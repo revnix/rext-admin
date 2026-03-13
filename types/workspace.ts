@@ -13,69 +13,45 @@
 // WORKSPACE CORE TYPES
 // ============================================================================
 
+import type {
+  WorkspaceResponseSchema,
+  WorkspaceListResponse as GeneratedWorkspaceListResponse,
+  BrandVoiceStateResponse,
+} from "@/types/generated/types.gen";
+
 /**
- * Main workspace model matching backend WorkspaceModel
+ * Workspace Owner summary
  */
-export interface Workspace {
-  id: string; // UUID
-  title?: string; // optional for backward compatibility - deprecated, use 'name' instead
-  name: string; // unique, required — workspace display name
-  slug: string; // URL-safe identifier for workspace
-  timezone?: string; // optional IANA timezone
-  url: string; // required
-  created_at: string; // DateTime ISO string
-  updated_at?: string; // DateTime ISO string
-  brand_voice?: BrandVoice;
-  websites?: WebKnowledge[];
-  knowledge_files?: FileKnowledge[];
-  text_knowledge?: TextKnowledge[];
-  // New fields from backend API response
-  knowledge_stats?: {
-    web_knowledge: number;
-    files: number;
-    text_knowledge: number;
-    total: number;
-  };
-  analytics?: {
-    knowledge_counts: {
-      web_knowledge: number;
-      files: number;
-      text_knowledge: number;
-      total_knowledge_items: number;
-    };
-    content_metrics: {
-      total_words: number;
-      web_content_words: number;
-      file_content_words: number;
-      avg_web_article_words: number;
-      avg_file_words: number;
-      estimated_reading_time_minutes: number;
-    };
-    team_metrics: {
-      total_members: number;
-    };
-  };
-  // Flat analytics fields (backend returns these at root level)
-  knowledge_counts?: {
-    web_knowledge: number;
-    files: number;
-    text_knowledge: number;
-    total_knowledge_items: number;
-  };
-  content_metrics?: {
-    total_words?: number;
-    web_content_words?: number;
-    file_content_words?: number;
-    avg_web_article_words?: number;
-    avg_file_words?: number;
-    estimated_reading_time_minutes?: number;
-  };
-  team_metrics?: {
-    total_members: number;
-  };
-  members_count?: number;
-  content_count?: number;
+export interface WorkspaceOwner {
+  id: string;
+  name: string;
+  email?: string;
+  image?: string;
+  [key: string]: unknown;
 }
+
+/**
+ * Workspace Knowledge statistics
+ */
+export interface KnowledgeStats {
+  web_count: number;
+  file_count: number;
+  text_count: number;
+  total_count: number;
+  total_chars: number;
+  total_words: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Main workspace model aligned with generated rigid types, 
+ * but with restored rigidity for metadata fields.
+ */
+export interface Workspace extends Omit<WorkspaceResponseSchema, "owner" | "knowledge_stats"> {
+  owner?: WorkspaceOwner | null;
+  knowledge_stats?: KnowledgeStats | null;
+}
+
 
 /**
  * Persona data for target audience
@@ -97,22 +73,23 @@ export interface Persona {
 }
 
 /**
- * Brand voice data extracted by LLM
+ * Brand voice data extracted by LLM.
+ * Intersects generated response with missing frontend-only or logic-heavy fields.
  */
 export interface BrandVoice {
-  id?: string;
+  id?: string | null;
   workspace_id: string;
-  about?: string; // Brand description
-  customer_profile?: string; // Target customer details
-  selling_position?: string; // Unique selling proposition
-  target_audience?: string[]; // Array of audience segments
-  brand_voice?: string[]; // Communication tone/style characteristics
-  competitors?: string[]; // Array of competitor names
-  content_strategy?: string[]; // Content pillars/themes
-  content_pillar?: string[]; // Alternative name for content strategy
-  personas?: Persona[]; // Target audience personas
-  created_at?: string;
-  updated_at?: string;
+  about?: string | null;
+  customer_profile?: string | null;
+  selling_position?: string | null;
+  target_audience?: string[];
+  brand_voice?: string[];
+  competitors?: string[];
+  content_strategy?: string[];
+  content_pillar?: string[]; // Alias for content_strategy, restored for UI parity
+  personas?: Persona[]; // RESTORED: Missing from backend schema but used in UI
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 // ============================================================================
@@ -219,12 +196,7 @@ export interface UpdateWorkspaceRequest {
 /**
  * Response for workspace list endpoint
  */
-export interface WorkspaceListResponse {
-  workspaces: Workspace[];
-  total: number;
-  page?: number;
-  limit?: number;
-}
+export type WorkspaceListResponse = GeneratedWorkspaceListResponse;
 
 /**
  * Response for single workspace endpoint
@@ -234,11 +206,7 @@ export interface WorkspaceResponse {
 }
 
 /**
- * Response for creating a workspace with background processing metadata.
- *
- * Matches backend `created()` payload which includes both workspace data and
- * an `operation_id` used to subscribe to SSE progress updates. `message` is
- * optional because the backend helper injects it when available.
+ * Response for creating a workspace
  */
 export interface CreateWorkspaceResponse {
   workspace: Workspace;
@@ -545,7 +513,8 @@ export interface WorkspaceCrudState {
   // Operation tracking for SSE (transient, not persisted)
   currentOperation: {
     operationId: string;
-    workspaceId: string;
+    workspaceId?: string;
+    status: string;
   } | null;
 
   // Actions
@@ -565,7 +534,8 @@ export interface WorkspaceCrudState {
   setCurrentOperation: (
     operation: {
       operationId: string;
-      workspaceId: string;
+      workspaceId?: string;
+      status: string;
     } | null,
   ) => void;
   clearCurrentOperation: () => void;

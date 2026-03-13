@@ -8,6 +8,13 @@
 import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import type {
+  WebhookEventRow,
+  FailedWebhookListResponse,
+  WebhookPagination,
+  WebhookFailureStatistics,
+  WebhookStatsResponseSchema,
+} from "@/types/generated/types.gen";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -101,6 +108,7 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
         end_date: filters?.end_date,
       });
 
+      // The backend returns a complex object; we cast to our local rigid WebhookEventsResponse
       return client.request<WebhookEventsResponse>(url, {
         method: "GET",
       });
@@ -119,12 +127,24 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
       perPage = 50,
       hours = 24,
     ): Promise<WebhookEventsResponse> => {
-      return client.request<WebhookEventsResponse>(
+      // The backend returns FailedWebhookListResponse. We map this to our unified WebhookEventsResponse.
+      const response = await client.request<FailedWebhookListResponse>(
         `${ENDPOINTS.ADMIN_WEBHOOKS.failed}?page=${page}&per_page=${perPage}&hours=${hours}`,
         {
           method: "GET",
         },
       );
+
+      return {
+        events: response.failed_events as unknown as WebhookEvent[],
+        pagination: response.pagination as unknown as WebhookEventsPagination,
+        summary: {
+          total: response.statistics.total_failed,
+          processed: 0,
+          pending: 0,
+          failed: response.statistics.total_failed,
+        },
+      };
     },
 
     /**
@@ -150,9 +170,23 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getStats: async (): Promise<WebhookStats> => {
-      return client.request<WebhookStats>(ENDPOINTS.ADMIN_WEBHOOKS.stats, {
-        method: "GET",
-      });
+      const response = await client.request<WebhookStatsResponseSchema>(
+        ENDPOINTS.ADMIN_WEBHOOKS.stats,
+        {
+          method: "GET",
+        },
+      );
+
+      // Map generated WebhookStatsResponseSchema to local rigid WebhookStats
+      return {
+        total_events: response.total_events,
+        processed_events: response.processed,
+        failed_events: response.failed,
+        pending_events: response.pending,
+        success_rate: response.success_rate,
+        event_type_breakdown: [], // Field missing in backend response schema
+        recent_errors: [], // Field missing in backend response schema
+      } as WebhookStats;
     },
   };
 }

@@ -15,39 +15,28 @@
  * - Brand voice refresh
  */
 
-import { apiErrorHandler } from "@/lib/api-error-middleware";
-import { authenticatedFetch } from "@/lib/auth-utils";
-import { generateRequestId, sanitizeErrorForLogging } from "@/lib/error-utils";
-import { InputSanitizer } from "@/lib/sanitization";
+import { apiClient } from "@/lib/api-client";
 import type {
-  CreateWorkspaceRequest,
-  CreateWorkspaceResponse,
-  RefreshBrandVoiceResponse,
-  UpdateWorkspaceRequest,
-  WorkspaceApiConfig,
-  WorkspaceApiContext,
   WorkspaceListResponse,
-  WorkspaceResponse,
-} from "@/types/workspace";
+  BrandVoiceRefreshResponse,
+  WorkspaceStatsResponse as WorkspaceStats,
+} from "@/types/generated/types.gen";
+import type { Workspace } from "@/types/workspace";
 import {
   BaseWorkspaceService,
-  WorkspaceApiError,
+  WorkspaceApiError as WorkspaceServiceError,
 } from "./base-workspace-service";
-import { WorkspaceServiceError } from ".";
 import { VALIDATION_MESSAGES } from "./validation-messages";
 
-// ============================================================================
-// ERROR HANDLING
-// ============================================================================
+export { WorkspaceServiceError };
 
-export { WorkspaceApiError as WorkspaceServiceError };
 
 // ============================================================================
 // MAIN SERVICE CLASS
 // ============================================================================
 export class WorkspaceService extends BaseWorkspaceService {
-  constructor(config: Partial<WorkspaceApiConfig> = {}) {
-    super("WorkspaceService", config);
+  constructor() {
+    super("WorkspaceService");
   }
 
   // ============================================================================
@@ -58,34 +47,32 @@ export class WorkspaceService extends BaseWorkspaceService {
    * Health check for workspace API
    */
   async healthCheck(): Promise<{ status: string }> {
-    return this.makeRequest<{ status: string }>("GET", "/api/v1/workspace/");
+    return apiClient.request<{ status: string }>("/api/v1/workspace/", {
+      method: "GET",
+    });
   }
 
   /**
    * List all workspaces with metadata
    */
   async listWorkspaces(): Promise<WorkspaceListResponse> {
-    return this.makeRequest<WorkspaceListResponse>(
-      "GET",
-      "/api/v1/workspace/all",
-    );
+    return apiClient.workspaces.list();
   }
 
   /**
    * Get workspace by ID
    */
-  async getWorkspace(workspaceId: string): Promise<WorkspaceResponse> {
+  async getWorkspace(workspaceId: string): Promise<Workspace> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest<WorkspaceResponse>(
-      "GET",
-      `/api/v1/workspace/detail?workspace_id=${workspaceId}`,
-    );
+    return apiClient.workspaces.get(workspaceId);
   }
 
   /**
    * Get workspace by slug
    */
-  async getWorkspaceBySlug(workspaceSlug: string): Promise<WorkspaceResponse> {
+  async getWorkspaceBySlug(
+    workspaceSlug: string,
+  ): Promise<Workspace> {
     if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
@@ -94,26 +81,19 @@ export class WorkspaceService extends BaseWorkspaceService {
       );
     }
 
-    return this.makeRequest<WorkspaceResponse>(
-      "GET",
-      `/api/v1/workspace/slug/${workspaceSlug}`,
-    );
+    return apiClient.workspaces.getBySlug(workspaceSlug);
   }
 
   /**
    * Create new workspace
    */
-  async createWorkspace(
-    data: CreateWorkspaceRequest,
-  ): Promise<CreateWorkspaceResponse> {
+  async createWorkspace(data: {
+    name: string;
+    timezone?: string;
+    url: string;
+  }): Promise<Workspace> {
     this.validateWorkspaceData(data);
-    const sanitizedData = this.sanitizeWorkspaceData(data);
-
-    return this.makeRequest<CreateWorkspaceResponse>(
-      "POST",
-      "/api/v1/workspace/create",
-      sanitizedData,
-    );
+    return apiClient.workspaces.create(data);
   }
 
   /**
@@ -121,28 +101,19 @@ export class WorkspaceService extends BaseWorkspaceService {
    */
   async updateWorkspace(
     workspaceId: string,
-    data: UpdateWorkspaceRequest,
-  ): Promise<WorkspaceResponse> {
+    data: { title?: string; name?: string; timezone?: string; url?: string },
+  ): Promise<Workspace> {
     this.validateUuid(workspaceId, "workspace_id");
     this.validateWorkspaceUpdateData(data);
-    const sanitizedData = this.sanitizeWorkspaceUpdateData(data);
-
-    return this.makeRequest<WorkspaceResponse>(
-      "PUT",
-      `/api/v1/workspace/update?workspace_id=${workspaceId}`,
-      sanitizedData,
-    );
+    return apiClient.workspaces.update(workspaceId, data);
   }
 
   /**
    * Delete workspace with vector store cleanup
    */
-  async deleteWorkspace(workspaceId: string): Promise<{ success: boolean }> {
+  async deleteWorkspace(workspaceId: string): Promise<Workspace> {
     this.validateUuid(workspaceId, "workspace_id");
-    return this.makeRequest<{ success: boolean }>(
-      "DELETE",
-      `/api/v1/workspace/delete?workspace_id=${workspaceId}`,
-    );
+    return apiClient.workspaces.delete(workspaceId);
   }
 
   /**
@@ -150,18 +121,16 @@ export class WorkspaceService extends BaseWorkspaceService {
    */
   async duplicateWorkspace(
     sourceWorkspaceId: string,
-  ): Promise<CreateWorkspaceResponse> {
+  ): Promise<Workspace> {
     this.validateUuid(sourceWorkspaceId, "workspace_id");
 
-    const sourceResponse = await this.getWorkspace(sourceWorkspaceId);
-    const sourceWorkspace = sourceResponse.workspace;
-
+    const sourceWorkspace = await this.getWorkspace(sourceWorkspaceId);
     const duplicateName = this.generateDuplicateName(sourceWorkspace.name);
 
-    const duplicateData: CreateWorkspaceRequest = {
+    const duplicateData = {
       name: duplicateName,
-      timezone: sourceWorkspace.timezone,
-      url: sourceWorkspace.url,
+      timezone: sourceWorkspace.timezone ?? undefined,
+      url: sourceWorkspace.url ?? "",
     };
 
     return this.createWorkspace(duplicateData);
@@ -172,13 +141,9 @@ export class WorkspaceService extends BaseWorkspaceService {
    */
   async refreshBrandVoice(
     workspaceId: string,
-  ): Promise<RefreshBrandVoiceResponse> {
+  ): Promise<BrandVoiceRefreshResponse> {
     this.validateUuid(workspaceId, "workspace_id");
-
-    return this.makeRequest<RefreshBrandVoiceResponse>(
-      "POST",
-      `/api/v1/workspaces/${workspaceId}/brand-voice/refresh`,
-    );
+    return apiClient.workspaces.refreshBrandVoice(workspaceId);
   }
 
   // ============================================================================
@@ -197,150 +162,11 @@ export class WorkspaceService extends BaseWorkspaceService {
     }
   }
 
-  protected async makeRequest<T>(
-    method: string,
-    endpoint: string,
-    body?: unknown,
-  ): Promise<T> {
-    const requestId = generateRequestId();
-    const context = this.createRequestContext(requestId);
-    const controller = new AbortController();
-    this.activeRequests.set(requestId, controller);
-
-    try {
-      return await this.executeRequest<T>(
-        method,
-        endpoint,
-        body,
-        controller.signal,
-        context,
-      );
-    } finally {
-      this.activeRequests.delete(requestId);
-    }
-  }
-
-  protected async executeRequest<T>(
-    method: string,
-    endpoint: string,
-    body: unknown,
-    signal: AbortSignal,
-    context: WorkspaceApiContext,
-  ): Promise<T> {
-    const url = `${this.config.baseUrl}${endpoint}`;
-    const startTime = Date.now();
-
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "X-Request-ID": context.requestId,
-        "X-Timestamp": context.timestamp,
-      };
-
-      const signals = [signal];
-      if (this.config.timeout) {
-        signals.push(AbortSignal.timeout(this.config.timeout));
-      }
-      const combinedSignal =
-        signals.length > 1 ? AbortSignal.any(signals) : signal;
-
-      const response = await authenticatedFetch(url, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: combinedSignal,
-      });
-
-      const duration = Date.now() - startTime;
-
-      if (!response.ok) {
-        await this.handleErrorResponse(response, context, duration);
-      }
-
-      let data: unknown;
-      if (
-        response.status === 204 ||
-        response.headers.get("content-length") === "0"
-      ) {
-        data = {};
-      } else {
-        data = await response.json();
-      }
-
-      const responseData = data as { success?: boolean; data?: T };
-      if (responseData?.success && responseData.data) {
-        return responseData.data;
-      }
-
-      return data as T;
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      await this.handleRequestError(error, context, duration);
-      throw error;
-    }
-  }
-
-  protected async handleErrorResponse(
-    response: Response,
-    context: WorkspaceApiContext,
-    duration: number,
-  ): Promise<never> {
-    const errorData = await response.json().catch(() => ({}));
-
-    this.log.error("Workspace request failed", {
-      requestId: context.requestId,
-      status: response.status,
-      statusText: response.statusText,
-      duration,
-      errorData: sanitizeErrorForLogging(errorData),
-    });
-
-    throw WorkspaceApiError.fromResponse(errorData, response.status);
-  }
-
-  protected async handleRequestError(
-    error: unknown,
-    context: WorkspaceApiContext,
-    duration: number,
-  ): Promise<never> {
-    await apiErrorHandler.handleError(error, {
-      showToast: true,
-      logError: true,
-      throwError: true,
-      context: {
-        requestId: context.requestId,
-        duration,
-        timestamp: context.timestamp,
-      },
-    });
-
-    throw error;
-  }
-
-  protected createRequestContext(requestId: string): WorkspaceApiContext {
-    return {
-      requestId,
-      timestamp: new Date().toISOString(),
-      userId: undefined,
-    };
-  }
-
   // ============================================================================
   // VALIDATION METHODS
   // ============================================================================
 
-  protected validateUuid(id: string, fieldName: string): void {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!id || !uuidRegex.test(id)) {
-      throw new WorkspaceServiceError(
-        "INVALID_REQUEST",
-        VALIDATION_MESSAGES.INVALID_UUID(fieldName),
-      );
-    }
-  }
-
-  protected validateWorkspaceData(data: CreateWorkspaceRequest): void {
+  protected validateWorkspaceData(data: { name: string; url: string }): void {
     if (!data.name || data.name.trim().length === 0) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
@@ -363,12 +189,15 @@ export class WorkspaceService extends BaseWorkspaceService {
     }
   }
 
-  protected validateWorkspaceUpdateData(data: UpdateWorkspaceRequest): void {
+  protected validateWorkspaceUpdateData(data: {
+    name?: string;
+    url?: string;
+  }): void {
     if (data.name !== undefined) {
       if (!data.name || data.name.trim().length === 0) {
         throw new WorkspaceServiceError(
           "INVALID_REQUEST",
-          VALIDATION_MESSAGES.TITLE_REQUIRED, // Now consistent with create
+          VALIDATION_MESSAGES.TITLE_REQUIRED,
         );
       }
       if (data.name.length > 200) {
@@ -387,66 +216,21 @@ export class WorkspaceService extends BaseWorkspaceService {
     }
   }
 
-  protected isValidUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch {
-      return false;
-    }
-  }
-
-  // ============================================================================
-  // SANITIZATION METHODS
-  // ============================================================================
-
-  private sanitizeWorkspaceData(
-    data: CreateWorkspaceRequest,
-  ): Record<string, unknown> {
-    return {
-      name: InputSanitizer.sanitizeText(data.name.trim()),
-      timezone: data.timezone,
-      url: data.url.trim(),
-    };
-  }
-
-  private sanitizeWorkspaceUpdateData(
-    data: UpdateWorkspaceRequest,
-  ): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
-
-    if (data.name !== undefined) {
-      result.name = InputSanitizer.sanitizeText(data.name.trim());
-    }
-    if (data.timezone !== undefined) {
-      result.timezone = data.timezone;
-    }
-    if (data.url !== undefined) {
-      result.url = data.url.trim();
-    }
-
-    return result;
-  }
-
   /**
    * Cancel all active requests
    */
   public cancelAllRequests(): void {
-    for (const [requestId, controller] of this.activeRequests) {
-      controller.abort();
-      this.log.debug("Cancelled request", { requestId });
-    }
-
-    this.activeRequests.clear();
+    apiClient.cancelAllRequests();
   }
 
   /**
    * Get the count of active requests
    */
   public getActiveRequestsCount(): number {
-    return this.activeRequests.size;
+    return apiClient.getActiveRequestsCount();
   }
 }
+
 
 // Default instance
 export const workspaceService = new WorkspaceService();

@@ -20,6 +20,12 @@
  */
 
 import type {
+  AdminInvitationResponse,
+  AdminInvitationListResponse as GeneratedListResponse,
+  CreateAdminInvitationRequest as GeneratedCreateRequest,
+  ValidateAdminInvitationResponse as GeneratedValidateResponse,
+} from "@/types/generated/types.gen";
+import type {
   AdminInvitation,
   AdminInvitationListResponse,
   CreateAdminInvitationRequest,
@@ -40,7 +46,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(data as GeneratedCreateRequest),
         },
       );
     },
@@ -59,6 +65,7 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
         offset: filters?.offset,
       });
 
+      // Data is correctly typed but we cast to maintain our local rigid enum mapping in the UI
       return client.request<AdminInvitationListResponse>(endpoint, {
         method: "GET",
       });

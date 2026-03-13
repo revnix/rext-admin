@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
-import type { WorkspaceCrudState } from "@/types/workspace";
+import type { WorkspaceCrudState, Workspace } from "@/types/workspace";
 import { useWorkspaceContextStore } from "./use-workspace-context-store";
 
 export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
@@ -37,24 +37,28 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }));
 
         try {
-          const { workspace, operation_id } = await apiClient.workspaces.create(
-            {
-              name: data.name,
-              timezone: data.timezone,
-              url: data.url,
-            },
-          );
+          // The new apiClient returns WorkspaceCreateResponse which includes operation_id
+          const response = await apiClient.workspaces.create({
+            name: data.name,
+            timezone: data.timezone,
+            url: data.url,
+          });
 
-          // Only update CRUD store's own state
+          // Set current operation for SSE tracking if operation_id is present
+          if (response.operation_id) {
+            set({
+              currentOperation: {
+                operationId: response.operation_id,
+                status: "pending",
+              },
+            });
+          }
+
           set((state) => ({
-            currentOperation: {
-              operationId: operation_id,
-              workspaceId: workspace.id,
-            },
             loadingStates: { ...state.loadingStates, creating: false },
           }));
 
-          return workspace;
+          return response as Workspace;
         } catch (error) {
           set((state) => ({
             ...state,
@@ -71,13 +75,11 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }));
 
         try {
-          const response = await apiClient.workspaces.update(workspaceId, {
+          const workspace = await apiClient.workspaces.update(workspaceId, {
             name: data.name,
             timezone: data.timezone,
             url: data.url,
           });
-
-          const workspace = response.workspace;
 
           set((state) => ({
             loadingStates: { ...state.loadingStates, updating: false },
@@ -148,30 +150,23 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
 
         try {
           // Fetch the source workspace to get its data
-          const sourceResponse =
+          const sourceWorkspace =
             await apiClient.workspaces.get(sourceWorkspaceId);
-          const sourceWorkspace = sourceResponse.workspace;
 
           // Generate a duplicate name
           const duplicateName = `${sourceWorkspace.name} (Copy)`;
 
           // Create the duplicate workspace using the same data
-          const { workspace, operation_id } = await apiClient.workspaces.create(
-            {
-              name: duplicateName,
-              timezone: sourceWorkspace.timezone,
-              url: sourceWorkspace.url,
-            },
-          );
+          const workspace = (await apiClient.workspaces.create({
+            name: duplicateName,
+            timezone: sourceWorkspace.timezone ?? undefined,
+            url: sourceWorkspace.url ?? "",
+          })) as Workspace;
 
           // Add to context store (same pattern as createWorkspace)
           useWorkspaceContextStore.getState().addWorkspaceToList(workspace);
 
           set((state) => ({
-            currentOperation: {
-              operationId: operation_id,
-              workspaceId: workspace.id,
-            },
             loadingStates: { ...state.loadingStates, duplicating: false },
           }));
 
@@ -192,8 +187,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
         }));
 
         try {
-          const response = await apiClient.workspaces.get(workspaceId);
-          const workspace = response.workspace;
+          const workspace = await apiClient.workspaces.get(workspaceId);
 
           set((state) => ({
             loadingStates: { ...state.loadingStates, switching: false },

@@ -7,6 +7,12 @@
 
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import type {
+  RefundAdminRow,
+  RefundAdminListResponse as GeneratedRefundListResponse,
+  RefundCreateRequest as GeneratedRefundCreateRequest,
+  RefundCreateData,
+} from "@/types/generated/types.gen";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -113,6 +119,7 @@ export function createAdminRefundsNamespace(client: ApiClient) {
       const queryString = params.toString();
       const url = `${ENDPOINTS.ADMIN_REFUNDS.list}${queryString ? `?${queryString}` : ""}`;
 
+      // Backend returns a paginated list; we cast to our local rigid RefundListResponse
       return client.request<RefundListResponse>(url, {
         method: "GET",
       });
@@ -139,14 +146,15 @@ export function createAdminRefundsNamespace(client: ApiClient) {
     create: async (
       data: RefundCreateRequest,
     ): Promise<RefundCreateResponse> => {
-      return client.request<RefundCreateResponse>(
+      const response = await client.request<RefundCreateResponse>(
         ENDPOINTS.ADMIN_REFUNDS.create,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(data as GeneratedRefundCreateRequest),
         },
       );
+      return response;
     },
   };
 }

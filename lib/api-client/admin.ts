@@ -14,6 +14,14 @@
 import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import type {
+  AuditLogItem,
+  AuditLogListResponse as GeneratedAuditListResponse,
+  AuditLogsListResponse as GeneratedAdminAuditListResponse,
+  EmailTemplateResponse,
+  EmailTemplateListResponse,
+  CreateEmailTemplateRequest,
+} from "@/types/generated/types.gen";
 
 export interface EmailTemplate {
   id: string;
@@ -107,18 +115,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
       });
 
       return client.request<{
-        logs: Array<{
-          id: string;
-          user_id: string;
-          action: string;
-          resource_type: string;
-          resource_id: string;
-          details: Record<string, unknown>;
-          ip_address: string;
-          user_agent: string;
-          created_at: string;
-          status?: string;
-        }>;
+        logs: AuditLogItem[];
         total: number;
         has_more: boolean;
       }>(endpoint, {
@@ -159,19 +156,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
       });
 
       return client.request<{
-        logs: Array<{
-          id: string;
-          user_id: string;
-          workspace_id?: string;
-          action: string;
-          resource_type: string;
-          resource_id: string;
-          details: Record<string, unknown>;
-          ip_address: string;
-          user_agent: string;
-          created_at: string;
-          status?: string;
-        }>;
+        logs: AuditLogItem[];
         total: number;
         has_more: boolean;
       }>(endpoint, {
@@ -183,21 +168,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
      * Get single audit log by ID (admin)
      */
     getLog: async (logId: string) => {
-      return client.request<{
-        id: string;
-        user_id: string;
-        workspace_id?: string;
-        action: string;
-        resource_type: string;
-        resource_id: string;
-        details: Record<string, unknown>;
-        old_values?: Record<string, unknown>;
-        new_values?: Record<string, unknown>;
-        ip_address: string;
-        user_agent: string;
-        created_at: string;
-        status?: string;
-      }>(ENDPOINTS.ADMIN.audit.detail(logId), {
+      return client.request<AuditLogItem>(ENDPOINTS.ADMIN.audit.detail(logId), {
         method: "GET",
       });
     },
@@ -237,11 +208,15 @@ export function createEmailTemplatesNamespace(client: ApiClient) {
      * List email templates
      */
     list: async (workspaceId: string) => {
-      return client.request<{
-        templates: EmailTemplate[];
-      }>(ENDPOINTS.ADMIN.emailTemplates.list(workspaceId), {
-        method: "GET",
-      });
+      const response = await client.request<EmailTemplateListResponse>(
+        ENDPOINTS.ADMIN.emailTemplates.list(workspaceId),
+        {
+          method: "GET",
+        },
+      );
+      return {
+        templates: response.templates as unknown as EmailTemplate[],
+      };
     },
 
     /**

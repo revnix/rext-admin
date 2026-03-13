@@ -6,7 +6,7 @@ const path = require("node:path");
 // biome-ignore lint/suspicious/noConsole: CLI script requires console output
 console.log("🔄 Generating TypeScript types from backend OpenAPI schema...");
 
-const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+const backendUrl = process.env.BACKEND_URL || "http://localhost:2024";
 const openapiPath = path.join(__dirname, "../openapi.json");
 const typesOutputPath = path.join(__dirname, "../types/generated");
 

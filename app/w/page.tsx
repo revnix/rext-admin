@@ -58,18 +58,22 @@ export default function WorkspacePage() {
 
   // Transform workspaces to include title field and handle API response structure
   const transformedWorkspaces: WorkspaceData[] = (
-    workspacesResponse?.workspaces || []
+    (workspacesResponse?.workspaces as unknown as Workspace[]) || []
   ).map((workspace: Workspace) => ({
     id: workspace.id,
     title: workspace.name || "Untitled Workspace",
-    slug: workspace.slug, // Include slug for URL navigation
+    name: workspace.name,
+    slug: workspace.slug,
     timezone: workspace.timezone,
-    url: workspace.url,
+    url: workspace.url ?? "",
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
-    knowledge_stats: workspace.knowledge_stats,
-    brand_voice: workspace.brand_voice,
-    status: "active", // Default status since it's not in Workspace type
+    knowledge_stats: workspace.knowledge_stats as WorkspaceData["knowledge_stats"],
+    // Brand voice might be missing from the schema but present in reality, 
+    // or we may need a separate fetch. For now, cast to maintain safety net where possible.
+    brand_voice: (workspace as any).brand_voice as WorkspaceData["brand_voice"],
+    status: workspace.status || "active",
+    owner: workspace.owner as WorkspaceData["owner"],
   }));
 
   // Define columns for the DataTable
@@ -127,12 +131,12 @@ export default function WorkspacePage() {
       header: "Knowledge",
       width: "120px",
       cell: (_value: unknown, row: WorkspaceData) => {
-        const stats = row.knowledge_stats;
+        const stats = row.knowledge_stats as any;
         const total = stats?.total || 0;
         return (
           <div className="flex items-center gap-1">
             <FileText className="h-4 w-4 text-muted-foreground" />
-            <span>{total} items</span>
+            <span>{String(total)} items</span>
           </div>
         );
       },
@@ -155,11 +159,11 @@ export default function WorkspacePage() {
       header: "Owner",
       width: "150px",
       cell: (_value: unknown, row: WorkspaceData) => {
-        const owner = row.owner;
+        const owner = row.owner as any;
         return owner ? (
           <div className="flex flex-col">
-            <span className="text-sm font-medium">{owner.name}</span>
-            <span className="text-xs text-muted-foreground">{owner.email}</span>
+            <span className="text-sm font-medium">{String(owner.name || "")}</span>
+            <span className="text-xs text-muted-foreground">{String(owner.email || "")}</span>
           </div>
         ) : (
           <span className="text-muted-foreground text-sm">—</span>
@@ -286,10 +290,10 @@ export default function WorkspacePage() {
                 if (!oldData?.workspaces) return oldData;
                 return {
                   ...oldData,
-                  workspaces: oldData.workspaces.filter(
-                    (ws: Workspace) => ws.id !== deletedWorkspaceId,
+                  workspaces: (oldData.workspaces as any[]).filter(
+                    (ws: any) => ws.id !== deletedWorkspaceId,
                   ),
-                  total: Math.max(0, (oldData.total || 0) - 1),
+                  total_count: Math.max(0, (oldData.total_count || 0) - 1),
                 };
               },
             );

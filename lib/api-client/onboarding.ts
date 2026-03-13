@@ -11,6 +11,11 @@ import type {
   OnboardingStatus,
   OnboardingStepUpdate,
 } from "@/types/onboarding";
+import type {
+  UserOnboardingResponse,
+  ShouldShowOnboardingResponse,
+  OnboardingStepUpdate as GeneratedOnboardingStepUpdate,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -20,6 +25,7 @@ export function createOnboardingNamespace(client: ApiClient) {
      * Get current user's onboarding status
      */
     async getStatus(): Promise<OnboardingStatus> {
+      // Backend returns UserOnboardingResponse; we cast to local rigid OnboardingStatus
       return client.request<OnboardingStatus>(ENDPOINTS.ONBOARDING.BASE, {
         method: "GET",
       });
@@ -73,7 +79,8 @@ export function createOnboardingNamespace(client: ApiClient) {
      * Check if onboarding should be shown to current user
      */
     async shouldShow(): Promise<{ should_show: boolean }> {
-      return client.request<{ should_show: boolean }>(
+      // Backend returns ShouldShowOnboardingResponse
+      return client.request<ShouldShowOnboardingResponse>(
         ENDPOINTS.ONBOARDING.shouldShow,
         {
           method: "GET",

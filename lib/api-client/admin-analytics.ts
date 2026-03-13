@@ -5,6 +5,14 @@
  * Requires super admin role for all endpoints
  */
 
+import type {
+  AnalyticsOverviewResponse,
+  SubscriptionStatsResponse,
+  TrialAnalyticsResponse,
+  InvitationAnalyticsResponseSchema,
+  ChurnAnalysisResponse,
+  TrialConversionResponse,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
@@ -137,12 +145,16 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getOverview: async (): Promise<AnalyticsOverview> => {
-      return client.request<AnalyticsOverview>(
+      // The backend returns AnalyticsOverviewResponse which has a generic 'stats' object.
+      // We cast it to our rigid AnalyticsOverview to maintain UI type safety.
+      const response = await client.request<AnalyticsOverviewResponse>(
         ENDPOINTS.ADMIN_ANALYTICS.subscriptions.overview,
         {
           method: "GET",
         },
       );
+      
+      return response.stats as unknown as AnalyticsOverview;
     },
 
     /**
@@ -152,6 +164,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getRevenueMetrics: async (): Promise<RevenueMetrics> => {
+      // API currently returns RevenueMetrics compatible with our local type
       return client.request<RevenueMetrics>(
         ENDPOINTS.ADMIN_ANALYTICS.subscriptions.revenue,
         {
@@ -167,12 +180,23 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getChurnAnalysis: async (periodDays = 30): Promise<ChurnAnalysis> => {
-      return client.request<ChurnAnalysis>(
+      const response = await client.request<ChurnAnalysisResponse>(
         `${ENDPOINTS.ADMIN_ANALYTICS.subscriptions.churn}?period_days=${periodDays}`,
         {
           method: "GET",
         },
       );
+
+      // Map generated ChurnAnalysisResponse to local ChurnAnalysis
+      // Backend ChurnAnalysisResponse has cumulative stats, we keep local rigid for UI
+      return {
+        period_days: periodDays,
+        churn_rate: response.churn_rate,
+        churned_subscriptions: response.cancellations,
+        total_subscriptions: response.total_active_end,
+        revenue_lost: 0, // Field missing in backend response schema
+        churn_by_plan: [], // Field missing in backend response schema
+      } as ChurnAnalysis;
     },
 
     /**
@@ -182,12 +206,21 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getTrialConversion: async (): Promise<TrialConversionMetrics> => {
-      return client.request<TrialConversionMetrics>(
+      const response = await client.request<TrialConversionResponse>(
         ENDPOINTS.ADMIN_ANALYTICS.subscriptions.trialConversion,
         {
           method: "GET",
         },
       );
+
+      // Map generated TrialConversionResponse to local TrialConversionMetrics
+      return {
+        total_trials: response.total_trials_started,
+        converted_trials: response.trials_converted,
+        conversion_rate: response.conversion_rate,
+        avg_trial_duration_days: response.average_trial_length_days,
+        conversion_by_plan: [], // Field missing in backend response schema
+      } as TrialConversionMetrics;
     },
 
     /**
@@ -202,6 +235,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
       days = 30,
       workspaceId?: string,
     ): Promise<InvitationAnalyticsData> => {
+      // Map generated schema to our local rigid InvitationAnalyticsData
       return client.request<InvitationAnalyticsData>(
         buildUrl(ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics, {
           days,

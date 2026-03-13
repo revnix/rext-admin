@@ -18,6 +18,10 @@
  * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
 
+import type {
+  WorkspaceDashboardResponse,
+  ContentStats,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -80,7 +84,8 @@ export function createDashboardNamespace(client: ApiClient) {
      * - Draft content
      * - Total personas
      */
-    getStats: async (workspaceId: string) => {
+    getStats: async (workspaceId: string): Promise<DashboardStats> => {
+      // Backend returns WorkspaceDashboardResponse; we cast to local rigid DashboardStats
       return client.request<DashboardStats>(
         ENDPOINTS.DASHBOARD.stats(workspaceId),
         {

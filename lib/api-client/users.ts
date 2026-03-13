@@ -23,6 +23,10 @@ import type {
   SessionListResponse,
   UserSession,
 } from "@/types/user-session";
+import type {
+  UserListResponse as GeneratedUserListResponse,
+  UserResponse as GeneratedUserResponse,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -55,6 +59,7 @@ export function createUsersNamespace(client: ApiClient) {
       const params = workspaceId
         ? `?workspace_id=${encodeURIComponent(workspaceId)}`
         : "";
+      // Backend returns UserListResponse; we cast to our local rigid UsersListResponse
       return client.request<UsersListResponse>(
         `${ENDPOINTS.USERS.list}${params}`,
         {
@@ -67,6 +72,7 @@ export function createUsersNamespace(client: ApiClient) {
      * Get a single user by ID
      */
     get: async (userId: string): Promise<User> => {
+      // Backend returns UserResponse; we cast to our local rigid User
       return client.request<User>(ENDPOINTS.USERS.byId(userId), {
         method: "GET",
       });

@@ -199,23 +199,19 @@ export interface RuleData extends BaseTableRow {
 }
 
 export interface WorkspaceData extends BaseTableRow {
-  title: string; // Display name for workspace
-  name?: string; // API field name (mapped to title)
-  slug: string; // URL-safe identifier for workspace
-  description?: string;
+  title: string; // Internal UI display name (usually workspace.name)
+  name: string; // Strictly typed from API
+  slug: string;
   url: string;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
+  timezone?: string | null;
   owner?: {
-    name: string;
-    email: string;
-  };
+    [key: string]: unknown;
+  } | null;
   knowledge_stats?: {
-    web_knowledge: number;
-    files: number;
-    text_knowledge: number;
-    total: number;
-  };
+    [key: string]: unknown;
+  } | null;
   brand_voice?: BrandVoice;
   status: string;
 }

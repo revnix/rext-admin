@@ -31,6 +31,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * Get current user's subscription
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
+      // API schema missing UserSubscriptionResponse, falling back to local rigid type
       return client.request<UserSubscription>(
         ENDPOINTS.SUBSCRIPTIONS.mySubscription,
         {
@@ -43,6 +44,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * Get all available subscription plans
      */
     getPlans: async (): Promise<SubscriptionListResponse> => {
+      // API schema missing SubscriptionListResponse, falling back to local rigid type
       return client.request<SubscriptionListResponse>(
         ENDPOINTS.SUBSCRIPTIONS.plans,
         {
@@ -318,6 +320,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Trial status information
      */
     getTrialStatus: async (): Promise<TrialStatus> => {
+      // API schema missing TrialStatusResponse, falling back to local rigid type
       return client.request<TrialStatus>(ENDPOINTS.SUBSCRIPTIONS.trialStatus, {
         method: "GET",
       });

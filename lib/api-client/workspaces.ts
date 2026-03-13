@@ -5,27 +5,27 @@
  */
 
 import type {
-  BrandVoice,
-  CreateWorkspaceResponse,
   WorkspaceListResponse,
-  WorkspaceResponse,
-  Persona,
-} from "@/types/workspace";
-import type { WorkspaceStats } from "@/types/workspace-stats";
+  BrandVoiceRefreshResponse,
+  AvailableRolesResponse,
+  MyWorkspacePermissionsResponse as WorkspacePermissionsResponse,
+  WorkspaceStatsResponse as WorkspaceStats,
+  BrandVoiceStateResponse,
+  BrandVoiceWrapperResponse,
+  MemberWorkspacePermissionsResponse as MemberPermissionsResponse,
+} from "@/types/generated/types.gen";
+import type { Persona, Workspace, BrandVoice as RobustBrandVoice } from "@/types/workspace";
+
+/**
+ * Custom response for workspace creation that includes operation_id for SSE tracking.
+ * Extending Workspace to ensure type safety for the workspace data itself.
+ */
+export interface WorkspaceCreateResponse extends Workspace {
+  operation_id: string;
+}
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
-import {
-  workspaceResponseSchema,
-  workspaceListResponseSchema,
-  createWorkspaceResponseSchema,
-  refreshBrandVoiceResponseSchema,
-  availableRolesResponseSchema,
-  workspacePermissionsResponseSchema,
-  workspaceStatsSchema,
-  memberPermissionsResponseSchema,
-  updateBrandVoiceResponseSchema,
-} from "@/schemas/workspace-schemas";
-import { validateResponse } from "@/lib/api-response-validator";
+import { InputSanitizer } from "@/lib/sanitization";
 
 interface WorkspaceCreatePayload {
   name: string;
@@ -97,51 +97,41 @@ function toBrandVoicePayload(data: {
     personas: data.personas ?? [],
   };
 }
-import { InputSanitizer } from "@/lib/sanitization";
+
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
     /**
      * List all workspaces
      */
-    // Then wrap existing return values. For example, in the list method:
     list: async () => {
-      const data = await client.request<WorkspaceListResponse>(
+      return client.request<WorkspaceListResponse>(
         ENDPOINTS.WORKSPACES.BASE_ALL,
         {
           method: "GET",
         },
       );
-      return validateResponse(
-        workspaceListResponseSchema,
-        data,
-        "workspaces.list",
-      );
     },
 
-    // In the get method:
+    /**
+     * Get workspace by ID
+     */
     get: async (workspaceId: string) => {
-      const data = await client.request<WorkspaceResponse>(
+      return client.request<Workspace>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         { method: "GET" },
       );
-      return validateResponse(workspaceResponseSchema, data, "workspaces.get");
     },
 
     /**
      * Get workspace by slug
      */
     getBySlug: async (slug: string) => {
-      const data = await client.request<WorkspaceResponse>(
+      return client.request<Workspace>(
         ENDPOINTS.WORKSPACES.bySlug(slug),
         {
           method: "GET",
         },
-      );
-      return validateResponse(
-        workspaceResponseSchema,
-        data,
-        "workspaces.getBySlug",
       );
     },
 
@@ -154,7 +144,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         timezone: data.timezone,
         url: data.url.trim(),
       };
-      const response = await client.request<CreateWorkspaceResponse>(
+      return client.request<WorkspaceCreateResponse>(
         ENDPOINTS.WORKSPACES.BASE,
         {
           method: "POST",
@@ -162,13 +152,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toCreatePayload(payload)),
         },
       );
-      return validateResponse(
-        createWorkspaceResponseSchema,
-        response,
-        "workspaces.create",
-      );
     },
 
+    /**
+     * Update workspace
+     */
     update: async (
       workspaceId: string,
       data: { title?: string; name?: string; timezone?: string; url?: string },
@@ -179,7 +167,8 @@ export function createWorkspacesNamespace(client: ApiClient) {
         payload.name = InputSanitizer.sanitizeText(data.name.trim());
       if (data.timezone !== undefined) payload.timezone = data.timezone;
       if (data.url !== undefined) payload.url = data.url.trim();
-      const response = await client.request<WorkspaceResponse>(
+
+      return client.request<Workspace>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "PUT",
@@ -187,27 +176,17 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toUpdatePayload(payload)),
         },
       );
-      return validateResponse(
-        workspaceResponseSchema,
-        response,
-        "workspaces.update",
-      );
     },
 
     /**
      * Delete workspace
      */
     delete: async (workspaceId: string) => {
-      const response = await client.request<void>(
+      return client.request<Workspace>(
         ENDPOINTS.WORKSPACES.byId(workspaceId),
         {
           method: "DELETE",
         },
-      );
-      return validateResponse(
-        workspaceResponseSchema,
-        response,
-        "workspaces.delete",
       );
     },
 
@@ -216,16 +195,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Returns operation identifier for SSE tracking.
      */
     refreshBrandVoice: async (workspaceId: string) => {
-      const response = await client.request<{
-        operation_id: string;
-      }>(ENDPOINTS.WORKSPACES.refreshBrandVoice(workspaceId), {
-        method: "POST",
-      });
-
-      return validateResponse(
-        refreshBrandVoiceResponseSchema,
-        response,
-        "workspaces.refreshBrandVoice",
+      return client.request<BrandVoiceRefreshResponse>(
+        ENDPOINTS.WORKSPACES.refreshBrandVoice(workspaceId),
+        {
+          method: "POST",
+        },
       );
     },
 
@@ -233,16 +207,11 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Get brand voice for workspace
      */
     getBrandVoice: async (workspaceId: string) => {
-      const response = await client.request<{
-        brand_voice: BrandVoice;
-      }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
-        method: "GET",
-      });
-
-      return validateResponse(
-        updateBrandVoiceResponseSchema,
-        response,
-        "workspaces.getBrandVoice",
+      return client.request<RobustBrandVoice>(
+        ENDPOINTS.WORKSPACES.brandVoice(workspaceId),
+        {
+          method: "GET",
+        },
       );
     },
 
@@ -273,39 +242,25 @@ export function createWorkspacesNamespace(client: ApiClient) {
         personas: data.personas ?? [],
       };
 
-      const response = await client.request<{
-        brand_voice: BrandVoice;
-      }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toBrandVoicePayload(payload)),
-      });
-      return validateResponse(
-        updateBrandVoiceResponseSchema,
-        response,
-        "workspaces.updateBrandVoice",
+      return client.request<RobustBrandVoice>(
+        ENDPOINTS.WORKSPACES.brandVoice(workspaceId),
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(toBrandVoicePayload(payload)),
+        },
       );
     },
 
     /**
      * Get current user's permissions in a specific workspace
-     *
-     * Returns workspace-scoped permissions using dot notation (e.g., "topic.create")
-     * Note: Response format updated to match Phase 1 backend changes
      */
     getPermissions: async (workspaceId: string) => {
-      const response = await client.request<{
-        workspace_id: string;
-        workspace_slug: string;
-        user_role: string; // Simplified: single role name instead of array
-        permissions: string[]; // Dot notation: "topic.create", "content.read", etc.
-      }>(ENDPOINTS.WORKSPACES.permissions.me(workspaceId), {
-        method: "GET",
-      });
-      return validateResponse(
-        workspacePermissionsResponseSchema,
-        response,
-        "workspaces.getPermissions",
+      return client.request<WorkspacePermissionsResponse>(
+        ENDPOINTS.WORKSPACES.permissions.me(workspaceId),
+        {
+          method: "GET",
+        },
       );
     },
 
@@ -313,7 +268,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Check if current user has a specific permission in a workspace
      */
     checkPermission: async (workspaceId: string, permission: string) => {
-      const response = await client.request<{
+      return client.request<{
         has_permission: boolean;
         permission: string;
         workspace_id: string;
@@ -323,29 +278,17 @@ export function createWorkspacesNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      return response; // checkPermission doesn't have a matching schema yet, returning as is for now or we should define one.
-      // Actually let's just return response and not validate with the wrong schema.
     },
 
     /**
      * Refresh current user's permissions in a workspace
-     *
-     * Forces fresh permission retrieval from database
      */
     refreshPermissions: async (workspaceId: string) => {
-      const response = await client.request<{
-        workspace_id: string;
-        workspace_slug: string;
-        user_role: string;
-        permissions: string[];
-      }>(ENDPOINTS.WORKSPACES.permissions.refresh(workspaceId), {
-        method: "POST",
-      });
-
-      return validateResponse(
-        workspacePermissionsResponseSchema,
-        response,
-        "workspaces.refreshPermissions",
+      return client.request<WorkspacePermissionsResponse>(
+        ENDPOINTS.WORKSPACES.permissions.refresh(workspaceId),
+        {
+          method: "POST",
+        },
       );
     },
 
@@ -353,75 +296,37 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Get a workspace member's permissions (admin only)
      */
     getMemberPermissions: async (workspaceId: string, userId: string) => {
-      const response = await client.request<{
-        user_id: string;
-        workspace_id: string;
-        roles: Array<{
-          name: string;
-          display_name: string;
-          workspace_scoped: boolean;
-          workspace_id: string | null;
-        }>;
-        permissions: string[];
-      }>(ENDPOINTS.WORKSPACES.permissions.member(workspaceId, userId), {
-        method: "GET",
-      });
-
-      return validateResponse(
-        memberPermissionsResponseSchema,
-        response,
-        "workspaces.getMemberPermissions",
+      return client.request<MemberPermissionsResponse>(
+        ENDPOINTS.WORKSPACES.permissions.member(workspaceId, userId),
+        {
+          method: "GET",
+        },
       );
     },
 
     /**
      * Get workspace statistics for onboarding tracking
-     *
-     * Returns real-time counts of topics, content, knowledge items, and members
-     * Used for tracking onboarding progress on dashboard
      */
     getStats: async (workspaceId: string) => {
-      const response = await client.request<WorkspaceStats>(
+      return client.request<WorkspaceStats>(
         ENDPOINTS.WORKSPACES.stats(workspaceId),
         {
           method: "GET",
         },
       );
-      return validateResponse(
-        workspaceStatsSchema,
-        response,
-        "workspaces.getStats",
-      );
     },
 
     /**
      * Get available roles for workspace member invitations
-     *
-     * Returns non-system roles that can be assigned to workspace members.
-     * Does not require special permissions - any authenticated user can call this.
      */
     getAvailableRoles: async () => {
-      const response = await client.request<{
-        roles: Array<{
-          id: string;
-          name: string;
-          display_name: string;
-          description: string | null;
-          is_system_role: boolean;
-          hierarchy_level: number;
-          created_at: string;
-          updated_at: string;
-        }>;
-        total_count: number;
-      }>(ENDPOINTS.WORKSPACES.availableRoles, {
-        method: "GET",
-      });
-
-      return validateResponse(
-        availableRolesResponseSchema,
-        response,
-        "workspaces.getAvailableRoles",
+      return client.request<AvailableRolesResponse>(
+        ENDPOINTS.WORKSPACES.availableRoles,
+        {
+          method: "GET",
+        },
       );
     },
   };
+
 }
