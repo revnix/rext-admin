@@ -121,13 +121,17 @@ export function RolePermissionAuditLog({
   });
 
   const getActionIcon = (action: string) => {
-    const Icon = ACTION_ICONS[action.toLowerCase()] || History;
+    // Backend returns e.g. "role.create", we want "create"
+    const parsedAction = action.includes(".") ? action.split(".").pop() || action : action;
+    const Icon = ACTION_ICONS[parsedAction.toLowerCase()] || History;
     return Icon;
   };
 
   const getActionColors = (action: string) => {
+    // Backend returns e.g. "role.create", we want "create"
+    const parsedAction = action.includes(".") ? action.split(".").pop() || action : action;
     return (
-      ACTION_COLORS[action.toLowerCase()] || {
+      ACTION_COLORS[parsedAction.toLowerCase()] || {
         bg: "bg-gray-100",
         text: "text-gray-800",
         border: "border-gray-200",
