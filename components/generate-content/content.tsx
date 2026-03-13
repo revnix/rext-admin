@@ -249,7 +249,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     introduction:
       allContent?.introduction || allContent?.meta_description || "",
     body_markdown: body,
-    body_html: "",
+    body_html: allContent?.body_html || allContent?.html_content || "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
@@ -519,8 +519,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                   ) : (
                     <div className="space-y-4">
                       {displayTitle ||
-                        tags.length > 0 ||
-                        allContent?.introduction ? (
+                      tags.length > 0 ||
+                      allContent?.introduction ? (
                         <div className="space-y-4 mb-8">
                           <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             {tags.slice(0, 6).map((t) => (
