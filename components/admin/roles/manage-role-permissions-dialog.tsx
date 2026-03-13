@@ -41,12 +41,16 @@ export function ManageRolePermissionsDialog({
   );
 
   useEffect(() => {
-    if (role?.permissions) {
-      setSelectedPermissionIds(role.permissions.map((p) => p.id));
+    if (role?.permissions && allPermissions) {
+      const validPermissionIds = new Set(allPermissions.map((p) => p.id));
+      const filteredIds = role.permissions
+        .filter((p) => validPermissionIds.has(p.id))
+        .map((p) => p.id);
+      setSelectedPermissionIds(filteredIds.slice(0, 50));
     } else {
       setSelectedPermissionIds([]);
     }
-  }, [role]);
+  }, [role, allPermissions]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
