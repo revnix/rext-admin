@@ -145,9 +145,9 @@ export function UsageMetrics({
     },
     {
       label: "Members",
-      current: (usage as any).current_members ?? 0,
-      max: (usage as any).max_members ?? 0,
-      percentage: (usage as any).members_usage_percent ?? 0,
+      current: usage.current_members ?? 0,
+      max: usage.max_members ?? 0,
+      percentage: usage.members_usage_percent ?? 0,
       description: "Total team members across all workspaces",
     },
     {
@@ -176,7 +176,7 @@ export function UsageMetrics({
   // Get overall status (highest usage percentage)
   const overallPercentage = Math.max(
     usage.workspaces_usage_percent,
-    (usage as any).members_usage_percent ?? 0,
+    usage.members_usage_percent ?? 0,
     usage.topics_usage_percent,
     usage.knowledge_items_usage_percent,
     usage.api_calls_usage_percent,

@@ -94,7 +94,6 @@ export function PageLayout({
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
-  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   // const { role: fetchedWorkspaceRole } = useWorkspacePermissions(
   //   currentWorkspace?.id,
   // );
