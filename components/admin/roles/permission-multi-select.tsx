@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -50,6 +51,10 @@ export function PermissionMultiSelect({
     if (isSelected) {
       onChange(selectedPermissionIds.filter((id) => id !== permissionId));
     } else {
+      if (selectedPermissionIds.length >= 50) {
+        toast.error("Maximum 50 permissions can be assigned to a role.");
+        return;
+      }
       onChange([...selectedPermissionIds, permissionId]);
     }
   };
@@ -69,12 +74,25 @@ export function PermissionMultiSelect({
         ),
       );
     } else {
-      // Select all
-      const newIds = new Set([
-        ...selectedPermissionIds,
-        ...resourcePermissionIds,
-      ]);
-      onChange(Array.from(newIds));
+      // Select all (respecting 50 limit)
+      const currentIds = new Set(selectedPermissionIds);
+      const toAdd = resourcePermissionIds.filter((id) => !currentIds.has(id));
+
+      if (selectedPermissionIds.length + toAdd.length > 50) {
+        const canAddCount = 50 - selectedPermissionIds.length;
+        if (canAddCount <= 0) {
+          toast.error("Maximum 50 permissions can be assigned to a role.");
+          return;
+        }
+
+        const cappedAdd = toAdd.slice(0, canAddCount);
+        onChange([...selectedPermissionIds, ...cappedAdd]);
+        toast.warning(
+          `Only added ${canAddCount} permissions to stay within the 50 limit.`,
+        );
+      } else {
+        onChange([...selectedPermissionIds, ...toAdd]);
+      }
     }
   };
 
@@ -107,9 +125,15 @@ export function PermissionMultiSelect({
       </div>
 
       {/* Selected count */}
-      <div className="text-sm text-muted-foreground">
-        {selectedPermissionIds.length} of {permissions.length} permissions
-        selected
+      <div className="text-sm font-medium">
+        <span
+          className={
+            selectedPermissionIds.length > 50 ? "text-destructive" : ""
+          }
+        >
+          {Math.min(selectedPermissionIds.length, 50)}
+        </span>{" "}
+        of 50 permissions selected
       </div>
 
       {/* Permissions list */}

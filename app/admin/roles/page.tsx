@@ -122,30 +122,42 @@ export default function AdminRolesPage() {
   }
 
   // Transform roles data for DataTable
-  const rolesTableData: RoleTableData[] = (rolesData?.roles || []).map(
-    (role) => ({
-      id: role.id,
-      name: role.name,
-      display_name: role.display_name,
-      hierarchy_level: role.hierarchy_level,
-      is_system_role: role.is_system_role,
-      permissions_count: role.permissions?.length || 0,
-      description: role.description,
-    }),
+  // Only count permissions that are present in the permissionsData and common across the app
+  const systemPermissionIds = new Set(
+    (permissionsData?.permissions || []).map((p) => p.id),
   );
 
-  // Transform permissions data for DataTable
+  const rolesTableData: RoleTableData[] = (rolesData?.roles || []).map(
+    (role) => {
+      const validPermissions =
+        role.permissions?.filter((p) => systemPermissionIds.has(p.id)) || [];
+
+      return {
+        id: role.id,
+        name: role.name,
+        display_name: role.display_name,
+        hierarchy_level: role.hierarchy_level,
+        is_system_role: role.is_system_role,
+        permissions_count: Math.min(validPermissions.length, 50),
+        description: role.description,
+      };
+    },
+  );
+
+  // Transform permissions data for DataTable - Limit to 50
   const permissionsTableData: PermissionTableData[] = (
     permissionsData?.permissions || []
-  ).map((permission) => ({
-    id: permission.id,
-    name: permission.name,
-    display_name: permission.display_name,
-    resource: permission.resource,
-    action: permission.action,
-    roles_count: permission.roles?.length || 0,
-    description: permission.description,
-  }));
+  )
+    .slice(0, 50)
+    .map((permission) => ({
+      id: permission.id,
+      name: permission.name,
+      display_name: permission.display_name,
+      resource: permission.resource,
+      action: permission.action,
+      roles_count: permission.roles?.length || 0,
+      description: permission.description,
+    }));
 
   // Role columns
   const roleColumns: Column<RoleTableData>[] = [
@@ -396,10 +408,10 @@ export default function AdminRolesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {permissionsData?.count || 0}
+                  {Math.min(permissionsData?.count || 0, 50)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Available permissions
+                  Available permissions (capped at 50)
                 </p>
               </CardContent>
             </Card>
