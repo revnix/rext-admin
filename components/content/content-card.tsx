@@ -107,24 +107,6 @@ export function ContentCard({
     getStatusConfig: (item: ContentItem) => statusConfig[item.status] || null,
     getActions: (item: ContentItem): CardAction[] => [
       {
-        icon: Eye,
-        label: "View",
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(
-            workspaceRoutes.contentDetail(workspaceSlug, item.id) as Route,
-          );
-        },
-      },
-      {
-        icon: Copy,
-        label: "Copy",
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          toast.info("Copy functionality not implemented yet");
-        },
-      },
-      {
         icon: Trash2,
         label: "Delete",
         variant: "destructive",

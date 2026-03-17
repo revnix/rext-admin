@@ -156,7 +156,7 @@ const ToolbarButton = ({
   </button>
 );
 
-function ToolbarPlugin() {
+function ToolbarPlugin({ className }: { className?: string }) {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -343,7 +343,7 @@ function ToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap">
+    <div className={cn("flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap", className)}>
       <ToolbarButton
         active={false}
         onClick={() => {
@@ -537,6 +537,7 @@ interface LexicalEditorProps {
   onChange?: (markdown: string) => void;
   readOnly?: boolean;
   showDebug?: boolean;
+  toolbarClass?: string;
 }
 
 // Plugin to update editor when markdown input changes
@@ -568,6 +569,7 @@ export default function LexicalEditor({
   onChange,
   readOnly = false,
   showDebug = false,
+  toolbarClass,
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
@@ -643,13 +645,13 @@ export default function LexicalEditor({
         />
         <div
           className={cn(
-            "border rounded-md relative min-h-[200px] bg-background text-foreground overflow-hidden flex flex-col",
+            "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
             readOnly
               ? "border-none shadow-none bg-transparent"
               : "border-border shadow-sm",
           )}
         >
-          {!readOnly && <ToolbarPlugin />}
+          {!readOnly && <ToolbarPlugin className={toolbarClass} />}
           <div className="relative grow">
             <RichTextPlugin
               contentEditable={
