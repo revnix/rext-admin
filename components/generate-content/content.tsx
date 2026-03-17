@@ -13,6 +13,7 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  Copy,
   Eye,
   Pencil,
   Save,
@@ -20,6 +21,14 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useTypewriter } from "@/hooks/use-typewriter";
@@ -182,7 +191,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [statusModal, setStatusModal] = useState<{
     isOpen: boolean;
     type: "success" | "error";
-    action: "publish" | "save";
+    action: "publish" | "save" | "copy";
     message: string;
   }>({
     isOpen: false,
@@ -390,6 +399,44 @@ function ContentEditorInner(props: ContentEditorProps) {
     setIntegrationModalOpen(false);
   };
 
+  const handleCopy = async (format: "formatted" | "markdown" | "html") => {
+    try {
+      const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.introduction || ""}</em></p>${previewHtml}`;
+
+      if (format === "html") {
+        await navigator.clipboard.writeText(htmlContent);
+      } else if (format === "markdown") {
+        const mdIntro = allContent?.introduction ? `\n\n*${allContent.introduction}*\n` : "";
+        const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
+        await navigator.clipboard.writeText(contentToCopy);
+      } else {
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlContent;
+        const textBody = tempDiv.textContent || tempDiv.innerText || "";
+        
+        const clipboardItem = new ClipboardItem({
+          "text/plain": new Blob([textBody], { type: "text/plain" }),
+          "text/html": new Blob([htmlContent], { type: "text/html" }),
+        });
+        await navigator.clipboard.write([clipboardItem]);
+      }
+      
+      setStatusModal({
+        isOpen: true,
+        type: "success",
+        action: "copy",
+        message: `Content copied to clipboard as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      setStatusModal({
+        isOpen: true,
+        type: "error",
+        action: "copy",
+        message: "Failed to copy content to clipboard",
+      });
+    }
+  };
+
   !body && (
     <div className="space-y-3 animate-pulse">
       <div className="h-4 bg-muted rounded w-full" />
@@ -399,11 +446,11 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   return (
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t">
-      <div className="flex flex-1 overflow-hidden relative border-b border-border">
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t relative">
+      <div className="flex flex-1 relative border-b border-border">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col py-8 mt-1.5 shrink-0 overflow-y-auto">
+          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col py-8 mt-1.5 shrink-0 overflow-y-auto sticky top-[74px] max-h-[calc(100vh-72px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-6 space-y-8">
               <div>
                 <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
@@ -459,9 +506,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="flex-1 overflow-y-auto bg-background px-2 py-4 mt-2 scroll-smooth"
+          className="flex-1 bg-background px-2 py-4 mt-2 scroll-smooth"
         >
-          <article className="max-w-3xl mx-5">
+          <article className="mx-5">
             <div>
               {isEditing ? (
                 <div className="space-y-4">
@@ -473,6 +520,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
+                      toolbarClass="top-[80px] z-50"
                     />
                   </div>
                 </div>
@@ -564,17 +612,17 @@ function ContentEditorInner(props: ContentEditorProps) {
         </main>
 
         {/* Right Sidebar: Analysis */}
-        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col px-1.5 py-3 space-y-8 overflow-y-auto mt-2.5">
-          <div className="flex items-center justify-around px-2 gap-2">
+        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col px-1.5 space-y-8 overflow-y-auto mt-2.5 sticky top-[78px] max-h-[calc(100vh-72px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+          <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4">
             <Button
               variant="secondary"
               size="sm"
               className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
               onClick={onEditToggle}
               disabled={!isFinal}
+              title={isEditing ? "Exit Edit Mode" : "Edit Content"}
             >
               {isEditing ? <Eye size={14} /> : <Pencil size={14} />}{" "}
-              {isEditing ? "Prev" : "Edit"}
             </Button>
             <Button
               onClick={saveContent}
@@ -582,21 +630,47 @@ function ContentEditorInner(props: ContentEditorProps) {
               variant="secondary"
               size="sm"
               className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
+              title="Save Content"
             >
               <Save size={14} className={isSaving ? "animate-pulse" : ""} />{" "}
-              {isSaving ? "Saving..." : "Save"}
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={!isFinal}
+                  variant="secondary"
+                  size="sm"
+                  className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
+                  title="Copy Content"
+                >
+                  <Copy size={14} />{" "}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48" align="center">
+                <DropdownMenuLabel>Copy Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleCopy("html")}>
+                  Copy as HTML
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+                  Copy as Markdown
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+                  Copy as Text
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               onClick={publishContent}
               disabled={!isFinal || isPublishing || isSaving}
               size="sm"
               className="h-8 px-2! text-xs font-bold flex-1"
+              title="Publish Content"
             >
               <Send
                 size={14}
                 className={cn("", isPublishing ? "animate-pulse" : "")}
               />{" "}
-              {isPublishing ? "Publishing" : "Publish"}
             </Button>
           </div>
           {/* Status Modal (Unified Success/Error) */}
@@ -625,8 +699,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                 <div className="space-y-2">
                   <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
                     {statusModal.type === "success"
-                      ? `Content ${statusModal.action === "publish" ? "Published" : "Saved"} Successfully!`
-                      : `${statusModal.action === "publish" ? "Publish" : "Save"} Failed`}
+                      ? `Content ${statusModal.action === "publish" ? "Published" : statusModal.action === "copy" ? "Copied" : "Saved"} Successfully!`
+                      : `${statusModal.action === "publish" ? "Publish" : statusModal.action === "copy" ? "Copy" : "Save"} Failed`}
                   </DialogTitle>
                   <DialogDescription className="text-muted-foreground text-base">
                     {statusModal.message}
