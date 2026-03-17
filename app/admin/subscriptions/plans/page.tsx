@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
@@ -210,6 +210,7 @@ export default function SubscriptionPlansPage() {
               rowActions={[
                 {
                   label: "Edit",
+                  icon: <Edit className="h-4 w-4" />,
                   onClick: (plan) => {
                     setEditingPlan(plan);
                     setEditDialogOpen(true);
@@ -217,6 +218,7 @@ export default function SubscriptionPlansPage() {
                 },
                 {
                   label: "Delete",
+                  icon: <Trash2 className="h-4 w-4" />,
                   onClick: (plan) => {
                     if (
                       confirm(

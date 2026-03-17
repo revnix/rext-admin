@@ -191,7 +191,7 @@ export function RolePermissionAuditLog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[600px] pr-4">
+        <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-4 py-4">
             {isLoading ? (
               // Loading skeleton

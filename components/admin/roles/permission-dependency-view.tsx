@@ -99,7 +99,7 @@ export function PermissionDependencyView({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[600px] pr-4">
+        <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-6 py-4">
             {/* Current Permission Info */}
             <Card>
