@@ -29,7 +29,7 @@ export function SecurityOverview() {
   });
   
   const resendMutation = useMutation({
-    mutationFn: () => apiClient.profile.resendVerification(),
+    mutationFn: () => apiClient.profile.resendVerification(profile?.email ?? ""),
     onSuccess: (data) => {
       toast.success(data.message || "Verification email sent successfully");
     },

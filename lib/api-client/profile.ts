@@ -115,12 +115,14 @@ export function createProfileNamespace(client: ApiClient) {
     /**
      * Resend verification email
      */
-    resendVerification: async () => {
+    resendVerification: async (email: string) => {
       return client.request<{
         success: boolean;
         message: string;
       }>(ENDPOINTS.PROFILE.resendVerification, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
     },
   };
