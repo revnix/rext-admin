@@ -7,7 +7,7 @@ A modern Next.js application for generating, managing, and utilizing AI-powered 
 **This application has been updated with comprehensive security measures (September 2024).**
 
 Key security features implemented:
-- **Server-side API proxy** prevents client-side key exposure  
+- **Server-side API proxy** prevents client-side key exposure   
 - **Rate limiting** protects against API abuse (60 req/min per IP)   
 - **Input validation & sanitization** blocks XSS attacks
 - **Security headers** via middleware (CSP, HSTS, XSS protection) 
