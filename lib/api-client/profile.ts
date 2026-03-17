@@ -111,6 +111,18 @@ export function createProfileNamespace(client: ApiClient) {
         method: "DELETE",
       });
     },
+
+    /**
+     * Resend verification email
+     */
+    resendVerification: async () => {
+      return client.request<{
+        success: boolean;
+        message: string;
+      }>(ENDPOINTS.PROFILE.resendVerification, {
+        method: "POST",
+      });
+    },
   };
 }
 

@@ -183,6 +183,7 @@ export const ENDPOINTS = {
       upload: "/api/v1/user/avatar/upload",
       delete: "/api/v1/user/avatar",
     },
+    resendVerification: "/api/v1/user/resend-verification",
   },
 
   /**
