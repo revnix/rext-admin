@@ -16,21 +16,19 @@ const urlSchema = z
     (url) => {
       try {
         const parsed = new URL(url);
-        // Protocol must be https://
         if (parsed.protocol !== "https:") return false;
 
         const hostname = parsed.hostname;
-
-        // Specifically only allow .com
-        if (!hostname.endsWith(".com")) return false;
-
-        return true;
+        // Strict domain regex: supports subdomains, valid labels (hyphen in middle), and TLD (at least 2 chars)
+        const domainRegex =
+          /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
+        return domainRegex.test(hostname);
       } catch {
         return false;
       }
     },
     {
-      message: "URL must start with https:// and end with .com",
+      message: "URL must start with https:// and contain a valid domain",
     },
   );
 
