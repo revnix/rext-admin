@@ -148,8 +148,12 @@ export function createSecurityNamespace(client: ApiClient) {
         offset: options?.offset,
       });
 
-      return client.request<{
-        history: Array<{
+      const response = await client.request<{
+        message?: string;
+        user_id?: string;
+        full_name?: string;
+        email?: string;
+        login_history?: Array<{
           id: string;
           ip_address: string;
           location: string;
@@ -158,11 +162,29 @@ export function createSecurityNamespace(client: ApiClient) {
           success: boolean;
           created_at: string;
         }>;
-        total_count: number;
+        history?: Array<{
+          id: string;
+          ip_address: string;
+          location: string;
+          device: string;
+          browser: string;
+          success: boolean;
+          created_at: string;
+        }>;
+        total_count?: number;
+        total?: number;
+        has_more?: boolean;
       }>(endpoint, {
         method: "GET",
       });
+
+      // Normalize: API returns `login_history`, component expects `history`
+      return {
+        history: response.history ?? response.login_history ?? [],
+        total_count: response.total_count ?? response.total ?? 0,
+      };
     },
+
 
     /**
      * Get active sessions count

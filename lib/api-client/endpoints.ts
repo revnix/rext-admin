@@ -183,6 +183,7 @@ export const ENDPOINTS = {
       upload: "/api/v1/user/avatar/upload",
       delete: "/api/v1/user/avatar",
     },
+    resendVerification: "/api/v1/user/resend-verification",
   },
 
   /**
@@ -278,7 +279,7 @@ export const ENDPOINTS = {
 
     // Audit Logs
     audit: {
-      myLogs: "/api/v1/audit/user/my-logs",
+      myLogs: "/api/v1/audit-logs/user/my-logs",
       allLogs: "api/v1/audit-logs/",
       detail: (id: string) => `/api/v1/audit/${id}` as const,
     },

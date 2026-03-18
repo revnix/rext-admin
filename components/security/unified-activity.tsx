@@ -366,8 +366,8 @@ export function UnifiedActivity() {
                       </p>
                     </div>
                     <p className="text-sm font-medium">
-                      {loginHistory.history[0]?.created_at
-                        ? formatTimestamp(loginHistory.history[0]?.created_at)
+                      {(loginHistory.history ?? [])[0]?.created_at
+                        ? formatTimestamp((loginHistory.history ?? [])[0]?.created_at)
                         : "Never"}
                     </p>
                   </div>
@@ -379,7 +379,7 @@ export function UnifiedActivity() {
                       </p>
                     </div>
                     <p className="text-2xl font-bold">
-                      {loginHistory.history.filter((h) => !h.success).length}
+                      {(loginHistory.history ?? []).filter((h) => !h.success).length}
                     </p>
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export function UnifiedActivity() {
                 {/* Recent Login Events */}
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Recent Login Activity</p>
-                  {loginHistory.history.length === 0 ? (
+                  {(loginHistory.history ?? []).length === 0 ? (
                     <div className="rounded-lg border border-dashed p-8 text-center">
                       <History className="mx-auto h-12 w-12 text-muted-foreground/50" />
                       <p className="mt-4 text-sm text-muted-foreground">
@@ -398,7 +398,7 @@ export function UnifiedActivity() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {loginHistory.history.map((event) => (
+                      {(loginHistory.history ?? []).map((event) => (
                         <div
                           key={event.created_at}
                           className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
