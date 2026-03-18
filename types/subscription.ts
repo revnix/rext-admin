@@ -148,6 +148,7 @@ export interface UserSubscription {
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
+  data?: UserSubscription;
 }
 
 export interface SubscriptionCreateRequest {

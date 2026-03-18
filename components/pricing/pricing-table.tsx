@@ -26,10 +26,6 @@ import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 
-interface Features {
-  [key: string]: string | boolean;
-}
-
 const FEATURE_LABELS: Record<string, string> = {
   support: "Support Type",
   api_access: "API Access Level",

@@ -193,8 +193,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async (options) => {
-
+      fetchSubscription: async () => {
         inFlightSubscriptionFetch = (async () => {
           set({ isLoading: true, error: null });
 

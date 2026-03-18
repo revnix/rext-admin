@@ -136,7 +136,7 @@ export default function SubscriptionDashboardPage() {
   }
 
   // Render the dashboard if we have subscription data, even if usage stats failed
-  if (!subscription) {
+  if (!subscription?.data) {
     return (
       <PageLayout
         title="Subscription Management"
