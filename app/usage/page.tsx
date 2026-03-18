@@ -127,9 +127,8 @@ export default function UsagePage() {
         }
       >
         {/* Usage Warnings */}
-        <div className="space-y-3">
+        <div className="space-y-4 mb-4">
           <UsageLimitWarning resource="workspaces" />
-          <UsageLimitWarning resource="topics" />
           <UsageLimitWarning resource="knowledge_items" />
           <UsageLimitWarning resource="ai_requests" />
         </div>
