@@ -10,7 +10,7 @@
  */
 
 import { Check, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckoutWithDiscount } from "@/components/subscription/checkout-with-discount";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,19 @@ import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 
+interface Features {
+  [key: string]: string | boolean;
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  support: "Support Type",
+  api_access: "API Access Level",
+  collaboration: "Collaboration Tools",
+  custom_branding: "Custom Branding Enabled",
+  priority_support: "Priority Support",
+  advanced_analytics: "Advanced Analytics",
+};
+
 export interface PricingTableProps {
   /** Additional CSS classes */
   className?: string;
@@ -35,6 +48,7 @@ export interface PricingTableProps {
   defaultBillingPeriod?: BillingPeriod;
   /** Hide billing period toggle */
   hideBillingToggle?: boolean;
+  plans?: SubscriptionPlan[];
 }
 
 /**
@@ -45,19 +59,11 @@ export function PricingTable({
   popularPlanId,
   defaultBillingPeriod = BillingPeriod.MONTHLY,
   hideBillingToggle = false,
+  plans,
 }: PricingTableProps) {
   const [billingPeriod, setBillingPeriod] =
     useState<BillingPeriod>(defaultBillingPeriod);
-  const { plans, subscription, fetchPlans, isLoading } = useSubscriptionStore();
-
-  const visiblePlans = plans.filter((plan) => plan.is_public && plan.is_active);
-
-  // Fetch plans on mount
-  useEffect(() => {
-    if (plans.length === 0) {
-      fetchPlans();
-    }
-  }, [fetchPlans, plans.length]);
+  const { subscription } = useSubscriptionStore();
 
   // Calculate yearly savings
   const getYearlySavings = (plan: SubscriptionPlan) => {
@@ -74,7 +80,7 @@ export function PricingTable({
     return { savings, savingsPercent };
   };
 
-  const maxYearlySavingsPercent = visiblePlans.reduce((max, plan) => {
+  const maxYearlySavingsPercent = plans?.reduce((max, plan) => {
     const { savingsPercent } = getYearlySavings(plan);
     return savingsPercent > max ? savingsPercent : max;
   }, 0);
@@ -91,7 +97,7 @@ export function PricingTable({
     return subscription?.plan_id === planId;
   };
 
-  if (isLoading && plans.length === 0) {
+  if (plans?.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -124,7 +130,7 @@ export function PricingTable({
               className="relative"
             >
               Yearly
-              {maxYearlySavingsPercent > 0 && (
+              {maxYearlySavingsPercent && (
                 <Badge variant="secondary" className="ml-2 text-xs">
                   Save up to {maxYearlySavingsPercent}%
                 </Badge>
@@ -136,8 +142,8 @@ export function PricingTable({
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {visiblePlans.map((plan) => {
-          const features = plan.features.items;
+        {plans?.map((plan) => {
+          const features = plan.features;
           const price = getPrice(plan);
           const { savingsPercent } = getYearlySavings(plan);
           const isPopular = plan.id === popularPlanId;
@@ -200,16 +206,19 @@ export function PricingTable({
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-grow">
+              <CardContent className="grow">
                 {/* Features List */}
                 <ul className="space-y-3">
-                  {features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-
+                  {Object.entries(features)
+                    .filter(([_, value]) => value === true) // STRICT: only keep true
+                    .map(([key]) => (
+                      <li key={key} className="flex items-center gap-2">
+                        <Check className="h-5 w-5 shrink-0 text-green-600 dark:text-green-500" />
+                        <span className="text-sm font-medium">
+                          {FEATURE_LABELS[key] || key.replace(/_/g, " ")}
+                        </span>
+                      </li>
+                    ))}
                   {/* Limits */}
                   <li className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
@@ -263,7 +272,7 @@ export function PricingTable({
       </div>
 
       {/* No Plans Message */}
-      {plans.length === 0 && !isLoading && (
+      {plans?.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
             No subscription plans available at the moment.

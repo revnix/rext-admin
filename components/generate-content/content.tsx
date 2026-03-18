@@ -406,28 +406,30 @@ function ContentEditorInner(props: ContentEditorProps) {
       if (format === "html") {
         await navigator.clipboard.writeText(htmlContent);
       } else if (format === "markdown") {
-        const mdIntro = allContent?.introduction ? `\n\n*${allContent.introduction}*\n` : "";
+        const mdIntro = allContent?.introduction
+          ? `\n\n*${allContent.introduction}*\n`
+          : "";
         const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
         await navigator.clipboard.writeText(contentToCopy);
       } else {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = htmlContent;
         const textBody = tempDiv.textContent || tempDiv.innerText || "";
-        
+
         const clipboardItem = new ClipboardItem({
           "text/plain": new Blob([textBody], { type: "text/plain" }),
           "text/html": new Blob([htmlContent], { type: "text/html" }),
         });
         await navigator.clipboard.write([clipboardItem]);
       }
-      
+
       setStatusModal({
         isOpen: true,
         type: "success",
         action: "copy",
         message: `Content copied to clipboard as ${format.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch (_error) {
       setStatusModal({
         isOpen: true,
         type: "error",
@@ -632,7 +634,10 @@ function ContentEditorInner(props: ContentEditorProps) {
               className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
               title="Save Content"
             >
-              <Save size={14} className={isSaving ? "animate-pulse" : ""} />{" "}
+              <Save
+                size={14}
+                className={isSaving ? "animate-pulse" : ""}
+              />{" "}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

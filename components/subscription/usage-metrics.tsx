@@ -151,13 +151,6 @@ export function UsageMetrics({
       description: "Total team members across all workspaces",
     },
     {
-      label: "Topics",
-      current: usage.current_topics,
-      max: usage.max_topics,
-      percentage: usage.topics_usage_percent,
-      description: "Total topics across all workspaces",
-    },
-    {
       label: "Knowledge Items",
       current: usage.current_knowledge_items,
       max: usage.max_knowledge_items,
@@ -212,7 +205,7 @@ export function UsageMetrics({
 
         {/* Usage Metrics */}
         <div className="space-y-5">
-          {usageMetrics.map((metric) => {
+          {usageMetrics?.map((metric) => {
             const isUnlimited = metric.max === -1;
             const percentage = isUnlimited ? 0 : metric.percentage;
 

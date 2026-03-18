@@ -149,17 +149,59 @@ export class ApiClient {
         }
 
         if (result.success && "data" in result) {
-          // If data itself is an informative object with a message and null data, unwrap it further
           const data = result.data;
+
+          // Debug raw response processing
+          if (process.env.NODE_ENV === "development") {
+            log.debug(`[API DEBUG] ${endpoint} processing:`, {
+              hasSuccess: true,
+              hasData: "data" in result,
+              dataType: typeof data,
+              dataIsNull: data === null,
+            });
+          }
+
+          // Only unwrap nested data if it's the intended payload.
+          // If the outer object already looks like it has the payload (e.g., has 'id' or other resource fields),
+          // and 'data' is just a small wrapper with a 'message', then the payload is at the root.
+          const hasRootPayload =
+            result &&
+            typeof result === "object" &&
+            ("id" in result ||
+              "billing_period" in result ||
+              "plan_id" in result);
+          const dataIsJustMessage =
+            data &&
+            typeof data === "object" &&
+            !Array.isArray(data) &&
+            Object.keys(data).length <= 2 &&
+            "message" in data;
+
+          if (hasRootPayload && (dataIsJustMessage || data === null)) {
+            // Keep the root object as the payload, but remove success/data if they are redundant meta-fields
+            const { success, data: _unused, ...rest } = result;
+            return rest as T;
+          }
+
+          // If data itself is an informative object with a message and non-null data, unwrap it further
           if (
             data &&
             typeof data === "object" &&
             "message" in data &&
-            "data" in data
+            "data" in data &&
+            data.data !== null &&
+            data.data !== undefined
           ) {
             return (data as unknown as { data: T }).data;
           }
+
           return result.data as T;
+        }
+
+        // If it has success but no data field, return the object itself (minus success)
+        const { success, ...rest } = result;
+        if (Object.keys(rest).length > 0) {
+          return rest as T;
         }
       }
 

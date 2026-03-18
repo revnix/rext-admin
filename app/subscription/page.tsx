@@ -98,7 +98,7 @@ export default function SubscriptionDashboardPage() {
       setLoading(true);
 
       const [subscriptionResult, plansResult] = await Promise.allSettled([
-        fetchSubscription(), // already fetches usage in store
+        fetchSubscription({ force: true }), // already fetches usage in store
         loadPlans(),
       ]);
 
@@ -135,7 +135,8 @@ export default function SubscriptionDashboardPage() {
     );
   }
 
-  if (!subscription || !usage) {
+  // Render the dashboard if we have subscription data, even if usage stats failed
+  if (!subscription) {
     return (
       <PageLayout
         title="Subscription Management"
@@ -176,6 +177,13 @@ export default function SubscriptionDashboardPage() {
       title="Subscription Management"
       description="Manage your subscription, view usage, and access billing"
     >
+      {/* Debug Info (Wait for console for real data) */}
+      {!usage && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+          Usage statistics are currently unavailable, but your plan details are
+          still accessible.
+        </div>
+      )}
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}
 
@@ -234,7 +242,7 @@ export default function SubscriptionDashboardPage() {
                 </CustomerPortalButton>
 
                 <Button
-                  onClick={() => router.push("/dashboard/billing" as Route)}
+                  onClick={() => router.push("/billing" as Route)}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -361,9 +369,7 @@ export default function SubscriptionDashboardPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your invoice history is available in the dedicated billing page.
               </p>
-              <Button
-                onClick={() => router.push("/dashboard/billing" as Route)}
-              >
+              <Button onClick={() => router.push("/billing" as Route)}>
                 <FileText className="mr-2 h-4 w-4" />
                 View All Invoices
               </Button>
