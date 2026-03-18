@@ -68,8 +68,9 @@ export default function WorkspacePage() {
     url: workspace.url ?? "",
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
-    knowledge_stats: workspace.knowledge_stats as WorkspaceData["knowledge_stats"],
-    // Brand voice might be missing from the schema but present in reality, 
+    knowledge_stats:
+      workspace.knowledge_stats as WorkspaceData["knowledge_stats"],
+    // Brand voice might be missing from the schema but present in reality,
     // or we may need a separate fetch. For now, cast to maintain safety net where possible.
     brand_voice: (workspace as any).brand_voice as WorkspaceData["brand_voice"],
     status: workspace.status || "active",
@@ -162,8 +163,12 @@ export default function WorkspacePage() {
         const owner = row.owner as any;
         return owner ? (
           <div className="flex flex-col">
-            <span className="text-sm font-medium">{String(owner.name || "")}</span>
-            <span className="text-xs text-muted-foreground">{String(owner.email || "")}</span>
+            <span className="text-sm font-medium">
+              {String(owner.name || "")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {String(owner.email || "")}
+            </span>
           </div>
         ) : (
           <span className="text-muted-foreground text-sm">—</span>

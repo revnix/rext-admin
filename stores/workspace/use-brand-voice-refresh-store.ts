@@ -28,9 +28,11 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
 
           const operationId = response.operation_id;
 
-          useWorkspaceCrudStore
-            .getState()
-            .setCurrentOperation({ operationId, workspaceId });
+          useWorkspaceCrudStore.getState().setCurrentOperation({
+            operationId,
+            workspaceId,
+            status: "pending",
+          });
 
           set((state) => ({
             brandVoiceRefresh: {

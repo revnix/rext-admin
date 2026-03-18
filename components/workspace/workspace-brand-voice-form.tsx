@@ -134,7 +134,7 @@ export function WorkspaceBrandVoiceForm({
   const { data: personasData, isLoading: isLoadingPersonas } = usePersonas(
     workspaceId || null,
   );
-  const personas = personasData?.personas || [];
+  const personas = ((personasData as any)?.personas || []) as Persona[];
 
   // Tag input states
   const [targetAudienceInput, setTargetAudienceInput] = useState("");

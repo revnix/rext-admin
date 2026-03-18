@@ -105,7 +105,7 @@ export function WorkspaceProvider({
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff, max 3s
   });
 
-  const workspace = workspaceResponse?.workspace;
+  const workspace = workspaceResponse;
 
   // Immediately set a preliminary workspace in store using the slug from URL
   // This ensures workspace context is available even before API call completes
@@ -117,6 +117,7 @@ export function WorkspaceProvider({
     if (!isUuid && workspaceId && !workspace && !isLoading) {
       const preliminaryWorkspace: Workspace = {
         id: "", // Will be filled when API returns
+        user_id: "", // Missing field
         slug: workspaceId, // From URL
         name: workspaceId, // Use slug as name temporarily
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

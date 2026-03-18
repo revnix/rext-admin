@@ -1,28 +1,25 @@
+import { buildUrl } from "../url-utils";
+import type {
+  ContentCreate,
+  ContentDetailResponse,
+  ContentListResponse,
+  ContentResponse,
+  ContentUpdate,
+} from "../../types/generated";
+import type { ApiClient } from "./core";
+import { ENDPOINTS } from "./endpoints";
+
 /**
  * Content API Namespace
  *
  * Handles content CRUD operations, publishing, and management for workspace content.
  *
  * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
- * - Uses query parameter `workspace_id` instead of path-based workspace scoping: `/api/v1/content/?workspace_id=...`
- * - Expected pattern: `/api/v1/workspaces/{id}/content` (path-based like other workspace resources)
+ * - Uses query parameter `workspace_id` instead of path-based workspace scoping
  * - Endpoint paths not fully RESTful (e.g., /content/retry, /content/save, /content/publish)
  *
  * These will be addressed in a backend API v2 migration.
- * See: lib/api-client/endpoints.ts for full path documentation and convention guide.
  */
-
-// Note: Content endpoints use query param (?workspace_id=) instead of path param.
-
-import type {
-  ContentListResponse,
-  ContentResponse,
-  CreateContentRequest,
-  UpdateContentRequest,
-} from "@/types/content";
-import type { ApiClient } from "./core";
-import { buildUrl } from "../url-utils";
-import { ENDPOINTS } from "./endpoints";
 
 export function createContentNamespace(client: ApiClient) {
   return {
@@ -36,7 +33,7 @@ export function createContentNamespace(client: ApiClient) {
         limit?: number;
         offset?: number;
       },
-    ) => {
+    ): Promise<ContentListResponse> => {
       const endpoint = buildUrl(ENDPOINTS.CONTENT.base, {
         workspace_id: workspaceId,
         status: options?.status,
@@ -52,27 +49,39 @@ export function createContentNamespace(client: ApiClient) {
     /**
      * Get single content item
      */
-    get: async (workspaceId: string, contentId: string) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "GET",
-        },
-      );
+    get: async (
+      workspaceId: string,
+      contentId: string,
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.detail(contentId), {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "GET",
+      });
+
+      return response.content;
     },
 
     /**
      * Create new content
      */
-    create: async (workspaceId: string, data: CreateContentRequest) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.base}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+    create: async (
+      workspaceId: string,
+      data: ContentCreate,
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.base, {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      return response.content;
     },
 
     /**
@@ -81,86 +90,111 @@ export function createContentNamespace(client: ApiClient) {
     update: async (
       workspaceId: string,
       contentId: string,
-      data: UpdateContentRequest,
-    ) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+      data: ContentUpdate,
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.detail(contentId), {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      return response.content;
     },
 
     /**
      * Delete content
      */
-    delete: async (workspaceId: string, contentId: string) => {
-      return client.request<void>(
-        `${ENDPOINTS.CONTENT.detail(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "DELETE",
-        },
-      );
+    delete: async (workspaceId: string, contentId: string): Promise<void> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.detail(contentId), {
+        workspace_id: workspaceId,
+      });
+
+      return client.request<void>(url, {
+        method: "DELETE",
+      });
     },
 
     /**
      * Retry content generation
      */
-    retry: async (workspaceId: string, contentId: string) => {
-      return client.request<{ content_id: string; status: string }>(
-        `${ENDPOINTS.CONTENT.retry(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-        },
-      );
+    retry: async (
+      workspaceId: string,
+      contentId: string,
+    ): Promise<{ content_id: string; status: string }> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.retry(contentId), {
+        workspace_id: workspaceId,
+      });
+
+      return client.request<{ content_id: string; status: string }>(url, {
+        method: "POST",
+      });
     },
 
     /**
      * Save draft content
      */
-    save: async (workspaceId: string, data: Record<string, unknown>) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.save}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+    save: async (
+      workspaceId: string,
+      data: ContentCreate,
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.save, {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      return response.content;
     },
 
     /**
-     * Publish content
+     * Publish content (Save & Publish)
      */
     save_publish: async (
       workspaceId: string,
-      data: Record<string, unknown>,
-    ) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+      data: ContentCreate,
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.save_publish, {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      return response.content;
     },
 
+    /**
+     * Publish existing content
+     */
     publish: async (
       workspaceId: string,
-      data: Record<string, unknown>,
+      data: ContentUpdate,
       contentId: string,
-    ) => {
-      return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.publish(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+    ): Promise<ContentResponse> => {
+      const url = buildUrl(ENDPOINTS.CONTENT.publish(contentId), {
+        workspace_id: workspaceId,
+      });
+
+      const response = await client.request<ContentDetailResponse>(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      return response.content;
     },
   };
 }
+
+export type ContentNamespace = ReturnType<typeof createContentNamespace>;

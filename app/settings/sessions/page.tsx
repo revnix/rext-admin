@@ -181,7 +181,7 @@ export default function SessionsPage() {
           <CardContent>
             <div className="flex items-start gap-4">
               <div className="mt-1 text-green-600 dark:text-green-400">
-                {getDeviceIcon(currentSession.device_type)}
+                {getDeviceIcon(currentSession.device_type ?? null)}
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
@@ -246,13 +246,13 @@ export default function SessionsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {otherSessions.map((session: UserSession) => (
+              {otherSessions.map((session) => (
                 <div
                   key={session.id}
                   className="flex items-start gap-4 p-4 rounded-lg border"
                 >
                   <div className="mt-1 text-muted-foreground">
-                    {getDeviceIcon(session.device_type)}
+                    {getDeviceIcon(session.device_type ?? null)}
                   </div>
                   <div className="flex-1 space-y-1">
                     <p className="font-medium">{session.device_name}</p>

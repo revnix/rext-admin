@@ -77,7 +77,9 @@ export function OnboardingWorkspace({
       toast.success("Workspace created successfully!");
 
       // Navigate to the new workspace
-      router.push(`/w/${response.workspace.slug}/overview` as Route);
+      router.push(
+        `/w/${(response as any).workspace?.slug || (response as any).slug}/overview` as Route,
+      );
 
       // Complete this step
       await onNext();

@@ -5,16 +5,16 @@
  */
 
 import type {
-  License,
+  LicenseAdminRow,
   LicenseActivateRequest,
-  LicenseActivateResponse,
-  LicenseActivation,
+  LicenseActivationData,
+  LicenseActivationRow,
   LicenseActivationListResponse,
   LicenseDeactivateRequest,
   LicenseListResponse,
   LicenseValidateRequest,
   LicenseValidateResponse,
-} from "@/types/license";
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
@@ -32,10 +32,15 @@ export function createLicensesClient(client: ApiClient) {
     /**
      * Get a specific license by ID
      */
-    getLicense: async (licenseId: string): Promise<License> => {
-      return client.request<License>(ENDPOINTS.LICENSES.detail(licenseId), {
-        method: "GET",
-      });
+    getLicense: async (
+      licenseId: string,
+    ): Promise<{ data: LicenseAdminRow }> => {
+      return client.request<{ data: LicenseAdminRow }>(
+        ENDPOINTS.LICENSES.detail(licenseId),
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -57,8 +62,8 @@ export function createLicensesClient(client: ApiClient) {
      */
     activateLicense: async (
       data: LicenseActivateRequest,
-    ): Promise<LicenseActivateResponse> => {
-      return client.request<LicenseActivateResponse>(
+    ): Promise<{ data: LicenseActivationData }> => {
+      return client.request<{ data: LicenseActivationData }>(
         ENDPOINTS.LICENSES.activate,
         {
           method: "POST",
@@ -74,8 +79,8 @@ export function createLicensesClient(client: ApiClient) {
     deactivateLicense: async (
       licenseId: string,
       data: LicenseDeactivateRequest,
-    ): Promise<LicenseActivation> => {
-      return client.request<LicenseActivation>(
+    ): Promise<{ data: LicenseActivationRow }> => {
+      return client.request<{ data: LicenseActivationRow }>(
         ENDPOINTS.LICENSES.deactivate(licenseId),
         {
           method: "POST",

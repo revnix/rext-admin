@@ -78,13 +78,7 @@ export default function WorkspaceContentPage() {
     const searchLower = searchQuery.toLowerCase();
     return (
       item.title.toLowerCase().includes(searchLower) ||
-      item.content_metadata?.content_type
-        ?.toLowerCase()
-        .includes(searchLower) ||
-      item.status.toLowerCase().includes(searchLower) ||
-      item.content_metadata?.target_platform
-        ?.toLowerCase()
-        .includes(searchLower)
+      item.status.toLowerCase().includes(searchLower)
     );
   });
 
@@ -168,7 +162,7 @@ export default function WorkspaceContentPage() {
                 {filteredContent.map((item) => (
                   <ContentCard
                     key={item.id}
-                    item={item}
+                    item={item as any}
                     workspaceSlug={workspaceSlug}
                     onDelete={handleDelete}
                   />

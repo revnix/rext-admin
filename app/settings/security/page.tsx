@@ -272,7 +272,7 @@ export default function SecuritySettingsPage() {
                         </p>
                         <div className="space-y-1">
                           {(securityStats.top_failed_login_ips || []).map(
-                            (item) => (
+                            (item: any) => (
                               <div
                                 key={item.ip}
                                 className="flex items-center justify-between text-xs"
@@ -300,7 +300,7 @@ export default function SecuritySettingsPage() {
                         </p>
                         <div className="space-y-1">
                           {(securityStats.top_failed_login_users || []).map(
-                            (item) => (
+                            (item: any) => (
                               <div
                                 key={item.email}
                                 className="flex items-center justify-between text-xs"
@@ -378,7 +378,7 @@ export default function SecuritySettingsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <div className="rounded-full bg-primary/10 p-2">
-                        {getDeviceIcon(currentSession.device_type)}
+                        {getDeviceIcon(currentSession.device_type ?? null)}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -428,7 +428,7 @@ export default function SecuritySettingsPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-4">
                             <div className="rounded-full bg-muted p-2">
-                              {getDeviceIcon(session.device_type)}
+                              {getDeviceIcon(session.device_type ?? null)}
                             </div>
                             <div className="space-y-1">
                               <p className="font-medium">

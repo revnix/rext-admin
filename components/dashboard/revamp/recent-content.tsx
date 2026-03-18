@@ -10,53 +10,18 @@ import { apiClient } from "@/lib/api-client";
 
 interface RecentContentProps {
   workspace: Workspace | null;
+  activities?: import("@/lib/api-client/dashboard").RecentActivity[];
+  isLoading?: boolean;
 }
 
-export function RecentContent({ workspace }: RecentContentProps) {
-  const { data: rawData, isLoading } = useQuery({
-    queryKey: ["recent-activities", workspace?.id],
-    queryFn: () => apiClient.dashboard.getRecentActivities(workspace?.id || ""),
-    enabled: !!workspace?.id,
-    staleTime: 30 * 1000,
-  });
-
-  // Safely extract the activities array in case the API wraps it
-  // (e.g., { data: [] } or { items: [] } or { activities: [] })
-  type ActivityItem = import("@/lib/api-client/dashboard").RecentActivity;
-  let recentActivities: ActivityItem[] = [];
-
-  if (Array.isArray(rawData)) {
-    recentActivities =
-      rawData as import("@/lib/api-client/dashboard").RecentActivity[];
-  } else if (rawData) {
-    // Try to find the array in common wrapper properties
-    const possibleWrappers = [
-      "data",
-      "items",
-      "activities",
-      "recent_activities",
-    ];
-
-    // Use type assertion to a more flexible record for checking
-    const dataRecord = rawData as Record<string, unknown>;
-
-    for (const key of possibleWrappers) {
-      if (Array.isArray(dataRecord[key])) {
-        // We found an array inside the data wrapper
-        recentActivities = dataRecord[key] as ActivityItem[];
-        break;
-      }
-    }
-
-    // If we still don't have an array but we have data, it might be a completely unexpected format
-    if (
-      recentActivities.length === 0 &&
-      Object.keys(dataRecord).length > 0 &&
-      !possibleWrappers.some((k) => Array.isArray(dataRecord[k]))
-    ) {
-      // Unrecognized format, just fallback to empty array
-    }
-  }
+export function RecentContent({
+  workspace,
+  activities: propActivities,
+  isLoading: propLoading,
+}: RecentContentProps) {
+  // Use props if provided, otherwise fallback (for safety during transition)
+  const recentActivities = propActivities || [];
+  const isLoading = propLoading || false;
 
   // Keep some helper for color selection
 

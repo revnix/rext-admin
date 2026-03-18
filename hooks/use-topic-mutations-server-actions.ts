@@ -172,13 +172,13 @@ export function useTopicSaveServerAction() {
 
     onMutate: async (topicData) => {
       logger.info("Starting topic save via server action", {
-        title: topicData.title,
+        topic_name: topicData.topic_name,
       });
     },
 
     onError: (err, topicData) => {
       logger.error("Failed to save topic", {
-        title: topicData.title,
+        topic_name: topicData.topic_name,
         error: err.message,
       });
 
@@ -191,14 +191,14 @@ export function useTopicSaveServerAction() {
     onSuccess: (_data, topicData) => {
       // Note: This may not run if server action redirects
       logger.info("Successfully saved topic", {
-        title: topicData.title,
+        topic_name: topicData.topic_name,
       });
 
       // Invalidate topics cache for when user returns to topics page
       queryClient.invalidateQueries({ queryKey: ["topics"] });
 
       toast.success("Topic saved successfully!", {
-        description: `"${topicData.title}" has been saved`,
+        description: `"${topicData.topic_name}" has been saved`,
         duration: 3000,
       });
     },
@@ -259,25 +259,10 @@ export function useTopicUpdateServerAction() {
             const updatedTopic = { ...topic };
 
             // Update fields that were provided
-            if (updateData.title !== undefined)
-              updatedTopic.name = updateData.title;
-            if (updateData.approved !== undefined) {
-              updatedTopic.status = updateData.approved
-                ? "approved"
-                : "pending";
-            }
-            if (updateData.tags !== undefined)
-              updatedTopic.tags = updateData.tags;
-            if (updateData.angle !== undefined)
-              updatedTopic.angle = updateData.angle;
+            if (updateData.topic_name !== undefined)
+              updatedTopic.topic_name = updateData.topic_name;
             if (updateData.description !== undefined)
               updatedTopic.description = updateData.description;
-            if (updateData.audience_fit !== undefined)
-              updatedTopic.audience_fit = updateData.audience_fit;
-            if (updateData.channel_fit !== undefined)
-              updatedTopic.channel_fit = updateData.channel_fit;
-            if (updateData.why_it_works !== undefined)
-              updatedTopic.why_it_works = updateData.why_it_works;
 
             return updatedTopic;
           }
@@ -335,69 +320,13 @@ export function useTopicUpdateServerAction() {
 }
 
 /**
- * Modern TanStack Query v5 mutation hook for approving topics using Server Actions
- *
- * This is a convenience wrapper around useTopicUpdateServerAction for approval-specific operations
- *
- * @example
- * ```tsx
- * const approveTopicMutation = useTopicApproveServerAction()
- *
- * // Approve topic
- * approveTopicMutation.mutate('topic_123')
- * ```
- */
-export function useTopicApproveServerAction() {
-  const updateMutation = useTopicUpdateServerAction();
-
-  return useMutation({
-    mutationFn: async (topicId: string) => {
-      return await updateMutation.mutateAsync({
-        topic_id: topicId,
-        approved: true,
-      });
-    },
-
-    onError: (err, topicId) => {
-      logger.error("Failed to approve topic", {
-        topicId,
-        error: err.message,
-      });
-
-      toast.error("Failed to approve topic", {
-        description: err.message,
-        duration: 5000,
-      });
-    },
-
-    onSuccess: (data, topicId) => {
-      logger.info("Successfully approved topic", {
-        topicId,
-        updated_count: data.updated_count,
-      });
-
-      toast.success("Topic approved successfully", {
-        description: "Topic status has been updated to approved",
-        duration: 3000,
-      });
-    },
-  });
-}
-
-/**
  * Transform GeneratedTopic to SaveTopicData format
  */
 export function transformGeneratedTopicForSave(
   topic: GeneratedTopic,
 ): SaveTopicData {
   return {
-    title: topic.title,
+    topic_name: topic.topic_name || topic.title || "",
     description: topic.description,
-    angle: topic.angle,
-    tags: topic.tags,
-    audience_fit: topic.audience_fit,
-    channel_fit: topic.channel_fit,
-    scores: topic.scores,
-    why_it_works: topic.why_it_works,
   };
 }

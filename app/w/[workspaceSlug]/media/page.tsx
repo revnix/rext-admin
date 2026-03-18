@@ -128,7 +128,7 @@ export default function WorkspaceMediaPage() {
       (m) =>
         m.title?.toLowerCase().includes(q) ||
         m.original_filename.toLowerCase().includes(q) ||
-        m.tags.some((tag) => tag.toLowerCase().includes(q)),
+        (m.tags || []).some((tag) => tag.toLowerCase().includes(q)),
     );
   }
 
@@ -147,7 +147,7 @@ export default function WorkspaceMediaPage() {
     mutationFn: (mediaIds: string[]) =>
       apiClient.media.bulkDelete(workspace?.id || "", mediaIds),
     onSuccess: (res) => {
-      toast.success(res.message || "Media deleted successfully");
+      toast.success(`${res.deleted} media items deleted successfully`);
       handleRefresh();
       setSelectedIds(new Set());
       setSelectionMode(false);

@@ -1,20 +1,16 @@
-/**
- * Settings API Namespace
- *
- * Handles settings-related operations: notifications, sessions, security
- */
-
 import type {
-  NotificationPreferences,
-  NotificationPreferencesApiResponse,
-} from "@/schemas/notification-schemas";
-import type {
-  RevokeAllSessionsResponse,
-  RevokeSessionResponse,
+  NotificationPreferencesResponse,
   SessionListResponse,
+  SessionRevokeResponse,
+  BulkSessionRevokeResponse,
+  SecurityStatsResponse,
+  UserPreferencesResponse,
+  UserPreferencesWrappedResponse,
+} from "@/types/generated/types.gen";
+import type {
   UserSession,
+  UserSessionListResponse,
 } from "@/types/user-session";
-import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
@@ -28,8 +24,10 @@ export function createNotificationsNamespace(client: ApiClient) {
     /**
      * Get notification preferences
      */
-    getPreferences: async () => {
-      return client.request<NotificationPreferencesApiResponse>(
+    getPreferences: async (): Promise<{
+      data: NotificationPreferencesResponse;
+    }> => {
+      return client.request<{ data: NotificationPreferencesResponse }>(
         ENDPOINTS.SETTINGS.notifications.getPreferences,
         {
           method: "GET",
@@ -41,9 +39,9 @@ export function createNotificationsNamespace(client: ApiClient) {
      * Update notification preferences
      */
     updatePreferences: async (
-      preferences: Partial<NotificationPreferences>,
-    ) => {
-      return client.request<NotificationPreferencesApiResponse>(
+      preferences: Partial<NotificationPreferencesResponse>,
+    ): Promise<{ data: NotificationPreferencesResponse }> => {
+      return client.request<{ data: NotificationPreferencesResponse }>(
         ENDPOINTS.SETTINGS.notifications.updatePreferences,
         {
           method: "PATCH",
@@ -64,8 +62,8 @@ export function createSessionsNamespace(client: ApiClient) {
     /**
      * List active sessions
      */
-    list: async (): Promise<SessionListResponse> => {
-      const response = await client.request<SessionListResponse>(
+    list: async (): Promise<UserSessionListResponse> => {
+      const response = await client.request<UserSessionListResponse>(
         ENDPOINTS.SETTINGS.sessions.list,
         {
           method: "GET",
@@ -74,23 +72,15 @@ export function createSessionsNamespace(client: ApiClient) {
 
       return {
         ...response,
-        sessions: response.sessions.map((s): UserSession => {
-          const session = s as UserSession & {
-            device?: string;
-            browser?: string;
-            last_active?: string;
-          };
+        sessions: (response?.sessions || []).map((s): UserSession => {
           return {
             ...s,
-            device_name:
-              session.device_name ?? session.device ?? "Unknown Device",
-            device_type: session.device_type ?? null,
-            ip_address: session.ip_address ?? null,
-            user_agent: session.user_agent ?? session.browser ?? null,
-            created_at: session.created_at ?? null,
+            device_name: s.device_name ?? "Unknown Device",
+            device_type: (s.device_type as any) ?? null,
+            ip_address: s.ip_address ?? null,
+            user_agent: s.user_agent ?? null,
             last_activity_at:
-              session.last_activity_at ?? session.last_active ?? null,
-            is_current: Boolean(session.is_current),
+              s.last_activity_at || s.created_at || new Date().toISOString(),
           };
         }),
       };
@@ -99,8 +89,8 @@ export function createSessionsNamespace(client: ApiClient) {
     /**
      * Revoke a specific session
      */
-    revoke: async (sessionId: string) => {
-      return client.request<RevokeSessionResponse>(
+    revoke: async (sessionId: string): Promise<SessionRevokeResponse> => {
+      return client.request<SessionRevokeResponse>(
         ENDPOINTS.SETTINGS.sessions.revoke(sessionId),
         {
           method: "DELETE",
@@ -111,8 +101,8 @@ export function createSessionsNamespace(client: ApiClient) {
     /**
      * Revoke all sessions except current
      */
-    revokeAll: async () => {
-      return client.request<RevokeAllSessionsResponse>(
+    revokeAll: async (): Promise<BulkSessionRevokeResponse> => {
+      return client.request<BulkSessionRevokeResponse>(
         ENDPOINTS.SETTINGS.sessions.revokeAll,
         {
           method: "DELETE",
@@ -125,18 +115,19 @@ export function createSessionsNamespace(client: ApiClient) {
 // ============================================================================
 // SECURITY
 // ============================================================================
-// User-scoped security endpoints for current authenticated user
-// Admin security monitoring endpoints are at /api/v1/security/* (admin-only)
 
 export function createSecurityNamespace(client: ApiClient) {
   return {
     /**
      * Get security stats for current user
      */
-    getStats: async () => {
-      return client.request<SecurityStats>(ENDPOINTS.SETTINGS.security.stats, {
-        method: "GET",
-      });
+    getStats: async (): Promise<SecurityStatsResponse | null> => {
+      return client.request<SecurityStatsResponse>(
+        ENDPOINTS.SETTINGS.security.stats,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -182,64 +173,31 @@ export function createSecurityNamespace(client: ApiClient) {
 // PREFERENCES
 // ============================================================================
 
-export interface UserPreferences {
-  id: string;
-  user_id: string;
-  theme: string;
-  date_format: string;
-  time_format: string;
-  items_per_page: number;
-  sidebar_collapsed: boolean;
-  created_at: string;
-  updated_at: string;
-}
+export type UserPreferences = UserPreferencesResponse;
 
 export function createPreferencesNamespace(client: ApiClient) {
   return {
     /**
      * Get user preferences
      */
-    get: async () => {
-      const response = await client.request<
-        Partial<UserPreferences> & {
-          data?: { preferences?: Partial<UserPreferences> };
-          preferences?: Partial<UserPreferences>;
-        }
-      >(ENDPOINTS.SETTINGS.preferences.get, {
-        method: "GET",
-      });
+    get: async (): Promise<UserPreferencesResponse | null> => {
+      const response = await client.request<UserPreferencesWrappedResponse>(
+        ENDPOINTS.SETTINGS.preferences.get,
+        {
+          method: "GET",
+        },
+      );
 
-      // Handle the consistent format: { success, data: { message, preferences } }
-      // client.request already unwraps result.data if success: true.
-      // So response is typically { message, preferences }
-
-      let data = response;
-
-      // Defensively check for nested data
-      if (data && typeof data === "object" && "data" in data && data.data) {
-        data = data.data;
-      }
-
-      // Look for preferences property
-      if (data && typeof data === "object" && "preferences" in data) {
-        return data.preferences as UserPreferences;
-      }
-
-      // If none of the above, assume data is the preferences object itself
-      return data as UserPreferences;
+      return response?.preferences || null;
     },
 
     /**
      * Update user preferences
      */
-    update: async (preferences: {
-      theme?: "system" | "light" | "dark";
-      date_format?: "iso" | "us" | "eu" | "relative";
-      time_format?: "24h" | "12h";
-      items_per_page?: number;
-      sidebar_collapsed?: boolean;
-    }) => {
-      return client.request<UserPreferences>(
+    update: async (
+      preferences: Partial<UserPreferencesResponse>,
+    ): Promise<UserPreferencesWrappedResponse> => {
+      return client.request<UserPreferencesWrappedResponse>(
         ENDPOINTS.SETTINGS.preferences.update,
         {
           method: "PATCH",

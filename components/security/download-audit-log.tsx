@@ -49,7 +49,7 @@ export function DownloadAuditLog({
       ];
 
       const rows = data.logs.map((log) => [
-        new Date(log.created_at).toISOString(),
+        new Date(log.created_at as any).toISOString(),
         log.action,
         log.resource_type,
         log.status || "success",

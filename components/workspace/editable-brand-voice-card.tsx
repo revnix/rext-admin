@@ -342,7 +342,7 @@ export function EditableBrandVoiceCard({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {brandVoice.target_audience?.map((item) => (
+              {brandVoice.target_audience?.map((item: string) => (
                 <Badge key={item} variant="secondary" className="text-sm">
                   {item}
                 </Badge>
@@ -398,7 +398,7 @@ export function EditableBrandVoiceCard({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {brandVoice.brand_voice?.map((item) => (
+              {brandVoice.brand_voice?.map((item: string) => (
                 <Badge key={item} variant="outline" className="text-sm">
                   {item}
                 </Badge>
@@ -454,7 +454,7 @@ export function EditableBrandVoiceCard({
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {brandVoice.content_strategy?.map((item) => (
+              {brandVoice.content_strategy?.map((item: string) => (
                 <Badge key={item} variant="secondary" className="text-sm">
                   {item}
                 </Badge>

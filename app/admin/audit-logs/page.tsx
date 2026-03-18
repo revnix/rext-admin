@@ -206,7 +206,7 @@ export default function AuditLogsPage() {
           </CardHeader>
           <CardContent>
             <AuditLogsTable
-              logs={logs}
+              logs={logs as any}
               isLoading={isLoading}
               page={page}
               totalPages={totalPages}

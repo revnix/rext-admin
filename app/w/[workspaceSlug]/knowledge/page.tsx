@@ -68,12 +68,10 @@ export default function WorkspaceKnowledgePage() {
 
   // Calculate stats
   const totalItems = knowledgeBases.reduce(
-    (sum, kb) => sum + kb.items_count,
+    (sum, kb) => sum + (kb.items_count || 0),
     0,
   );
-  const customBasesCount = knowledgeBases.filter(
-    (kb) => kb.type === "custom",
-  ).length;
+  const customBasesCount = knowledgeBases.length;
 
   const headerActions = (
     <>

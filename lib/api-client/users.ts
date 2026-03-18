@@ -19,36 +19,21 @@
  */
 
 import type {
-  RevokeAllSessionsResponse,
   SessionListResponse,
-  UserSession,
-} from "@/types/user-session";
+  SessionItem,
+  SessionRevokeResponse,
+  BulkSessionRevokeResponse,
+} from "@/types/generated/types.gen";
 import type {
-  UserListResponse as GeneratedUserListResponse,
-  UserResponse as GeneratedUserResponse,
+  UserListResponse,
+  UserResponse,
 } from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
-export interface User {
-  id: string;
-  email: string;
-  full_name?: string;
-  display_name?: string;
-  status: string;
-  email_verified: boolean;
-  avatar_url?: string | null;
-  language?: string;
-  timezone?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+export type User = UserResponse;
 
-export interface UsersListResponse {
-  users: User[];
-  total_count: number;
-  workspace_id?: string | null;
-}
+export type UsersListResponse = UserListResponse;
 
 export function createUsersNamespace(client: ApiClient) {
   return {
@@ -59,21 +44,25 @@ export function createUsersNamespace(client: ApiClient) {
       const params = workspaceId
         ? `?workspace_id=${encodeURIComponent(workspaceId)}`
         : "";
-      // Backend returns UserListResponse; we cast to our local rigid UsersListResponse
-      return client.request<UsersListResponse>(
+      const response = await client.request<UserListResponse>(
         `${ENDPOINTS.USERS.list}${params}`,
         {
           method: "GET",
         },
       );
+
+      // Backend returns users as Record<string, unknown>[]; we cast to UserResponse[] for UI safety
+      return {
+        ...response,
+        users: (response?.users || []) as UserResponse[],
+      };
     },
 
     /**
      * Get a single user by ID
      */
     get: async (userId: string): Promise<User> => {
-      // Backend returns UserResponse; we cast to our local rigid User
-      return client.request<User>(ENDPOINTS.USERS.byId(userId), {
+      return client.request<UserResponse>(ENDPOINTS.USERS.byId(userId), {
         method: "GET",
       });
     },
@@ -82,14 +71,16 @@ export function createUsersNamespace(client: ApiClient) {
      * Register a new user
      */
     register: async (data: Record<string, unknown>) => {
-      return client.request<{
-        user: User;
+      const response = await client.request<{
+        user: UserResponse;
         message: string;
       }>(ENDPOINTS.USERS.register, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      return response;
     },
 
     /**
@@ -110,51 +101,33 @@ export function createUsersNamespace(client: ApiClient) {
      * Get all active sessions for current user
      */
     getSessions: async (): Promise<SessionListResponse> => {
-      const response = await client.request<SessionListResponse>(
+      return client.request<SessionListResponse>(
         ENDPOINTS.USERS.sessions.list,
         {
           method: "GET",
         },
       );
-
-      return {
-        ...response,
-        sessions: response.sessions.map((s): UserSession => {
-          const session = s as UserSession & {
-            device?: string;
-            browser?: string;
-            last_active?: string;
-          };
-          return {
-            ...s,
-            device_name:
-              session.device_name ?? session.device ?? "Unknown Device",
-            device_type: session.device_type ?? null,
-            ip_address: session.ip_address ?? null,
-            user_agent: session.user_agent ?? session.browser ?? null,
-            created_at: session.created_at ?? null,
-            last_activity_at:
-              session.last_activity_at ?? session.last_active ?? null,
-            is_current: Boolean(session.is_current),
-          };
-        }),
-      };
     },
 
     /**
      * Revoke a specific session (logout from that device)
      */
-    revokeSession: async (sessionId: string): Promise<void> => {
-      return client.request<void>(ENDPOINTS.USERS.sessions.detail(sessionId), {
-        method: "DELETE",
-      });
+    revokeSession: async (
+      sessionId: string,
+    ): Promise<SessionRevokeResponse> => {
+      return client.request<SessionRevokeResponse>(
+        ENDPOINTS.USERS.sessions.detail(sessionId),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
      * Revoke all other sessions (logout from all other devices)
      */
-    revokeAllOtherSessions: async (): Promise<RevokeAllSessionsResponse> => {
-      return client.request<RevokeAllSessionsResponse>(
+    revokeAllOtherSessions: async (): Promise<BulkSessionRevokeResponse> => {
+      return client.request<BulkSessionRevokeResponse>(
         ENDPOINTS.USERS.sessions.revokeAll,
         {
           method: "DELETE",

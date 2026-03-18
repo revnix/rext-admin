@@ -219,9 +219,9 @@ export function WorkspaceCreateWizard() {
 
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
-        about: brandVoiceData.about,
-        customer_profile: brandVoiceData.customer_profile,
-        selling_position: brandVoiceData.selling_position,
+        about: brandVoiceData.about || undefined,
+        customer_profile: brandVoiceData.customer_profile || undefined,
+        selling_position: brandVoiceData.selling_position || undefined,
         target_audience: brandVoiceData.target_audience,
         brand_voice: brandVoiceData.brand_voice,
         competitors: brandVoiceData.competitors,
@@ -241,13 +241,18 @@ export function WorkspaceCreateWizard() {
           brandVoiceData.personas.map((persona: Persona) =>
             apiClient.personas.create(workspaceId, {
               name: persona.name,
-              description:
-                persona.description || persona.professional_title || "",
-              full_name: persona.full_name || persona.name,
-              professional_title: persona.professional_title,
-              areas_of_expertise: persona.areas_of_expertise,
-              tone_of_voice: persona.tone_of_voice,
-              bio: persona.bio,
+              description: (persona.description ||
+                persona.professional_title ||
+                "") as string,
+              full_name: persona.full_name || undefined,
+              professional_title: persona.professional_title || undefined,
+              areas_of_expertise: Array.isArray(persona.areas_of_expertise)
+                ? persona.areas_of_expertise
+                : persona.areas_of_expertise
+                  ? [persona.areas_of_expertise as string]
+                  : [],
+              tone_of_voice: persona.tone_of_voice || undefined,
+              bio: persona.bio || undefined,
               linkedin_url: persona.linkedin_url,
               demographics: persona.demographics,
               pain_points: persona.pain_points,

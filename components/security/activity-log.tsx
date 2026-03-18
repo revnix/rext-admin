@@ -324,7 +324,7 @@ export function ActivityLog() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {formatTimestamp(log.created_at)}
+                          {formatTimestamp(log.created_at as any)}
                         </span>
                         {log.ip_address && (
                           <span className="flex items-center gap-1">

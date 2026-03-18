@@ -264,29 +264,21 @@ export class BackendService {
    *   { approved: true, title: "New Title" },
    *   "workspace_abc"
    * );
-   * log.info(`Updated ${result.updated_fields.join(", ")}`);
    * ```
    */
   async updateTopic(
     topicId: string,
     updateData: {
-      title?: string;
-      angle?: string;
+      topic_name?: string;
       description?: string;
-      channel_fit?: string[];
-      audience_fit?: string[];
-      why_it_works?: string;
-      tags?: string[];
-      approved?: boolean;
     },
     workspaceId: string,
   ): Promise<{
     success: boolean;
     updated_count: number;
     topic_id: string;
-    topic_title: string;
+    topic_name: string;
     updated_fields: string[];
-    approved?: boolean;
     message: string;
   }> {
     const { apiClient } = await import("@/lib/api-client");

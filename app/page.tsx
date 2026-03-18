@@ -58,15 +58,15 @@ export default function DashboardPage() {
   });
 
   // Total Workspaces Count
-  const _totalWorkspaces = workspacesResponse?.total || 0;
+  const _totalWorkspaces = workspacesResponse?.total_count || 0;
 
   // Update page title and description
   usePageTitle(
-    currentWorkspace?.title
-      ? `${currentWorkspace.title} - Dashboard`
+    currentWorkspace?.name
+      ? `${currentWorkspace.name} - Dashboard`
       : "Dashboard",
     currentWorkspace
-      ? `Welcome to ${currentWorkspace.title}. Monitor your progress and manage your workspace.`
+      ? `Welcome to ${currentWorkspace.name}. Monitor your progress and manage your workspace.`
       : "Overview of your content performance, automation flows, and key metrics. Monitor your AI-powered content strategy at a glance.",
   );
 
@@ -85,8 +85,8 @@ export default function DashboardPage() {
     <AuthGuard>
       <APIErrorBoundary>
         <PageLayout
-          title={currentWorkspace?.title || "Dashboard"}
-          description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
+          title={currentWorkspace?.name || "Dashboard"}
+          description={`Welcome to ${currentWorkspace?.name || "your workspace"}. Monitor your progress and manage your workspace.`}
         >
           <div className="flex flex-col gap-8">
             {/* Top Row: Metrics Cards (5 Cards) */}
@@ -102,7 +102,11 @@ export default function DashboardPage() {
             <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
               {/* Main Content: Recent Activities Table */}
               <div className="space-y-8">
-                <RecentContent workspace={currentWorkspace} />
+                <RecentContent
+                  workspace={currentWorkspace}
+                  activities={dashboardStats?.recent_activities}
+                  isLoading={isLoadingDashboard}
+                />
               </div>
 
               {/* Sidebar: Quick Actions List */}

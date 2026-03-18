@@ -162,7 +162,7 @@ export function FileKnowledgeList({
   // Update store when data changes
   useEffect(() => {
     if (fileKnowledge) {
-      setItems(fileKnowledge);
+      setItems(fileKnowledge as any);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileKnowledge, setItems]);

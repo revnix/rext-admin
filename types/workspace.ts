@@ -44,14 +44,23 @@ export interface KnowledgeStats {
 }
 
 /**
- * Main workspace model aligned with generated rigid types, 
+ * Main workspace model aligned with generated rigid types,
  * but with restored rigidity for metadata fields.
  */
-export interface Workspace extends Omit<WorkspaceResponseSchema, "owner" | "knowledge_stats"> {
+export interface Workspace
+  extends Omit<WorkspaceResponseSchema, "owner" | "knowledge_stats"> {
   owner?: WorkspaceOwner | null;
   knowledge_stats?: KnowledgeStats | null;
-}
 
+  // Legacy UI extensions that are injected dynamically by Redux/Contexts
+  team_metrics?: any;
+  knowledge_counts?: any;
+  content_metrics?: any;
+  websites?: any;
+  knowledge_files?: any;
+  text_knowledge?: any;
+  brand_voice?: any;
+}
 
 /**
  * Persona data for target audience
@@ -62,14 +71,14 @@ export interface Persona {
   description: string;
   full_name?: string | null;
   professional_title?: string | null;
-  areas_of_expertise?: string;
+  areas_of_expertise?: string[];
   tone_of_voice?: string;
   bio?: string;
   linkedin_url?: string | null;
   demographics?: string;
-  pain_points?: string;
-  goals?: string;
-  behaviors?: string;
+  pain_points?: string[];
+  goals?: string[];
+  behaviors?: string[];
 }
 
 /**
@@ -102,7 +111,7 @@ export interface BrandVoice {
 export interface WebKnowledge {
   id: string;
   workspace_id: string;
-  knowledge_base_id: string; // FK to knowledge_base
+  knowledge_base_id?: string; // FK to knowledge_base
   url: string;
   title?: string;
   status: WebKnowledgeStatus;
@@ -120,7 +129,7 @@ export interface WebKnowledge {
 export interface FileKnowledge {
   id: string;
   workspace_id: string;
-  knowledge_base_id: string; // FK to knowledge_base
+  knowledge_base_id?: string; // FK to knowledge_base
   name: string;
   type: string; // MIME type
   size: number; // bytes
@@ -140,7 +149,7 @@ export interface FileKnowledge {
 export interface TextKnowledge {
   id: string;
   workspace_id: string;
-  knowledge_base_id: string; // FK to knowledge_base
+  knowledge_base_id?: string; // FK to knowledge_base
   title: string;
   content: string;
   char_count?: number;

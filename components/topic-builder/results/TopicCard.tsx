@@ -4,7 +4,6 @@ import { Check } from "lucide-react";
 import { memo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CircularProgress } from "@/components/ui/progress";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { TopicCardProps } from "@/types/topic-builder-results";
@@ -58,7 +57,7 @@ export const TopicCard = memo(function TopicCard({
                         onSelect(topic.id, !!checked)
                       }
                       className="h-4 w-4"
-                      aria-label={`Select topic: ${topic.title}`}
+                      aria-label={`Select topic: ${topic.topic_name || topic.title}`}
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
@@ -68,7 +67,7 @@ export const TopicCard = memo(function TopicCard({
                 <div className="flex-1 min-w-0 space-y-3">
                   <div className="flex items-start justify-between">
                     <h3 className="font-semibold text-lg line-clamp-2 pr-2 group-hover:text-primary transition-colors">
-                      {topic.title}
+                      {topic.topic_name || topic.title}
                     </h3>
 
                     {/* Saved Indicator */}
@@ -89,26 +88,6 @@ export const TopicCard = memo(function TopicCard({
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Right Column: Progress Score */}
-            <div className="flex-shrink-0">
-              <CircularProgress
-                value={Math.round(
-                  ((topic.scores.relevance +
-                    topic.scores.seo_potential +
-                    topic.scores.trend_level +
-                    topic.scores.uniqueness +
-                    topic.scores.reader_interest +
-                    topic.scores.actionable_potential +
-                    topic.scores.brand_alignment +
-                    topic.scores.controversy) /
-                    8) *
-                    100,
-                )}
-                size="md"
-                className="text-primary"
-              />
             </div>
           </div>
         </CardContent>

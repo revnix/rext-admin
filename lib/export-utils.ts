@@ -207,7 +207,7 @@ export function generateJsonExport(
       workspace: {
         id: workspace.id,
         title: workspace.name,
-        url: workspace.url,
+        url: workspace.url ?? "",
       },
       export: {
         format: "json",

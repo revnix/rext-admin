@@ -30,9 +30,9 @@ import {
 
 interface AuditLog {
   id: string;
-  user_id?: string;
-  full_name?: string;
-  user_email?: string;
+  user_id?: string | null;
+  full_name?: string | null;
+  user_email?: string | null;
   action: string;
   resource_type: string;
   resource_id?: string;

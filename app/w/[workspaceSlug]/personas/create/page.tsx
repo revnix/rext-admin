@@ -58,7 +58,7 @@ export default function CreatePersonaPage() {
         description: formData.title, // Using title as description
         full_name: formData.fullName,
         professional_title: formData.title,
-        areas_of_expertise: expertiseTags.join(", "),
+        areas_of_expertise: expertiseTags,
         tone_of_voice: formData.tone,
         bio: formData.bio,
         linkedin_url: formData.linkedin,

@@ -101,60 +101,25 @@ export interface TopicBuilderFormData {
 export interface GeneratedTopic {
   /** Unique identifier for the topic */
   id: string;
-  /** The main topic title/headline */
+  /** The main topic identifier from backend */
+  topic_name: string;
+  /** Display title - for backward compatibility with existing UI */
   title: string;
-  /** Specific angle or approach for the topic */
-  angle: string;
   /** Optional detailed description */
   description?: string;
-  /** Channels/platforms this topic fits well */
-  channel_fit: string[];
-  /** Audience segments this topic appeals to */
-  audience_fit: string[];
-  /** Explanation of why this topic would work well */
-  why_it_works: string;
-  /** AI-generated quality scores */
-  scores: {
-    /** How relevant the topic is to the input criteria (0-1) */
-    relevance: number;
-    /** SEO ranking potential (0-1) */
-    seo_potential: number;
-    /** How trending/current the topic is (0-1) */
-    trend_level: number;
-    /** How unique/original the topic approach is (0-1) */
-    uniqueness: number;
-    /** Expected reader engagement potential (0-1) */
-    reader_interest: number;
-    /** How actionable/practical the content can be (0-1) */
-    actionable_potential: number;
-    /** How well it aligns with brand values (0-1) */
-    brand_alignment: number;
-    /** Potential for controversy/polarization (0-1, lower = safer) */
-    controversy: number;
-  };
-  /** Categorization tags for the topic */
-  tags: string[];
   /** When the topic was created/generated (ISO string, nullable) */
   created_at?: string | null;
   /** When the topic was last updated (ISO string, nullable) */
   updated_at?: string | null;
-  /** When the topic was approved (ISO string, nullable) */
-  approved_at?: string | null;
-  /** Suggested default content parameters */
-  suggested_defaults?: Record<string, unknown>;
-  /** Whether the topic has been saved to user's library */
-  is_saved?: boolean;
-  /** Whether the topic has been approved for content creation */
-  approved?: boolean;
   /** ID of the user who generated this topic */
   generated_by_user_id: string;
-  /** First name of the user who generated this topic */
-  generated_by_first_name: string;
-  /** Last name of the user who generated this topic */
-  generated_by_last_name: string;
-  /** Optimistic UI state: marks topic as saved while API call is in progress */
+
+  // UI state fields (optional)
+  /** Whether the topic has been saved to the library */
+  is_saved?: boolean;
+  /** Optimistic save status for UI updates */
   _optimisticSaved?: boolean;
-  /** Tracks if topic is currently being saved (for loading states) */
+  /** Whether the topic is currently being saved */
   _isBeingSaved?: boolean;
 }
 

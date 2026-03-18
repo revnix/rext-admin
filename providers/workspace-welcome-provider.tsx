@@ -106,7 +106,7 @@ export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
         <WorkspaceWelcomeModal
           open={isOpen}
           onClose={handleClose}
-          workspace={welcomeData.workspace}
+          workspace={welcomeData.workspace as any}
           inviterName={welcomeData.inviterName}
           roleName={welcomeData.roleName}
           rolePermissions={welcomeData.rolePermissions}

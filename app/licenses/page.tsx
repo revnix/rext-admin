@@ -53,7 +53,7 @@ export default function LicensesPage() {
     try {
       setLoading(true);
       const response = await apiClient.licenses.getLicenses();
-      setLicenses(response.licenses || []);
+      setLicenses((response.licenses as unknown as License[]) || []);
     } catch (error) {
       toast.error("Failed to load licenses", {
         description:
@@ -82,7 +82,8 @@ export default function LicensesPage() {
         await apiClient.licenses.getLicenseActivations(licenseId);
       setActivations((prev) => ({
         ...prev,
-        [licenseId]: response.activations || [],
+        [licenseId]:
+          (response.activations as unknown as LicenseActivation[]) || [],
       }));
       setExpandedLicense(licenseId);
     } catch (error) {
@@ -108,7 +109,8 @@ export default function LicensesPage() {
         await apiClient.licenses.getLicenseActivations(licenseId);
       setActivations((prev) => ({
         ...prev,
-        [licenseId]: response.activations || [],
+        [licenseId]:
+          (response.activations as unknown as LicenseActivation[]) || [],
       }));
 
       // Refresh licenses to update activation count

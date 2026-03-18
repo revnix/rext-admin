@@ -111,6 +111,7 @@ describe("InvitedUserOnboardingModal", () => {
     url: "https://test-workspace.com",
     // description: "A test workspace",
     // owner_id: "user-123",
+    user_id: "",
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
   };

@@ -54,7 +54,7 @@ export function WorkspaceSwitcher() {
   // Update local store when API data changes
   React.useEffect(() => {
     if (workspaces.length > 0) {
-      setWorkspaceList(workspaces);
+      setWorkspaceList(workspaces as any);
     }
   }, [workspaces, setWorkspaceList]);
 
@@ -67,7 +67,7 @@ export function WorkspaceSwitcher() {
   }, [pathname, setLastWorkspacePath]);
 
   const handleWorkspaceSelect = (workspace: Workspace) => {
-    setCurrentWorkspace(workspace);
+    setCurrentWorkspace(workspace as any);
 
     // Extract current page segment from pathname
     const currentPageSegment = extractWorkspacePageSegment(pathname);
@@ -84,7 +84,7 @@ export function WorkspaceSwitcher() {
   };
 
   // Use current workspace or first available workspace
-  const displayWorkspace = currentWorkspace || workspaces[0] || null;
+  const displayWorkspace = (currentWorkspace || workspaces[0] || null) as any;
 
   // Always render - never return null for debugging
   return (
@@ -172,7 +172,7 @@ export function WorkspaceSwitcher() {
                   return (
                     <DropdownMenuItem
                       key={workspace.id}
-                      onClick={() => handleWorkspaceSelect(workspace)}
+                      onClick={() => handleWorkspaceSelect(workspace as any)}
                       className="gap-2 p-2"
                     >
                       <div className="flex size-6 items-center justify-center rounded-md border">
@@ -181,7 +181,7 @@ export function WorkspaceSwitcher() {
                       <div className="flex flex-col flex-1 gap-0.5">
                         <span className="text-sm">
                           {getWorkspaceDisplayTitle(
-                            workspace,
+                            workspace as any,
                             "Untitled Workspace",
                           )}
                         </span>
@@ -201,7 +201,7 @@ export function WorkspaceSwitcher() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/w/create" className="gap-2 p-2">
+              <Link href={"/w/create" as Route} className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <Plus className="size-4" />
                 </div>

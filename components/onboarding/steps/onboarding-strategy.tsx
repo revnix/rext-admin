@@ -38,7 +38,7 @@ export const OnboardingStrategy = forwardRef<
   const [personaData, setPersonaData] = useState<Partial<Persona>>({
     full_name: "",
     professional_title: "",
-    areas_of_expertise: "",
+    areas_of_expertise: [],
     tone_of_voice: "",
     bio: "",
     linkedin_url: "",
@@ -66,7 +66,7 @@ export const OnboardingStrategy = forwardRef<
     onFormVisibilityChange?.(false);
   };
 
-  const handlePersonaFieldChange = (field: keyof Persona, value: string) => {
+  const handlePersonaFieldChange = (field: keyof Persona, value: any) => {
     setPersonaData((prev) => ({
       ...prev,
       [field]: value,
@@ -264,12 +264,17 @@ export const OnboardingStrategy = forwardRef<
                       <Input
                         id="areas_of_expertise"
                         type="text"
-                        placeholder="Add expertise tag"
-                        value={personaData.areas_of_expertise || ""}
+                        placeholder="Add expertise tag (comma separated)"
+                        value={(
+                          (personaData.areas_of_expertise as string[]) || []
+                        ).join(", ")}
                         onChange={(e) =>
                           handlePersonaFieldChange(
                             "areas_of_expertise",
-                            e.target.value,
+                            e.target.value
+                              .split(",")
+                              .map((v) => v.trim())
+                              .filter(Boolean),
                           )
                         }
                         className="h-11"

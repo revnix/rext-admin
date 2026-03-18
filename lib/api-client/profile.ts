@@ -4,29 +4,15 @@
  * Handles user profile and account management
  */
 
-import { z } from "zod";
-import type { UpdateProfileRequest, UserProfile } from "@/types/profile";
+import type {
+  ProfileResponseDetailed,
+  UpdateProfileRequest,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 import type { DataExportFormValues } from "@/schemas/account-schemas";
 
-const profileEnvelopeSchema = z.object({
-  profile: z.object({
-    id: z.string(),
-    email: z.string().email(),
-    full_name: z.string().nullable(),
-    display_name: z.string().nullable(),
-    bio: z.string().nullable().optional(),
-    language: z.string(),
-    timezone: z.string(),
-    status: z.string(),
-    email_verified: z.boolean(),
-    two_factor_enabled: z.boolean().nullable().optional(),
-    avatar_url: z.string().nullable().optional(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
-  }),
-});
+export type UserProfile = ProfileResponseDetailed;
 
 export function createProfileNamespace(client: ApiClient) {
   return {
@@ -34,43 +20,20 @@ export function createProfileNamespace(client: ApiClient) {
      * Get user profile
      */
     get: async (): Promise<UserProfile> => {
-      const response = await client.request<unknown>(ENDPOINTS.PROFILE.get, {
+      return client.request<UserProfile>(ENDPOINTS.PROFILE.get, {
         method: "GET",
       });
-
-      const parsed = profileEnvelopeSchema.safeParse(response);
-      if (!parsed.success) {
-        throw new Error("Invalid /api/v1/user/profile response contract");
-      }
-
-      const { profile } = parsed.data;
-      return {
-        ...profile,
-        bio: profile.bio ?? null,
-        avatar_url: profile.avatar_url ?? null,
-      };
     },
 
     /**
      * Update user profile
      */
     update: async (data: UpdateProfileRequest): Promise<UserProfile> => {
-      const response = await client.request<{
-        profile?: UserProfile;
-        user?: UserProfile;
-        id?: string;
-      }>(ENDPOINTS.PROFILE.update, {
+      return client.request<UserProfile>(ENDPOINTS.PROFILE.update, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
-      // Handle both wrapped and direct response formats
-      const profile = response.profile || response.user;
-      if (!profile) {
-        throw new Error("Invalid update response: missing profile data");
-      }
-      return profile;
     },
 
     /**

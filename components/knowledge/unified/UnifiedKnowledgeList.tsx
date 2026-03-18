@@ -131,7 +131,9 @@ export function UnifiedKnowledgeList({
 
   useEffect(() => {
     if (webQuery.data) {
-      setWebItems(webQuery.data);
+      setWebItems(
+        webQuery.data as unknown as import("@/types/workspace").WebKnowledge[],
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webQuery.data, setWebItems]);
@@ -149,7 +151,9 @@ export function UnifiedKnowledgeList({
 
   useEffect(() => {
     if (fileQuery.data) {
-      setFileItems(fileQuery.data);
+      setFileItems(
+        fileQuery.data as unknown as import("@/types/workspace").FileKnowledge[],
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileQuery.data, setFileItems]);
@@ -167,7 +171,9 @@ export function UnifiedKnowledgeList({
 
   useEffect(() => {
     if (textQuery.data) {
-      setTextItems(textQuery.data);
+      setTextItems(
+        textQuery.data as unknown as import("@/types/workspace").TextKnowledge[],
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textQuery.data, setTextItems]);

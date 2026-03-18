@@ -122,21 +122,18 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
         {persona.areas_of_expertise && (
           <div className="mt-3">
             <div className="flex flex-wrap gap-1.5">
-              {persona.areas_of_expertise
-                .split(",")
-                .slice(0, 3)
-                .map((area) => (
-                  <Badge
-                    key={area.trim()}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {area.trim()}
-                  </Badge>
-                ))}
-              {persona.areas_of_expertise.split(",").length > 3 && (
+              {persona.areas_of_expertise.slice(0, 3).map((area) => (
+                <Badge
+                  key={area.trim()}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {area.trim()}
+                </Badge>
+              ))}
+              {persona.areas_of_expertise.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{persona.areas_of_expertise.split(",").length - 3} more
+                  +{persona.areas_of_expertise.length - 3} more
                 </Badge>
               )}
             </div>

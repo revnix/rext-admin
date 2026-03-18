@@ -122,13 +122,18 @@ export function FileUploadZone({
         setUploadingFiles((prev) =>
           prev.map((f) =>
             f.id === uploadingFile.id
-              ? { ...f, status: "completed", progress: 100, result }
+              ? {
+                  ...f,
+                  status: "completed",
+                  progress: 100,
+                  result: result as any,
+                }
               : f,
           ),
         );
 
         // Add to store
-        addItem(result);
+        addItem(result as any);
 
         toast.success(
           `File "${uploadingFile.file.name}" uploaded successfully`,

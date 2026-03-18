@@ -265,21 +265,9 @@ export function TitleDisplay({
     return <span className="text-muted-foreground">Untitled</span>;
   }
 
-  // Use enhanced fields if available, otherwise fall back to parsing description
-  const angle = row?.angle || "";
-  const whyItWorks = row?.why_it_works || "";
-  let displayAngle = angle;
-  let displayDescription = row?.description || "";
-
-  // If angle is not available, try to extract from description (fallback for basic transformation)
-  if (!angle && displayDescription.includes(" • ")) {
-    const parts = displayDescription.split(" • ");
-    displayAngle = parts[0] || "";
-    displayDescription = parts[1] || "";
-  }
-
-  // If we have additional details, show them in tooltip
-  const hasDetails = displayAngle || displayDescription || whyItWorks;
+  // Use description if available
+  const displayDescription = row?.description || "";
+  const hasDetails = !!displayDescription;
 
   const TitleContent = ({ children }: { children: ReactNode }) => {
     if (href) {
@@ -325,28 +313,12 @@ export function TitleDisplay({
       }
       content={
         <div className="space-y-3">
-          {displayAngle && (
-            <div>
-              <div className="font-medium text-xs text-muted-foreground mb-1">
-                Angle:
-              </div>
-              <div className="text-sm italic">{displayAngle}</div>
-            </div>
-          )}
           {displayDescription && (
             <div>
               <div className="font-medium text-xs text-muted-foreground mb-1">
                 Description:
               </div>
               <div className="text-sm">{displayDescription}</div>
-            </div>
-          )}
-          {whyItWorks && (
-            <div>
-              <div className="font-medium text-xs text-muted-foreground mb-1">
-                Why it works:
-              </div>
-              <div className="text-sm">{whyItWorks}</div>
             </div>
           )}
         </div>
@@ -361,59 +333,22 @@ export function TitleDisplay({
  * Enhanced Category Display Cell Formatter - shows all relevant categories
  */
 export function CategoryDisplay({
+  value,
   row,
 }: {
   value: unknown;
   row?: TopicData;
 }): ReactNode {
-  const tags = row?.tags || [];
-
-  // Use only tags as categories, excluding channel and audience prefixes
-  // Don't duplicate the primary category since it's derived from the first tag
-  const filteredTags = tags.filter(
-    (tag) => !tag.startsWith("channel:") && !tag.startsWith("audience:"),
-  );
-
-  // Just use the tags directly as categories, properly formatted and deduplicated
-  const allCategories =
-    filteredTags.length > 0
-      ? [...new Set(filteredTags)]
-          .map(
-            (category) =>
-              String(category).charAt(0).toUpperCase() +
-              String(category).slice(1).toLowerCase(),
-          )
-          .slice(0, 2) // Limit to 2 categories for cleaner look
-      : ["General"]; // Fallback when no tags available
-
-  const remainingCount = Math.max(0, filteredTags.length - 2);
+  const category = String(value || "General");
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
-      {allCategories.map((category) => (
-        <span
-          key={String(category)}
-          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
-        >
-          {category}
-        </span>
-      ))}
-      <OverflowCountTooltip
-        count={remainingCount}
-        badgeClassName="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 cursor-help"
-        content={
-          <div className="text-xs">
-            {filteredTags
-              .slice(2)
-              .map(
-                (category) =>
-                  String(category).charAt(0).toUpperCase() +
-                  String(category).slice(1).toLowerCase(),
-              )
-              .join(", ")}
-          </div>
-        }
-      />
+      <span
+        key={category}
+        className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+      >
+        {category}
+      </span>
     </div>
   );
 }
@@ -501,9 +436,7 @@ export function StatusDisplay({
 
   // Determine if status is approved - check both status string and approved field
   const isApproved =
-    status.toLowerCase() === "approved" ||
-    status.toLowerCase() === "saved" ||
-    (row && "approved" in row && row.approved === true);
+    status.toLowerCase() === "approved" || status.toLowerCase() === "saved";
 
   return (
     <Badge
@@ -520,7 +453,7 @@ export function StatusDisplay({
 }
 
 /**
- * Enhanced Score Display with 8-point breakdown tooltip
+ * Enhanced Score Display with basic display
  */
 export function EnhancedScoreDisplay({
   value,
@@ -529,7 +462,6 @@ export function EnhancedScoreDisplay({
   value: unknown;
   row?: TopicData;
 }): ReactNode {
-  const progressTitleId = useId();
   const score =
     typeof value === "number" ? value : parseFloat(String(value || "0"));
   const formattedScore = formatScore(score);
@@ -539,129 +471,7 @@ export function EnhancedScoreDisplay({
     return <span className="text-muted-foreground">--</span>;
   }
 
-  // Use the preserved scores data from TopicData
-  const scoreBreakdown = row?.scores;
-
-  if (!scoreBreakdown) {
-    // Fallback to basic score display
-    return (
-      <span className={`font-mono text-sm ${colorClass}`}>
-        {formattedScore}
-      </span>
-    );
-  }
-
   return (
-    <TruncatedTooltipText
-      trigger={
-        <div className="flex items-center gap-2 cursor-help">
-          {/* Circular Progress - Larger size */}
-          <div className="relative w-12 h-12">
-            <svg
-              className="w-12 h-12 transform -rotate-90"
-              viewBox="0 0 48 48"
-              role="img"
-              aria-labelledby={progressTitleId}
-            >
-              <title id={progressTitleId}>Score progress</title>
-              {/* Background circle */}
-              <circle
-                cx="24"
-                cy="24"
-                r="18"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-                className="text-muted-foreground/20"
-              />
-              {/* Progress circle */}
-              <circle
-                cx="24"
-                cy="24"
-                r="18"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-                strokeDasharray={`${2 * Math.PI * 18}`}
-                strokeDashoffset={`${2 * Math.PI * 18 * (1 - score / 100)}`}
-                className={colorClass}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-medium">{Math.round(score)}</span>
-            </div>
-          </div>
-        </div>
-      }
-      content={
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">Relevance:</span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.relevance * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                SEO Potential:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.seo_potential * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Trend Level:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.trend_level * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">Uniqueness:</span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.uniqueness * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Reader Interest:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.reader_interest * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Actionable Potential:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.actionable_potential * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Brand Alignment:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.brand_alignment * 100)}%
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">
-                Controversy:
-              </span>
-              <span className="text-sm">
-                {Math.round(scoreBreakdown.controversy * 100)}%
-              </span>
-            </div>
-          </div>
-        </div>
-      }
-      side="bottom"
-      className="max-w-md p-4"
-    />
+    <span className={`font-mono text-sm ${colorClass}`}>{formattedScore}</span>
   );
 }

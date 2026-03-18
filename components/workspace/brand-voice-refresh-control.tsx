@@ -119,7 +119,7 @@ export function BrandVoiceRefreshControl({
   const handleRefresh = useCallback(async () => {
     try {
       const operationId = await refreshBrandVoice(workspaceId);
-      setCurrentOperation({ operationId, workspaceId });
+      setCurrentOperation({ operationId, workspaceId, status: "pending" });
       setBrandVoiceRefreshState({
         isRefreshing: true,
         operationId: operationId,

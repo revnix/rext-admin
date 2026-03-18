@@ -162,8 +162,8 @@ function MediaRow({
     return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
-  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
-  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url || null);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url || null);
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
@@ -265,9 +265,9 @@ function MediaRow({
 
       {/* Tags */}
       <TableCell>
-        {media.tags.length > 0 ? (
+        {(media.tags || []).length > 0 ? (
           <div className="flex flex-wrap gap-1">
-            {media.tags.slice(0, 3).map((tag) => (
+            {(media.tags || []).slice(0, 3).map((tag) => (
               <span
                 key={tag}
                 className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded"
@@ -275,9 +275,9 @@ function MediaRow({
                 {tag}
               </span>
             ))}
-            {media.tags.length > 3 && (
+            {(media.tags || []).length > 3 && (
               <span className="inline-block text-xs text-muted-foreground">
-                +{media.tags.length - 3}
+                +{(media.tags || []).length - 3}
               </span>
             )}
           </div>

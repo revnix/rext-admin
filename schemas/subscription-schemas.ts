@@ -104,12 +104,34 @@ export const PlanFeaturesSchema = z
   .union([
     z.object({ items: FeatureItemsSchema }),
     z.object({ list: FeatureItemsSchema }),
-    z.record(z.string(), z.string()),
+    z.record(z.string(), z.union([z.string(), z.boolean(), z.number()])),
   ])
   .transform((raw): { items: string[] } => {
-    if ("items" in raw) return { items: raw.items as string[] };
-    if ("list" in raw) return { items: (raw as { list: string[] }).list };
-    return { items: Object.values(raw as Record<string, string>) };
+    if ("items" in raw && Array.isArray(raw.items))
+      return { items: raw.items as string[] };
+    if ("list" in raw && Array.isArray(raw.list))
+      return { items: (raw as { list: string[] }).list };
+
+    const items: string[] = [];
+    Object.entries(raw as Record<string, string | boolean | number>).forEach(
+      ([key, value]) => {
+        if (typeof value === "boolean") {
+          if (value) {
+            // Convert snake_case key to natural title
+            const label = key
+              .split("_")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ");
+            items.push(label);
+          }
+        } else if (typeof value === "string") {
+          items.push(value);
+        } else if (typeof value === "number") {
+          items.push(`${key}: ${value}`);
+        }
+      },
+    );
+    return { items };
   });
 
 export const SubscriptionPlanSchema = z.object({

@@ -105,7 +105,7 @@ export type {
   RevokeAllSessionsResponse,
   RevokeSessionRequest,
   RevokeSessionResponse,
-  SessionListResponse,
+  UserSessionListResponse as SessionListResponse,
   UserSession,
 } from "@/types/user-session";
 // Export audit log API functions

@@ -19,7 +19,8 @@ export const notificationPreferencesQueryOptions = queryOptions({
   queryKey: ["notification-preferences"],
   queryFn: async (): Promise<NotificationPreferencesApiResponse> => {
     try {
-      return await apiClient.notifications.getPreferences();
+      const resp = await apiClient.notifications.getPreferences();
+      return (resp as any)?.data || resp;
     } catch (error) {
       notificationPreferencesLogger.error(
         "Failed to load notification preferences",

@@ -153,7 +153,7 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
           method: "GET",
         },
       );
-      
+
       return response.stats as unknown as AnalyticsOverview;
     },
 

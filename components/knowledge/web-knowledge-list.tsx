@@ -190,7 +190,7 @@ export function WebKnowledgeList({
   // Update store when API data changes
   useEffect(() => {
     if (webKnowledgeList) {
-      setItems(webKnowledgeList);
+      setItems(webKnowledgeList as any);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webKnowledgeList, setItems]);

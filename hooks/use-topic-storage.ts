@@ -124,28 +124,11 @@ export const useTopicStorage = (): UseTopicStorageReturn => {
           linkElement.setAttribute("download", exportFileDefaultName);
           linkElement.click();
         } else if (format === "csv") {
-          const headers = [
-            "Title",
-            "Angle",
-            "Relevance Score",
-            "Freshness Score",
-            "Novelty Score",
-            "Channel Fit",
-            "Audience Fit",
-            "Why It Works",
-            "Tags",
-          ];
+          const headers = ["Title", "Description"];
 
           const csvRows = savedTopics.map((topic) => [
-            `"${topic.title.replace(/"/g, '""')}"`,
-            `"${topic.angle.replace(/"/g, '""')}"`,
-            topic.scores.relevance.toFixed(2),
-            topic.scores.trend_level.toFixed(2),
-            topic.scores.uniqueness.toFixed(2),
-            `"${topic.channel_fit.join(", ")}"`,
-            `"${topic.audience_fit.join(", ")}"`,
-            `"${topic.why_it_works.replace(/"/g, '""')}"`,
-            `"${topic.tags.join(", ")}"`,
+            `"${(topic.topic_name || topic.title).replace(/"/g, '""')}"`,
+            `"${(topic.description ?? "").replace(/"/g, '""')}"`,
           ]);
 
           const csvContent = [

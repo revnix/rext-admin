@@ -1,31 +1,16 @@
 "use client";
 
-import {
-  CheckCircle,
-  Eye,
-  Lightbulb,
-  Loader2,
-  PenTool,
-  Trash2,
-} from "lucide-react";
+import { Eye, Lightbulb, Loader2, PenTool, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table";
 import {
-  AudienceFitDisplay,
   CategoryDisplay,
   DateDisplay,
-  EnhancedScoreDisplay,
-  StatusDisplay,
-  TagsList,
   TitleDisplay,
 } from "@/components/ui/topic-cell-formatters";
-import {
-  useTopicApproveServerAction,
-  useTopicDeleteServerAction,
-} from "@/hooks/use-topic-mutations-server-actions";
+import { useTopicDeleteServerAction } from "@/hooks/use-topic-mutations-server-actions";
 import { logger } from "@/lib/logger";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
-// import { TOPIC_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import type { Column, RowAction, TopicData } from "@/types/data-table";
 import { useState } from "react";
@@ -49,15 +34,12 @@ export function TopicsClientWrapper({
   const router = useRouter();
   // Mutations using modern server actions
   const deleteMutation = useTopicDeleteServerAction();
-  const approveMutation = useTopicApproveServerAction();
   const topicsLogger = logger.forComponent("TopicsClientWrapper");
-  const [approvingTopicId, setApprovingTopicId] = useState<string | null>(null);
   const [deletingTopicId, setDeletingTopicId] = useState<string | null>(null);
 
-  // Get workspace context (optional because this component is used in both workspace and legacy routes)
+  // Get workspace context
   const workspaceContext = useWorkspaceOptional();
   const workspaceSlug = workspaceContext?.workspaceSlug;
-  // const workspaceId = workspaceContext?.workspaceId;
 
   // Permission: can the current user delete topics in this workspace?
   const { hasPermission: canDelete } = useWorkspacePermission(
@@ -71,7 +53,6 @@ export function TopicsClientWrapper({
       setDeletingTopicId(topicId);
       await deleteMutation.mutateAsync([topicId]);
     } catch (error) {
-      // Error handling is done by the mutation hook
       topicsLogger.error("Failed to delete topic", {
         topic_id: topicId,
         error: error instanceof Error ? error.message : String(error),
@@ -81,29 +62,12 @@ export function TopicsClientWrapper({
     }
   };
 
-  // Handle topic approval using server actions
-  const handleTopicApproval = async (topicId: string, topicName: string) => {
-    try {
-      setApprovingTopicId(topicId);
-      await approveMutation.mutateAsync(topicId);
-    } catch (error) {
-      // Error handling is done by the mutation hook
-      topicsLogger.error("Failed to approve topic", {
-        topic_id: topicId,
-        topic_name: topicName,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    } finally {
-      setApprovingTopicId(null);
-    }
-  };
-
-  // Column definitions moved to client component to avoid serialization issues
+  // Column definitions - simplified for content-only tracker
   const columns: Column<TopicData>[] = [
     {
-      key: "name",
+      key: "topic_name",
       header: "Topic Title",
-      width: "320px",
+      width: "400px",
       cell: (value, row) => (
         <TitleDisplay
           value={value}
@@ -125,34 +89,6 @@ export function TopicsClientWrapper({
       searchable: true,
     },
     {
-      key: "audience_fit",
-      header: "Audience",
-      width: "120px",
-      cell: (value) => <AudienceFitDisplay value={value} />,
-      searchable: true,
-    },
-    {
-      key: "tags",
-      header: "Tags",
-      width: "100px",
-      cell: (value, row) => <TagsList value={value} row={row} />,
-      searchable: true,
-    },
-    {
-      key: "score",
-      header: "Overall Score",
-      width: "180px",
-      cell: (value, row) => <EnhancedScoreDisplay value={value} row={row} />,
-      searchable: false,
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "220px",
-      cell: (value, row) => <StatusDisplay value={value} row={row} />,
-      searchable: false,
-    },
-    {
       key: "created",
       header: "Saved",
       width: "120px",
@@ -161,7 +97,7 @@ export function TopicsClientWrapper({
     },
   ];
 
-  // Row actions specific to topics with client-side interactions
+  // Row actions specific to topics
   const rowActions: RowAction<TopicData>[] = [
     {
       label: "View",
@@ -173,47 +109,18 @@ export function TopicsClientWrapper({
       tooltip: "View topic details",
       showLabel: true,
     },
-    // Approve button - only shown for non-approved topics
-    {
-      label: (row: TopicData) =>
-        row.id === approvingTopicId ? "Loading…" : "Approve",
-      icon: (row: TopicData) =>
-        row.id === approvingTopicId ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <CheckCircle className="h-4 w-4" />
-        ),
-      onClick: (row: TopicData) => {
-        if (!approvingTopicId) handleTopicApproval(row.id, row.name);
-      },
-      tooltip: "Approve this topic for content creation",
-      variant: "default" as const,
-      showLabel: true,
-      primary: true,
-      disabled: (row: TopicData) =>
-        approvingTopicId === row.id ||
-        row.status?.toLowerCase() === "approved" ||
-        row.status?.toLowerCase() === "saved" ||
-        (row && "approved" in row && row.approved === true),
-    },
-    // Write Content button - only shown for approved topics
     {
       label: "Write Content",
       icon: <PenTool className="h-4 w-4" />,
       onClick: (row: TopicData) => {
         topicsLogger.info("Create content clicked", {
           topic_id: row.id,
-          topic_name: row.name,
+          topic_name: row.topic_name,
         });
 
-        // Navigate to content creation with topic prefilled
         if (workspaceSlug && row.id) {
           router.push(
             `/w/${workspaceSlug}/content/create?topicId=${row.id}` as Route,
-          );
-        } else {
-          topicsLogger.error(
-            "Cannot navigate: Missing workspace slug or topic ID",
           );
         }
       },
@@ -221,10 +128,6 @@ export function TopicsClientWrapper({
       variant: "default" as const,
       showLabel: true,
       primary: true,
-      disabled: (row: TopicData) =>
-        row.status?.toLowerCase() !== "approved" &&
-        row.status?.toLowerCase() !== "saved" &&
-        !(row && "approved" in row && row.approved === true),
     },
     //  Conditionally include Remove only if permission granted
     ...(canDelete
@@ -239,7 +142,7 @@ export function TopicsClientWrapper({
                 <Trash2 className="h-4 w-4" />
               ),
             onClick: (row: TopicData) => {
-              if (!deletingTopicId) handleTopicDelete(row.id, row.name);
+              if (!deletingTopicId) handleTopicDelete(row.id, row.topic_name);
             },
             variant: "destructive" as const,
             requiresConfirmation: true,
@@ -259,10 +162,10 @@ export function TopicsClientWrapper({
       columns={columns}
       data={data}
       emptyTitle="No topics yet"
-      emptyDescription="Generate your first collection of AI-powered topics. Use the topic builder to create engaging content topics tailored to your audience."
+      emptyDescription="Find and save interesting content ideas to your library."
       emptyActions={emptyActions}
       emptyIcon={<Lightbulb className="h-8 w-8 text-muted-foreground" />}
-      searchPlaceholder="Search topics by title, category, content type..."
+      searchPlaceholder="Search topics by title or description..."
       actions={tableActions}
       rowActions={rowActions}
       pageSize={15}

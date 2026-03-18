@@ -75,7 +75,7 @@ export function GeneralInfoSection() {
         throw new Error("Workspace data is not loaded yet. Please try again.");
       }
 
-      const response = await apiClient.workspaces.update(workspace.id, {
+      const response: any = await apiClient.workspaces.update(workspace.id, {
         name: data.name,
         url: data.url,
       });
@@ -83,6 +83,8 @@ export function GeneralInfoSection() {
       // Update local store immediately so UI reflects changes without waiting for refetch
       if (response?.workspace) {
         setCurrentWorkspace(response.workspace);
+      } else if (response) {
+        setCurrentWorkspace(response);
       }
 
       // Ensure the workspace query is refreshed (avoid stale cache)
@@ -92,7 +94,7 @@ export function GeneralInfoSection() {
         });
       }
 
-      router.refresh();
+      (router as any).refresh();
       toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
       const errorMessage =

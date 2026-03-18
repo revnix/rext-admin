@@ -31,9 +31,7 @@ export const SCORE_THRESHOLDS = {
  * @param scores - Topic scores object
  * @returns Overall score as percentage (0-100)
  */
-export function calculateOverallScore(
-  scores: GeneratedTopic["scores"],
-): number {
+export function calculateOverallScore(scores: any): number {
   if (!scores) return 0;
 
   const {

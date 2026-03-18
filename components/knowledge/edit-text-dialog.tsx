@@ -124,7 +124,7 @@ export function EditTextDialog({
           },
         );
 
-        updateItem(textId, updatedItem);
+        updateItem(textId, updatedItem as any);
         setHasUnsavedChanges(false);
         setLastSaved(new Date());
       } catch (error) {

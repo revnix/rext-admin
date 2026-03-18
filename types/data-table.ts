@@ -33,39 +33,10 @@ export interface ContentData extends BaseTableRow {
 }
 
 export interface TopicData extends BaseTableRow {
-  name: string;
+  topic_name: string;
   description: string;
   category: string;
-  status: string;
-  priority: string;
-  source: string;
-  tags: string[];
   created: string;
-  lastModified: string;
-  assignee: string;
-  estimatedEffort: string;
-  // Additional fields for enhanced topic tracking
-  score?: number;
-  ranking?: string;
-  updated?: string;
-  author?: string;
-  contentType?: string;
-  // Enhanced fields for full topic display
-  audience_fit?: string[];
-  channel_fit?: string[];
-  scores?: {
-    relevance: number;
-    seo_potential: number;
-    trend_level: number;
-    uniqueness: number;
-    reader_interest: number;
-    actionable_potential: number;
-    brand_alignment: number;
-    controversy: number;
-  };
-  angle?: string;
-  why_it_works?: string;
-  approved?: boolean;
 }
 
 export interface ModelData extends BaseTableRow {

@@ -217,26 +217,9 @@ export interface SaveTopicRequest {
 export interface BackendSaveTopicRequestList {
   topics: Array<{
     id: string;
-    workspace_id: string; // Required for workspace-scoped topics
-    title: string;
-    angle: string;
-    description: string; // Required by backend validation
-    channel_fit: string[];
-    audience_fit: string[];
-    why_it_works: string;
-    tags: string[];
-    scores: {
-      relevance: number;
-      seo_potential: number;
-      trend_level: number;
-      uniqueness: number;
-      reader_interest: number;
-      actionable_potential: number;
-      brand_alignment: number;
-      controversy: number;
-    };
-    suggested_defaults: Record<string, unknown>;
-    input_params?: Record<string, unknown>;
+    workspace_id: string;
+    topic_name: string;
+    description: string;
   }>;
 }
 
@@ -281,9 +264,8 @@ export interface UpdateTopicResponse {
   success: boolean;
   updated_count: number;
   topic_id: string;
-  topic_title: string;
+  topic_name: string;
   updated_fields: string[];
-  approved?: boolean;
   message: string;
 }
 

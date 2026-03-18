@@ -9,6 +9,7 @@ import { usePersona } from "@/hooks/use-personas";
 import { PersonaDetail } from "@/components/personas/persona-detail";
 import { useParams } from "next/navigation";
 import type { Route } from "next";
+import type { Persona } from "@/types/workspace";
 
 export default function PersonaDetailPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -20,7 +21,7 @@ export default function PersonaDetailPage() {
     isLoading,
     error,
   } = usePersona(workspace?.id || null, personaId);
-  const persona = personaData?.persona;
+  const persona = personaData;
 
   // Wait for workspace to be loaded before considering it an error
   const isWorkspaceLoading = !workspace && !error;
@@ -62,8 +63,11 @@ export default function PersonaDetailPage() {
   }
 
   return (
-    <PageLayout title={persona.name} description={persona.description}>
-      <PersonaDetail persona={persona} />
+    <PageLayout
+      title={persona.name}
+      description={(persona as any).description || undefined}
+    >
+      <PersonaDetail persona={persona as any} />
     </PageLayout>
   );
 }

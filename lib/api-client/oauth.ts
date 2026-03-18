@@ -1,3 +1,4 @@
+import type { SuccessResponseUnlinkOAuthResponse } from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 
 export interface OAuthAccount {
@@ -12,11 +13,6 @@ interface OAuthAccountsResponse {
   accounts: OAuthAccount[];
 }
 
-interface OAuthUnlinkResponse {
-  provider: string;
-  status: string;
-}
-
 export function createOAuthNamespace(client: ApiClient) {
   return {
     listAccounts: async (): Promise<OAuthAccount[]> => {
@@ -27,8 +23,10 @@ export function createOAuthNamespace(client: ApiClient) {
       return response.accounts;
     },
 
-    unlinkAccount: async (provider: string): Promise<OAuthUnlinkResponse> => {
-      return client.request<OAuthUnlinkResponse>(
+    unlinkAccount: async (
+      provider: string,
+    ): Promise<SuccessResponseUnlinkOAuthResponse> => {
+      return client.request<SuccessResponseUnlinkOAuthResponse>(
         `/api/v1/user/oauth/${provider}`,
         {
           method: "DELETE",

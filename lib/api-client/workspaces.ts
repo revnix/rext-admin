@@ -14,7 +14,11 @@ import type {
   BrandVoiceWrapperResponse,
   MemberWorkspacePermissionsResponse as MemberPermissionsResponse,
 } from "@/types/generated/types.gen";
-import type { Persona, Workspace, BrandVoice as RobustBrandVoice } from "@/types/workspace";
+import type {
+  Persona,
+  Workspace,
+  BrandVoice as RobustBrandVoice,
+} from "@/types/workspace";
 
 /**
  * Custom response for workspace creation that includes operation_id for SSE tracking.
@@ -72,7 +76,8 @@ interface BrandVoicePayload {
   target_audience: string[];
   brand_voice: string[];
   competitors: string[];
-  content_pillar: string[];
+  content_strategy: string[];
+  secondary_pillars: string[];
   personas: Persona[];
 }
 
@@ -84,6 +89,7 @@ function toBrandVoicePayload(data: {
   brand_voice?: string[];
   competitors?: string[];
   content_strategy?: string[];
+  secondary_pillars?: string[];
   personas?: Persona[];
 }): BrandVoicePayload {
   return {
@@ -93,11 +99,11 @@ function toBrandVoicePayload(data: {
     target_audience: data.target_audience ?? [],
     brand_voice: data.brand_voice ?? [],
     competitors: data.competitors ?? [],
-    content_pillar: data.content_strategy ?? [],
+    content_strategy: data.content_strategy ?? [],
+    secondary_pillars: data.secondary_pillars ?? [],
     personas: data.personas ?? [],
   };
 }
-
 
 export function createWorkspacesNamespace(client: ApiClient) {
   return {
@@ -117,22 +123,18 @@ export function createWorkspacesNamespace(client: ApiClient) {
      * Get workspace by ID
      */
     get: async (workspaceId: string) => {
-      return client.request<Workspace>(
-        ENDPOINTS.WORKSPACES.byId(workspaceId),
-        { method: "GET" },
-      );
+      return client.request<Workspace>(ENDPOINTS.WORKSPACES.byId(workspaceId), {
+        method: "GET",
+      });
     },
 
     /**
      * Get workspace by slug
      */
     getBySlug: async (slug: string) => {
-      return client.request<Workspace>(
-        ENDPOINTS.WORKSPACES.bySlug(slug),
-        {
-          method: "GET",
-        },
-      );
+      return client.request<Workspace>(ENDPOINTS.WORKSPACES.bySlug(slug), {
+        method: "GET",
+      });
     },
 
     /**
@@ -168,26 +170,20 @@ export function createWorkspacesNamespace(client: ApiClient) {
       if (data.timezone !== undefined) payload.timezone = data.timezone;
       if (data.url !== undefined) payload.url = data.url.trim();
 
-      return client.request<Workspace>(
-        ENDPOINTS.WORKSPACES.byId(workspaceId),
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(toUpdatePayload(payload)),
-        },
-      );
+      return client.request<Workspace>(ENDPOINTS.WORKSPACES.byId(workspaceId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toUpdatePayload(payload)),
+      });
     },
 
     /**
      * Delete workspace
      */
     delete: async (workspaceId: string) => {
-      return client.request<Workspace>(
-        ENDPOINTS.WORKSPACES.byId(workspaceId),
-        {
-          method: "DELETE",
-        },
-      );
+      return client.request<Workspace>(ENDPOINTS.WORKSPACES.byId(workspaceId), {
+        method: "DELETE",
+      });
     },
 
     /**
@@ -228,6 +224,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         brand_voice?: string[];
         competitors?: string[];
         content_strategy?: string[];
+        secondary_pillars?: string[];
         personas?: Persona[];
       },
     ) => {
@@ -328,5 +325,4 @@ export function createWorkspacesNamespace(client: ApiClient) {
       );
     },
   };
-
 }

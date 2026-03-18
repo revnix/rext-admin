@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { Route } from "next";
 import type { UserProfile } from "@/types/profile";
 import { settingsRoutes } from "@/lib/routes";
 
@@ -40,7 +41,6 @@ import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import { log } from "@/lib/logger";
-import type { Route } from "next";
 
 export function NavUser() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export function NavUser() {
       try {
         const res = await apiClient.profile.get();
         if (mounted) {
-          setProfileUser(res);
+          setProfileUser(res as unknown as UserProfile);
         }
       } catch (err) {
         log.error("Profile fetch failed:", err);
@@ -283,7 +283,9 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.subscription)}
+                onClick={() =>
+                  router.push(settingsRoutes.subscription as Route)
+                }
               >
                 <Sparkles />
                 Upgrade to Pro
@@ -294,19 +296,21 @@ export function NavUser() {
 
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.root)}
+                onClick={() => router.push(settingsRoutes.root as Route)}
               >
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.subscription)}
+                onClick={() =>
+                  router.push(settingsRoutes.subscription as Route)
+                }
               >
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push(settingsRoutes.security)}
+                onClick={() => router.push(settingsRoutes.security as Route)}
               >
                 <Bell />
                 Security

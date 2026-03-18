@@ -253,7 +253,7 @@ export function UnifiedActivity() {
                           <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {formatTimestamp(log.created_at)}
+                              {formatTimestamp(log.created_at as any)}
                             </span>
                             {log.ip_address && (
                               <span className="flex items-center gap-1">
@@ -367,7 +367,9 @@ export function UnifiedActivity() {
                     </div>
                     <p className="text-sm font-medium">
                       {loginHistory.history[0]?.created_at
-                        ? formatTimestamp(loginHistory.history[0]?.created_at)
+                        ? formatTimestamp(
+                            loginHistory.history[0]?.created_at as any,
+                          )
                         : "Never"}
                     </p>
                   </div>
@@ -436,7 +438,9 @@ export function UnifiedActivity() {
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
-                                  {formatLoginEventTime(event.created_at)}
+                                  {formatLoginEventTime(
+                                    event.created_at as any,
+                                  )}
                                 </span>
                                 {event.ip_address && (
                                   <span className="flex items-center gap-1">

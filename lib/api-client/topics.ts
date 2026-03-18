@@ -24,12 +24,9 @@ export function createTopicsNamespace(client: ApiClient) {
       const response = await client.request<{
         topics: GeneratedTopic[];
         total_count: number;
-      }>(
-        `/api/v1/topic/get-topics?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "GET",
-        },
-      );
+      }>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/topics`, {
+        method: "GET",
+      });
       return response.topics;
     },
 
@@ -39,7 +36,7 @@ export function createTopicsNamespace(client: ApiClient) {
     get: async (topicId: string, workspaceId: string) => {
       return client
         .request<GeneratedTopic | null>(
-          `/api/v1/topic/get-topic/${topicId}?workspace_id=${encodeURIComponent(workspaceId)}`,
+          `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/topics/${encodeURIComponent(topicId)}`,
           {
             method: "GET",
           },
@@ -61,14 +58,14 @@ export function createTopicsNamespace(client: ApiClient) {
     },
 
     /**
-     * Generate topics using AI
+     * Generate topics using AI (Legacy flow, retained for backward compatibility)
      */
     generate: async (
       formData: {
         wizardMode?: string;
         industry: string;
         industry_other?: string | null;
-        audience: string[]; // Required field (matches backend schema)
+        audience: string[];
         purpose?: string[];
         purpose_other?: string | null;
         num_topics: number;
@@ -80,10 +77,9 @@ export function createTopicsNamespace(client: ApiClient) {
         ? `/api/v1/topic/generate-topic?workspace_id=${encodeURIComponent(workspaceId)}`
         : "/api/v1/topic/generate-topic";
 
-      // Ensure audience field is always present (required by backend)
       const payload = {
         ...formData,
-        audience: formData.audience || [], // Ensure audience is always an array
+        audience: formData.audience || [],
         timestamp: new Date().toISOString(),
       };
 
@@ -104,24 +100,25 @@ export function createTopicsNamespace(client: ApiClient) {
      * Save topics to workspace
      */
     save: async (topics: GeneratedTopic[], workspaceId: string) => {
+      const payload = {
+        topics: topics.map((topic) => ({
+          id: topic.id,
+          workspace_id: workspaceId,
+          topic_name: topic.topic_name || topic.title || "",
+          description: topic.description || "",
+        })),
+      };
+
       return client.request<{
         success: boolean;
         saved_count: number;
         message: string;
         saved_topic_ids?: string[];
-      }>(
-        `/api/v1/topic/save-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            topics: topics.map((topic) => ({
-              ...topic,
-              workspace_id: workspaceId,
-            })),
-          }),
-        },
-      );
+      }>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/topics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
     },
 
     /**
@@ -130,14 +127,8 @@ export function createTopicsNamespace(client: ApiClient) {
     update: async (
       topicId: string,
       updateData: {
-        title?: string;
-        angle?: string;
+        topic_name?: string;
         description?: string;
-        channel_fit?: string[];
-        audience_fit?: string[];
-        why_it_works?: string;
-        tags?: string[];
-        approved?: boolean;
       },
       workspaceId: string,
     ) => {
@@ -145,19 +136,15 @@ export function createTopicsNamespace(client: ApiClient) {
         success: boolean;
         updated_count: number;
         topic_id: string;
-        topic_title: string;
+        topic_name: string;
         updated_fields: string[];
-        approved?: boolean;
         message: string;
       }>(
-        `/api/v1/topic/update-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/topics/${encodeURIComponent(topicId)}`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            topic_id: topicId,
-            ...updateData,
-          }),
+          body: JSON.stringify(updateData),
         },
       );
     },
@@ -171,14 +158,11 @@ export function createTopicsNamespace(client: ApiClient) {
         deleted_count: number;
         message: string;
         topic_ids: string[];
-      }>(
-        `/api/v1/topic/delete-topic?workspace_id=${encodeURIComponent(workspaceId)}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic_ids: topicIds }),
-        },
-      );
+      }>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/topics`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic_ids: topicIds }),
+      });
     },
   };
 }

@@ -292,7 +292,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!workspaceId) return;
     try {
       setIsPublishing(true);
-      let response: { message?: string } | undefined;
+      let response: any;
       if (contentSavedId) {
         response = await apiClient.content.publish(
           workspaceId,
@@ -338,7 +338,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!workspaceId) return;
     try {
       setIsSaving(true);
-      let response: { message?: string; id?: string } | undefined;
+      let response: any;
       if (contentSavedId) {
         response = await apiClient.content.update(
           workspaceId,

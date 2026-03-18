@@ -221,8 +221,8 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             ]);
 
             set({
-              subscription: nextSubscription,
-              usage: nextUsage,
+              subscription: nextSubscription as any,
+              usage: nextUsage as any,
               subscriptionFetchedAt: Date.now(),
               isLoading: false,
               error: null,
@@ -246,7 +246,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       fetchUsage: async () => {
         try {
           const usage = await apiClient.subscriptions.getUsageStats();
-          set({ usage });
+          set({ usage: usage as any });
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -300,7 +300,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           );
 
           set({
-            subscription: updatedSubscription,
+            subscription: updatedSubscription as any,
             isLoading: false,
             error: null,
           });
@@ -339,7 +339,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           );
 
           set({
-            subscription: updatedSubscription,
+            subscription: updatedSubscription as any,
             isLoading: false,
             error: null,
           });

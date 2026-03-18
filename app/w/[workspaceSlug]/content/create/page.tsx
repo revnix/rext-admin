@@ -90,9 +90,11 @@ export default function WorkspaceContentCreatePage({
               : undefined,
         },
         seo_data: {
-          content_primary_keywords: primaryKeywords,
-          content_search_intent: formData.searchIntent || [],
-          content_meta_description: metaDescription.slice(0, 160), // Limit to 160 chars
+          focus_keyphrase: primaryKeywords[0] || null,
+          secondary_keywords:
+            primaryKeywords.length > 1 ? primaryKeywords.slice(1) : [],
+          search_intent: formData.searchIntent || [],
+          meta_description: metaDescription.slice(0, 160), // Limit to 160 chars
         },
       };
 
@@ -104,13 +106,13 @@ export default function WorkspaceContentCreatePage({
 
       // Validate response has required ID field
       // Response structure: { content: {...}, operation_id: "...", message: "..." }
-      if (!response?.content?.id) {
+      if (!(response as any)?.content?.id) {
         log.error("Response missing content ID", { response });
         toast.error("Failed to get content ID from server response");
         return;
       }
 
-      const contentId = response.content.id;
+      const contentId = (response as any).content.id;
 
       toast.success(
         "Content generation started! Redirecting to progress page...",

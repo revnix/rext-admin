@@ -96,20 +96,20 @@ export default function KnowledgeBaseDetailPage() {
 
   // Filter items by knowledge_base_id
   const filteredWeb = webKnowledge.filter(
-    (item) => item.knowledge_base_id === kbId,
+    (item: any) => item.knowledge_base_id === kbId,
   );
   const filteredFiles = fileKnowledge.filter(
-    (item) => item.knowledge_base_id === kbId,
+    (item: any) => item.knowledge_base_id === kbId,
   );
   const filteredText = textKnowledge.filter(
-    (item) => item.knowledge_base_id === kbId,
+    (item: any) => item.knowledge_base_id === kbId,
   );
 
   // Convert to unified format
   const knowledgeItems = convertToKnowledgeItems(
-    filteredWeb,
-    filteredFiles,
-    filteredText,
+    filteredWeb as any,
+    filteredFiles as any,
+    filteredText as any,
   );
 
   const handleRefresh = () => {

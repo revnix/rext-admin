@@ -37,6 +37,8 @@ export interface DashboardStats {
     draft: number;
   };
   personas: number;
+  total_knowledge_items: number;
+  recent_activities: RecentActivity[];
 }
 
 export interface RecentActivity {

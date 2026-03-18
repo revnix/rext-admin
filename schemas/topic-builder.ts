@@ -71,23 +71,26 @@ export const topicBuilderFormDataSchema = z.object({
 // Generated topic schema
 export const generatedTopicSchema = z.object({
   id: z.string(),
-  title: z.string(),
-  angle: z.string(),
+  topic_name: z.string(),
+  title: z.string().optional(), // Kept as optional alias for compatibility
+  angle: z.string().optional(),
   description: z.string().optional(),
-  channel_fit: z.array(z.string()),
-  audience_fit: z.array(z.string()),
-  why_it_works: z.string(),
-  scores: z.object({
-    relevance: z.number().min(0).max(1),
-    seo_potential: z.number().min(0).max(1),
-    trend_level: z.number().min(0).max(1),
-    uniqueness: z.number().min(0).max(1),
-    reader_interest: z.number().min(0).max(1),
-    actionable_potential: z.number().min(0).max(1),
-    brand_alignment: z.number().min(0).max(1),
-    controversy: z.number().min(0).max(1),
-  }),
-  tags: z.array(z.string()),
+  channel_fit: z.array(z.string()).optional(),
+  audience_fit: z.array(z.string()).optional(),
+  why_it_works: z.string().optional(),
+  scores: z
+    .object({
+      relevance: z.number().min(0).max(1),
+      seo_potential: z.number().min(0).max(1),
+      trend_level: z.number().min(0).max(1),
+      uniqueness: z.number().min(0).max(1),
+      reader_interest: z.number().min(0).max(1),
+      actionable_potential: z.number().min(0).max(1),
+      brand_alignment: z.number().min(0).max(1),
+      controversy: z.number().min(0).max(1),
+    })
+    .optional(),
+  tags: z.array(z.string()).optional(),
   is_saved: z.boolean().optional(),
   created_at: z.string().datetime(),
 });

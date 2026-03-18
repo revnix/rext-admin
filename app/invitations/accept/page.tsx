@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { storeInvitationContext } from "@/hooks/use-invited-user-onboarding";
 import { apiClient } from "@/lib/api-client";
 import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
+import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
 
 export default function AcceptInvitationPage() {
@@ -65,8 +66,10 @@ export default function AcceptInvitationPage() {
         name: result.workspace_name,
         slug: result.workspace_slug,
         url: "",
+        user_id: "",
         created_at: new Date().toISOString(),
-      };
+        updated_at: new Date().toISOString(),
+      } as Workspace;
 
       const inviterName =
         typeof invitation.invited_by === "string"

@@ -89,7 +89,7 @@ export function MediaPickerDialog({
     const matchesSearch = searchQuery
       ? m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         m.original_filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.tags.some((tag) =>
+        (m.tags || []).some((tag) =>
           tag.toLowerCase().includes(searchQuery.toLowerCase()),
         )
       : true;
@@ -258,8 +258,8 @@ function MediaPickerCard({ media, selected, onSelect }: MediaPickerCardProps) {
   const isVideo = mediaKind === "video";
   const isDocument = mediaKind === "document";
 
-  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
-  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url || null);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url || null);
 
   return (
     <button

@@ -65,6 +65,7 @@ import { createTopicsNamespace } from "./topics";
 import { createUsersNamespace } from "./users";
 import { createWorkspacesNamespace } from "./workspaces";
 import { createOAuthNamespace } from "./oauth";
+import { createToolsNamespace } from "./tools";
 
 // ============================================================================
 // UNIFIED API CLIENT INSTANCE
@@ -114,6 +115,7 @@ function createApiClient() {
     security: createSecurityNamespace(client),
     preferences: createPreferencesNamespace(client),
     oauth: createOAuthNamespace(client),
+    tools: createToolsNamespace(client),
 
     // Utility methods
     cancelAllRequests: () => client.cancelAllRequests(),

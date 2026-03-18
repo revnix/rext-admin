@@ -92,7 +92,7 @@ export function MediaDetailSheet({
     setEditDescription(media.description ?? "");
     setEditAltText(media.alt_text ?? "");
     setEditFolder(media.folder ?? "");
-    setEditTags(media.tags.join(", "));
+    setEditTags((media.tags || []).join(", "));
     setIsEditing(false);
   }, [media]);
 
@@ -148,7 +148,7 @@ export function MediaDetailSheet({
       setEditDescription(media.description ?? "");
       setEditAltText(media.alt_text ?? "");
       setEditFolder(media.folder ?? "");
-      setEditTags(media.tags.join(", "));
+      setEditTags((media.tags || []).join(", "));
     } else {
       setEditTitle("");
       setEditDescription("");
@@ -166,13 +166,13 @@ export function MediaDetailSheet({
     enabled: !!workspaceId && !!media?.id && open,
   });
 
-  const usage = usageResponse?.data;
+  const usage = usageResponse;
 
   if (!media) return null;
 
   const isImage = isMediaKind(media.file_type, "image");
 
-  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url ?? null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -406,7 +406,7 @@ export function MediaDetailSheet({
             </div>
 
             {/* Organization */}
-            {(isEditing || media.folder || media.tags.length > 0) && (
+            {(isEditing || media.folder || (media.tags || []).length > 0) && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">Organization</h3>
 
@@ -441,9 +441,9 @@ export function MediaDetailSheet({
                       className="mt-1"
                     />
                   ) : (
-                    media.tags.length > 0 && (
+                    (media.tags || []).length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {media.tags.map((tag) => (
+                        {(media.tags || []).map((tag) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>
@@ -485,7 +485,9 @@ export function MediaDetailSheet({
                   <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Created</p>
-                    <p className="text-sm">{formatDate(media.created_at)}</p>
+                    <p className="text-sm">
+                      {formatDate(media.created_at || "")}
+                    </p>
                   </div>
                 </div>
 
@@ -495,7 +497,9 @@ export function MediaDetailSheet({
                     <p className="text-xs text-muted-foreground">
                       Last Modified
                     </p>
-                    <p className="text-sm">{formatDate(media.updated_at)}</p>
+                    <p className="text-sm">
+                      {formatDate(media.updated_at || media.created_at || "")}
+                    </p>
                   </div>
                 </div>
 
@@ -536,7 +540,7 @@ export function MediaDetailSheet({
                       Featured Image
                     </p>
                     <div className="space-y-2">
-                      {usage.featured_in.map((content) => (
+                      {usage.featured_in.map((content: any) => (
                         <Link
                           key={content.id}
                           href={
@@ -565,7 +569,7 @@ export function MediaDetailSheet({
                       Inline Content
                     </p>
                     <div className="space-y-2">
-                      {usage.used_in_content.map((content) => (
+                      {usage.used_in_content.map((content: any) => (
                         <Link
                           key={`${content.id}-${content.position || 0}`}
                           href={

@@ -194,7 +194,7 @@ export abstract class BaseWorkspaceService {
     return {
       requestId,
       timestamp: new Date().toISOString(),
-      userId: undefined,
+      userId: "",
     };
   }
 

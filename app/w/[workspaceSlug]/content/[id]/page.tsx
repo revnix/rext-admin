@@ -45,7 +45,7 @@ export default function WorkspaceContentDetailPage({
     refetch: refetchContent,
   } = useContentDetail(workspaceId, id);
 
-  const content = contentResponse?.content;
+  const content = contentResponse;
   const [isEditing, setIsEditing] = useState(false);
   const [contentMarkdown, setContentMarkdown] = useState("");
 
@@ -136,7 +136,7 @@ export default function WorkspaceContentDetailPage({
         html_content: content?.body_html || "",
       },
       review: {
-        seo_score: content?.seo_data?.content_seo_score || 0,
+        seo_score: content?.seo_data?.seo_score || 0,
         trust_score: content?.seo_data?.trust_score
           ? {
               score: content?.seo_data.trust_score,

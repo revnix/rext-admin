@@ -13,30 +13,8 @@ export function transformTopicForBackend(
   return {
     id: topic.id,
     workspace_id: workspaceId,
-    title: topic.title,
-    angle: topic.angle,
-    description: topic.description ?? topic.title,
-    channel_fit: topic.channel_fit ?? [],
-    audience_fit: topic.audience_fit ?? [],
-    why_it_works: topic.why_it_works ?? "",
-    tags: topic.tags ?? [],
-    scores: topic.scores,
-    suggested_defaults: {
-      platform: "Website",
-      industry: topic.audience_fit?.[0] || "general",
-      audienceType: topic.audience_fit || [],
-      readingLevel: ["Intermediate"],
-      goals: ["educate-inform"],
-      tone: ["professional-formal"],
-      region: "International/Global",
-      contentLength: { type: "preset", preset: "Medium" },
-      primaryKeywords: topic.tags?.slice(0, 5) || [],
-      includeTOC: false,
-      includeSummary: true,
-      includeCTA: true,
-      includeKeyTakeaways: true,
-    },
-    input_params: undefined,
+    topic_name: topic.topic_name || topic.title || "Untitled",
+    description: topic.description ?? "",
   } satisfies BackendSaveTopicRequestList["topics"][number];
 }
 

@@ -571,43 +571,12 @@ export const transformTopicForSaving = (
     throw new Error("Invalid GeneratedTopic provided for transformation");
   }
 
-  // Ensure required arrays have at least one item
-  if (topic.channel_fit.length === 0) {
-    throw new Error("channel_fit array cannot be empty for backend save");
-  }
-  if (topic.audience_fit.length === 0) {
-    throw new Error("audience_fit array cannot be empty for backend save");
-  }
-  if (topic.tags.length === 0) {
-    throw new Error("tags array cannot be empty for backend save");
-  }
-
   // Transform to backend format (match SaveTopicRequest schema)
   const backendTopic: BackendSaveTopicItem = {
     id: topic.id,
     workspace_id: workspaceId,
-    title: topic.title,
-    angle: topic.angle,
-    description: topic.description || topic.angle, // Use angle as fallback if no description
-    channel_fit: topic.channel_fit,
-    audience_fit: topic.audience_fit,
-    why_it_works: topic.why_it_works,
-    tags: topic.tags,
-    scores: topic.scores,
-    suggested_defaults: {
-      platform: "blog",
-      industry: "general",
-      audienceType: topic.audience_fit,
-      readingLevel: ["intermediate"],
-      goals: ["educate-inform"],
-      tone: ["professional-formal"],
-      region: "global",
-      contentLength: "medium",
-      primaryKeywords: topic.tags,
-      secondaryKeywords: [],
-      includeTOC: false,
-    },
-    input_params: undefined,
+    topic_name: topic.topic_name || topic.title || "Untitled",
+    description: topic.description || "",
   };
 
   // Return the backend-compatible topic

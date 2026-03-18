@@ -57,8 +57,8 @@ export function WorkspaceKnowledgeBasesTable({
     id: kb.id,
     name: kb.name,
     description: kb.description,
-    type: kb.type,
-    items_count: kb.items_count,
+    type: (kb as any).type || "custom",
+    items_count: kb.items_count || 0,
     created_at: kb.created_at,
     formatted_date: format(new Date(kb.created_at), "MMM d, yyyy"),
   }));

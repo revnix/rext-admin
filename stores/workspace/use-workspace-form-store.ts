@@ -48,7 +48,7 @@ export const useWorkspaceFormStore = create<WorkspaceFormStoreState>()(
                   timezone:
                     workspace.timezone ||
                     Intl.DateTimeFormat().resolvedOptions().timeZone,
-                  url: workspace.url,
+                  url: workspace.url || "",
                 }
               : initialWorkspaceFormData,
             isSubmitting: false,

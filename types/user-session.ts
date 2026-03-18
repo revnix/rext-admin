@@ -5,26 +5,22 @@
  * Separate from topic generation sessions (types/session.ts).
  */
 
+import type { SessionItem } from "./generated/types.gen";
+
 export type DeviceType = "desktop" | "mobile" | "tablet";
 
-export interface UserSession {
-  id: string;
-  device_name: string | null;
-  device_type: DeviceType | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string | null;
-  last_activity_at: string | null;
-  is_current: boolean;
+export interface UserSession extends SessionItem {
+  device_name?: string | null;
+  device_type?: DeviceType | null;
+  // Non-nullable if SessionItem says so
+  last_activity_at: string;
   // Optional extension fields
-  user_id?: string;
   country?: string | null;
   city?: string | null;
   is_active?: boolean;
-  expires_at?: string | null;
 }
 
-export interface SessionListResponse {
+export interface UserSessionListResponse {
   sessions: UserSession[];
   total_count: number;
   active_count: number;

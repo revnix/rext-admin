@@ -70,7 +70,7 @@ export function useWorkspaceAutoSelect() {
     }
 
     // Update workspace list in store
-    setWorkspaceList(workspaces);
+    setWorkspaceList(workspaces as any);
 
     // If currentWorkspace is already set and exists in the list, keep it
     if (
@@ -82,7 +82,7 @@ export function useWorkspaceAutoSelect() {
     }
 
     // Auto-selection logic
-    let selectedWorkspace = null;
+    let selectedWorkspace: any = null;
 
     // Strategy 1: If only 1 workspace, auto-select it
     if (workspaces.length === 1) {

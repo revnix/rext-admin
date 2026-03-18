@@ -461,4 +461,24 @@ export const ENDPOINTS = {
     // Placeholders for future use patterns
     HEALTH: "/api/health",
   },
+
+  /**
+   * Tools Endpoints
+   * @note Platform-level SEO and content tools
+   */
+  TOOLS: {
+    BASE: "/api/v1/tools/",
+    METRICS: "/api/v1/tools/count_metrics",
+    META_DESCRIPTION: "/api/v1/tools/meta-description/generate",
+    SCHEMA_GENERATOR: "/api/v1/tools/schema-generator",
+    READABILITY: "/api/v1/tools/readability-checker",
+    CANONICAL: "/api/v1/tools/canonical-tag-generator",
+    QUESTION_GENERATOR: "/api/v1/tools/question-generator",
+    LINK_CHECKER: "/api/v1/tools/link-checker",
+    IDEA_GENERATOR: "/api/v1/tools/content-idea-generator",
+    ROBOTS_TXT: "/api/v1/tools/robots-txt/generate",
+    GRAMMAR_CHECKER: "/api/v1/tools/grammar-checker",
+    HOOK_GENERATOR: "/api/v1/tools/hook-generator",
+    SEO_BLOG_TITLES: "/api/v1/tools/seo-blog-titles",
+  },
 } as const;

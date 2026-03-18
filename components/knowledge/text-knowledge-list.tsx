@@ -177,7 +177,7 @@ export function TextKnowledgeList({
   // Update store when data changes
   useEffect(() => {
     if (textKnowledge) {
-      setItems(textKnowledge);
+      setItems(textKnowledge as any);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textKnowledge, setItems]);

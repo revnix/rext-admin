@@ -107,7 +107,7 @@ export function AddTextDialog({
       );
 
       // Add to store with optimistic update
-      addItem(textKnowledge);
+      addItem(textKnowledge as any);
 
       toast.success(`Text note "${data.title}" created successfully`);
       reset();

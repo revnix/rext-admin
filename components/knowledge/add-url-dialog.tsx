@@ -98,7 +98,7 @@ export function AddUrlDialog({
       );
 
       // Update the store
-      addItem(newWebKnowledge);
+      addItem(newWebKnowledge as any);
 
       // Show success message
       toast.success("URL added successfully", {

@@ -104,8 +104,8 @@ function MediaCard({
   //   return `${backendUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   // };
 
-  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url);
-  const publicUrl = toAbsoluteMediaUrl(media.public_url);
+  const thumbnailUrl = toAbsoluteMediaUrl(media.thumbnail_url ?? null);
+  const publicUrl = toAbsoluteMediaUrl(media.public_url ?? null);
 
   const handleClick = () => {
     if (selectionMode && onSelectionChange) {
@@ -190,9 +190,9 @@ function MediaCard({
             </p>
           )}
         </div>
-        {media.tags.length > 0 && (
+        {(media.tags || []).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {media.tags.slice(0, 2).map((tag) => (
+            {(media.tags || []).slice(0, 2).map((tag) => (
               <span
                 key={tag}
                 className="inline-block text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded"
@@ -200,9 +200,9 @@ function MediaCard({
                 {tag}
               </span>
             ))}
-            {media.tags.length > 2 && (
+            {(media.tags || []).length > 2 && (
               <span className="inline-block text-[10px] text-muted-foreground">
-                +{media.tags.length - 2}
+                +{(media.tags || []).length - 2}
               </span>
             )}
           </div>

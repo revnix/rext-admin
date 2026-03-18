@@ -19,8 +19,8 @@ export const getWorkspaceDisplayTitle = (
     return workspace.name.trim();
   }
 
-  if (isNonEmptyString(workspace.title)) {
-    return workspace.title.trim();
+  if ("title" in workspace && isNonEmptyString(workspace.title)) {
+    return workspace.title.trim() as string;
   }
 
   return fallback;

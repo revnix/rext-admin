@@ -20,8 +20,8 @@ import { useAuthStore } from "@/stores/auth-store";
 interface User {
   id: string;
   email: string;
-  full_name?: string;
-  display_name?: string;
+  full_name?: string | null;
+  display_name?: string | null;
 }
 
 interface ImpersonationStartDialogProps {

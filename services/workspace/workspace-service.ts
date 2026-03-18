@@ -30,7 +30,6 @@ import { VALIDATION_MESSAGES } from "./validation-messages";
 
 export { WorkspaceServiceError };
 
-
 // ============================================================================
 // MAIN SERVICE CLASS
 // ============================================================================
@@ -70,9 +69,7 @@ export class WorkspaceService extends BaseWorkspaceService {
   /**
    * Get workspace by slug
    */
-  async getWorkspaceBySlug(
-    workspaceSlug: string,
-  ): Promise<Workspace> {
+  async getWorkspaceBySlug(workspaceSlug: string): Promise<Workspace> {
     if (!/^[a-z0-9-]+$/.test(workspaceSlug)) {
       throw new WorkspaceServiceError(
         "INVALID_REQUEST",
@@ -119,9 +116,7 @@ export class WorkspaceService extends BaseWorkspaceService {
   /**
    * Duplicate workspace
    */
-  async duplicateWorkspace(
-    sourceWorkspaceId: string,
-  ): Promise<Workspace> {
+  async duplicateWorkspace(sourceWorkspaceId: string): Promise<Workspace> {
     this.validateUuid(sourceWorkspaceId, "workspace_id");
 
     const sourceWorkspace = await this.getWorkspace(sourceWorkspaceId);
@@ -230,7 +225,6 @@ export class WorkspaceService extends BaseWorkspaceService {
     return apiClient.getActiveRequestsCount();
   }
 }
-
 
 // Default instance
 export const workspaceService = new WorkspaceService();

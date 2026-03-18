@@ -5,22 +5,19 @@
  */
 
 import type {
-  FileKnowledge,
-  TextKnowledge,
-  WebKnowledge,
-} from "@/types/workspace";
+  WebKnowledgeResponse,
+  WebKnowledgeListResponse,
+  FileKnowledgeResponse,
+  FileKnowledgeListResponse,
+  TextKnowledgeResponse,
+  TextKnowledgeListResponse,
+  KnowledgeBaseResponse,
+  KnowledgeBaseListResponse,
+  KnowledgeBaseDetail,
+} from "@/types/generated/types.gen";
 import type { ApiClient } from "./core";
 
-export interface KnowledgeBase {
-  id: string;
-  workspace_id: string;
-  name: string;
-  description: string | null;
-  type: "default" | "custom";
-  items_count: number;
-  created_at: string;
-  updated_at: string | null;
-}
+export type KnowledgeBase = KnowledgeBaseDetail;
 
 export function createKnowledgeNamespace(client: ApiClient) {
   return {
@@ -31,13 +28,15 @@ export function createKnowledgeNamespace(client: ApiClient) {
     /**
      * List all knowledge bases for workspace
      */
-    listBases: async (workspaceId: string) => {
-      return client.request<{
-        knowledge_bases: KnowledgeBase[];
-        total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge-bases`, {
-        method: "GET",
-      });
+    listBases: async (
+      workspaceId: string,
+    ): Promise<KnowledgeBaseListResponse> => {
+      return client.request<KnowledgeBaseListResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge-bases`,
+        {
+          method: "GET",
+        },
+      );
     },
 
     /**
@@ -47,8 +46,8 @@ export function createKnowledgeNamespace(client: ApiClient) {
       workspaceId: string,
       kbId: string,
       includeItems = false,
-    ) => {
-      return client.request<{ knowledge_base: KnowledgeBase }>(
+    ): Promise<KnowledgeBaseResponse> => {
+      return client.request<KnowledgeBaseResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge-bases/${kbId}?include_items=${includeItems}`,
         {
           method: "GET",
@@ -62,8 +61,8 @@ export function createKnowledgeNamespace(client: ApiClient) {
     createBase: async (
       workspaceId: string,
       data: { name: string; description?: string },
-    ) => {
-      return client.request<{ knowledge_base: KnowledgeBase }>(
+    ): Promise<KnowledgeBaseResponse> => {
+      return client.request<KnowledgeBaseResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge-bases`,
         {
           method: "POST",
@@ -80,8 +79,8 @@ export function createKnowledgeNamespace(client: ApiClient) {
       workspaceId: string,
       kbId: string,
       data: { name?: string; description?: string },
-    ) => {
-      return client.request<{ knowledge_base: KnowledgeBase }>(
+    ): Promise<KnowledgeBaseResponse> => {
+      return client.request<KnowledgeBaseResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge-bases/${kbId}`,
         {
           method: "PUT",
@@ -94,7 +93,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
     /**
      * Delete knowledge base
      */
-    deleteBase: async (workspaceId: string, kbId: string) => {
+    deleteBase: async (workspaceId: string, kbId: string): Promise<void> => {
       return client.request<void>(
         `/api/v1/workspaces/${workspaceId}/knowledge-bases/${kbId}`,
         {
@@ -107,42 +106,31 @@ export function createKnowledgeNamespace(client: ApiClient) {
     // WEB KNOWLEDGE
     // ========================================================================
 
-    /**
-     * List web knowledge for workspace
-     */
     listWeb: async (workspaceId: string) => {
-      return client.request<{
-        web_knowledge: WebKnowledge[];
-        total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web`, {
-        method: "GET",
-      });
+      return client.request<WebKnowledgeListResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/web`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Get single web knowledge item
-     */
     getWeb: async (webId: string, workspaceId: string) => {
-      return client.request<{
-        id: string;
-        url: string;
-        title: string;
-        created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`, {
-        method: "GET",
-      });
+      return client.request<WebKnowledgeResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Add web knowledge
-     */
     addWeb: async (
       workspaceId: string,
       url: string,
       title?: string,
       knowledgeBaseId?: string,
     ) => {
-      return client.request<WebKnowledge>(
+      return client.request<WebKnowledgeResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge/web`,
         {
           method: "POST",
@@ -156,19 +144,15 @@ export function createKnowledgeNamespace(client: ApiClient) {
       );
     },
 
-    /**
-     * Update web knowledge
-     */
     updateWeb: async (workspaceId: string, webId: string, title: string) => {
-      return client.request<{
-        id: string;
-        url: string;
-        title: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
+      return client.request<WebKnowledgeResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/web/${webId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        },
+      );
     },
 
     /**
@@ -187,35 +171,24 @@ export function createKnowledgeNamespace(client: ApiClient) {
     // FILE KNOWLEDGE
     // ========================================================================
 
-    /**
-     * List file knowledge for workspace
-     */
     listFiles: async (workspaceId: string) => {
-      return client.request<{
-        file_knowledge: FileKnowledge[];
-        total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/files`, {
-        method: "GET",
-      });
+      return client.request<FileKnowledgeListResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/files`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Get single file knowledge item
-     */
     getFile: async (fileId: string, workspaceId: string) => {
-      return client.request<{
-        id: string;
-        filename: string;
-        file_path: string;
-        created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`, {
-        method: "GET",
-      });
+      return client.request<FileKnowledgeResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/files/${fileId}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Add file knowledge (upload)
-     */
     addFile: async (
       workspaceId: string,
       file: FormData,
@@ -225,7 +198,7 @@ export function createKnowledgeNamespace(client: ApiClient) {
       if (knowledgeBaseId) {
         file.append("knowledge_base_id", knowledgeBaseId);
       }
-      return client.request<FileKnowledge>(
+      return client.request<FileKnowledgeResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge/files`,
         {
           method: "POST",
@@ -250,42 +223,31 @@ export function createKnowledgeNamespace(client: ApiClient) {
     // TEXT KNOWLEDGE
     // ========================================================================
 
-    /**
-     * List text knowledge for workspace
-     */
     listText: async (workspaceId: string) => {
-      return client.request<{
-        text_knowledge: TextKnowledge[];
-        total_count: number;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text`, {
-        method: "GET",
-      });
+      return client.request<TextKnowledgeListResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/text`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Get single text knowledge item
-     */
     getText: async (textId: string, workspaceId: string) => {
-      return client.request<{
-        id: string;
-        title: string;
-        content: string;
-        created_at: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`, {
-        method: "GET",
-      });
+      return client.request<TextKnowledgeResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
+        {
+          method: "GET",
+        },
+      );
     },
 
-    /**
-     * Add text knowledge
-     */
     addText: async (
       workspaceId: string,
       _title: string,
       content: string,
       knowledgeBaseId?: string,
     ) => {
-      return client.request<TextKnowledge>(
+      return client.request<TextKnowledgeResponse>(
         `/api/v1/workspaces/${workspaceId}/knowledge/text`,
         {
           method: "POST",
@@ -299,23 +261,19 @@ export function createKnowledgeNamespace(client: ApiClient) {
       );
     },
 
-    /**
-     * Update text knowledge
-     */
     updateText: async (
       workspaceId: string,
       textId: string,
       data: { title?: string; content?: string; tags?: string[] },
     ) => {
-      return client.request<{
-        id: string;
-        title: string;
-        content: string;
-      }>(`/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      return client.request<TextKnowledgeResponse>(
+        `/api/v1/workspaces/${workspaceId}/knowledge/text/${textId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
 
     /**

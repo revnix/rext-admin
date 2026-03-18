@@ -42,7 +42,8 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
   // Fetch the latest persona data directly to ensure synchronization
   const { data: personaData } = usePersona(workspace?.id || null, personaId);
-  const persona = personaData?.persona || initialPersona;
+  const persona =
+    (personaData as any)?.persona || personaData || initialPersona;
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
@@ -77,7 +78,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
     deletePersona.mutate(persona.id, {
       onSuccess: () => {
-        router.push(`/w/${workspaceSlug}/personas`);
+        router.push(`/w/${workspaceSlug}/personas` as Route);
       },
     });
   };
@@ -91,7 +92,17 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+    if (id === "areas_of_expertise") {
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+    }
   };
 
   return (
@@ -340,14 +351,21 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 {isEditing ? (
                   <Input
                     id="areas_of_expertise"
-                    value={formData.areas_of_expertise || ""}
+                    value={
+                      Array.isArray(formData.areas_of_expertise)
+                        ? formData.areas_of_expertise.join(", ")
+                        : formData.areas_of_expertise || ""
+                    }
                     onChange={handleChange}
                     placeholder="Comma separated values"
                   />
                 ) : (
                   persona.areas_of_expertise && (
                     <div className="flex flex-wrap gap-2">
-                      {persona.areas_of_expertise.split(",").map((area) => (
+                      {(Array.isArray(persona.areas_of_expertise)
+                        ? persona.areas_of_expertise
+                        : String(persona.areas_of_expertise || "").split(",")
+                      ).map((area: string) => (
                         <Badge
                           key={area.trim()}
                           variant="secondary"

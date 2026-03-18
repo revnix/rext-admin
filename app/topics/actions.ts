@@ -158,26 +158,14 @@ export async function deleteTopics(formData: FormData) {
 }
 
 export interface SaveTopicData {
-  title: string;
+  topic_name: string;
   description?: string;
-  angle?: string;
-  tags?: string[];
-  audience_fit?: string[];
-  channel_fit?: string[];
-  scores?: Record<string, number>;
-  why_it_works?: string;
 }
 
 export interface UpdateTopicData {
   topic_id: string;
-  title?: string;
-  angle?: string;
+  topic_name?: string;
   description?: string;
-  channel_fit?: string[];
-  audience_fit?: string[];
-  why_it_works?: string;
-  tags?: string[];
-  approved?: boolean;
 }
 
 /**
@@ -265,47 +253,6 @@ export async function updateTopic(formData: FormData) {
 }
 
 /**
- * Approve a topic - convenience wrapper around updateTopic
- *
- * @param formData - FormData containing topicId and workspaceId
- * @returns Promise resolving to update operation results
- * @throws {Error} When topic ID or workspace ID is missing, or approval fails
- *
- * @example
- * ```typescript
- * const formData = new FormData();
- * formData.set("topicId", "topic_123");
- * formData.set("workspaceId", "workspace_abc");
- * const result = await approveTopic(formData);
- * ```
- */
-export async function approveTopic(formData: FormData) {
-  const topicId = formData.get("topicId") as string;
-  const workspaceId = formData.get("workspaceId") as string;
-
-  if (!topicId) {
-    throw new Error("Topic ID is required");
-  }
-
-  if (!workspaceId) {
-    throw new Error("Workspace ID is required");
-  }
-
-  // Create a new FormData with the update structure
-  const updateFormData = new FormData();
-  updateFormData.set(
-    "updateData",
-    JSON.stringify({
-      topic_id: topicId,
-      approved: true,
-    }),
-  );
-  updateFormData.set("workspaceId", workspaceId);
-
-  return await updateTopic(updateFormData);
-}
-
-/**
  * Save generated topics using BackendService
  *
  * @param formData - FormData containing topicsData (JSON array) and workspaceId
@@ -347,7 +294,7 @@ export async function saveTopic(formData: FormData) {
     logger.info("Saving topics via server action", {
       workspaceId,
       count: topicsData.length,
-      firstTitle: topicsData[0]?.title,
+      firstTitle: topicsData[0]?.topic_name,
     });
 
     const backendService = new BackendService();
