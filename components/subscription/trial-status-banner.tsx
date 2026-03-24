@@ -64,10 +64,10 @@ export function TrialStatusBanner({
     // Calculate time remaining in trial with real-time updates
     const calculateTimeRemaining = () => {
       if (
-        subscription?.status === SubscriptionStatus.TRIAL &&
-        subscription.trial_end_date
+        subscription?.subscription?.status === SubscriptionStatus.TRIAL &&
+        subscription?.subscription?.trial_end_date
       ) {
-        const trialEnd = new Date(subscription.trial_end_date);
+        const trialEnd = new Date(subscription?.subscription?.trial_end_date);
         const now = new Date();
         const diffTime = trialEnd.getTime() - now.getTime();
 
@@ -109,7 +109,7 @@ export function TrialStatusBanner({
   }
 
   // Don't show if not on trial
-  if (subscription?.status !== SubscriptionStatus.TRIAL) {
+  if (subscription?.subscription?.status !== SubscriptionStatus.TRIAL) {
     return null;
   }
 
@@ -203,7 +203,7 @@ export function TrialStatusBanner({
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {/* Icon */}
-          <div className="flex-shrink-0 mt-0.5">
+          <div className="shrink-0 mt-0.5">
             {isUrgent ? (
               <AlertCircle className={`h-5 w-5 ${colors.icon}`} />
             ) : isExpiringSoon ? (
@@ -228,7 +228,7 @@ export function TrialStatusBanner({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <Button
                   onClick={handleUpgrade}
                   className={colors.button}

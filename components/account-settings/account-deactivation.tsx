@@ -278,25 +278,27 @@ export function AccountDeactivation() {
                   control={form.control}
                   name="understood"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg bg-muted/50">
-                      <FormControl>
-                        <Checkbox
-                          id="understood"
-                          checked={field.value}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked === true)
-                          }
-                          disabled={deactivateMutation.isPending}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel
-                          htmlFor="understood"
-                          className="cursor-pointer font-medium"
-                        >
-                          I understand that my account will be permanently
-                          deleted after 14 days
-                        </FormLabel>
+                    <FormItem className="p-4 border rounded-lg bg-muted/50">
+                      <div className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            id="understood"
+                            checked={field.value}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
+                            disabled={deactivateMutation.isPending}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel
+                            htmlFor="understood"
+                            className="cursor-pointer font-medium"
+                          >
+                            I understand that my account will be permanently
+                            deleted after 14 days
+                          </FormLabel>
+                        </div>
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -308,31 +310,33 @@ export function AccountDeactivation() {
                     control={form.control}
                     name="cancel_subscriptions"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 border rounded-lg bg-destructive/10 border-destructive/20">
-                        <FormControl>
-                          <Checkbox
-                            id="cancel-subscriptions-inline"
-                            checked={field.value}
-                            onCheckedChange={(checked) =>
-                              field.onChange(checked === true)
-                            }
-                            disabled={deactivateMutation.isPending}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel
-                            htmlFor="cancel-subscriptions-inline"
-                            className="cursor-pointer font-medium"
-                          >
-                            Automatically cancel my {subscriptions.length}{" "}
-                            active subscription
-                            {subscriptions.length > 1 ? "s" : ""}
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            All active subscriptions will be canceled
-                            immediately. You&apos;ll retain access until the end
-                            of your current billing period.
-                          </p>
+                      <FormItem className="p-4 border rounded-lg bg-destructive/10 border-destructive/20">
+                        <div className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              id="cancel-subscriptions-inline"
+                              checked={field.value}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked === true)
+                              }
+                              disabled={deactivateMutation.isPending}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel
+                              htmlFor="cancel-subscriptions-inline"
+                              className="cursor-pointer font-medium"
+                            >
+                              Automatically cancel my {subscriptions.length}{" "}
+                              active subscription
+                              {subscriptions.length > 1 ? "s" : ""}
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              All active subscriptions will be canceled
+                              immediately. You&apos;ll retain access until the end
+                              of your current billing period.
+                            </p>
+                          </div>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -344,15 +348,13 @@ export function AccountDeactivation() {
                   <AlertDialogCancel disabled={deactivateMutation.isPending}>
                     Cancel
                   </AlertDialogCancel>
-                  <AlertDialogAction asChild>
-                    <Button
-                      type="submit"
-                      variant="destructive"
-                      disabled={deactivateMutation.isPending}
-                    >
-                      Deactivate Account
-                    </Button>
-                  </AlertDialogAction>
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    disabled={deactivateMutation.isPending}
+                  >
+                    Deactivate Account
+                  </Button>
                 </AlertDialogFooter>
               </form>
             </AlertDialogContent>

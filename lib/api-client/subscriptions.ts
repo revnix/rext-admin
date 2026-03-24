@@ -31,12 +31,13 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * Get current user's subscription
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
-      return client.request<UserSubscription>(
+      const response = await client.request<UserSubscription>(
         ENDPOINTS.SUBSCRIPTIONS.mySubscription,
         {
           method: "GET",
         },
       );
+      return response;
     },
 
     /**
@@ -242,74 +243,12 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      * @returns Current usage stats
      */
     getUsageStats: async (): Promise<UsageStats> => {
-      const result = await client.request<unknown>(
+      const result = await client.request<UsageStats>(
         ENDPOINTS.SUBSCRIPTIONS.usage,
-        {
-          method: "GET",
-        },
+        { method: "GET" },
       );
 
-      // Normalize the response to the UsageStats interface
-      if (result && typeof result === "object") {
-        const resObj = result as Record<string, unknown>;
-
-        // Handle the new nested structure (e.g., workspaces: {used, limit, percentage})
-        // or the older structure (e.g., workspaces: {current, max})
-        const flattened: Record<string, unknown> = {};
-
-        // Extract plan info from meta if available
-        if (resObj.meta && typeof resObj.meta === "object") {
-          const meta = resObj.meta as Record<string, unknown>;
-          flattened.plan_name = meta.plan_name || "Unknown";
-          flattened.billing_period = meta.billing_period || "Monthly";
-          flattened.subscription_id = meta.subscription_id || "";
-        }
-
-        for (const [key, value] of Object.entries(resObj)) {
-          // Skip the meta object as we handle it separately
-          if (key === "meta") continue;
-
-          if (value && typeof value === "object") {
-            const val = value as {
-              current?: number;
-              used?: number;
-              max?: number;
-              limit?: number;
-              percentage?: number;
-              reset_date?: string | null;
-            };
-
-            const current = val.used ?? val.current ?? 0;
-            const max = val.limit ?? val.max ?? 0;
-
-            flattened[`current_${key}`] = current;
-
-            // Handle specific field name differences for backward compatibility
-            const maxKey =
-              key === "api_calls" ? "max_api_calls_per_month" : `max_${key}`;
-            flattened[maxKey] = max;
-
-            // Use percentage from API if available, otherwise calculate
-            const percentKey = `${key}_usage_percent`;
-            flattened[percentKey] =
-              val.percentage ?? (max > 0 ? (current / max) * 100 : 0);
-
-            // Special handling for api_calls reset date
-            if (key === "api_calls" && val.reset_date) {
-              flattened.usage_reset_date = val.reset_date;
-            }
-          }
-        }
-
-        // If usage_reset_date is still missing, provide a fallback or find it if it was at top level
-        if (!flattened.usage_reset_date && resObj.usage_reset_date) {
-          flattened.usage_reset_date = resObj.usage_reset_date;
-        }
-
-        return flattened as unknown as UsageStats;
-      }
-
-      return result as UsageStats;
+      return result;
     },
 
     /**

@@ -113,7 +113,7 @@ export default function PricingPage() {
       {/* Pricing Table */}
       <div className="max-w-7xl mx-auto">
         {plans.length > 0 ? (
-          <PricingTable />
+          <PricingTable plans={plans} />
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">

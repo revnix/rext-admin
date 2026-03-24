@@ -8,6 +8,7 @@ interface SafeLexicalEditorProps {
   onChange?: (markdown: string) => void;
   readOnly?: boolean;
   showDebug?: boolean;
+  toolbarClass?: string;
 }
 
 function LexicalEditorFallback({

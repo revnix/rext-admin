@@ -9,11 +9,9 @@ import {
   Calendar,
   Edit3,
   Eye,
-  Copy,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { BaseKnowledgeCard } from "@/components/knowledge/shared/BaseKnowledgeCard";
 import type { ContentItem, ContentStatus } from "@/types/content";
 import type {
@@ -105,25 +103,7 @@ export function ContentCard({
       </span>
     ),
     getStatusConfig: (item: ContentItem) => statusConfig[item.status] || null,
-    getActions: (item: ContentItem): CardAction[] => [
-      {
-        icon: Eye,
-        label: "View",
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(
-            workspaceRoutes.contentDetail(workspaceSlug, item.id) as Route,
-          );
-        },
-      },
-      {
-        icon: Copy,
-        label: "Copy",
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          toast.info("Copy functionality not implemented yet");
-        },
-      },
+    getActions: (): CardAction[] => [
       {
         icon: Trash2,
         label: "Delete",

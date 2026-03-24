@@ -106,8 +106,21 @@ export function createAuditLogsNamespace(client: ApiClient) {
         offset: filters?.offset,
       });
 
-      return client.request<{
-        logs: Array<{
+      const response = await client.request<{
+        message?: string;
+        items?: Array<{
+          id: string;
+          user_id: string;
+          action: string;
+          resource_type: string;
+          resource_id: string;
+          details: Record<string, unknown>;
+          ip_address: string;
+          user_agent: string;
+          created_at: string;
+          status?: string;
+        }>;
+        logs?: Array<{
           id: string;
           user_id: string;
           action: string;
@@ -124,7 +137,14 @@ export function createAuditLogsNamespace(client: ApiClient) {
       }>(endpoint, {
         method: "GET",
       });
+
+      // Normalize: API returns `items`, legacy expected `logs`
+      return {
+        ...response,
+        logs: response.logs ?? response.items ?? [],
+      };
     },
+
 
     /**
      * Get all audit logs (admin)

@@ -98,7 +98,7 @@ export default function SubscriptionDashboardPage() {
       setLoading(true);
 
       const [subscriptionResult, plansResult] = await Promise.allSettled([
-        fetchSubscription(), // already fetches usage in store
+        fetchSubscription({ force: true }), // already fetches usage in store
         loadPlans(),
       ]);
 
@@ -135,7 +135,8 @@ export default function SubscriptionDashboardPage() {
     );
   }
 
-  if (!subscription || !usage) {
+  // Render the dashboard if we have subscription data, even if usage stats failed
+  if (!subscription?.subscription) {
     return (
       <PageLayout
         title="Subscription Management"
@@ -161,13 +162,14 @@ export default function SubscriptionDashboardPage() {
     );
   }
 
-  const isTrial = subscription.status === SubscriptionStatus.TRIAL;
+  const isTrial =
+    subscription?.subscription?.status === SubscriptionStatus.TRIAL;
   const canChangePlan =
-    subscription.status === SubscriptionStatus.ACTIVE ||
-    subscription.status === SubscriptionStatus.TRIAL;
+    subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
+    subscription?.subscription?.status === SubscriptionStatus.TRIAL;
   const canCancel =
-    subscription.status === SubscriptionStatus.ACTIVE ||
-    subscription.status === SubscriptionStatus.TRIAL;
+    subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
+    subscription?.subscription?.status === SubscriptionStatus.TRIAL;
 
   // NOTE: This page is protected by middleware (see middleware.ts)
   // No need for PermissionGuard wrapper as middleware already validates subscription.read permission
@@ -176,6 +178,13 @@ export default function SubscriptionDashboardPage() {
       title="Subscription Management"
       description="Manage your subscription, view usage, and access billing"
     >
+      {/* Debug Info (Wait for console for real data) */}
+      {!usage && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+          Usage statistics are currently unavailable, but your plan details are
+          still accessible.
+        </div>
+      )}
       {/* Trial Banner */}
       {isTrial && <TrialStatusBanner showGlobally={false} />}
 
@@ -234,7 +243,7 @@ export default function SubscriptionDashboardPage() {
                 </CustomerPortalButton>
 
                 <Button
-                  onClick={() => router.push("/dashboard/billing" as Route)}
+                  onClick={() => router.push("/billing" as Route)}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -361,9 +370,7 @@ export default function SubscriptionDashboardPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your invoice history is available in the dedicated billing page.
               </p>
-              <Button
-                onClick={() => router.push("/dashboard/billing" as Route)}
-              >
+              <Button onClick={() => router.push("/billing" as Route)}>
                 <FileText className="mr-2 h-4 w-4" />
                 View All Invoices
               </Button>
@@ -373,13 +380,13 @@ export default function SubscriptionDashboardPage() {
       </Tabs>
 
       {/* Plan Change Modal */}
-      {subscription && (
+      {subscription?.subscription && (
         <PlanChangeModal
           open={planChangeModalOpen}
           onOpenChange={setPlanChangeModalOpen}
           plans={plans}
-          currentPlanId={subscription.plan_id}
-          currentBillingPeriod={subscription.billing_period}
+          currentPlanId={subscription?.subscription.plan_id}
+          currentBillingPeriod={subscription?.subscription.billing_period}
         />
       )}
 
@@ -387,7 +394,7 @@ export default function SubscriptionDashboardPage() {
       <CancelSubscriptionModal
         open={cancelModalOpen}
         onOpenChange={setCancelModalOpen}
-        currentPeriodEnd={subscription.current_period_end ?? null}
+        currentPeriodEnd={subscription?.subscription.current_period_end ?? null}
       />
 
       {/* Footer with Policy Links */}

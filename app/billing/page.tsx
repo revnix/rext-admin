@@ -89,7 +89,7 @@ export default function BillingHistoryPage() {
     >
       <div className="space-y-8">
         {/* Current Billing Cycle Info */}
-        {subscription && (
+        {subscription?.subscription && (
           <Card>
             <CardHeader>
               <CardTitle>Current Billing Cycle</CardTitle>
@@ -103,8 +103,8 @@ export default function BillingHistoryPage() {
                   <p className="text-sm font-medium text-muted-foreground">
                     Plan
                   </p>
-                  <p className="text-lg font-semibold">
-                    {subscription.plan_name}
+                  <p className="text-lg font-semibold capitalize">
+                    {subscription?.subscription?.plan_name}
                   </p>
                 </div>
                 <div>
@@ -112,7 +112,7 @@ export default function BillingHistoryPage() {
                     Billing Period
                   </p>
                   <p className="text-lg font-semibold capitalize">
-                    {subscription.billing_period}
+                    {subscription?.subscription?.billing_period}
                   </p>
                 </div>
                 <div>
@@ -120,18 +120,18 @@ export default function BillingHistoryPage() {
                     Status
                   </p>
                   <p className="text-lg font-semibold capitalize">
-                    {subscription.status}
+                    {subscription?.subscription?.status}
                   </p>
                 </div>
               </div>
 
-              {subscription.current_period_end && (
+              {subscription?.subscription?.current_period_end && (
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground">
                     Next billing date:{" "}
                     <span className="font-medium text-foreground">
                       {new Date(
-                        subscription.current_period_end,
+                        subscription?.subscription?.current_period_end,
                       ).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
