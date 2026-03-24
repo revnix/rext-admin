@@ -90,7 +90,7 @@ export function PricingTable({
 
   // Check if plan is current
   const isCurrentPlan = (planId: string) => {
-    return subscription?.plan_id === planId;
+    return subscription?.subscription?.plan_id === planId;
   };
 
   if (plans?.length === 0) {

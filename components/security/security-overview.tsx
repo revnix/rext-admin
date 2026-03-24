@@ -27,13 +27,14 @@ export function SecurityOverview() {
     queryKey: ["profile"],
     queryFn: () => apiClient.profile.get(),
   });
-  
+
   const resendMutation = useMutation({
-    mutationFn: () => apiClient.profile.resendVerification(profile?.email ?? ""),
+    mutationFn: () =>
+      apiClient.profile.resendVerification(profile?.email ?? ""),
     onSuccess: (data) => {
       toast.success(data.message || "Verification email sent successfully");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(error.message || "Failed to resend verification email");
     },
   });

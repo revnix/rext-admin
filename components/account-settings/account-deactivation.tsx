@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -57,8 +56,8 @@ export function AccountDeactivation() {
   // Check if user has an active subscription
   const hasActiveSubscriptions =
     subscription &&
-    (subscription.status === SubscriptionStatus.ACTIVE ||
-      subscription.status === SubscriptionStatus.TRIAL);
+    (subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
+      subscription?.subscription?.status === SubscriptionStatus.TRIAL);
 
   // Convert single subscription to array format for easier rendering
   const subscriptions = hasActiveSubscriptions ? [subscription] : [];
@@ -333,8 +332,8 @@ export function AccountDeactivation() {
                             </FormLabel>
                             <p className="text-xs text-muted-foreground">
                               All active subscriptions will be canceled
-                              immediately. You&apos;ll retain access until the end
-                              of your current billing period.
+                              immediately. You&apos;ll retain access until the
+                              end of your current billing period.
                             </p>
                           </div>
                         </div>

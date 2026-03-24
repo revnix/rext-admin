@@ -47,9 +47,9 @@ const SubscriptionManagementComponent = () => {
     <div>
       <h1>Subscription Management</h1>
       <div data-testid="subscription-status">
-        <p>Plan: {subscription.plan_display_name}</p>
-        <p>Status: {subscription.status}</p>
-        <p>Period: {subscription.billing_period}</p>
+        <p>Plan: {subscription?.subscription?.plan_display_name}</p>
+        <p>Status: {subscription?.subscription?.status}</p>
+        <p>Period: {subscription?.subscription?.billing_period}</p>
       </div>
 
       {usage && (

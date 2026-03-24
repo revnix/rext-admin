@@ -185,7 +185,6 @@ export function createSecurityNamespace(client: ApiClient) {
       };
     },
 
-
     /**
      * Get active sessions count
      */
