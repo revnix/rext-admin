@@ -99,16 +99,22 @@ export function SubscriptionStatusCard({
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "N/A";
+    }
   };
 
   // Calculate days remaining for trial
-  const getTrialDaysRemaining = (trialEndDate: string) => {
+  const getTrialDaysRemaining = (trialEndDate: string | null | undefined) => {
+    if (!trialEndDate) return 0;
     const now = new Date();
     const end = new Date(trialEndDate);
     const diffTime = end.getTime() - now.getTime();
@@ -126,7 +132,7 @@ export function SubscriptionStatusCard({
     );
   }
 
-  if (!subscription) {
+  if (!subscription?.subscription) {
     const usagePlanName = useSubscriptionStore.getState().usage?.plan_name;
 
     if (usagePlanName) {
@@ -174,26 +180,30 @@ export function SubscriptionStatusCard({
     );
   }
 
-  const isTrialActive = subscription.status === SubscriptionStatus.TRIAL;
-  const trialDaysRemaining = subscription.trial_end_date
-    ? getTrialDaysRemaining(subscription.trial_end_date)
+  const isTrialActive =
+    subscription?.subscription?.status === SubscriptionStatus.TRIAL;
+  const trialDaysRemaining = subscription?.subscription?.trial_end_date
+    ? getTrialDaysRemaining(subscription?.subscription?.trial_end_date)
     : null;
 
   return (
     <Card className={className}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-2xl">
-              {subscription.plan_display_name || subscription.plan_name}
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Your current subscription plan
-            </CardDescription>
+      {subscription?.subscription?.status && (
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-2xl">
+                {subscription?.subscription?.plan_display_name ||
+                  subscription?.subscription?.plan_name}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Your current subscription plan
+              </CardDescription>
+            </div>
+            {getStatusBadge(subscription?.subscription?.status)}
           </div>
-          {getStatusBadge(subscription.status)}
-        </div>
-      </CardHeader>
+        </CardHeader>
+      )}
 
       <CardContent className="space-y-6">
         {/* Trial Warning */}
@@ -210,9 +220,10 @@ export function SubscriptionStatusCard({
                     ? `${trialDaysRemaining} day${trialDaysRemaining !== 1 ? "s" : ""} remaining`
                     : "Trial expires today"}
                 </p>
-                {subscription.trial_end_date && (
+                {subscription?.subscription?.trial_end_date && (
                   <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Ends on {formatDate(subscription.trial_end_date)}
+                    Ends on{" "}
+                    {formatDate(subscription?.subscription?.trial_end_date)}
                   </p>
                 )}
               </div>
@@ -228,47 +239,56 @@ export function SubscriptionStatusCard({
               Billing Period
             </p>
             <p className="font-medium capitalize">
-              {subscription.billing_period}
+              {subscription?.subscription?.billing_period}
             </p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Start Date
-            </p>
-            <p className="font-medium">{formatDate(subscription.start_date)}</p>
-          </div>
-
-          {subscription.end_date && (
+          {subscription?.subscription?.start_date && (
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {subscription.status === SubscriptionStatus.CANCELLED
-                  ? "Expires On"
-                  : "Renews On"}
+                Start Date
               </p>
-              <p className="font-medium">{formatDate(subscription.end_date)}</p>
+              <p className="font-medium">
+                {formatDate(subscription?.subscription?.start_date)}
+              </p>
             </div>
           )}
 
-          {subscription.cancelled_at && (
+          {subscription?.subscription?.end_date && (
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {subscription?.subscription?.status ===
+                SubscriptionStatus.CANCELLED
+                  ? "Expires On"
+                  : "Renews On"}
+              </p>
+              <p className="font-medium">
+                {formatDate(subscription?.subscription?.end_date)}
+              </p>
+            </div>
+          )}
+
+          {subscription?.subscription?.cancelled_at && (
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Cancelled On</p>
               <p className="font-medium">
-                {formatDate(subscription.cancelled_at)}
+                {formatDate(subscription?.subscription?.cancelled_at)}
               </p>
             </div>
           )}
         </div>
 
         {/* Cancelled Subscription Warning */}
-        {subscription.status === SubscriptionStatus.CANCELLED && (
+        {subscription?.subscription?.status ===
+          SubscriptionStatus.CANCELLED && (
           <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
             <p className="text-sm text-orange-900 dark:text-orange-100">
               Your subscription has been cancelled and will remain active until{" "}
-              {subscription.end_date && formatDate(subscription.end_date)}.
-              After that, you'll lose access to premium features.
+              {subscription?.subscription?.end_date &&
+                formatDate(subscription?.subscription?.end_date)}
+              . After that, you'll lose access to premium features.
             </p>
           </div>
         )}

@@ -23,8 +23,8 @@ import type {
 import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
 import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
 import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
+import { log } from "@/lib/logger";
 
-const SUBSCRIPTION_CACHE_TTL_MS = 60_000;
 let inFlightSubscriptionFetch: Promise<void> | null = null;
 
 // ============================================================================
@@ -193,39 +193,46 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async (options) => {
-        const force = options?.force ?? false;
-        const { subscription, subscriptionFetchedAt } = get();
-        const now = Date.now();
-
-        if (
-          !force &&
-          subscription &&
-          subscriptionFetchedAt &&
-          now - subscriptionFetchedAt < SUBSCRIPTION_CACHE_TTL_MS
-        ) {
-          return;
-        }
-
-        if (inFlightSubscriptionFetch) {
-          return inFlightSubscriptionFetch;
-        }
-
+      fetchSubscription: async () => {
         inFlightSubscriptionFetch = (async () => {
           set({ isLoading: true, error: null });
 
           try {
-            const [nextSubscription, nextUsage] = await Promise.all([
+            // Use allSettled so that if usage stats fail (500), we still get the subscription
+            const [subscriptionResult, usageResult] = await Promise.allSettled([
               apiClient.subscriptions.getCurrentPlan(),
               apiClient.subscriptions.getUsageStats(),
             ]);
+
+            const nextSubscription =
+              subscriptionResult.status === "fulfilled"
+                ? subscriptionResult.value
+                : null;
+            const nextUsage =
+              usageResult.status === "fulfilled" ? usageResult.value : null;
+
+            if (subscriptionResult.status === "rejected") {
+              log.error(
+                "Subscription fetch failed:",
+                subscriptionResult.reason,
+              );
+            }
+            if (usageResult.status === "rejected") {
+              log.warn(
+                "Usage stats fetch failed (expected if API is 500):",
+                usageResult.reason,
+              );
+            }
 
             set({
               subscription: nextSubscription,
               usage: nextUsage,
               subscriptionFetchedAt: Date.now(),
               isLoading: false,
-              error: null,
+              error:
+                subscriptionResult.status === "rejected"
+                  ? String(subscriptionResult.reason)
+                  : null,
             });
           } catch (error) {
             const errorMessage =
@@ -306,7 +313,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           });
 
           // Refresh usage stats after upgrade
-          await get().fetchSubscription();
+          await get().fetchSubscription({ force: true });
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -345,7 +352,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           });
 
           // Refresh usage stats after downgrade
-          await get().fetchSubscription();
+          await get().fetchSubscription({ force: true });
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -378,7 +385,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           );
 
           // Refresh subscription to get updated cancellation status
-          await get().fetchSubscription();
+          await get().fetchSubscription({ force: true });
 
           set({
             isLoading: false,

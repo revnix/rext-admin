@@ -343,7 +343,12 @@ function ToolbarPlugin({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap", className)}>
+    <div
+      className={cn(
+        "flex items-center gap-1 border-b border-border p-2 mb-2 sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex-wrap",
+        className,
+      )}
+    >
       <ToolbarButton
         active={false}
         onClick={() => {

@@ -113,7 +113,7 @@ export default function SubscriptionSettingsPage() {
           <CardContent className="space-y-3">
             {/* Full Subscription Dashboard */}
             <Button
-              onClick={() => router.push("/dashboard/subscription" as Route)}
+              onClick={() => router.push("/subscription" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -143,7 +143,7 @@ export default function SubscriptionSettingsPage() {
 
             {/* Invoices */}
             <Button
-              onClick={() => router.push("/dashboard/billing" as Route)}
+              onClick={() => router.push("/billing" as Route)}
               className="w-full justify-start"
               variant="outline"
             >
@@ -272,7 +272,7 @@ export default function SubscriptionSettingsPage() {
                 Learn more about plans, billing, and features
               </p>
               <a
-                href="/docs/pricing"
+                href="/pricing"
                 className="text-xs text-primary hover:underline"
               >
                 View documentation →

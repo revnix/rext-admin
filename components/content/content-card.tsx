@@ -9,11 +9,9 @@ import {
   Calendar,
   Edit3,
   Eye,
-  Copy,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { BaseKnowledgeCard } from "@/components/knowledge/shared/BaseKnowledgeCard";
 import type { ContentItem, ContentStatus } from "@/types/content";
 import type {
@@ -105,7 +103,7 @@ export function ContentCard({
       </span>
     ),
     getStatusConfig: (item: ContentItem) => statusConfig[item.status] || null,
-    getActions: (item: ContentItem): CardAction[] => [
+    getActions: (): CardAction[] => [
       {
         icon: Trash2,
         label: "Delete",

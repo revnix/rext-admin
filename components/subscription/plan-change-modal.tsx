@@ -24,7 +24,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
-import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,7 +89,7 @@ export function PlanChangeModal({
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [phase, _setPhase] = useState<PlanChangePhase>("idle");
+  const [phase, setPhase] = useState<PlanChangePhase>("idle");
   const isBusy = phase !== "idle";
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
 
@@ -99,12 +98,13 @@ export function PlanChangeModal({
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
 
   // Determine if this is an upgrade or downgrade
+  // If currentPlan is missing (e.g. inactive/legacy), we default to upgrade path
   const isUpgrade =
     selectedPlan &&
-    currentPlan &&
-    (currentBillingPeriod === BillingPeriod.MONTHLY
-      ? selectedPlan.price_monthly > currentPlan.price_monthly
-      : selectedPlan.price_yearly > currentPlan.price_yearly);
+    (!currentPlan ||
+      (currentBillingPeriod === BillingPeriod.MONTHLY
+        ? selectedPlan.price_monthly > currentPlan.price_monthly
+        : selectedPlan.price_yearly > currentPlan.price_yearly));
 
   const isDowngrade =
     selectedPlan &&
@@ -123,21 +123,24 @@ export function PlanChangeModal({
     if (!selectedPlan || selectedPlanId === currentPlanId) return;
 
     setIsLoading(true);
+    setPhase("submitting");
     setError(null);
 
     try {
-      if (isUpgrade) {
-        await upgradeSubscription(selectedPlanId);
-        toast.success("Plan upgraded successfully!", {
-          description: `You are now on the ${selectedPlan.name} plan.`,
-        });
-      } else if (isDowngrade) {
+      if (isDowngrade) {
         await downgradeSubscription(selectedPlanId);
         toast.success("Plan downgraded", {
           description: `${selectedPlan.name} limits are now active.`,
         });
+      } else {
+        // Upgrade or equal-price change
+        await upgradeSubscription(selectedPlanId);
+        toast.success("Plan changed successfully!", {
+          description: `You are now on the ${selectedPlan.name} plan.`,
+        });
       }
 
+      setPhase("syncing");
       await fetchSubscription();
       onOpenChange(false);
     } catch (err) {
@@ -149,6 +152,7 @@ export function PlanChangeModal({
       });
     } finally {
       setIsLoading(false);
+      setPhase("idle");
     }
   };
 
@@ -292,7 +296,7 @@ export function PlanChangeModal({
 
             {isBusy && (
               <Alert>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 <AlertDescription>
                   {phase === "submitting"
                     ? "Submitting plan change..."
@@ -300,15 +304,6 @@ export function PlanChangeModal({
                 </AlertDescription>
               </Alert>
             )}
-
-            <RadioGroupPrimitive.Root
-              value={selectedPlanId}
-              onValueChange={setSelectedPlanId}
-              className={cn(
-                "space-y-3",
-                isBusy && "pointer-events-none opacity-70",
-              )}
-            ></RadioGroupPrimitive.Root>
 
             {/* Change Type Info */}
             {isUpgrade && (
