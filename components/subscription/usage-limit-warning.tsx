@@ -137,19 +137,22 @@ export function UsageLimitWarning({
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces ?? -1;
+        max = subscription?.subscription?.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics ?? -1;
+        max = subscription?.subscription?.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items ?? -1;
+        max =
+          subscription?.subscription?.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
+        max =
+          subscription?.subscription?.plan_limits?.max_api_calls_per_month ??
+          -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented
@@ -388,19 +391,22 @@ export function useResourceLimit(
     switch (resource) {
       case "workspaces":
         current = usage.current_workspaces;
-        max = subscription.plan_limits?.max_workspaces ?? -1;
+        max = subscription?.subscription?.plan_limits?.max_workspaces ?? -1;
         break;
       case "topics":
         current = usage.current_topics;
-        max = subscription.plan_limits?.max_topics ?? -1;
+        max = subscription?.subscription?.plan_limits?.max_topics ?? -1;
         break;
       case "knowledge_items":
         current = usage.current_knowledge_items;
-        max = subscription.plan_limits?.max_knowledge_items ?? -1;
+        max =
+          subscription?.subscription?.plan_limits?.max_knowledge_items ?? -1;
         break;
       case "ai_requests":
         current = usage.current_api_calls;
-        max = subscription.plan_limits?.max_api_calls_per_month ?? -1;
+        max =
+          subscription?.subscription?.plan_limits?.max_api_calls_per_month ??
+          -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented

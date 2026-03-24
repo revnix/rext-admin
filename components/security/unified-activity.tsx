@@ -367,7 +367,9 @@ export function UnifiedActivity() {
                     </div>
                     <p className="text-sm font-medium">
                       {(loginHistory.history ?? [])[0]?.created_at
-                        ? formatTimestamp((loginHistory.history ?? [])[0]?.created_at)
+                        ? formatTimestamp(
+                            (loginHistory.history ?? [])[0]?.created_at,
+                          )
                         : "Never"}
                     </p>
                   </div>
@@ -379,7 +381,10 @@ export function UnifiedActivity() {
                       </p>
                     </div>
                     <p className="text-2xl font-bold">
-                      {(loginHistory.history ?? []).filter((h) => !h.success).length}
+                      {
+                        (loginHistory.history ?? []).filter((h) => !h.success)
+                          .length
+                      }
                     </p>
                   </div>
                 </div>

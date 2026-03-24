@@ -114,12 +114,12 @@ export function CustomerPortalButton({
   };
 
   // If subscription has a direct customer_portal_url, use it
-  const hasDirectPortalUrl = subscription?.customer_portal_url;
+  const hasDirectPortalUrl = subscription?.subscription?.customer_portal_url;
 
   const handleClick = () => {
-    if (hasDirectPortalUrl && subscription.customer_portal_url) {
+    if (hasDirectPortalUrl && subscription?.subscription?.customer_portal_url) {
       window.open(
-        subscription.customer_portal_url,
+        subscription?.subscription?.customer_portal_url,
         "_blank",
         "noopener,noreferrer",
       );

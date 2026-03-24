@@ -145,7 +145,6 @@ export function createAuditLogsNamespace(client: ApiClient) {
       };
     },
 
-
     /**
      * Get all audit logs (admin)
      */

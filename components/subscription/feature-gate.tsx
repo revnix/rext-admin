@@ -117,8 +117,10 @@ export function FeatureGate({
         : [requiredPlan];
 
       if (
-        !subscription.plan_name ||
-        !allowedPlans.includes(subscription.plan_name.toLowerCase())
+        !subscription?.subscription?.plan_name ||
+        !allowedPlans.includes(
+          subscription?.subscription?.plan_name.toLowerCase(),
+        )
       ) {
         setHasAccess(false);
         return;
@@ -127,7 +129,12 @@ export function FeatureGate({
 
     // Check feature flags in plan
     // Check feature flags in plan using centralized evaluator
-    setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
+    setHasAccess(
+      resolvePlanFeatureAccess(
+        subscription?.subscription?.plan_features,
+        feature,
+      ),
+    );
   }, [subscription, feature, requiredPlan]);
 
   const handleUpgrade = () => {
@@ -285,8 +292,10 @@ export function useFeatureAccess(
         : [requiredPlan];
 
       if (
-        !subscription.plan_name ||
-        !allowedPlans.includes(subscription.plan_name.toLowerCase())
+        !subscription?.subscription?.plan_name ||
+        !allowedPlans.includes(
+          subscription?.subscription?.plan_name.toLowerCase(),
+        )
       ) {
         setHasAccess(false);
         return;
@@ -295,7 +304,12 @@ export function useFeatureAccess(
 
     // Check feature flags
     // Check feature flags using centralized evaluator
-    setHasAccess(resolvePlanFeatureAccess(subscription.plan_features, feature));
+    setHasAccess(
+      resolvePlanFeatureAccess(
+        subscription?.subscription?.plan_features,
+        feature,
+      ),
+    );
   }, [subscription, feature, requiredPlan]);
 
   return hasAccess;

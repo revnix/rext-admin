@@ -13,6 +13,7 @@ import {
   SubscriptionStatus,
   type UsageStats,
   type UserSubscription,
+  type UserSubscriptionDetail,
 } from "@/types/subscription";
 
 // ============================================================================
@@ -43,39 +44,41 @@ export const createMockSubscriptionPlan = (
 });
 
 export const createMockUserSubscription = (
-  overrides?: Partial<UserSubscription>,
+  overrides?: Partial<UserSubscriptionDetail>,
 ): UserSubscription => ({
-  id: "sub-123",
-  user_id: "user-456",
-  plan_id: "plan-pro",
-  plan_name: "pro",
-  plan_display_name: "Pro Plan",
-  status: SubscriptionStatus.ACTIVE,
-  billing_period: BillingPeriod.MONTHLY,
-  start_date: "2025-01-01T00:00:00Z",
-  end_date: null,
-  trial_end_date: null,
-  cancelled_at: null,
-  current_api_calls: 0,
-  created_at: "2025-01-01T00:00:00Z",
-  lemonsqueezy_subscription_id: "ls-sub-123",
-  lemonsqueezy_customer_id: "ls-cust-456",
-  renews_at: "2025-02-01T00:00:00Z",
-  ends_at: null,
-  current_period_end: "2025-02-01T00:00:00Z",
-  plan_features: {
-    advanced_ai: true,
-    priority_support: true,
+  subscription: {
+    id: "sub-123",
+    user_id: "user-456",
+    plan_id: "plan-pro",
+    plan_name: "pro",
+    plan_display_name: "Pro Plan",
+    status: SubscriptionStatus.ACTIVE,
+    billing_period: BillingPeriod.MONTHLY,
+    start_date: "2025-01-01T00:00:00Z",
+    end_date: null,
+    trial_end_date: null,
+    cancelled_at: null,
+    current_api_calls: 0,
+    created_at: "2025-01-01T00:00:00Z",
+    lemonsqueezy_subscription_id: "ls-sub-123",
+    lemonsqueezy_customer_id: "ls-cust-456",
+    renews_at: "2025-02-01T00:00:00Z",
+    ends_at: null,
+    current_period_end: "2025-02-01T00:00:00Z",
+    plan_features: {
+      advanced_ai: true,
+      priority_support: true,
+    },
+    plan_limits: {
+      max_workspaces: 10,
+      max_members_per_workspace: 5,
+      max_topics: 100,
+      max_knowledge_items: 500,
+      max_api_calls_per_month: 10000,
+    },
+    customer_portal_url: "https://portal.lemonsqueezy.com/test",
+    ...overrides,
   },
-  plan_limits: {
-    max_workspaces: 10,
-    max_members_per_workspace: 5,
-    max_topics: 100,
-    max_knowledge_items: 500,
-    max_api_calls_per_month: 10000,
-  },
-  customer_portal_url: "https://portal.lemonsqueezy.com/test",
-  ...overrides,
 });
 
 export const createMockUsageStats = (
