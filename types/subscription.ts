@@ -117,8 +117,7 @@ export interface SubscriptionPlanUpdate {
 // ============================================================================
 // USER SUBSCRIPTION INTERFACES
 // ============================================================================
-
-export interface UserSubscription {
+export interface UserSubscriptionDetail {
   id: string;
   user_id: string;
   plan_id: string;
@@ -126,7 +125,7 @@ export interface UserSubscription {
   plan_display_name: string | null;
   status: SubscriptionStatus;
   billing_period: BillingPeriod;
-  start_date: string;
+  start_date: string | null;
   end_date: string | null;
   trial_end_date: string | null;
   cancelled_at: string | null;
@@ -148,7 +147,10 @@ export interface UserSubscription {
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
-  data?: UserSubscription;
+}
+
+export interface UserSubscription {
+  subscription?: UserSubscriptionDetail;
 }
 
 export interface SubscriptionCreateRequest {
@@ -174,6 +176,30 @@ export interface UsageStats {
   subscription_id: string;
   plan_name: string;
   billing_period: BillingPeriod;
+
+  workspaces: {
+    used: number;
+    limit: number;
+    percentage: number;
+  };
+
+  knowledge_items: {
+    used: number;
+    limit: number;
+    percentage: number;
+  };
+
+  api_calls: {
+    used: number;
+    limit: number;
+    percentage: number;
+  };
+
+  members: {
+    used: number;
+    limit: number;
+    percentage: number;
+  };
 
   // Current usage
   current_workspaces: number;
@@ -321,8 +347,8 @@ export function calculateTrialDaysRemaining(
 // Helper function to check if subscription is active
 export function isSubscriptionActive(subscription: UserSubscription): boolean {
   return (
-    subscription.status === SubscriptionStatus.ACTIVE ||
-    subscription.status === SubscriptionStatus.TRIAL
+    subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
+    subscription?.subscription?.status === SubscriptionStatus.TRIAL
   );
 }
 

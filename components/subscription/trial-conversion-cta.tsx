@@ -56,10 +56,10 @@ export function TrialConversionCTA({
   useEffect(() => {
     // Calculate days remaining
     if (
-      subscription?.status === SubscriptionStatus.TRIAL &&
-      subscription.trial_end_date
+      subscription?.subscription?.status === SubscriptionStatus.TRIAL &&
+      subscription?.subscription?.trial_end_date
     ) {
-      const trialEnd = new Date(subscription.trial_end_date);
+      const trialEnd = new Date(subscription?.subscription?.trial_end_date);
       const now = new Date();
       const diffTime = trialEnd.getTime() - now.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -70,7 +70,7 @@ export function TrialConversionCTA({
   }, [subscription]);
 
   // Don't show if not on trial
-  if (subscription?.status !== SubscriptionStatus.TRIAL) {
+  if (subscription?.subscription?.status !== SubscriptionStatus.TRIAL) {
     return null;
   }
 

@@ -319,7 +319,9 @@ function BillingDashboardContent() {
                       Started
                     </p>
                     <p className="text-sm font-medium">
-                      {new Date(subscription.start_date).toLocaleDateString()}
+                      {subscription.start_date
+                        ? new Date(subscription.start_date).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                 )}
@@ -330,9 +332,11 @@ function BillingDashboardContent() {
                       {subscription.cancel_at_period_end ? "Ends" : "Renews"}
                     </p>
                     <p className="text-sm font-medium">
-                      {new Date(
-                        subscription.current_period_end,
-                      ).toLocaleDateString()}
+                      {subscription.current_period_end
+                        ? new Date(
+                            subscription.current_period_end,
+                          ).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                 )}
@@ -517,9 +521,10 @@ function BillingDashboardContent() {
                   {usage.api_calls?.reset_date && (
                     <p className="text-xs text-muted-foreground">
                       Resets{" "}
-                      {new Date(
-                        usage.api_calls.reset_date,
-                      ).toLocaleDateString()}
+                      {usage.api_calls.reset_date &&
+                        new Date(
+                          usage.api_calls.reset_date,
+                        ).toLocaleDateString()}
                     </p>
                   )}
                 </div>

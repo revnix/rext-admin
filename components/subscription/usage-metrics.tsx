@@ -138,41 +138,40 @@ export function UsageMetrics({
   const usageMetrics = [
     {
       label: "Workspaces",
-      current: usage.current_workspaces,
-      max: usage.max_workspaces,
-      percentage: usage.workspaces_usage_percent,
+      current: usage.workspaces.used,
+      max: usage.workspaces.limit,
+      percentage: usage.workspaces.percentage,
       description: "Number of workspaces you can create",
     },
     {
       label: "Members",
-      current: usage.current_members ?? 0,
-      max: usage.max_members ?? 0,
-      percentage: usage.members_usage_percent ?? 0,
+      current: usage.members.used ?? 0,
+      max: usage.members.limit ?? 0,
+      percentage: usage.members.percentage ?? 0,
       description: "Total team members across all workspaces",
     },
     {
       label: "Knowledge Items",
-      current: usage.current_knowledge_items,
-      max: usage.max_knowledge_items,
-      percentage: usage.knowledge_items_usage_percent,
+      current: usage.knowledge_items.used,
+      max: usage.knowledge_items.limit,
+      percentage: usage.knowledge_items.percentage,
       description: "Knowledge base entries and documents",
     },
     {
       label: "API Calls",
-      current: usage.current_api_calls,
-      max: usage.max_api_calls_per_month,
-      percentage: usage.api_calls_usage_percent,
+      current: usage.api_calls.used,
+      max: usage.api_calls.limit,
+      percentage: usage.api_calls.percentage,
       description: "API calls this billing period",
     },
   ];
 
   // Get overall status (highest usage percentage)
   const overallPercentage = Math.max(
-    usage.workspaces_usage_percent,
-    usage.members_usage_percent ?? 0,
-    usage.topics_usage_percent,
-    usage.knowledge_items_usage_percent,
-    usage.api_calls_usage_percent,
+    usage.workspaces.percentage,
+    usage.members.percentage ?? 0,
+    usage.knowledge_items.percentage,
+    usage.api_calls.percentage,
   );
 
   return (

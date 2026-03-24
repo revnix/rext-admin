@@ -48,7 +48,7 @@ export default function CheckoutSuccessPage() {
         await fetchSubscription();
         const latest = useSubscriptionStore.getState().subscription;
 
-        if (latest && READY_STATUSES.has(latest.status)) {
+        if (latest && READY_STATUSES.has(latest?.subscription?.status || "")) {
           return true;
         }
 
@@ -165,19 +165,19 @@ export default function CheckoutSuccessPage() {
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Activating your subscription...</span>
             </div>
-          ) : subscription ? (
+          ) : subscription?.subscription ? (
             <div className="bg-muted/50 rounded-lg p-6 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-lg flex items-center gap-2">
-                    {subscription.plan_display_name}
-                    {subscription.status === "trial" && (
+                    {subscription?.subscription.plan_display_name}
+                    {subscription?.subscription.status === "trial" && (
                       <Badge variant="secondary">
                         <Sparkles className="h-3 w-3 mr-1" />
                         Trial
                       </Badge>
                     )}
-                    {subscription.status === "active" && (
+                    {subscription?.subscription.status === "active" && (
                       <Badge variant="default" className="bg-green-500">
                         Active
                       </Badge>
@@ -186,7 +186,7 @@ export default function CheckoutSuccessPage() {
                   <p className="text-sm text-muted-foreground mt-1">
                     Billing period:{" "}
                     <span className="font-medium capitalize">
-                      {subscription.billing_period}
+                      {subscription?.subscription.billing_period}
                     </span>
                   </p>
                 </div>
@@ -196,15 +196,19 @@ export default function CheckoutSuccessPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Start Date</p>
                   <p className="font-medium">
-                    {new Date(subscription.start_date).toLocaleDateString()}
+                    {subscription?.subscription.start_date
+                      ? new Date(
+                          subscription?.subscription.start_date,
+                        ).toLocaleDateString()
+                      : "N/A"}
                   </p>
                 </div>
-                {subscription.trial_end_date && (
+                {subscription?.subscription.trial_end_date && (
                   <div>
                     <p className="text-sm text-muted-foreground">Trial Ends</p>
                     <p className="font-medium">
                       {new Date(
-                        subscription.trial_end_date,
+                        subscription?.subscription.trial_end_date,
                       ).toLocaleDateString()}
                     </p>
                   </div>
