@@ -8,18 +8,26 @@ import type {
   Issue,
   TrustScore,
 } from "@/types/generate-content";
+import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { Button } from "../ui/button";
 import {
   Activity,
   AlertCircle,
+  Bot,
   CheckCircle2,
   Copy,
   Eye,
+  ChevronDown,
+  ChevronUp,
+  Globe,
+  Loader2,
   Pencil,
   Save,
+  Search,
   Send,
   Sparkles,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +54,79 @@ import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-in
 import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
+
+function InlineToolCard({ tc }: { tc: ToolCall }) {
+  const [expanded, setExpanded] = useState(false);
+  const isRunning = tc.status === "running";
+  const Icon =
+    tc.name.toLowerCase().includes("duck") ||
+    tc.name.toLowerCase().includes("search")
+      ? Search
+      : Globe;
+  const hasOutput = tc.status === "done" && !!tc.output;
+  return (
+    <div
+      className={`relative rounded-xl border overflow-hidden ${
+        isRunning
+          ? "bg-amber-500/5 border-amber-500/25"
+          : "bg-emerald-500/5 border-emerald-500/20"
+      }`}
+    >
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-0.5 ${isRunning ? "bg-amber-400" : "bg-emerald-500"}`}
+      />
+      <div className="flex items-start gap-2 p-2.5">
+        <div
+          className={`shrink-0 mt-0.5 ${isRunning ? "text-amber-500" : "text-emerald-500"}`}
+        >
+          {isRunning ? (
+            <Loader2 size={11} className="animate-spin" />
+          ) : (
+            <CheckCircle2 size={11} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 mb-0.5">
+            <Icon size={9} className="text-muted-foreground shrink-0" />
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+              Web Search
+            </span>
+          </div>
+          <div className="text-[11px] text-foreground/80 font-mono leading-tight break-words">
+            "{tc.query.length > 38 ? `${tc.query.slice(0, 38)}…` : tc.query}"
+          </div>
+          {tc.status === "done" && tc.resultCount !== undefined && (
+            <div className="flex items-center justify-between mt-0.5">
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <Zap size={9} />
+                {tc.resultCount} result{tc.resultCount !== 1 ? "s" : ""}
+              </div>
+              {hasOutput && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="text-[9px] text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors"
+                >
+                  {expanded ? (
+                    <ChevronUp size={10} />
+                  ) : (
+                    <ChevronDown size={10} />
+                  )}
+                  {expanded ? "hide" : "view"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {expanded && tc.output && (
+        <div className="mx-2.5 mb-2.5 p-2 rounded-lg bg-background/60 border border-border/50 text-[10px] text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+          {tc.output}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -139,6 +220,8 @@ const getSEOStatusText = (score: number) => {
   return "Poor SEO Score";
 };
 
+type PipelineStep = { label: string; status: "pending" | "active" | "done" };
+
 type ContentEditorProps = {
   contentId?: string;
   allContent: FinalContent | null;
@@ -151,6 +234,9 @@ type ContentEditorProps = {
   outline: Outline | null;
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
+  // Agent activity (shown in right sidebar while generating)
+  toolCalls?: ToolCall[];
+  pipelineSteps?: PipelineStep[];
 };
 
 function ContentEditorInner(props: ContentEditorProps) {
@@ -166,6 +252,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     outline,
     onEditToggle,
     onContentChange,
+    toolCalls = [],
+    pipelineSteps = [],
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -230,14 +318,15 @@ function ContentEditorInner(props: ContentEditorProps) {
       const headings = Array.from(
         container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
       );
-      let _currentSectionIdx = -1;
+      let currentSectionIdx = -1;
+      void currentSectionIdx;
 
       for (let i = 0; i < headings.length; i++) {
         const rect = headings[i].getBoundingClientRect();
         // The container's top is roughly its position in viewport
         // We use a 160px buffer for the sticky-like offset
         if (rect.top <= 200) {
-          _currentSectionIdx = i;
+          currentSectionIdx = i;
         } else {
           break;
         }
@@ -726,6 +815,79 @@ function ContentEditorInner(props: ContentEditorProps) {
           </Dialog>
 
           <section className="space-y-4">
+            {/* ── Agent Activity Feed (shown while generating) ───────────── */}
+            {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative shrink-0">
+                    <Bot size={14} className="text-primary" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Agent Activity
+                  </h4>
+                </div>
+
+                {/* Pipeline steps */}
+                {pipelineSteps.length > 0 && (
+                  <div className="bg-card p-4 rounded-2xl border border-border space-y-2">
+                    <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.15em] mb-2">
+                      Pipeline
+                    </div>
+                    {pipelineSteps.map((step) => (
+                      <div key={step.label} className="flex items-center gap-2">
+                        {step.status === "done" ? (
+                          <CheckCircle2
+                            size={11}
+                            className="text-emerald-500 shrink-0"
+                          />
+                        ) : step.status === "active" ? (
+                          <Loader2
+                            size={11}
+                            className="text-amber-500 animate-spin shrink-0"
+                          />
+                        ) : (
+                          <div className="w-[11px] h-[11px] rounded-full border border-border/60 shrink-0" />
+                        )}
+                        <span
+                          className={`text-[11px] leading-tight ${
+                            step.status === "done"
+                              ? "text-muted-foreground/50 line-through"
+                              : step.status === "active"
+                                ? "text-foreground font-semibold"
+                                : "text-muted-foreground/40"
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tool call research feed */}
+                {toolCalls.length > 0 && (
+                  <div className="bg-card p-4 rounded-2xl border border-border space-y-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-[0.15em]">
+                        Research
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {toolCalls.filter((t) => t.status === "done").length}/
+                        {toolCalls.length}
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                      {toolCalls.map((tc) => (
+                        <InlineToolCard key={tc.id} tc={tc} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Metrics (shown once generation is complete) ─────────────── */}
             {score ? (
               <>
                 <div className="flex items-center gap-2 font-bold">
@@ -754,31 +916,14 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 </div>
               </>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 font-bold">
-                  <Activity size={16} className="text-muted-foreground/30" />
-                  <div className="h-3 bg-muted rounded w-32" />
-                </div>
+            ) : null}
 
-                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
-                  <div className="h-5 bg-muted rounded w-28" />
-
-                  <div className="space-y-2">
-                    <div className="h-7 bg-muted rounded w-40" />
-
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden" />
-                  </div>
-                </div>
-              </div>
-            )}
             {seoScore ? (
               <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
                 <h4 className="text-lg font-bold text-foreground">
                   On-Page SEO
                 </h4>
 
-                {/* Score */}
                 <div className="flex items-center gap-6">
                   <div className="relative flex items-center justify-center shrink-0">
                     <svg className="w-20 h-20 transform -rotate-90">
@@ -819,23 +964,20 @@ function ContentEditorInner(props: ContentEditorProps) {
                       {getSEOStatusText(seoScore.seo_health_score)}
                     </div>
                     {seoScore.issue_summary?.warnings ||
-                      (seoScore.issue_summary?.errors && (
-                        <div className="text-sm text-muted-foreground">
-                          {seoScore.issue_summary?.warnings} warnings
-                          <br />
-                          {seoScore.issue_summary?.errors} errors
-                        </div>
-                      ))}
+                    seoScore.issue_summary?.errors ? (
+                      <div className="text-sm text-muted-foreground">
+                        {seoScore.issue_summary?.warnings} warnings
+                        <br />
+                        {seoScore.issue_summary?.errors} errors
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Issues */}
                 <div className="space-y-3 pt-2">
-                  {seoScore.issues &&
-                    seoScore.issues.length > 0 &&
+                  {seoScore.issues?.length > 0 &&
                     seoScore.issues.map((issue: Issue) => {
                       const status = levelToStatus(issue.level);
-
                       return (
                         <div
                           key={issue.message}
@@ -846,49 +988,27 @@ function ContentEditorInner(props: ContentEditorProps) {
                               size={18}
                               className="text-emerald-500 shrink-0"
                             />
-                          ) : status === "warning" ? (
-                            <AlertCircle
-                              size={18}
-                              className="text-orange-500 shrink-0"
-                            />
                           ) : (
                             <AlertCircle
                               size={18}
-                              className="text-muted-foreground shrink-0"
+                              className={
+                                status === "warning"
+                                  ? "text-orange-500 shrink-0"
+                                  : "text-muted-foreground shrink-0"
+                              }
                             />
                           )}
-
                           <span className="leading-tight">{issue.message}</span>
                         </div>
                       );
                     })}
                 </div>
               </div>
-            ) : (
-              <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
-                <div className="h-4 bg-muted rounded w-1/2" />
-                <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 rounded-full bg-muted" />
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-muted rounded w-3/4" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="h-4 w-4 bg-muted rounded-full" />
-                      <div className="h-3 bg-muted rounded w-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <hr />
+            ) : null}
 
             {trustScore ? (
               <>
+                <hr />
                 <div className="flex items-center gap-2 font-bold">
                   <Sparkles size={16} className="text-blue-500" />
                   <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -897,12 +1017,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
 
                 <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-foreground leading-tight">
-                      Trust Score
-                    </h4>
-                  </div>
-
+                  <h4 className="text-lg font-bold text-foreground leading-tight">
+                    Trust Score
+                  </h4>
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
                       {trustScore.score
@@ -915,28 +1032,14 @@ function ContentEditorInner(props: ContentEditorProps) {
                       className="text-emerald-500 shrink-0"
                     />
                   </div>
-
                   <div className="text-[13px] text-muted-foreground font-medium">
-                    {trustScore.score
-                      ? getStatusMessage(trustScore.score)
-                      : getStatusMessage(trustScore.trust_score)}
+                    {getStatusMessage(
+                      trustScore.score ?? trustScore.trust_score,
+                    )}
                   </div>
                 </div>
               </>
-            ) : (
-              <>
-                <hr />
-                <div className="flex items-center gap-2 font-bold">
-                  <Sparkles size={16} className="text-muted-foreground/50" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                </div>
-                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
-                  <div className="h-4 bg-muted rounded w-1/2" />
-                  <div className="h-8 bg-muted rounded w-1/3" />
-                  <div className="h-3 bg-muted rounded w-3/4" />
-                </div>
-              </>
-            )}
+            ) : null}
           </section>
         </aside>
       </div>

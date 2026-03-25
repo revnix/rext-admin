@@ -47,6 +47,7 @@ import {
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
+import type { ToolCall } from "@/components/generate-content/agent-feed";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -225,10 +226,7 @@ export function FreshGenerationView({
     instructionType !== "outline_reject" &&
     instructionType !== "content" &&
     tokenTarget !== "content" &&
-    (instructionType === "outline_review" ||
-      tokenTarget === "outline" ||
-      outline.streamedText.length > 0 ||
-      !!parsedOutline);
+    (outline.streamedText.length > 0 || !!parsedOutline);
 
   const showContentStream =
     instructionType === "content" ||
@@ -279,9 +277,36 @@ export function FreshGenerationView({
     } as unknown as FinalContent;
   })();
 
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
-  const [enhancingDescription, setEnhancingDescription] = useState("");
+  const [, setIsEnhancing] = useState(false);
+  const [, setEnhancingMsg] = useState("Enhancing content...");
+  const [, setEnhancingDescription] = useState("");
+
+  // ── Tool call tracking for agent activity feed ────────────────────────────
+  const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
+  const [pipelineSteps, setPipelineSteps] = useState<
+    Array<{ label: string; status: "pending" | "active" | "done" }>
+  >([]);
+
+  const CONTENT_PIPELINE = ["Generating Content", "Reviewing Content"];
+
+  // Advance pipeline: mark previous step done, set new step active
+  const advancePipeline = (activeLabel: string) => {
+    setPipelineSteps((prev) => {
+      // Initialize on first call
+      const base =
+        prev.length === 0
+          ? CONTENT_PIPELINE.map((label) => ({
+              label,
+              status: "pending" as const,
+            }))
+          : prev;
+      return base.map((step) => {
+        if (step.label === activeLabel) return { ...step, status: "active" };
+        if (step.status === "active") return { ...step, status: "done" };
+        return step;
+      });
+    });
+  };
 
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
@@ -426,9 +451,13 @@ export function FreshGenerationView({
       for await (const chunk of stream) {
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
-        if (chunk.event === "messages/partial") {
+        if (
+          chunk.event === "messages/partial" ||
+          chunk.event?.startsWith("messages/partial|")
+        ) {
           // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
-          const raw = (chunk.data as any)?.[0]?.content;
+          const msgData = (chunk.data as any)?.[0];
+          const raw = msgData?.content;
           const token =
             typeof raw === "string"
               ? raw
@@ -443,6 +472,48 @@ export function FreshGenerationView({
               content.appendToken(token);
             }
           }
+
+          continue;
+        }
+
+        // ── custom — agent streaming events (token, tool_start, tool_end) ──
+        if (chunk.event === "custom" || chunk.event?.startsWith("custom|")) {
+          // biome-ignore lint/suspicious/noExplicitAny: custom event payload
+          const d = chunk.data as any;
+          if (d?.type === "token" && tokenTargetRef.current === "content") {
+            content.appendToken(d.content as string);
+          } else if (d?.type === "tool_start") {
+            const id = String(d.id ?? "");
+            const name = String(d.name ?? "");
+            const query = String(d.query ?? "");
+            if (id) {
+              setToolCalls((prev) => {
+                if (prev.some((c) => c.id === id)) return prev;
+                return [
+                  ...prev,
+                  { id, name, query, status: "running" as const },
+                ];
+              });
+            }
+          } else if (d?.type === "tool_end") {
+            const id = String(d.id ?? "");
+            const count = Number(d.count ?? 0);
+            const output = d.output ? String(d.output) : undefined;
+            if (id) {
+              setToolCalls((prev) =>
+                prev.map((tc) =>
+                  tc.id === id
+                    ? {
+                        ...tc,
+                        status: "done" as const,
+                        resultCount: count,
+                        output,
+                      }
+                    : tc,
+                ),
+              );
+            }
+          }
           continue;
         }
 
@@ -452,7 +523,19 @@ export function FreshGenerationView({
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
 
-        // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
+        // generate_outline uses structured output (ainvoke) — no streaming tokens.
+        // Extract the outline from the node update so it can be shown before the interrupt fires.
+        const generateOutlineResult = (
+          updates as {
+            generate_outline?: { content?: { outline?: ContentOutline } };
+          }
+        )?.generate_outline?.content?.outline;
+        if (generateOutlineResult) {
+          dispatch({ type: "SET_OUTLINE", payload: generateOutlineResult });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
+        }
+
+        // Some graphs also emit the outline in a "review_outline" envelope (not in __interrupt__)
         const reviewOutline = (
           updates as {
             review_outline?: { content?: { outline?: ContentOutline } };
@@ -469,52 +552,25 @@ export function FreshGenerationView({
           setEnhancingDescription(
             "Creating the first draft based on the approved outline...",
           );
+          advancePipeline("Generating Content");
         }
 
         if (updates?.generate_content) {
-          setEnhancingMsg("Injecting EEAT...");
-          setEnhancingDescription(
-            "Enhancing the content with experience, expertise, authority, and trust signals...",
-          );
-        }
-
-        if (updates?.inject_eeat) {
-          setEnhancingMsg("Humanizing Content...");
-          setEnhancingDescription(
-            "Refining the text to sound more natural, engaging, and human-like...",
-          );
-        }
-
-        if (updates?.humanize_content) {
-          setEnhancingMsg("Calculating Readability...");
-          setEnhancingDescription(
-            "Analyzing the content to ensure it is clear and easy to read...",
-          );
-        }
-
-        if (updates?.calculate_readability) {
-          setEnhancingMsg("Calculating On-Page SEO...");
-          setEnhancingDescription(
-            "Evaluating SEO factors such as keywords, structure, and optimization...",
-          );
-        }
-
-        if (updates?.calculate_on_page_seo) {
-          setEnhancingMsg("Reviewing Content...");
-          setEnhancingDescription(
-            "Performing a final review to improve clarity, quality, and consistency...",
-          );
+          advancePipeline("Reviewing Content");
         }
 
         if (updates?.review_content) {
-          setEnhancingMsg("Generating Final Content...");
-          setEnhancingDescription(
-            "Preparing the finalized content for display in the editor...",
+          setPipelineSteps((prev) =>
+            prev.map((s) => ({ ...s, status: "done" as const })),
           );
         }
 
         if (updates?.content_engine) {
           setIsEnhancing(false);
+          // Mark all pipeline steps done
+          setPipelineSteps((prev) =>
+            prev.map((s) => ({ ...s, status: "done" as const })),
+          );
         }
 
         // Centralized handling for nodes that emit content updates
@@ -659,7 +715,7 @@ export function FreshGenerationView({
           is_library: isLibrary,
         },
       },
-      streamMode: ["updates", "messages"],
+      streamMode: ["updates", "messages", "custom"],
       streamSubgraphs: true,
     });
 
@@ -677,6 +733,8 @@ export function FreshGenerationView({
 
     const stream = streamFromSSE(`/api/generate/${threadId}/resume`, {
       payload,
+      streamMode: ["updates", "messages", "custom"],
+      streamSubgraphs: true,
     });
     await processStream(stream);
   };
@@ -722,6 +780,8 @@ export function FreshGenerationView({
         setTokenTarget("content");
         tokenTargetRef.current = "content";
         content.resetStream();
+        setToolCalls([]);
+        setPipelineSteps([]);
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         dispatch({
@@ -890,12 +950,13 @@ export function FreshGenerationView({
             isEditing={isEditing}
             userKeyword={userKeyword}
             outline={parsedOutline}
+            toolCalls={toolCalls}
+            pipelineSteps={pipelineSteps}
             onEditToggle={() =>
               dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
             }
             onContentChange={(val) => {
               dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-              // Also sync allContent.body_markdown so other parts of the UI stay updated
               if (allContent) {
                 dispatch({
                   type: "SET_ALL_CONTENT",
@@ -904,19 +965,6 @@ export function FreshGenerationView({
               }
             }}
           />
-
-          {isEnhancing && (
-            <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
-              <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
-                <div className="text-sm font-semibold text-foreground">
-                  {enhancingMsg}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {enhancingDescription}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
