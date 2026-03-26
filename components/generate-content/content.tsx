@@ -172,12 +172,12 @@ function ContentEditorInner(props: ContentEditorProps) {
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
-  const displayTitle = allContent?.title || "";
+  const displayTitle = allContent?.meta_title || "";
   const body = generatedContent;
   const previewHtml = body ? marked.parse(body) : "";
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
   const { displayed: typedIntro } = useTypewriter(
-    allContent?.introduction || "",
+    allContent?.meta_description || "",
     {
       speed: 45,
     },
@@ -256,7 +256,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     status: "draft" as ContentStatus,
     workspace_id: workspaceId ?? undefined,
     introduction:
-      allContent?.introduction || allContent?.meta_description || "",
+      allContent?.meta_description || allContent?.meta_description || "",
     body_markdown: body,
     body_html: allContent?.body_html || allContent?.html_content || "",
     tags: tags,
@@ -401,13 +401,13 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const handleCopy = async (format: "formatted" | "markdown" | "html") => {
     try {
-      const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.introduction || ""}</em></p>${previewHtml}`;
+      const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.meta_description || ""}</em></p>${previewHtml}`;
 
       if (format === "html") {
         await navigator.clipboard.writeText(htmlContent);
       } else if (format === "markdown") {
-        const mdIntro = allContent?.introduction
-          ? `\n\n*${allContent.introduction}*\n`
+        const mdIntro = allContent?.meta_description
+          ? `\n\n*${allContent.meta_description}*\n`
           : "";
         const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
         await navigator.clipboard.writeText(contentToCopy);
@@ -545,7 +545,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                           {typedTitle}
                         </h1>
 
-                        {allContent?.introduction && (
+                        {allContent?.meta_description && (
                           <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
                             {typedIntro}
                           </div>
@@ -570,7 +570,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                     <div className="space-y-4">
                       {displayTitle ||
                       tags.length > 0 ||
-                      allContent?.introduction ? (
+                      allContent?.meta_description ? (
                         <div className="space-y-4 mb-8">
                           <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             {tags.slice(0, 6).map((t) => (
@@ -589,7 +589,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                           ) : (
                             <div className="h-8 bg-muted rounded w-3/4" />
                           )}
-                          {allContent?.introduction ? (
+                          {allContent?.meta_description ? (
                             <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
                               {typedIntro}
                             </div>
