@@ -17,6 +17,14 @@ import {
   Sparkles,
   Library,
   Palette,
+  BarChart,
+  ClipboardList,
+  Contact,
+  LayoutTemplate,
+  Server,
+  Banknote,
+  Activity,
+  Webhook,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -202,16 +210,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
         {
-          title: "User Management",
-          url: "/admin/users",
-          icon: UserCog,
-          permission: USER_PERMISSIONS.READ,
+          title: "Audit Logs",
+          url: "/admin/audit-logs",
+          icon: ClipboardList,
+          permission: "audit.read",
         },
         {
-          title: "Subscriptions",
-          url: "/admin/subscriptions",
-          icon: CreditCard,
-          anyPermission: ["subscription.analytics", "subscription.read"],
+          title: "Customers",
+          url: "/admin/customers",
+          icon: Contact,
+        },
+        {
+          title: "Email Analytics",
+          url: "/admin/email-analytics",
+          icon: Mail,
+          anyPermission: ["system.manage", "audit.read"],
+        },
+        {
+          title: "Email Templates",
+          url: "/admin/email-templates",
+          icon: LayoutTemplate,
         },
         {
           title: "System Monitoring",
@@ -220,10 +238,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           permission: "system.manage",
         },
         {
-          title: "Email Analytics",
-          url: "/admin/email-analytics",
-          icon: Mail,
-          anyPermission: ["system.manage", "audit.read"],
+          title: "Platform",
+          url: "/admin/platform/invitations",
+          icon: Server,
+        },
+        {
+          title: "Refunds",
+          url: "/admin/refunds",
+          icon: Banknote,
         },
         {
           title: "Roles & Permissions",
@@ -233,6 +255,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ADMIN_PERMISSIONS.ROLE_READ,
             ADMIN_PERMISSIONS.PERMISSION_READ,
           ],
+        },
+        {
+          title: "Statistics",
+          url: "/admin/statistics",
+          icon: Activity,
+        },
+        {
+          title: "Subscriptions",
+          url: "/admin/subscriptions",
+          icon: CreditCard,
+          anyPermission: ["subscription.analytics", "subscription.read"],
+          items: [
+            { title: "Overview", url: "/admin/subscriptions" },
+            { title: "Plans", url: "/admin/subscriptions/plans" },
+          ],
+        },
+        {
+          title: "User Management",
+          url: "/admin/users",
+          icon: UserCog,
+          permission: USER_PERMISSIONS.READ,
+        },
+        {
+          title: "Webhooks",
+          url: "/admin/webhooks",
+          icon: Webhook,
         },
       ],
     },
@@ -249,8 +297,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const displayMainNavigation = hasWorkspaces
     ? filteredMainNavigation
     : filteredMainNavigation.filter(
-        (group) => group.groupLabel !== "Workspace",
-      );
+      (group) => group.groupLabel !== "Workspace",
+    );
 
   return (
     <Sidebar
@@ -392,11 +440,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           </div>
                           <ChevronDown
                             size={16}
-                            className={`transition-transform duration-200 ${
-                              expandedAccordion === item.title
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            className={`transition-transform duration-200 ${expandedAccordion === item.title
+                              ? "rotate-180"
+                              : ""
+                              }`}
                           />
                         </SidebarMenuButton>
 
