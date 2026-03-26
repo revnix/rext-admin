@@ -210,6 +210,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
         {
+          title: "Analytics",
+          url: "#",
+          icon: BarChart,
+          items: [
+            { title: "Invitations", url: "/admin/analytics/invitations" },
+            { title: "Subscriptions", url: "/admin/analytics/subscriptions" },
+          ],
+        },
+        {
           title: "Audit Logs",
           url: "/admin/audit-logs",
           icon: ClipboardList,
@@ -509,7 +518,118 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
-                  const isActive = pathname === item.url;
+                  const hasChildren = item.items && item.items.length > 0;
+                  const isActive =
+                    pathname === item.url ||
+                    (hasChildren &&
+                      item.items?.some((sub) => pathname === sub.url));
+
+                  //  Fixed Collapsed Sidebar Popover
+                  if (sidebarState === "collapsed" && hasChildren) {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <Popover
+                          open={openDropdown === item.title}
+                          onOpenChange={(open) =>
+                            setOpenDropdown(open ? item.title : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <SidebarMenuButton
+                              tooltip={item.title}
+                              className="justify-center hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                              isActive={isActive}
+                            >
+                              {Icon && <Icon />}
+                              <span className="sr-only">{item.title}</span>
+                            </SidebarMenuButton>
+                          </PopoverTrigger>
+
+                          {/* Dropdown Popover */}
+                          <PopoverContent
+                            side="right"
+                            align="start"
+                            className="w-48 p-2"
+                          >
+                            <div className="mb-2 px-2 text-xs font-medium text-muted-foreground">
+                              {item.title}
+                            </div>
+                            <SidebarMenu>
+                              {item.items?.map((subItem) => (
+                                <SidebarMenuItem key={subItem.title}>
+                                  <SidebarMenuButton
+                                    asChild
+                                    isActive={pathname === subItem.url}
+                                    className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
+                                  >
+                                    <Link href={subItem.url as Route}>
+                                      <span>{subItem.title}</span>
+                                    </Link>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              ))}
+                            </SidebarMenu>
+                          </PopoverContent>
+                        </Popover>
+                      </SidebarMenuItem>
+                    );
+                  }
+
+                  // Expanded Sidebar → Accordion
+                  // If has children, we make the parent a TOGGLE, not a link.
+                  // This assumes the "Overview" link exists as the first child if navigation is needed.
+                  if (hasChildren) {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          className="group/menu-button flex w-full items-center justify-between hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
+                          isActive={isActive}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setExpandedAccordion(
+                              expandedAccordion === item.title
+                                ? null
+                                : item.title,
+                            );
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {Icon && <Icon />}
+                            <span>{item.title}</span>
+                          </div>
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-200 ${
+                              expandedAccordion === item.title
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        </SidebarMenuButton>
+
+                        {expandedAccordion === item.title && (
+                          <SidebarMenu className="mt-1 flex flex-col gap-1">
+                            {item.items?.map((subItem) => (
+                              <SidebarMenuItem key={subItem.title}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={pathname === subItem.url}
+                                  className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)] pl-9 transition-colors"
+                                >
+                                  <Link href={subItem.url as Route}>
+                                    {subItem.title}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        )}
+                      </SidebarMenuItem>
+                    );
+                  }
+
+                  // Standard Item (No Children)
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -518,7 +638,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         isActive={isActive}
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
-                        <Link href={item.url as Route}>
+                        <Link
+                          href={item.url as Route}
+                          className="flex items-center gap-2"
+                        >
                           {Icon && <Icon />}
                           <span>{item.title}</span>
                         </Link>
