@@ -802,10 +802,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                           delay: 0.1,
                         },
                       ].map((section) => (
-                        <div
-                          key={section.id}
-                          className="space-y-3 pt-2"
-                        >
+                        <div key={section.id} className="space-y-3 pt-2">
                           <div
                             className={`skeleton-shimmer h-5 rounded-lg ${section.h}`}
                             style={{ animationDelay: `${section.delay}s` }}
