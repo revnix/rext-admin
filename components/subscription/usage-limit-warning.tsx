@@ -136,23 +136,16 @@ export function UsageLimitWarning({
 
     switch (resource) {
       case "workspaces":
-        current = usage.current_workspaces;
-        max = subscription?.subscription?.plan_limits?.max_workspaces ?? -1;
-        break;
-      case "topics":
-        current = usage.current_topics;
-        max = subscription?.subscription?.plan_limits?.max_topics ?? -1;
+        current = usage.workspaces.used;
+        max = usage.workspaces.limit ?? -1;
         break;
       case "knowledge_items":
-        current = usage.current_knowledge_items;
-        max =
-          subscription?.subscription?.plan_limits?.max_knowledge_items ?? -1;
+        current = usage.knowledge_items.used;
+        max = usage.knowledge_items.limit ?? -1;
         break;
       case "ai_requests":
-        current = usage.current_api_calls;
-        max =
-          subscription?.subscription?.plan_limits?.max_api_calls_per_month ??
-          -1;
+        current = usage.api_calls.used;
+        max = usage.api_calls.limit ?? -1;
         break;
       case "storage":
         current = 0; // Storage tracking not yet implemented
