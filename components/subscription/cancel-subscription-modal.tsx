@@ -154,8 +154,8 @@ export function CancelSubscriptionModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <XCircle className="h-5 w-5" />
             Cancel Subscription
@@ -166,93 +166,95 @@ export function CancelSubscriptionModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Warning Alert */}
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>What happens when you cancel:</strong>
-              <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-                <li>
-                  {currentPeriodEnd
-                    ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
-                    : "Your access will end immediately"}
-                </li>
-                <li>All your data will be preserved for 30 days</li>
-                <li>You can reactivate your subscription anytime</li>
-                <li>No refunds for the current billing period</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          {/* Feedback Section */}
-          <div className="space-y-3">
-            <Label className="text-base">
-              Help us improve - Why are you cancelling? (Optional)
-            </Label>
-            <div className="space-y-2">
-              {CANCELLATION_REASONS.map((reason) => (
-                <div key={reason} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`reason-${reason}`}
-                    checked={selectedReasons.includes(reason)}
-                    onCheckedChange={() => toggleReason(reason)}
-                  />
-                  <Label
-                    htmlFor={`reason-${reason}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {reason}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Feedback */}
-          <div className="space-y-2">
-            <Label htmlFor="feedback">Additional feedback (Optional)</Label>
-            <Textarea
-              id="feedback"
-              placeholder="Tell us more about your experience or what we could do better..."
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              rows={4}
-              className="resize-none"
-            />
-          </div>
-
-          {/* Confirmation Checkbox */}
-          <div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
-            <Checkbox
-              id="confirm-cancel"
-              checked={confirmed}
-              onCheckedChange={(checked) => setConfirmed(checked === true)}
-            />
-            <div className="flex-1">
-              <Label
-                htmlFor="confirm-cancel"
-                className="text-sm font-medium cursor-pointer"
-              >
-                I understand that my subscription will be cancelled
-              </Label>
-              <p className="text-sm text-muted-foreground mt-1">
-                This action will cancel your subscription at the end of the
-                current billing period. You can reactivate anytime.
-              </p>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 scrollbar-hide">
+          <div className="space-y-4 py-4">
+            {/* Warning Alert */}
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>What happens when you cancel:</strong>
+                <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
+                  <li>
+                    {currentPeriodEnd
+                      ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
+                      : "Your access will end immediately"}
+                  </li>
+                  <li>All your data will be preserved for 30 days</li>
+                  <li>You can reactivate your subscription anytime</li>
+                  <li>No refunds for the current billing period</li>
+                </ul>
+              </AlertDescription>
             </Alert>
-          )}
+
+            {/* Feedback Section */}
+            <div className="space-y-3">
+              <Label className="text-base">
+                Help us improve - Why are you cancelling? (Optional)
+              </Label>
+              <div className="space-y-2">
+                {CANCELLATION_REASONS.map((reason) => (
+                  <div key={reason} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`reason-${reason}`}
+                      checked={selectedReasons.includes(reason)}
+                      onCheckedChange={() => toggleReason(reason)}
+                    />
+                    <Label
+                      htmlFor={`reason-${reason}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {reason}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Additional Feedback */}
+            <div className="space-y-2">
+              <Label htmlFor="feedback">Additional feedback (Optional)</Label>
+              <Textarea
+                id="feedback"
+                placeholder="Tell us more about your experience or what we could do better..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Confirmation Checkbox */}
+            <div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
+              <Checkbox
+                id="confirm-cancel"
+                checked={confirmed}
+                onCheckedChange={(checked) => setConfirmed(checked === true)}
+              />
+              <div className="flex-1">
+                <Label
+                  htmlFor="confirm-cancel"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  I understand that my subscription will be cancelled
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This action will cancel your subscription at the end of the
+                  current billing period. You can reactivate anytime.
+                </p>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 border-t">
           <Button variant="outline" onClick={handleClose} disabled={isLoading}>
             Keep Subscription
           </Button>
