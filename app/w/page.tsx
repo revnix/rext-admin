@@ -62,6 +62,7 @@ export default function WorkspacePage() {
   ).map((workspace: Workspace) => ({
     id: workspace.id,
     title: workspace.name || "Untitled Workspace",
+    name: workspace.name, // Keep both for safety
     slug: workspace.slug, // Include slug for URL navigation
     timezone: workspace.timezone,
     url: workspace.url,
@@ -69,7 +70,9 @@ export default function WorkspacePage() {
     updated_at: workspace.updated_at,
     knowledge_stats: workspace.knowledge_stats,
     brand_voice: workspace.brand_voice,
-    status: "active", // Default status since it's not in Workspace type
+    status: "active", // Default status
+    // Flatten some fields for easier global search
+    owner_name: workspace.name, // Assuming the workspace name reflects the owner context in this view if no explicit owner
   }));
 
   // Define columns for the DataTable
@@ -77,9 +80,10 @@ export default function WorkspacePage() {
     {
       key: "title",
       header: "Name",
-      width: "300px",
+      width: "200px",
+      searchable: true,
       cell: (value: unknown, row: WorkspaceData) => (
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-2 min-w-[150px]">
           <div className="flex-shrink-0 mt-0.5">
             <div className="h-5 w-5 rounded bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
               {String(value || "W")
@@ -87,23 +91,23 @@ export default function WorkspacePage() {
                 .toUpperCase()}
             </div>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href={`/w/${row.slug}/settings` as Route}
-                className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer"
+                className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer truncate"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
               >
                 {String(value || "")}
               </Link>
               {currentWorkspace?.id === row.id && (
-                <Badge variant="default" className="text-xs px-1.5 py-0">
+                <Badge variant="default" className="text-[10px] px-1 py-0 h-4">
                   Current
                 </Badge>
               )}
             </div>
             {row.timezone ? (
-              <span className="text-xs text-muted-foreground line-clamp-1 mt-1">
+              <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
                 {String(row.timezone)}
               </span>
             ) : null}
@@ -114,9 +118,10 @@ export default function WorkspacePage() {
     {
       key: "url",
       header: "Website",
-      width: "200px",
+      width: "150px",
+      searchable: true,
       cell: (value: unknown) => (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
           <Globe className="h-4 w-4 flex-shrink-0" />
           <span className="truncate">{String(value || "")}</span>
         </div>
@@ -125,12 +130,12 @@ export default function WorkspacePage() {
     {
       key: "knowledge_stats",
       header: "Knowledge",
-      width: "120px",
+      width: "100px",
       cell: (_value: unknown, row: WorkspaceData) => {
         const stats = row.knowledge_stats;
         const total = stats?.total || 0;
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-sm whitespace-nowrap">
             <FileText className="h-4 w-4 text-muted-foreground" />
             <span>{total} items</span>
           </div>
@@ -140,11 +145,12 @@ export default function WorkspacePage() {
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "80px",
+      searchable: true,
       cell: (value: unknown) => (
         <Badge
           variant={String(value) === "active" ? "default" : "secondary"}
-          className="text-xs"
+          className="text-[10px] px-1.5 py-0"
         >
           {String(value || "active")}
         </Badge>
@@ -153,9 +159,9 @@ export default function WorkspacePage() {
     {
       key: "created_at",
       header: "Created",
-      width: "130px",
+      width: "100px",
       cell: (value: unknown) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           {new Date(String(value)).toLocaleDateString()}
         </span>
       ),
@@ -174,11 +180,11 @@ export default function WorkspacePage() {
   // Define table actions
   const tableActions = (
     <div className="flex items-center gap-2">
-      <Button variant="outline" onClick={() => refetch()}>
+      <Button variant="outline" size="sm" onClick={() => refetch()}>
         <Settings className="h-4 w-4 mr-2" />
         Refresh
       </Button>
-      <Button onClick={() => router.push("/w/create" as Route)}>
+      <Button size="sm" onClick={() => router.push("/w/create" as Route)}>
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -235,7 +241,7 @@ export default function WorkspacePage() {
         actions={tableActions}
         rowActions={rowActions}
         pageSize={10}
-        searchFields={["title", "url", "timezone", "owner"]}
+        searchFields={["title", "url", "timezone", "status"]}
         isLoading={isLoading}
         searchWidth="md:w-[450px]"
         tableId="workspaces"

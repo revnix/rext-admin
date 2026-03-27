@@ -236,6 +236,15 @@ export function DataTable<
           return searchFields.some((field) => {
             const value = row[field];
 
+            // Handle objects (like owner: {name: '...'})
+            if (value && typeof value === "object" && !Array.isArray(value)) {
+              return Object.values(value).some((val) =>
+                String(val || "")
+                  .toLowerCase()
+                  .includes(query),
+              );
+            }
+
             // Handle array fields (like tags)
             if (Array.isArray(value)) {
               return value.some((item) =>
@@ -254,6 +263,15 @@ export function DataTable<
 
         // Otherwise search all values in the row
         return Object.values(row).some((value) => {
+          // Handle objects
+          if (value && typeof value === "object" && !Array.isArray(value)) {
+            return Object.values(value).some((val) =>
+              String(val || "")
+                .toLowerCase()
+                .includes(query),
+            );
+          }
+
           // Handle array fields
           if (Array.isArray(value)) {
             return value.some((item) =>
@@ -362,10 +380,10 @@ export function DataTable<
       {(actions || showSearch || columnFilters.length > 0) && (
         <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               {showSearch && (
                 <div
-                  className={`relative flex-1 min-w-0 md:flex-none ${searchWidth}`}
+                  className={`relative w-full sm:flex-1 min-w-0 sm:max-w-md ${searchWidth}`}
                 >
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -388,8 +406,8 @@ export function DataTable<
                   )}
                 </div>
               )}
-              {/* Actions container: 'contents' on mobile unwraps children so they participate in the parent flex grid */}
-              <div className="contents md:flex md:items-center md:gap-2 md:ml-auto">
+              {/* Actions container */}
+              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                 {actions}
               </div>
             </div>
@@ -433,72 +451,74 @@ export function DataTable<
         ) : hasData ? (
           hasFilteredData ? (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {columns.map((column) => (
-                      <TableHead
-                        key={column.key}
-                        style={{ width: column.width }}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span>{column.header}</span>
-                          {column.filterable && (
-                            <FilterPopover
-                              column={column}
-                              data={data}
-                              currentFilter={getColumnFilter(column.key)}
-                              onApplyFilter={(filter) =>
-                                handleApplyFilter(column.key, filter)
-                              }
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                              >
-                                <Filter className="h-3 w-3" />
-                              </Button>
-                            </FilterPopover>
-                          )}
-                        </div>
-                      </TableHead>
-                    ))}
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow
-                      key={"id" in row ? (row.id as string) : `row-${index}`}
-                      className={`group ${
-                        onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
-                      }`}
-                      onClick={() => onRowClick?.(row)}
-                    >
+              <div className="relative w-full overflow-x-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
                       {columns.map((column) => (
-                        <TableCell key={column.key}>
-                          {column.cell
-                            ? column.cell(
-                                (row as Record<string, unknown>)[column.key],
-                                row as T,
-                              )
-                            : ((row as Record<string, unknown>)[
-                                column.key
-                              ] as string) || "--"}
-                        </TableCell>
+                        <TableHead
+                          key={column.key}
+                          style={{ width: column.width }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span>{column.header}</span>
+                            {column.filterable && (
+                              <FilterPopover
+                                column={column}
+                                data={data}
+                                currentFilter={getColumnFilter(column.key)}
+                                onApplyFilter={(filter) =>
+                                  handleApplyFilter(column.key, filter)
+                                }
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-6 w-6 p-0 ${getColumnFilter(column.key) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                                >
+                                  <Filter className="h-3 w-3" />
+                                </Button>
+                              </FilterPopover>
+                            )}
+                          </div>
+                        </TableHead>
                       ))}
-                      <TableCell className="w-[200px]">
-                        <ActionsCell
-                          actions={displayRowActions}
-                          row={row as T}
-                          showOnHover={shouldShowActionsOnHover()}
-                        />
-                      </TableCell>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedData.map((row, index) => (
+                      <TableRow
+                        key={"id" in row ? (row.id as string) : `row-${index}`}
+                        className={`group ${
+                          onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
+                        }`}
+                        onClick={() => onRowClick?.(row)}
+                      >
+                        {columns.map((column) => (
+                          <TableCell key={column.key}>
+                            {column.cell
+                              ? column.cell(
+                                  (row as Record<string, unknown>)[column.key],
+                                  row as T,
+                                )
+                              : ((row as Record<string, unknown>)[
+                                  column.key
+                                ] as string) || "--"}
+                          </TableCell>
+                        ))}
+                        <TableCell className="w-[200px]">
+                          <ActionsCell
+                            actions={displayRowActions}
+                            row={row as T}
+                            showOnHover={shouldShowActionsOnHover()}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               {/* Pagination */}
               {(totalPages > 1 || pageSizeOptions.length > 1) && (

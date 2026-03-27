@@ -244,11 +244,11 @@ export function CustomIntegrationConfiguration({
           />
 
           {/* Actions */}
-          <div className="pt-6 border-t col-span-1 md:col-span-2 flex justify-between items-center">
+          <div className="pt-6 border-t col-span-1 md:col-span-2 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
             <Button
               variant="destructive"
               onClick={onDelete}
-              className="w-full md:w-auto"
+              className="w-full sm:w-auto"
               type="button"
             >
               Delete Integration
@@ -256,7 +256,7 @@ export function CustomIntegrationConfiguration({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full md:w-auto min-w-[120px]"
+              className="w-full sm:w-auto min-w-[120px]"
             >
               {isSubmitting ? (
                 <>
