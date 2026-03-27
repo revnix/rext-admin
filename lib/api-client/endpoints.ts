@@ -280,7 +280,7 @@ export const ENDPOINTS = {
     // Audit Logs
     audit: {
       myLogs: "/api/v1/audit-logs/user/my-logs",
-      allLogs: "api/v1/audit-logs/",
+      allLogs: "/api/v1/audit-logs/",
       detail: (id: string) => `/api/v1/audit/${id}` as const,
     },
 
