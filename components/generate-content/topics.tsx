@@ -1,4 +1,6 @@
-import { ArrowRight } from "lucide-react";
+"use client";
+
+import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -16,40 +18,43 @@ export function TopicsSection({
 }: TopicsSectionProps) {
   return (
     <div className="w-full py-6">
-      <div className="mb-8">
-        <motion.h2
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold text-foreground tracking-tight"
-        >
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="mb-7"
+      >
+        <p className="text-[11px] font-semibold text-primary/70 tracking-[0.12em] uppercase mb-1.5">
+          Step 3
+        </p>
+        <h2 className="text-xl font-bold text-foreground tracking-tight leading-snug">
           {instruction}
-        </motion.h2>
-      </div>
+        </h2>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex flex-col gap-2">
         {topics.map((topic, index) => (
           <motion.button
             key={topic}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{
+              delay: index * 0.04,
+              duration: 0.38,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             onClick={() => onSelect(topic)}
             className={cn(
-              "group cursor-pointer relative flex flex-col items-start text-left p-6 rounded-xl border transition-all duration-300 w-full outline-none",
-              "bg-card border-border hover:border-primary hover:shadow-lg hover:shadow-colored-sm active:scale-[0.99]",
+              "group cursor-pointer relative flex items-center justify-between text-left px-5 py-4 rounded-xl border w-full outline-none",
+              "bg-card border-border hover:border-primary/40 hover:bg-accent/30 active:scale-[0.995] transition-all duration-200",
             )}
           >
-            <div className="flex justify-between items-start w-full mb-4">
-              <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors leading-tight pr-6">
-                {topic}
-              </h3>
-              <div className="shrink-0 p-2 rounded-lg bg-muted group-hover:bg-accent transition-colors">
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </div>
-
-            {/* Subtle background gradient on hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -z-10" />
+            <span className="text-[14px] font-medium text-foreground group-hover:text-primary transition-colors leading-snug pr-4">
+              {topic}
+            </span>
+            <span className="shrink-0 w-7 h-7 rounded-lg border border-border/60 bg-muted/50 group-hover:border-primary/30 group-hover:bg-primary/5 flex items-center justify-center transition-all duration-200">
+              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </span>
           </motion.button>
         ))}
       </div>

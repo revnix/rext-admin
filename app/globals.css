@@ -1600,3 +1600,188 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+/* Shimmer skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* ============================================
+   BLOG CONTENT — Modern article typography
+   Makes links visually obvious and clickable
+   ============================================ */
+
+/* Links — brand colored, underlined, open in new tab */
+.blog-content a,
+.prose-link {
+  color: #3641f5;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    text-decoration-thickness 0.15s ease;
+}
+
+.blog-content a:hover,
+.prose-link:hover {
+  color: #2a31d8;
+  text-decoration-thickness: 2px;
+}
+
+/* Dark mode links */
+.dark .blog-content a,
+.dark .prose-link {
+  color: #9cb9ff;
+}
+
+.dark .blog-content a:hover,
+.dark .prose-link:hover {
+  color: #c2d6ff;
+}
+
+/* Headings — editorial weight */
+.blog-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.blog-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.blog-content h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 0.625rem;
+  color: hsl(var(--foreground));
+}
+
+/* Paragraphs — comfortable reading line height */
+.blog-content p {
+  line-height: 1.85;
+  margin-bottom: 1.4rem;
+  color: hsl(var(--foreground) / 0.87);
+}
+
+/* Blockquotes — accent left border */
+.blog-content blockquote {
+  border-left: 3px solid #3641f5;
+  background: hsl(var(--primary) / 0.04);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.875rem 1.25rem;
+  margin: 1.75rem 0;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .blog-content blockquote {
+  background: hsl(var(--primary) / 0.07);
+}
+
+/* Inline code */
+.blog-content :not(pre) > code {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.82em;
+  color: #6938ef;
+  font-family: var(--font-mono);
+}
+
+.dark .blog-content :not(pre) > code {
+  color: #9b8afb;
+}
+
+/* Code blocks */
+.blog-content pre {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  padding: 1.1rem 1.25rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.blog-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+}
+
+/* Lists */
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.4rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.4rem;
+  line-height: 1.75;
+  color: hsl(var(--foreground) / 0.87);
+}
+
+.blog-content ul li::marker {
+  color: #3641f5;
+}
+
+.dark .blog-content ul li::marker {
+  color: #9cb9ff;
+}
+
+/* Horizontal rules */
+.blog-content hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 2.5rem 0;
+}
+
+/* Strong */
+.blog-content strong {
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+/* Images */
+.blog-content img {
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem 0;
+  border: 1px solid hsl(var(--border));
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.08) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+}

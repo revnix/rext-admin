@@ -112,7 +112,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       return client.request<CustomerPortalResponse>(
         ENDPOINTS.SUBSCRIPTIONS.portal,
         {
-          method: "GET",
+          method: "POST",
         },
       );
     },
