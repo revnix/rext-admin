@@ -301,22 +301,23 @@ export function OutlineDisplay({
       {/* Header */}
       <div className="mb-10 space-y-4">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-muted">
-            <ListChecks className="w-5 h-5 text-primary" />
-          </div>
+          <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">
+            Step 05 — Content Outline
+          </p>
           {isDraft && (
-            <span className="text-sm font-medium text-muted-foreground">
-              Generating outline…
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/50 ml-2">
+              <ListChecks className="w-3.5 h-3.5 animate-pulse" />
+              Generating…
             </span>
           )}
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
           {titleTw.displayed}
           {!titleTw.isDone && <Cursor />}
         </h2>
 
-        <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+        <p className="text-[15px] text-muted-foreground leading-relaxed max-w-3xl">
           {briefTw.displayed}
           {!briefTw.isDone && <Cursor />}
         </p>
@@ -324,13 +325,13 @@ export function OutlineDisplay({
 
       {/* Metadata Grid (show only after parsed outline arrives) */}
       {outline && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="flex items-center gap-4 p-5 rounded-2xl bg-muted/50 border border-border"
+            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
           >
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Mic2 className="w-5 h-5 text-primary" />
@@ -395,7 +396,7 @@ export function OutlineDisplay({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-4 p-5 rounded-2xl bg-muted/50 border border-border"
+            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
           >
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Target className="w-5 h-5 text-primary" />
@@ -458,7 +459,7 @@ export function OutlineDisplay({
       )}
 
       {/* Sections — each section staggers in and types its own fields */}
-      <div className="space-y-6 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-slate-200">
+      <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
         {effectiveOutline.sections.length > 0
           ? effectiveOutline.sections
               .slice(
@@ -475,13 +476,13 @@ export function OutlineDisplay({
                   transition={{ delay: 0.3 + idx * 0.12 }}
                   className="relative pl-12 group"
                 >
-                  <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border-2 border-border group-hover:border-primary transition-colors z-10">
-                    <span className="text-xs font-bold text-muted-foreground group-hover:text-primary transition-colors">
-                      {idx + 1}
+                  <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
+                    <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                      {String(idx + 1).padStart(2, "0")}
                     </span>
                   </div>
 
-                  <div className="p-6 rounded-2xl border border-border bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300">
+                  <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                       <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                         <TypeField
@@ -548,22 +549,22 @@ export function OutlineDisplay({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 + effectiveOutline.sections.length * 0.12 }}
-        className="mt-12 flex items-center justify-end gap-3"
+        className="mt-10 flex items-center justify-end gap-3"
       >
         <Button
           onClick={onReject}
           disabled={isLoading || isDraft}
           variant="outline"
-          className="h-12 px-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 dark:text-white"
+          className="h-11 px-7 rounded-xl border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
         >
           <X className="w-4 h-4 mr-2" /> Reject
         </Button>
         <Button
           onClick={onApprove}
           disabled={isLoading || isDraft}
-          className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white border-none shadow-lg shadow-blue-500/20"
+          className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
         >
-          <Check className="w-4 h-4 mr-2" /> Approve & Generate
+          <Check className="w-4 h-4" /> Approve & Generate
         </Button>
       </motion.div>
     </motion.div>
@@ -588,13 +589,16 @@ export function OutlineRejectSection({
       animate={{ opacity: 1, scale: 1 }}
       className="w-full max-w-2xl mx-auto py-12"
     >
-      <div className="p-8 rounded-3xl bg-card border border-border">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 rounded-2xl bg-muted">
-            <MessageSquare className="w-6 h-6 text-primary" />
+      <div className="p-7 rounded-2xl bg-card border border-border/50">
+        <div className="flex items-center gap-4 mb-7">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-foreground leading-tight">
+            <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-0.5">
+              Feedback
+            </p>
+            <h3 className="text-[15px] font-bold text-foreground leading-tight">
               {instruction}
             </h3>
           </div>
@@ -603,15 +607,15 @@ export function OutlineRejectSection({
           value={rejectedReason}
           onChange={(e) => onChange(e.target.value)}
           placeholder={instruction}
-          className="w-full min-h-[160px] p-5 rounded-2xl border-border focus:border-primary text-foreground bg-muted/50 text-base leading-relaxed"
+          className="w-full min-h-[140px] p-4 rounded-xl border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
         />
-        <div className="flex items-center justify-end mt-8">
+        <div className="flex items-center justify-end mt-6">
           <Button
             onClick={onSubmit}
-            className="h-12 px-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white border-none group"
+            className="h-11 px-8 rounded-xl font-semibold gap-1.5 group"
           >
-            Submit
-            <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            Submit Feedback
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Button>
         </div>
       </div>

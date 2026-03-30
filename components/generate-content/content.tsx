@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ContentStatus } from "@/types/content";
 import type {
   FinalContent,
@@ -19,14 +20,20 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Globe,
+  ImageIcon,
+  Link2,
   Loader2,
   Pencil,
+  Plus,
   Save,
   Search,
   Send,
   Sparkles,
+  Trash2,
   TrendingUp,
+  X,
   Zap,
 } from "lucide-react";
 import {
@@ -55,12 +62,36 @@ import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
 
-// Open every link in a new tab and add noopener for security
+// Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
   renderer: {
     link({ href, title, text }) {
       const titleAttr = title ? ` title="${title}"` : "";
       return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="prose-link">${text}</a>`;
+    },
+    image({ href, title, text }) {
+      const alt = text || title || "";
+      const caption = title || text || "";
+      const placeholder = `
+        <div class="content-image-placeholder" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <span>Image could not be loaded</span>
+        </div>`;
+      return `
+        <figure class="content-image-figure">
+          <img
+            src="${href}"
+            alt="${alt}"
+            loading="lazy"
+            class="content-image"
+            onerror="this.closest('figure').classList.add('content-image-broken'); this.style.display='none';"
+          />
+          ${placeholder}
+          ${caption ? `<figcaption class="content-image-caption">${caption}</figcaption>` : ""}
+        </figure>`;
     },
   },
 });
@@ -309,6 +340,103 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
   const [contentSavedId, setContentSavedId] = useState<string | undefined>(
     contentId,
+  );
+
+  // ── Image & Source editor ─────────────────────────────────────────────
+  type ImageEntry = { alt: string; url: string; raw: string };
+  type SourceEntry = { text: string; url: string; raw: string };
+
+  const parsedImages = useMemo<ImageEntry[]>(() => {
+    if (!body) return [];
+    return [...body.matchAll(/!\[([^\]]*)\]\(([^)\s]+)\)/g)].map((m) => ({
+      alt: m[1],
+      url: m[2],
+      raw: m[0],
+    }));
+  }, [body]);
+
+  const parsedSources = useMemo<SourceEntry[]>(() => {
+    if (!body) return [];
+    return [...body.matchAll(/(?<!!)\[([^\]]+)\]\(([^)\s]+)\)/g)].map((m) => ({
+      text: m[1],
+      url: m[2],
+      raw: m[0],
+    }));
+  }, [body]);
+
+  const [editingImage, setEditingImage] = useState<{
+    index: number;
+    alt: string;
+    url: string;
+  } | null>(null);
+  const [editingSource, setEditingSource] = useState<{
+    index: number;
+    text: string;
+    url: string;
+  } | null>(null);
+  const [newImage, setNewImage] = useState<{ alt: string; url: string } | null>(
+    null,
+  );
+  const [newSource, setNewSource] = useState<{
+    text: string;
+    url: string;
+  } | null>(null);
+
+  const applyImageEdit = useCallback(
+    (index: number, newAlt: string, newUrl: string) => {
+      const old = parsedImages[index];
+      if (!old || !body) return;
+      onContentChange(body.replace(old.raw, `![${newAlt}](${newUrl})`));
+      setEditingImage(null);
+    },
+    [parsedImages, body, onContentChange],
+  );
+
+  const removeImage = useCallback(
+    (index: number) => {
+      const old = parsedImages[index];
+      if (!old || !body) return;
+      onContentChange(body.replace(old.raw, ""));
+    },
+    [parsedImages, body, onContentChange],
+  );
+
+  const addImage = useCallback(
+    (alt: string, url: string) => {
+      if (!url.trim()) return;
+      onContentChange((body ?? "") + `\n\n![${alt}](${url})\n`);
+      setNewImage(null);
+    },
+    [body, onContentChange],
+  );
+
+  const applySourceEdit = useCallback(
+    (index: number, newText: string, newUrl: string) => {
+      const old = parsedSources[index];
+      if (!old || !body) return;
+      onContentChange(body.replace(old.raw, `[${newText}](${newUrl})`));
+      setEditingSource(null);
+    },
+    [parsedSources, body, onContentChange],
+  );
+
+  const removeSource = useCallback(
+    (index: number) => {
+      const old = parsedSources[index];
+      if (!old || !body) return;
+      // Replace the link with just its text (unlinks it)
+      onContentChange(body.replace(old.raw, old.text));
+    },
+    [parsedSources, body, onContentChange],
+  );
+
+  const addSource = useCallback(
+    (text: string, url: string) => {
+      if (!url.trim() || !text.trim()) return;
+      onContentChange((body ?? "") + `\n\n[${text}](${url})\n`);
+      setNewSource(null);
+    },
+    [body, onContentChange],
   );
 
   // Derive sidebar headings from the actual body content
@@ -560,23 +688,21 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="flex flex-1 relative border-b border-border">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-60 border-r border-border bg-sidebar/30 flex-col py-6 mt-1.5 shrink-0 overflow-y-auto sticky top-[74px] max-h-[calc(100vh-72px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-            <div className="px-5">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="h-px flex-1 bg-border/60" />
-                <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+          <aside className="hidden lg:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col mt-1.5 shrink-0 overflow-y-auto sticky top-[74px] max-h-[calc(100vh-72px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+            <div className="px-3 py-4">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
                   Structure
                 </span>
-                <div className="h-px flex-1 bg-border/60" />
+                {!isFinal && (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20">
+                    <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                    <span className="text-[9px] text-amber-500/80 font-bold leading-none">
+                      Live
+                    </span>
+                  </div>
+                )}
               </div>
-              {!isFinal && (
-                <div className="flex items-center gap-1.5 mb-4 px-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                  <span className="text-[10px] text-amber-500/80 font-semibold">
-                    Generating content…
-                  </span>
-                </div>
-              )}
               <nav className="space-y-0.5">
                 {sidebarSections.map((sec, i) => {
                   const sectionWritten = body
@@ -616,10 +742,10 @@ function ContentEditorInner(props: ContentEditorProps) {
                         }
                       }}
                       className={cn(
-                        "w-full flex items-center gap-2.5 px-2.5 py-2 text-left cursor-pointer rounded-lg group transition-all duration-200 relative",
+                        "w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left cursor-pointer rounded-lg group transition-all duration-200 relative",
                         sectionWritten
-                          ? "text-foreground/70 hover:bg-muted/60 hover:text-foreground"
-                          : "text-muted-foreground/40 hover:text-muted-foreground/60",
+                          ? "text-foreground/75 hover:bg-muted/50 hover:text-foreground"
+                          : "text-muted-foreground/30 hover:text-muted-foreground/50",
                       )}
                     >
                       <span
@@ -705,6 +831,19 @@ function ContentEditorInner(props: ContentEditorProps) {
                     </>
                   ) : (
                     <div className="space-y-8 py-2">
+                      {/* Generating status banner */}
+                      <div className="flex items-center gap-3 p-4 rounded-xl border border-border/40 bg-card/50">
+                        <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0" />
+                        <div>
+                          <p className="text-[12px] font-semibold text-foreground/80">
+                            Generating your article…
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">
+                            AI is researching and writing. This may take a
+                            minute.
+                          </p>
+                        </div>
+                      </div>
                       {/* Tags skeleton or real tags */}
                       <div className="flex flex-wrap gap-2">
                         {tags.length > 0 ? (
@@ -830,68 +969,84 @@ function ContentEditorInner(props: ContentEditorProps) {
 
         {/* Right Sidebar: Analysis */}
         <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col px-1.5 space-y-8 overflow-y-auto mt-2.5 sticky top-[78px] max-h-[calc(100vh-72px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-          <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
-              onClick={onEditToggle}
-              disabled={!isFinal}
-              title={isEditing ? "Exit Edit Mode" : "Edit Content"}
-            >
-              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}{" "}
-            </Button>
-            <Button
-              onClick={saveContent}
-              disabled={!isFinal || isSaving || isPublishing}
-              variant="secondary"
-              size="sm"
-              className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
-              title="Save Content"
-            >
-              <Save
-                size={14}
-                className={isSaving ? "animate-pulse" : ""}
-              />{" "}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={!isFinal}
-                  variant="secondary"
-                  size="sm"
-                  className={`h-8 px-2! text-xs font-bold transition-all flex-1`}
-                  title="Copy Content"
-                >
-                  <Copy size={14} />{" "}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48" align="center">
-                <DropdownMenuLabel>Copy Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleCopy("html")}>
-                  Copy as HTML
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-                  Copy as Markdown
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleCopy("formatted")}>
-                  Copy as Text
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              onClick={publishContent}
-              disabled={!isFinal || isPublishing || isSaving}
-              size="sm"
-              className="h-8 px-2! text-xs font-bold flex-1"
-              title="Publish Content"
-            >
-              <Send
-                size={14}
-                className={cn("", isPublishing ? "animate-pulse" : "")}
-              />{" "}
-            </Button>
+          <div className="sticky top-0 bg-sidebar/95 backdrop-blur-sm border-b border-border/40 px-3 pt-3 pb-2.5 z-10 space-y-2">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
+                Actions
+              </span>
+              {isFinal && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/20">
+                  <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                  <span className="text-[9px] text-emerald-500/80 font-bold leading-none">
+                    Ready
+                  </span>
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-[11px] font-semibold gap-1.5 border-border/50 hover:bg-accent/30 transition-all"
+                onClick={onEditToggle}
+                disabled={!isFinal}
+                title={isEditing ? "Exit Edit Mode" : "Edit Content"}
+              >
+                {isEditing ? <Eye size={12} /> : <Pencil size={12} />}
+                {isEditing ? "Preview" : "Edit"}
+              </Button>
+              <Button
+                onClick={saveContent}
+                disabled={!isFinal || isSaving || isPublishing}
+                variant="outline"
+                size="sm"
+                className="h-8 text-[11px] font-semibold gap-1.5 border-border/50 hover:bg-accent/30 transition-all"
+                title="Save Content"
+              >
+                <Save size={12} className={isSaving ? "animate-pulse" : ""} />
+                {isSaving ? "Saving…" : "Save"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={!isFinal}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-[11px] font-semibold gap-1.5 border-border/50 hover:bg-accent/30 transition-all w-full"
+                    title="Copy Content"
+                  >
+                    <Copy size={12} />
+                    Copy
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48" align="center">
+                  <DropdownMenuLabel>Copy Options</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleCopy("html")}>
+                    Copy as HTML
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+                    Copy as Markdown
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+                    Copy as Text
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                onClick={publishContent}
+                disabled={!isFinal || isPublishing || isSaving}
+                size="sm"
+                className="h-8 text-[11px] font-semibold gap-1.5 transition-all"
+                title="Publish Content"
+              >
+                <Send
+                  size={12}
+                  className={cn("", isPublishing ? "animate-pulse" : "")}
+                />
+                {isPublishing ? "Publishing…" : "Publish"}
+              </Button>
+            </div>
           </div>
           {/* Status Modal (Unified Success/Error) */}
           <Dialog
@@ -945,15 +1100,15 @@ function ContentEditorInner(props: ContentEditorProps) {
             {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
               <div className="space-y-3 pb-2">
                 {/* Header */}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-0.5 pb-0.5">
                   <div className="relative shrink-0">
                     <Bot size={13} className="text-primary" />
                     <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                   </div>
-                  <h4 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground flex-1">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/60 flex-1">
                     Agent Activity
                   </h4>
-                  <span className="text-[9px] bg-amber-400/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-bold border border-amber-400/20">
+                  <span className="text-[9px] bg-amber-400/10 text-amber-500 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-bold border border-amber-400/20">
                     Live
                   </span>
                 </div>
@@ -1065,14 +1220,14 @@ function ContentEditorInner(props: ContentEditorProps) {
             {/* ── Metrics (shown once generation is complete) ─────────────── */}
             {score ? (
               <>
-                <div className="flex items-center gap-2 font-bold">
+                <div className="flex items-center gap-2">
                   <Activity size={16} className="text-emerald-500" />
-                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
                     Performance & SEO
                   </h4>
                 </div>
 
-                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
+                <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
                   <h4 className="text-lg font-bold text-foreground">
                     Readability
                   </h4>
@@ -1094,7 +1249,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             ) : null}
 
             {seoScore ? (
-              <div className="bg-card p-6 rounded-3xl border border-border space-y-6">
+              <div className="bg-card p-5 rounded-xl border border-border/50 space-y-6">
                 <h4 className="text-lg font-bold text-foreground">
                   On-Page SEO
                 </h4>
@@ -1184,14 +1339,14 @@ function ContentEditorInner(props: ContentEditorProps) {
             {trustScore ? (
               <>
                 <hr />
-                <div className="flex items-center gap-2 font-bold">
+                <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-blue-500" />
-                  <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
                     EEAT Assistant
                   </h4>
                 </div>
 
-                <div className="bg-card p-6 rounded-3xl border border-border space-y-4">
+                <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
                   <h4 className="text-lg font-bold text-foreground leading-tight">
                     Trust Score
                   </h4>
@@ -1215,6 +1370,372 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </>
             ) : null}
+
+            {/* ── Images Manager ───────────────────────────────────────── */}
+            {isFinal && (
+              <>
+                <hr />
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={16} className="text-violet-500" />
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+                    Images
+                  </h4>
+                </div>
+
+                <div className="bg-card rounded-3xl border border-border overflow-hidden">
+                  <div className="space-y-0">
+                    {parsedImages.length === 0 && (
+                      <p className="text-xs text-muted-foreground px-4 py-4">
+                        No images in the article yet.
+                      </p>
+                    )}
+                    {parsedImages.map((img, i) => (
+                      <div
+                        key={`${img.raw}-${i}`}
+                        className="border-b border-border last:border-0"
+                      >
+                        {editingImage?.index === i ? (
+                          <div className="p-3 space-y-2">
+                            <input
+                              className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                              placeholder="Alt text"
+                              value={editingImage.alt}
+                              onChange={(e) =>
+                                setEditingImage((prev) =>
+                                  prev
+                                    ? { ...prev, alt: e.target.value }
+                                    : prev,
+                                )
+                              }
+                            />
+                            <input
+                              className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                              placeholder="Image URL"
+                              value={editingImage.url}
+                              onChange={(e) =>
+                                setEditingImage((prev) =>
+                                  prev
+                                    ? { ...prev, url: e.target.value }
+                                    : prev,
+                                )
+                              }
+                            />
+                            <div className="flex gap-1.5">
+                              <Button
+                                size="sm"
+                                className="h-6 text-[11px] flex-1"
+                                onClick={() =>
+                                  applyImageEdit(
+                                    i,
+                                    editingImage.alt,
+                                    editingImage.url,
+                                  )
+                                }
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 text-[11px]"
+                                onClick={() => setEditingImage(null)}
+                              >
+                                <X size={11} />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 px-3 py-2">
+                            <div className="w-8 h-8 rounded-lg bg-muted border border-border shrink-0 overflow-hidden flex items-center justify-center">
+                              <Image
+                                src={img.url}
+                                alt={img.alt || "CMS image"}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                                unoptimized
+                                onError={(e) => {
+                                  (
+                                    e.currentTarget as HTMLImageElement
+                                  ).style.display = "none";
+                                }}
+                              />
+                            </div>
+                            <span className="flex-1 text-xs text-foreground truncate min-w-0">
+                              {img.alt || (
+                                <span className="text-muted-foreground italic">
+                                  No alt text
+                                </span>
+                              )}
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                title="Open image"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                                onClick={() => window.open(img.url, "_blank")}
+                              >
+                                <ExternalLink size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                title="Edit image"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                                onClick={() =>
+                                  setEditingImage({
+                                    index: i,
+                                    alt: img.alt,
+                                    url: img.url,
+                                  })
+                                }
+                              >
+                                <Pencil size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                title="Remove image"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500"
+                                onClick={() => removeImage(i)}
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Add new image */}
+                    {newImage ? (
+                      <div className="p-3 space-y-2 border-t border-border">
+                        <input
+                          className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                          placeholder="Alt text"
+                          value={newImage.alt}
+                          onChange={(e) =>
+                            setNewImage((prev) =>
+                              prev ? { ...prev, alt: e.target.value } : prev,
+                            )
+                          }
+                        />
+                        <input
+                          className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                          placeholder="Image URL (https://...)"
+                          value={newImage.url}
+                          onChange={(e) =>
+                            setNewImage((prev) =>
+                              prev ? { ...prev, url: e.target.value } : prev,
+                            )
+                          }
+                        />
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            className="h-6 text-[11px] flex-1"
+                            onClick={() => addImage(newImage.alt, newImage.url)}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-[11px]"
+                            onClick={() => setNewImage(null)}
+                          >
+                            <X size={11} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-1.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border"
+                        onClick={() => setNewImage({ alt: "", url: "" })}
+                      >
+                        <Plus size={12} />
+                        Add image
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Sources Manager ──────────────────────────────────────── */}
+            {isFinal && (
+              <>
+                <hr />
+                <div className="flex items-center gap-2">
+                  <Link2 size={16} className="text-sky-500" />
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+                    Sources
+                  </h4>
+                </div>
+
+                <div className="bg-card rounded-3xl border border-border overflow-hidden">
+                  <div className="space-y-0">
+                    {parsedSources.length === 0 && (
+                      <p className="text-xs text-muted-foreground px-4 py-4">
+                        No citations in the article yet.
+                      </p>
+                    )}
+                    {parsedSources.map((src, i) => (
+                      <div
+                        key={`${src.raw}-${i}`}
+                        className="border-b border-border last:border-0"
+                      >
+                        {editingSource?.index === i ? (
+                          <div className="p-3 space-y-2">
+                            <input
+                              className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                              placeholder="Link text"
+                              value={editingSource.text}
+                              onChange={(e) =>
+                                setEditingSource((prev) =>
+                                  prev
+                                    ? { ...prev, text: e.target.value }
+                                    : prev,
+                                )
+                              }
+                            />
+                            <input
+                              className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                              placeholder="URL (https://...)"
+                              value={editingSource.url}
+                              onChange={(e) =>
+                                setEditingSource((prev) =>
+                                  prev
+                                    ? { ...prev, url: e.target.value }
+                                    : prev,
+                                )
+                              }
+                            />
+                            <div className="flex gap-1.5">
+                              <Button
+                                size="sm"
+                                className="h-6 text-[11px] flex-1"
+                                onClick={() =>
+                                  applySourceEdit(
+                                    i,
+                                    editingSource.text,
+                                    editingSource.url,
+                                  )
+                                }
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 text-[11px]"
+                                onClick={() => setEditingSource(null)}
+                              >
+                                <X size={11} />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 px-3 py-2">
+                            <div className="w-5 h-5 rounded bg-sky-500/10 flex items-center justify-center shrink-0">
+                              <Link2 size={10} className="text-sky-500" />
+                            </div>
+                            <span className="flex-1 text-xs text-foreground truncate min-w-0">
+                              {src.text}
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                title="Open source"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                                onClick={() => window.open(src.url, "_blank")}
+                              >
+                                <ExternalLink size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                title="Edit source"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                                onClick={() =>
+                                  setEditingSource({
+                                    index: i,
+                                    text: src.text,
+                                    url: src.url,
+                                  })
+                                }
+                              >
+                                <Pencil size={11} />
+                              </button>
+                              <button
+                                type="button"
+                                title="Remove source"
+                                className="h-5 w-5 flex items-center justify-center rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500"
+                                onClick={() => removeSource(i)}
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Add new source */}
+                    {newSource ? (
+                      <div className="p-3 space-y-2 border-t border-border">
+                        <input
+                          className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                          placeholder="Link text"
+                          value={newSource.text}
+                          onChange={(e) =>
+                            setNewSource((prev) =>
+                              prev ? { ...prev, text: e.target.value } : prev,
+                            )
+                          }
+                        />
+                        <input
+                          className="w-full h-7 rounded-lg bg-muted border border-border text-xs px-2 outline-none focus:ring-1 focus:ring-ring"
+                          placeholder="URL (https://...)"
+                          value={newSource.url}
+                          onChange={(e) =>
+                            setNewSource((prev) =>
+                              prev ? { ...prev, url: e.target.value } : prev,
+                            )
+                          }
+                        />
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            className="h-6 text-[11px] flex-1"
+                            onClick={() =>
+                              addSource(newSource.text, newSource.url)
+                            }
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-[11px]"
+                            onClick={() => setNewSource(null)}
+                          >
+                            <X size={11} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-1.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border"
+                        onClick={() => setNewSource({ text: "", url: "" })}
+                      >
+                        <Plus size={12} />
+                        Add source
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </section>
         </aside>
       </div>

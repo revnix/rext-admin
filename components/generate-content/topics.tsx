@@ -24,40 +24,55 @@ export function TopicsSection({
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="mb-7"
       >
-        <p className="text-[11px] font-semibold text-primary/70 tracking-[0.12em] uppercase mb-1.5">
-          Step 3
+        <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-2">
+          Step 03
         </p>
-        <h2 className="text-xl font-bold text-foreground tracking-tight leading-snug">
+        <h2 className="text-[1.4rem] font-bold text-foreground tracking-tight leading-snug">
           {instruction}
         </h2>
       </motion.div>
 
-      <div className="flex flex-col gap-2">
+      {/* Single bordered container with dividers */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        className="border border-border/50 rounded-2xl overflow-hidden bg-card divide-y divide-border/30"
+      >
         {topics.map((topic, index) => (
           <motion.button
             key={topic}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{
-              delay: index * 0.04,
-              duration: 0.38,
+              delay: 0.15 + index * 0.05,
+              duration: 0.35,
               ease: [0.22, 1, 0.36, 1],
             }}
             onClick={() => onSelect(topic)}
             className={cn(
-              "group cursor-pointer relative flex items-center justify-between text-left px-5 py-4 rounded-xl border w-full outline-none",
-              "bg-card border-border hover:border-primary/40 hover:bg-accent/30 active:scale-[0.995] transition-all duration-200",
+              "group relative flex items-center justify-between text-left w-full px-5 py-4 outline-none",
+              "hover:bg-accent/20 active:bg-accent/30 transition-colors duration-200 cursor-pointer",
             )}
           >
-            <span className="text-[14px] font-medium text-foreground group-hover:text-primary transition-colors leading-snug pr-4">
-              {topic}
-            </span>
-            <span className="shrink-0 w-7 h-7 rounded-lg border border-border/60 bg-muted/50 group-hover:border-primary/30 group-hover:bg-primary/5 flex items-center justify-center transition-all duration-200">
-              <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            {/* Left accent line */}
+            <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary origin-center scale-y-0 group-hover:scale-y-100 transition-transform duration-200 rounded-full" />
+
+            <div className="flex items-center gap-4 pr-4 min-w-0">
+              <span className="shrink-0 text-[10px] font-black text-muted-foreground/20 group-hover:text-primary/40 transition-colors tracking-wider">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="text-[14px] font-medium text-foreground/80 group-hover:text-foreground transition-colors leading-snug truncate">
+                {topic}
+              </span>
+            </div>
+
+            <span className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 group-hover:text-primary group-hover:bg-primary/8 transition-all duration-200">
+              <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
             </span>
           </motion.button>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -58,9 +58,9 @@ export function SuggestionsSection({
       {/* Step label */}
       <motion.p
         variants={itemVariants}
-        className="text-[11px] font-semibold text-primary/70 tracking-[0.12em] uppercase mt-5 mb-3"
+        className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mt-5 mb-3"
       >
-        Step 2 — Select keyword
+        Step 02 — Select keyword
       </motion.p>
 
       {/* Primary keyword */}
@@ -68,19 +68,19 @@ export function SuggestionsSection({
         type="button"
         variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/25 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/15"
+        className="w-full text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
       >
-        <span className="absolute left-0 top-0 h-full w-0.5 bg-primary rounded-l-xl" />
+        <span className="absolute left-0 top-0 h-full w-[2px] bg-primary rounded-l-xl" />
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-muted-foreground/50 font-semibold uppercase tracking-widest mb-0.5">
+            <p className="text-[10px] text-muted-foreground/40 font-black uppercase tracking-[0.18em] mb-0.5">
               Searched keyword
             </p>
             <h1 className="text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
               {primaryKeyword}
             </h1>
           </div>
-          <div className="h-8 w-8 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center text-primary/60 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200">
+          <div className="h-8 w-8 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center text-primary/50 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200">
             <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
@@ -90,13 +90,13 @@ export function SuggestionsSection({
       <div className="grid grid-cols-1 md:grid-cols-2 mt-3 gap-3">
         <motion.div
           variants={itemVariants}
-          className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between"
+          className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
               Difficulty
             </span>
-            <Zap className="w-3.5 h-3.5 text-primary" />
+            <Zap className="w-3.5 h-3.5 text-primary/60" />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <SafeChartRadialStacked difficultyScore={difficultyScore} />
@@ -106,13 +106,13 @@ export function SuggestionsSection({
         <div className="flex flex-col gap-3">
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between"
+            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Search Intent
               </span>
-              <Compass className="w-3.5 h-3.5 text-primary" />
+              <Compass className="w-3.5 h-3.5 text-primary/60" />
             </div>
             <div className="flex items-center gap-3">
               <AnimatePresence mode="wait">
@@ -136,7 +136,7 @@ export function SuggestionsSection({
                 ) : (
                   <motion.div
                     key="intent-loader"
-                    className="flex items-center gap-2 text-xs text-muted-foreground"
+                    className="flex items-center gap-2 text-xs text-muted-foreground/50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -151,13 +151,13 @@ export function SuggestionsSection({
 
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between"
+            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Monthly Volume
               </span>
-              <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
+              <TrendingUp className="w-3.5 h-3.5 text-sky-400/70" />
             </div>
             <AnimatePresence mode="wait">
               {seoResult?.volume ? (
@@ -172,7 +172,7 @@ export function SuggestionsSection({
               ) : (
                 <motion.div
                   key="volume-loader"
-                  className="flex items-center gap-2 text-xs text-muted-foreground"
+                  className="flex items-center gap-2 text-xs text-muted-foreground/50"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -192,34 +192,44 @@ export function SuggestionsSection({
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[13px] font-semibold text-foreground/70 mt-5 mb-3"
+            className="text-[12.5px] font-semibold text-foreground/60 mt-6 mb-3"
           >
             {instruction}
           </motion.p>
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col gap-1.5">
+      {/* Alternatives list — single bordered container */}
+      <motion.div
+        variants={itemVariants}
+        className="border border-border/40 rounded-xl overflow-hidden bg-card divide-y divide-border/25"
+      >
         <AnimatePresence>
           {suggestedKeywords.length > 0 ? (
             suggestedKeywords.map((kw, idx) => (
               <motion.button
                 type="button"
                 key={kw}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{
                   delay: idx * 0.04,
                   duration: 0.35,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="w-full group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
+                className="group relative w-full flex items-center justify-between px-5 py-3.5 hover:bg-accent/20 transition-colors duration-200 text-left cursor-pointer"
                 onClick={() => onSelect(kw)}
               >
-                <span className="text-[13px] font-medium text-foreground/80 group-hover:text-primary transition-colors">
-                  {kw}
-                </span>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary origin-center scale-y-0 group-hover:scale-y-100 transition-transform duration-200 rounded-full" />
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black text-muted-foreground/20 group-hover:text-primary/40 transition-colors tracking-wider">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[13px] font-medium text-foreground/75 group-hover:text-foreground transition-colors">
+                    {kw}
+                  </span>
+                </div>
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/25 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" />
               </motion.button>
             ))
           ) : (
@@ -227,14 +237,14 @@ export function SuggestionsSection({
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2"
+              className="px-5 py-4 text-xs text-muted-foreground/50 flex items-center gap-2"
             >
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Generating suggestions...
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

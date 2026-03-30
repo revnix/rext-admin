@@ -10,6 +10,7 @@ import {
   Layout,
   BarChart3,
   FileCheck2,
+  ArrowUpRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -66,15 +67,15 @@ export default function ContentType({
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="mb-7"
       >
-        <p className="text-[11px] font-semibold text-primary/70 tracking-[0.12em] uppercase mb-1.5">
-          Step 4
+        <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-2">
+          Step 04
         </p>
-        <h2 className="text-xl font-bold text-foreground tracking-tight leading-snug">
+        <h2 className="text-[1.4rem] font-bold text-foreground tracking-tight leading-snug">
           {instruction}
         </h2>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {contentTypes.map((type: string, index: number) => {
           const Icon = getIconForType(type);
           const description = getDescriptionForType(type);
@@ -82,7 +83,7 @@ export default function ContentType({
           return (
             <motion.button
               key={type}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 delay: index * 0.05,
@@ -91,24 +92,37 @@ export default function ContentType({
               }}
               onClick={() => handleContentTypeSelect(type)}
               className={cn(
-                "group cursor-pointer relative flex flex-col items-start text-left p-5 rounded-xl border transition-all duration-200 w-full outline-none h-full",
-                "bg-card border-border hover:border-primary/40 hover:bg-accent/20 active:scale-[0.98]",
+                "group relative flex flex-col items-start text-left p-5 rounded-xl border transition-all duration-200 w-full outline-none h-full overflow-hidden",
+                "bg-card border-border/50 hover:border-primary/35 hover:bg-accent/15 active:scale-[0.98] cursor-pointer",
               )}
             >
-              <div className="mb-4 p-2.5 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                <Icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              {/* Subtle hover glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-transparent to-primary/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+              {/* Index number — decorative background */}
+              <span className="absolute -bottom-1 -right-1 text-[56px] font-black leading-none select-none pointer-events-none text-foreground/[0.03] group-hover:text-primary/[0.05] transition-colors duration-300">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+
+              {/* Icon */}
+              <div className="relative z-10 mb-4 w-9 h-9 rounded-lg bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors duration-200">
+                <Icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
               </div>
 
-              <div className="flex-1 w-full">
-                <h3 className="text-[14px] font-semibold text-foreground group-hover:text-primary transition-colors mb-1.5 capitalize leading-tight">
+              {/* Content */}
+              <div className="relative z-10 flex-1 w-full">
+                <h3 className="text-[13.5px] font-semibold text-foreground group-hover:text-primary transition-colors duration-200 mb-1.5 capitalize leading-tight">
                   {type}
                 </h3>
-                <p className="text-[12px] text-muted-foreground leading-relaxed">
+                <p className="text-[12px] text-muted-foreground/70 leading-relaxed">
                   {description}
                 </p>
               </div>
 
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/4 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl -z-10" />
+              {/* Arrow */}
+              <div className="relative z-10 mt-4 self-end">
+                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/25 group-hover:text-primary/60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
+              </div>
             </motion.button>
           );
         })}

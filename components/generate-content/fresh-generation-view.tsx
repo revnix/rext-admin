@@ -819,21 +819,13 @@ export function FreshGenerationView({
     !showContentStream
   ) {
     return (
-      <div
-        className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative px-6 transition-all duration-700",
-          instructionType === "keyword"
-            ? "min-h-[70vh] justify-center"
-            : "min-h-0 pt-2",
-        )}
-      >
+      <div className="max-w-3xl mx-auto w-full flex flex-col items-center justify-center relative px-6 min-h-[60vh]">
         <LoadingIndicatorVariants
           step={instructionType}
           isLoading={isLoading || isManualLoading}
           loadingStatus={loadingStatus}
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
-          className="mt-5"
         />
       </div>
     );

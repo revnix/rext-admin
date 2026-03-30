@@ -1,45 +1,67 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+
+const STEPS = ["Keyword", "Topics", "Type", "Outline", "Article"];
 
 export function HeroSection() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="text-center mb-12 select-none"
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="text-center mb-10 select-none"
     >
+      {/* Step pipeline indicator */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.88 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/5 mb-7"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+        className="inline-flex items-center gap-0 mb-8 border border-border/40 rounded-lg overflow-hidden bg-card"
       >
-        <Sparkles className="w-3 h-3 text-primary" />
-        <span className="text-[11px] font-semibold text-primary tracking-[0.11em] uppercase">
-          AI Content Engine
-        </span>
+        {STEPS.map((step, i) => (
+          <div key={step} className="flex items-center">
+            <div
+              className={`flex items-center gap-1.5 px-3 py-1.5 ${i === 0 ? "bg-primary/10" : ""}`}
+            >
+              <span
+                className={`text-[10px] font-bold tracking-[0.1em] uppercase ${
+                  i === 0 ? "text-primary" : "text-muted-foreground/40"
+                }`}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span
+                className={`text-[10px] font-semibold ${
+                  i === 0 ? "text-foreground/80" : "text-muted-foreground/30"
+                }`}
+              >
+                {step}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && <div className="w-px h-5 bg-border/40" />}
+          </div>
+        ))}
       </motion.div>
 
+      {/* Main heading */}
       <motion.h1
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="text-[2.6rem] md:text-[3.4rem] font-bold tracking-[-0.03em] leading-[1.06] text-foreground mb-4"
+        transition={{ delay: 0.14, duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+        className="text-[2.4rem] md:text-[3.2rem] font-bold tracking-[-0.03em] leading-[1.06] text-foreground mb-4"
       >
         What are we{" "}
         <span className="relative inline-block">
           <span className="text-primary">writing</span>
           <motion.span
-            className="absolute -bottom-0.5 left-0 h-[2px] bg-primary/35 rounded-full w-full"
+            className="absolute -bottom-0.5 left-0 h-[1.5px] bg-primary/40 w-full"
             initial={{ scaleX: 0, originX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{
-              delay: 0.52,
-              duration: 0.5,
+              delay: 0.5,
+              duration: 0.45,
               ease: [0.22, 1, 0.36, 1],
             }}
           />
@@ -50,11 +72,11 @@ export function HeroSection() {
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="text-[15px] text-muted-foreground max-w-[380px] mx-auto leading-relaxed"
+        transition={{ delay: 0.28, duration: 0.45 }}
+        className="text-[14px] text-muted-foreground max-w-[340px] mx-auto leading-relaxed"
       >
-        Enter a keyword — our AI researches, plans, and writes fully optimized
-        content.
+        Enter a keyword — AI researches, plans, and writes fully optimized
+        content in minutes.
       </motion.p>
     </motion.div>
   );
