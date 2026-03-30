@@ -83,7 +83,7 @@ export default function ContentType({
               transition={{ delay: index * 0.05 }}
               onClick={() => handleContentTypeSelect(type)}
               className={cn(
-                "group cursor-pointer relative flex flex-col items-start text-left p-8 rounded-3xl border-2 transition-all duration-300 w-full outline-none h-full",
+                "group cursor-pointer relative flex flex-col items-start text-left p-5 rounded-3xl border-2 transition-all duration-300 w-full outline-none h-full",
                 "bg-card border-border hover:border-primary hover:shadow-xl hover:shadow-colored-sm active:scale-[0.98]",
               )}
             >
@@ -94,8 +94,8 @@ export default function ContentType({
 
               {/* Content */}
               <div className="flex-1 w-full mb-2">
-                <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 capitalize">
-                  {type}
+                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 capitalize">
+                  {type.replace(/[_-]/g, " ")}
                 </h3>
                 <p className="text-[15px] text-muted-foreground leading-[1.6] group-hover:text-foreground transition-colors">
                   {description}
