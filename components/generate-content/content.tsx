@@ -404,7 +404,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   const addImage = useCallback(
     (alt: string, url: string) => {
       if (!url.trim()) return;
-      onContentChange((body ?? "") + `\n\n![${alt}](${url})\n`);
+      onContentChange(`${body ?? ""}\n\n![${alt}](${url})\n`);
       setNewImage(null);
     },
     [body, onContentChange],
@@ -433,7 +433,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   const addSource = useCallback(
     (text: string, url: string) => {
       if (!url.trim() || !text.trim()) return;
-      onContentChange((body ?? "") + `\n\n[${text}](${url})\n`);
+      onContentChange(`${body ?? ""}\n\n[${text}](${url})\n`);
       setNewSource(null);
     },
     [body, onContentChange],
