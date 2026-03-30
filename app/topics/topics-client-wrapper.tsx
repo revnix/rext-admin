@@ -103,60 +103,86 @@ export function TopicsClientWrapper({
     {
       key: "name",
       header: "Topic Title",
-      width: "320px",
+      width: "250px",
       cell: (value, row) => (
-        <TitleDisplay
-          value={value}
-          row={row}
-          href={
-            workspaceSlug
-              ? `/w/${workspaceSlug}/topics/${row.id}`
-              : (`/topics/${row.id}` as Route)
-          }
-        />
+        <div className="min-w-[180px]">
+          <TitleDisplay
+            value={value}
+            row={row}
+            href={
+              workspaceSlug
+                ? `/w/${workspaceSlug}/topics/${row.id}`
+                : (`/topics/${row.id}` as Route)
+            }
+          />
+        </div>
       ),
       searchable: true,
     },
     {
       key: "category",
       header: "Categories",
-      width: "140px",
-      cell: (value, row) => <CategoryDisplay value={value} row={row} />,
+      width: "120px",
+      cell: (value, row) => (
+        <div className="min-w-[100px]">
+          <CategoryDisplay value={value} row={row} />
+        </div>
+      ),
       searchable: true,
     },
     {
       key: "audience_fit",
       header: "Audience",
-      width: "120px",
-      cell: (value) => <AudienceFitDisplay value={value} />,
+      width: "100px",
+      cell: (value) => (
+        <div className="min-w-[80px]">
+          <AudienceFitDisplay value={value} />
+        </div>
+      ),
       searchable: true,
     },
     {
       key: "tags",
       header: "Tags",
       width: "100px",
-      cell: (value, row) => <TagsList value={value} row={row} />,
+      cell: (value, row) => (
+        <div className="max-w-[120px]">
+          <TagsList value={value} row={row} />
+        </div>
+      ),
       searchable: true,
     },
     {
       key: "score",
       header: "Overall Score",
-      width: "180px",
-      cell: (value, row) => <EnhancedScoreDisplay value={value} row={row} />,
+      width: "150px",
+      cell: (value, row) => (
+        <div className="min-w-[140px]">
+          <EnhancedScoreDisplay value={value} row={row} />
+        </div>
+      ),
       searchable: false,
     },
     {
       key: "status",
       header: "Status",
-      width: "220px",
-      cell: (value, row) => <StatusDisplay value={value} row={row} />,
+      width: "160px",
+      cell: (value, row) => (
+        <div className="min-w-[140px]">
+          <StatusDisplay value={value} row={row} />
+        </div>
+      ),
       searchable: false,
     },
     {
       key: "created",
       header: "Saved",
-      width: "120px",
-      cell: (value) => <DateDisplay value={value} />,
+      width: "100px",
+      cell: (value) => (
+        <div className="whitespace-nowrap text-xs">
+          <DateDisplay value={value} />
+        </div>
+      ),
       searchable: false,
     },
   ];

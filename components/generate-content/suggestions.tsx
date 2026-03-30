@@ -178,22 +178,22 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto">
-        <div className="flex flex-wrap gap-2 justify-between">
+      <div className="mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <AnimatePresence>
             {suggestedKeywords.length > 0 ? (
               suggestedKeywords.map((kw, idx) => (
                 <motion.div
                   key={kw}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="cursor-pointer w-[49%] bg-white group hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors rounded-lg"
+                  className="cursor-pointer bg-white group hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all rounded-xl border border-border hover:border-primary/30 hover:shadow-sm"
                   onClick={() => onSelect(kw)}
                 >
                   <div className="px-4 py-4 font-medium text-sm text-gray-800 dark:text-gray-200 flex justify-between items-center group-hover:text-primary transition-all duration-200">
-                    {kw}
-                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1" />
+                    <span className="truncate mr-2">{kw}</span>
+                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1 shrink-0" />
                   </div>
                 </motion.div>
               ))
@@ -202,7 +202,7 @@ export function SuggestionsSection({
                 key="loading"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="px-4 py-3 italic text-gray-400 text-sm flex items-center gap-2"
+                className="col-span-full px-4 py-3 italic text-gray-400 text-sm flex items-center gap-2"
               >
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating suggestions...
