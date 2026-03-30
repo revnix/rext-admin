@@ -335,7 +335,7 @@ export function OutlineDisplay({
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Mic2 className="w-5 h-5 text-primary" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                 Tone
               </p>
@@ -400,7 +400,7 @@ export function OutlineDisplay({
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Target className="w-5 h-5 text-primary" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                 Audience
               </p>
@@ -409,7 +409,7 @@ export function OutlineDisplay({
                   <Input
                     value={audience}
                     onChange={(e) => setAudience(e.target.value)}
-                    className="h-7 text-sm min-w-[200px]"
+                    className="h-7 text-sm min-w-[100px]"
                   />
                   <Button
                     size="icon"
@@ -433,7 +433,7 @@ export function OutlineDisplay({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-foreground truncate max-w-[200px]">
+                  <p className="text-sm font-bold text-foreground truncate">
                     <TypeField
                       text={outline.target_audience?.join(", ") || ""}
                       speed={55}

@@ -259,7 +259,7 @@ export function WorkspaceMembersPanel({
   ];
 
   const headerActions = (
-    <>
+    <div className="flex items-center gap-2 flex-wrap">
       <Button
         variant="outline"
         size="sm"
@@ -277,13 +277,13 @@ export function WorkspaceMembersPanel({
         <Button
           size="sm"
           onClick={() => setShowInviteDialog(true)}
-          className="w-full md:w-auto"
+          className="w-full sm:w-auto min-w-0"
         >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite Members
+          <UserPlus className="h-4 w-4 mr-2 shrink-0" />
+          <span className="truncate">Invite Members</span>
         </Button>
       </PermissionGuard>
-    </>
+    </div>
   );
 
   return (
