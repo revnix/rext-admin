@@ -237,7 +237,7 @@ export default function WorkspacePage() {
         emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
         emptyActions={emptyActions}
         emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search workspaces by name, URL, owner..."
+        searchPlaceholder="Search workspaces by name, URL ..."
         actions={tableActions}
         rowActions={rowActions}
         pageSize={10}

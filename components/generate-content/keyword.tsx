@@ -42,7 +42,7 @@ export function KeywordForm({
           <Input
             type="text"
             placeholder="Enter a keyword or topic..."
-            className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-muted-foreground focus-visible:ring-0 bg-transparent px-0"
+            className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-muted-foreground focus-visible:ring-0 bg-transparent px-2"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
             required
@@ -50,12 +50,15 @@ export function KeywordForm({
         </div>
 
         <div className="flex items-center gap-2 px-2 border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0 group/actions">
-          <CountryDropdown
-            slim={true}
-            value={country}
-            onChange={(c) => onCountryChange(c.alpha2)}
-          />
-          <Button type="submit" className="h-12 px-4 text-lg">
+          <div className="w-[24%] md:w-auto">
+            <CountryDropdown
+              slim={true}
+              value={country}
+              onChange={(c) => onCountryChange(c.alpha2)}
+            />
+          </div>
+
+          <Button type="submit" className="h-12 px-4 text-lg w-[70%] md:w-auto">
             Analyze
           </Button>
         </div>

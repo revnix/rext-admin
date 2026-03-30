@@ -409,7 +409,7 @@ export function OutlineDisplay({
                   <Input
                     value={audience}
                     onChange={(e) => setAudience(e.target.value)}
-                    className="h-7 text-sm min-w-[200px]"
+                    className="h-7 text-sm min-w-[100px]"
                   />
                   <Button
                     size="icon"
