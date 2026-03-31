@@ -290,7 +290,11 @@ export function FreshGenerationView({
     Array<{ label: string; status: "pending" | "active" | "done" }>
   >([]);
 
-  const CONTENT_PIPELINE = ["Generating Content", "Humanizing", "Reviewing Content"];
+  const CONTENT_PIPELINE = [
+    "Generating Content",
+    "Humanizing",
+    "Reviewing Content",
+  ];
 
   // Advance pipeline: mark previous step done, set new step active
   const advancePipeline = (activeLabel: string) => {
