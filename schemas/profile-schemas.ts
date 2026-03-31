@@ -42,7 +42,8 @@ export const profileSchema = z.object({
   full_name: z
     .string()
     .min(2, "Full name must be at least 2 characters")
-    .regex(/^[^0-9]*$/, "Name should not contain numbers"),
+    .regex(/^[^0-9]*$/, "Name should not contain numbers")
+    .regex(/[a-zA-Z]/, "Name must contain at least one letter"),
   display_name: z.preprocess((value) => {
     if (typeof value !== "string") return value;
     const trimmed = value.trim();
