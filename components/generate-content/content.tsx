@@ -283,6 +283,8 @@ type ContentEditorProps = {
   // Agent activity (shown in right sidebar while generating)
   toolCalls?: ToolCall[];
   pipelineSteps?: PipelineStep[];
+  /** When true, shows the content blurred with a humanizing overlay */
+  isHumanizing?: boolean;
 };
 
 function ContentEditorInner(props: ContentEditorProps) {
@@ -300,6 +302,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
     toolCalls = [],
     pipelineSteps = [],
+    isHumanizing = false,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -800,7 +803,44 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 </div>
               ) : (
-                <div className="w-full">
+                <div className="w-full relative">
+                  {/* ── Humanizing overlay ──────────────────────────────── */}
+                  {isHumanizing && body && (
+                    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden rounded-xl">
+                      {/* blur mask */}
+                      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/30" />
+                      {/* diagonal repeating label */}
+                      <div
+                        className="absolute inset-0 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <div
+                          className="select-none"
+                          style={{
+                            transform: "rotate(-35deg)",
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, 1fr)",
+                            gap: "2.5rem 3rem",
+                            opacity: 0.12,
+                          }}
+                        >
+                          {Array.from({ length: 15 }).map((_, i) => (
+                            <span
+                              // biome-ignore lint/suspicious/noArrayIndexKey: decorative
+                              key={i}
+                              className="text-[22px] font-black tracking-[0.18em] uppercase text-foreground whitespace-nowrap"
+                            >
+                              Humanizing
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {/* animated bottom bar */}
+                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary/30 overflow-hidden">
+                        <div className="h-full w-1/3 bg-primary animate-[shimmer_1.4s_ease-in-out_infinite]" />
+                      </div>
+                    </div>
+                  )}
                   {body ? (
                     <>
                       <div className="space-y-4 mb-8">
@@ -1121,7 +1161,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         Pipeline
                       </span>
                     </div>
-                    <div className="p-3 space-y-0">
+                    <div className="p-3 space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                       {pipelineSteps.map((step, idx) => (
                         <div
                           key={step.label}

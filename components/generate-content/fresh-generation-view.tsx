@@ -281,13 +281,16 @@ export function FreshGenerationView({
   const [, setEnhancingMsg] = useState("Enhancing content...");
   const [, setEnhancingDescription] = useState("");
 
+  // ── Humanizing overlay state ──────────────────────────────────────────────
+  const [isHumanizing, setIsHumanizing] = useState(false);
+
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [pipelineSteps, setPipelineSteps] = useState<
     Array<{ label: string; status: "pending" | "active" | "done" }>
   >([]);
 
-  const CONTENT_PIPELINE = ["Generating Content", "Reviewing Content"];
+  const CONTENT_PIPELINE = ["Generating Content", "Humanizing", "Reviewing Content"];
 
   // Advance pipeline: mark previous step done, set new step active
   const advancePipeline = (activeLabel: string) => {
@@ -486,6 +489,10 @@ export function FreshGenerationView({
             const id = String(d.id ?? "");
             const name = String(d.name ?? "");
             const query = String(d.query ?? "");
+            if (name === "humanize_content") {
+              setIsHumanizing(true);
+              advancePipeline("Humanizing");
+            }
             if (id) {
               setToolCalls((prev) => {
                 if (prev.some((c) => c.id === id)) return prev;
@@ -497,8 +504,12 @@ export function FreshGenerationView({
             }
           } else if (d?.type === "tool_end") {
             const id = String(d.id ?? "");
+            const name = String(d.name ?? "");
             const count = Number(d.count ?? 0);
             const output = d.output ? String(d.output) : undefined;
+            if (name === "humanize_content") {
+              setIsHumanizing(false);
+            }
             if (id) {
               setToolCalls((prev) =>
                 prev.map((tc) =>
@@ -556,6 +567,10 @@ export function FreshGenerationView({
         }
 
         if (updates?.generate_content) {
+          advancePipeline("Humanizing");
+        }
+
+        if (updates?.humanize_content) {
           advancePipeline("Reviewing Content");
         }
 
@@ -944,6 +959,7 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
+            isHumanizing={isHumanizing}
             onEditToggle={() =>
               dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
             }
