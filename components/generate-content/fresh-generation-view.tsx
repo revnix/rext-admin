@@ -829,7 +829,7 @@ export function FreshGenerationView({
           "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700",
           instructionType === "keyword"
             ? "min-h-[70vh] justify-center"
-            : "min-h-0 pt-2",
+            : "min-h-0",
         )}
       >
         <AnimatePresence mode="wait">

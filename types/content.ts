@@ -244,6 +244,7 @@ export interface ContentItem {
  */
 export interface ContentResponse {
   content: ContentItem;
+  id: string;
   operation_id?: string; // For SSE subscription during generation
   message?: string;
 }
