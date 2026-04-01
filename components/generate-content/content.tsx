@@ -44,6 +44,7 @@ import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-in
 import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
+import { cn } from "@/lib/utils";
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -299,12 +300,6 @@ function ContentEditorInner(props: ContentEditorProps) {
       ) {
         setIntegrationModalOpen(true);
       }
-      setStatusModal({
-        isOpen: true,
-        type: "error",
-        action: "publish",
-        message: err.message || "Failed to publish content. Please try again.",
-      });
     } finally {
       setIsPublishing(false);
     }
@@ -319,8 +314,8 @@ function ContentEditorInner(props: ContentEditorProps) {
         ? await apiClient.content.update(workspaceId, contentSavedId, payload)
         : await apiClient.content.save(workspaceId, payload);
 
-      if (!contentSavedId && response.content?.id) {
-        setContentSavedId(response.content.id);
+      if (!contentSavedId && response.id) {
+        setContentSavedId(response.id);
       }
       setStatusModal({
         isOpen: true,
@@ -397,7 +392,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   // Sidebar Layout Templates
   const structureSidebarContent = (
-    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto">
+    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
       <div>
         <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
           Structure
@@ -499,7 +494,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1.5 py-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-1.5 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
         {score ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-bold px-2">
@@ -536,36 +531,36 @@ function ContentEditorInner(props: ContentEditorProps) {
             </div>
             <div className="space-y-2 mt-4">
               {seoScore.issues &&
-                    seoScore.issues.length > 0 &&
-                    seoScore.issues.map((issue: Issue) => {
-                      const status = levelToStatus(issue.level);
+                seoScore.issues.length > 0 &&
+                seoScore.issues.map((issue: Issue) => {
+                  const status = levelToStatus(issue.level);
 
-                      return (
-                        <div
-                          key={issue.message}
-                          className="flex items-center gap-3 text-sm"
-                        >
-                          {status === "success" ? (
-                            <CheckCircle2
-                              size={18}
-                              className="text-emerald-500 shrink-0"
-                            />
-                          ) : status === "warning" ? (
-                            <AlertCircle
-                              size={18}
-                              className="text-orange-500 shrink-0"
-                            />
-                          ) : (
-                            <AlertCircle
-                              size={18}
-                              className="text-muted-foreground shrink-0"
-                            />
-                          )}
+                  return (
+                    <div
+                      key={issue.message}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      {status === "success" ? (
+                        <CheckCircle2
+                          size={18}
+                          className="text-emerald-500 shrink-0"
+                        />
+                      ) : status === "warning" ? (
+                        <AlertCircle
+                          size={18}
+                          className="text-orange-500 shrink-0"
+                        />
+                      ) : (
+                        <AlertCircle
+                          size={18}
+                          className="text-muted-foreground shrink-0"
+                        />
+                      )}
 
-                          <span className="leading-tight">{issue.message}</span>
-                        </div>
-                      );
-                    })}
+                      <span className="leading-tight">{issue.message}</span>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         ) : (
@@ -591,11 +586,11 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   return (
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col -mt-9 border-t relative">
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col border-t relative">
       <div className="flex flex-1 relative border-b border-border">
         {/* Desktop Left Sidebar */}
         {sidebarSections && sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col mt-1.5 shrink-0 sticky top-[74px] max-h-[calc(100vh-72px)]">
+          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col shrink-0 sticky top-[74px] max-h-[calc(100vh-80px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
             {structureSidebarContent}
           </aside>
         )}
@@ -603,7 +598,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="flex-1 bg-background px-2 py-4 mt-2 scroll-smooth"
+          className="flex-1 bg-background px-2 mt-2 scroll-smooth"
         >
           <article className="mx-5">
             {!body ? (
@@ -668,7 +663,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         </main>
 
         {/* Desktop Right Sidebar */}
-        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col mt-2.5 sticky top-[78px] max-h-[calc(100vh-72px)]">
+        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col sticky top-[78px] max-h-[calc(100vh-82px)]">
           {analysisSidebarContent}
         </aside>
       </div>
@@ -723,29 +718,48 @@ function ContentEditorInner(props: ContentEditorProps) {
         onAdd={handleIntegrationAdded}
       />
 
+      {/* Status Modal (Unified Success/Error) */}
       <Dialog
         open={statusModal.isOpen}
         onOpenChange={(open) =>
           setStatusModal((prev) => ({ ...prev, isOpen: open }))
         }
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle className="flex items-center gap-2">
-            {statusModal.type === "success" ? (
-              <span className="text-emerald-600">Success</span>
-            ) : (
-              <span className="text-destructive">Error</span>
-            )}
-          </DialogTitle>
-          <DialogDescription>{statusModal.message}</DialogDescription>
-          <div className="flex justify-end gap-3 mt-4">
+        <DialogContent className="sm:max-w-md bg-card border border-border shadow-2xl rounded-4xl p-8">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div
+              className={cn(
+                "w-16 h-16 rounded-full flex items-center justify-center",
+                statusModal.type === "success"
+                  ? "bg-emerald-500/10"
+                  : "bg-red-500/10",
+              )}
+            >
+              {statusModal.type === "success" ? (
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              ) : (
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              )}
+            </div>
+            <div className="space-y-2">
+              <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
+                {statusModal.type === "success"
+                  ? `Content ${statusModal.action === "publish" ? "Published" : statusModal.action === "copy" ? "Copied" : "Saved"} Successfully!`
+                  : `${statusModal.action === "publish" ? "Publish" : statusModal.action === "copy" ? "Copy" : "Save"} Failed`}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground text-base">
+                {statusModal.message}
+              </DialogDescription>
+            </div>
             <Button
-              variant="secondary"
               onClick={() =>
                 setStatusModal((prev) => ({ ...prev, isOpen: false }))
               }
+              className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
             >
-              Close
+              {statusModal.type === "success"
+                ? "Great, thanks!"
+                : "Try Again"}
             </Button>
           </div>
         </DialogContent>
