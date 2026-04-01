@@ -55,16 +55,6 @@ export function HeroSection() {
         What are we{" "}
         <span className="relative inline-block">
           <span className="text-primary">writing</span>
-          <motion.span
-            className="absolute -bottom-0.5 left-0 h-[1.5px] bg-primary/40 w-full"
-            initial={{ scaleX: 0, originX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{
-              delay: 0.5,
-              duration: 0.45,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-          />
         </span>{" "}
         today?
       </motion.h1>
@@ -73,7 +63,7 @@ export function HeroSection() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.28, duration: 0.45 }}
-        className="text-[14px] text-muted-foreground max-w-[340px] mx-auto leading-relaxed"
+        className="text-[14px] text-muted-foreground max-w-xl mx-auto leading-relaxed"
       >
         Enter a keyword — AI researches, plans, and writes fully optimized
         content in minutes.

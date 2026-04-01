@@ -108,20 +108,22 @@ export default function AdminUsersPage() {
     {
       key: "name",
       header: "User",
-      width: "250px",
+      width: "200px",
       cell: (value, row) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+        <div className="flex items-center gap-2 min-w-[150px]">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
               {row.initials}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <p className="font-medium">{value as string}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-sm truncate">{value as string}</p>
             {row.full_name &&
               row.display_name &&
               row.full_name !== row.display_name && (
-                <p className="text-sm text-muted-foreground">{row.full_name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {row.full_name}
+                </p>
               )}
           </div>
         </div>
@@ -131,37 +133,54 @@ export default function AdminUsersPage() {
     {
       key: "email",
       header: "Email",
-      width: "250px",
+      width: "180px",
+      cell: (value) => (
+        <span className="text-xs text-muted-foreground truncate block min-w-[120px]">
+          {value as string}
+        </span>
+      ),
       searchable: true,
     },
     {
       key: "full_name",
       header: "Full Name",
-      width: "150px",
+      width: "120px",
       cell: (value) => (
-        <span className="text-sm text-muted-foreground">{value as string}</span>
+        <span className="text-xs text-muted-foreground truncate block min-w-[100px]">
+          {value as string}
+        </span>
       ),
       searchable: true,
     },
     {
       key: "status",
       header: "Status",
-      width: "120px",
-      cell: (value) => getStatusBadge(value as string),
+      width: "100px",
+      cell: (value) => (
+        <div className="scale-90 origin-left">
+          {getStatusBadge(value as string)}
+        </div>
+      ),
     },
     {
       key: "email_verified",
       header: "Verified",
-      width: "120px",
+      width: "100px",
       cell: (value) => {
         const verified = value as boolean;
         return verified ? (
-          <Badge variant="outline" className="text-green-600 border-green-600">
-            <ShieldCheck className="h-3 w-3 mr-1" />
+          <Badge
+            variant="outline"
+            className="text-[10px] text-green-600 border-green-600 px-1 py-0 h-5"
+          >
+            <ShieldCheck className="h-2.5 w-2.5 mr-1" />
             Yes
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-amber-600 border-amber-600">
+          <Badge
+            variant="outline"
+            className="text-[10px] text-amber-600 border-amber-600 px-1 py-0 h-5"
+          >
             No
           </Badge>
         );

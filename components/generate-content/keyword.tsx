@@ -1,11 +1,8 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowRight } from "lucide-react";
+import { Search } from "lucide-react";
 import { CountryDropdown } from "../ui/country-dropdown";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 export function KeywordForm({
   userKeyword,
@@ -21,7 +18,6 @@ export function KeywordForm({
   onCountryChange: (val: string) => void;
 }) {
   const [value, setValue] = useState(userKeyword);
-  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     setValue(userKeyword);
@@ -33,75 +29,40 @@ export function KeywordForm({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative"
-    >
+    <div className="relative group">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
         }}
+        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-xl"
       >
-        {/* Main search bar */}
-        <div
-          className={`relative flex items-center bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${
-            focused
-              ? "border-primary/50 shadow-[0_0_0_4px_hsl(var(--primary)/0.06)]"
-              : "border-border/60 hover:border-border"
-          }`}
-        >
-          <div
-            className={`flex items-center justify-center w-12 h-14 shrink-0 transition-colors duration-200 ${
-              focused ? "text-primary" : "text-muted-foreground/35"
-            }`}
-          >
-            <Search className="w-4 h-4" />
-          </div>
-
+        <div className="flex-1 flex items-center px-4">
+          <Search className="w-6 h-6 text-muted-foreground mr-4" />
           <Input
             type="text"
-            placeholder="Enter a keyword or topic to write about..."
-            className="flex-1 h-14 border-none shadow-none text-[15px] placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-0 font-medium"
+            placeholder="Enter a keyword or topic..."
+            className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-muted-foreground focus-visible:ring-0 bg-transparent px-2"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             required
           />
+        </div>
 
-          {/* Actions — always visible, right side */}
-          <div className="flex items-center gap-2 pr-3 pl-2">
-            <div className="h-8 w-px bg-border/50 mr-1" />
+        <div className="flex items-center gap-2 px-2 border-t sm:border-t-0 sm:border-l border-border pt-2 sm:pt-0 group/actions">
+          <div className="w-[24%] md:w-auto">
             <CountryDropdown
               slim={true}
               value={country}
               onChange={(c) => onCountryChange(c.alpha2)}
             />
-            <Button
-              type="submit"
-              size="sm"
-              className="h-9 px-4 rounded-xl font-semibold gap-1.5 text-[13px] shrink-0"
-            >
-              Analyze
-              <ArrowRight className="w-3 h-3" />
-            </Button>
           </div>
-        </div>
 
-        {/* Hint line */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-[11px] text-muted-foreground/40 mt-3 pl-1 tracking-wide"
-        >
-          Try: &ldquo;best project management tools&rdquo; · &ldquo;how to start
-          a podcast&rdquo; · &ldquo;AI in healthcare&rdquo;
-        </motion.p>
+          <Button type="submit" className="h-12 px-4 text-lg w-[70%] md:w-auto">
+            Analyze
+          </Button>
+        </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

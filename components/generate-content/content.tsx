@@ -15,7 +15,6 @@ import {
   Activity,
   AlertCircle,
   Bot,
-  CheckCircle2,
   Copy,
   Eye,
   ChevronDown,
@@ -32,17 +31,19 @@ import {
   Send,
   Sparkles,
   Trash2,
-  TrendingUp,
+  List,
+  CheckCircle2,
   X,
   Zap,
+  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
@@ -55,12 +56,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
 import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
+import { cn } from "@/lib/utils";
 
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
@@ -239,16 +241,7 @@ const slugify = (text: string) => {
     .trim();
 };
 
-const levelToStatus = (level: string) => {
-  switch (level) {
-    case "GOOD":
-      return "success";
-    case "WARNING":
-      return "warning";
-    default:
-      return "info";
-  }
-};
+// levelToStatus was unused and removed
 
 const getStatusMessage = (score: number) => {
   if (score >= 80) return "Excellent EEAT signals detected";
@@ -264,6 +257,17 @@ const getSEOStatusText = (score: number) => {
   if (score >= 50) return "Good Progress";
   if (score >= 30) return "Needs Optimization";
   return "Poor SEO Score";
+};
+
+const levelToStatus = (level: string) => {
+  switch (level) {
+    case "GOOD":
+      return "success";
+    case "WARNING":
+      return "warning";
+    default:
+      return "info";
+  }
 };
 
 type PipelineStep = { label: string; status: "pending" | "active" | "done" };
@@ -327,6 +331,8 @@ function ContentEditorInner(props: ContentEditorProps) {
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
   const workspaceId = useCurrentWorkspaceId();
+
+  // State
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusModal, setStatusModal] = useState<{
@@ -441,21 +447,17 @@ function ContentEditorInner(props: ContentEditorProps) {
     },
     [body, onContentChange],
   );
+  const [isStructureOpen, setIsStructureOpen] = useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
-  // Derive sidebar headings from the actual body content
   const sidebarSections = useMemo(() => {
     if (!body) return outline?.sections || [];
-
-    // Extract ATX-style headings (# Heading)
     const matches = Array.from(body.matchAll(/^#{1,6}\s+(.*)$/gm));
-
     if (matches.length > 0) {
       return matches.map((m) => ({
         heading: m[1].trim(),
       }));
     }
-
-    // Fallback to planned outline if no headings found in body yet
     return outline?.sections || [];
   }, [body, outline]);
 
@@ -463,7 +465,6 @@ function ContentEditorInner(props: ContentEditorProps) {
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-
     const handleScroll = () => {
       const headings = Array.from(
         container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
@@ -473,8 +474,6 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       for (let i = 0; i < headings.length; i++) {
         const rect = headings[i].getBoundingClientRect();
-        // The container's top is roughly its position in viewport
-        // We use a 160px buffer for the sticky-like offset
         if (rect.top <= 200) {
           currentSectionIdx = i;
         } else {
@@ -482,20 +481,19 @@ function ContentEditorInner(props: ContentEditorProps) {
         }
       }
     };
-
     container.addEventListener("scroll", handleScroll);
-    handleScroll(); // Initial check
+    handleScroll();
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Actions
   const getContentPayload = () => ({
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
     status: "draft" as ContentStatus,
     workspace_id: workspaceId ?? undefined,
-    introduction:
-      allContent?.introduction || allContent?.meta_description || "",
+    introduction: allContent?.meta_description || "",
     body_markdown: body,
     body_html: allContent?.body_html || allContent?.html_content || "",
     tags: tags,
@@ -515,20 +513,6 @@ function ContentEditorInner(props: ContentEditorProps) {
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,
     },
-    // media_items: fc?.images?.map(img => ({
-    //   media_id: img.media_id || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : "00000000-0000-0000-0000-000000000000"),
-    //   alt_text: img.alt_text,
-    //   context: img.context,
-    //   placement: img.placement
-    // })) || [],
-    // images_data: {
-    //   images: fc?.images || []
-    // },
-    // links_data: {
-    //   internal: fc?.internal_links || [],
-    //   outbound: fc?.outbound_links || []
-    // },
-    // schema_markup: fc?.schema_markup || {},
     media_items: [],
     images_data: {},
     links_data: {},
@@ -536,23 +520,14 @@ function ContentEditorInner(props: ContentEditorProps) {
   });
 
   const publishContent = async () => {
-    if (!isFinal) return;
-    if (!workspaceId) return;
+    if (!isFinal || !workspaceId) return;
     try {
       setIsPublishing(true);
-      let response: { message?: string } | undefined;
-      if (contentSavedId) {
-        response = await apiClient.content.publish(
-          workspaceId,
-          getContentPayload(),
-          contentSavedId,
-        );
-      } else {
-        response = await apiClient.content.save_publish(
-          workspaceId,
-          getContentPayload(),
-        );
-      }
+      const payload = getContentPayload();
+      const response = contentSavedId
+        ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
+        : await apiClient.content.save_publish(workspaceId, payload);
+
       setStatusModal({
         isOpen: true,
         type: "success",
@@ -563,7 +538,6 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
     } catch (error) {
       const err = error as Error;
-      const msg = err.message || "Failed to publish content. Please try again.";
       if (
         err.message ===
         "No active WordPress sites found in this workspace. Please connect a site before publishing."
@@ -574,7 +548,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         isOpen: true,
         type: "error",
         action: "publish",
-        message: msg,
+        message: err.message || "Failed to publish content. Please try again.",
       });
     } finally {
       setIsPublishing(false);
@@ -582,24 +556,16 @@ function ContentEditorInner(props: ContentEditorProps) {
   };
 
   const saveContent = async () => {
-    if (!isFinal) return;
-    if (!workspaceId) return;
+    if (!isFinal || !workspaceId) return;
     try {
       setIsSaving(true);
-      let response: { message?: string; id?: string } | undefined;
-      if (contentSavedId) {
-        response = await apiClient.content.update(
-          workspaceId,
-          contentSavedId,
-          getContentPayload(),
-        );
-      } else {
-        response = await apiClient.content.save(
-          workspaceId,
-          getContentPayload(),
-        );
+      const payload = getContentPayload();
+      const response = contentSavedId
+        ? await apiClient.content.update(workspaceId, contentSavedId, payload)
+        : await apiClient.content.save(workspaceId, payload);
 
-        setContentSavedId(response.id);
+      if (!contentSavedId && response.content?.id) {
+        setContentSavedId(response.content.id);
       }
       setStatusModal({
         isOpen: true,
@@ -628,7 +594,6 @@ function ContentEditorInner(props: ContentEditorProps) {
       await integrationsApiService.listIntegrations(workspaceId);
     } catch (error) {
       log.error("Failed to fetch integrations", error);
-    } finally {
     }
   }, [workspaceId]);
 
@@ -640,13 +605,12 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const handleCopy = async (format: "formatted" | "markdown" | "html") => {
     try {
-      const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.introduction || ""}</em></p>${previewHtml}`;
-
+      const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.meta_description || ""}</em></p>${previewHtml}`;
       if (format === "html") {
         await navigator.clipboard.writeText(htmlContent);
       } else if (format === "markdown") {
-        const mdIntro = allContent?.introduction
-          ? `\n\n*${allContent.introduction}*\n`
+        const mdIntro = allContent?.meta_description
+          ? `\n\n*${allContent.meta_description}*\n`
           : "";
         const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
         await navigator.clipboard.writeText(contentToCopy);
@@ -654,14 +618,12 @@ function ContentEditorInner(props: ContentEditorProps) {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = htmlContent;
         const textBody = tempDiv.textContent || tempDiv.innerText || "";
-
         const clipboardItem = new ClipboardItem({
           "text/plain": new Blob([textBody], { type: "text/plain" }),
           "text/html": new Blob([htmlContent], { type: "text/html" }),
         });
         await navigator.clipboard.write([clipboardItem]);
       }
-
       setStatusModal({
         isOpen: true,
         type: "success",
@@ -683,6 +645,181 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="h-4 bg-muted rounded w-full" />
       <div className="h-4 bg-muted rounded w-5/6" />
       <div className="h-4 bg-muted rounded w-4/6" />
+    </div>
+  );
+
+  const analysisSidebarContent = (
+    <div className="flex flex-col min-h-full bg-sidebar">
+      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-8 px-2! text-xs font-bold transition-all flex-1"
+          onClick={onEditToggle}
+          disabled={!isFinal}
+        >
+          {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+        </Button>
+        <Button
+          onClick={saveContent}
+          disabled={!isFinal || isSaving || isPublishing}
+          variant="secondary"
+          size="sm"
+          className="h-8 px-2! text-xs font-bold transition-all flex-1"
+        >
+          <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              disabled={!isFinal}
+              variant="secondary"
+              size="sm"
+              className="h-8 px-2! text-xs font-bold transition-all flex-1"
+            >
+              <Copy size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48" align="center">
+            <DropdownMenuItem onClick={() => handleCopy("html")}>
+              Copy HTML
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+              Copy MD
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+              Copy Text
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          onClick={publishContent}
+          disabled={!isFinal || isPublishing || isSaving}
+          size="sm"
+          className="h-8 px-2! text-xs font-bold flex-1"
+        >
+          <Send size={14} className={isPublishing ? "animate-pulse" : ""} />
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-1.5 py-6 space-y-8">
+        {score ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 font-bold px-2">
+              <Activity size={16} className="text-emerald-500" />
+              <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
+                Analysis
+              </h4>
+            </div>
+            <div className="bg-card p-6 rounded-3xl border border-border">
+              <h4 className="text-lg font-bold">Readability</h4>
+              <div className={`text-xl font-bold ${color}`}>
+                {label} ({score.toFixed(1)})
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full ${barColor}`}
+                  style={{ width: progressWidth }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-muted animate-pulse rounded-2xl h-32" />
+        )}
+
+        {seoScore ? (
+          <div className="bg-card p-6 rounded-3xl border border-border space-y-4 mx-0.5">
+            <h4 className="text-lg font-bold">SEO Health</h4>
+            <div className="text-3xl font-bold">
+              {Math.round(seoScore.seo_health_score)}%
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {getSEOStatusText(seoScore.seo_health_score)}
+            </div>
+            <div className="space-y-2 mt-4">
+              {seoScore.issues?.map((issue: Issue) => (
+                <div
+                  key={issue.message}
+                  className="flex gap-2 text-sm leading-tight"
+                >
+                  <AlertCircle
+                    size={14}
+                    className="shrink-0 mt-0.5 text-orange-500"
+                  />
+                  <span>{issue.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-muted animate-pulse rounded-2xl h-32" />
+        )}
+
+        {trustScore && (
+          <div className="bg-card p-6 rounded-3xl border border-border mb-20 md:mb-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={16} className="text-blue-500" />
+              <h4 className="text-lg font-bold">EEAT Score</h4>
+            </div>
+            <div className="text-3xl font-bold text-emerald-600">
+              {trustScore.score || trustScore.trust_score}%
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {getStatusMessage(trustScore.score || trustScore.trust_score)}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const structureSidebarContent = (
+    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto">
+      <div>
+        <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+          Structure
+        </h3>
+        <nav className="space-y-1">
+          {sidebarSections?.map((sec, i) => (
+            <button
+              type="button"
+              key={`${sec.heading}-${i}`}
+              onClick={() => {
+                const id = slugify(sec.heading);
+                const element =
+                  document.getElementById(id) ||
+                  Array.from(
+                    document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+                  ).find(
+                    (h) =>
+                      h.textContent
+                        ?.trim()
+                        .toLowerCase()
+                        .includes(sec.heading.trim().toLowerCase()) ||
+                      sec.heading
+                        .trim()
+                        .toLowerCase()
+                        .includes(h.textContent?.trim().toLowerCase() || ""),
+                  );
+
+                if (element) {
+                  element.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  setIsStructureOpen(false);
+                }
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            >
+              <span className="relative truncate leading-none">
+                {sec.heading}
+              </span>
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 
@@ -1778,7 +1915,54 @@ function ContentEditorInner(props: ContentEditorProps) {
             )}
           </section>
         </aside>
+
+        {/* Desktop Right Sidebar */}
+        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col mt-2.5 sticky top-[78px] max-h-[calc(100vh-72px)]">
+          {analysisSidebarContent}
+        </aside>
       </div>
+
+      {/* Mobile Responsive Drawers */}
+      <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
+        {sidebarSections && sidebarSections.length > 0 && (
+          <div className="lg:hidden pointer-events-auto">
+            <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
+              <Button
+                onClick={() => setIsStructureOpen(true)}
+                className="rounded-full shadow-lg h-12 pr-6 pl-4 flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/50"
+              >
+                <List size={18} />
+                <span className="font-bold text-sm">Structure</span>
+              </Button>
+              <SheetContent side="left" className="p-0 w-80">
+                <SheetHeader className="px-6 py-4 border-b">
+                  <SheetTitle>Content Structure</SheetTitle>
+                </SheetHeader>
+                {structureSidebarContent}
+              </SheetContent>
+            </Sheet>
+          </div>
+        )}
+
+        <div className="xl:hidden pointer-events-auto">
+          <Sheet open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
+            <Button
+              onClick={() => setIsAnalysisOpen(true)}
+              className="rounded-full shadow-lg h-12 pr-6 pl-4 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/50"
+            >
+              <Activity size={18} />
+              <span className="font-bold text-sm">Analysis</span>
+            </Button>
+            <SheetContent side="right" className="p-0 w-80 bg-card">
+              <SheetHeader className="px-6 py-4 border-b">
+                <SheetTitle>SEO & Performance</SheetTitle>
+              </SheetHeader>
+              {analysisSidebarContent}
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+
       <AddIntegrationModal
         isOpen={integrationModalOpen}
         onClose={() => {
@@ -1787,6 +1971,34 @@ function ContentEditorInner(props: ContentEditorProps) {
         }}
         onAdd={handleIntegrationAdded}
       />
+
+      <Dialog
+        open={statusModal.isOpen}
+        onOpenChange={(open) =>
+          setStatusModal((prev) => ({ ...prev, isOpen: open }))
+        }
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="flex items-center gap-2">
+            {statusModal.type === "success" ? (
+              <span className="text-emerald-600">Success</span>
+            ) : (
+              <span className="text-destructive">Error</span>
+            )}
+          </DialogTitle>
+          <DialogDescription>{statusModal.message}</DialogDescription>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setStatusModal((prev) => ({ ...prev, isOpen: false }))
+              }
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

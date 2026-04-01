@@ -199,37 +199,27 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-      {/* Alternatives list — single bordered container */}
-      <motion.div
-        variants={itemVariants}
-        className="border border-border/40 rounded-xl overflow-hidden bg-card divide-y divide-border/25"
-      >
+   <div className="flex flex-wrap justify-between gap-1.5">
         <AnimatePresence>
           {suggestedKeywords.length > 0 ? (
             suggestedKeywords.map((kw, idx) => (
               <motion.button
                 type="button"
                 key={kw}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{
                   delay: idx * 0.04,
                   duration: 0.35,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="group relative w-full flex items-center justify-between px-5 py-3.5 hover:bg-accent/20 transition-colors duration-200 text-left cursor-pointer"
+                className="w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
                 onClick={() => onSelect(kw)}
               >
-                <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary origin-center scale-y-0 group-hover:scale-y-100 transition-transform duration-200 rounded-full" />
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-muted-foreground/20 group-hover:text-primary/40 transition-colors tracking-wider">
-                    {String(idx + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-[13px] font-medium text-foreground/75 group-hover:text-foreground transition-colors">
-                    {kw}
-                  </span>
-                </div>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/25 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" />
+                <span className="text-[13px] font-medium text-foreground/80 group-hover:text-primary transition-colors">
+                  {kw}
+                </span>
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </motion.button>
             ))
           ) : (
@@ -237,14 +227,14 @@ export function SuggestionsSection({
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="px-5 py-4 text-xs text-muted-foreground/50 flex items-center gap-2"
+              className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2"
             >
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Generating suggestions...
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
