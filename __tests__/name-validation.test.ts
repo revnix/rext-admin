@@ -29,6 +29,33 @@ describe("Name Validation", () => {
         ).toBe(true);
       }
     });
+
+    it("should reject names with only special characters", () => {
+      const result = signupFormSchema.safeParse({
+        full_name: "!@#$$%",
+        email: "test@example.com",
+        password: "Password123!",
+        confirmPassword: "Password123!",
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (i) => i.message === "Name must contain at least one letter",
+          ),
+        ).toBe(true);
+      }
+    });
+
+    it("should accept names with letters and special characters", () => {
+      const result = signupFormSchema.safeParse({
+        full_name: "John-Doe",
+        email: "test@example.com",
+        password: "Password123!",
+        confirmPassword: "Password123!",
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("profileSchema", () => {
@@ -51,6 +78,27 @@ describe("Name Validation", () => {
           ),
         ).toBe(true);
       }
+    });
+
+    it("should reject names with only special characters", () => {
+      const result = profileSchema.safeParse({
+        full_name: "!@#$$%",
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (i) => i.message === "Name must contain at least one letter",
+          ),
+        ).toBe(true);
+      }
+    });
+
+    it("should accept names with letters and special characters", () => {
+      const result = profileSchema.safeParse({
+        full_name: "John-Doe !@#",
+      });
+      expect(result.success).toBe(true);
     });
   });
 });
