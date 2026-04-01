@@ -165,7 +165,7 @@ export function getContentTypeConfig(type: string) {
   const normalized = normalizeType(type);
 
   const rule = CONTENT_TYPE_RULES.find((r) =>
-    r.match.some((keyword) => normalized.includes(keyword))
+    r.match.some((keyword) => normalized.includes(keyword)),
   );
 
   return (

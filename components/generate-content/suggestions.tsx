@@ -199,7 +199,7 @@ export function SuggestionsSection({
         )}
       </AnimatePresence>
 
-   <div className="flex flex-wrap justify-between gap-1.5">
+      <div className="flex flex-wrap justify-between gap-1.5">
         <AnimatePresence>
           {suggestedKeywords.length > 0 ? (
             suggestedKeywords.map((kw, idx) => (

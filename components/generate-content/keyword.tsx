@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { CountryDropdown } from "../ui/country-dropdown";
 import { useEffect, useState } from "react";
 
@@ -41,8 +41,8 @@ export function KeywordForm({
           <Search className="w-6 h-6 text-muted-foreground mr-4" />
           <Input
             type="text"
-            placeholder="Enter a keyword or topic..."
-            className="h-12 w-full border-none shadow-none !text-lg !placeholder:text-muted-foreground focus-visible:ring-0 bg-transparent px-2"
+            placeholder="Enter a keyword or topic to write about..."
+            className="flex-1 h-10 border-none shadow-none text-[15px] placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-4 font-medium"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
             required
@@ -58,8 +58,13 @@ export function KeywordForm({
             />
           </div>
 
-          <Button type="submit" className="h-12 px-4 text-lg w-[70%] md:w-auto">
+          <Button
+            type="submit"
+            size="sm"
+            className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0"
+          >
             Analyze
+            <ArrowRight className="w-3 h-3" />
           </Button>
         </div>
       </form>
