@@ -871,19 +871,17 @@ export function OutlineDisplay({
                             Answer
                           </p>
                           <div className="space-y-1.5">
-                            {section.questions_to_answer.map(
-                              (q: string) => (
-                                <div
-                                  key={q}
-                                  className="flex items-start gap-2 text-sm text-muted-foreground"
-                                >
-                                  <span className="text-primary mt-0.5 shrink-0">
-                                    •
-                                  </span>
-                                  <span>{q}</span>
-                                </div>
-                              ),
-                            )}
+                            {section.questions_to_answer.map((q: string) => (
+                              <div
+                                key={q}
+                                className="flex items-start gap-2 text-sm text-muted-foreground"
+                              >
+                                <span className="text-primary mt-0.5 shrink-0">
+                                  •
+                                </span>
+                                <span>{q}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
