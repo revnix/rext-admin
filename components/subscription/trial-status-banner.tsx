@@ -215,7 +215,7 @@ export function TrialStatusBanner({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h3 className={`text-sm font-semibold ${colors.text}`}>
                   {getTrialMessage()}
@@ -228,7 +228,7 @@ export function TrialStatusBanner({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0 mt-2 sm:mt-0">
                 <Button
                   onClick={handleUpgrade}
                   className={colors.button}
