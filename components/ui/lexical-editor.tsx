@@ -14,6 +14,7 @@ import {
   TRANSFORMERS,
   $convertToMarkdownString,
   $convertFromMarkdownString,
+  type TextMatchTransformer,
 } from "@lexical/markdown";
 import {
   HeadingNode,
@@ -50,6 +51,9 @@ import {
   CAN_UNDO_COMMAND,
   CAN_REDO_COMMAND,
   $createParagraphNode,
+  TextNode,
+  $createTextNode,
+  $isTextNode,
 } from "lexical";
 import { $setBlocksType } from "@lexical/selection";
 import {
@@ -125,6 +129,26 @@ const NODES = [
   LinkNode,
   AutoLinkNode,
 ];
+
+const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
+  dependencies: [TextNode],
+  export: (node, exportChildren, exportFormat) => {
+    if (!$isTextNode(node) || !node.hasFormat("underline")) return null;
+    return `<u>${exportFormat(node, node.getTextContent())}</u>`;
+  },
+  importRegExp: /<u>(.*?)<\/u>/,
+  regExp: /<u>(.*?)<\/u>$/,
+  replace: (node: TextNode, match: RegExpMatchArray) => {
+    const [, text] = match;
+    const underlineNode = $createTextNode(text);
+    underlineNode.setFormat("underline");
+    node.replace(underlineNode);
+  },
+  trigger: ">",
+  type: "text-match",
+};
+
+const CUSTOM_TRANSFORMERS = [UNDERLINE_TRANSFORMER, ...TRANSFORMERS];
 
 const ToolbarButton = ({
   active,
@@ -560,7 +584,7 @@ function MarkdownUpdatePlugin({
   useEffect(() => {
     if (shouldUpdate) {
       editor.update(() => {
-        $convertFromMarkdownString(markdown, TRANSFORMERS);
+        $convertFromMarkdownString(markdown, CUSTOM_TRANSFORMERS);
       });
       onUpdateComplete();
     }
@@ -605,8 +629,8 @@ export default function LexicalEditor({
         (editor as { update: (fn: () => void) => void }).update(() => {
           if (initialValue) {
             try {
-              $convertFromMarkdownString(initialValue, TRANSFORMERS);
-            } catch (_e) {}
+              $convertFromMarkdownString(initialValue, CUSTOM_TRANSFORMERS);
+            } catch (_e) { }
           }
         });
       },
@@ -617,7 +641,7 @@ export default function LexicalEditor({
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {
       // Export to markdown
-      const markdown = $convertToMarkdownString(TRANSFORMERS);
+      const markdown = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
 
       // Only update local state if we aren't currently forcing an update
       // (though normally forcing happens before this callback)
@@ -679,7 +703,7 @@ export default function LexicalEditor({
             <HistoryPlugin />
             <ListPlugin />
             <LinkPlugin />
-            <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+            <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>
         </div>
