@@ -29,7 +29,7 @@ export function KeywordForm({
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group pt-4">
       <form
         onSubmit={(e) => {
           e.preventDefault();

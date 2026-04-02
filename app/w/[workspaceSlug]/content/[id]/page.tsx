@@ -274,7 +274,7 @@ export default function WorkspaceContentDetailPage({
         title={content.title}
         description="Review and edit generated content"
         fullWidth
-        className="p-0"
+        className="!py-0"
         hideTitle
       >
         {finalContent && (
