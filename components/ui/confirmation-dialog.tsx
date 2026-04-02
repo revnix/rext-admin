@@ -59,7 +59,7 @@ export function ConfirmationDialog({
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
+            onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
             className={
               variant === "destructive"
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
