@@ -439,12 +439,6 @@ function ContentEditorInner(props: ContentEditorProps) {
       ) {
         setIntegrationModalOpen(true);
       }
-      setStatusModal({
-        isOpen: true,
-        type: "error",
-        action: "publish",
-        message: err.message || "Failed to publish content. Please try again.",
-      });
     } finally {
       setIsPublishing(false);
     }
@@ -459,8 +453,8 @@ function ContentEditorInner(props: ContentEditorProps) {
         ? await apiClient.content.update(workspaceId, contentSavedId, payload)
         : await apiClient.content.save(workspaceId, payload);
 
-      if (!contentSavedId && response.content?.id) {
-        setContentSavedId(response.content.id);
+      if (!contentSavedId && response.id) {
+        setContentSavedId(response.id);
       }
       setStatusModal({
         isOpen: true,
@@ -1013,7 +1007,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
-                      toolbarClass="top-[80px] z-50"
+                      toolbarClass="top-0 z-50"
                     />
                   </div>
                 </div>

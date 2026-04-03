@@ -49,6 +49,7 @@ export default function Page() {
       hideTitle={true}
       description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
       fullWidth
+      className="!py-0"
     >
       <div className="w-full">
         {view === "selection" && (

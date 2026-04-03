@@ -50,7 +50,7 @@ export function SuggestionsSection({
 
   return (
     <motion.div
-      className="w-full"
+      className="w-full pb-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"

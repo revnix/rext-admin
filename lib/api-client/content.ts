@@ -15,6 +15,7 @@
 // Note: Content endpoints use query param (?workspace_id=) instead of path param.
 
 import type {
+  ContentListResponse,
   ContentResponse,
   CreateContentRequest,
   UpdateContentRequest,
@@ -43,7 +44,7 @@ export function createContentNamespace(client: ApiClient) {
         offset: options?.offset,
       });
 
-      return client.request<ContentResponse>(endpoint, {
+      return client.request<ContentListResponse>(endpoint, {
         method: "GET",
       });
     },

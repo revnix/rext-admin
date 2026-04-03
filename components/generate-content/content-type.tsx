@@ -1,57 +1,12 @@
-import {
-  FileText,
-  BookOpen,
-  Zap,
-  Target,
-  HelpCircle,
-  MessageSquare,
-  Search,
-  Newspaper,
-  Layout,
-  BarChart3,
-  FileCheck2,
-} from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getContentTypeConfig } from "@/config/content-types";
 
 interface ContentTypeProps {
   instruction: string;
   contentTypes: string[];
   handleContentTypeSelect: (type: string) => void;
 }
-
-const getIconForType = (type: string) => {
-  const t = type.toLowerCase();
-  if (t.includes("article")) return FileText;
-  if (t.includes("blog")) return Newspaper;
-  if (t.includes("report")) return BarChart3;
-  if (t.includes("whitepaper")) return FileCheck2;
-  if (t.includes("guide") || t.includes("educational")) return BookOpen;
-  if (t.includes("expert") || t.includes("opinion")) return Zap;
-  if (t.includes("how-to") || t.includes("tutorial")) return Layout;
-  if (t.includes("case study")) return Target;
-  if (t.includes("review")) return Search;
-  if (t.includes("faq")) return HelpCircle;
-  if (t.includes("interview")) return MessageSquare;
-  return FileText;
-};
-
-const getDescriptionForType = (type: string) => {
-  const t = type.toLowerCase();
-  if (t.includes("blog"))
-    return "Comprehensive, detailed analysis with rich insights.";
-  if (t.includes("article"))
-    return "Professional content tailored to your specific audience.";
-  if (t.includes("report"))
-    return "Data-driven results and professional formatting.";
-  if (t.includes("whitepaper"))
-    return "Technical, in-depth documentation for authority.";
-  if (t.includes("guide"))
-    return "Step-by-step educational content for your audience.";
-  if (t.includes("expert"))
-    return "Persuasive and highly personal professional perspective.";
-  return "High-quality content optimized for engagement and conversion.";
-};
 
 export default function ContentType({
   instruction,
@@ -72,8 +27,7 @@ export default function ContentType({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {contentTypes.map((type: string, index: number) => {
-          const Icon = getIconForType(type);
-          const description = getDescriptionForType(type);
+          const { icon: Icon, description } = getContentTypeConfig(type);
 
           return (
             <motion.button

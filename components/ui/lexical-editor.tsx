@@ -14,7 +14,7 @@ import {
   TRANSFORMERS,
   $convertToMarkdownString,
   $convertFromMarkdownString,
-  type ElementTransformer,
+  type TextMatchTransformer,
 } from "@lexical/markdown";
 import {
   HeadingNode,
@@ -68,6 +68,9 @@ import {
   type LexicalNode,
   type SerializedLexicalNode,
   type EditorConfig,
+  TextNode,
+  $createTextNode,
+  $isTextNode,
 } from "lexical";
 import { $setBlocksType } from "@lexical/selection";
 import {
@@ -263,52 +266,6 @@ export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> =
   createCommand("INSERT_IMAGE_COMMAND");
 
 // ---------------------------------------------------------------------------
-// ImagePlugin — handles the INSERT_IMAGE_COMMAND
-// ---------------------------------------------------------------------------
-function ImagePlugin(): null {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_IMAGE_COMMAND,
-      (payload: InsertImagePayload) => {
-        const imageNode = $createImageNode(payload);
-        $insertNodes([imageNode]);
-        return true;
-      },
-      COMMAND_PRIORITY_CRITICAL,
-    );
-  }, [editor]);
-
-  return null;
-}
-
-// ---------------------------------------------------------------------------
-// IMAGE_TRANSFORMER — teaches markdown serialiser about ImageNode
-// Using ElementTransformer: the export fn is called for every top-level node
-// and returns null for anything that isn't an ImageNode.
-// ---------------------------------------------------------------------------
-const IMAGE_TRANSFORMER: ElementTransformer = {
-  dependencies: [ImageNode],
-  export: (node) => {
-    if (!$isImageNode(node)) return null;
-    return `![${node.__altText}](${node.__src})`;
-  },
-  // Matches a standalone markdown image line: ![alt](url)
-  regExp: /^!\[([^\]]*)\]\(([^)]+)\)\s?$/,
-  replace: (parentNode, _children, match) => {
-    const [, altText, src] = match;
-    const imageNode = $createImageNode({ src, altText: altText || "" });
-    parentNode.replace(imageNode);
-  },
-  type: "element",
-};
-
-// All transformers — IMAGE_TRANSFORMER must come before the built-ins so it
-// is checked first when exporting/importing ImageNodes.
-const ALL_TRANSFORMERS = [IMAGE_TRANSFORMER, ...TRANSFORMERS];
-
-// ---------------------------------------------------------------------------
 // Nodes list
 // ---------------------------------------------------------------------------
 const NODES = [
@@ -321,6 +278,26 @@ const NODES = [
   AutoLinkNode,
   ImageNode,
 ];
+
+const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
+  dependencies: [TextNode],
+  export: (node, _exportChildren, exportFormat) => {
+    if (!$isTextNode(node) || !node.hasFormat("underline")) return null;
+    return `<u>${exportFormat(node, node.getTextContent())}</u>`;
+  },
+  importRegExp: /<u>(.*?)<\/u>/,
+  regExp: /<u>(.*?)<\/u>$/,
+  replace: (node: TextNode, match: RegExpMatchArray) => {
+    const [, text] = match;
+    const underlineNode = $createTextNode(text);
+    underlineNode.setFormat("underline");
+    node.replace(underlineNode);
+  },
+  trigger: ">",
+  type: "text-match",
+};
+
+const CUSTOM_TRANSFORMERS = [UNDERLINE_TRANSFORMER, ...TRANSFORMERS];
 
 // ---------------------------------------------------------------------------
 // ToolbarButton
@@ -900,7 +877,7 @@ function MarkdownUpdatePlugin({
   useEffect(() => {
     if (shouldUpdate) {
       editor.update(() => {
-        $convertFromMarkdownString(markdown, ALL_TRANSFORMERS);
+        $convertFromMarkdownString(markdown, CUSTOM_TRANSFORMERS);
       });
       onUpdateComplete();
     }
@@ -956,7 +933,7 @@ export default function LexicalEditor({
         (editor as { update: (fn: () => void) => void }).update(() => {
           if (initialValue) {
             try {
-              $convertFromMarkdownString(initialValue, ALL_TRANSFORMERS);
+              $convertFromMarkdownString(initialValue, CUSTOM_TRANSFORMERS);
             } catch (_e) {}
           }
         });
@@ -967,7 +944,11 @@ export default function LexicalEditor({
 
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {
-      const markdown = $convertToMarkdownString(ALL_TRANSFORMERS);
+      // Export to markdown
+      const markdown = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
+
+      // Only update local state if we aren't currently forcing an update
+      // (though normally forcing happens before this callback)
       if (!shouldUpdateEditor) {
         setMarkdownOutput(markdown);
       }
@@ -1025,8 +1006,7 @@ export default function LexicalEditor({
             <HistoryPlugin />
             <ListPlugin />
             <LinkPlugin />
-            <ImagePlugin />
-            <MarkdownShortcutPlugin transformers={ALL_TRANSFORMERS} />
+            <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>
         </div>
