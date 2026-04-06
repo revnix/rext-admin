@@ -840,7 +840,7 @@ export function FreshGenerationView({
     return (
       <div
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700",
+          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700 mt-4",
           instructionType === "keyword"
             ? "min-h-[70vh] justify-center"
             : "min-h-0 pt-2",

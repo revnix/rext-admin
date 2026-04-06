@@ -219,10 +219,11 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
       <Image
         src={this.__src}
         alt={this.__altText}
-        width={this.__width}
-        height={this.__height}
+        width={this.__width || 500}
+        height={this.__height || 300}
         className="max-w-full rounded-md my-2 inline-block"
         style={{ maxHeight: 480 }}
+        unoptimized
       />
     );
   }
@@ -410,7 +411,7 @@ function ImageInsertPopover() {
           title="Insert Image"
           type="button"
         >
-          <ImageIcon size={18} />
+          <ImageIcon size={16} />
         </button>
       </PopoverTrigger>
 
@@ -461,7 +462,10 @@ function ImageInsertPopover() {
             <Image
               src={preview}
               alt="preview"
+              width={300}
+              height={200}
               className="max-h-40 max-w-full object-contain"
+              unoptimized
               onError={() => setError("Could not load image from this URL.")}
             />
           </div>
@@ -682,7 +686,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         disabled={!canUndo}
         title="Undo"
       >
-        <Undo size={18} />
+        <Undo size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={false}
@@ -690,7 +694,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         disabled={!canRedo}
         title="Redo"
       >
-        <Redo size={18} />
+        <Redo size={16} />
       </ToolbarButton>
 
       <div className="w-px h-6 bg-border mx-1" />
@@ -701,28 +705,28 @@ function ToolbarPlugin({ className }: { className?: string }) {
         onClick={() => formatHeading("h1")}
         title="Heading 1"
       >
-        <Heading1 size={18} />
+        <Heading1 size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={blockType === "h2"}
         onClick={() => formatHeading("h2")}
         title="Heading 2"
       >
-        <Heading2 size={18} />
+        <Heading2 size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={blockType === "h3"}
         onClick={() => formatHeading("h3")}
         title="Heading 3"
       >
-        <Heading3 size={18} />
+        <Heading3 size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={blockType === "paragraph"}
         onClick={formatParagraph}
         title="Normal Text"
       >
-        <Type size={18} />
+        <Type size={16} />
       </ToolbarButton>
 
       <div className="w-px h-6 bg-border mx-1" />
@@ -733,21 +737,21 @@ function ToolbarPlugin({ className }: { className?: string }) {
         onClick={() => toggleList("ul")}
         title="Bullet List"
       >
-        <List size={18} />
+        <List size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={blockType === "ol"}
         onClick={() => toggleList("ol")}
         title="Numbered List"
       >
-        <ListOrdered size={18} />
+        <ListOrdered size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={blockType === "quote"}
         onClick={formatQuote}
         title="Quote"
       >
-        <Quote size={18} />
+        <Quote size={16} />
       </ToolbarButton>
 
       <div className="w-px h-6 bg-border mx-1" />
@@ -758,21 +762,21 @@ function ToolbarPlugin({ className }: { className?: string }) {
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
         title="Bold"
       >
-        <Bold size={18} />
+        <Bold size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={isItalic}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
         title="Italic"
       >
-        <Italic size={18} />
+        <Italic size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={isUnderline}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
         title="Underline"
       >
-        <Underline size={18} />
+        <Underline size={16} />
       </ToolbarButton>
       <ToolbarButton
         active={isStrikethrough}
@@ -781,7 +785,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         }
         title="Strikethrough"
       >
-        <Strikethrough size={18} />
+        <Strikethrough size={16} />
       </ToolbarButton>
 
       <div className="w-px h-6 bg-border mx-1" />
@@ -791,7 +795,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
         title="Inline Code"
       >
-        <CodeIcon size={18} />
+        <CodeIcon size={16} />
       </ToolbarButton>
 
       {/* Link popover */}
@@ -807,7 +811,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
             title="Link"
             type="button"
           >
-            <LinkIcon size={18} />
+            <LinkIcon size={16} />
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-80" align="end">

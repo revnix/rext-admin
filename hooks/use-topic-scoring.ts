@@ -14,7 +14,7 @@ import type { GeneratedTopic } from "@/types/topic-builder";
  */
 export function useTopicScoring(topic: GeneratedTopic | null | undefined) {
   return useMemo(() => {
-    if (!topic || !topic.scores) {
+    if (!topic?.scores) {
       return {
         overallScore: 0,
         rating: "Needs Work" as const,

@@ -58,11 +58,27 @@ import { cn } from "@/lib/utils";
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
   renderer: {
-    link({ href, title, text }) {
+    link({
+      href,
+      title,
+      text,
+    }: {
+      href: string;
+      title?: string | null;
+      text: string;
+    }) {
       const titleAttr = title ? ` title="${title}"` : "";
       return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="prose-link">${text}</a>`;
     },
-    image({ href, title, text }) {
+    image({
+      href,
+      title,
+      text,
+    }: {
+      href: string;
+      title?: string | null;
+      text: string;
+    }) {
       const alt = text || title || "";
       const caption = title || text || "";
       const placeholder = `
@@ -861,10 +877,10 @@ function ContentEditorInner(props: ContentEditorProps) {
           Structure
         </h3>
         <nav className="space-y-1">
-          {sidebarSections?.map((sec, i) => (
+          {sidebarSections?.map((sec, _i) => (
             <button
               type="button"
-              key={`${sec.heading}-${i}`}
+              key={`${sec.heading}-${sec}`}
               onClick={() => {
                 const id = slugify(sec.heading);
                 const element =
@@ -925,7 +941,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   return (
                     <button
                       type="button"
-                      key={`${sec.heading}-${i}`}
+                      key={`${sec.heading}-${sec}`}
                       onClick={() => {
                         const id = slugify(sec.heading);
                         const element =
