@@ -97,13 +97,13 @@ export function WorkspaceSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               data-tooltip-id="workspace-switcher"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center">
                 <Image
                   src="/logos/icon_dark.svg"
                   alt="Rext"
-                  width={20}
-                  height={20}
-                  className="size-5"
+                  width={28}
+                  height={28}
+                  className="size-7"
                 />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
