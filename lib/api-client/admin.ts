@@ -177,15 +177,32 @@ export function createAuditLogsNamespace(client: ApiClient) {
         offset: filters?.offset,
       });
 
-      return client.request<{
-        logs: Array<{
+      const response = await client.request<{
+        items?: Array<{
           id: string;
           user_id: string;
-          workspace_id?: string;
+          full_name?: string | null;
+          user_email?: string | null;
+          workspace_id?: string | null;
           action: string;
           resource_type: string;
           resource_id: string;
-          details: Record<string, unknown>;
+          details?: Record<string, unknown>;
+          ip_address: string;
+          user_agent: string;
+          created_at: string;
+          status?: string;
+        }>;
+        logs?: Array<{
+          id: string;
+          user_id: string;
+          full_name?: string | null;
+          user_email?: string | null;
+          workspace_id?: string | null;
+          action: string;
+          resource_type: string;
+          resource_id: string;
+          details?: Record<string, unknown>;
           ip_address: string;
           user_agent: string;
           created_at: string;
@@ -196,6 +213,11 @@ export function createAuditLogsNamespace(client: ApiClient) {
       }>(endpoint, {
         method: "GET",
       });
+
+      return {
+        ...response,
+        logs: response.logs ?? response.items ?? [],
+      };
     },
 
     /**

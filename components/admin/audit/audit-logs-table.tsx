@@ -30,19 +30,19 @@ import {
 
 interface AuditLog {
   id: string;
-  user_id?: string;
-  full_name?: string;
-  user_email?: string;
+  user_id?: string | null;
+  full_name?: string | null;
+  user_email?: string | null;
   action: string;
   resource_type: string;
-  resource_id?: string;
-  workspace_id?: string;
-  ip_address?: string;
-  status?: string;
+  resource_id?: string | null;
+  workspace_id?: string | null;
+  ip_address?: string | null;
+  status?: string | null;
   created_at: string;
-  old_values?: Record<string, unknown>;
-  new_values?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
+  old_values?: Record<string, unknown> | null;
+  new_values?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface AuditLogsTableProps {
@@ -73,7 +73,7 @@ export function AuditLogsTable({
     });
   };
 
-  const getStatusBadge = (status?: string) => {
+  const getStatusBadge = (status?: string | null) => {
     if (!status) status = "unknown";
     const config: Record<
       string,
