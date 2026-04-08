@@ -221,14 +221,14 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
     <div className="grid gap-4 md:grid-cols-4 mb-6">
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold">{stats.total_events}</div>
+          <div className="text-2xl font-bold">{stats.total_events ?? 0}</div>
           <p className="text-sm text-muted-foreground">Total Events</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold text-green-600">
-            {stats.processed_events}
+            {stats.processed_events ?? 0}
           </div>
           <p className="text-sm text-muted-foreground">Processed</p>
         </CardContent>
@@ -236,7 +236,7 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold text-red-600">
-            {stats.failed_events}
+            {stats.failed_events ?? 0}
           </div>
           <p className="text-sm text-muted-foreground">Failed</p>
         </CardContent>
@@ -244,7 +244,9 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold">
-            {stats.success_rate.toFixed(1)}%
+            {typeof stats.success_rate === "number"
+              ? stats.success_rate.toFixed(1)
+              : "0.0"}%
           </div>
           <p className="text-sm text-muted-foreground">Success Rate</p>
         </CardContent>
