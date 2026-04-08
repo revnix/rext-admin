@@ -8,7 +8,7 @@ A modern Next.js application for generating, managing, and utilizing AI-powered 
 
 Key security features implemented: 
 - **Server-side API proxy** prevents client-side key exposure   
-- **Rate limiting** protects against API abuse (60 req/min per IP)   
+- **Rate limiting** protects against API abuse (60 req/min per IP)    
 - **Input validation & sanitization** blocks XSS attacks
 - **Security headers** via middleware (CSP, HSTS, XSS protection) 
 - **Environment variable security** with proper isolation
