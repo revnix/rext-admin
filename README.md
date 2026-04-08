@@ -20,7 +20,7 @@ Key security features implemented:
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
 - **AI-Powered Topic Generation**: Generate relevant, targeted topics
 - **Modern UI/UX**: Built with Radix UI and Tailwind CSS 4
-- **Full TypeScript**: End-to-end type safety
+- **Full TypeScript**: End-to-end type safety 
 - **Responsive Design**: Optimized for all screen sizes
 - **Accessibility First**: WCAG 2.1 AA compliant
 
