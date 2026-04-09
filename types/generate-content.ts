@@ -263,6 +263,7 @@ export type WREXT = {
   status?: string;
   rejected_reason?: string;
   instruction_response?: string;
+  selected_topic?: string;
   "Selected Topic"?: string;
   "Primary Keyword"?: string;
   Recommendations?: string[];
@@ -548,6 +549,7 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
+  | { type: "SET_TOPICS"; payload: string[] }
   | { type: "SET_OUTLINE"; payload: ContentOutline };
 
 export type StreamInput = {
@@ -576,6 +578,7 @@ export type ResumeOptions = {
 export type WorkflowStep =
   | "KEYWORD_SELECT"
   | "TOPIC_SELECT"
+  | "TOPIC_REGENERATE"
   | "CONTENT_TYPE_SELECT"
   | "OUTLINE_APPROVE"
   | "OUTLINE_REJECT"

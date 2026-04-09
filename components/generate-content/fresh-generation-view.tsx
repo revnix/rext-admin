@@ -704,8 +704,18 @@ export function FreshGenerationView({
           payload: TOPIC_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { "Selected Topic": value },
+          payload: { selected_topic: value },
           status: "Content Type Generation...",
+        });
+      case "TOPIC_REGENERATE":
+        setTokenTarget("none");
+        tokenTargetRef.current = "none";
+        // Clear topics and stale outline to provide visual indicator of regeneration
+        dispatch({ type: "SET_TOPICS", payload: [] });
+        dispatch({ type: "SET_OUTLINE", payload: null as any });
+        return resumeWorkflow({
+          payload: { action: "regenerate", feedback: value || "" },
+          status: "Regenerating topics...",
         });
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
@@ -729,7 +739,11 @@ export function FreshGenerationView({
           payload: FINAL_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { action: "approve" },
+          payload: {
+            action: "approve",
+            tone: parsedOutline?.tone,
+            target_audience: parsedOutline?.target_audience,
+          },
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
@@ -797,6 +811,18 @@ export function FreshGenerationView({
         instruction={displayedInstruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)}
+        keyword={primaryKeyword}
+      />
+    ),
+    topic_selection: (
+      <TopicsSection
+        instruction={displayedInstruction}
+        topics={topics}
+        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)}
         keyword={primaryKeyword}
       />
     ),
