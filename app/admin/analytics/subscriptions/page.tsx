@@ -49,7 +49,9 @@ import type {
 // HELPER FUNCTIONS
 // ============================================================================
 
-const formatCurrency = (amount: number): string => {
+const formatCurrency = (amount: number | undefined | null): string => {
+  if (amount === undefined || amount === null || Number.isNaN(amount))
+    return "$0";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -58,7 +60,8 @@ const formatCurrency = (amount: number): string => {
   }).format(amount);
 };
 
-const formatPercentage = (value: number): string => {
+const formatPercentage = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return "0.0%";
   return `${value.toFixed(1)}%`;
 };
 
@@ -106,17 +109,23 @@ function MetricCard({
   const showTrend = change !== undefined && trend;
 
   return (
-    <Card className={className}>
+    <Card
+      className={`relative overflow-hidden border-none shadow-sm transition-all hover:shadow-md ${className}`}
+    >
+      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+        {icon}
+      </div>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="h-4 w-4 text-muted-foreground">{icon}</div>
+        <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-3xl font-bold tracking-tight">{value}</div>
         {showTrend && (
           <p
-            className={`text-xs flex items-center gap-1 mt-1 ${
-              trend === "up" ? "text-green-600" : "text-red-600"
+            className={`text-xs flex items-center gap-1 mt-2 font-medium ${
+              trend === "up" ? "text-emerald-600" : "text-rose-600"
             }`}
           >
             {trend === "up" ? (
@@ -281,34 +290,58 @@ export default function SubscriptionAnalyticsPage() {
   }
 
   // Prepare chart data
-  const revenueByPlanData = revenue.revenue_by_plan.map((plan) => ({
-    name: plan.plan_name,
-    revenue: plan.revenue,
+  const revenueByPlanData = revenue.by_plan.map((plan) => ({
+    name: plan.plan_display_name || plan.plan_name,
+    revenue: plan.revenue_monthly + plan.revenue_yearly / 12,
     subscriptions: plan.subscription_count,
   }));
 
-  const tierDistributionData = revenue.revenue_by_plan.map((plan) => ({
-    name: plan.plan_name,
+  const tierDistributionData = revenue.by_plan.map((plan) => ({
+    name: plan.plan_display_name || plan.plan_name,
     value: plan.subscription_count,
   }));
 
-  const trialFunnelData = trialConversion.conversion_by_plan.map((plan) => ({
-    name: plan.plan_name,
-    trials: plan.trials,
-    conversions: plan.conversions,
-    conversionRate: plan.conversion_rate,
-  }));
+  const trialFunnelData = (trialConversion.conversion_by_plan || []).map(
+    (plan) => ({
+      name: plan.plan_name,
+      trials: plan.trials,
+      conversions: plan.conversions,
+      conversionRate: plan.conversion_rate,
+    }),
+  );
 
-  const churnByPlanData = churn.churn_by_plan.map((plan) => ({
+  const churnByPlanData = (churn.churn_by_plan || []).map((plan) => ({
     name: plan.plan_name,
     churnRate: plan.churn_rate,
     churned: plan.churned,
     total: plan.total,
   }));
 
+  const cancellationReasonsData = Object.entries(
+    churn.cancellation_reasons,
+  ).map(([reason, count]) => ({
+    name: reason,
+    value: count,
+  }));
+
   // Calculate growth trend
   const growthRate = revenue.growth_rate;
   const growthTrend = growthRate >= 0 ? "up" : "down";
+
+  // Derived metrics for better accuracy fallback
+  const derivedMrr = revenue.current_month.mrr || overview.mrr;
+  const derivedActive =
+    revenue.by_plan.reduce(
+      (acc, p) =>
+        acc +
+        (p.plan_name.toLowerCase() !== "trial" ? p.subscription_count : 0),
+      0,
+    ) || overview.active_subscriptions;
+  const derivedTrialing =
+    trialConversion.trials_active || overview.trialing_subscriptions;
+  const totalSubscriptionsCount =
+    revenue.by_plan.reduce((acc, p) => acc + p.subscription_count, 0) ||
+    overview.total_subscriptions;
 
   return (
     <AdminGuard superAdminOnly={true}>
@@ -325,24 +358,24 @@ export default function SubscriptionAnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <MetricCard
             title="Monthly Recurring Revenue"
-            value={formatCurrency(overview.mrr)}
+            value={formatCurrency(derivedMrr)}
             icon={<DollarSign className="h-4 w-4" />}
             change={growthRate}
             trend={growthTrend}
           />
           <MetricCard
             title="Annual Recurring Revenue"
-            value={formatCurrency(overview.arr)}
+            value={formatCurrency(derivedMrr * 12)}
             icon={<DollarSign className="h-4 w-4" />}
           />
           <MetricCard
             title="Active Subscriptions"
-            value={overview.active_subscriptions}
+            value={derivedActive}
             icon={<Users className="h-4 w-4" />}
           />
           <MetricCard
             title="Churn Rate"
-            value={formatPercentage(overview.churn_rate)}
+            value={formatPercentage(churn.churn_rate || overview.churn_rate)}
             icon={<UserMinus className="h-4 w-4" />}
           />
         </div>
@@ -351,17 +384,24 @@ export default function SubscriptionAnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-3 mb-6">
           <MetricCard
             title="Trial Conversion Rate"
-            value={formatPercentage(overview.trial_conversion_rate)}
+            value={formatPercentage(
+              trialConversion.conversion_rate || overview.trial_conversion_rate,
+            )}
             icon={<UserCheck className="h-4 w-4" />}
           />
           <MetricCard
-            title="Customer Lifetime Value"
-            value={formatCurrency(overview.avg_customer_ltv)}
+            title="Avg Customer LTV"
+            value={
+              overview.avg_customer_ltv &&
+              !Number.isNaN(overview.avg_customer_ltv)
+                ? formatCurrency(overview.avg_customer_ltv)
+                : "N/A"
+            }
             icon={<DollarSign className="h-4 w-4" />}
           />
           <MetricCard
             title="Trial Subscriptions"
-            value={overview.trialing_subscriptions}
+            value={derivedTrialing}
             icon={<Users className="h-4 w-4" />}
           />
         </div>
@@ -371,13 +411,42 @@ export default function SubscriptionAnalyticsPage() {
           {/* Revenue by Plan */}
           <Card>
             <CardHeader>
-              <CardTitle>Revenue by Plan</CardTitle>
+              <CardTitle>Revenue Breakdown</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Current month: {formatCurrency(revenue.current_month_revenue)}
+                Current month activity
               </p>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-xs text-green-600 font-medium">NEW</p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(revenue.current_month.new_revenue)}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-600 font-medium">EXPANSION</p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(revenue.current_month.expansion_revenue)}
+                  </p>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-lg">
+                  <p className="text-xs text-orange-600 font-medium">
+                    CONTRACTION
+                  </p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(revenue.current_month.contraction_revenue)}
+                  </p>
+                </div>
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <p className="text-xs text-red-600 font-medium">CHURNED</p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(revenue.current_month.churned_revenue)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm font-medium mb-2">Revenue by Plan</p>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={revenueByPlanData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
@@ -386,7 +455,6 @@ export default function SubscriptionAnalyticsPage() {
                     formatter={(value: number) => formatCurrency(value)}
                     labelStyle={{ color: "#000" }}
                   />
-                  <Legend />
                   <Bar dataKey="revenue" fill={COLORS.primary} name="Revenue" />
                 </BarChart>
               </ResponsiveContainer>
@@ -398,7 +466,7 @@ export default function SubscriptionAnalyticsPage() {
             <CardHeader>
               <CardTitle>Subscription Distribution</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Total: {overview.total_subscriptions} subscriptions
+                Total: {totalSubscriptionsCount} subscriptions
               </p>
             </CardHeader>
             <CardContent>
@@ -440,13 +508,13 @@ export default function SubscriptionAnalyticsPage() {
               <span>
                 Total Trials:{" "}
                 <Badge variant="secondary">
-                  {trialConversion.total_trials}
+                  {trialConversion.total_trials_started}
                 </Badge>
               </span>
               <span>
                 Conversions:{" "}
                 <Badge variant="secondary">
-                  {trialConversion.converted_trials}
+                  {trialConversion.trials_converted}
                 </Badge>
               </span>
               <span>
@@ -458,31 +526,38 @@ export default function SubscriptionAnalyticsPage() {
               <span>
                 Avg Duration:{" "}
                 <Badge variant="secondary">
-                  {trialConversion.avg_trial_duration_days.toFixed(1)} days
+                  {(trialConversion.average_trial_length_days ?? 0).toFixed(1)}{" "}
+                  days
                 </Badge>
               </span>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={trialFunnelData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip labelStyle={{ color: "#000" }} />
-                <Legend />
-                <Bar
-                  dataKey="trials"
-                  fill={COLORS.warning}
-                  name="Trial Starts"
-                />
-                <Bar
-                  dataKey="conversions"
-                  fill={COLORS.success}
-                  name="Conversions"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {trialFunnelData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={trialFunnelData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip labelStyle={{ color: "#000" }} />
+                  <Legend />
+                  <Bar
+                    dataKey="trials"
+                    fill={COLORS.warning}
+                    name="Trial Starts"
+                  />
+                  <Bar
+                    dataKey="conversions"
+                    fill={COLORS.success}
+                    name="Conversions"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <p>No per-plan trial data available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -494,15 +569,13 @@ export default function SubscriptionAnalyticsPage() {
                 <CardTitle>Churn Analysis</CardTitle>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
                   <span>
-                    Churned:{" "}
-                    <Badge variant="destructive">
-                      {churn.churned_subscriptions}
-                    </Badge>
+                    Cancellations:{" "}
+                    <Badge variant="destructive">{churn.cancellations}</Badge>
                   </span>
                   <span>
-                    Revenue Lost:{" "}
-                    <Badge variant="destructive">
-                      {formatCurrency(churn.revenue_lost)}
+                    Retention Rate:{" "}
+                    <Badge variant="secondary">
+                      {formatPercentage(churn.retention_rate)}
                     </Badge>
                   </span>
                   <span>
@@ -530,28 +603,70 @@ export default function SubscriptionAnalyticsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={churnByPlanData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value: number, name: string) => {
-                    if (name === "Churn Rate") {
-                      return formatPercentage(value);
-                    }
-                    return value;
-                  }}
-                  labelStyle={{ color: "#000" }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="churnRate"
-                  fill={COLORS.danger}
-                  name="Churn Rate (%)"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Churn by Plan (if available) */}
+              {churnByPlanData.length > 0 && (
+                <div className="h-[300px]">
+                  <h4 className="text-sm font-medium mb-4">Churn by Plan</h4>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={churnByPlanData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value: number, name: string) => {
+                          if (name === "Churn Rate") {
+                            return formatPercentage(value);
+                          }
+                          return value;
+                        }}
+                        labelStyle={{ color: "#000" }}
+                      />
+                      <Legend />
+                      <Bar
+                        dataKey="churnRate"
+                        fill={COLORS.danger}
+                        name="Churn Rate (%)"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Cancellation Reasons */}
+              <div className="h-[300px]">
+                <h4 className="text-sm font-medium mb-4">
+                  Cancellation Reasons
+                </h4>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={cancellationReasonsData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {cancellationReasonsData.map((entry) => (
+                        <Cell
+                          key={`cell-${entry.name}`}
+                          fill={
+                            PIE_COLORS[
+                              cancellationReasonsData.indexOf(entry) %
+                                PIE_COLORS.length
+                            ]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </PageLayout>

@@ -132,7 +132,7 @@ const NODES = [
 
 const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
   dependencies: [TextNode],
-  export: (node, exportChildren, exportFormat) => {
+  export: (node, _exportChildren, exportFormat) => {
     if (!$isTextNode(node) || !node.hasFormat("underline")) return null;
     return `<u>${exportFormat(node, node.getTextContent())}</u>`;
   },
@@ -630,7 +630,7 @@ export default function LexicalEditor({
           if (initialValue) {
             try {
               $convertFromMarkdownString(initialValue, CUSTOM_TRANSFORMERS);
-            } catch (_e) { }
+            } catch (_e) {}
           }
         });
       },
