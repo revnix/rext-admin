@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useCreatePersona } from "@/hooks/use-personas";
 import type { Route } from "next";
 
+const EXPERTISE_SUGGESTIONS = ["SEO", "Digital Marketing", "Content Creation"];
+
 export default function CreatePersonaPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
@@ -42,6 +44,10 @@ export default function CreatePersonaPage() {
 
   const handleRemoveExpertise = (tagToRemove: string) => {
     setExpertiseTags(expertiseTags.filter((tag) => tag !== tagToRemove));
+  };
+
+  const handleToggleSuggestion = (suggestion: string) => {
+    setExpertiseInput(suggestion);
   };
 
   const handleCreate = async () => {
@@ -123,7 +129,7 @@ export default function CreatePersonaPage() {
                       handleAddExpertise();
                     }
                   }}
-                  placeholder="Add expertise tag"
+                  placeholder="e.g., Digital Marketing"
                   className="bg-background rounded-xl"
                 />
                 <Button
@@ -134,6 +140,30 @@ export default function CreatePersonaPage() {
                 >
                   Add
                 </Button>
+              </div>
+
+              {/* Predefined expertise chips */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {EXPERTISE_SUGGESTIONS.map((suggestion) => {
+                  const isSelected =
+                    expertiseInput === suggestion ||
+                    expertiseTags.includes(suggestion);
+                  return (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => handleToggleSuggestion(suggestion)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all duration-150 font-medium
+                        ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground hover:bg-muted/40"
+                        }`}
+                    >
+                      {suggestion}
+                    </button>
+                  );
+                })}
               </div>
 
               {expertiseTags.length > 0 && (
