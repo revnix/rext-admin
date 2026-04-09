@@ -401,7 +401,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           {sidebarSections?.map((sec, i) => (
             <button
               type="button"
-              key={`${sec.heading}-${i}`}
+              key={slugify(sec.heading)}
               onClick={() => {
                 const id = slugify(sec.heading);
                 const element =
@@ -757,9 +757,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               }
               className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
             >
-              {statusModal.type === "success"
-                ? "Great, thanks!"
-                : "Try Again"}
+              {statusModal.type === "success" ? "Great, thanks!" : "Try Again"}
             </Button>
           </div>
         </DialogContent>

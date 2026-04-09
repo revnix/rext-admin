@@ -233,7 +233,7 @@ export const getAllSessions = (): SessionData[] => {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
 
-      if (!key || !key.startsWith(SESSION_KEY_PREFIX)) {
+      if (!key?.startsWith(SESSION_KEY_PREFIX)) {
         continue;
       }
 
@@ -295,7 +295,7 @@ export const cleanupExpiredSessions = (): void => {
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
 
-      if (!key || !key.startsWith(SESSION_KEY_PREFIX)) {
+      if (!key?.startsWith(SESSION_KEY_PREFIX)) {
         continue;
       }
 
@@ -396,7 +396,7 @@ export const getAllSessionMetadata = (): SessionMetadata[] => {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
 
-      if (!key || !key.startsWith(SESSION_KEY_PREFIX)) {
+      if (!key?.startsWith(SESSION_KEY_PREFIX)) {
         continue;
       }
 

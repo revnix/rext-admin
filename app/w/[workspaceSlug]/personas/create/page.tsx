@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useCreatePersona } from "@/hooks/use-personas";
 import type { Route } from "next";
 
+const EXPERTISE_SUGGESTIONS = ["SEO", "Digital Marketing", "Content Creation"];
+
 export default function CreatePersonaPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
@@ -114,35 +116,12 @@ export default function CreatePersonaPage() {
             <div className="space-y-2">
               <Label>Areas of Expertise</Label>
               <div className="flex gap-2">
-                <Input
-                  value={expertiseInput}
-                  onChange={(e) => setExpertiseInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddExpertise();
-                    }
-                  }}
-                  placeholder="Add expertise tag"
-                  className="bg-background rounded-xl"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddExpertise}
-                  className="bg-background rounded-xl border-border"
-                >
-                  Add
-                </Button>
-              </div>
-
-              {expertiseTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3 p-1">
+                <div className="flex-1 flex flex-wrap items-center gap-1.5 p-1.5 min-h-11 bg-background border border-input rounded-xl focus-within:ring-2 focus-within:ring-[#4465FF]/20 focus-within:border-[#4465FF] transition-colors">
                   {expertiseTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="gap-1 pr-1 bg-muted hover:bg-muted/80 text-foreground rounded-lg px-2 py-0.5"
+                      className="gap-1 pr-1 bg-muted hover:bg-muted/80 text-foreground rounded-md px-2 py-0.5 text-xs font-medium"
                     >
                       {tag}
                       <button
@@ -154,8 +133,72 @@ export default function CreatePersonaPage() {
                       </button>
                     </Badge>
                   ))}
+                  <input
+                    value={expertiseInput}
+                    onChange={(e) => setExpertiseInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddExpertise();
+                      } else if (
+                        e.key === "Backspace" &&
+                        !expertiseInput &&
+                        expertiseTags.length > 0
+                      ) {
+                        e.preventDefault();
+                        handleRemoveExpertise(
+                          expertiseTags[expertiseTags.length - 1],
+                        );
+                      }
+                    }}
+                    placeholder={
+                      expertiseTags.length === 0
+                        ? "e.g., Digital Marketing"
+                        : ""
+                    }
+                    className="flex-1 min-w-[150px] bg-transparent border-none outline-none focus:ring-0 px-2 py-1 text-sm inline-flex h-8"
+                  />
                 </div>
-              )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddExpertise}
+                  className="bg-background rounded-xl border-border h-auto shrink-0"
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Predefined expertise chips */}
+              <div className="flex flex-wrap gap-1 pt-2">
+                {EXPERTISE_SUGGESTIONS.map((suggestion) => {
+                  const isSelected =
+                    expertiseInput === suggestion ||
+                    expertiseTags.includes(suggestion);
+                  return (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => {
+                        if (!expertiseTags.includes(suggestion)) {
+                          setExpertiseTags([...expertiseTags, suggestion]);
+                          setExpertiseInput("");
+                        } else {
+                          handleRemoveExpertise(suggestion);
+                        }
+                      }}
+                      className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 font-medium
+                        ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-background text-muted-foreground border-border hover:border-primary/60 hover:text-foreground hover:bg-muted/40"
+                        }`}
+                    >
+                      {suggestion}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Tone of Voice */}

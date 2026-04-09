@@ -27,24 +27,34 @@ export interface AnalyticsOverview {
 }
 
 export interface RevenueMetrics {
-  current_month_revenue: number;
-  revenue_by_plan: Array<{
+  current_month: {
+    mrr: number;
+    new_revenue: number;
+    expansion_revenue: number;
+    contraction_revenue: number;
+    churned_revenue: number;
+  };
+  by_plan: Array<{
     plan_name: string;
     plan_id: string;
-    revenue: number;
+    plan_display_name: string;
+    revenue_monthly: number;
+    revenue_yearly: number;
     subscription_count: number;
   }>;
   growth_rate: number;
-  previous_month_revenue: number;
 }
 
 export interface ChurnAnalysis {
-  period_days: number;
+  period: string;
+  total_active_start: number;
+  new_subscriptions: number;
+  cancellations: number;
+  total_active_end: number;
   churn_rate: number;
-  churned_subscriptions: number;
-  total_subscriptions: number;
-  revenue_lost: number;
-  churn_by_plan: Array<{
+  retention_rate: number;
+  cancellation_reasons: Record<string, number>;
+  churn_by_plan?: Array<{
     plan_name: string;
     churned: number;
     total: number;
@@ -53,11 +63,13 @@ export interface ChurnAnalysis {
 }
 
 export interface TrialConversionMetrics {
-  total_trials: number;
-  converted_trials: number;
+  total_trials_started: number;
+  trials_converted: number;
+  trials_expired: number;
+  trials_active: number;
   conversion_rate: number;
-  avg_trial_duration_days: number;
-  conversion_by_plan: Array<{
+  average_trial_length_days: number;
+  conversion_by_plan?: Array<{
     plan_name: string;
     trials: number;
     conversions: number;
