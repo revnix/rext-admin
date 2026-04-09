@@ -46,6 +46,7 @@ export type { EmailTemplate };
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createDashboardNamespace } from "./dashboard";
+import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createLicensesClient } from "./licenses";
 import { createMediaNamespace } from "./media";
@@ -87,6 +88,7 @@ function createApiClient() {
     dashboard: createDashboardNamespace(client),
     workspaces: createWorkspacesNamespace(client),
     knowledge: createKnowledgeNamespace(client),
+    keywordLibrary: createKeywordLibraryNamespace(client),
     media: createMediaNamespace(client),
     members: createMembersNamespace(client),
     invitations: createInvitationsNamespace(client),

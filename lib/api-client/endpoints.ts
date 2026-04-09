@@ -462,4 +462,13 @@ export const ENDPOINTS = {
     // Placeholders for future use patterns
     HEALTH: "/api/health",
   },
+
+  /**
+   * Keyword Library Endpoints
+   * @note Workspace-scoped keyword storage management
+   */
+  KEYWORD_LIBRARY: {
+    base: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/keyword-library` as const,
+  },
 } as const;
