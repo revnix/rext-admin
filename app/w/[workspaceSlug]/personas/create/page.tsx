@@ -170,7 +170,7 @@ export default function CreatePersonaPage() {
               </div>
 
               {/* Predefined expertise chips */}
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-1 pt-2">
                 {EXPERTISE_SUGGESTIONS.map((suggestion) => {
                   const isSelected =
                     expertiseInput === suggestion ||
@@ -187,7 +187,7 @@ export default function CreatePersonaPage() {
                           handleRemoveExpertise(suggestion);
                         }
                       }}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-all duration-150 font-medium
+                      className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-150 font-medium
                         ${
                           isSelected
                             ? "bg-primary text-primary-foreground border-primary shadow-sm"
