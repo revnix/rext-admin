@@ -126,7 +126,7 @@ export function PricingTable({
               className="relative"
             >
               Yearly
-              {maxYearlySavingsPercent && (
+              {(maxYearlySavingsPercent ?? 0) > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">
                   Save up to {maxYearlySavingsPercent}%
                 </Badge>
@@ -194,11 +194,11 @@ export function PricingTable({
                     </span>
                   </div>
                   {billingPeriod === BillingPeriod.YEARLY &&
-                    savingsPercent > 0 && (
-                      <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-                        Save {savingsPercent}% with yearly billing
-                      </p>
-                    )}
+                  savingsPercent > 0 ? (
+                    <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                      Save {savingsPercent}% with yearly billing
+                    </p>
+                  ) : null}
                 </div>
               </CardHeader>
 

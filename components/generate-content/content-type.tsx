@@ -57,7 +57,7 @@ export default function ContentType({
               </div>
 
               {/* Subtle hover gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[22px] -z-10" />
+              <div className="absolute inset-0 bg-linear-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[22px] -z-10" />
             </motion.button>
           );
         })}

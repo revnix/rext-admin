@@ -246,7 +246,8 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
           <div className="text-2xl font-bold">
             {typeof stats.success_rate === "number"
               ? stats.success_rate.toFixed(1)
-              : "0.0"}%
+              : "0.0"}
+            %
           </div>
           <p className="text-sm text-muted-foreground">Success Rate</p>
         </CardContent>

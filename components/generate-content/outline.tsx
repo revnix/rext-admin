@@ -206,7 +206,7 @@ function SectionContent({ section }: { section: ContentSection }) {
       <div className="space-y-2">
         {section.steps.map((step, i) => (
           <div
-            key={`step-${step.title}-${i}`}
+            key={`step-${step.title}`}
             className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
           >
             <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
@@ -234,7 +234,7 @@ function SectionContent({ section }: { section: ContentSection }) {
       <div className="space-y-2">
         {section.steps_howto.map((step, i) => (
           <div
-            key={`howto-${step.title}-${i}`}
+            key={`howto-${step.title}`}
             className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
           >
             <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
