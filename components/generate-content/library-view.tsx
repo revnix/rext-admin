@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, ChevronRight, Loader2 } from "lucide-react";
+import type { MouseEvent } from "react";
+import { Search, ChevronRight, Loader2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -10,6 +12,7 @@ import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { formatDistanceToNow } from "date-fns";
 import { log } from "@/lib/logger";
+import { apiClient } from "@/lib/api-client";
 import LibraryDetail from "./library-detail";
 import type {
   LibraryItem,
@@ -46,6 +49,8 @@ export function LibraryView() {
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<"list" | "detail">("list");
   const { user } = useAuthSession();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
   const { workspace } = useWorkspace();
 
@@ -131,6 +136,30 @@ export function LibraryView() {
     setSelectedId(item.id);
     setSelectedItem(item);
     setView("detail");
+  };
+
+  const handleDelete = async (e: MouseEvent, item: LibraryItem) => {
+    e.stopPropagation();
+    if (!workspace?.id) return;
+
+    if (!window.confirm(`Are you sure you want to delete "${item.keyword}"?`)) {
+      return;
+    }
+
+    setDeletingId(item.id);
+    try {
+      await apiClient.keywordLibrary.delete(workspace.id, item.id);
+
+      toast.success(`"${item.keyword}" has been removed from your library.`);
+
+      setKeywords((prev) => prev.filter((k) => k.id !== item.id));
+    } catch (error: unknown) {
+      const err = error as Error;
+      libraryLogger.error("Failed to delete keyword", { error: err });
+      toast.error(err.message || "Failed to delete keyword from library.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (view === "detail" && selectedItem) {
@@ -248,6 +277,20 @@ export function LibraryView() {
                       >
                         Use Keyword
                         <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={deletingId === item.id}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                        onClick={(e) => handleDelete(e, item)}
+                        title="Delete from library"
+                      >
+                        {deletingId === item.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </div>
                   </div>
