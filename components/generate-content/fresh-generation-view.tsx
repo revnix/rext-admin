@@ -277,6 +277,33 @@ export function FreshGenerationView({
     } as unknown as FinalContent;
   })();
 
+  // ── Selected intent from dropdown ────────────────────────────────────────
+  const [selectedIntent, setSelectedIntent] = useState<
+    "informational" | "commercial" | "transactional" | "navigational" | ""
+  >("");
+
+  // Auto-select first intent when seoResult arrives
+  useEffect(() => {
+    if (!seoResult?.intent || selectedIntent) return;
+    const raw = Array.isArray(seoResult.intent)
+      ? seoResult.intent[0]
+      : String(seoResult.intent);
+    const norm = raw?.trim().toLowerCase();
+    if (
+      ["informational", "commercial", "transactional", "navigational"].includes(
+        norm,
+      )
+    ) {
+      setSelectedIntent(
+        norm as
+          | "informational"
+          | "commercial"
+          | "transactional"
+          | "navigational",
+      );
+    }
+  }, [seoResult?.intent, selectedIntent]);
+
   const [, setIsEnhancing] = useState(false);
   const [, setEnhancingMsg] = useState("Enhancing content...");
   const [, setEnhancingDescription] = useState("");
@@ -770,7 +797,10 @@ export function FreshGenerationView({
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
         return resumeWorkflow({
-          payload: { "Primary Keyword": value },
+          payload: {
+            "Primary Keyword": value,
+            ...(selectedIntent ? { intent: selectedIntent } : {}),
+          },
           status: "Keyword Recommendation...",
         });
       case "TOPIC_SELECT":
@@ -868,6 +898,8 @@ export function FreshGenerationView({
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
         seoResult={seoResult}
+        selectedIntent={selectedIntent}
+        onIntentChange={setSelectedIntent}
       />
     ),
     topic: (

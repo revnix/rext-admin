@@ -40,6 +40,8 @@ type IntentType = keyof typeof INTENT_CONFIG;
 interface SearchIntentCardProps {
   /** Intent category key used to resolve icon/color/description. */
   intent?: IntentType;
+  /** Optional source label shown above the intent (e.g. "SEO Data", "AI Suggested"). */
+  label?: string;
   /** Optional class override for container-level composition. */
   className?: string;
 }
@@ -49,27 +51,35 @@ interface SearchIntentCardProps {
  */
 export function SearchIntentCard({
   intent = "transactional",
+  label,
 }: SearchIntentCardProps) {
   const config = INTENT_CONFIG[intent] || INTENT_CONFIG.informational;
   const Icon = config.icon;
 
   return (
-    <>
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: config.color }}
-      >
-        <Icon className="w-5 h-5 text-white" />
+    <div className="flex flex-col gap-1 min-w-0">
+      {label && (
+        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/50">
+          {label}
+        </span>
+      )}
+      <div className="flex items-center gap-2">
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: config.color }}
+        >
+          <Icon className="w-3.5 h-3.5 text-white" />
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-foreground truncate uppercase">
+            {intent}
+          </h3>
+          <p className={`text-[9px] leading-tight ${config.textColor}`}>
+            {config.description}
+          </p>
+        </div>
       </div>
-      <div className="min-w-0">
-        <h3 className="text-lg font-bold text-foreground truncate uppercase">
-          {intent}
-        </h3>
-        <p className={`text-[10px] leading-tight ${config.textColor}`}>
-          {config.description}
-        </p>
-      </div>
-    </>
+    </div>
   );
 }
 

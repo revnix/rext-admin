@@ -96,15 +96,43 @@ export default function LibraryDetail({
           </Card>
           <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
             {data.seo_state?.intent ? (
-              <SearchIntentCard
-                intent={
-                  data.seo_state?.intent as
-                    | "informational"
-                    | "commercial"
-                    | "transactional"
-                    | "navigational"
-                }
-              />
+              Array.isArray(data.seo_state.intent) ? (
+                <div className="flex flex-col gap-2">
+                  <SearchIntentCard
+                    intent={
+                      data.seo_state.intent[0] as
+                        | "informational"
+                        | "commercial"
+                        | "transactional"
+                        | "navigational"
+                    }
+                    label="SEO Data"
+                  />
+                  {data.seo_state.intent[1] &&
+                    data.seo_state.intent[1] !== data.seo_state.intent[0] && (
+                      <SearchIntentCard
+                        intent={
+                          data.seo_state.intent[1] as
+                            | "informational"
+                            | "commercial"
+                            | "transactional"
+                            | "navigational"
+                        }
+                        label="AI Suggested"
+                      />
+                    )}
+                </div>
+              ) : (
+                <SearchIntentCard
+                  intent={
+                    data.seo_state.intent as
+                      | "informational"
+                      | "commercial"
+                      | "transactional"
+                      | "navigational"
+                  }
+                />
+              )
             ) : (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
