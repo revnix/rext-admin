@@ -162,7 +162,10 @@ export default function IntegrationsPage() {
                       <AvatarImage
                         src={
                           integration.logo ||
-                          "https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg"
+                          (integration.integration_type.toLowerCase() ===
+                          "shopify"
+                            ? "https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopify_logo_2018.svg"
+                            : "https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg")
                         }
                         alt={integration.name || integration.integration_type}
                         className="object-contain p-1"

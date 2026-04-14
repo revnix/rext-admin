@@ -109,6 +109,12 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "minio",
+        port: "9000",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "api.rext.ai",
         pathname: "/media/**",
