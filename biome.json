@@ -33,6 +33,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "performance": {
+        "noImgElement": "off"
+      },
       "suspicious": {
         "noUnknownAtRules": "off",
         "noConsole": {

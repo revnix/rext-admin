@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload, X } from "lucide-react";
-import Image from "next/image";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -237,11 +236,10 @@ export function ProfileEdit() {
           {/* Avatar Display */}
           <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
             {currentAvatar ? (
-              <Image
+              <img
                 src={currentAvatar}
-                alt="Profile picture"
-                fill
-                className="object-cover"
+                alt="Profile"
+                className="object-cover w-full h-full"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground">

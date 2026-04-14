@@ -78,6 +78,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "http",
+        hostname: "127.0.0.1",
+        port: "2024",
+        pathname: "/avatars/**",
+      },
+      {
+        protocol: "http",
         hostname: "localhost",
         port: "9000",
         pathname: "/**",
@@ -111,7 +117,12 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "api.rext.ai",
-        pathname: "/media/**",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "staging-api.rext.ai",
+        pathname: "/**",
       },
     ],
   },
