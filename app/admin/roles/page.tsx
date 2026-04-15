@@ -144,12 +144,10 @@ export default function AdminRolesPage() {
     },
   );
 
-  // Transform permissions data for DataTable - Limit to 50
+  // Transform permissions data for DataTable
   const permissionsTableData: PermissionTableData[] = (
     permissionsData?.permissions || []
-  )
-    .slice(0, 50)
-    .map((permission) => ({
+  ).map((permission) => ({
       id: permission.id,
       name: permission.name,
       display_name: permission.display_name,
@@ -408,10 +406,10 @@ export default function AdminRolesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {Math.min(permissionsData?.count || 0, 50)}
+                  {permissionsData?.count || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Available permissions (capped at 50)
+                  Available permissions
                 </p>
               </CardContent>
             </Card>

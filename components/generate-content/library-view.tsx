@@ -148,7 +148,7 @@ export function LibraryView() {
 
     setDeletingId(item.id);
     try {
-      await apiClient.keywordLibrary.delete(workspace.id, item.id);
+      await apiClient.keywordLibrary.delete(workspace.id, item.id, item.namespace);
 
       toast.success(`"${item.keyword}" has been removed from your library.`);
 
