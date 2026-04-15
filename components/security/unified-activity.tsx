@@ -67,8 +67,10 @@ export function UnifiedActivity() {
     queryFn: () =>
       apiClient.auditLogs.getMyLogs({
         action: filters.action,
-        start_date: filters.date_from,
-        end_date: filters.date_to,
+        status: filters.status,
+        resource_type: filters.resource_type,
+        date_from: filters.date_from,
+        date_to: filters.date_to,
         limit: filters.limit,
         offset: filters.offset,
       }),
@@ -368,8 +370,8 @@ export function UnifiedActivity() {
                     <p className="text-sm font-medium">
                       {(loginHistory.history ?? [])[0]?.created_at
                         ? formatTimestamp(
-                            (loginHistory.history ?? [])[0]?.created_at,
-                          )
+                          (loginHistory.history ?? [])[0]?.created_at,
+                        )
                         : "Never"}
                     </p>
                   </div>
@@ -410,11 +412,10 @@ export function UnifiedActivity() {
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`rounded-full p-2 ${
-                                event.success
+                              className={`rounded-full p-2 ${event.success
                                   ? "bg-green-100 dark:bg-green-950"
                                   : "bg-red-100 dark:bg-red-950"
-                              }`}
+                                }`}
                             >
                               {event.success ? (
                                 <TrendingUp className="h-4 w-4 text-green-600" />
