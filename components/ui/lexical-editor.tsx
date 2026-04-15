@@ -51,6 +51,8 @@ import {
   $getSelection,
   $isRangeSelection,
   $setSelection,
+  $getRoot,
+  $getNodeByKey,
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
@@ -143,6 +145,54 @@ const theme = {
 const lexicalLog = log.forComponent("LexicalEditor");
 
 // ---------------------------------------------------------------------------
+// ImageNodeComponent — renders image with a remove button overlay
+// ---------------------------------------------------------------------------
+function ImageNodeComponent({
+  editor,
+  nodeKey,
+  src,
+  altText,
+  width,
+  height,
+}: {
+  editor: import("lexical").LexicalEditor;
+  nodeKey: string;
+  src: string;
+  altText: string;
+  width?: number;
+  height?: number;
+}) {
+  const handleRemove = useCallback(() => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  }, [editor, nodeKey]);
+
+  return (
+    <span className="relative inline-block group my-2">
+      <Image
+        src={src}
+        alt={altText}
+        width={width || 500}
+        height={height || 300}
+        className="max-w-full rounded-md block"
+        style={{ maxHeight: 480 }}
+        unoptimized
+      />
+      <button
+        type="button"
+        title="Remove image"
+        onClick={handleRemove}
+        className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
+      >
+        <X size={13} />
+      </button>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ImageNode — custom DecoratorNode for inline images
 // ---------------------------------------------------------------------------
 export type SerializedImageNode = SerializedLexicalNode & {
@@ -214,16 +264,20 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return false;
   }
 
-  decorate(): JSX.Element {
+  decorate(editor: import("lexical").LexicalEditor): JSX.Element {
+    const nodeKey = this.__key;
+    const src = this.__src;
+    const altText = this.__altText;
+    const width = this.__width;
+    const height = this.__height;
     return (
-      <Image
-        src={this.__src}
-        alt={this.__altText}
-        width={this.__width || 500}
-        height={this.__height || 300}
-        className="max-w-full rounded-md my-2 inline-block"
-        style={{ maxHeight: 480 }}
-        unoptimized
+      <ImageNodeComponent
+        editor={editor}
+        nodeKey={nodeKey}
+        src={src}
+        altText={altText}
+        width={width}
+        height={height}
       />
     );
   }
@@ -298,7 +352,27 @@ const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
   type: "text-match",
 };
 
-const CUSTOM_TRANSFORMERS = [UNDERLINE_TRANSFORMER, ...TRANSFORMERS];
+const IMAGE_TRANSFORMER: TextMatchTransformer = {
+  dependencies: [ImageNode],
+  export: (node) => {
+    if (!$isImageNode(node)) return null;
+    const src = node.__src;
+    const alt = node.__altText || "";
+    const title = node.__altText || "";
+    return `![${alt}](${src} "${title}")`;
+  },
+  importRegExp: /!\[([^\]]*)\]\(([^)\s"]+)(?:\s+"([^"]*)")?\)/,
+  regExp: /!\[([^\]]*)\]\(([^)\s"]+)(?:\s+"([^"]*)")?\)$/,
+  replace: (textNode, match) => {
+    const [, altText, src] = match;
+    const imageNode = $createImageNode({ src, altText: altText || "" });
+    textNode.replace(imageNode);
+  },
+  trigger: ")",
+  type: "text-match",
+};
+
+const CUSTOM_TRANSFORMERS = [UNDERLINE_TRANSFORMER, IMAGE_TRANSFORMER, ...TRANSFORMERS];
 
 // ---------------------------------------------------------------------------
 // ToolbarButton
@@ -865,7 +939,29 @@ function ToolbarPlugin({ className }: { className?: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// MarkdownUpdatePlugin
+// NewTabLinkPlugin — makes all links open in a new tab
+// ---------------------------------------------------------------------------
+function NewTabLinkPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerMutationListener(LinkNode, (mutations) => {
+      editor.update(() => {
+        for (const [key, mutation] of mutations) {
+          if (mutation === "created" || mutation === "updated") {
+            const node = $getNodeByKey(key);
+            if ($isLinkNode(node) && node.getTarget() !== "_blank") {
+              node.setTarget("_blank");
+              node.setRel("noopener noreferrer");
+            }
+          }
+        }
+      });
+    });
+  }, [editor]);
+
+  return null;
+}
 // ---------------------------------------------------------------------------
 function MarkdownUpdatePlugin({
   markdown,
@@ -948,11 +1044,78 @@ export default function LexicalEditor({
 
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {
-      // Export to markdown
-      const markdown = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
+      const root = $getRoot();
+      const hasImages = root
+        .getChildren()
+        .some((n) => $isImageNode(n));
 
-      // Only update local state if we aren't currently forcing an update
-      // (though normally forcing happens before this callback)
+      let markdown: string;
+
+      if (!hasImages) {
+        markdown = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
+      } else {
+        // Walk each top-level child; ImageNodes are serialized directly,
+        // everything else is serialized via $convertToMarkdownString on a
+        // temporary single-paragraph basis by reading its text content.
+        // We rebuild the full markdown by processing children in order.
+        const rootChildren = root.getChildren();
+        const parts: string[] = [];
+
+        for (const child of rootChildren) {
+          if ($isImageNode(child)) {
+            const alt = child.__altText || "";
+            const src = child.__src;
+            parts.push(`![${alt}](${src})`);
+          } else {
+            // Get the markdown for this node by temporarily isolating it.
+            // Since $convertToMarkdownString works on the whole tree, we
+            // extract the text representation for non-image nodes by
+            // checking their serialized text content with formatting.
+            const nodeText = child.getTextContent();
+            if (nodeText.trim()) {
+              // Re-use the full markdown but only take the portion matching
+              // this node — simplest reliable approach: serialize the whole
+              // tree and split on image placeholders we inject.
+            }
+            // Fallback: just use the text content for non-image nodes
+            parts.push(nodeText);
+          }
+        }
+
+        // Better approach: serialize full tree, then re-insert image lines
+        // at the correct positions by comparing child order.
+        const rawMd = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
+        const rawLines = rawMd.split("\n");
+        const result: string[] = [];
+        let rawIdx = 0;
+
+        for (const child of rootChildren) {
+          if ($isImageNode(child)) {
+            result.push(`![${child.__altText || ""}](${child.__src})`);
+          } else {
+            // Consume lines from rawMd that correspond to this node
+            const text = child.getTextContent().trim();
+            if (!text) {
+              // blank / empty paragraph — consume one blank line if present
+              if (rawLines[rawIdx] === "") rawIdx++;
+              result.push("");
+              continue;
+            }
+            const nodeLines: string[] = [];
+            while (rawIdx < rawLines.length) {
+              const line = rawLines[rawIdx];
+              nodeLines.push(line);
+              rawIdx++;
+              // A blank line signals end of a block
+              if (line === "") break;
+            }
+            result.push(nodeLines.join("\n").trimEnd());
+          }
+        }
+
+        markdown = result.filter((p) => p !== undefined).join("\n\n").replace(/\n{3,}/g, "\n\n");
+      }
+
       if (!shouldUpdateEditor) {
         setMarkdownOutput(markdown);
       }
@@ -1010,6 +1173,7 @@ export default function LexicalEditor({
             <HistoryPlugin />
             <ListPlugin />
             <LinkPlugin />
+            <NewTabLinkPlugin />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>
