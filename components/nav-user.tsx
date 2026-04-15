@@ -10,9 +10,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import type { UserProfile } from "@/types/profile";
 import { settingsRoutes } from "@/lib/routes";
+import { useQuery } from "@tanstack/react-query";
+import { profileQueries } from "@/lib/query-keys";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -37,9 +37,6 @@ import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 
-import { apiClient } from "@/lib/api-client";
-import Image from "next/image";
-import { log } from "@/lib/logger";
 import type { Route } from "next";
 
 export function NavUser() {
@@ -48,33 +45,10 @@ export function NavUser() {
 
   const { user, isAuthenticated, isLoading, logout } = useAuthSession();
 
-  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
-  // ----------------------------------
-  // Fetch API user once
-  // ----------------------------------
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchUser() {
-      try {
-        const res = await apiClient.profile.get();
-        if (mounted) {
-          setProfileUser(res);
-        }
-      } catch (err) {
-        log.error("Profile fetch failed:", err);
-      } finally {
-        if (mounted) setLoadingProfile(false);
-      }
-    }
-
-    fetchUser();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { data: profileUser, isLoading: loadingProfile } = useQuery({
+    ...profileQueries.detail(),
+    enabled: isAuthenticated,
+  });
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -187,12 +161,10 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
                 {profileUser?.avatar_url ? (
-                  <Image
+                  <img
                     src={getAvatarUrl(profileUser.avatar_url) || ""}
                     alt="User avatar"
-                    fill
-                    className="object-cover"
-                    sizes="32px"
+                    className="object-cover w-full h-full"
                   />
                 ) : (
                   <AvatarFallback className="rounded-lg">
@@ -239,12 +211,10 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
                   {profileUser?.avatar_url ? (
-                    <Image
+                    <img
                       src={getAvatarUrl(profileUser.avatar_url) || ""}
                       alt="User avatar"
-                      fill
-                      className="object-cover"
-                      sizes="32px"
+                      className="object-cover w-full h-full"
                     />
                   ) : (
                     <AvatarFallback className="rounded-lg">

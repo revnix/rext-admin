@@ -840,7 +840,7 @@ export interface StoredKeyword {
   top_organic_results?: NormalizedOrganicResult[];
   seo_state: {
     keyword_difficulty: number | null;
-    intent: string;
+    intent: string | string[];
     volume: number | string;
     backlinks: number | null;
     referring_domains: number | null;
@@ -854,7 +854,7 @@ export interface LibraryItem {
   difficulty: string;
   difficultyScore: number | null;
   volume: string | number;
-  intent: string;
+  intent: string | string[];
   lastUpdated: string;
   rawData: StoredKeyword;
   namespace: string[];

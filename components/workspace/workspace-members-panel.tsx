@@ -29,7 +29,6 @@ import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
-import Image from "next/image";
 
 interface WorkspaceMembersPanelProps {
   workspace: Workspace;
@@ -162,7 +161,7 @@ export function WorkspaceMembersPanel({
           </Avatar> */}
           <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
             {row.avatar ? (
-              <Image
+              <img
                 src={
                   row.avatar.startsWith("http://") ||
                   row.avatar.startsWith("https://")
@@ -170,9 +169,7 @@ export function WorkspaceMembersPanel({
                     : `${baseUrl}${row.avatar}`
                 }
                 alt="User avatar"
-                fill
-                className="object-cover"
-                sizes="32px"
+                className="object-cover w-full h-full"
               />
             ) : (
               <AvatarFallback className="rounded-lg">

@@ -194,7 +194,12 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Short Description</Label>
-                    <Textarea id="description" />
+                    <Textarea
+                      id="description"
+                      value={formData.description || ""}
+                      onChange={handleChange}
+                      placeholder="Short description of this persona..."
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label

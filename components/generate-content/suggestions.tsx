@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
@@ -15,24 +16,69 @@ import { SearchIntentCard } from "../ui/content/intent-card";
 import { useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
+type IntentOption =
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
+
+type IntentOptionItem = { value: IntentOption; label: string };
+
+const VALID_INTENTS = [
+  "informational",
+  "commercial",
+  "transactional",
+  "navigational",
+];
+
+/** Resolve the intent list from backend, preserving SEO vs AI labels. */
+function resolveIntentOptions(intent: SEORESULT["intent"]): IntentOptionItem[] {
+  if (!intent) return [];
+  const raw = Array.isArray(intent) ? intent : [String(intent)];
+  const seen = new Set<string>();
+  const result: IntentOptionItem[] = [];
+
+  raw.forEach((v, idx) => {
+    const norm = v?.trim().toLowerCase();
+    if (!VALID_INTENTS.includes(norm) || seen.has(norm)) return;
+    seen.add(norm);
+    const source = idx === 0 ? "SEO Data" : "AI Suggested";
+    result.push({
+      value: norm as IntentOption,
+      label: `${norm.charAt(0).toUpperCase() + norm.slice(1)} — ${source}`,
+    });
+  });
+
+  return result;
+}
+
 export function SuggestionsSection({
   instruction,
   primaryKeyword,
   suggestedKeywords,
   onSelect,
   seoResult,
+  selectedIntent,
+  onIntentChange,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
+  selectedIntent: IntentOption | "";
+  onIntentChange: (intent: IntentOption) => void;
 }) {
   const difficultyScore = useMemo(() => {
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
     return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
   }, [seoResult?.keyword_difficulty]);
+
+  const intentOptions = useMemo<IntentOptionItem[]>(
+    () => resolveIntentOptions(seoResult?.intent),
+    [seoResult?.intent],
+  );
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -114,39 +160,52 @@ export function SuggestionsSection({
               </span>
               <Compass className="w-3.5 h-3.5 text-primary/60" />
             </div>
-            <div className="flex items-center gap-3">
-              <AnimatePresence mode="wait">
-                {seoResult?.intent ? (
-                  <motion.div
-                    key="intent-content"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <SearchIntentCard
-                      intent={
-                        seoResult?.intent as
-                          | "informational"
-                          | "commercial"
-                          | "transactional"
-                          | "navigational"
+
+            <AnimatePresence mode="wait">
+              {intentOptions.length > 0 && seoResult?.intent ? (
+                <motion.div
+                  key="intent-content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="w-full space-y-2"
+                >
+                  {/* Icon preview of currently selected intent */}
+                  {selectedIntent && (
+                    <SearchIntentCard intent={selectedIntent} />
+                  )}
+
+                  {/* Dropdown — intents returned by backend */}
+                  <div className="relative w-full mt-1">
+                    <select
+                      value={selectedIntent}
+                      onChange={(e) =>
+                        onIntentChange(e.target.value as IntentOption)
                       }
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="intent-loader"
-                    className="flex items-center gap-2 text-xs text-muted-foreground/50"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Analyzing...
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      className="w-full appearance-none bg-background border border-border rounded-lg px-3 py-2 pr-8 text-[11px] font-bold uppercase tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+                    >
+                      {intentOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="intent-loader"
+                  className="flex items-center gap-2 text-xs text-muted-foreground/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Analyzing...
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           <motion.div
