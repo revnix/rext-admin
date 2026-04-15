@@ -15,10 +15,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useState } from "react";
-import {
-  integrationSchema,
-  type IntegrationFormData,
-} from "@/schemas/integration-schemas";
+import { z } from "zod";
+import { integrationSchema } from "@/schemas/integration-schemas";
 import type { Integration } from "@/services/integrations-api";
 
 interface CustomIntegrationConfigurationProps {
@@ -35,8 +33,30 @@ export function CustomIntegrationConfiguration({
   const [showApiKey, setShowApiKey] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const form = useForm<IntegrationFormData>({
-    resolver: zodResolver(integrationSchema),
+  const configUrl =
+    typeof integration.config?.url === "string" ? integration.config.url : null;
+  const isShopify =
+    integration.integration_type?.toLowerCase()?.trim() === "shopify" ||
+    integration.name?.toLowerCase()?.trim() === "shopify" ||
+    integration.site_url?.includes("myshopify.com") ||
+    integration.site?.site_url?.includes("myshopify.com") ||
+    (configUrl ? configUrl.includes("myshopify.com") : false);
+
+  const dynamicSchema = z.object({
+    site_url: isShopify
+      ? z.string().min(1, "Store URL is required")
+      : integrationSchema.shape.site_url,
+    api_key: isShopify
+      ? z.string().min(1, "Admin API access token is required")
+      : integrationSchema.shape.api_key,
+    api_endpoint: isShopify
+      ? z.string().optional()
+      : integrationSchema.shape.api_endpoint,
+    is_active: z.boolean(),
+  });
+
+  const form = useForm<z.infer<typeof dynamicSchema>>({
+    resolver: zodResolver(dynamicSchema),
     defaultValues: {
       site_url:
         integration.site?.site_url ||
@@ -66,7 +86,7 @@ export function CustomIntegrationConfiguration({
     form.setValue("is_active", checked);
   };
 
-  const onSubmit = async (data: IntegrationFormData) => {
+  const onSubmit = async (data: z.infer<typeof dynamicSchema>) => {
     // Construct payload with only updateable fields
     const payload = {
       site_url: data.site_url,
@@ -113,7 +133,7 @@ export function CustomIntegrationConfiguration({
           {/* Site URL */}
           <div className="pt-2">
             <FormLabel className="text-base font-medium text-slate-700">
-              Site URL
+              {isShopify ? "Shopify Store URL" : "Site URL"}
             </FormLabel>
           </div>
           <FormField
@@ -125,13 +145,19 @@ export function CustomIntegrationConfiguration({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="https://example.com"
+                      placeholder={
+                        isShopify
+                          ? "https://yourstore.myshopify.com"
+                          : "https://example.com"
+                      }
                       className="bg-white font-mono text-sm"
                     />
                   </FormControl>
                   <Button
                     variant="outline"
-                    onClick={() => copyToClipboard(field.value, "url")}
+                    onClick={() =>
+                      field.value && copyToClipboard(field.value, "url")
+                    }
                     className="shrink-0"
                     type="button"
                   >
@@ -143,7 +169,9 @@ export function CustomIntegrationConfiguration({
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  The URL for this integration.
+                  {isShopify
+                    ? "The URL for your Shopify store."
+                    : "The URL for this integration."}
                 </p>
                 <FormMessage />
               </FormItem>
@@ -153,7 +181,7 @@ export function CustomIntegrationConfiguration({
           {/* API Key */}
           <div className="pt-2">
             <FormLabel className="text-base font-medium text-slate-700">
-              API Key
+              {isShopify ? "Admin API Access Token" : "API Key"}
             </FormLabel>
           </div>
           <FormField
@@ -166,7 +194,7 @@ export function CustomIntegrationConfiguration({
                     <Input
                       type={showApiKey ? "text" : "password"}
                       {...field}
-                      placeholder="rext_..."
+                      placeholder={isShopify ? "shpat_..." : "rext_..."}
                       className="bg-white font-mono text-sm mb-2"
                     />
                   </FormControl>
@@ -183,7 +211,9 @@ export function CustomIntegrationConfiguration({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyToClipboard(field.value, "key")}
+                      onClick={() =>
+                        field.value && copyToClipboard(field.value, "key")
+                      }
                       className="text-slate-600"
                       type="button"
                     >
@@ -196,7 +226,9 @@ export function CustomIntegrationConfiguration({
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  The API key used for authentication.
+                  {isShopify
+                    ? "The admin API access token for authentication."
+                    : "The API key used for authentication."}
                 </p>
                 <FormMessage />
               </FormItem>
@@ -204,44 +236,51 @@ export function CustomIntegrationConfiguration({
           />
 
           {/* API Endpoint */}
-          <div className="pt-2">
-            <FormLabel className="text-base font-medium text-slate-700">
-              API Endpoint
-            </FormLabel>
-          </div>
-          <FormField
-            control={form.control}
-            name="api_endpoint"
-            render={({ field }) => (
-              <FormItem className="space-y-2">
-                <div className="flex gap-2 max-w-xl">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="https://example.com/wp-json/rext-ai/v1/"
-                      className="bg-white font-mono text-sm"
-                    />
-                  </FormControl>
-                  <Button
-                    variant="outline"
-                    onClick={() => copyToClipboard(field.value, "endpoint")}
-                    className="shrink-0"
-                    type="button"
-                  >
-                    {copiedField === "endpoint" ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      "Copy"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  The REST API endpoint for this integration.
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isShopify && (
+            <>
+              <div className="pt-2">
+                <FormLabel className="text-base font-medium text-slate-700">
+                  API Endpoint
+                </FormLabel>
+              </div>
+              <FormField
+                control={form.control}
+                name="api_endpoint"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <div className="flex gap-2 max-w-xl">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="https://example.com/wp-json/rext-ai/v1/"
+                          className="bg-white font-mono text-sm"
+                        />
+                      </FormControl>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          field.value &&
+                          copyToClipboard(field.value, "endpoint")
+                        }
+                        className="shrink-0"
+                        type="button"
+                      >
+                        {copiedField === "endpoint" ? (
+                          <Check className="h-4 w-4 text-green-600" />
+                        ) : (
+                          "Copy"
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      The REST API endpoint for this integration.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           {/* Actions */}
           <div className="pt-6 border-t col-span-1 md:col-span-2 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
