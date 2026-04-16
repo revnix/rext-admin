@@ -270,7 +270,7 @@ export default {
                 "[AuthJS] OAuth login failed with message:",
                 errorMessage,
               );
-              return token;
+              return { ...token, error: "OAuthBackendError" };
             }
 
             const oauthResponseText = await oauthResponse.text();
@@ -283,7 +283,8 @@ export default {
             );
 
             if (!oauthResponseData) {
-              return token;
+              log.error("[AuthJS] Invalid OAuth response format");
+              return { ...token, error: "OAuthBackendError" };
             }
 
             // Extract data from wrapped response
@@ -291,7 +292,7 @@ export default {
 
             if (!oauthData.user) {
               log.error("[AuthJS] No user object in OAuth response");
-              return token;
+              return { ...token, error: "OAuthBackendError" };
             }
 
             token.id = oauthData.user.id;
@@ -321,11 +322,7 @@ export default {
               message: error instanceof Error ? error.message : String(error),
               name: error instanceof Error ? error.name : "Unknown",
             });
-            // Fall back to OAuth-only data (no backend tokens)
-            token.id = user.id;
-            token.email = user.email;
-            token.name = user.name;
-            token.picture = user.image;
+            return { ...token, error: "OAuthBackendError" };
           }
         }
       }
@@ -409,8 +406,9 @@ export default {
       return session;
     },
     async authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
+      const isLoggedIn = !!auth?.user && !auth?.error;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
+      const hasOAuthError = auth?.error === "OAuthBackendError";
       const pathname = nextUrl.pathname;
       const isOnAuthPage = isAuthPage(pathname);
       const isInvitationPage =
@@ -421,14 +419,15 @@ export default {
       // CRITICAL: If there is a refresh error, the session is essentially invalid.
       // We must force the user to the login page and NOT allow them to be redirected
       // back to the dashboard even if NextAuth technically still considers them "logged in".
-      if (hasRefreshError) {
+      if (hasRefreshError || hasOAuthError) {
         if (isOnAuthPage || isInvitationPage) {
           // Allow them to stay on the auth/invitation page to log in again
           return true;
         }
         // Redirect to login from any protected page
+        const errorParam = hasOAuthError ? "OAuthError" : "SessionExpired";
         return Response.redirect(
-          new URL("/login?error=SessionExpired", nextUrl),
+          new URL(`/login?error=${errorParam}`, nextUrl),
         );
       }
 

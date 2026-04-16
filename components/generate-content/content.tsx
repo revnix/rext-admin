@@ -110,7 +110,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
   const isRunning = tc.status === "running";
   const Icon =
     tc.name.toLowerCase().includes("duck") ||
-      tc.name.toLowerCase().includes("search")
+    tc.name.toLowerCase().includes("search")
       ? Search
       : Globe;
   const hasOutput = tc.status === "done" && !!tc.output;
@@ -406,7 +406,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     workspace_id: workspaceId ?? undefined,
     introduction: allContent?.meta_description || "",
     body_markdown: body,
-    body_html: previewHtml || allContent?.body_html || allContent?.html_content || "",
+    body_html:
+      previewHtml || allContent?.body_html || allContent?.html_content || "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
@@ -797,7 +798,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   {getSEOStatusText(seoScore.seo_health_score)}
                 </div>
                 {seoScore.issue_summary?.warnings ||
-                  seoScore.issue_summary?.errors ? (
+                seoScore.issue_summary?.errors ? (
                   <div className="text-sm text-muted-foreground">
                     {seoScore.issue_summary?.warnings} warnings
                     <br />
@@ -935,8 +936,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {sidebarSections.map((sec, i) => {
                   const sectionWritten = body
                     ? body
-                      .toLowerCase()
-                      .includes(sec.heading.toLowerCase().slice(0, 12))
+                        .toLowerCase()
+                        .includes(sec.heading.toLowerCase().slice(0, 12))
                     : false;
                   return (
                     <button

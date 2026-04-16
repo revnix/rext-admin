@@ -372,7 +372,11 @@ const IMAGE_TRANSFORMER: TextMatchTransformer = {
   type: "text-match",
 };
 
-const CUSTOM_TRANSFORMERS = [UNDERLINE_TRANSFORMER, IMAGE_TRANSFORMER, ...TRANSFORMERS];
+const CUSTOM_TRANSFORMERS = [
+  UNDERLINE_TRANSFORMER,
+  IMAGE_TRANSFORMER,
+  ...TRANSFORMERS,
+];
 
 // ---------------------------------------------------------------------------
 // ToolbarButton
@@ -945,6 +949,27 @@ function NewTabLinkPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
+    // One-time pass: fix any links already in the editor state on mount
+    editor.update(() => {
+      const root = $getRoot();
+      // Walk all nodes via getChildren recursively
+      const walk = (node: import("lexical").LexicalNode) => {
+        if ($isLinkNode(node) && node.getTarget() !== "_blank") {
+          node.setTarget("_blank");
+          node.setRel("noopener noreferrer");
+        }
+        if ("getChildren" in node) {
+          for (const child of (
+            node as import("lexical").ElementNode
+          ).getChildren()) {
+            walk(child);
+          }
+        }
+      };
+      walk(root);
+    });
+
+    // Ongoing: fix any links created or updated after mount
     return editor.registerMutationListener(LinkNode, (mutations) => {
       editor.update(() => {
         for (const [key, mutation] of mutations) {
@@ -1045,9 +1070,7 @@ export default function LexicalEditor({
   function handleChange(editorState: unknown) {
     (editorState as { read: (fn: () => void) => void }).read(() => {
       const root = $getRoot();
-      const hasImages = root
-        .getChildren()
-        .some((n) => $isImageNode(n));
+      const hasImages = root.getChildren().some((n) => $isImageNode(n));
 
       let markdown: string;
 
@@ -1113,7 +1136,10 @@ export default function LexicalEditor({
           }
         }
 
-        markdown = result.filter((p) => p !== undefined).join("\n\n").replace(/\n{3,}/g, "\n\n");
+        markdown = result
+          .filter((p) => p !== undefined)
+          .join("\n\n")
+          .replace(/\n{3,}/g, "\n\n");
       }
 
       if (!shouldUpdateEditor) {
@@ -1172,9 +1198,11 @@ export default function LexicalEditor({
             />
             <HistoryPlugin />
             <ListPlugin />
-            <LinkPlugin />
-            <NewTabLinkPlugin />
+            <LinkPlugin
+              attributes={{ target: "_blank", rel: "noopener noreferrer" }}
+            />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
+            <NewTabLinkPlugin />
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>
         </div>

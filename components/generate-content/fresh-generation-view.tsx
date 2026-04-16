@@ -52,6 +52,7 @@ import type { ToolCall } from "@/components/generate-content/agent-feed";
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
+  initialIntent?: string;
   isLibrary?: boolean;
 }
 
@@ -161,6 +162,7 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 export function FreshGenerationView({
   onBack: _onBack,
   initialKeyword: _initialKeyword = "",
+  initialIntent: _initialIntent = "",
   isLibrary = false,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
@@ -209,12 +211,38 @@ export function FreshGenerationView({
     isEditingRef.current = isEditing;
   }, [isEditing]);
 
+  // Abort controller — cancelled on unmount or when a new stream starts
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const cancelStream = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+  };
+
+  // Cancel on unmount (e.g. user navigates away)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
+  useEffect(() => {
+    return () => cancelStream();
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
     if (_initialKeyword) {
       handleKeywordSubmit();
     }
   }, [_initialKeyword]);
+
+  // Auto-skip keyword selection step when coming from library
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleWorkflow is declared after this effect and is not stable
+  useEffect(() => {
+    if (
+      isLibrary &&
+      instructionType === "keyword Selection" &&
+      primaryKeyword
+    ) {
+      handleWorkflow("KEYWORD_SELECT", primaryKeyword);
+    }
+  }, [isLibrary, instructionType, primaryKeyword]);
 
   // ── Typewriter for instruction hint text ─────────────────────────────────
   const { displayed: displayedInstruction } = useTypewriter(instruction, {
@@ -734,6 +762,10 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
+    cancelStream();
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -751,19 +783,27 @@ export function FreshGenerationView({
 
     const keyword = _initialKeyword || userKeyword;
 
-    const stream = streamFromSSE(`/api/generate/${newThreadId}/stream`, {
-      input: {
-        serp_payload: {
-          query: keyword,
-          country,
-          user_id: user?.id,
-          workspace_id: workspaceId ?? undefined,
-          is_library: isLibrary,
+    const stream = streamFromSSE(
+      `/api/generate/${newThreadId}/stream`,
+      {
+        input: {
+          serp_payload: {
+            query: keyword,
+            country,
+            user_id: user?.id,
+            workspace_id: workspaceId ?? undefined,
+            is_library: isLibrary,
+          },
+          ...(selectedIntent || _initialIntent
+            ? { final_intent_type: selectedIntent || _initialIntent }
+            : {}),
         },
+        streamMode: ["updates", "messages", "custom"],
+        streamSubgraphs: true,
+        onDisconnect: "cancel",
       },
-      streamMode: ["updates", "messages", "custom"],
-      streamSubgraphs: true,
-    });
+      signal,
+    );
 
     await processStream(stream);
   };
@@ -773,15 +813,24 @@ export function FreshGenerationView({
     status: statusMsg,
   }: ResumeOptions) => {
     if (!threadId) return;
+    cancelStream();
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     if (statusMsg) dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
 
-    const stream = streamFromSSE(`/api/generate/${threadId}/resume`, {
-      payload,
-      streamMode: ["updates", "messages", "custom"],
-      streamSubgraphs: true,
-    });
+    const stream = streamFromSSE(
+      `/api/generate/${threadId}/resume`,
+      {
+        payload,
+        streamMode: ["updates", "messages", "custom"],
+        streamSubgraphs: true,
+        onDisconnect: "cancel",
+      },
+      signal,
+    );
     await processStream(stream);
   };
 
@@ -811,8 +860,18 @@ export function FreshGenerationView({
           payload: TOPIC_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { "Selected Topic": value },
+          payload: { selected_topic: value },
           status: "Content Type Generation...",
+        });
+      case "TOPIC_REGENERATE":
+        setTokenTarget("none");
+        tokenTargetRef.current = "none";
+        // Clear topics and stale outline to provide visual indicator of regeneration
+        dispatch({ type: "SET_TOPICS", payload: [] });
+        dispatch({ type: "SET_OUTLINE", payload: null });
+        return resumeWorkflow({
+          payload: { action: "regenerate", feedback: value || "" },
+          status: "Regenerating topics...",
         });
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
@@ -838,7 +897,13 @@ export function FreshGenerationView({
           payload: FINAL_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { action: "approve" },
+          payload: {
+            action: "approve",
+            ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
+            ...(parsedOutline?.target_audience?.length
+              ? { target_audience: parsedOutline.target_audience }
+              : {}),
+          },
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
@@ -891,7 +956,7 @@ export function FreshGenerationView({
     instructionType === "keyword" || instructionType === "keyword Selection";
 
   const instructionViewMap: Record<string, React.ReactNode> = {
-    "keyword Selection": (
+    "keyword Selection": isLibrary ? null : (
       <SuggestionsSection
         instruction={displayedInstruction}
         primaryKeyword={primaryKeyword}
@@ -907,6 +972,22 @@ export function FreshGenerationView({
         instruction={displayedInstruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={
+          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
+        }
+        keyword={primaryKeyword}
+      />
+    ),
+    topic_selection: (
+      <TopicsSection
+        instruction={displayedInstruction}
+        topics={topics}
+        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={
+          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
+        }
         keyword={primaryKeyword}
       />
     ),

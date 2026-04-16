@@ -148,14 +148,14 @@ export default function AdminRolesPage() {
   const permissionsTableData: PermissionTableData[] = (
     permissionsData?.permissions || []
   ).map((permission) => ({
-      id: permission.id,
-      name: permission.name,
-      display_name: permission.display_name,
-      resource: permission.resource,
-      action: permission.action,
-      roles_count: permission.roles?.length || 0,
-      description: permission.description,
-    }));
+    id: permission.id,
+    name: permission.name,
+    display_name: permission.display_name,
+    resource: permission.resource,
+    action: permission.action,
+    roles_count: permission.roles?.length || 0,
+    description: permission.description,
+  }));
 
   // Role columns
   const roleColumns: Column<RoleTableData>[] = [

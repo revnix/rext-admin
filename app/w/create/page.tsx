@@ -2,15 +2,13 @@
 
 import { ChevronLeft, ShieldX } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageLoader } from "@/components/ui/loading-states";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { usePermission } from "@/hooks/use-permission";
-import type { Route } from "next";
+import { usePermissionDecision } from "@/hooks/use-permission";
 
 /**
  * Create Workspace Page
@@ -38,21 +36,15 @@ export default function CreateWorkspacePage() {
     "Create a new workspace with guided setup for optimal content generation",
   );
 
-  // Check if user has permission to create workspaces
-  const canCreateWorkspace = usePermission("workspace.create");
-  const router = useRouter();
+  const { hasAccess: canCreateWorkspace, isLoading: isCheckingPermission } =
+    usePermissionDecision({
+      mode: "single",
+      permissions: ["workspace.create"],
+    });
 
-  // Redirect to dashboard if no permission
-  useEffect(() => {
-    if (!canCreateWorkspace) {
-      // Don't redirect immediately to avoid flash
-      const timer = setTimeout(() => {
-        router.push("/" as Route);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [canCreateWorkspace, router]);
+  if (isCheckingPermission) {
+    return <PageLoader message="Checking workspace permissions..." />;
+  }
 
   // Show permission denied message if no access
   if (!canCreateWorkspace) {

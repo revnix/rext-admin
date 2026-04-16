@@ -14,11 +14,13 @@ export async function createThread(): Promise<string> {
 export async function* streamFromSSE(
   url: string,
   body: Record<string, unknown>,
+  signal?: AbortSignal,
 ): AsyncGenerator<RunStreamEvent> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!res.ok || !res.body) throw new Error("Stream failed");
@@ -28,6 +30,10 @@ export async function* streamFromSSE(
   let buffer = "";
 
   while (true) {
+    if (signal?.aborted) {
+      reader.cancel();
+      return;
+    }
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });

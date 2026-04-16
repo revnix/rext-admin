@@ -10,7 +10,7 @@ export function createKeywordLibraryNamespace(client: ApiClient) {
     /**
      * Delete a keyword from the library
      */
-    delete: async (workspaceId: string, key: string, namespace: string[]) => {
+    delete: async (key: string, namespace: string[]) => {
       return client.request<{ deleted_key: string }>(
         ENDPOINTS.KEYWORD_LIBRARY.base,
         {

@@ -35,7 +35,9 @@ export function ActivityFilter({
   const fromDateRef = useRef<HTMLInputElement>(null);
   const toDateRef = useRef<HTMLInputElement>(null);
 
-  const openDatePicker = (inputRef: React.RefObject<HTMLInputElement | null>) => {
+  const openDatePicker = (
+    inputRef: React.RefObject<HTMLInputElement | null>,
+  ) => {
     const input = inputRef.current;
     if (!input) return;
 
@@ -194,17 +196,10 @@ export function ActivityFilter({
           <label htmlFor="date-from" className="text-sm font-medium">
             From Date
           </label>
-          <div
-            className="relative"
+          <button
+            type="button"
+            className="relative w-full text-left"
             onClick={() => openDatePicker(fromDateRef)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openDatePicker(fromDateRef);
-              }
-            }}
-            role="button"
-            tabIndex={0}
             aria-label="Open from date picker"
           >
             <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -216,24 +211,17 @@ export function ActivityFilter({
               value={filters.date_from || ""}
               onChange={(e) => onFilterChange("date_from", e.target.value)}
             />
-          </div>
+          </button>
         </div>
 
         <div className="space-y-2">
           <label htmlFor="date-to" className="text-sm font-medium">
             To Date
           </label>
-          <div
-            className="relative"
+          <button
+            type="button"
+            className="relative w-full text-left"
             onClick={() => openDatePicker(toDateRef)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openDatePicker(toDateRef);
-              }
-            }}
-            role="button"
-            tabIndex={0}
             aria-label="Open to date picker"
           >
             <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -245,7 +233,7 @@ export function ActivityFilter({
               value={filters.date_to || ""}
               onChange={(e) => onFilterChange("date_to", e.target.value)}
             />
-          </div>
+          </button>
         </div>
       </div>
 
