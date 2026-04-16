@@ -1032,7 +1032,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 <div className="w-full relative">
                   {/* ── Humanizing overlay ──────────────────────────────── */}
                   {isHumanizing && body && (
-                    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden rounded-xl">
+                    <div className="absolute inset-0 z-20 overflow-hidden rounded-xl">
                       {/* blur mask */}
                       <div className="absolute inset-0 backdrop-blur-[3px] bg-background/30" />
                       {/* diagonal repeating label */}

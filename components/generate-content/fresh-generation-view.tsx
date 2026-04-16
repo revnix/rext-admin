@@ -927,10 +927,16 @@ export function FreshGenerationView({
   // ─────────────────────────────────────────────────────────────────────────
   // Loading screen
   // ─────────────────────────────────────────────────────────────────────────
+  const isTopicLoading =
+    instructionType === "topic" ||
+    instructionType === "topic_selection" ||
+    instructionType === "keyword Selection";
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
-    !showContentStream
+    !showContentStream &&
+    !(isLibrary && isTopicLoading)
   ) {
     return (
       <div
@@ -1032,7 +1038,7 @@ export function FreshGenerationView({
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="w-full"
         >
-          {isKeywordFlow && (
+          {isKeywordFlow && !isLibrary && (
             <KeywordForm
               userKeyword={userKeyword}
               country={country}
