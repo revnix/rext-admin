@@ -9,7 +9,9 @@ import {
   ChevronRight,
   TrendingUp,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
+import { useState, useMemo } from "react";
 import type { LibraryItem, StoredKeyword } from "@/types/generate-content";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
@@ -17,6 +19,41 @@ import { SearchIntentCard } from "../ui/content/intent-card";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
+
+type IntentOption =
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
+
+const VALID_INTENTS: IntentOption[] = [
+  "informational",
+  "commercial",
+  "transactional",
+  "navigational",
+];
+
+type IntentOptionItem = { value: IntentOption; label: string };
+
+function resolveIntentOptions(
+  intent: string | string[] | undefined,
+): IntentOptionItem[] {
+  if (!intent) return [];
+  const raw = Array.isArray(intent) ? intent : [String(intent)];
+  const seen = new Set<string>();
+  const result: IntentOptionItem[] = [];
+  raw.forEach((v, idx) => {
+    const norm = v?.trim().toLowerCase() as IntentOption;
+    if (!VALID_INTENTS.includes(norm) || seen.has(norm)) return;
+    seen.add(norm);
+    const source = idx === 0 ? "SEO Data" : "AI Suggested";
+    result.push({
+      value: norm,
+      label: `${norm.charAt(0).toUpperCase() + norm.slice(1)} — ${source}`,
+    });
+  });
+  return result;
+}
 
 export default function LibraryDetail({
   data,
@@ -31,9 +68,26 @@ export default function LibraryDetail({
 }) {
   const router = useRouter();
   const { workspace } = useWorkspace();
+
+  const intentOptions = useMemo(
+    () => resolveIntentOptions(data.seo_state?.intent),
+    [data.seo_state?.intent],
+  );
+
+  const [selectedIntent, setSelectedIntent] = useState<IntentOption | "">(
+    () => {
+      const raw = Array.isArray(data.seo_state?.intent)
+        ? data.seo_state.intent[0]
+        : data.seo_state?.intent;
+      const norm = raw?.trim().toLowerCase() as IntentOption;
+      return VALID_INTENTS.includes(norm) ? norm : "";
+    },
+  );
+
   const handleContinue = () => {
+    const intentParam = selectedIntent ? `&intent=${selectedIntent}` : "";
     router.push(
-      `/w/${workspace?.slug}/generate_content?library=${selectedItem.keyword}` as Route,
+      `/w/${workspace?.slug}/generate_content?library=${selectedItem.keyword}${intentParam}` as Route,
     );
   };
 
@@ -96,15 +150,27 @@ export default function LibraryDetail({
           </Card>
           <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
             {data.seo_state?.intent ? (
-              <SearchIntentCard
-                intent={
-                  data.seo_state?.intent as
-                    | "informational"
-                    | "commercial"
-                    | "transactional"
-                    | "navigational"
-                }
-              />
+              <div className="space-y-2">
+                {selectedIntent && <SearchIntentCard intent={selectedIntent} />}
+                {intentOptions.length > 0 && (
+                  <div className="relative w-full mt-1">
+                    <select
+                      value={selectedIntent}
+                      onChange={(e) =>
+                        setSelectedIntent(e.target.value as IntentOption)
+                      }
+                      className="w-full appearance-none bg-background border border-border rounded-lg px-3 py-2 pr-8 text-[11px] font-bold uppercase tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+                    >
+                      {intentOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />

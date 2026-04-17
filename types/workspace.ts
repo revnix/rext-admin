@@ -89,6 +89,7 @@ export interface Persona {
   areas_of_expertise?: string;
   tone_of_voice?: string;
   bio?: string;
+  avatar_url?: string | null;
   linkedin_url?: string | null;
   demographics?: string;
   pain_points?: string;

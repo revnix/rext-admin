@@ -1,14 +1,14 @@
 # Rext Admin     
 
 A modern Next.js application for generating, managing, and utilizing AI-powered content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
- 
-## 🔒 Security Notice    
+
+## 🔒 Security Notice  
    
 **This application has been updated with comprehensive security measures (September 2024).**
 
-Key security features implemented: 
-- **Server-side API proxy** prevents client-side key exposure   
-- **Rate limiting** protects against API abuse (60 req/min per IP)    
+Key security features implemented:  
+- **Server-side API proxy** prevents client-side key exposure    
+- **Rate limiting** protects against API abuse (60 req/min per IP)   
 - **Input validation & sanitization** blocks XSS attacks
 - **Security headers** via middleware (CSP, HSTS, XSS protection) 
 - **Environment variable security** with proper isolation
@@ -20,7 +20,7 @@ Key security features implemented:
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
 - **AI-Powered Topic Generation**: Generate relevant, targeted topics
 - **Modern UI/UX**: Built with Radix UI and Tailwind CSS 4
-- **Full TypeScript**: End-to-end type safety
+- **Full TypeScript**: End-to-end type safety 
 - **Responsive Design**: Optimized for all screen sizes
 - **Accessibility First**: WCAG 2.1 AA compliant
 

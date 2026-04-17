@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, X } from "lucide-react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -31,6 +32,23 @@ export function ActivityFilter({
   hasActiveFilters,
   resultsCount = 0,
 }: ActivityFilterProps) {
+  const fromDateRef = useRef<HTMLInputElement>(null);
+  const toDateRef = useRef<HTMLInputElement>(null);
+
+  const openDatePicker = (
+    inputRef: React.RefObject<HTMLInputElement | null>,
+  ) => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    input.focus();
+
+    const pickerInput = input as HTMLInputElement & {
+      showPicker?: () => void;
+    };
+    pickerInput.showPicker?.();
+  };
+
   return (
     <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
       {/* Filter Controls */}
@@ -178,32 +196,44 @@ export function ActivityFilter({
           <label htmlFor="date-from" className="text-sm font-medium">
             From Date
           </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <button
+            type="button"
+            className="relative w-full text-left"
+            onClick={() => openDatePicker(fromDateRef)}
+            aria-label="Open from date picker"
+          >
+            <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
+              ref={fromDateRef}
               id="date-from"
               type="date"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
               value={filters.date_from || ""}
               onChange={(e) => onFilterChange("date_from", e.target.value)}
             />
-          </div>
+          </button>
         </div>
 
         <div className="space-y-2">
           <label htmlFor="date-to" className="text-sm font-medium">
             To Date
           </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <button
+            type="button"
+            className="relative w-full text-left"
+            onClick={() => openDatePicker(toDateRef)}
+            aria-label="Open to date picker"
+          >
+            <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
+              ref={toDateRef}
               id="date-to"
               type="date"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
               value={filters.date_to || ""}
               onChange={(e) => onFilterChange("date_to", e.target.value)}
             />
-          </div>
+          </button>
         </div>
       </div>
 

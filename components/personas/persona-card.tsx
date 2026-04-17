@@ -14,6 +14,8 @@ import Link from "next/link";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 interface PersonaCardProps {
   persona: Persona & { id: string };
 }
@@ -44,16 +46,23 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   return (
     <Link
       href={`/w/${workspaceSlug}/personas/${persona.id}` as Route}
-      className="block h-full"
+      className="block h-full group"
     >
       <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border bg-card flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
           <div className="flex items-center gap-3">
-            <div
-              className={`h-10 w-10 rounded-lg ${avatarColor} flex items-center justify-center text-white font-bold text-sm shadow-sm`}
-            >
-              {initials}
-            </div>
+            <Avatar className="h-10 w-10 rounded-lg shadow-sm">
+              <AvatarImage
+                src={persona.avatar_url || ""}
+                alt={`${persona.name}'s avatar`}
+                className="object-cover"
+              />
+              <AvatarFallback
+                className={`rounded-lg ${avatarColor} text-white font-bold text-sm`}
+              >
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </CardHeader>
         <CardContent className="p-6 pt-2 flex-grow">

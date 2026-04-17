@@ -1,4 +1,4 @@
-import type { Outline } from "@/types/generate-content";
+import type { Outline, ContentSection } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { motion } from "framer-motion";
@@ -12,6 +12,10 @@ import {
   ListChecks,
   MessageSquare,
   Pencil,
+  Hash,
+  Tag,
+  FileText,
+  HelpCircle,
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Input } from "../ui/input";
@@ -69,6 +73,265 @@ function extractJsonStringArrayField(raw: string, field: string) {
       }
     })
     .filter((s: unknown) => typeof s === "string" && s.trim().length > 0);
+}
+
+// ─── Section content renderer (handles all content types) ────────────────────
+function SectionContent({ section }: { section: ContentSection }) {
+  const items: { label: string; content: string }[] = [];
+
+  // key_points (most common — blog, pillar, etc.)
+  if (section.key_points?.length) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {section.key_points.map((point: string, pIdx: number) => (
+          <motion.div
+            key={point}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.05 + pIdx * 0.05 }}
+            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
+          >
+            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <span className="text-sm font-medium text-muted-foreground">
+              {point}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+    );
+  }
+
+  // checklist items
+  if (section.items?.length) {
+    return (
+      <div className="space-y-2">
+        {section.items.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {item.label}
+              </p>
+              {item.context && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {item.context}
+                </p>
+              )}
+              <span className="text-[10px] font-bold uppercase text-primary/60">
+                {item.difficulty}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // FAQ items
+  if (section.items_faq?.length) {
+    return (
+      <div className="space-y-3">
+        {section.items_faq.map((faq) => (
+          <div
+            key={faq.question}
+            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <p className="text-sm font-semibold text-foreground">
+              {faq.question}
+            </p>
+            {faq.answer_brief && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {faq.answer_brief}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // glossary entries
+  if (section.entries?.length) {
+    return (
+      <div className="space-y-2">
+        {section.entries.map((entry) => (
+          <div
+            key={entry.term}
+            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <p className="text-sm font-bold text-foreground">{entry.term}</p>
+            {entry.definition && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {entry.definition}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // resource list
+  if (section.resources?.length) {
+    return (
+      <div className="space-y-2">
+        {section.resources.map((res) => (
+          <div
+            key={res.title}
+            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <p className="text-sm font-semibold text-foreground">{res.title}</p>
+            {res.description && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {res.description}
+              </p>
+            )}
+            {res.category && (
+              <span className="text-[10px] font-bold uppercase text-primary/60">
+                {res.category}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // tutorial steps
+  if (section.steps?.length) {
+    return (
+      <div className="space-y-2">
+        {section.steps.map((step, i) => (
+          <div
+            key={`step-${step.title}`}
+            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
+              {i + 1}.
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {step.title}
+              </p>
+              {step.description && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {step.description}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // howto steps
+  if (section.steps_howto?.length) {
+    return (
+      <div className="space-y-2">
+        {section.steps_howto.map((step, i) => (
+          <div
+            key={`howto-${step.title}`}
+            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
+              {i + 1}.
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {step.title}
+              </p>
+              {step.description && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {step.description}
+                </p>
+              )}
+              {step.tools_needed?.length ? (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Tools: {step.tools_needed.join(", ")}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // whitepaper findings
+  if (section.findings?.length) {
+    return (
+      <div className="space-y-2">
+        {section.findings.map((f) => (
+          <div
+            key={f.topic}
+            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <p className="text-sm font-semibold text-foreground">{f.topic}</p>
+            {f.data_points?.length ? (
+              <ul className="mt-1 space-y-0.5">
+                {f.data_points.map((dp) => (
+                  <li key={dp} className="text-xs text-muted-foreground">
+                    • {dp}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {f.implication && (
+              <p className="text-xs text-primary/70 mt-1 italic">
+                {f.implication}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // case study highlights / results
+  if (section.key_highlights?.length || section.results?.length) {
+    const highlights = section.key_highlights ?? [];
+    const results = section.results ?? [];
+    return (
+      <div className="space-y-2">
+        {highlights.map((h) => (
+          <div
+            key={h}
+            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <span className="text-sm font-medium text-muted-foreground">
+              {h}
+            </span>
+          </div>
+        ))}
+        {results.map((r) => (
+          <div
+            key={r.metric_name}
+            className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+          >
+            <span className="text-sm font-bold text-foreground">
+              {r.metric_name}:
+            </span>
+            <span className="text-sm text-primary font-semibold">
+              {r.result_value}
+            </span>
+            {r.context && (
+              <span className="text-xs text-muted-foreground">
+                ({r.context})
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  void items;
+  return null;
 }
 
 function deriveOutlineFromTokens(rawTokens: string): Outline {
@@ -172,7 +435,7 @@ export function OutlineDisplay({
   const [tone, setTone] = useState("");
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
-  const [visiblePointsBySection, setVisiblePointsBySection] = useState<
+  const [_visiblePointsBySection, setVisiblePointsBySection] = useState<
     Record<number, number>
   >({});
 
@@ -301,22 +564,23 @@ export function OutlineDisplay({
       {/* Header */}
       <div className="mb-10 space-y-4">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-muted">
-            <ListChecks className="w-5 h-5 text-primary" />
-          </div>
+          <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">
+            Step 05 — Content Outline
+          </p>
           {isDraft && (
-            <span className="text-sm font-medium text-muted-foreground">
-              Generating outline…
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/50 ml-2">
+              <ListChecks className="w-3.5 h-3.5 animate-pulse" />
+              Generating…
             </span>
           )}
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
           {titleTw.displayed}
           {!titleTw.isDone && <Cursor />}
         </h2>
 
-        <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+        <p className="text-[15px] text-muted-foreground leading-relaxed max-w-3xl">
           {briefTw.displayed}
           {!briefTw.isDone && <Cursor />}
         </p>
@@ -324,13 +588,13 @@ export function OutlineDisplay({
 
       {/* Metadata Grid (show only after parsed outline arrives) */}
       {outline && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="flex items-center gap-4 p-5 rounded-2xl bg-muted/50 border border-border"
+            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
           >
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Mic2 className="w-5 h-5 text-primary" />
@@ -395,7 +659,7 @@ export function OutlineDisplay({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-4 p-5 rounded-2xl bg-muted/50 border border-border"
+            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
           >
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Target className="w-5 h-5 text-primary" />
@@ -454,18 +718,110 @@ export function OutlineDisplay({
               )}
             </div>
           </motion.div>
+
+          {/* Focus Keyphrase */}
+          {outline.focus_keyphrase && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
+            >
+              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
+                <Hash className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                  Focus Keyphrase
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  <TypeField
+                    text={outline.focus_keyphrase}
+                    speed={55}
+                    retypeOnChange={false}
+                  />
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Schema Type + Target Word Count */}
+          {(outline.schema_type || outline.target_word_count) && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35 }}
+              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
+            >
+              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex gap-8">
+                {outline.schema_type && (
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      Schema
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {outline.schema_type}
+                    </p>
+                  </div>
+                )}
+                {outline.target_word_count && (
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      Target Words
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {outline.target_word_count.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Keywords to include */}
+          {outline.keywords_to_include &&
+            outline.keywords_to_include.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+                className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50"
+              >
+                <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border shrink-0">
+                  <Tag className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                    Keywords to Include
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {outline.keywords_to_include.map((kw) => (
+                      <span
+                        key={kw}
+                        className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted border border-border text-foreground"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
         </div>
       )}
 
       {/* Sections — each section staggers in and types its own fields */}
-      <div className="space-y-6 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-slate-200">
-        {effectiveOutline.sections.length > 0
-          ? effectiveOutline.sections
+      <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
+        {(effectiveOutline.sections?.length ?? 0) > 0
+          ? (effectiveOutline.sections ?? [])
               .slice(
                 0,
                 outline
                   ? visibleSectionCount
-                  : effectiveOutline.sections.length,
+                  : (effectiveOutline.sections?.length ?? 0),
               )
               .map((section, idx) => (
                 <motion.div
@@ -475,13 +831,13 @@ export function OutlineDisplay({
                   transition={{ delay: 0.3 + idx * 0.12 }}
                   className="relative pl-12 group"
                 >
-                  <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border-2 border-border group-hover:border-primary transition-colors z-10">
-                    <span className="text-xs font-bold text-muted-foreground group-hover:text-primary transition-colors">
-                      {idx + 1}
+                  <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
+                    <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                      {String(idx + 1).padStart(2, "0")}
                     </span>
                   </div>
 
-                  <div className="p-6 rounded-2xl border border-border bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300">
+                  <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                       <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                         <TypeField
@@ -498,7 +854,7 @@ export function OutlineDisplay({
                       </div>
                     </div>
 
-                    <p className="text-[15px] text-muted-foreground leading-relaxed mb-6">
+                    <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
                       <TypeField
                         text={section.description}
                         speed={48}
@@ -506,37 +862,32 @@ export function OutlineDisplay({
                       />
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {section.key_points
-                        .slice(
-                          0,
-                          outline
-                            ? idx === visibleSectionCount - 1
-                              ? (visiblePointsBySection[idx] ?? 0)
-                              : section.key_points.length
-                            : section.key_points.length,
-                        )
-                        .map((point: string, pIdx: number) => (
-                          <motion.div
-                            key={point}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{
-                              delay: 0.4 + idx * 0.12 + pIdx * 0.06,
-                            }}
-                            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
-                          >
-                            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                            <span className="text-sm font-medium text-muted-foreground">
-                              <TypeField
-                                text={point}
-                                speed={52}
-                                retypeOnChange={false}
-                              />
-                            </span>
-                          </motion.div>
-                        ))}
-                    </div>
+                    {/* questions_to_answer */}
+                    {section.questions_to_answer &&
+                      section.questions_to_answer.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <HelpCircle className="w-3.5 h-3.5" /> Questions to
+                            Answer
+                          </p>
+                          <div className="space-y-1.5">
+                            {section.questions_to_answer.map((q: string) => (
+                              <div
+                                key={q}
+                                className="flex items-start gap-2 text-sm text-muted-foreground"
+                              >
+                                <span className="text-primary mt-0.5 shrink-0">
+                                  •
+                                </span>
+                                <span>{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Section-type specific content */}
+                    <SectionContent section={section} />
                   </div>
                 </motion.div>
               ))
@@ -547,23 +898,25 @@ export function OutlineDisplay({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 + effectiveOutline.sections.length * 0.12 }}
-        className="mt-12 flex items-center justify-end gap-3"
+        transition={{
+          delay: 0.3 + (effectiveOutline.sections?.length ?? 0) * 0.12,
+        }}
+        className="mt-10 flex items-center justify-end gap-3"
       >
         <Button
           onClick={onReject}
           disabled={isLoading || isDraft}
           variant="outline"
-          className="h-12 px-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 dark:text-white"
+          className="h-11 px-7 rounded-xl border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
         >
           <X className="w-4 h-4 mr-2" /> Reject
         </Button>
         <Button
           onClick={onApprove}
           disabled={isLoading || isDraft}
-          className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white border-none shadow-lg shadow-blue-500/20"
+          className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
         >
-          <Check className="w-4 h-4 mr-2" /> Approve & Generate
+          <Check className="w-4 h-4" /> Approve & Generate
         </Button>
       </motion.div>
     </motion.div>
@@ -588,13 +941,16 @@ export function OutlineRejectSection({
       animate={{ opacity: 1, scale: 1 }}
       className="w-full max-w-2xl mx-auto py-12"
     >
-      <div className="p-8 rounded-3xl bg-card border border-border">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 rounded-2xl bg-muted">
-            <MessageSquare className="w-6 h-6 text-primary" />
+      <div className="p-7 rounded-2xl bg-card border border-border/50">
+        <div className="flex items-center gap-4 mb-7">
+          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-foreground leading-tight">
+            <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-0.5">
+              Feedback
+            </p>
+            <h3 className="text-[15px] font-bold text-foreground leading-tight">
               {instruction}
             </h3>
           </div>
@@ -603,15 +959,15 @@ export function OutlineRejectSection({
           value={rejectedReason}
           onChange={(e) => onChange(e.target.value)}
           placeholder={instruction}
-          className="w-full min-h-[160px] p-5 rounded-2xl border-border focus:border-primary text-foreground bg-muted/50 text-base leading-relaxed"
+          className="w-full min-h-[140px] p-4 rounded-xl border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
         />
-        <div className="flex items-center justify-end mt-8">
+        <div className="flex items-center justify-end mt-6">
           <Button
             onClick={onSubmit}
-            className="h-12 px-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white border-none group"
+            className="h-11 px-8 rounded-xl font-semibold gap-1.5 group"
           >
-            Submit
-            <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            Submit Feedback
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Button>
         </div>
       </div>

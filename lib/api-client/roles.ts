@@ -165,12 +165,19 @@ export function createRolesNamespace(client: ApiClient) {
     },
 
     /**
-     * List all permissions with optional roles
+     * List permissions for a single page
      */
-    listPermissions: async (resource?: string, includeRoles = false) => {
+    listPermissionsPage: async (
+      resource?: string,
+      includeRoles = false,
+      page = 1,
+      perPage = 100,
+    ) => {
       const url = buildUrl(ENDPOINTS.PERMISSIONS.list, {
         resource,
         include_roles: includeRoles ? "true" : undefined,
+        page,
+        per_page: perPage,
       });
 
       return client.request<{
@@ -190,9 +197,94 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
         }>;
         count: number;
+        page: number;
+        per_page: number;
+        total_pages: number;
       }>(url, {
         method: "GET",
       });
+    },
+
+    /**
+     * List all permissions with optional roles — fetches all pages automatically
+     */
+    listPermissions: async (resource?: string, includeRoles = false) => {
+      const PER_PAGE = 100;
+      const firstPage = await client.request<{
+        permissions: Array<{
+          id: string;
+          name: string;
+          display_name: string;
+          description?: string;
+          resource: string;
+          action: string;
+          created_at: string;
+          roles?: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+            hierarchy_level: number;
+          }>;
+        }>;
+        count: number;
+        page: number;
+        per_page: number;
+        total_pages: number;
+      }>(
+        buildUrl(ENDPOINTS.PERMISSIONS.list, {
+          resource,
+          include_roles: includeRoles ? "true" : undefined,
+          page: 1,
+          per_page: PER_PAGE,
+        }),
+        { method: "GET" },
+      );
+
+      const totalPages = firstPage.total_pages ?? 1;
+      if (totalPages <= 1) {
+        return { permissions: firstPage.permissions, count: firstPage.count };
+      }
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          client.request<{
+            permissions: Array<{
+              id: string;
+              name: string;
+              display_name: string;
+              description?: string;
+              resource: string;
+              action: string;
+              created_at: string;
+              roles?: Array<{
+                id: string;
+                name: string;
+                display_name: string;
+                hierarchy_level: number;
+              }>;
+            }>;
+            count: number;
+            page: number;
+            per_page: number;
+            total_pages: number;
+          }>(
+            buildUrl(ENDPOINTS.PERMISSIONS.list, {
+              resource,
+              include_roles: includeRoles ? "true" : undefined,
+              page: i + 2,
+              per_page: PER_PAGE,
+            }),
+            { method: "GET" },
+          ),
+        ),
+      );
+
+      const allPermissions = [
+        ...firstPage.permissions,
+        ...remainingPages.flatMap((p) => p.permissions),
+      ];
+
+      return { permissions: allPermissions, count: firstPage.count };
     },
 
     /**

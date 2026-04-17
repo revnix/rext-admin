@@ -54,7 +54,8 @@ export function getCSPHeader(_nonce: string): string {
     `style-src 'self' 'unsafe-inline'`,
 
     // Images: Allow self, data URIs, and blobs
-    "img-src 'self' blob: data: https:",
+    // In dev: also allow http: for local MinIO (localhost:9000 presigned URLs)
+    `img-src 'self' blob: data: https: ${isDev ? "http:" : ""}`.trim(),
 
     // Fonts: Allow self and data URIs
     "font-src 'self' data:",

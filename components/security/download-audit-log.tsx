@@ -27,8 +27,10 @@ export function DownloadAuditLog({
       // Fetch audit logs data
       const data = await apiClient.auditLogs.getMyLogs({
         action: filters?.action,
-        start_date: filters?.date_from,
-        end_date: filters?.date_to,
+        status: filters?.status,
+        resource_type: filters?.resource_type,
+        date_from: filters?.date_from,
+        date_to: filters?.date_to,
         limit: 1000, // Get more data for export
         offset: 0,
       });

@@ -14,6 +14,7 @@ import {
   X,
   Loader2,
   Link as LinkIcon,
+  Image as ImageIcon,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
@@ -30,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface PersonaDetailProps {
   persona: Persona;
@@ -196,18 +198,49 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       id="description"
                       value={formData.description || ""}
                       onChange={handleChange}
-                      placeholder="Brief summary of this persona..."
-                      className="min-h-[60px]"
+                      placeholder="Short description of this persona..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="avatar_url"
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon size={14} />
+                      Avatar URL
+                    </Label>
+                    <Input
+                      id="avatar_url"
+                      value={formData.avatar_url || ""}
+                      onChange={handleChange}
+                      placeholder="https://example.com/image.jpg"
                     />
                   </div>
                 </>
               )}
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Full Name
-                </Label>
-                <p className="text-base font-medium">{persona.name}</p>
+              <div className="flex items-center gap-4 mb-6">
+                <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                  <AvatarImage
+                    src={persona.avatar_url || ""}
+                    alt={`${persona.name}'s avatar`}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                    {persona.name
+                      .split(" ")
+                      .map((word) => word[0])
+                      .join("")
+                      .substring(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Full Name
+                  </Label>
+                  <p className="text-xl font-bold">{persona.name}</p>
+                </div>
               </div>
 
               {/* Professional Title */}

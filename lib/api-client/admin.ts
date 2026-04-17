@@ -93,15 +93,19 @@ export function createAuditLogsNamespace(client: ApiClient) {
      */
     getMyLogs: async (filters?: {
       action?: string;
-      start_date?: string;
-      end_date?: string;
+      status?: string;
+      resource_type?: string;
+      date_from?: string;
+      date_to?: string;
       limit?: number;
       offset?: number;
     }) => {
       const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.myLogs, {
         action: filters?.action,
-        start_date: filters?.start_date,
-        end_date: filters?.end_date,
+        status: filters?.status,
+        resource_type: filters?.resource_type,
+        date_from: filters?.date_from,
+        date_to: filters?.date_to,
         limit: filters?.limit,
         offset: filters?.offset,
       });

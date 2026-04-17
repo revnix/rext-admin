@@ -47,10 +47,12 @@ import {
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
+import type { ToolCall } from "@/components/generate-content/agent-feed";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
+  initialIntent?: string;
   isLibrary?: boolean;
 }
 
@@ -160,6 +162,7 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 export function FreshGenerationView({
   onBack: _onBack,
   initialKeyword: _initialKeyword = "",
+  initialIntent: _initialIntent = "",
   isLibrary = false,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
@@ -208,12 +211,38 @@ export function FreshGenerationView({
     isEditingRef.current = isEditing;
   }, [isEditing]);
 
+  // Abort controller — cancelled on unmount or when a new stream starts
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const cancelStream = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+  };
+
+  // Cancel on unmount (e.g. user navigates away)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
+  useEffect(() => {
+    return () => cancelStream();
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
     if (_initialKeyword) {
       handleKeywordSubmit();
     }
   }, [_initialKeyword]);
+
+  // Auto-skip keyword selection step when coming from library
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleWorkflow is declared after this effect and is not stable
+  useEffect(() => {
+    if (
+      isLibrary &&
+      instructionType === "keyword Selection" &&
+      primaryKeyword
+    ) {
+      handleWorkflow("KEYWORD_SELECT", primaryKeyword);
+    }
+  }, [isLibrary, instructionType, primaryKeyword]);
 
   // ── Typewriter for instruction hint text ─────────────────────────────────
   const { displayed: displayedInstruction } = useTypewriter(instruction, {
@@ -225,10 +254,7 @@ export function FreshGenerationView({
     instructionType !== "outline_reject" &&
     instructionType !== "content" &&
     tokenTarget !== "content" &&
-    (instructionType === "outline_review" ||
-      tokenTarget === "outline" ||
-      outline.streamedText.length > 0 ||
-      !!parsedOutline);
+    (outline.streamedText.length > 0 || !!parsedOutline);
 
   const showContentStream =
     instructionType === "content" ||
@@ -279,9 +305,70 @@ export function FreshGenerationView({
     } as unknown as FinalContent;
   })();
 
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
-  const [enhancingDescription, setEnhancingDescription] = useState("");
+  // ── Selected intent from dropdown ────────────────────────────────────────
+  const [selectedIntent, setSelectedIntent] = useState<
+    "informational" | "commercial" | "transactional" | "navigational" | ""
+  >("");
+
+  // Auto-select first intent when seoResult arrives
+  useEffect(() => {
+    if (!seoResult?.intent || selectedIntent) return;
+    const raw = Array.isArray(seoResult.intent)
+      ? seoResult.intent[0]
+      : String(seoResult.intent);
+    const norm = raw?.trim().toLowerCase();
+    if (
+      ["informational", "commercial", "transactional", "navigational"].includes(
+        norm,
+      )
+    ) {
+      setSelectedIntent(
+        norm as
+          | "informational"
+          | "commercial"
+          | "transactional"
+          | "navigational",
+      );
+    }
+  }, [seoResult?.intent, selectedIntent]);
+
+  const [, setIsEnhancing] = useState(false);
+  const [, setEnhancingMsg] = useState("Enhancing content...");
+  const [, setEnhancingDescription] = useState("");
+
+  // ── Humanizing overlay state ──────────────────────────────────────────────
+  const [isHumanizing, setIsHumanizing] = useState(false);
+
+  // ── Tool call tracking for agent activity feed ────────────────────────────
+  const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
+  const [pipelineSteps, setPipelineSteps] = useState<
+    Array<{ label: string; status: "pending" | "active" | "done" }>
+  >([]);
+
+  const CONTENT_PIPELINE = [
+    "Generating Content",
+    "Humanizing",
+    "Reviewing Content",
+  ];
+
+  // Advance pipeline: mark previous step done, set new step active
+  const advancePipeline = (activeLabel: string) => {
+    setPipelineSteps((prev) => {
+      // Initialize on first call
+      const base =
+        prev.length === 0
+          ? CONTENT_PIPELINE.map((label) => ({
+              label,
+              status: "pending" as const,
+            }))
+          : prev;
+      return base.map((step) => {
+        if (step.label === activeLabel) return { ...step, status: "active" };
+        if (step.status === "active") return { ...step, status: "done" };
+        return step;
+      });
+    });
+  };
 
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
@@ -426,9 +513,13 @@ export function FreshGenerationView({
       for await (const chunk of stream) {
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
-        if (chunk.event === "messages/partial") {
+        if (
+          chunk.event === "messages/partial" ||
+          chunk.event?.startsWith("messages/partial|")
+        ) {
           // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
-          const raw = (chunk.data as any)?.[0]?.content;
+          const msgData = (chunk.data as any)?.[0];
+          const raw = msgData?.content;
           const token =
             typeof raw === "string"
               ? raw
@@ -443,6 +534,56 @@ export function FreshGenerationView({
               content.appendToken(token);
             }
           }
+
+          continue;
+        }
+
+        // ── custom — agent streaming events (token, tool_start, tool_end) ──
+        if (chunk.event === "custom" || chunk.event?.startsWith("custom|")) {
+          // biome-ignore lint/suspicious/noExplicitAny: custom event payload
+          const d = chunk.data as any;
+          if (d?.type === "token" && tokenTargetRef.current === "content") {
+            content.appendToken(d.content as string);
+          } else if (d?.type === "tool_start") {
+            const id = String(d.id ?? "");
+            const name = String(d.name ?? "");
+            const query = String(d.query ?? "");
+            if (name === "humanize_content") {
+              setIsHumanizing(true);
+              advancePipeline("Humanizing");
+            }
+            if (id) {
+              setToolCalls((prev) => {
+                if (prev.some((c) => c.id === id)) return prev;
+                return [
+                  ...prev,
+                  { id, name, query, status: "running" as const },
+                ];
+              });
+            }
+          } else if (d?.type === "tool_end") {
+            const id = String(d.id ?? "");
+            const name = String(d.name ?? "");
+            const count = Number(d.count ?? 0);
+            const output = d.output ? String(d.output) : undefined;
+            if (name === "humanize_content") {
+              setIsHumanizing(false);
+            }
+            if (id) {
+              setToolCalls((prev) =>
+                prev.map((tc) =>
+                  tc.id === id
+                    ? {
+                        ...tc,
+                        status: "done" as const,
+                        resultCount: count,
+                        output,
+                      }
+                    : tc,
+                ),
+              );
+            }
+          }
           continue;
         }
 
@@ -452,7 +593,19 @@ export function FreshGenerationView({
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
 
-        // Some graphs emit the outline in a "review_outline" envelope (not in __interrupt__)
+        // generate_outline uses structured output (ainvoke) — no streaming tokens.
+        // Extract the outline from the node update so it can be shown before the interrupt fires.
+        const generateOutlineResult = (
+          updates as {
+            generate_outline?: { content?: { outline?: ContentOutline } };
+          }
+        )?.generate_outline?.content?.outline;
+        if (generateOutlineResult) {
+          dispatch({ type: "SET_OUTLINE", payload: generateOutlineResult });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
+        }
+
+        // Some graphs also emit the outline in a "review_outline" envelope (not in __interrupt__)
         const reviewOutline = (
           updates as {
             review_outline?: { content?: { outline?: ContentOutline } };
@@ -469,52 +622,29 @@ export function FreshGenerationView({
           setEnhancingDescription(
             "Creating the first draft based on the approved outline...",
           );
+          advancePipeline("Generating Content");
         }
 
         if (updates?.generate_content) {
-          setEnhancingMsg("Injecting EEAT...");
-          setEnhancingDescription(
-            "Enhancing the content with experience, expertise, authority, and trust signals...",
-          );
-        }
-
-        if (updates?.inject_eeat) {
-          setEnhancingMsg("Humanizing Content...");
-          setEnhancingDescription(
-            "Refining the text to sound more natural, engaging, and human-like...",
-          );
+          advancePipeline("Humanizing");
         }
 
         if (updates?.humanize_content) {
-          setEnhancingMsg("Calculating Readability...");
-          setEnhancingDescription(
-            "Analyzing the content to ensure it is clear and easy to read...",
-          );
-        }
-
-        if (updates?.calculate_readability) {
-          setEnhancingMsg("Calculating On-Page SEO...");
-          setEnhancingDescription(
-            "Evaluating SEO factors such as keywords, structure, and optimization...",
-          );
-        }
-
-        if (updates?.calculate_on_page_seo) {
-          setEnhancingMsg("Reviewing Content...");
-          setEnhancingDescription(
-            "Performing a final review to improve clarity, quality, and consistency...",
-          );
+          advancePipeline("Reviewing Content");
         }
 
         if (updates?.review_content) {
-          setEnhancingMsg("Generating Final Content...");
-          setEnhancingDescription(
-            "Preparing the finalized content for display in the editor...",
+          setPipelineSteps((prev) =>
+            prev.map((s) => ({ ...s, status: "done" as const })),
           );
         }
 
         if (updates?.content_engine) {
           setIsEnhancing(false);
+          // Mark all pipeline steps done
+          setPipelineSteps((prev) =>
+            prev.map((s) => ({ ...s, status: "done" as const })),
+          );
         }
 
         // Centralized handling for nodes that emit content updates
@@ -632,6 +762,10 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
+    cancelStream();
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -649,19 +783,27 @@ export function FreshGenerationView({
 
     const keyword = _initialKeyword || userKeyword;
 
-    const stream = streamFromSSE(`/api/generate/${newThreadId}/stream`, {
-      input: {
-        serp_payload: {
-          query: keyword,
-          country,
-          user_id: user?.id,
-          workspace_id: workspaceId ?? undefined,
-          is_library: isLibrary,
+    const stream = streamFromSSE(
+      `/api/generate/${newThreadId}/stream`,
+      {
+        input: {
+          serp_payload: {
+            query: keyword,
+            country,
+            user_id: user?.id,
+            workspace_id: workspaceId ?? undefined,
+            is_library: isLibrary,
+          },
+          ...(selectedIntent || _initialIntent
+            ? { final_intent_type: selectedIntent || _initialIntent }
+            : {}),
         },
+        streamMode: ["updates", "messages", "custom"],
+        streamSubgraphs: true,
+        onDisconnect: "cancel",
       },
-      streamMode: ["updates", "messages"],
-      streamSubgraphs: true,
-    });
+      signal,
+    );
 
     await processStream(stream);
   };
@@ -671,13 +813,24 @@ export function FreshGenerationView({
     status: statusMsg,
   }: ResumeOptions) => {
     if (!threadId) return;
+    cancelStream();
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     dispatch({ type: "CLEAR_COMPLETED_NODES" });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     if (statusMsg) dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
 
-    const stream = streamFromSSE(`/api/generate/${threadId}/resume`, {
-      payload,
-    });
+    const stream = streamFromSSE(
+      `/api/generate/${threadId}/resume`,
+      {
+        payload,
+        streamMode: ["updates", "messages", "custom"],
+        streamSubgraphs: true,
+        onDisconnect: "cancel",
+      },
+      signal,
+    );
     await processStream(stream);
   };
 
@@ -693,7 +846,10 @@ export function FreshGenerationView({
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
         return resumeWorkflow({
-          payload: { "Primary Keyword": value },
+          payload: {
+            "Primary Keyword": value,
+            ...(selectedIntent ? { intent: selectedIntent } : {}),
+          },
           status: "Keyword Recommendation...",
         });
       case "TOPIC_SELECT":
@@ -704,8 +860,18 @@ export function FreshGenerationView({
           payload: TOPIC_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { "Selected Topic": value },
+          payload: { selected_topic: value },
           status: "Content Type Generation...",
+        });
+      case "TOPIC_REGENERATE":
+        setTokenTarget("none");
+        tokenTargetRef.current = "none";
+        // Clear topics and stale outline to provide visual indicator of regeneration
+        dispatch({ type: "SET_TOPICS", payload: [] });
+        dispatch({ type: "SET_OUTLINE", payload: null });
+        return resumeWorkflow({
+          payload: { action: "regenerate", feedback: value || "" },
+          status: "Regenerating topics...",
         });
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
@@ -722,6 +888,8 @@ export function FreshGenerationView({
         setTokenTarget("content");
         tokenTargetRef.current = "content";
         content.resetStream();
+        setToolCalls([]);
+        setPipelineSteps([]);
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         dispatch({
@@ -729,7 +897,13 @@ export function FreshGenerationView({
           payload: FINAL_GENERATION_STEPS,
         });
         return resumeWorkflow({
-          payload: { action: "approve" },
+          payload: {
+            action: "approve",
+            ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
+            ...(parsedOutline?.target_audience?.length
+              ? { target_audience: parsedOutline.target_audience }
+              : {}),
+          },
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
@@ -753,15 +927,21 @@ export function FreshGenerationView({
   // ─────────────────────────────────────────────────────────────────────────
   // Loading screen
   // ─────────────────────────────────────────────────────────────────────────
+  const isTopicLoading =
+    instructionType === "topic" ||
+    instructionType === "topic_selection" ||
+    instructionType === "keyword Selection";
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
-    !showContentStream
+    !showContentStream &&
+    !(isLibrary && isTopicLoading)
   ) {
     return (
       <div
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700",
+          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700 mt-4",
           instructionType === "keyword"
             ? "min-h-[70vh] justify-center"
             : "min-h-0 pt-2",
@@ -773,7 +953,6 @@ export function FreshGenerationView({
           loadingStatus={loadingStatus}
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
-          className="mt-5"
         />
       </div>
     );
@@ -783,13 +962,15 @@ export function FreshGenerationView({
     instructionType === "keyword" || instructionType === "keyword Selection";
 
   const instructionViewMap: Record<string, React.ReactNode> = {
-    "keyword Selection": (
+    "keyword Selection": isLibrary ? null : (
       <SuggestionsSection
         instruction={displayedInstruction}
         primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
         seoResult={seoResult}
+        selectedIntent={selectedIntent}
+        onIntentChange={setSelectedIntent}
       />
     ),
     topic: (
@@ -797,6 +978,22 @@ export function FreshGenerationView({
         instruction={displayedInstruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={
+          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
+        }
+        keyword={primaryKeyword}
+      />
+    ),
+    topic_selection: (
+      <TopicsSection
+        instruction={displayedInstruction}
+        topics={topics}
+        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
+        isRegenerating={
+          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
+        }
         keyword={primaryKeyword}
       />
     ),
@@ -841,7 +1038,7 @@ export function FreshGenerationView({
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="w-full"
         >
-          {isKeywordFlow && (
+          {isKeywordFlow && !isLibrary && (
             <KeywordForm
               userKeyword={userKeyword}
               country={country}
@@ -890,12 +1087,14 @@ export function FreshGenerationView({
             isEditing={isEditing}
             userKeyword={userKeyword}
             outline={parsedOutline}
+            toolCalls={toolCalls}
+            pipelineSteps={pipelineSteps}
+            isHumanizing={isHumanizing}
             onEditToggle={() =>
               dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
             }
             onContentChange={(val) => {
               dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-              // Also sync allContent.body_markdown so other parts of the UI stay updated
               if (allContent) {
                 dispatch({
                   type: "SET_ALL_CONTENT",
@@ -904,19 +1103,6 @@ export function FreshGenerationView({
               }
             }}
           />
-
-          {isEnhancing && (
-            <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
-              <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
-                <div className="text-sm font-semibold text-foreground">
-                  {enhancingMsg}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {enhancingDescription}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

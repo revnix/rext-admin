@@ -77,6 +77,24 @@ const nextConfig: NextConfig = {
         pathname: "/media/**",
       },
       {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "2024",
+        pathname: "/avatars/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "9000",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "*.r2.cloudflarestorage.com",
         pathname: "/**",
@@ -97,9 +115,20 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "minio",
+        port: "9000",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "api.rext.ai",
-        pathname: "/media/**",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "staging-api.rext.ai",
+        pathname: "/**",
       },
     ],
   },

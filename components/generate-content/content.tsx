@@ -8,18 +8,27 @@ import type {
   Issue,
   TrustScore,
 } from "@/types/generate-content";
+import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { Button } from "../ui/button";
 import {
   Activity,
   AlertCircle,
+  Bot,
   Copy,
   Eye,
+  ChevronDown,
+  ChevronUp,
+  Globe,
+  Loader2,
   Pencil,
   Save,
+  Search,
   Send,
   Sparkles,
   List,
   CheckCircle2,
+  Zap,
+  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +54,134 @@ import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
+
+// Custom renderers: links open in new tab; images get fallback placeholder on error
+marked.use({
+  renderer: {
+    link({
+      href,
+      title,
+      text,
+    }: {
+      href: string;
+      title?: string | null;
+      text: string;
+    }) {
+      const titleAttr = title ? ` title="${title}"` : "";
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="prose-link">${text}</a>`;
+    },
+    image({
+      href,
+      title,
+      text,
+    }: {
+      href: string;
+      title?: string | null;
+      text: string;
+    }) {
+      const alt = text || title || "";
+      const caption = title || text || "";
+      const placeholder = `
+        <div class="content-image-placeholder" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <span>Image could not be loaded</span>
+        </div>`;
+      return `
+        <figure class="content-image-figure">
+          <img
+            src="${href}"
+            alt="${alt}"
+            loading="lazy"
+            class="content-image"
+            onerror="this.closest('figure').classList.add('content-image-broken'); this.style.display='none';"
+          />
+          ${placeholder}
+          ${caption ? `<figcaption class="content-image-caption">${caption}</figcaption>` : ""}
+        </figure>`;
+    },
+  },
+});
+
+function InlineToolCard({ tc }: { tc: ToolCall }) {
+  const [expanded, setExpanded] = useState(false);
+  const isRunning = tc.status === "running";
+  const Icon =
+    tc.name.toLowerCase().includes("duck") ||
+      tc.name.toLowerCase().includes("search")
+      ? Search
+      : Globe;
+  const hasOutput = tc.status === "done" && !!tc.output;
+  return (
+    <div
+      className={cn(
+        "relative rounded-lg border overflow-hidden transition-colors",
+        isRunning
+          ? "bg-amber-500/5 border-amber-500/20"
+          : "bg-emerald-500/4 border-emerald-500/15",
+      )}
+    >
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-0.5",
+          isRunning ? "bg-amber-400" : "bg-emerald-500/60",
+        )}
+      />
+      <div className="flex items-start gap-2 pl-3 pr-2.5 py-2">
+        <div
+          className={cn(
+            "shrink-0 mt-0.5",
+            isRunning ? "text-amber-500" : "text-emerald-500",
+          )}
+        >
+          {isRunning ? (
+            <Loader2 size={10} className="animate-spin" />
+          ) : (
+            <CheckCircle2 size={10} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1 mb-0.5">
+            <Icon size={8} className="text-muted-foreground/60 shrink-0" />
+            <span className="text-[8px] font-bold text-muted-foreground/50 uppercase tracking-wider">
+              Web Search
+            </span>
+          </div>
+          <div className="text-[10px] text-foreground/70 leading-snug break-words">
+            <span className="text-muted-foreground/40">"</span>
+            {tc.query.length > 40 ? `${tc.query.slice(0, 40)}…` : tc.query}
+            <span className="text-muted-foreground/40">"</span>
+          </div>
+          {tc.status === "done" && tc.resultCount !== undefined && (
+            <div className="flex items-center justify-between mt-1">
+              <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
+                <Zap size={8} />
+                {tc.resultCount} result{tc.resultCount !== 1 ? "s" : ""}
+              </div>
+              {hasOutput && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="text-[8px] text-muted-foreground/50 hover:text-foreground flex items-center gap-0.5 transition-colors"
+                >
+                  {expanded ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
+                  {expanded ? "hide" : "view"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {expanded && tc.output && (
+        <div className="mx-2 mb-2 p-2 rounded-md bg-background/60 border border-border/40 text-[9px] text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+          {tc.output}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function getReadabilityMeta(score: number): ReadabilityMeta {
   if (score >= 90) {
@@ -96,9 +233,9 @@ function getReadabilityMeta(score: number): ReadabilityMeta {
   }
 
   return {
-    label: "Loading",
-    color: "text-green-600",
-    barColor: "bg-transparent",
+    label: "Very Confusing",
+    color: "text-red-600",
+    barColor: "bg-red-500",
   };
 }
 
@@ -140,6 +277,8 @@ const levelToStatus = (level: string) => {
   }
 };
 
+type PipelineStep = { label: string; status: "pending" | "active" | "done" };
+
 type ContentEditorProps = {
   contentId?: string;
   allContent: FinalContent | null;
@@ -152,6 +291,11 @@ type ContentEditorProps = {
   outline: Outline | null;
   onEditToggle: () => void;
   onContentChange: (val: string) => void;
+  // Agent activity (shown in right sidebar while generating)
+  toolCalls?: ToolCall[];
+  pipelineSteps?: PipelineStep[];
+  /** When true, shows the content blurred with a humanizing overlay */
+  isHumanizing?: boolean;
 };
 
 function ContentEditorInner(props: ContentEditorProps) {
@@ -167,39 +311,22 @@ function ContentEditorInner(props: ContentEditorProps) {
     outline,
     onEditToggle,
     onContentChange,
+    toolCalls = [],
+    pipelineSteps = [],
+    isHumanizing = false,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const workspaceId = useCurrentWorkspaceId();
-
-  // State
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [statusModal, setStatusModal] = useState<{
-    isOpen: boolean;
-    type: "success" | "error";
-    action: "publish" | "save" | "copy";
-    message: string;
-  }>({
-    isOpen: false,
-    type: "success",
-    action: "publish",
-    message: "",
-  });
-  const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
-  const [contentSavedId, setContentSavedId] = useState<string | undefined>(
-    contentId,
-  );
-  const [isStructureOpen, setIsStructureOpen] = useState(false);
-  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
-
-  // Derived Values
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
   const displayTitle = allContent?.meta_title || "";
   const body = generatedContent;
-  const previewHtml = body ? marked.parse(body) : "";
+  const previewHtml = useMemo(() => {
+    if (!body) return "";
+    const result = marked.parse(body);
+    return typeof result === "string" ? result : "";
+  }, [body]);
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
   const { displayed: typedIntro } = useTypewriter(
     allContent?.meta_description || "",
@@ -209,7 +336,33 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
   const score = readabilityScore?.flesch_reading_ease ?? 0;
   const { label, color, barColor } = getReadabilityMeta(score);
-  const progressWidth = `${Math.round(Math.min(Math.max(score, 0), 100))}%`;
+  const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
+  const workspaceId = useCurrentWorkspaceId();
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  // State
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [statusModal, setStatusModal] = useState<{
+    title: string;
+    isOpen: boolean;
+    type: "success" | "error";
+    action: "publish" | "save" | "copy";
+    message: string;
+  }>({
+    title: "",
+    isOpen: false,
+    type: "success",
+    action: "publish",
+    message: "",
+  });
+  const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
+  const [contentSavedId, setContentSavedId] = useState<string | undefined>(
+    contentId,
+  );
+
+  const [isStructureOpen, setIsStructureOpen] = useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
   const sidebarSections = useMemo(() => {
     if (!body) return outline?.sections || [];
@@ -230,10 +383,15 @@ function ContentEditorInner(props: ContentEditorProps) {
       const headings = Array.from(
         container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
       );
+      let currentSectionIdx = -1;
+      void currentSectionIdx;
+
       for (let i = 0; i < headings.length; i++) {
         const rect = headings[i].getBoundingClientRect();
         if (rect.top <= 200) {
-          // You could set active section here if needed
+          currentSectionIdx = i;
+        } else {
+          break;
         }
       }
     };
@@ -251,7 +409,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     workspace_id: workspaceId ?? undefined,
     introduction: allContent?.meta_description || "",
     body_markdown: body,
-    body_html: allContent?.body_html || allContent?.html_content || "",
+    body_html:
+      previewHtml || allContent?.body_html || allContent?.html_content || "",
     tags: tags,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
@@ -279,27 +438,56 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!isFinal || !workspaceId) return;
     try {
       setIsPublishing(true);
-      const payload = getContentPayload();
-      const response = contentSavedId
-        ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
-        : await apiClient.content.save_publish(workspaceId, payload);
-
       setStatusModal({
+        title: "Checking for integrations...",
         isOpen: true,
         type: "success",
         action: "publish",
         message:
-          response?.message ||
-          "Your content has been published as a draft and is ready for review.",
+          "Looking for connected sites...",
       });
+      await delay(1200);
+
+      const integrationsData = await integrationsApiService.listIntegrations(workspaceId);
+
+      if (integrationsData.length === 0) {
+        setIntegrationModalOpen(true);
+        return;
+      }
+
+      else {
+        setStatusModal({
+          title: "Publishing Content...",
+          isOpen: true,
+          type: "success",
+          action: "publish",
+          message:
+            "Publishing content to your connected site...",
+        });
+        const payload = getContentPayload();
+        const response = contentSavedId
+          ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
+          : await apiClient.content.save_publish(workspaceId, payload);
+
+        setStatusModal({
+          title: "Content Published Successfully!",
+          isOpen: true,
+          type: "success",
+          action: "publish",
+          message:
+            response?.message ||
+            "Your content has been published as a draft and is ready for review.",
+        });
+      }
     } catch (error) {
       const err = error as Error;
-      if (
-        err.message ===
-        "No active WordPress sites found in this workspace. Please connect a site before publishing."
-      ) {
-        setIntegrationModalOpen(true);
-      }
+      setStatusModal({
+        title: "Failed to Publish Content",
+        isOpen: true,
+        type: "error",
+        action: "publish",
+        message: err.message || "Failed to publish content. Please try again.",
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -309,6 +497,14 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!isFinal || !workspaceId) return;
     try {
       setIsSaving(true);
+      setStatusModal({
+        title: "Saving Content...",
+        isOpen: true,
+        type: "success",
+        action: "save",
+        message:
+          "Saving content to your workspace...",
+      });
       const payload = getContentPayload();
       const response = contentSavedId
         ? await apiClient.content.update(workspaceId, contentSavedId, payload)
@@ -318,6 +514,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         setContentSavedId(response.id);
       }
       setStatusModal({
+        title: "Content Saved Successfully!",
         isOpen: true,
         type: "success",
         action: "save",
@@ -328,6 +525,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     } catch (error) {
       const err = error as Error;
       setStatusModal({
+        title: "Failed to Save Content",
         isOpen: true,
         type: "error",
         action: "save",
@@ -375,6 +573,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         await navigator.clipboard.write([clipboardItem]);
       }
       setStatusModal({
+        title: "Content Copied Successfully!",
         isOpen: true,
         type: "success",
         action: "copy",
@@ -382,6 +581,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
     } catch (_error) {
       setStatusModal({
+        title: "Failed to Copy Content",
         isOpen: true,
         type: "error",
         action: "copy",
@@ -390,59 +590,17 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  // Sidebar Layout Templates
-  const structureSidebarContent = (
-    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-      <div>
-        <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
-          Structure
-        </h3>
-        <nav className="space-y-1">
-          {sidebarSections?.map((sec, i) => (
-            <button
-              type="button"
-              key={slugify(sec.heading)}
-              onClick={() => {
-                const id = slugify(sec.heading);
-                const element =
-                  document.getElementById(id) ||
-                  Array.from(
-                    document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
-                  ).find(
-                    (h) =>
-                      h.textContent
-                        ?.trim()
-                        .toLowerCase()
-                        .includes(sec.heading.trim().toLowerCase()) ||
-                      sec.heading
-                        .trim()
-                        .toLowerCase()
-                        .includes(h.textContent?.trim().toLowerCase() || ""),
-                  );
-
-                if (element) {
-                  element.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                  setIsStructureOpen(false);
-                }
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            >
-              <span className="relative truncate leading-none">
-                {sec.heading}
-              </span>
-            </button>
-          ))}
-        </nav>
-      </div>
+  !body && (
+    <div className="space-y-3 animate-pulse">
+      <div className="h-4 bg-muted rounded w-full" />
+      <div className="h-4 bg-muted rounded w-5/6" />
+      <div className="h-4 bg-muted rounded w-4/6" />
     </div>
   );
 
   const analysisSidebarContent = (
-    <div className="flex flex-col min-h-full bg-sidebar">
-      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-2 z-4 border-b border-border/50 lg:border-none">
+    <div className="flex flex-col h-full bg-sidebar">
+      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
         <Button
           variant="secondary"
           size="sm"
@@ -494,47 +652,210 @@ function ContentEditorInner(props: ContentEditorProps) {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1.5 py-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-        {score ? (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 font-bold px-2">
-              <Activity size={16} className="text-emerald-500" />
-              <h4 className="text-xs uppercase tracking-widest text-muted-foreground">
-                Analysis
+      <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+        {/* ── Agent Activity Feed (shown while generating) ───────────── */}
+        {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
+          <div className="space-y-3 pb-2">
+            {/* Header */}
+            <div className="flex items-center gap-2 pt-0.5 pb-0.5">
+              <div className="relative shrink-0">
+                <Bot size={13} className="text-primary" />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              </div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/60 flex-1">
+                Agent Activity
               </h4>
             </div>
-            <div className="bg-card p-6 rounded-3xl border border-border">
-              <h4 className="text-lg font-bold">Readability</h4>
-              <div className={`text-xl font-bold ${color}`}>
-                {label} ({score.toFixed(1)})
+
+            {/* Pipeline steps with connecting lines */}
+            {pipelineSteps.length > 0 && (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
+                  <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.15em]">
+                    Pipeline
+                  </span>
+                </div>
+                <div className="p-3 space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                  {pipelineSteps.map((step, idx) => (
+                    <div
+                      key={step.label}
+                      className="flex items-stretch gap-2.5"
+                    >
+                      {/* Left timeline */}
+                      <div className="flex flex-col items-center w-3 shrink-0">
+                        <div
+                          className={cn(
+                            "w-2.5 h-2.5 rounded-full border-2 shrink-0 mt-0.5 z-10 transition-all duration-300",
+                            step.status === "done"
+                              ? "bg-emerald-500 border-emerald-500"
+                              : step.status === "active"
+                                ? "bg-amber-400 border-amber-400 shadow-[0_0_6px_hsl(var(--amber-400)/0.5)]"
+                                : "bg-transparent border-border/60",
+                          )}
+                        >
+                          {step.status === "active" && (
+                            <div className="absolute w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping opacity-60" />
+                          )}
+                        </div>
+                        {idx < pipelineSteps.length - 1 && (
+                          <div
+                            className={cn(
+                              "w-px flex-1 mt-0.5 mb-0.5 min-h-[12px] transition-colors duration-500",
+                              step.status === "done"
+                                ? "bg-emerald-500/40"
+                                : "bg-border/40",
+                            )}
+                          />
+                        )}
+                      </div>
+                      {/* Label */}
+                      <div
+                        className={cn(
+                          "flex-1 pb-2.5 pt-0.5",
+                          idx === pipelineSteps.length - 1 && "pb-0",
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          {step.status === "active" && (
+                            <Loader2
+                              size={9}
+                              className="text-amber-500 animate-spin shrink-0"
+                            />
+                          )}
+                          <span
+                            className={cn(
+                              "text-[11px] leading-tight transition-all duration-200",
+                              step.status === "done"
+                                ? "text-muted-foreground/40 line-through"
+                                : step.status === "active"
+                                  ? "text-foreground font-semibold"
+                                  : "text-muted-foreground/30",
+                            )}
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="h-1.5 w-full bg-muted rounded-full mt-2 overflow-hidden">
-                <div
-                  className={`h-full ${barColor}`}
-                  style={{ width: progressWidth }}
-                />
+            )}
+
+            {/* Tool call research feed */}
+            {toolCalls.length > 0 && (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="px-3 py-2 border-b border-border/50 bg-muted/30 flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.15em]">
+                    Research
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {toolCalls.filter((t) => t.status === "done").length}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground/40">/</div>
+                    <div className="text-[9px] text-muted-foreground/60">
+                      {toolCalls.length}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-2 space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                  {toolCalls.map((tc) => (
+                    <InlineToolCard key={tc.id} tc={tc} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="p-4 bg-muted animate-pulse rounded-2xl h-32" />
         )}
 
+        {/* ── Metrics (shown once generation is complete) ─────────────── */}
+        {score ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-emerald-500" />
+              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+                Performance & SEO
+              </h4>
+            </div>
+
+            <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+              <h4 className="text-lg font-bold text-foreground">Readability</h4>
+
+              <div className="space-y-2">
+                <div className={`text-xl font-bold ${color}`}>
+                  {label} ({score.toFixed(1)})
+                </div>
+
+                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${barColor} transition-all`}
+                    style={{ width: progressWidth }}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        ) : null}
+
         {seoScore ? (
-          <div className="bg-card p-6 rounded-3xl border border-border space-y-4 mx-0.5">
-            <h4 className="text-lg font-bold">SEO Health</h4>
-            <div className="text-3xl font-bold">
-              {Math.round(seoScore.seo_health_score)}%
+          <div className="bg-card p-5 rounded-xl border border-border/50 space-y-6">
+            <h4 className="text-lg font-bold text-foreground">On-Page SEO</h4>
+
+            <div className="flex items-center gap-6">
+              <div className="relative flex items-center justify-center shrink-0">
+                <svg className="w-20 h-20 transform -rotate-90">
+                  <title id="seo-health-score-title">
+                    SEO health score: {seoScore.seo_health_score} percent
+                  </title>
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="36"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    className="text-muted/30"
+                  />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="36"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={226.2}
+                    strokeDashoffset={
+                      226.2 * (1 - seoScore.seo_health_score / 100)
+                    }
+                    strokeLinecap="round"
+                    className="text-emerald-600 dark:text-emerald-500 transition-all duration-1000"
+                  />
+                </svg>
+                <span className="absolute text-xl font-bold text-foreground">
+                  {Math.round(seoScore.seo_health_score)}
+                </span>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="text-lg font-bold text-foreground leading-tight">
+                  {getSEOStatusText(seoScore.seo_health_score)}
+                </div>
+                {seoScore.issue_summary?.warnings ||
+                  seoScore.issue_summary?.errors ? (
+                  <div className="text-sm text-muted-foreground">
+                    {seoScore.issue_summary?.warnings} warnings
+                    <br />
+                    {seoScore.issue_summary?.errors} errors
+                  </div>
+                ) : null}
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {getSEOStatusText(seoScore.seo_health_score)}
-            </div>
-            <div className="space-y-2 mt-4">
-              {seoScore.issues &&
-                seoScore.issues.length > 0 &&
+
+            <div className="space-y-3 pt-2">
+              {seoScore.issues?.length > 0 &&
                 seoScore.issues.map((issue: Issue) => {
                   const status = levelToStatus(issue.level);
-
                   return (
                     <div
                       key={issue.message}
@@ -545,125 +866,419 @@ function ContentEditorInner(props: ContentEditorProps) {
                           size={18}
                           className="text-emerald-500 shrink-0"
                         />
-                      ) : status === "warning" ? (
-                        <AlertCircle
-                          size={18}
-                          className="text-orange-500 shrink-0"
-                        />
                       ) : (
                         <AlertCircle
                           size={18}
-                          className="text-muted-foreground shrink-0"
+                          className={
+                            status === "warning"
+                              ? "text-orange-500 shrink-0"
+                              : "text-muted-foreground shrink-0"
+                          }
                         />
                       )}
-
                       <span className="leading-tight">{issue.message}</span>
                     </div>
                   );
                 })}
             </div>
           </div>
-        ) : (
-          <div className="p-4 bg-muted animate-pulse rounded-2xl h-32" />
-        )}
+        ) : null}
 
-        {trustScore && (
-          <div className="bg-card p-6 rounded-3xl border border-border mb-20 md:mb-0">
-            <div className="flex items-center gap-2 mb-2">
+        {trustScore ? (
+          <>
+            <hr />
+            <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-blue-500" />
-              <h4 className="text-lg font-bold">EEAT Score</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+                EEAT Assistant
+              </h4>
             </div>
-            <div className="text-3xl font-bold text-emerald-600">
-              {trustScore.score || trustScore.trust_score}%
+
+            <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+              <h4 className="text-lg font-bold text-foreground leading-tight">
+                Trust Score
+              </h4>
+              <div className="flex items-center gap-2">
+                <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
+                  {trustScore.score ? trustScore.score : trustScore.trust_score}
+                  %
+                </span>
+                <TrendingUp size={20} className="text-emerald-500 shrink-0" />
+              </div>
+              <div className="text-[13px] text-muted-foreground font-medium">
+                {getStatusMessage(trustScore.score ?? trustScore.trust_score)}
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {getStatusMessage(trustScore.score || trustScore.trust_score)}
-            </p>
-          </div>
-        )}
+          </>
+        ) : null}
+      </section>
+    </div>
+  );
+
+  const structureSidebarContent = (
+    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto">
+      <div>
+        <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+          Structure
+        </h3>
+        <nav className="space-y-1">
+          {sidebarSections?.map((sec, _i) => (
+            <button
+              type="button"
+              key={`${sec.heading}-${sec}`}
+              onClick={() => {
+                const id = slugify(sec.heading);
+                const element =
+                  document.getElementById(id) ||
+                  Array.from(
+                    document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+                  ).find(
+                    (h) =>
+                      h.textContent
+                        ?.trim()
+                        .toLowerCase()
+                        .includes(sec.heading.trim().toLowerCase()) ||
+                      sec.heading
+                        .trim()
+                        .toLowerCase()
+                        .includes(h.textContent?.trim().toLowerCase() || ""),
+                  );
+
+                if (element) {
+                  element.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  setIsStructureOpen(false);
+                }
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            >
+              <span className="relative truncate leading-none">
+                {sec.heading}
+              </span>
+            </button>
+          ))}
+        </nav>
       </div>
     </div>
   );
 
   return (
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col border-t relative">
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col border-t relative h-[88.5vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
       <div className="flex flex-1 relative border-b border-border">
-        {/* Desktop Left Sidebar */}
-        {sidebarSections && sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-56 border-r border-border bg-sidebar/50 flex-col shrink-0 sticky top-[74px] max-h-[calc(100vh-80px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-            {structureSidebarContent}
+        {/* Left Sidebar: Outline (never render inside editor body) */}
+        {sidebarSections.length > 0 && (
+          <aside className="hidden lg:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+            <div className="px-3 py-4">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
+                  Structure
+                </span>
+              </div>
+              <nav className="space-y-0.5">
+                {sidebarSections.map((sec, i) => {
+                  const sectionWritten = body
+                    ? body
+                      .toLowerCase()
+                      .includes(sec.heading.toLowerCase().slice(0, 12))
+                    : false;
+                  return (
+                    <button
+                      type="button"
+                      key={`${sec.heading}-${sec}`}
+                      onClick={() => {
+                        const id = slugify(sec.heading);
+                        const element =
+                          document.getElementById(id) ||
+                          Array.from(
+                            document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+                          ).find(
+                            (h) =>
+                              h.textContent
+                                ?.trim()
+                                .toLowerCase()
+                                .includes(sec.heading.trim().toLowerCase()) ||
+                              sec.heading
+                                .trim()
+                                .toLowerCase()
+                                .includes(
+                                  h.textContent?.trim().toLowerCase() || "",
+                                ),
+                          );
+
+                        if (element) {
+                          element.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left cursor-pointer rounded-lg group transition-all duration-200 relative",
+                        sectionWritten
+                          ? "text-foreground/75 hover:bg-muted/50 hover:text-foreground"
+                          : "text-muted-foreground/30 hover:text-muted-foreground/50",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "text-[9px] font-bold tabular-nums shrink-0 w-5 text-right leading-none transition-colors",
+                          sectionWritten
+                            ? "text-primary/50"
+                            : "text-muted-foreground/20",
+                        )}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="relative truncate text-[12px] font-medium leading-snug flex-1">
+                        {sec.heading}
+                      </span>
+                      {!isFinal && !sectionWritten && (
+                        <span className="shrink-0 w-1 h-1 rounded-full bg-muted-foreground/20" />
+                      )}
+                      {sectionWritten && (
+                        <CheckCircle2
+                          size={10}
+                          className="shrink-0 text-emerald-500/60"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
           </aside>
         )}
 
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="flex-1 bg-background px-2 mt-2 scroll-smooth"
+          className="flex-1 bg-background px-2 py-4 scroll-smooth"
         >
-          <article className="mx-5">
-            {!body ? (
-              <div className="space-y-3 animate-pulse">
-                <div className="h-4 bg-muted rounded w-full" />
-                <div className="h-4 bg-muted rounded w-5/6" />
-                <div className="h-4 bg-muted rounded w-4/6" />
-              </div>
-            ) : (
-              <div>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <h1 className="text-3xl font-bold tracking-tight mb-8">
-                      {displayTitle}
-                    </h1>
-                    <div className="min-h-[600px]">
-                      <SafeLexicalEditor
-                        key={`editor-${contentId ?? "new"}-${isEditing}`}
-                        initialValue={body}
-                        onChange={onContentChange}
-                        toolbarClass="top-[80px] z-50"
-                      />
-                    </div>
+          <article className="mx-auto max-w-3xl px-4 pb-16">
+            <div>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
+                    {displayTitle}
+                  </h1>
+                  <div className="min-h-[600px]">
+                    <SafeLexicalEditor
+                      key={`editor-${contentId ?? "new"}-${isEditing}`}
+                      initialValue={body}
+                      onChange={onContentChange}
+                      toolbarClass="top-0 z-50"
+                    />
                   </div>
-                ) : (
-                  <div className="w-full">
-                    <div className="space-y-4 mb-8">
-                      <div className="flex flex-wrap gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        {tags.map((t) => (
-                          <span key={t} className="bg-muted px-2 py-1 rounded">
-                            #{t}
-                          </span>
-                        ))}
+                </div>
+              ) : (
+                <div className="w-full relative">
+                  {/* ── Humanizing overlay ──────────────────────────────── */}
+                  {isHumanizing && body && (
+                    <div className="absolute inset-0 z-20 overflow-hidden rounded-xl">
+                      {/* blur mask */}
+                      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/30" />
+                      {/* diagonal repeating label */}
+                      <div
+                        className="absolute inset-0 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <div
+                          className="select-none"
+                          style={{
+                            transform: "rotate(-35deg)",
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, 1fr)",
+                            gap: "2.5rem 3rem",
+                            opacity: 0.12,
+                          }}
+                        >
+                          {Array.from({ length: 15 }).map((_, i) => (
+                            <span
+                              // biome-ignore lint/suspicious/noArrayIndexKey: decorative
+                              key={i}
+                              className="text-[22px] font-black tracking-[0.18em] uppercase text-foreground whitespace-nowrap"
+                            >
+                              Humanizing
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <h1 className="text-4xl font-bold tracking-tight leading-tight">
-                        {typedTitle}
-                      </h1>
-                      {allContent?.meta_description && (
-                        <div className="text-xl text-muted-foreground leading-relaxed font-medium border-l-4 border-border pl-6 my-8 italic">
+                      {/* animated bottom bar */}
+                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary/30 overflow-hidden">
+                        <div className="h-full w-1/3 bg-primary animate-[shimmer_1.4s_ease-in-out_infinite]" />
+                      </div>
+                    </div>
+                  )}
+                  {body ? (
+                    <>
+                      <div className="space-y-4 mb-8">
+                        <div className="flex flex-wrap gap-2">
+                          {tags.map((t) => (
+                            <span
+                              key={t}
+                              className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800/70 px-3 py-1 rounded-full"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
+                          {typedTitle}
+                        </h1>
+
+                        {allContent?.meta_description && (
+                          <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-[3px] border-primary/40 pl-6 my-8 italic py-1">
+                            {typedIntro}
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        className="blog-content prose prose-slate dark:prose-invert prose-lg max-w-none"
+                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                      />
+                    </>
+                  ) : (
+                    <div className="space-y-8 py-2">
+                      {/* Generating status banner */}
+                      <div className="flex items-center gap-3 p-4 rounded-xl border border-border/40 bg-card/50">
+                        <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0" />
+                        <div>
+                          <p className="text-[12px] font-semibold text-foreground/80">
+                            Generating your article…
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">
+                            AI is researching and writing. This may take a
+                            minute.
+                          </p>
+                        </div>
+                      </div>
+                      {/* Tags skeleton or real tags */}
+                      <div className="flex flex-wrap gap-2">
+                        {tags.length > 0 ? (
+                          tags.slice(0, 6).map((t) => (
+                            <span
+                              key={t}
+                              className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800/70 px-3 py-1 rounded-full"
+                            >
+                              {t}
+                            </span>
+                          ))
+                        ) : (
+                          <>
+                            <div className="skeleton-shimmer h-5 w-16 rounded-md" />
+                            <div
+                              className="skeleton-shimmer h-5 w-20 rounded-md"
+                              style={{ animationDelay: "0.1s" }}
+                            />
+                            <div
+                              className="skeleton-shimmer h-5 w-14 rounded-md"
+                              style={{ animationDelay: "0.2s" }}
+                            />
+                          </>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <div className="space-y-3">
+                        {displayTitle ? (
+                          <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
+                            {typedTitle}
+                          </h1>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="skeleton-shimmer h-9 rounded-xl w-4/5" />
+                            <div
+                              className="skeleton-shimmer h-9 rounded-xl w-3/5"
+                              style={{ animationDelay: "0.15s" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Introduction */}
+                      {allContent?.meta_description ? (
+                        <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-[3px] border-primary/40 pl-6 py-1 italic">
                           {typedIntro}
                         </div>
-                      )}
-                    </div>
-                    <div className="prose dark:prose-invert prose-lg max-w-none">
-                      {isFinal ? (
-                        <SafeLexicalEditor
-                          key={`editor-preview-${contentId ?? "new"}`}
-                          initialValue={body}
-                          readOnly={true}
-                        />
                       ) : (
-                        <div
-                          dangerouslySetInnerHTML={{ __html: previewHtml }}
-                        />
+                        <div className="border-l-4 border-primary/15 pl-6 space-y-2.5">
+                          <div className="skeleton-shimmer h-4 rounded-lg w-full" />
+                          <div
+                            className="skeleton-shimmer h-4 rounded-lg w-11/12"
+                            style={{ animationDelay: "0.1s" }}
+                          />
+                          <div
+                            className="skeleton-shimmer h-4 rounded-lg w-4/5"
+                            style={{ animationDelay: "0.2s" }}
+                          />
+                        </div>
                       )}
+
+                      {/* Content section skeletons */}
+                      {[
+                        {
+                          id: "sk0",
+                          h: "w-2/5",
+                          lines: [
+                            { id: "a", w: "w-full", pos: 0 },
+                            { id: "b", w: "w-11/12", pos: 1 },
+                            { id: "c", w: "w-4/5", pos: 2 },
+                            { id: "d", w: "w-3/4", pos: 3 },
+                          ],
+                          delay: 0,
+                        },
+                        {
+                          id: "sk1",
+                          h: "w-1/3",
+                          lines: [
+                            { id: "a", w: "w-full", pos: 0 },
+                            { id: "b", w: "w-5/6", pos: 1 },
+                            { id: "c", w: "w-full", pos: 2 },
+                            { id: "d", w: "w-2/3", pos: 3 },
+                          ],
+                          delay: 0.05,
+                        },
+                        {
+                          id: "sk2",
+                          h: "w-2/5",
+                          lines: [
+                            { id: "a", w: "w-full", pos: 0 },
+                            { id: "b", w: "w-11/12", pos: 1 },
+                            { id: "c", w: "w-3/4", pos: 2 },
+                          ],
+                          delay: 0.1,
+                        },
+                      ].map((section) => (
+                        <div key={section.id} className="space-y-3 pt-2">
+                          <div
+                            className={`skeleton-shimmer h-5 rounded-lg ${section.h}`}
+                            style={{ animationDelay: `${section.delay}s` }}
+                          />
+                          <div className="space-y-2">
+                            {section.lines.map((line) => (
+                              <div
+                                key={`${section.id}-${line.id}`}
+                                className={`skeleton-shimmer h-3.5 rounded-md ${line.w}`}
+                                style={{
+                                  animationDelay: `${section.delay + line.pos * 0.06}s`,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </article>
         </main>
 
         {/* Desktop Right Sidebar */}
-        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col sticky top-[78px] max-h-[calc(100vh-82px)]">
+        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col sticky top-0 max-h-[calc(100vh-85px)]">
           {analysisSidebarContent}
         </aside>
       </div>
@@ -743,22 +1358,12 @@ function ContentEditorInner(props: ContentEditorProps) {
             </div>
             <div className="space-y-2">
               <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
-                {statusModal.type === "success"
-                  ? `Content ${statusModal.action === "publish" ? "Published" : statusModal.action === "copy" ? "Copied" : "Saved"} Successfully!`
-                  : `${statusModal.action === "publish" ? "Publish" : statusModal.action === "copy" ? "Copy" : "Save"} Failed`}
+                {statusModal.title}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-base">
                 {statusModal.message}
               </DialogDescription>
             </div>
-            <Button
-              onClick={() =>
-                setStatusModal((prev) => ({ ...prev, isOpen: false }))
-              }
-              className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
-            >
-              {statusModal.type === "success" ? "Great, thanks!" : "Try Again"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,10 +1,56 @@
+"use client";
+
 import type { SEORESULT } from "@/types/generate-content";
-import { Zap, Compass, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Zap,
+  Compass,
+  TrendingUp,
+  ArrowRight,
+  ArrowUpRight,
+  Loader2,
+  ChevronDown,
+} from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+
+type IntentOption =
+  | "informational"
+  | "commercial"
+  | "transactional"
+  | "navigational";
+
+type IntentOptionItem = { value: IntentOption; label: string };
+
+const VALID_INTENTS = [
+  "informational",
+  "commercial",
+  "transactional",
+  "navigational",
+];
+
+/** Resolve the intent list from backend, preserving SEO vs AI labels. */
+function resolveIntentOptions(intent: SEORESULT["intent"]): IntentOptionItem[] {
+  if (!intent) return [];
+  const raw = Array.isArray(intent) ? intent : [String(intent)];
+  const seen = new Set<string>();
+  const result: IntentOptionItem[] = [];
+
+  raw.forEach((v, idx) => {
+    const norm = v?.trim().toLowerCase();
+    if (!VALID_INTENTS.includes(norm) || seen.has(norm)) return;
+    seen.add(norm);
+    const source = idx === 0 ? "SEO Data" : "AI Suggested";
+    result.push({
+      value: norm as IntentOption,
+      label: `${norm.charAt(0).toUpperCase() + norm.slice(1)} — ${source}`,
+    });
+  });
+
+  return result;
+}
 
 export function SuggestionsSection({
   instruction,
@@ -12,12 +58,16 @@ export function SuggestionsSection({
   suggestedKeywords,
   onSelect,
   seoResult,
+  selectedIntent,
+  onIntentChange,
 }: {
   instruction: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   onSelect: (kw: string) => void;
   seoResult: SEORESULT | null;
+  selectedIntent: IntentOption | "";
+  onIntentChange: (intent: IntentOption) => void;
 }) {
   const difficultyScore = useMemo(() => {
     const value = seoResult?.keyword_difficulty;
@@ -25,19 +75,23 @@ export function SuggestionsSection({
     return Number.isFinite(numberValue) ? Math.round(numberValue) : 0;
   }, [seoResult?.keyword_difficulty]);
 
-  const containerVariants = {
+  const intentOptions = useMemo<IntentOptionItem[]>(
+    () => resolveIntentOptions(seoResult?.intent),
+    [seoResult?.intent],
+  );
+
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 8 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+    },
   };
 
   return (
@@ -47,36 +101,48 @@ export function SuggestionsSection({
       initial="hidden"
       animate="visible"
     >
+      {/* Step label */}
+      <motion.p
+        variants={itemVariants}
+        className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mt-5 mb-3"
+      >
+        Step 02 — Select keyword
+      </motion.p>
+
+      {/* Primary keyword */}
       <motion.button
         type="button"
         variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full text-left relative mt-4 cursor-pointer overflow-hidden rounded-xl border border-primary/30 bg-card p-4 group transition-all duration-200 hover:border-primary/60 hover:shadow-sm"
+        className="w-full text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
       >
-        <span className="absolute left-0 top-0 h-full w-1 bg-primary" />
+        <span className="absolute left-0 top-0 h-full w-[2px] bg-primary rounded-l-xl" />
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Searched Keyword</p>
-            <h1 className="text-2xl md:text-3xl font-semibold leading-snug text-foreground">
+            <p className="text-[10px] text-muted-foreground/40 font-black uppercase tracking-[0.18em] mb-0.5">
+              Searched keyword
+            </p>
+            <h1 className="text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
               {primaryKeyword}
             </h1>
           </div>
-          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary transition-all duration-200 group-hover:translate-x-1 group-hover:bg-primary group-hover:text-primary-foreground">
-            <ArrowRight className="h-4 w-4" />
+          <div className="h-8 w-8 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center text-primary/50 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200">
+            <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
       </motion.button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-3">
+      {/* SEO metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 mt-3 gap-3">
         <motion.div
           variants={itemVariants}
-          className="bg-card border border-border rounded-xl p-4 flex flex-col justify-between transition-all"
+          className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
               Difficulty
             </span>
-            <Zap className="w-4 h-4 text-primary" />
+            <Zap className="w-3.5 h-3.5 text-primary/60" />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <SafeChartRadialStacked difficultyScore={difficultyScore} />
@@ -86,58 +152,71 @@ export function SuggestionsSection({
         <div className="flex flex-col gap-3">
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-muted-foreground">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Search Intent
               </span>
-              <Compass className="w-4 h-4 text-primary" />
+              <Compass className="w-3.5 h-3.5 text-primary/60" />
             </div>
-            <div className="flex items-center gap-3">
-              <AnimatePresence mode="wait">
-                {seoResult?.intent ? (
-                  <motion.div
-                    key="intent-content"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <SearchIntentCard
-                      intent={
-                        seoResult?.intent as
-                          | "informational"
-                          | "commercial"
-                          | "transactional"
-                          | "navigational"
+
+            <AnimatePresence mode="wait">
+              {intentOptions.length > 0 && seoResult?.intent ? (
+                <motion.div
+                  key="intent-content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="w-full space-y-2"
+                >
+                  {/* Icon preview of currently selected intent */}
+                  {selectedIntent && (
+                    <SearchIntentCard intent={selectedIntent} />
+                  )}
+
+                  {/* Dropdown — intents returned by backend */}
+                  <div className="relative w-full mt-1">
+                    <select
+                      value={selectedIntent}
+                      onChange={(e) =>
+                        onIntentChange(e.target.value as IntentOption)
                       }
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="intent-loader"
-                    className="flex items-center gap-2 text-sm text-muted-foreground italic"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Analyzing intent...
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      className="w-full appearance-none bg-background border border-border rounded-lg px-3 py-2 pr-8 text-[11px] font-bold uppercase tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+                    >
+                      {intentOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="intent-loader"
+                  className="flex items-center gap-2 text-xs text-muted-foreground/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Analyzing...
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border rounded-xl p-4 h-full flex flex-col justify-between transition-all"
+            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Monthly Volume
               </span>
-              <TrendingUp className="w-4 h-4 text-blue-500" />
+              <TrendingUp className="w-3.5 h-3.5 text-sky-400/70" />
             </div>
             <AnimatePresence mode="wait">
               {seoResult?.volume ? (
@@ -152,13 +231,13 @@ export function SuggestionsSection({
               ) : (
                 <motion.div
                   key="volume-loader"
-                  className="flex items-center gap-2 text-sm text-muted-foreground italic"
+                  className="flex items-center gap-2 text-xs text-muted-foreground/50"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Fetching volume...
+                  Fetching...
                 </motion.div>
               )}
             </AnimatePresence>
@@ -166,50 +245,54 @@ export function SuggestionsSection({
         </div>
       </div>
 
+      {/* Suggested alternatives */}
       <AnimatePresence>
         {instruction && (
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-xl font-semibold my-4"
+            className="text-[12.5px] font-semibold text-foreground/60 mt-6 mb-3"
           >
             {instruction}
-          </motion.h2>
+          </motion.p>
         )}
       </AnimatePresence>
 
-      <div className="mt-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <AnimatePresence>
-            {suggestedKeywords.length > 0 ? (
-              suggestedKeywords.map((kw, idx) => (
-                <motion.div
-                  key={kw}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="cursor-pointer bg-white group hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-all rounded-xl border border-border hover:border-primary/30 hover:shadow-sm"
-                  onClick={() => onSelect(kw)}
-                >
-                  <div className="px-4 py-4 font-medium text-sm text-gray-800 dark:text-gray-200 flex justify-between items-center group-hover:text-primary transition-all duration-200">
-                    <span className="truncate mr-2">{kw}</span>
-                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary transition-all duration-200 group-hover:translate-x-1 shrink-0" />
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="col-span-full px-4 py-3 italic text-gray-400 text-sm flex items-center gap-2"
+      <div className="flex flex-wrap justify-between gap-1.5">
+        <AnimatePresence>
+          {suggestedKeywords.length > 0 ? (
+            suggestedKeywords.map((kw, idx) => (
+              <motion.button
+                type="button"
+                key={kw}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: idx * 0.04,
+                  duration: 0.35,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
+                onClick={() => onSelect(kw)}
               >
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating suggestions...
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <span className="text-[13px] font-medium text-foreground/80 group-hover:text-primary transition-colors">
+                  {kw}
+                </span>
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </motion.button>
+            ))
+          ) : (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2"
+            >
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Generating suggestions...
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

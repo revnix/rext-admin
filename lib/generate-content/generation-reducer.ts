@@ -81,6 +81,8 @@ export function generationReducer(
       return { ...state, step: "outline", rejectedReason: "", outline: null };
     case "SET_INTERRUPT":
       return { ...state, interrupt: action.payload };
+    case "SET_TOPICS":
+      return { ...state, topics: action.payload };
     case "SET_OUTLINE":
       return { ...state, outline: action.payload };
     case "SET_KEYWORD_DIFFICULTY":
@@ -178,12 +180,13 @@ function handleStreamUpdate(
           changed = true;
         }
       }
-    } else if (interruptValue.topics) {
-      const newTopics = interruptValue.topics as string[];
-      if (JSON.stringify(state.topics) !== JSON.stringify(newTopics)) {
-        newState.topics = newTopics;
-        changed = true;
-      }
+    } else if (
+      interruptValue.topics ||
+      newInstructionType === "topic_selection"
+    ) {
+      const newTopics = (interruptValue.topics as string[]) || [];
+      newState.topics = newTopics;
+      changed = true;
     } else if (interruptValue.content_types) {
       const newContentTypes = interruptValue.content_types as string[];
       if (

@@ -21,9 +21,10 @@ import { useTheme } from "@/providers/theme-provider";
 
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { profileQueries } from "@/lib/query-keys";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 // import { QuickAddDropdown } from "@/components/quick-add-dropdown"; // Removed
@@ -38,8 +39,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { apiClient } from "@/lib/api-client";
-import { log } from "@/lib/logger";
 
 import {
   DropdownMenu,
@@ -66,7 +65,6 @@ interface PageLayoutProps {
   fullWidth?: boolean;
 }
 
-import type { UserProfile } from "@/types/profile";
 import type { Route } from "next";
 
 export function PageLayout({
@@ -90,7 +88,6 @@ export function PageLayout({
 
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthSession();
-  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
 
   // Workspace permissions
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -99,28 +96,10 @@ export function PageLayout({
   // );
   const hasUnread = unreadNotifications > 0;
 
-  // Fetch API user once
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchUser() {
-      // Only fetch if authenticated
-      if (!isAuthenticated) return;
-      try {
-        const res = await apiClient.profile.get();
-        if (mounted) {
-          setProfileUser(res);
-        }
-      } catch (err) {
-        log.error("Profile fetch failed:", err);
-      }
-    }
-
-    fetchUser();
-    return () => {
-      mounted = false;
-    };
-  }, [isAuthenticated]);
+  const { data: profileUser } = useQuery({
+    ...profileQueries.detail(),
+    enabled: isAuthenticated,
+  });
 
   // Helper
   const getInitials = (name?: string) =>
@@ -388,12 +367,10 @@ export function PageLayout({
                 >
                   <Avatar className="h-full w-full">
                     {profileUser?.avatar_url ? (
-                      <Image
+                      <img
                         src={getAvatarUrl(profileUser.avatar_url) || ""}
                         alt="User avatar"
-                        fill
-                        className="object-cover"
-                        sizes="32px"
+                        className="object-cover w-full h-full"
                       />
                     ) : (
                       <AvatarFallback className="bg-muted text-muted-foreground font-medium hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)]">

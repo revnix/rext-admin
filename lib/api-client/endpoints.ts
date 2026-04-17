@@ -468,7 +468,6 @@ export const ENDPOINTS = {
    * @note Workspace-scoped keyword storage management
    */
   KEYWORD_LIBRARY: {
-    base: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/keyword-library` as const,
+    base: "/store/items",
   },
 } as const;

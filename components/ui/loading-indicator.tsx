@@ -4,6 +4,7 @@ import { Loader2, Check, Shield } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import type { LoadingStep } from "@/constants/loading-steps";
 
 type SpinnerVariant = {
@@ -204,13 +205,13 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
 
   if (props.variant === "steps") {
     return (
-      <Card
+      <div
         className={cn(
-          "p-2 border-border/50 shadow-sm bg-card/50",
+          "w-full border border-border/40 rounded-2xl overflow-hidden bg-card",
           props.className,
         )}
       >
-        <div className="space-y-1">
+        <div className="divide-y divide-border/25">
           {props.steps.map((step, index) => {
             const isCompleted =
               props.completedStepIds?.includes(step.id) ||
@@ -220,59 +221,91 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
             const isPending = !isActive && !isCompleted;
 
             return (
-              <div
+              <motion.div
                 key={step.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.04 }}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-all duration-200",
-                  isActive
-                    ? "bg-primary/5 border-primary/20"
-                    : "bg-transparent border-transparent",
-                  isCompleted ? "opacity-70" : "",
+                  "relative flex items-center gap-4 px-5 py-3.5 transition-colors duration-300",
+                  isActive ? "bg-primary/[0.04]" : "",
+                  isCompleted ? "opacity-60" : "",
                 )}
               >
+                {/* Active left bar */}
+                {isActive && (
+                  <motion.span
+                    layoutId="active-bar"
+                    className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary rounded-full"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+
+                {/* Step indicator */}
                 <div
                   className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded-full border transition-colors",
+                    "shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-all duration-300",
                     isActive
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border",
-                    isCompleted
-                      ? "bg-primary/20 text-primary border-primary/20"
-                      : "",
-                    isPending ? "text-muted-foreground border-border/50" : "",
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : isCompleted
+                        ? "bg-primary/15 border-primary/25 text-primary"
+                        : "bg-transparent border-border/40 text-muted-foreground/40",
                   )}
                 >
                   {isCompleted ? (
                     <Check className="w-3 h-3" />
                   ) : isActive ? (
-                    <span className="text-[10px] font-bold">{index + 1}</span>
+                    <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {index + 1}
+                    <span className="text-[9px] font-black">
+                      {String(index + 1).padStart(2, "0")}
                     </span>
                   )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "text-sm font-medium truncate transition-colors",
-                      isActive ? "text-primary" : "text-muted-foreground",
-                      isCompleted ? "text-foreground" : "",
-                    )}
-                  >
-                    {step.label}
-                  </p>
-                </div>
+                {/* Label */}
+                <p
+                  className={cn(
+                    "flex-1 text-[13px] font-medium transition-colors duration-200",
+                    isActive
+                      ? "text-foreground"
+                      : isCompleted
+                        ? "text-muted-foreground/50"
+                        : "text-muted-foreground/35",
+                    isPending ? "" : "",
+                  )}
+                >
+                  {step.label}
+                </p>
 
-                {isActive && (
-                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
-                )}
-              </div>
+                {/* Status indicator */}
+                <AnimatePresence mode="wait">
+                  {isActive && (
+                    <motion.span
+                      key="active"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="shrink-0 text-[9px] font-bold text-primary/60 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/15"
+                    >
+                      Running
+                    </motion.span>
+                  )}
+                  {isCompleted && (
+                    <motion.span
+                      key="done"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary/40"
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.div>
             );
           })}
         </div>
-      </Card>
+      </div>
     );
   }
 

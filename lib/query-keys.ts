@@ -295,8 +295,8 @@ export const adminQueries = {
         queryFn: () =>
           apiClient.auditLogs.getMyLogs({
             action,
-            start_date: startDate,
-            end_date: endDate,
+            date_from: startDate,
+            date_to: endDate,
           }),
       }),
   },

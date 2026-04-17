@@ -45,26 +45,280 @@ export type SERPNormalized = {
   features: Record<string, boolean>;
 };
 
+export type ContentFact = {
+  text: string;
+};
+
+// ── Section item sub-types (content types that don't use key_points) ──────────
+
+export type ChecklistItem = {
+  label: string;
+  context?: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+};
+
+export type FAQItem = {
+  question: string;
+  answer_brief: string;
+  detailed_answer?: string;
+};
+
+export type GlossaryEntry = {
+  term: string;
+  definition: string;
+  examples?: string[];
+  related_terms?: string[];
+};
+
+export type ResourceItem = {
+  title: string;
+  url?: string;
+  description: string;
+  category?: string;
+  pros?: string[];
+};
+
+export type TutorialStep = {
+  title: string;
+  description: string;
+  code_suggestions?: Array<{
+    language: string;
+    description: string;
+    difficulty: "Easy" | "Medium" | "Hard";
+  }>;
+};
+
+export type HowToStep = {
+  title: string;
+  description: string;
+  tools_needed?: string[];
+};
+
+export type ResearchFinding = {
+  topic: string;
+  data_points: string[];
+  implication: string;
+};
+
+export type CaseStudyResultMetric = {
+  metric_name: string;
+  result_value: string;
+  context?: string;
+};
+
+export type KeyConcept = {
+  term: string;
+  definition: string;
+  examples?: string[];
+};
+
+// ── ContentSection covers all backend section variants ────────────────────────
 export type ContentSection = {
   heading: string;
+  heading_level?: "H2" | "H3";
   description: string;
-  key_points: string[];
   suggested_word_count?: number;
+
+  // Blog / HowTo(section) / Explainer / Pillar / commercial
+  key_points?: string[];
+  questions_to_answer?: string[];
+  snippet_target?: boolean;
+  search_intent?:
+    | "informational"
+    | "commercial"
+    | "navigational"
+    | "transactional";
+  include_keyphrase_in_heading?: boolean;
+  facts?: ContentFact[];
+  concepts?: KeyConcept[]; // ExplainerSection
+  subtopic_cluster?: string[]; // PillarSection
+  comparison_criteria?: string[]; // ComparisonSection
+  pros?: string[]; // ProsConsSection
+  cons?: string[]; // ProsConsSection
+  product_feature?: string; // InDepthReviewSection
+  rating?: number; // InDepthReviewSection
+  tier_name?: string; // PricingTierSection
+  price_point?: string;
+  target_user?: string;
+
+  // Checklist sections
+  items?: ChecklistItem[];
+
+  // FAQ sections (backend key is also "items")
+  items_faq?: FAQItem[];
+
+  // Glossary sections
+  entries?: GlossaryEntry[];
+
+  // Resource list sections
+  resources?: ResourceItem[];
+
+  // Tutorial sections
+  steps?: TutorialStep[];
+
+  // HowTo sections (backend key is also "steps")
+  steps_howto?: HowToStep[];
+
+  // White paper sections
+  findings?: ResearchFinding[];
+
+  // Case study sections
+  key_highlights?: string[];
+  results?: CaseStudyResultMetric[];
+};
+
+export type ContentImageSuggestion = {
+  description: string;
+  alt_text_template: string;
+  section: string;
+};
+
+export type ContentLinkSuggestion = {
+  anchor_text: string;
+  link_type: "internal" | "outbound";
+  context: string;
+  section: string;
 };
 
 export type ContentOutline = {
   title: string | undefined;
+  slug_suggestion?: string;
   brief: string | undefined;
+  focus_keyphrase?: string;
+  keywords_to_include: string[];
   sections: ContentSection[];
+  faqs?: string[];
+  key_facts?: ContentFact[];
+  image_suggestions?: ContentImageSuggestion[];
+  link_suggestions?: ContentLinkSuggestion[];
+  schema_type?:
+    | "Article"
+    | "HowTo"
+    | "FAQPage"
+    | "BlogPosting"
+    | "Product"
+    | "Review"
+    | "DefinedTermSet"
+    | "ItemList"
+    | "WebPage"
+    | "TechArticle"
+    | "NewsArticle"
+    | "ScholarlyArticle"
+    | "WhitePaper";
   target_audience: string[];
   tone: string;
-  keywords_to_include: string[];
-  status: "approved" | "rejected";
+  target_word_count?: number;
+  status: "approved" | "rejected" | "reviewing";
   rejected_reason?: string;
-  outline_retries: number;
-  draft_retries: number;
-  review_retries: number;
-  max_retries: number;
+
+  // ── Informational type-specific ───────────────────────────────────────────
+  total_time?: string; // HowToGuide, Checklist
+  difficulty?: "Beginner" | "Intermediate" | "Advanced"; // HowToGuide, Tutorial
+  tools_needed?: string[]; // HowToGuide
+  environment_setup?: string; // Tutorial
+  total_items?: number; // Checklist
+  estimated_time?: string; // Checklist
+  contact_instruction?: string; // FAQ
+  alphabetical_navigation?: boolean; // Glossary
+  selection_criteria?: string; // ResourceList
+  methodology?: string; // WhitePaper
+  client?: string; // CaseStudy
+  related_clusters?: string[]; // PillarContent
+
+  // ── Commercial type-specific ──────────────────────────────────────────────
+  compared_entities?: string[];
+  winner_declaration?: boolean;
+  comparison_table_included?: boolean;
+  product_name?: string;
+  manufacturer?: string;
+  overall_rating?: number;
+  verdict?: string;
+  entity_name?: string;
+  overall_sentiment?: string;
+  final_recommendation?: string;
+  category_name?: string;
+  total_tools_to_list?: number;
+  ranking_criteria?: string[];
+  top_pick_declaration?: boolean;
+  total_products?: number;
+  roundup_theme?: string;
+  best_value_pick?: string;
+  premium_pick?: string;
+  primary_entity?: string;
+  reasons_for_alternatives?: string[];
+  total_alternatives_to_list?: number;
+  best_overall_alternative?: string;
+  product_category?: string;
+  key_features_to_consider?: string[];
+  budget_tiers?: string[];
+  common_mistakes_to_avoid?: string[];
+
+  // ── Navigational type-specific ────────────────────────────────────────────
+  brand_name?: string;
+  core_values?: string[];
+  founding_year?: number;
+  key_products_or_services?: string[];
+  hero_headline?: string;
+  primary_call_to_action?: string;
+  key_benefits?: string[];
+  social_proof_elements?: string[];
+  topic_or_module?: string;
+  intended_audience_technical_level?: string;
+  prerequisites_needed?: string[];
+  includes_code_snippets?: boolean;
+  number_of_features_highlighted?: number;
+  target_user_role?: string;
+  integration_mentions?: string[];
+  platform_name?: string;
+  top_categories?: string[];
+  most_popular_articles?: string[];
+  search_bar_prominence?: boolean;
+  common_login_issues?: string[];
+  support_contact_included?: boolean;
+  company_name?: string;
+  mission_statement?: string;
+  key_milestones?: string[];
+  team_members_mentioned?: string[];
+  contact_methods?: string[];
+  expected_response_time?: string;
+  office_locations?: string[];
+
+  // ── Transactional type-specific ───────────────────────────────────────────
+  campaign_name?: string;
+  lead_magnet?: string;
+  conversion_goal?: string;
+  benefits_highlighted?: string[];
+  pricing_model?: string;
+  has_free_tier?: boolean;
+  product_or_service?: string;
+  main_pain_point_addressed?: string;
+  urgency_or_scarcity_element?: string;
+  guarantee_or_risk_reversal?: string;
+  primary_cta?: string;
+  service_name?: string;
+  service_area?: string;
+  the_process?: string[];
+  why_choose_us?: string[];
+  value_prop_reminder?: string;
+  social_login_options?: string[];
+  required_fields?: string[];
+  booking_tool_integration?: string;
+  what_to_expect?: string[];
+  qualifying_questions?: string[];
+  brand_or_product?: string;
+  offer_details?: string;
+  expiration_date?: string;
+  terms_and_conditions?: string[];
+  store_name?: string;
+  trust_signals?: string[];
+  accepted_payment_methods?: string[];
+  upsell_or_cross_sell?: string;
+
+  // ── Frontend-only retry tracking (not in backend state) ───────────────────
+  outline_retries?: number;
+  draft_retries?: number;
+  review_retries?: number;
+  max_retries?: number;
 };
 
 export type ContentDraft = {
@@ -177,23 +431,20 @@ export type FinalContent = {
 export type CONTENT = {
   topics: string[];
   selected_topic: string | undefined;
+  content_type?: string;
   outline: ContentOutline;
-  draft: ContentDraft;
   review?: ContentReview;
   final_content?: FinalContent;
   status:
     | "planning"
     | "drafting"
     | "reviewing"
+    | "editing"
     | "optimizing"
     | "completed"
-    | "failed"
-    | "approved"
-    | "rejected";
-  outline_retries: number;
-  draft_retries: number;
-  review_retries: number;
-  max_retries: number;
+    | "failed";
+  action?: "publish" | "edit" | "save";
+  site_id?: string;
   error?: string;
 };
 
@@ -263,6 +514,7 @@ export type WREXT = {
   status?: string;
   rejected_reason?: string;
   instruction_response?: string;
+  selected_topic?: string;
   "Selected Topic"?: string;
   "Primary Keyword"?: string;
   Recommendations?: string[];
@@ -548,7 +800,8 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
-  | { type: "SET_OUTLINE"; payload: ContentOutline };
+  | { type: "SET_TOPICS"; payload: string[] }
+  | { type: "SET_OUTLINE"; payload: ContentOutline | null };
 
 export type StreamInput = {
   serp_payload?: {
@@ -576,6 +829,7 @@ export type ResumeOptions = {
 export type WorkflowStep =
   | "KEYWORD_SELECT"
   | "TOPIC_SELECT"
+  | "TOPIC_REGENERATE"
   | "CONTENT_TYPE_SELECT"
   | "OUTLINE_APPROVE"
   | "OUTLINE_REJECT"
@@ -589,7 +843,7 @@ export interface StoredKeyword {
   top_organic_results?: NormalizedOrganicResult[];
   seo_state: {
     keyword_difficulty: number | null;
-    intent: string;
+    intent: string | string[];
     volume: number | string;
     backlinks: number | null;
     referring_domains: number | null;
@@ -603,7 +857,7 @@ export interface LibraryItem {
   difficulty: string;
   difficultyScore: number | null;
   volume: string | number;
-  intent: string;
+  intent: string | string[];
   lastUpdated: string;
   rawData: StoredKeyword;
   namespace: string[];

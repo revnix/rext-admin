@@ -32,27 +32,38 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     input: body.input,
-    streamMode: ["updates", "messages"],
+    streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
+    onDisconnect: "cancel",
   });
 
+  const { signal } = request;
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
       try {
         for await (const chunk of stream) {
+          if (signal.aborted) break;
           const data = `data: ${JSON.stringify(chunk)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (error) {
+        if (signal.aborted) {
+          controller.close();
+          return;
+        }
         const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),
         );
         controller.close();
       }
+    },
+    cancel() {
+      // Called by the runtime when the client disconnects
+      stream.return?.(undefined);
     },
   });
 

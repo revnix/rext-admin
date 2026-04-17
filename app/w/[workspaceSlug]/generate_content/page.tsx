@@ -19,6 +19,7 @@ export default function Page() {
   >(undefined);
   const urlParams = useSearchParams();
   const libraryKeyword = urlParams.get("library");
+  const libraryIntent = urlParams.get("intent");
   const isLibrary = libraryKeyword !== null;
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function Page() {
           <FreshGenerationView
             onBack={handleBackToSelection}
             initialKeyword={selectedLibraryKeyword}
+            initialIntent={libraryIntent ?? undefined}
             isLibrary={isLibrary}
           />
         )}
