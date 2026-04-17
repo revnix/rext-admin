@@ -110,7 +110,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
   const isRunning = tc.status === "running";
   const Icon =
     tc.name.toLowerCase().includes("duck") ||
-    tc.name.toLowerCase().includes("search")
+      tc.name.toLowerCase().includes("search")
       ? Search
       : Globe;
   const hasOutput = tc.status === "done" && !!tc.output;
@@ -338,16 +338,19 @@ function ContentEditorInner(props: ContentEditorProps) {
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
   const workspaceId = useCurrentWorkspaceId();
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // State
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusModal, setStatusModal] = useState<{
+    title: string;
     isOpen: boolean;
     type: "success" | "error";
     action: "publish" | "save" | "copy";
     message: string;
   }>({
+    title: "",
     isOpen: false,
     type: "success",
     action: "publish",
@@ -435,27 +438,56 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!isFinal || !workspaceId) return;
     try {
       setIsPublishing(true);
-      const payload = getContentPayload();
-      const response = contentSavedId
-        ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
-        : await apiClient.content.save_publish(workspaceId, payload);
-
       setStatusModal({
+        title: "Checking for integrations...",
         isOpen: true,
         type: "success",
         action: "publish",
         message:
-          response?.message ||
-          "Your content has been published as a draft and is ready for review.",
+          "Looking for connected sites...",
       });
+      await delay(1200);
+
+      const integrationsData = await integrationsApiService.listIntegrations(workspaceId);
+
+      if (integrationsData.length === 0) {
+        setIntegrationModalOpen(true);
+        return;
+      }
+
+      else {
+        setStatusModal({
+          title: "Publishing Content...",
+          isOpen: true,
+          type: "success",
+          action: "publish",
+          message:
+            "Publishing content to your connected site...",
+        });
+        const payload = getContentPayload();
+        const response = contentSavedId
+          ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
+          : await apiClient.content.save_publish(workspaceId, payload);
+
+        setStatusModal({
+          title: "Content Published Successfully!",
+          isOpen: true,
+          type: "success",
+          action: "publish",
+          message:
+            response?.message ||
+            "Your content has been published as a draft and is ready for review.",
+        });
+      }
     } catch (error) {
       const err = error as Error;
-      if (
-        err.message ===
-        "No active WordPress sites found in this workspace. Please connect a site before publishing."
-      ) {
-        setIntegrationModalOpen(true);
-      }
+      setStatusModal({
+        title: "Failed to Publish Content",
+        isOpen: true,
+        type: "error",
+        action: "publish",
+        message: err.message || "Failed to publish content. Please try again.",
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -465,6 +497,14 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!isFinal || !workspaceId) return;
     try {
       setIsSaving(true);
+      setStatusModal({
+        title: "Saving Content...",
+        isOpen: true,
+        type: "success",
+        action: "save",
+        message:
+          "Saving content to your workspace...",
+      });
       const payload = getContentPayload();
       const response = contentSavedId
         ? await apiClient.content.update(workspaceId, contentSavedId, payload)
@@ -474,6 +514,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         setContentSavedId(response.id);
       }
       setStatusModal({
+        title: "Content Saved Successfully!",
         isOpen: true,
         type: "success",
         action: "save",
@@ -484,6 +525,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     } catch (error) {
       const err = error as Error;
       setStatusModal({
+        title: "Failed to Save Content",
         isOpen: true,
         type: "error",
         action: "save",
@@ -531,6 +573,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         await navigator.clipboard.write([clipboardItem]);
       }
       setStatusModal({
+        title: "Content Copied Successfully!",
         isOpen: true,
         type: "success",
         action: "copy",
@@ -538,6 +581,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
     } catch (_error) {
       setStatusModal({
+        title: "Failed to Copy Content",
         isOpen: true,
         type: "error",
         action: "copy",
@@ -798,7 +842,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   {getSEOStatusText(seoScore.seo_health_score)}
                 </div>
                 {seoScore.issue_summary?.warnings ||
-                seoScore.issue_summary?.errors ? (
+                  seoScore.issue_summary?.errors ? (
                   <div className="text-sm text-muted-foreground">
                     {seoScore.issue_summary?.warnings} warnings
                     <br />
@@ -936,8 +980,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {sidebarSections.map((sec, i) => {
                   const sectionWritten = body
                     ? body
-                        .toLowerCase()
-                        .includes(sec.heading.toLowerCase().slice(0, 12))
+                      .toLowerCase()
+                      .includes(sec.heading.toLowerCase().slice(0, 12))
                     : false;
                   return (
                     <button
@@ -1314,22 +1358,12 @@ function ContentEditorInner(props: ContentEditorProps) {
             </div>
             <div className="space-y-2">
               <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
-                {statusModal.type === "success"
-                  ? `Content ${statusModal.action === "publish" ? "Published" : statusModal.action === "copy" ? "Copied" : "Saved"} Successfully!`
-                  : `${statusModal.action === "publish" ? "Publish" : statusModal.action === "copy" ? "Copy" : "Save"} Failed`}
+                {statusModal.title}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground text-base">
                 {statusModal.message}
               </DialogDescription>
             </div>
-            <Button
-              onClick={() =>
-                setStatusModal((prev) => ({ ...prev, isOpen: false }))
-              }
-              className="w-full bg-slate-900 text-white hover:bg-slate-800 h-12 rounded-2xl font-bold transition-all"
-            >
-              {statusModal.type === "success" ? "Great, thanks!" : "Try Again"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
