@@ -11,25 +11,42 @@ import { Button } from "@/components/ui/button";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type { Route } from "next";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  const form = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Invitation validation hook
   const {
@@ -73,8 +90,7 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LoginData) => {
     setIsLoading(true);
 
     // Clear any previous session invalidity flag
@@ -85,8 +101,8 @@ export function LoginForm({
     try {
       // Backend validated successfully, now use NextAuth for session creation
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         redirect: false,
         rememberMe: rememberMe.toString(),
       });
@@ -98,6 +114,11 @@ export function LoginForm({
           result.code && result.code !== "CredentialsSignin"
             ? result.code
             : "Authentication failed. Please check your credentials and try again.";
+
+        // Highlight fields with red border and show message on failure
+        // We set the message on both fields to ensure the red border appears on both
+        form.setError("email", { type: "manual", message: "" });
+        form.setError("password", { type: "manual", message: errorMessage });
 
         toast.error(errorMessage);
         return;
@@ -182,90 +203,109 @@ export function LoginForm({
           </p>
         </div>
         <div className="px-0">
-          <form onSubmit={handleSubmit}>
-            <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="!shadow-none"
+              <div className="flex flex-col gap-6">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-1">
+                      <FormLabel className="ml-1 text-foreground!">
+                        Email
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="m@example.com"
+                          type="email"
+                          disabled={isLoading}
+                          className="!shadow-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password" className="ml-1">
-                    Password
-                  </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-1">
+                      <div className="flex items-center">
+                        <FormLabel className="ml-1 text-foreground!">
+                          Password
+                        </FormLabel>
+                        <Link
+                          href="/forgot-password"
+                          className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                        >
+                          Forgot your password?
+                        </Link>
+                      </div>
+                      <FormControl>
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          disabled={isLoading}
+                          className="!shadow-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) =>
+                      setRememberMe(checked as boolean)
+                    }
+                  />
+                  <label
+                    htmlFor="remember"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground/70"
                   >
-                    Forgot your password?
-                  </Link>
+                    Remember me for 30 days
+                  </label>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="!shadow-none"
-                />
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="submit"
+                    className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
+                    disabled={isLoading || isLoadingInvitation}
+                  >
+                    {isLoading
+                      ? hasValidInvitation
+                        ? "Logging in & joining workspace..."
+                        : "Logging in..."
+                      : hasValidInvitation
+                        ? "Login & Join Workspace"
+                        : "Login"}
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
+              <div className="mt-4 text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href={
+                    invitationToken
+                      ? `/signup?token=${invitationToken}`
+                      : ("/signup" as Route)
                   }
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
                 >
-                  Remember me for 30 days
-                </label>
+                  Sign up
+                </Link>
               </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="submit"
-                  className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
-                  disabled={isLoading || isLoadingInvitation}
-                >
-                  {isLoading
-                    ? hasValidInvitation
-                      ? "Logging in & joining workspace..."
-                      : "Logging in..."
-                    : hasValidInvitation
-                      ? "Login & Join Workspace"
-                      : "Login"}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href={
-                  invitationToken
-                    ? `/signup?token=${invitationToken}`
-                    : ("/signup" as Route)
-                }
-                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
+            </form>
+          </Form>
         </div>
       </div>
     </div>
