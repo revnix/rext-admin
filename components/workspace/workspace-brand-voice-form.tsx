@@ -6,6 +6,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  type LucideIcon,
   Loader2,
   MessageSquare,
   Sparkles,
@@ -14,7 +15,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,19 @@ const TABS = [
 ] as const;
 type TabValue = (typeof TABS)[number];
 
+const REVIEW_SECTIONS: Array<{
+  value: TabValue;
+  label: string;
+  icon: LucideIcon;
+}> = [
+    { value: "info", label: "Brand Information", icon: Building2 },
+    { value: "voice", label: "Brand Voice", icon: MessageSquare },
+    { value: "strategy", label: "Content Strategy", icon: BookOpen },
+    { value: "competitors", label: "Competitors", icon: Swords },
+    { value: "audience", label: "Target Audience", icon: Target },
+    { value: "personas", label: "Personas", icon: Users },
+  ];
+
 type BrandVoiceFormData = z.infer<typeof brandVoiceSchema>;
 
 interface WorkspaceBrandVoiceFormProps {
@@ -102,7 +116,7 @@ export function WorkspaceBrandVoiceForm({
 
   const tabsListRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const scrollActiveTabIntoView = useCallback(() => {
     if (tabsListRef.current) {
       const activeTrigger = tabsListRef.current.querySelector(
         '[data-state="active"]',
@@ -116,6 +130,10 @@ export function WorkspaceBrandVoiceForm({
       }
     }
   }, []);
+
+  useEffect(() => {
+    scrollActiveTabIntoView();
+  }, [scrollActiveTabIntoView]);
 
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
@@ -184,6 +202,8 @@ export function WorkspaceBrandVoiceForm({
     }
   };
 
+  const activeTabIndex = TABS.indexOf(activeTab);
+
   return (
     <div className="space-y-6">
       {/* Brand Voice Form Card */}
@@ -191,37 +211,38 @@ export function WorkspaceBrandVoiceForm({
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as TabValue)}
+            onValueChange={(v) => {
+              setActiveTab(v as TabValue);
+              requestAnimationFrame(scrollActiveTabIntoView);
+            }}
             className="w-full"
           >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">
+                Review Sections
+              </p>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Section {activeTabIndex + 1} of {TABS.length}
+              </p>
+            </div>
             <TabsList
               ref={tabsListRef}
-              className="mb-8 w-full border-b justify-start overflow-x-auto"
+              className="mb-8 grid w-full grid-cols-1 gap-1 rounded-xl border border-border/70 bg-muted/25 p-1.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
             >
-              <TabsTrigger value="info">
-                <Building2 className="w-4 h-4" />
-                Brand Information
-              </TabsTrigger>
-              <TabsTrigger value="voice">
-                <MessageSquare className="w-4 h-4" />
-                Brand Voice
-              </TabsTrigger>
-              <TabsTrigger value="strategy">
-                <BookOpen className="w-4 h-4" />
-                Content Strategy
-              </TabsTrigger>
-              <TabsTrigger value="competitors">
-                <Swords className="w-4 h-4" />
-                Competitors
-              </TabsTrigger>
-              <TabsTrigger value="audience">
-                <Target className="w-4 h-4" />
-                Target Audience
-              </TabsTrigger>
-              <TabsTrigger value="personas">
-                <Users className="w-4 h-4" />
-                Personas
-              </TabsTrigger>
+              {REVIEW_SECTIONS.map((section) => {
+                const Icon = section.icon;
+
+                return (
+                  <TabsTrigger
+                    key={section.value}
+                    value={section.value}
+                    className="ml-0 w-full min-w-0 justify-start gap-2 whitespace-normal rounded-lg border border-transparent px-3 py-2 text-left text-xs font-medium leading-tight text-muted-foreground hover:border-border/60 hover:bg-background/80 hover:text-foreground data-[state=active]:border-primary/25 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-4 sm:py-2.5 sm:text-sm md:justify-center md:text-center"
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0">{section.label}</span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
 
             {/* Brand Information Tab */}
