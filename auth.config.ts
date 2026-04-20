@@ -307,7 +307,7 @@ export default {
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
             token.role = getPrimaryRole(oauthData.user);
-            token.permissions = oauthData.user.permissions || [];
+            token.permissions = oauthData.user.permissions || oauthData.permissions || [];
             // Derive expiry from backend OAuth response: prefer `expires_in` (seconds), fall back to `expires_at`
             token.accessTokenExpires = oauthData.expires_at
               ? new Date(oauthData.expires_at).getTime()
