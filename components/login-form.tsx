@@ -12,23 +12,13 @@ import { Button } from "@/components/ui/button";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import type { Route } from "next";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
 export function LoginForm({
   className,
@@ -46,16 +36,6 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-
-  const form = useForm<LoginData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const [rememberMe, setRememberMe] = useState(false);
 
   // Invitation validation hook
   const {
@@ -90,8 +70,8 @@ export function LoginForm({
       // Use errorCode if it's a descriptive message (not generic)
       const message =
         urlError === "CredentialsSignin" &&
-          errorCode &&
-          errorCode !== "credentials"
+        errorCode &&
+        errorCode !== "credentials"
           ? errorCode
           : errorMessages[urlError] || errorMessages.Default;
 
@@ -128,8 +108,8 @@ export function LoginForm({
     try {
       // Backend validated successfully, now use NextAuth for session creation
       const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
+        email,
+        password,
         redirect: false,
         rememberMe: rememberMe.toString(),
       });
@@ -234,125 +214,124 @@ export function LoginForm({
           </p>
         </div>
         <div className="px-0">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
+          <form onSubmit={handleSubmit}>
+            <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="email" className="ml-1">
-                    Email
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-3">
+                <Label htmlFor="email" className="ml-1">
+                  Email
+                </Label>
+                <Input
+                  ref={emailInputRef}
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (hasInvalidCredentialsError) {
+                      setHasInvalidCredentialsError(false);
+                    }
+                  }}
+                  className={cn(
+                    "!shadow-none",
+                    hasInvalidCredentialsError &&
+                      "border-destructive focus-visible:ring-destructive/30",
+                  )}
+                />
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password" className="ml-1">
+                    Password
                   </Label>
+                  <Link
+                    href="/forgot-password"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+                <div className="relative">
                   <Input
-                    ref={emailInputRef}
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    value={email}
+                    ref={passwordInputRef}
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
                     onChange={(e) => {
-                      setEmail(e.target.value);
+                      setPassword(e.target.value);
                       if (hasInvalidCredentialsError) {
                         setHasInvalidCredentialsError(false);
                       }
                     }}
                     className={cn(
-                      "!shadow-none",
+                      "!shadow-none pr-10",
                       hasInvalidCredentialsError &&
-                      "border-destructive focus-visible:ring-destructive/30",
+                        "border-destructive focus-visible:ring-destructive/30",
                     )}
                   />
-                </div>
-                <div className="grid gap-3">
-                  <div className="flex items-center">
-                    <Label htmlFor="password" className="ml-1">
-                      Password
-                    </Label>
-                    <Link
-                      href="/forgot-password"
-                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      ref={passwordInputRef}
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (hasInvalidCredentialsError) {
-                          setHasInvalidCredentialsError(false);
-                        }
-                      }}
-                      className={cn(
-                        "!shadow-none pr-10",
-                        hasInvalidCredentialsError &&
-                        "border-destructive focus-visible:ring-destructive/30",
-                      )}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) =>
-                      setRememberMe(checked as boolean)
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
                     }
-                  />
-                  <label
-                    htmlFor="remember"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Remember me for 30 days
-                  </label>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Button
-                    type="submit"
-                    className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
-                    disabled={isLoading || isLoadingInvitation}
-                  >
-                    {isLoading
-                      ? hasValidInvitation
-                        ? "Logging in & joining workspace..."
-                        : "Logging in..."
-                      : hasValidInvitation
-                        ? "Login & Join Workspace"
-                        : "Login"}
-                  </Button>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
-              <div className="mt-4 text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href={
-                    invitationToken
-                      ? `/signup?token=${invitationToken}`
-                      : ("/signup" as Route)
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
                   }
-                  className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Sign up
-                </Link>
+                  Remember me for 30 days
+                </label>
               </div>
-            </form>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="submit"
+                  className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
+                  disabled={isLoading || isLoadingInvitation}
+                >
+                  {isLoading
+                    ? hasValidInvitation
+                      ? "Logging in & joining workspace..."
+                      : "Logging in..."
+                    : hasValidInvitation
+                      ? "Login & Join Workspace"
+                      : "Login"}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                href={
+                  invitationToken
+                    ? `/signup?token=${invitationToken}`
+                    : ("/signup" as Route)
+                }
+                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
+              >
+                Sign up
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>
