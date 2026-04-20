@@ -101,20 +101,12 @@ export function SuggestionsSection({
       initial="hidden"
       animate="visible"
     >
-      {/* Step label */}
-      <motion.p
-        variants={itemVariants}
-        className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mt-5 mb-3"
-      >
-        Step 02 — Select keyword
-      </motion.p>
-
       {/* Primary keyword */}
       <motion.button
         type="button"
         variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
+        className="w-full mt-4 text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
       >
         <span className="absolute left-0 top-0 h-full w-[2px] bg-primary rounded-l-xl" />
         <div className="flex items-center justify-between">

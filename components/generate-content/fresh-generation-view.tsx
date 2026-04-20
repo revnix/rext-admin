@@ -36,6 +36,7 @@ import {
 } from "@/components/generate-content/outline";
 import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
+import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -251,16 +252,15 @@ export function FreshGenerationView({
   });
 
   const showOutlineReview =
-    instructionType !== "outline_reject" &&
-    instructionType !== "content" &&
-    tokenTarget !== "content" &&
-    (outline.streamedText.length > 0 || !!parsedOutline);
+    instructionType === "outline_review" && tokenTarget !== "content";
 
   const showContentStream =
     instructionType === "content" ||
     tokenTarget === "content" ||
     content.streamedText.length > 0 ||
     !!allContent;
+
+  const isStreamingOutline = tokenTarget === "outline" && !parsedOutline;
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
@@ -399,7 +399,7 @@ export function FreshGenerationView({
         const finalContent = parsed?.final_content || parsed;
         dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
         dispatch({ type: "SET_GENERATED_CONTENT", payload: body });
-        setTokenTarget("none");
+        setTokenTarget("outline");
         tokenTargetRef.current = "none";
       } catch {
         // Not valid JSON yet
@@ -907,15 +907,20 @@ export function FreshGenerationView({
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
-        setTokenTarget("none");
-        tokenTargetRef.current = "none";
+        setTokenTarget("outline");
+        tokenTargetRef.current = "outline";
+        outline.resetStream();
+        dispatch({ type: "SET_OUTLINE", payload: null });
+        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         return resumeWorkflow({ payload: { action: "reject" } });
       case "OUTLINE_REJECT_REASON":
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
         outline.resetStream();
+        dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         dispatch({ type: "SUBMIT_REJECT_REASON" });
+
         return resumeWorkflow({ payload: { reason: value } });
       default: {
         const _never: never = step;
@@ -985,18 +990,6 @@ export function FreshGenerationView({
         keyword={primaryKeyword}
       />
     ),
-    topic_selection: (
-      <TopicsSection
-        instruction={displayedInstruction}
-        topics={topics}
-        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
-        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
-        isRegenerating={
-          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
-        }
-        keyword={primaryKeyword}
-      />
-    ),
     content_type: (
       <ContentType
         instruction={displayedInstruction}
@@ -1019,16 +1012,63 @@ export function FreshGenerationView({
     ),
   };
 
+  const WORKFLOW_STEPS = [
+    { id: "keyword", label: "Search Keyword" },
+    { id: "keyword Selection", label: "Select Keyword" },
+    { id: "topic", label: "Topic Selection" },
+    { id: "content_type", label: "Type" },
+    { id: "outline_review", label: "Outline" },
+    { id: "content", label: "Article" },
+  ];
+
+  const activeStepIndex = (() => {
+    if (instructionType === "keyword") return 0;
+    if (instructionType === "keyword Selection") return 1;
+    if (instructionType === "topic" || instructionType === "topic_selection")
+      return 2;
+    if (instructionType === "content_type") return 3;
+    if (
+      instructionType === "outline_review" ||
+      instructionType === "outline_reject"
+    )
+      return 4;
+    if (instructionType === "content") return 5;
+    return 5;
+  })();
+
   return (
     <div className="relative">
       <div
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700",
+          "max-w-3xl mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
           instructionType === "keyword"
-            ? "min-h-[70vh] justify-center"
-            : "min-h-0",
+            ? "min-h-[70vh]"
+            : !showContentStream
+              ? "min-h-[85vh]"
+              : "min-h-0",
+          instructionType === "outline_review"
+            ? "justify-start"
+            : " justify-center",
         )}
       >
+        {/* Persistent workflow step indicator */}
+        {!showContentStream && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className={cn(
+              "mt-5",
+              activeStepIndex === 0 ? "mx-auto" : "mr-auto",
+            )}
+          >
+            <WorkflowStepIndicator
+              steps={WORKFLOW_STEPS}
+              activeStepIndex={activeStepIndex}
+            />
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           {instructionType === "keyword" && <HeroSection />}
         </AnimatePresence>
@@ -1054,11 +1094,11 @@ export function FreshGenerationView({
         </motion.div>
 
         {showOutlineReview ? (
-          <div className="w-full">
+          <div className="w-full mt-0">
             <OutlineDisplay
               outline={parsedOutline}
               rawTokens={outline.streamedText}
-              isLoading={isLoading || isManualLoading}
+              isLoading={isStreamingOutline}
               onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
               onUpdate={(updatedOutline) =>
@@ -1067,7 +1107,7 @@ export function FreshGenerationView({
             />
           </div>
         ) : (
-          instructionViewMap[instructionType]
+          <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
       </div>
 

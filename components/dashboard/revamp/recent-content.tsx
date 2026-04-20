@@ -1,9 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreVertical, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Workspace } from "@/types/workspace";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
@@ -81,13 +80,6 @@ export function RecentContent({ workspace }: RecentContentProps) {
         <CardTitle className="text-base font-semibold">
           Recent Activities
         </CardTitle>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground"
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">

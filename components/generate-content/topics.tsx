@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowRight,
-  RefreshCcw,
-  Loader2,
-  Sparkles,
-  Send,
-  X,
-} from "lucide-react";
+import { ArrowRight, RefreshCcw, Loader2, Send, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
@@ -50,19 +43,9 @@ export function TopicsSection({
   };
 
   return (
-    <div className="w-full py-8">
+    <div className="w-full py-3">
       {/* Header */}
-      <div className="mb-10 space-y-3">
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2 text-primary"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">
-            Step 2 · Topic Selection
-          </span>
-        </motion.div>
+      <div className="mb-6 space-y-3">
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -91,14 +74,14 @@ export function TopicsSection({
             onClick={() => onSelect(topic)}
             disabled={isRegenerating}
             className={cn(
-              "group relative flex items-start justify-between text-left p-6 rounded-2xl border outline-none",
+              "group relative flex items-start justify-between text-left p-6 rounded-xl cursor-pointer border outline-none",
               "bg-card/60 border-border/50 backdrop-blur-sm",
               "transition-all duration-200 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
               "active:scale-[0.985] active:shadow-none",
               isRegenerating && "opacity-40 pointer-events-none",
             )}
           >
-            <span className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-4">
+            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-4">
               {topic}
             </span>
             <span className="shrink-0 mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 group-hover:bg-primary/10 transition-colors duration-200">
@@ -132,7 +115,7 @@ export function TopicsSection({
                 disabled={isRegenerating}
                 className={cn(
                   "group flex items-center gap-2.5 px-5 py-2.5 rounded-full border text-sm font-medium",
-                  "bg-background border-border/60 text-muted-foreground",
+                  "bg-card cursor-pointer border-border/60 text-muted-foreground",
                   "hover:border-primary/40 hover:text-foreground hover:bg-accent/40",
                   "transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
                   "shadow-sm hover:shadow-md hover:shadow-primary/5",

@@ -110,7 +110,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
   const isRunning = tc.status === "running";
   const Icon =
     tc.name.toLowerCase().includes("duck") ||
-      tc.name.toLowerCase().includes("search")
+    tc.name.toLowerCase().includes("search")
       ? Search
       : Globe;
   const hasOutput = tc.status === "done" && !!tc.output;
@@ -443,30 +443,31 @@ function ContentEditorInner(props: ContentEditorProps) {
         isOpen: true,
         type: "success",
         action: "publish",
-        message:
-          "Looking for connected sites...",
+        message: "Looking for connected sites...",
       });
       await delay(1200);
 
-      const integrationsData = await integrationsApiService.listIntegrations(workspaceId);
+      const integrationsData =
+        await integrationsApiService.listIntegrations(workspaceId);
 
       if (integrationsData.length === 0) {
         setIntegrationModalOpen(true);
         return;
-      }
-
-      else {
+      } else {
         setStatusModal({
           title: "Publishing Content...",
           isOpen: true,
           type: "success",
           action: "publish",
-          message:
-            "Publishing content to your connected site...",
+          message: "Publishing content to your connected site...",
         });
         const payload = getContentPayload();
         const response = contentSavedId
-          ? await apiClient.content.publish(workspaceId, payload, contentSavedId)
+          ? await apiClient.content.publish(
+              workspaceId,
+              payload,
+              contentSavedId,
+            )
           : await apiClient.content.save_publish(workspaceId, payload);
 
         setStatusModal({
@@ -502,8 +503,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         isOpen: true,
         type: "success",
         action: "save",
-        message:
-          "Saving content to your workspace...",
+        message: "Saving content to your workspace...",
       });
       const payload = getContentPayload();
       const response = contentSavedId
@@ -842,7 +842,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   {getSEOStatusText(seoScore.seo_health_score)}
                 </div>
                 {seoScore.issue_summary?.warnings ||
-                  seoScore.issue_summary?.errors ? (
+                seoScore.issue_summary?.errors ? (
                   <div className="text-sm text-muted-foreground">
                     {seoScore.issue_summary?.warnings} warnings
                     <br />
@@ -980,8 +980,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {sidebarSections.map((sec, i) => {
                   const sectionWritten = body
                     ? body
-                      .toLowerCase()
-                      .includes(sec.heading.toLowerCase().slice(0, 12))
+                        .toLowerCase()
+                        .includes(sec.heading.toLowerCase().slice(0, 12))
                     : false;
                   return (
                     <button
