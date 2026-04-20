@@ -196,29 +196,29 @@ export function WorkspaceBrandVoiceForm({
           >
             <TabsList
               ref={tabsListRef}
-              className="mb-8 w-full border-b justify-start overflow-x-auto"
+              className="mb-8 w-full bg-input justify-start overflow-x-auto"
             >
-              <TabsTrigger value="info">
+              <TabsTrigger value="info" className="bg-white w-full ml-0">
                 <Building2 className="w-4 h-4" />
                 Brand Information
               </TabsTrigger>
-              <TabsTrigger value="voice">
+              <TabsTrigger value="voice" className="bg-white w-full ml-0">
                 <MessageSquare className="w-4 h-4" />
                 Brand Voice
               </TabsTrigger>
-              <TabsTrigger value="strategy">
+              <TabsTrigger value="strategy" className="bg-white w-full ml-0">
                 <BookOpen className="w-4 h-4" />
                 Content Strategy
               </TabsTrigger>
-              <TabsTrigger value="competitors">
+              <TabsTrigger value="competitors" className="bg-white w-full ml-0">
                 <Swords className="w-4 h-4" />
                 Competitors
               </TabsTrigger>
-              <TabsTrigger value="audience">
+              <TabsTrigger value="audience" className="bg-white w-full ml-0">
                 <Target className="w-4 h-4" />
                 Target Audience
               </TabsTrigger>
-              <TabsTrigger value="personas">
+              <TabsTrigger value="personas" className="bg-white w-full ml-0">
                 <Users className="w-4 h-4" />
                 Personas
               </TabsTrigger>
