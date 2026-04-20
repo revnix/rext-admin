@@ -4,7 +4,8 @@ import Link from "next/link";
 import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,15 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
+    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -81,8 +90,8 @@ export function LoginForm({
       // Use errorCode if it's a descriptive message (not generic)
       const message =
         urlError === "CredentialsSignin" &&
-        errorCode &&
-        errorCode !== "credentials"
+          errorCode &&
+          errorCode !== "credentials"
           ? errorCode
           : errorMessages[urlError] || errorMessages.Default;
 
@@ -90,7 +99,25 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const onSubmit = async (data: LoginData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHasInvalidCredentialsError(false);
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const hasEmail = trimmedEmail.length > 0;
+    const hasPassword = trimmedPassword.length > 0;
+
+    // Do not show credential errors for empty fields; only focus the first missing field.
+    if (!hasEmail || !hasPassword) {
+      if (!hasEmail) {
+        emailInputRef.current?.focus();
+      } else {
+        passwordInputRef.current?.focus();
+      }
+      return;
+    }
+
     setIsLoading(true);
 
     // Clear any previous session invalidity flag
@@ -115,10 +142,14 @@ export function LoginForm({
             ? result.code
             : "Authentication failed. Please check your credentials and try again.";
 
-        // Highlight fields with red border and show message on failure
-        // We set the message on both fields to ensure the red border appears on both
-        form.setError("email", { type: "manual", message: "" });
-        form.setError("password", { type: "manual", message: errorMessage });
+        const isInvalidCredentials = errorMessage
+          .toLowerCase()
+          .includes("invalid email or password");
+
+        if (isInvalidCredentials) {
+          setHasInvalidCredentialsError(true);
+          emailInputRef.current?.focus();
+        }
 
         toast.error(errorMessage);
         return;
@@ -208,58 +239,75 @@ export function LoginForm({
               <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
 
               <div className="flex flex-col gap-6">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-1">
-                      <FormLabel className="ml-1 text-foreground!">
-                        Email
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="m@example.com"
-                          type="email"
-                          disabled={isLoading}
-                          className="!shadow-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-1">
-                      <div className="flex items-center">
-                        <FormLabel className="ml-1 text-foreground!">
-                          Password
-                        </FormLabel>
-                        <Link
-                          href="/forgot-password"
-                          className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                        >
-                          Forgot your password?
-                        </Link>
-                      </div>
-                      <FormControl>
-                        <Input
-                          placeholder="••••••••"
-                          type="password"
-                          disabled={isLoading}
-                          className="!shadow-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                <div className="grid gap-3">
+                  <Label htmlFor="email" className="ml-1">
+                    Email
+                  </Label>
+                  <Input
+                    ref={emailInputRef}
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (hasInvalidCredentialsError) {
+                        setHasInvalidCredentialsError(false);
+                      }
+                    }}
+                    className={cn(
+                      "!shadow-none",
+                      hasInvalidCredentialsError &&
+                      "border-destructive focus-visible:ring-destructive/30",
+                    )}
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="password" className="ml-1">
+                      Password
+                    </Label>
+                    <Link
+                      href="/forgot-password"
+                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      ref={passwordInputRef}
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (hasInvalidCredentialsError) {
+                          setHasInvalidCredentialsError(false);
+                        }
+                      }}
+                      className={cn(
+                        "!shadow-none pr-10",
+                        hasInvalidCredentialsError &&
+                        "border-destructive focus-visible:ring-destructive/30",
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
@@ -270,7 +318,7 @@ export function LoginForm({
                   />
                   <label
                     htmlFor="remember"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground/70"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
                     Remember me for 30 days
                   </label>
@@ -305,7 +353,6 @@ export function LoginForm({
                 </Link>
               </div>
             </form>
-          </Form>
         </div>
       </div>
     </div>
