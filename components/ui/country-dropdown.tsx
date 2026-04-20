@@ -136,7 +136,7 @@ const CountryDropdownComponent = (
           <div className="flex items-center flex-grow w-0 gap-2 overflow-hidden">
             <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full">
               {selectedCountry.alpha2 === "global" ? (
-                <Globe size={18} className="text-slate-500" />
+                <Globe size={18} className="text-primary" />
               ) : (
                 <CircleFlag
                   countryCode={selectedCountry.alpha2.toLowerCase()}
@@ -181,7 +181,7 @@ const CountryDropdownComponent = (
                   <div className="flex flex-grow w-0 space-x-2 overflow-hidden">
                     <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full">
                       {option.alpha2 === "global" ? (
-                        <Globe size={18} className="text-slate-500" />
+                        <Globe size={18} className="text-primary" />
                       ) : (
                         <CircleFlag
                           countryCode={option.alpha2.toLowerCase()}
