@@ -4,7 +4,8 @@ import Link from "next/link";
 import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,13 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
+    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -75,6 +81,23 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasInvalidCredentialsError(false);
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const hasEmail = trimmedEmail.length > 0;
+    const hasPassword = trimmedPassword.length > 0;
+
+    // Do not show credential errors for empty fields; only focus the first missing field.
+    if (!hasEmail || !hasPassword) {
+      if (!hasEmail) {
+        emailInputRef.current?.focus();
+      } else {
+        passwordInputRef.current?.focus();
+      }
+      return;
+    }
+
     setIsLoading(true);
 
     // Clear any previous session invalidity flag
@@ -98,6 +121,15 @@ export function LoginForm({
           result.code && result.code !== "CredentialsSignin"
             ? result.code
             : "Authentication failed. Please check your credentials and try again.";
+
+        const isInvalidCredentials = errorMessage
+          .toLowerCase()
+          .includes("invalid email or password");
+
+        if (isInvalidCredentials) {
+          setHasInvalidCredentialsError(true);
+          emailInputRef.current?.focus();
+        }
 
         toast.error(errorMessage);
         return;
@@ -191,13 +223,22 @@ export function LoginForm({
                   Email
                 </Label>
                 <Input
+                  ref={emailInputRef}
                   id="email"
                   type="email"
                   placeholder="m@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="!shadow-none"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (hasInvalidCredentialsError) {
+                      setHasInvalidCredentialsError(false);
+                    }
+                  }}
+                  className={cn(
+                    "!shadow-none",
+                    hasInvalidCredentialsError &&
+                      "border-destructive focus-visible:ring-destructive/30",
+                  )}
                 />
               </div>
               <div className="grid gap-3">
@@ -212,14 +253,39 @@ export function LoginForm({
                     Forgot your password?
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="!shadow-none"
-                />
+                <div className="relative">
+                  <Input
+                    ref={passwordInputRef}
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (hasInvalidCredentialsError) {
+                        setHasInvalidCredentialsError(false);
+                      }
+                    }}
+                    className={cn(
+                      "!shadow-none pr-10",
+                      hasInvalidCredentialsError &&
+                        "border-destructive focus-visible:ring-destructive/30",
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox

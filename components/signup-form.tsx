@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -33,6 +34,8 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -50,6 +53,42 @@ export function SignupForm({
   });
 
   const { handleSubmit, setValue } = form;
+  const passwordValue = form.watch("password") || "";
+  const confirmPasswordValue = form.watch("confirmPassword") || "";
+
+  useEffect(() => {
+    if (!confirmPasswordValue) {
+      form.clearErrors("confirmPassword");
+      return;
+    }
+
+    if (passwordValue !== confirmPasswordValue) {
+      form.setError("confirmPassword", {
+        type: "manual",
+        message: "Passwords don't match",
+      });
+      return;
+    }
+
+    form.clearErrors("confirmPassword");
+  }, [confirmPasswordValue, form, passwordValue]);
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { label: "", color: "" };
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { label: "Weak", color: "text-red-500" };
+    if (score <= 4) return { label: "Fair", color: "text-yellow-500" };
+    return { label: "Strong", color: "text-green-500" };
+  };
+
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   // Pre-fill email from invitation
   useEffect(() => {
@@ -248,13 +287,42 @@ export function SignupForm({
                   <FormItem>
                     <FormLabel className="text-foreground!">Password</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Create a strong password"
-                        type="password"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="Create a strong password"
+                          type={showPassword ? "text" : "password"}
+                          disabled={isLoading}
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
+                    {passwordValue && (
+                      <p className="text-sm text-muted-foreground">
+                        Password strength:{" "}
+                        <span className={passwordStrength.color}>
+                          {passwordStrength.label}
+                        </span>
+                      </p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Must be at least 8 characters with uppercase, lowercase,
+                      number, and special character.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -269,12 +337,33 @@ export function SignupForm({
                       Confirm Password
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Confirm your password"
-                        type="password"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="Confirm your password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          disabled={isLoading}
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword((prev) => !prev)
+                          }
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          aria-label={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
