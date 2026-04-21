@@ -1,19 +1,8 @@
 "use client";
 
-import { AlertTriangle, Clock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { log } from "@/lib/logger";
 
