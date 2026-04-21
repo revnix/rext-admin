@@ -1,7 +1,6 @@
 import type { Outline, ContentSection } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { motion } from "framer-motion";
 import {
   Check,
   X,
@@ -20,7 +19,6 @@ import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
 
 function extractJsonStringField(raw: string, field: string) {
   // Works even when JSON is incomplete; grabs the latest seen value.
@@ -70,7 +68,7 @@ function extractJsonStringArrayField(raw: string, field: string) {
 function MetadataSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
-      {[1, 2, 3].map((i) => (
+      {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
           className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
@@ -79,7 +77,6 @@ function MetadataSkeleton() {
 
           <div className="flex-1 space-y-2">
             <Skeleton className="w-20 h-3" />
-            <Skeleton className="w-32 h-4" />
             <Skeleton className="w-32 h-4" />
           </div>
         </div>
@@ -127,17 +124,15 @@ function SectionContent({ section }: { section: ContentSection }) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {section.key_points.map((point: string) => (
-          <motion.div
+          <div
             key={point}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
             className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
           >
             <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
             <span className="text-sm font-medium text-muted-foreground">
               {point}
             </span>
-          </motion.div>
+          </div>
         ))}
       </div>
     );
@@ -462,58 +457,19 @@ export function OutlineDisplay({
   );
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
-  const [metaStep, setMetaStep] = useState(0);
 
   useEffect(() => {
     if (!outline) return;
 
-    let _cancelled = false;
-
-    const run = async () => {
-      // Step 1 → Tone
-      setMetaStep(1);
-      await wait(220);
-
-      // Step 2 → Audience
-      setMetaStep(2);
-      await wait(220);
-
-      // Step 3 → Keyphrase
-      if (outline.focus_keyphrase) {
-        setMetaStep(3);
-        await wait(220);
-      }
-
-      // Step 4 → Extra metadata (optional)
-      if (outline.schema_type || outline.target_word_count) {
-        setMetaStep(4);
-        await wait(200);
-      }
-
-      if (outline.keywords_to_include?.length) {
-        setMetaStep(5);
-        await wait(200);
-      }
-
-      // Step 5 → Sections unlock
-      setMetaStep(6);
-    };
-
-    run();
-
-    return () => {
-      _cancelled = true;
-    };
+    setTone(outline.tone || "");
+    setAudience(outline.target_audience?.join(", ") || "");
   }, [outline]);
 
-
-
-  
   // Progressive reveal when the *final* outline arrives:
   // - show section cards one-by-one
   // - in the currently revealing section, show key points one-by-one
   useEffect(() => {
-    if (!outline?.sections?.length || metaStep < 6) {
+    if (!outline?.sections?.length) {
       setVisibleSectionCount(0);
       return;
     }
@@ -534,7 +490,7 @@ export function OutlineDisplay({
     return () => {
       cancelled = true;
     };
-  }, [outline, metaStep]);
+  }, [outline]);
 
   const handleToneSave = () => {
     if (onUpdate && outline) onUpdate({ ...outline, tone });
@@ -554,11 +510,7 @@ export function OutlineDisplay({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto py-3"
-    >
+    <div className="w-full max-w-4xl mx-auto py-3">
       {/* Header */}
       <div className="mb-10 space-y-4">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
@@ -578,14 +530,10 @@ export function OutlineDisplay({
       )}
 
       {/* Metadata Grid (show only after parsed outline arrives) */}
-      {!isDraft && metaStep >= 1 && outline && (
+      {!isDraft && outline && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-          >
+          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Mic2 className="w-5 h-5 text-primary" />
             </div>
@@ -638,77 +586,67 @@ export function OutlineDisplay({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Audience */}
-          {metaStep >= 2 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-            >
-              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-                <Target className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
-                  Audience
-                </p>
-                {editingAudience ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={audience}
-                      onChange={(e) => setAudience(e.target.value)}
-                      className="h-7 text-sm min-w-[100px]"
-                    />
+          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
+            <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                Audience
+              </p>
+              {editingAudience ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value)}
+                    className="h-7 text-sm min-w-[100px]"
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-primary hover:bg-muted"
+                    onClick={handleAudienceSave}
+                  >
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-muted-foreground"
+                    onClick={() => {
+                      setAudience(outline.target_audience?.join(", ") || "");
+                      setEditingAudience(false);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-foreground truncate">
+                    {outline.target_audience?.join(", ") || ""}
+                  </p>
+                  {canEdit && (
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 text-primary hover:bg-muted"
-                      onClick={handleAudienceSave}
+                      className="h-6 w-6 text-muted-foreground hover:text-primary"
+                      onClick={() => setEditingAudience(true)}
                     >
-                      <Check className="w-4 h-4" />
+                      <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground"
-                      onClick={() => {
-                        setAudience(outline.target_audience?.join(", ") || "");
-                        setEditingAudience(false);
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-foreground truncate">
-                      {outline.target_audience?.join(", ") || ""}
-                    </p>
-                    {canEdit && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 text-muted-foreground hover:text-primary"
-                        onClick={() => setEditingAudience(true)}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Focus Keyphrase */}
-          {outline.focus_keyphrase && metaStep >= 3 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-            >
+          {outline.focus_keyphrase && (
+            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
               <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
                 <Hash className="w-5 h-5 text-primary" />
               </div>
@@ -720,54 +658,44 @@ export function OutlineDisplay({
                   {outline.focus_keyphrase}
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Schema Type + Target Word Count */}
-          {metaStep >= 4 &&
-            (outline.schema_type || outline.target_word_count) && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-              >
-                <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-                  <FileText className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex gap-8">
-                  {outline.schema_type && (
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
-                        Schema
-                      </p>
-                      <p className="text-sm font-bold text-foreground">
-                        {outline.schema_type}
-                      </p>
-                    </div>
-                  )}
-                  {outline.target_word_count && (
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
-                        Target Words
-                      </p>
-                      <p className="text-sm font-bold text-foreground">
-                        {outline.target_word_count.toLocaleString()}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
+          {(outline.schema_type || outline.target_word_count) && (
+            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
+              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex gap-8">
+                {outline.schema_type && (
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      Schema
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {outline.schema_type}
+                    </p>
+                  </div>
+                )}
+                {outline.target_word_count && (
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                      Target Words
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {outline.target_word_count.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Keywords to include */}
-          {metaStep >= 5 &&
-            outline.keywords_to_include &&
+          {outline.keywords_to_include &&
             outline.keywords_to_include.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50"
-              >
+              <div className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50">
                 <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border shrink-0">
                   <Tag className="w-5 h-5 text-primary" />
                 </div>
@@ -786,7 +714,7 @@ export function OutlineDisplay({
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
         </div>
       )}
@@ -795,12 +723,10 @@ export function OutlineDisplay({
       <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
         {!isDraft && (effectiveOutline.sections?.length ?? 0) > 0
           ? (effectiveOutline.sections ?? [])
-              .slice(0, metaStep >= 6 ? visibleSectionCount : 0)
+              .slice(0, visibleSectionCount)
               .map((section, idx) => (
-                <motion.div
+                <div
                   key={section.heading || `section-${idx}`}
-                  initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
                   className="relative pl-12 group"
                 >
                   <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
@@ -853,17 +779,13 @@ export function OutlineDisplay({
                     {/* Section-type specific content */}
                     <SectionContent section={section} />
                   </div>
-                </motion.div>
+                </div>
               ))
           : null}
       </div>
 
       {/* Action Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-10 flex items-center justify-end gap-3"
-      >
+      <div className="mt-10 flex items-center justify-end gap-3">
         <Button
           onClick={onReject}
           disabled={isLoading || isDraft}
@@ -879,8 +801,8 @@ export function OutlineDisplay({
         >
           <Check className="w-4 h-4" /> Approve & Generate
         </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -897,11 +819,7 @@ export function OutlineRejectSection({
   onSubmit: () => void;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-2xl mx-auto py-3"
-    >
+    <div className="w-full max-w-2xl mx-auto py-3">
       <div className="p-7 rounded-2xl bg-card border border-border/50">
         <div className="flex items-center gap-4 mb-7">
           <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -932,6 +850,6 @@ export function OutlineRejectSection({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

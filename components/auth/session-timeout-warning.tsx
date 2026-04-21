@@ -20,7 +20,7 @@ interface RefreshResponse {
  * Keeps the UI components for manual fallback if auto-refresh fails.
  */
 export function SessionTimeoutWarning() {
-  const { showWarning, formattedTime, sessionExpired } = useSessionTimeout();
+  const { showWarning, sessionExpired } = useSessionTimeout();
   const { data: session, update } = useSession();
   const [isExtending, setIsExtending] = useState(false);
 
@@ -105,19 +105,11 @@ export function SessionTimeoutWarning() {
 
   // Handle automatic refresh when session is about to expire
   useEffect(() => {
-    if (
-      showWarning &&
-      !isExtending &&
-      session?.user?.refreshToken
-    ) {
+    if (showWarning && !isExtending && session?.user?.refreshToken) {
       log.info("[Auth] Session expiring soon, triggering automatic refresh...");
       handleExtendSession();
     }
   }, [showWarning, isExtending, session, handleExtendSession]);
-
-  const handleLogout = async () => {
-    await performLogout("/login");
-  };
 
   // Don't render if session doesn't exist or has error
   if (!session || session.error) {

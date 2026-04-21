@@ -13,7 +13,6 @@ import { Button } from "../ui/button";
 import {
   Activity,
   AlertCircle,
-  Bot,
   Copy,
   Eye,
   ChevronDown,
@@ -27,7 +26,6 @@ import {
   Sparkles,
   List,
   CheckCircle2,
-  Zap,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -54,6 +52,17 @@ import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "../ui/skeleton";
+
+const TAG_SKELETON_KEYS = Array.from(
+  { length: 5 },
+  (_, i) => `tag-skeleton-${i + 1}`,
+);
+
+const CONTENT_SKELETON_KEYS = Array.from(
+  { length: 3 },
+  (_, i) => `content-skeleton-${i + 1}`,
+);
 
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
@@ -119,29 +128,17 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
       className={cn(
         "relative rounded-lg border overflow-hidden transition-colors",
         isRunning
-          ? "bg-amber-500/5 border-amber-500/20"
-          : "bg-emerald-500/4 border-emerald-500/15",
+          ? "bg-primary/5 border-primary/20"
+          : "bg-primary/4 border-primary/15",
       )}
     >
       <div
         className={cn(
           "absolute left-0 top-0 bottom-0 w-0.5",
-          isRunning ? "bg-amber-400" : "bg-emerald-500/60",
+          isRunning ? "bg-primary" : "bg-primary/60",
         )}
       />
       <div className="flex items-start gap-2 pl-3 pr-2.5 py-2">
-        <div
-          className={cn(
-            "shrink-0 mt-0.5",
-            isRunning ? "text-amber-500" : "text-emerald-500",
-          )}
-        >
-          {isRunning ? (
-            <Loader2 size={10} className="animate-spin" />
-          ) : (
-            <CheckCircle2 size={10} />
-          )}
-        </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <Icon size={8} className="text-muted-foreground/60 shrink-0" />
@@ -156,15 +153,14 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
           </div>
           {tc.status === "done" && tc.resultCount !== undefined && (
             <div className="flex items-center justify-between mt-1">
-              <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
-                <Zap size={8} />
-                {tc.resultCount} result{tc.resultCount !== 1 ? "s" : ""}
+              <div className="text-[9px] px-1 text-primary dark:text-primary font-bold flex items-center gap-0.5">
+                {tc.resultCount}&nbsp;result{tc.resultCount !== 1 ? "s" : ""}
               </div>
               {hasOutput && (
                 <button
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
-                  className="text-[8px] text-muted-foreground/50 hover:text-foreground flex items-center gap-0.5 transition-colors"
+                  className="cursor-pointer text-[8px] text-muted-foreground/50 hover:text-foreground flex items-center gap-0.5 transition-colors"
                 >
                   {expanded ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
                   {expanded ? "hide" : "view"}
@@ -590,14 +586,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  !body && (
-    <div className="space-y-3 animate-pulse">
-      <div className="h-4 bg-muted rounded w-full" />
-      <div className="h-4 bg-muted rounded w-5/6" />
-      <div className="h-4 bg-muted rounded w-4/6" />
-    </div>
-  );
-
   const analysisSidebarContent = (
     <div className="flex flex-col h-full bg-sidebar">
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
@@ -654,14 +642,10 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── Agent Activity Feed (shown while generating) ───────────── */}
-        {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
+        {(pipelineSteps.length > 0 || toolCalls.length > 0) && (
           <div className="space-y-3 pb-2">
             {/* Header */}
             <div className="flex items-center gap-2 pt-0.5 pb-0.5">
-              <div className="relative shrink-0">
-                <Bot size={13} className="text-primary" />
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-              </div>
               <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/60 flex-1">
                 Agent Activity
               </h4>
@@ -669,13 +653,9 @@ function ContentEditorInner(props: ContentEditorProps) {
 
             {/* Pipeline steps with connecting lines */}
             {pipelineSteps.length > 0 && (
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="px-3 py-2 border-b border-border/50 bg-muted/30">
-                  <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.15em]">
-                    Pipeline
-                  </span>
-                </div>
-                <div className="p-3 space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+              <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+                <h4 className="text-lg font-bold text-foreground">Pipeline</h4>
+                <div className="space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   {pipelineSteps.map((step, idx) => (
                     <div
                       key={step.label}
@@ -687,22 +667,18 @@ function ContentEditorInner(props: ContentEditorProps) {
                           className={cn(
                             "w-2.5 h-2.5 rounded-full border-2 shrink-0 mt-0.5 z-10 transition-all duration-300",
                             step.status === "done"
-                              ? "bg-emerald-500 border-emerald-500"
+                              ? "bg-primary border-primary"
                               : step.status === "active"
-                                ? "bg-amber-400 border-amber-400 shadow-[0_0_6px_hsl(var(--amber-400)/0.5)]"
+                                ? "bg-primary border-primary shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
                                 : "bg-transparent border-border/60",
                           )}
-                        >
-                          {step.status === "active" && (
-                            <div className="absolute w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping opacity-60" />
-                          )}
-                        </div>
+                        ></div>
                         {idx < pipelineSteps.length - 1 && (
                           <div
                             className={cn(
-                              "w-px flex-1 mt-0.5 mb-0.5 min-h-[12px] transition-colors duration-500",
+                              "w-px flex-1 mt-0.5 mb-0.5 min-h-2 transition-colors duration-500",
                               step.status === "done"
-                                ? "bg-emerald-500/40"
+                                ? "bg-primary/40"
                                 : "bg-border/40",
                             )}
                           />
@@ -711,7 +687,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       {/* Label */}
                       <div
                         className={cn(
-                          "flex-1 pb-2.5 pt-0.5",
+                          "flex-1 pb-2.5",
                           idx === pipelineSteps.length - 1 && "pb-0",
                         )}
                       >
@@ -719,12 +695,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                           {step.status === "active" && (
                             <Loader2
                               size={9}
-                              className="text-amber-500 animate-spin shrink-0"
+                              className="text-primary animate-spin shrink-0"
                             />
                           )}
                           <span
                             className={cn(
-                              "text-[11px] leading-tight transition-all duration-200",
+                              "text-xs leading-tight transition-all duration-200",
                               step.status === "done"
                                 ? "text-muted-foreground/40 line-through"
                                 : step.status === "active"
@@ -744,22 +720,24 @@ function ContentEditorInner(props: ContentEditorProps) {
 
             {/* Tool call research feed */}
             {toolCalls.length > 0 && (
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="px-3 py-2 border-b border-border/50 bg-muted/30 flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.15em]">
+              <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+                <div className="flex items-center justify-between gap-1.5">
+                  <h4 className="text-lg font-bold text-foreground">
                     Research
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                  </h4>
+                  <div className="flex gap-1">
+                    <div className="text-[12px] font-bold text-primary dark:text-primary">
                       {toolCalls.filter((t) => t.status === "done").length}
                     </div>
-                    <div className="text-[9px] text-muted-foreground/40">/</div>
-                    <div className="text-[9px] text-muted-foreground/60">
+                    <div className="text-[12px] text-muted-foreground/40">
+                      /
+                    </div>
+                    <div className="text-[12px] text-muted-foreground/60">
                       {toolCalls.length}
                     </div>
                   </div>
                 </div>
-                <div className="p-2 space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                <div className="space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   {toolCalls.map((tc) => (
                     <InlineToolCard key={tc.id} tc={tc} />
                   ))}
@@ -768,7 +746,6 @@ function ContentEditorInner(props: ContentEditorProps) {
             )}
           </div>
         )}
-
         {/* ── Metrics (shown once generation is complete) ─────────────── */}
         {score ? (
           <>
@@ -1111,7 +1088,44 @@ function ContentEditorInner(props: ContentEditorProps) {
                       </div>
                     </div>
                   )}
-                  {body ? (
+
+                  {!body?.trim() ? (
+                    <>
+                      <div className="space-y-4 mb-8">
+                        {/* Tags Skeleton */}
+                        <div className="flex flex-wrap gap-2">
+                          {TAG_SKELETON_KEYS.map((key) => (
+                            <Skeleton
+                              key={key}
+                              className="h-6 w-16 rounded-full"
+                            />
+                          ))}
+                        </div>
+
+                        {/* Title Skeleton */}
+                        <div className="space-y-3">
+                          <Skeleton className="h-10 w-4/5 rounded-lg" />
+                          <Skeleton className="h-10 w-2/3 rounded-lg" />
+                        </div>
+
+                        {/* Intro Skeleton */}
+                        {allContent?.meta_description && (
+                          <div className="border-l-[3px] border-primary/20 pl-6 my-8 space-y-3">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                            <Skeleton className="h-4 w-4/6" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Skeleton */}
+                      <div className="blog-content space-y-4">
+                        {CONTENT_SKELETON_KEYS.map((key) => (
+                          <Skeleton key={key} className="h-4 rounded" />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
                     <>
                       <div className="space-y-4 mb-8">
                         <div className="flex flex-wrap gap-2">
@@ -1139,137 +1153,6 @@ function ContentEditorInner(props: ContentEditorProps) {
                         dangerouslySetInnerHTML={{ __html: previewHtml }}
                       />
                     </>
-                  ) : (
-                    <div className="space-y-8 py-2">
-                      {/* Generating status banner */}
-                      <div className="flex items-center gap-3 p-4 rounded-xl border border-border/40 bg-card/50">
-                        <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin shrink-0" />
-                        <div>
-                          <p className="text-[12px] font-semibold text-foreground/80">
-                            Generating your article…
-                          </p>
-                          <p className="text-[11px] text-muted-foreground/50 mt-0.5">
-                            AI is researching and writing. This may take a
-                            minute.
-                          </p>
-                        </div>
-                      </div>
-                      {/* Tags skeleton or real tags */}
-                      <div className="flex flex-wrap gap-2">
-                        {tags.length > 0 ? (
-                          tags.slice(0, 6).map((t) => (
-                            <span
-                              key={t}
-                              className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800/70 px-3 py-1 rounded-full"
-                            >
-                              {t}
-                            </span>
-                          ))
-                        ) : (
-                          <>
-                            <div className="skeleton-shimmer h-5 w-16 rounded-md" />
-                            <div
-                              className="skeleton-shimmer h-5 w-20 rounded-md"
-                              style={{ animationDelay: "0.1s" }}
-                            />
-                            <div
-                              className="skeleton-shimmer h-5 w-14 rounded-md"
-                              style={{ animationDelay: "0.2s" }}
-                            />
-                          </>
-                        )}
-                      </div>
-
-                      {/* Title */}
-                      <div className="space-y-3">
-                        {displayTitle ? (
-                          <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
-                            {typedTitle}
-                          </h1>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="skeleton-shimmer h-9 rounded-xl w-4/5" />
-                            <div
-                              className="skeleton-shimmer h-9 rounded-xl w-3/5"
-                              style={{ animationDelay: "0.15s" }}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Introduction */}
-                      {allContent?.meta_description ? (
-                        <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-[3px] border-primary/40 pl-6 py-1 italic">
-                          {typedIntro}
-                        </div>
-                      ) : (
-                        <div className="border-l-4 border-primary/15 pl-6 space-y-2.5">
-                          <div className="skeleton-shimmer h-4 rounded-lg w-full" />
-                          <div
-                            className="skeleton-shimmer h-4 rounded-lg w-11/12"
-                            style={{ animationDelay: "0.1s" }}
-                          />
-                          <div
-                            className="skeleton-shimmer h-4 rounded-lg w-4/5"
-                            style={{ animationDelay: "0.2s" }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Content section skeletons */}
-                      {[
-                        {
-                          id: "sk0",
-                          h: "w-2/5",
-                          lines: [
-                            { id: "a", w: "w-full", pos: 0 },
-                            { id: "b", w: "w-11/12", pos: 1 },
-                            { id: "c", w: "w-4/5", pos: 2 },
-                            { id: "d", w: "w-3/4", pos: 3 },
-                          ],
-                          delay: 0,
-                        },
-                        {
-                          id: "sk1",
-                          h: "w-1/3",
-                          lines: [
-                            { id: "a", w: "w-full", pos: 0 },
-                            { id: "b", w: "w-5/6", pos: 1 },
-                            { id: "c", w: "w-full", pos: 2 },
-                            { id: "d", w: "w-2/3", pos: 3 },
-                          ],
-                          delay: 0.05,
-                        },
-                        {
-                          id: "sk2",
-                          h: "w-2/5",
-                          lines: [
-                            { id: "a", w: "w-full", pos: 0 },
-                            { id: "b", w: "w-11/12", pos: 1 },
-                            { id: "c", w: "w-3/4", pos: 2 },
-                          ],
-                          delay: 0.1,
-                        },
-                      ].map((section) => (
-                        <div key={section.id} className="space-y-3 pt-2">
-                          <div
-                            className={`skeleton-shimmer h-5 rounded-lg ${section.h}`}
-                            style={{ animationDelay: `${section.delay}s` }}
-                          />
-                          <div className="space-y-2">
-                            {section.lines.map((line) => (
-                              <div
-                                key={`${section.id}-${line.id}`}
-                                className={`skeleton-shimmer h-3.5 rounded-md ${line.w}`}
-                                style={{
-                                  animationDelay: `${section.delay + line.pos * 0.06}s`,
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   )}
                 </div>
               )}
