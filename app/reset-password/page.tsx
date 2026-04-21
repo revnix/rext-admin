@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,12 +38,32 @@ function ResetPasswordForm() {
     register,
     handleSubmit,
     watch,
+    clearErrors,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<ResetPasswordData>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
   const passwordValue = watch("password") || "";
+  const confirmPasswordValue = watch("confirmPassword") || "";
+
+  useEffect(() => {
+    if (!confirmPasswordValue) {
+      clearErrors("confirmPassword");
+      return;
+    }
+
+    if (passwordValue !== confirmPasswordValue) {
+      setFieldError("confirmPassword", {
+        type: "manual",
+        message: "Passwords don't match",
+      });
+      return;
+    }
+
+    clearErrors("confirmPassword");
+  }, [clearErrors, confirmPasswordValue, passwordValue, setFieldError]);
 
   const getPasswordStrength = (password: string) => {
     if (!password) return { label: "", color: "" };

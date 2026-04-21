@@ -54,6 +54,24 @@ export function SignupForm({
 
   const { handleSubmit, setValue } = form;
   const passwordValue = form.watch("password") || "";
+  const confirmPasswordValue = form.watch("confirmPassword") || "";
+
+  useEffect(() => {
+    if (!confirmPasswordValue) {
+      form.clearErrors("confirmPassword");
+      return;
+    }
+
+    if (passwordValue !== confirmPasswordValue) {
+      form.setError("confirmPassword", {
+        type: "manual",
+        message: "Passwords don't match",
+      });
+      return;
+    }
+
+    form.clearErrors("confirmPassword");
+  }, [confirmPasswordValue, form, passwordValue]);
 
   const getPasswordStrength = (password: string) => {
     if (!password) return { label: "", color: "" };
