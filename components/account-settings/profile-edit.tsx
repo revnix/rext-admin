@@ -232,9 +232,9 @@ export function ProfileEdit() {
           </p>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           {/* Avatar Display */}
-          <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted">
+          <div className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden bg-muted">
             {currentAvatar ? (
               <img
                 src={currentAvatar}
@@ -259,7 +259,7 @@ export function ProfileEdit() {
             />
 
             {avatarPreview ? (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   onClick={handleUploadAvatar}
@@ -287,7 +287,7 @@ export function ProfileEdit() {
                 </Button>
               </div>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
