@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, RefreshCcw, Loader2, Send, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 interface TopicsSectionProps {
   instruction: string;
@@ -21,25 +21,12 @@ export function TopicsSection({
   onRegenerate,
   isRegenerating = false,
 }: TopicsSectionProps) {
-  const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleOpen = () => {
-    setShowFeedback(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
 
   const handleRegenerate = () => {
     if (isRegenerating) return;
     onRegenerate(feedback);
     setFeedback("");
-    setShowFeedback(false);
-  };
-
-  const handleCancel = () => {
-    setFeedback("");
-    setShowFeedback(false);
   };
 
   return (
@@ -98,97 +85,53 @@ export function TopicsSection({
         transition={{ delay: 0.35 }}
         className="relative"
       >
-        <AnimatePresence mode="wait">
-          {!showFeedback ? (
-            /* ── Collapsed: single pill button ── */
-            <motion.div
-              key="pill"
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.97 }}
-              transition={{ duration: 0.15 }}
-              className="flex justify-center"
+        <div className="w-full max-w-3xl rounded-xl border border-border/70 bg-card/70 p-1.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-border/70",
+                "bg-background text-foreground text-sm font-medium",
+                "hover:bg-accent transition-colors duration-150",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+              )}
             >
-              <button
-                type="button"
-                onClick={handleOpen}
-                disabled={isRegenerating}
-                className={cn(
-                  "group flex items-center gap-2.5 px-5 py-2.5 rounded-full border text-sm font-medium",
-                  "bg-card cursor-pointer border-border/60 text-muted-foreground",
-                  "hover:border-primary/40 hover:text-foreground hover:bg-accent/40",
-                  "transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
-                  "shadow-sm hover:shadow-md hover:shadow-primary/5",
-                )}
-              >
-                {isRegenerating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                ) : (
-                  <RefreshCcw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
-                )}
-                <span>
-                  {isRegenerating
-                    ? "Regenerating topics…"
-                    : "Not what you're looking for?"}
-                </span>
-              </button>
-            </motion.div>
-          ) : (
-            /* ── Expanded: inline feedback bar ── */
-            <motion.div
-              key="bar"
-              initial={{ opacity: 0, y: 6, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.98 }}
-              transition={{ duration: 0.18 }}
-              className="flex items-center gap-2 p-1.5 rounded-2xl border border-primary/20 bg-background shadow-lg shadow-primary/5 ring-1 ring-primary/5"
+              {isRegenerating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="w-4 h-4" />
+              )}
+              <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
+            </button>
+
+            <input
+              type="text"
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Or describe what you're looking for..."
+              className="flex-1 min-w-0 h-9 rounded-lg border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRegenerate();
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className={cn(
+                "shrink-0 w-9 h-9 rounded-lg border border-border/70",
+                "bg-background text-foreground inline-flex items-center justify-center",
+                "hover:bg-accent transition-colors duration-150",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+              )}
             >
-              {/* Icon */}
-              <div className="shrink-0 w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center ml-1">
-                <RefreshCcw className="w-3.5 h-3.5 text-primary" />
-              </div>
-
-              {/* Input */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Tell us what to change… e.g. 'more beginner-friendly'"
-                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none py-2 px-1 min-w-0"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleRegenerate();
-                  if (e.key === "Escape") handleCancel();
-                }}
-              />
-
-              {/* Cancel */}
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Submit */}
-              <button
-                type="button"
-                onClick={handleRegenerate}
-                disabled={isRegenerating}
-                className={cn(
-                  "shrink-0 flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-semibold mr-0.5",
-                  "bg-primary text-primary-foreground",
-                  "hover:opacity-90 active:scale-95 transition-all duration-150",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                )}
-              >
-                <Send className="w-3 h-3" />
-                Regenerate
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </motion.div>
     </div>
   );
