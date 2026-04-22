@@ -67,6 +67,28 @@ const CONTENT_SKELETON_KEYS = Array.from(
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
   renderer: {
+    code({ text, lang }: { text: string; lang?: string }) {
+      const languageClass = lang ? `language-${lang}` : "";
+      const escapedText = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+      return `<div class="relative group my-6 rounded-xl overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80 shadow-sm">
+        ${
+          lang
+            ? `<div class="flex items-center justify-between px-4 py-2 bg-slate-800/40 border-b border-slate-800/80">
+                <span class="text-xs font-mono text-slate-400 font-medium">${lang}</span>
+              </div>`
+            : ""
+        }
+        <div class="px-4 py-4 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <pre class="!m-0 !p-0 !bg-transparent"><code class="${languageClass} text-[13px] leading-relaxed text-slate-200 font-mono tracking-wide">${escapedText}</code></pre>
+        </div>
+      </div>`;
+    },
     link({
       href,
       title,
@@ -395,6 +417,19 @@ function ContentEditorInner(props: ContentEditorProps) {
     handleScroll();
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleContentClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isEditing) return;
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (anchor && anchor.href) {
+        e.preventDefault();
+        window.open(anchor.href, "_blank", "noopener,noreferrer");
+      }
+    },
+    [isEditing],
+  );
 
   // Actions
   const getContentPayload = () => ({

@@ -117,6 +117,9 @@ const htmlToMarkdownLite = (html: string) => {
       .replace(/<ol[^>]*>/gi, "\n")
       .replace(/<\/ol>/gi, "\n")
       .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
+      // Links
+      .replace(/<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+      .replace(/<a[^>]*href='([^']+)'[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
       // Inline formatting
       .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
       .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
