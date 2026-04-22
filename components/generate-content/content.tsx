@@ -642,7 +642,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── Agent Activity Feed (shown while generating) ───────────── */}
-        {(pipelineSteps.length > 0 || toolCalls.length > 0) && (
+        {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
           <div className="space-y-3 pb-2">
             {/* Header */}
             <div className="flex items-center gap-2 pt-0.5 pb-0.5">
