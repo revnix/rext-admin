@@ -23,6 +23,7 @@ import {
   INITIAL_ANALYSIS_STEPS,
   KEYWORD_SELECTION_STEPS,
   TOPIC_GENERATION_STEPS,
+  TOPIC_REGENERATION_STEPS,
   CONTENT_TYPE_STEPS,
   FINAL_GENERATION_STEPS,
 } from "@/constants/loading-steps";
@@ -872,6 +873,10 @@ export function FreshGenerationView({
         // Clear topics and stale outline to provide visual indicator of regeneration
         dispatch({ type: "SET_TOPICS", payload: [] });
         dispatch({ type: "SET_OUTLINE", payload: null });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: TOPIC_REGENERATION_STEPS,
+        });
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
           status: "Regenerating topics...",
@@ -940,11 +945,16 @@ export function FreshGenerationView({
     instructionType === "topic_selection" ||
     instructionType === "keyword Selection";
 
+  const isRegeneratingTopics =
+    isManualLoading &&
+    (instructionType === "topic" || instructionType === "topic_selection") &&
+    topics.length === 0;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
     !showContentStream &&
-    !(isLibrary && isTopicLoading)
+    (isRegeneratingTopics || !(isLibrary && isTopicLoading))
   ) {
     return (
       <div
