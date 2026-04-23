@@ -92,7 +92,7 @@ export function TopicsSection({
               onClick={handleRegenerate}
               disabled={isRegenerating}
               className={cn(
-                "shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-border/70",
+                "shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-border/70 cursor-pointer",
                 "bg-background text-foreground text-sm font-medium",
                 "hover:bg-accent transition-colors duration-150",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -122,7 +122,7 @@ export function TopicsSection({
               onClick={handleRegenerate}
               disabled={isRegenerating}
               className={cn(
-                "shrink-0 w-9 h-9 rounded-lg border border-border/70",
+                "shrink-0 w-9 h-9 rounded-lg border border-border/70 cursor-pointer",
                 "bg-background text-foreground inline-flex items-center justify-center",
                 "hover:bg-accent transition-colors duration-150",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
