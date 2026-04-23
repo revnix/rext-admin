@@ -93,8 +93,6 @@ export function UnifiedActivity() {
       [key]: value || undefined,
       offset: 0, // Reset to first page when filtering
     }));
-
-    void queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
   };
 
   const clearFilters = () => {
@@ -102,8 +100,6 @@ export function UnifiedActivity() {
       limit: ITEMS_PER_PAGE,
       offset: 0,
     });
-
-    void queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
   };
 
   const handlePageChange = (direction: "prev" | "next") => {
