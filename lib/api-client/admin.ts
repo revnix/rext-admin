@@ -140,6 +140,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
         has_more: boolean;
       }>(endpoint, {
         method: "GET",
+        cache: "no-store",
       });
 
       // Normalize: API returns `items`, legacy expected `logs`

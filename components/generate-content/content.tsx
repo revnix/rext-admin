@@ -418,19 +418,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleContentClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isEditing) return;
-      const target = e.target as HTMLElement;
-      const anchor = target.closest("a");
-      if (anchor && anchor.href) {
-        e.preventDefault();
-        window.open(anchor.href, "_blank", "noopener,noreferrer");
-      }
-    },
-    [isEditing],
-  );
-
   // Actions
   const getContentPayload = () => ({
     title: displayTitle,

@@ -50,7 +50,16 @@ export function ActivityLog() {
 
   // Fetch audit logs
   const { data, isLoading, error } = useQuery({
-    queryKey: ["audit-logs", filters],
+    queryKey: [
+      "audit-logs",
+      filters.action ?? null,
+      filters.status ?? null,
+      filters.resource_type ?? null,
+      filters.date_from ?? null,
+      filters.date_to ?? null,
+      filters.limit ?? null,
+      filters.offset ?? null,
+    ],
     queryFn: () =>
       apiClient.auditLogs.getMyLogs({
         action: filters.action,
@@ -111,6 +120,7 @@ export function ActivityLog() {
 
   const hasActiveFilters =
     filters.action ||
+    filters.status ||
     filters.resource_type ||
     filters.date_from ||
     filters.date_to;
