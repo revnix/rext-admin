@@ -18,6 +18,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { integrationSchema } from "@/schemas/integration-schemas";
 import type { Integration } from "@/services/integrations-api";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface CustomIntegrationConfigurationProps {
   integration: Integration;
@@ -284,14 +285,21 @@ export function CustomIntegrationConfiguration({
 
           {/* Actions */}
           <div className="pt-6 border-t col-span-1 md:col-span-2 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
-            <Button
+            <ConfirmationDialog
+              title="Delete Integration"
+              description="Are you sure you want to delete this integration?"
+              confirmText="Delete"
               variant="destructive"
-              onClick={onDelete}
-              className="w-full sm:w-auto"
-              type="button"
+              onConfirm={onDelete || (() => {})}
             >
-              Delete Integration
-            </Button>
+              <Button
+                variant="destructive"
+                className="w-full sm:w-auto"
+                type="button"
+              >
+                Delete Integration
+              </Button>
+            </ConfirmationDialog>
             <Button
               type="submit"
               disabled={isSubmitting}

@@ -198,27 +198,45 @@ export function WorkspaceBrandVoiceForm({
               ref={tabsListRef}
               className="mb-8 w-full bg-input justify-start overflow-x-auto"
             >
-              <TabsTrigger value="info" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="info"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Building2 className="w-4 h-4" />
                 Brand Information
               </TabsTrigger>
-              <TabsTrigger value="voice" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="voice"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <MessageSquare className="w-4 h-4" />
                 Brand Voice
               </TabsTrigger>
-              <TabsTrigger value="strategy" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="strategy"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <BookOpen className="w-4 h-4" />
                 Content Strategy
               </TabsTrigger>
-              <TabsTrigger value="competitors" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="competitors"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Swords className="w-4 h-4" />
                 Competitors
               </TabsTrigger>
-              <TabsTrigger value="audience" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="audience"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Target className="w-4 h-4" />
                 Target Audience
               </TabsTrigger>
-              <TabsTrigger value="personas" className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border">
+              <TabsTrigger
+                value="personas"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Users className="w-4 h-4" />
                 Personas
               </TabsTrigger>

@@ -93,7 +93,6 @@ export function CustomIntegrationDetailsModal({
       toast.error("Workspace ID missing");
       return;
     }
-    if (!confirm("Are you sure you want to delete this integration?")) return;
     try {
       await integrationsApiService.deleteIntegration(
         integration.site?.id || integration.id,

@@ -40,6 +40,7 @@ import {
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
 import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { logger } from "@/lib/logger";
 
 // Helper to convert relative avatar URLs to absolute URLs
@@ -188,11 +189,6 @@ export function ProfileEdit() {
     uploadAvatarMutation.mutate(formData);
   };
 
-  const handleDeleteAvatar = () => {
-    if (!confirm("Are you sure you want to remove your avatar?")) return;
-    deleteAvatarMutation.mutate();
-  };
-
   const handleCancelAvatarChange = () => {
     setAvatarPreview(null);
     setAvatarFile(null);
@@ -297,21 +293,28 @@ export function ProfileEdit() {
                   Choose Image
                 </Button>
                 {profile?.avatar_url && (
-                  <Button
-                    size="sm"
+                  <ConfirmationDialog
+                    title="Remove Avatar"
+                    description="Are you sure you want to remove your avatar?"
+                    confirmText="Remove"
                     variant="destructive"
-                    onClick={handleDeleteAvatar}
-                    disabled={deleteAvatarMutation.isPending}
+                    onConfirm={() => deleteAvatarMutation.mutate()}
                   >
-                    {deleteAvatarMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <X className="mr-2 h-4 w-4" />
-                        Remove
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={deleteAvatarMutation.isPending}
+                    >
+                      {deleteAvatarMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <X className="mr-2 h-4 w-4" />
+                          Remove
+                        </>
+                      )}
+                    </Button>
+                  </ConfirmationDialog>
                 )}
               </div>
             )}
