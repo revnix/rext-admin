@@ -64,11 +64,15 @@ export function ActionsCell<
     if (action.requiresConfirmation) {
       const confirmed = await confirm({
         title:
-          action.confirmationTitle ||
-          `Confirm ${typeof action.label === "function" ? action.label(row) : action.label}`,
+          typeof action.confirmationTitle === "function"
+            ? action.confirmationTitle(row)
+            : action.confirmationTitle ||
+              `Confirm ${typeof action.label === "function" ? action.label(row) : action.label}`,
         description:
-          action.confirmationDescription ||
-          `Are you sure you want to ${typeof action.label === "function" ? action.label(row) : action.label}`.toLowerCase(),
+          typeof action.confirmationDescription === "function"
+            ? action.confirmationDescription(row)
+            : action.confirmationDescription ||
+              `Are you sure you want to ${typeof action.label === "function" ? action.label(row) : action.label}`.toLowerCase(),
         variant: action.variant === "destructive" ? "destructive" : "default",
         confirmText:
           typeof action.label === "function"

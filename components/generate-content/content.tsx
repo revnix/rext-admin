@@ -423,7 +423,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       if (isEditing) return;
       const target = e.target as HTMLElement;
       const anchor = target.closest("a");
-      if (anchor && anchor.href) {
+      if (anchor?.href) {
         e.preventDefault();
         window.open(anchor.href, "_blank", "noopener,noreferrer");
       }
@@ -1185,6 +1185,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       </div>
                       <div
                         className="blog-content prose prose-slate dark:prose-invert prose-lg max-w-none"
+                        onClick={handleContentClick}
                         dangerouslySetInnerHTML={{ __html: previewHtml }}
                       />
                     </>
