@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
@@ -39,6 +39,7 @@ const ITEMS_PER_PAGE = 20;
 
 export function UnifiedActivity() {
   const user = usePermissionUser();
+  const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AuditLogFilters>({
     limit: ITEMS_PER_PAGE,
@@ -63,7 +64,16 @@ export function UnifiedActivity() {
     isLoading: auditLoading,
     error: auditError,
   } = useQuery({
-    queryKey: ["audit-logs", filters],
+    queryKey: [
+      "audit-logs",
+      filters.action ?? null,
+      filters.status ?? null,
+      filters.resource_type ?? null,
+      filters.date_from ?? null,
+      filters.date_to ?? null,
+      filters.limit ?? null,
+      filters.offset ?? null,
+    ],
     queryFn: () =>
       apiClient.auditLogs.getMyLogs({
         action: filters.action,
