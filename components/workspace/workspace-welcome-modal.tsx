@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Building2, Check, Sparkles, User, X } from "lucide-react";
+import { ArrowRight, Building2, Check, User, UserCog, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
@@ -106,7 +106,7 @@ export function WorkspaceWelcomeModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent
         className="!max-w-2xl w-[95vw] p-0 overflow-hidden"
         showCloseButton={false}
@@ -136,22 +136,19 @@ export function WorkspaceWelcomeModal({
         </div>
 
         {/* Content */}
-        <div className="p-8 space-y-6">
-          {/* Header with Celebration */}
+        <div className="p-6 sm:p-8 space-y-5 sm:space-y-6">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, type: "spring" }}
-            className="text-center space-y-4"
+            className="text-center space-y-2"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white text-4xl mb-4 shadow-lg">
-              🎉
-            </div>
             <div>
-              <h2 className="text-3xl font-bold mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2">
                 Welcome to {workspace.name || "Workspace"}!
               </h2>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-base sm:text-lg">
                 You've successfully joined the workspace
               </p>
             </div>
@@ -164,10 +161,10 @@ export function WorkspaceWelcomeModal({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+            <div className="rounded-lg border border-border/70 bg-muted/40 dark:bg-muted/20 p-5 sm:p-6 space-y-4">
               {/* Inviter */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -178,8 +175,8 @@ export function WorkspaceWelcomeModal({
 
               {/* Role */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-                  <Sparkles className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
+                  <UserCog className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Your role</p>
@@ -190,7 +187,7 @@ export function WorkspaceWelcomeModal({
 
             {/* Permissions */}
             {permissions.length > 0 && (
-              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-6">
+              <div className="rounded-lg border border-primary/15 bg-primary/5 dark:bg-primary/10 p-5 sm:p-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
                   As {roleName}, you can:
@@ -204,7 +201,7 @@ export function WorkspaceWelcomeModal({
                       transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                       className="flex items-center gap-2 text-sm"
                     >
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white shrink-0">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/25 dark:bg-primary/20 dark:border-primary/30 shrink-0">
                         <Check className="h-3 w-3" />
                       </div>
                       <span>{permission}</span>
@@ -235,25 +232,25 @@ export function WorkspaceWelcomeModal({
                 onClick={handleTakeTour}
                 variant="outline"
                 size="lg"
-                className="flex-1 gap-2"
+                className="flex-1"
               >
-                <Sparkles className="h-4 w-4" />
                 Take a Quick Tour
               </Button>
             </div>
 
             {/* Don't show again checkbox */}
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-start justify-start gap-2 text-sm text-muted-foreground pt-1">
               <Checkbox
                 id="dont-show-again"
                 checked={dontShowAgain}
                 onCheckedChange={(checked) =>
                   setDontShowAgain(checked === true)
                 }
+                className="mt-0.5"
               />
               <label
                 htmlFor="dont-show-again"
-                className="cursor-pointer select-none"
+                className="cursor-pointer select-none leading-relaxed text-left"
               >
                 Don't show this again for this workspace
               </label>
