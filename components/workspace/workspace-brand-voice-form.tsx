@@ -395,7 +395,7 @@ export function WorkspaceBrandVoiceForm({
                         {/* Badges Container */}
                         <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
-                            field.value.map((item) => (
+                            field.value.map((item, index) => (
                               <Badge
                                 key={item}
                                 variant="default"
@@ -407,7 +407,7 @@ export function WorkspaceBrandVoiceForm({
                                   onClick={() =>
                                     removeItem(
                                       "brand_voice",
-                                      field.value.indexOf(item),
+                                      index,
                                     )
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
@@ -489,7 +489,7 @@ export function WorkspaceBrandVoiceForm({
                         {/* Badges Container */}
                         <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
-                            field.value.map((item) => (
+                            field.value.map((item, index) => (
                               <Badge
                                 key={item}
                                 variant="secondary"
@@ -501,7 +501,7 @@ export function WorkspaceBrandVoiceForm({
                                   onClick={() =>
                                     removeItem(
                                       "content_strategy",
-                                      field.value.indexOf(item),
+                                      index,
                                     )
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
@@ -580,7 +580,7 @@ export function WorkspaceBrandVoiceForm({
                         {/* Badges Container */}
                         <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
-                            field.value.map((item) => (
+                            field.value.map((item, index) => (
                               <Badge
                                 key={item}
                                 variant="outline"
@@ -592,7 +592,7 @@ export function WorkspaceBrandVoiceForm({
                                   onClick={() =>
                                     removeItem(
                                       "competitors",
-                                      field.value.indexOf(item),
+                                      index,
                                     )
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
@@ -670,7 +670,7 @@ export function WorkspaceBrandVoiceForm({
                         {/* Badges Container */}
                         <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
-                            field.value.map((item) => (
+                            field.value.map((item, index) => (
                               <Badge
                                 key={item}
                                 variant="secondary"
@@ -682,7 +682,7 @@ export function WorkspaceBrandVoiceForm({
                                   onClick={() =>
                                     removeItem(
                                       "target_audience",
-                                      field.value.indexOf(item),
+                                      index,
                                     )
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
