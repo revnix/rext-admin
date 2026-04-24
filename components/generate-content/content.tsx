@@ -313,7 +313,6 @@ type ContentEditorProps = {
   toolCalls?: ToolCall[];
   pipelineSteps?: PipelineStep[];
   /** When true, shows the content blurred with a humanizing overlay */
-  isHumanizing?: boolean;
 };
 
 function ContentEditorInner(props: ContentEditorProps) {
@@ -331,7 +330,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
     toolCalls = [],
     pipelineSteps = [],
-    isHumanizing = false,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -417,19 +415,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     handleScroll();
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const handleContentClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isEditing) return;
-      const target = e.target as HTMLElement;
-      const anchor = target.closest("a");
-      if (anchor?.href) {
-        e.preventDefault();
-        window.open(anchor.href, "_blank", "noopener,noreferrer");
-      }
-    },
-    [isEditing],
-  );
 
   // Actions
   const getContentPayload = () => ({
@@ -1077,6 +1062,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </h1>
                   <div className="min-h-[600px]">
                     <SafeLexicalEditor
+                      readOnly={false}
                       key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
@@ -1086,44 +1072,6 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               ) : (
                 <div className="w-full relative">
-                  {/* ── Humanizing overlay ──────────────────────────────── */}
-                  {isHumanizing && body && (
-                    <div className="absolute inset-0 z-20 overflow-hidden rounded-xl">
-                      {/* blur mask */}
-                      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/30" />
-                      {/* diagonal repeating label */}
-                      <div
-                        className="absolute inset-0 flex items-center justify-center"
-                        aria-hidden="true"
-                      >
-                        <div
-                          className="select-none"
-                          style={{
-                            transform: "rotate(-35deg)",
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: "2.5rem 3rem",
-                            opacity: 0.12,
-                          }}
-                        >
-                          {Array.from({ length: 15 }).map((_, i) => (
-                            <span
-                              // biome-ignore lint/suspicious/noArrayIndexKey: decorative
-                              key={i}
-                              className="text-[22px] font-black tracking-[0.18em] uppercase text-foreground whitespace-nowrap"
-                            >
-                              Humanizing
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      {/* animated bottom bar */}
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary/30 overflow-hidden">
-                        <div className="h-full w-1/3 bg-primary animate-[shimmer_1.4s_ease-in-out_infinite]" />
-                      </div>
-                    </div>
-                  )}
-
                   {!body?.trim() ? (
                     <>
                       <div className="space-y-4 mb-8">
@@ -1183,10 +1131,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                           </div>
                         )}
                       </div>
-                      <div
-                        className="blog-content prose prose-slate dark:prose-invert prose-lg max-w-none"
-                        onClick={handleContentClick}
-                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                      <SafeLexicalEditor
+                        readOnly={true}
+                        key={`editor-${contentId ?? "new"}-${isEditing}`}
+                        initialValue={body}
+                        onChange={onContentChange}
+                        toolbarClass="top-0 z-50"
                       />
                     </>
                   )}

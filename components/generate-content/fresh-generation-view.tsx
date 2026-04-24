@@ -340,9 +340,6 @@ export function FreshGenerationView({
   const [, setEnhancingMsg] = useState("Enhancing content...");
   const [, setEnhancingDescription] = useState("");
 
-  // ── Humanizing overlay state ──────────────────────────────────────────────
-  const [isHumanizing, setIsHumanizing] = useState(false);
-
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [pipelineSteps, setPipelineSteps] = useState<
@@ -553,7 +550,6 @@ export function FreshGenerationView({
             const name = String(d.name ?? "");
             const query = String(d.query ?? "");
             if (name === "humanize_content") {
-              setIsHumanizing(true);
               advancePipeline("Humanizing");
             }
             if (id) {
@@ -567,12 +563,8 @@ export function FreshGenerationView({
             }
           } else if (d?.type === "tool_end") {
             const id = String(d.id ?? "");
-            const name = String(d.name ?? "");
             const count = Number(d.count ?? 0);
             const output = d.output ? String(d.output) : undefined;
-            if (name === "humanize_content") {
-              setIsHumanizing(false);
-            }
             if (id) {
               setToolCalls((prev) =>
                 prev.map((tc) =>
@@ -596,6 +588,7 @@ export function FreshGenerationView({
 
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
+        // console.log("Received updates:", updates);
 
         // generate_outline uses structured output (ainvoke) — no streaming tokens.
         // Extract the outline from the node update so it can be shown before the interrupt fires.
@@ -1142,7 +1135,6 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
-            isHumanizing={isHumanizing}
             onEditToggle={() =>
               dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
             }
