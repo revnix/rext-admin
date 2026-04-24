@@ -247,7 +247,9 @@ export function EditableBrandVoiceCard({
               className="min-h-[80px]"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">{brandVoice.about}</p>
+            <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
+              {brandVoice.about}
+            </p>
           )}
         </div>
 
@@ -267,7 +269,7 @@ export function EditableBrandVoiceCard({
               className="min-h-[80px]"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
               {brandVoice.customer_profile}
             </p>
           )}
@@ -289,7 +291,7 @@ export function EditableBrandVoiceCard({
               className="min-h-[80px]"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
               {brandVoice.selling_position}
             </p>
           )}
@@ -319,12 +321,12 @@ export function EditableBrandVoiceCard({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
                 {formData.target_audience.map((item, index) => (
                   <Badge
                     key={item}
                     variant="secondary"
-                    className="text-sm px-3 py-1"
+                    className="text-sm px-3 py-1 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
                   >
                     {item}
                     <button
@@ -341,9 +343,13 @@ export function EditableBrandVoiceCard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
               {brandVoice.target_audience?.map((item) => (
-                <Badge key={item} variant="secondary" className="text-sm">
+                <Badge
+                  key={item}
+                  variant="secondary"
+                  className="text-sm break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
+                >
                   {item}
                 </Badge>
               ))}
@@ -375,12 +381,12 @@ export function EditableBrandVoiceCard({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
                 {formData.brand_voice.map((item, index) => (
                   <Badge
                     key={item}
                     variant="outline"
-                    className="text-sm px-3 py-1"
+                    className="text-sm px-3 py-1 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
                   >
                     {item}
                     <button
@@ -397,9 +403,13 @@ export function EditableBrandVoiceCard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
               {brandVoice.brand_voice?.map((item) => (
-                <Badge key={item} variant="outline" className="text-sm">
+                <Badge
+                  key={item}
+                  variant="outline"
+                  className="text-sm break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
+                >
                   {item}
                 </Badge>
               ))}
@@ -431,12 +441,12 @@ export function EditableBrandVoiceCard({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
                 {formData.content_strategy.map((item, index) => (
                   <Badge
                     key={item}
                     variant="secondary"
-                    className="text-sm px-3 py-1"
+                    className="text-sm px-3 py-1 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
                   >
                     {item}
                     <button
@@ -453,9 +463,13 @@ export function EditableBrandVoiceCard({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
               {brandVoice.content_strategy?.map((item) => (
-                <Badge key={item} variant="secondary" className="text-sm">
+                <Badge
+                  key={item}
+                  variant="secondary"
+                  className="text-sm break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
+                >
                   {item}
                 </Badge>
               ))}
@@ -487,12 +501,12 @@ export function EditableBrandVoiceCard({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
                 {formData.competitors.map((item, index) => (
                   <Badge
                     key={item}
                     variant="secondary"
-                    className="text-sm px-3 py-1"
+                    className="text-sm px-3 py-1 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
                   >
                     {item}
                     <button
@@ -509,7 +523,7 @@ export function EditableBrandVoiceCard({
               </div>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
               {brandVoice.competitors?.join(" • ")}
             </div>
           )}

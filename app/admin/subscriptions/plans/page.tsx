@@ -219,14 +219,12 @@ export default function SubscriptionPlansPage() {
                 {
                   label: "Delete",
                   icon: <Trash2 className="h-4 w-4" />,
+                  requiresConfirmation: true,
+                  confirmationTitle: "Delete Subscription Plan",
+                  confirmationDescription: (plan: SubscriptionPlan) =>
+                    `Are you sure you want to delete "${plan.display_name}"? This action cannot be undone.`,
                   onClick: (plan) => {
-                    if (
-                      confirm(
-                        `Are you sure you want to delete "${plan.display_name}"? This action cannot be undone.`,
-                      )
-                    ) {
-                      deleteMutation.mutate(plan.id);
-                    }
+                    deleteMutation.mutate(plan.id);
                   },
                   variant: "destructive",
                 },
