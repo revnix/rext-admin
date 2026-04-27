@@ -185,7 +185,7 @@ export function WorkspaceBrandVoiceForm({
   };
 
   return (
-    <div className="space-y-8 w-full max-w-4xl mx-auto overflow-x-hidden">
+    <div className="space-y-8 w-full max-w-6xl mx-auto overflow-x-hidden">
       {/* Brand Voice Form Card */}
       <Form {...form}>
         <form
@@ -198,62 +198,53 @@ export function WorkspaceBrandVoiceForm({
             className="w-full overflow-x-hidden"
           >
             {/* Improved Tabs List */}
-            <div className="mb-8 pb-4 border-b border-border/50 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-              <TabsList
-                ref={tabsListRef}
-                className="inline-flex gap-1 bg-transparent p-0 justify-start w-full min-w-max"
+           <TabsList
+              ref={tabsListRef}
+              className="w-full bg-input justify-start overflow-x-auto"
+            >
+              <TabsTrigger
+                value="info"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
-                <TabsTrigger
-                  value="info"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <Building2 className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Brand Information</span>
-                  <span className="sm:hidden">Info</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="voice"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <MessageSquare className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Brand Voice</span>
-                  <span className="sm:hidden">Voice</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="strategy"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <BookOpen className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Content Strategy</span>
-                  <span className="sm:hidden">Strategy</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="competitors"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <Swords className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Competitors</span>
-                  <span className="sm:hidden">Comp.</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="audience"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <Target className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Target Audience</span>
-                  <span className="sm:hidden">Audience</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="personas"
-                  className="px-4 py-2 rounded-t-lg bg-transparent border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground transition-colors data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:bg-primary/5"
-                >
-                  <Users className="w-4 h-4 mr-2 inline" />
-                  <span className="hidden sm:inline">Personas</span>
-                  <span className="sm:hidden">Pers.</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
+                <Building2 className="w-4 h-4" />
+                Brand Information
+              </TabsTrigger>
+              <TabsTrigger
+                value="voice"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Brand Voice
+              </TabsTrigger>
+              <TabsTrigger
+                value="strategy"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
+                <BookOpen className="w-4 h-4" />
+                Content Strategy
+              </TabsTrigger>
+              <TabsTrigger
+                value="competitors"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
+                <Swords className="w-4 h-4" />
+                Competitors
+              </TabsTrigger>
+              <TabsTrigger
+                value="audience"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
+                <Target className="w-4 h-4" />
+                Target Audience
+              </TabsTrigger>
+              <TabsTrigger
+                value="personas"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
+                <Users className="w-4 h-4" />
+                Personas
+              </TabsTrigger>
+            </TabsList>
             {/* Brand Information Tab */}
             <TabsContent value="info" className="space-y-6 py-6">
               {/* About Field */}
@@ -492,8 +483,8 @@ export function WorkspaceBrandVoiceForm({
                             field.value.map((item, index) => (
                               <Badge
                                 key={item}
-                                variant="secondary"
-                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
                                 {item}
                                 <button
@@ -583,8 +574,8 @@ export function WorkspaceBrandVoiceForm({
                             field.value.map((item, index) => (
                               <Badge
                                 key={item}
-                                variant="outline"
-                                className="gap-2 px-3 py-1.5 text-sm font-medium border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
                                 {item}
                                 <button
@@ -673,8 +664,8 @@ export function WorkspaceBrandVoiceForm({
                             field.value.map((item, index) => (
                               <Badge
                                 key={item}
-                                variant="secondary"
-                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-green-100 hover:bg-green-200 dark:bg-green-950 dark:hover:bg-green-900 text-green-700 dark:text-green-300 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
                                 {item}
                                 <button
@@ -738,7 +729,7 @@ export function WorkspaceBrandVoiceForm({
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row gap-4 items-center justify-between pt-8 mt-8 border-t border-border/50 bg-background/30 -mx-6 -mb-6 px-6 py-6 rounded-b-lg">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 items-center justify-between pt-8 mt-8 border-t border-border/50 -mx-6  px-6 py-6 rounded-b-lg">
             {/* Navigation Buttons */}
             <div className="flex gap-2 w-full sm:w-auto">
               <Button

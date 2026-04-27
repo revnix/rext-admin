@@ -419,7 +419,7 @@ export function WorkspaceCreateWizard() {
           <QuestionCard
             title="Review Brand Voice"
             description="Review and edit the AI-extracted brand information"
-            className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 max-w-5xl mx-auto w-full overflow-x-hidden"
+            className="px-4 sm:px-6 md:px-2 py-6 sm:py-2 mx-auto w-full overflow-x-hidden"
           >
             {extractedBrandVoice ? (
               <WorkspaceBrandVoiceForm
