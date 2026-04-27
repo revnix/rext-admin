@@ -198,7 +198,7 @@ export function WorkspaceBrandVoiceForm({
             className="w-full overflow-x-hidden"
           >
             {/* Improved Tabs List */}
-            <div className="mb-8 pb-4 border-b border-border/50 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="mb-8 pb-4 border-b border-border/50 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
               <TabsList
                 ref={tabsListRef}
                 className="inline-flex gap-1 bg-transparent p-0 justify-start w-full min-w-max"
@@ -393,7 +393,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden scrollbar-hide max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -405,10 +405,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "brand_voice",
-                                      index,
-                                    )
+                                    removeItem("brand_voice", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -487,7 +484,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden scrollbar-hide max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -499,10 +496,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "content_strategy",
-                                      index,
-                                    )
+                                    removeItem("content_strategy", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -578,7 +572,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden scrollbar-hide max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -590,10 +584,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "competitors",
-                                      index,
-                                    )
+                                    removeItem("competitors", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -668,7 +659,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden scrollbar-hide max-h-[200px] max-w-full">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -680,10 +671,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "target_audience",
-                                      index,
-                                    )
+                                    removeItem("target_audience", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >

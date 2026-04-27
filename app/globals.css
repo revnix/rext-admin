@@ -1593,12 +1593,45 @@
 
 /* Hide scrollbar while maintaining scroll functionality */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Hide viewport scrollbar while preserving scroll behavior */
+.hide-page-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.hide-page-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* Hide all scrollbars inside review step while preserving scrolling */
+.review-scrollbar-hide,
+.review-scrollbar-hide * {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.review-scrollbar-hide::-webkit-scrollbar,
+.review-scrollbar-hide *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  /* Chrome, Safari, Opera */
 }
 
 /* Shimmer skeleton animation */
@@ -1606,6 +1639,7 @@
   0% {
     background-position: -400px 0;
   }
+
   100% {
     background-position: 400px 0;
   }

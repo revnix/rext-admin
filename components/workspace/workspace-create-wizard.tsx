@@ -302,6 +302,21 @@ export function WorkspaceCreateWizard() {
     }
   }, [currentStep, isConnected, disconnect]);
 
+  // Hide viewport scrollbar in review step while preserving scroll behavior.
+  useEffect(() => {
+    const shouldHidePageScrollbar = currentStep === "review";
+
+    if (shouldHidePageScrollbar) {
+      document.documentElement.classList.add("hide-page-scrollbar");
+      document.body.classList.add("hide-page-scrollbar");
+    }
+
+    return () => {
+      document.documentElement.classList.remove("hide-page-scrollbar");
+      document.body.classList.remove("hide-page-scrollbar");
+    };
+  }, [currentStep]);
+
   // Cleanup SSE connection and clear completed operations on unmount
   useEffect(() => {
     return () => {
@@ -419,7 +434,7 @@ export function WorkspaceCreateWizard() {
           <QuestionCard
             title="Review Brand Voice"
             description="Review and edit the AI-extracted brand information"
-            className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 max-w-5xl mx-auto w-full overflow-x-hidden"
+            className="review-scrollbar-hide px-4 sm:px-6 md:px-8 py-6 sm:py-8 max-w-5xl mx-auto w-full overflow-x-hidden scrollbar-hide"
           >
             {extractedBrandVoice ? (
               <WorkspaceBrandVoiceForm
