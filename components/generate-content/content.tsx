@@ -299,6 +299,9 @@ type PipelineStep = { label: string; status: "pending" | "active" | "done" };
 
 type ContentEditorProps = {
   contentId?: string;
+  isEnhancing?: boolean;
+  enhancingMsg?: string;
+  enhancingDescription?: string;
   allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
   trustScore: TrustScore | null;
@@ -318,6 +321,9 @@ type ContentEditorProps = {
 function ContentEditorInner(props: ContentEditorProps) {
   const {
     contentId,
+    isEnhancing,
+    enhancingMsg,
+    enhancingDescription,
     allContent,
     readabilityScore,
     trustScore,
@@ -1139,6 +1145,18 @@ function ContentEditorInner(props: ContentEditorProps) {
                         toolbarClass="top-0 z-50"
                       />
                     </>
+                  )}
+                  {!isFinal && isEnhancing && (
+                    <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
+                      <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
+                        <div className="text-sm font-semibold text-foreground">
+                          {enhancingMsg}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {enhancingDescription}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

@@ -198,7 +198,7 @@ export function WorkspaceBrandVoiceForm({
             className="w-full overflow-x-hidden"
           >
             {/* Improved Tabs List */}
-           <TabsList
+            <TabsList
               ref={tabsListRef}
               className="w-full bg-input justify-start overflow-x-auto"
             >
@@ -396,10 +396,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "brand_voice",
-                                      index,
-                                    )
+                                    removeItem("brand_voice", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -490,10 +487,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "content_strategy",
-                                      index,
-                                    )
+                                    removeItem("content_strategy", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -581,10 +575,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "competitors",
-                                      index,
-                                    )
+                                    removeItem("competitors", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >
@@ -671,10 +662,7 @@ export function WorkspaceBrandVoiceForm({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    removeItem(
-                                      "target_audience",
-                                      index,
-                                    )
+                                    removeItem("target_audience", index)
                                   }
                                   className="ml-0.5 hover:opacity-70 transition-opacity"
                                 >

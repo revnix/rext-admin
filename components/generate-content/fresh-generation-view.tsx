@@ -8,15 +8,14 @@ import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indica
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
+  CommonOutput,
   ContentOutline,
   ContentSection,
   FinalContent,
-  ReadabilityMetrics,
+  NodeOutput,
   ResumeOptions,
   RunStreamEvent,
-  SEORESULT,
   StreamUpdates,
-  TrustScore,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
@@ -336,9 +335,9 @@ export function FreshGenerationView({
     }
   }, [seoResult?.intent, selectedIntent]);
 
-  const [, setIsEnhancing] = useState(false);
-  const [, setEnhancingMsg] = useState("Enhancing content...");
-  const [, setEnhancingDescription] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  const [enhancingDescription, setEnhancingDescription] = useState("");
 
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
@@ -645,31 +644,7 @@ export function FreshGenerationView({
         }
 
         // Centralized handling for nodes that emit content updates
-        interface CommonOutput {
-          final_content?: FinalContent;
-          outline?: ContentOutline;
-          review?: {
-            on_page_metrics?: SEORESULT;
-            trust_score?: TrustScore;
-            readability_metrics?: ReadabilityMetrics;
-          };
-        }
-        interface NodeOutput {
-          content?: CommonOutput;
-          review_outline?: {
-            content?: {
-              outline?: ContentOutline;
-            };
-          };
-          generate_content?: { content?: CommonOutput };
-          humanize_content?: { content?: CommonOutput };
-          inject_eeat?: { content?: CommonOutput };
-          review_content?: { content?: CommonOutput };
-          calculate_readability?: { content?: CommonOutput };
-          calculate_on_page_seo?: { content?: CommonOutput };
-          calculate_eeat_trust?: { content?: CommonOutput };
-          content_engine?: { content?: CommonOutput };
-        }
+
         const u = updates as unknown as NodeOutput;
         const nodeOutputs = [
           u.content,
@@ -1124,6 +1099,9 @@ export function FreshGenerationView({
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
             }
+            isEnhancing={isEnhancing}
+            enhancingMsg={enhancingMsg}
+            enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}
             seoScore={seoScore}
             trustScore={trustScore}

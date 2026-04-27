@@ -868,3 +868,29 @@ export interface StoreItem {
   key: string;
   namespace: string[];
 }
+
+export interface CommonOutput {
+  final_content?: FinalContent;
+  outline?: ContentOutline;
+  review?: {
+    on_page_metrics?: SEORESULT;
+    trust_score?: TrustScore;
+    readability_metrics?: ReadabilityMetrics;
+  };
+}
+export interface NodeOutput {
+  content?: CommonOutput;
+  review_outline?: {
+    content?: {
+      outline?: ContentOutline;
+    };
+  };
+  generate_content?: { content?: CommonOutput };
+  humanize_content?: { content?: CommonOutput };
+  inject_eeat?: { content?: CommonOutput };
+  review_content?: { content?: CommonOutput };
+  calculate_readability?: { content?: CommonOutput };
+  calculate_on_page_seo?: { content?: CommonOutput };
+  calculate_eeat_trust?: { content?: CommonOutput };
+  content_engine?: { content?: CommonOutput };
+}
