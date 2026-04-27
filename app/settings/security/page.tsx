@@ -341,7 +341,7 @@ export default function SecuritySettingsPage() {
         <TabsContent value="sessions" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle>Active Sessions</CardTitle>
                   <CardDescription>
@@ -425,7 +425,7 @@ export default function SecuritySettingsPage() {
                   <div className="space-y-3">
                     {otherSessions.map((session) => (
                       <div key={session.id} className="rounded-lg border p-4">
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                           <div className="flex items-start gap-4">
                             <div className="rounded-full bg-muted p-2">
                               {getDeviceIcon(session.device_type)}

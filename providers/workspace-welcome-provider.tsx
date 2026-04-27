@@ -57,9 +57,24 @@ export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
       return undefined;
     }
 
-    // Check for welcome modal data in sessionStorage
-    const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(currentWorkspace.id);
-    const data = session.getJSON<WelcomeData | null>(welcomeKey, null);
+    // Check for welcome modal data in sessionStorage.
+    // Fallback to workspace slug key to handle id format mismatches across flows.
+    const welcomeKeys = [
+      ONBOARDING_STORAGE_KEYS.welcomeData(String(currentWorkspace.id)),
+      ONBOARDING_STORAGE_KEYS.welcomeData(String(currentWorkspace.slug)),
+    ];
+
+    let data: WelcomeData | null = null;
+    let matchedKey: string | null = null;
+
+    for (const key of welcomeKeys) {
+      const candidate = session.getJSON<WelcomeData | null>(key, null);
+      if (candidate) {
+        data = candidate;
+        matchedKey = key;
+        break;
+      }
+    }
 
     if (data) {
       setWelcomeData(data);
@@ -70,7 +85,13 @@ export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
       }, MODAL_DELAYS.INVITED_USER);
 
       // Clear from sessionStorage so it only shows once
-      session.remove(welcomeKey);
+      if (matchedKey) {
+        session.remove(matchedKey);
+      }
+      // Also clear both canonical keys to avoid stale payloads.
+      for (const key of welcomeKeys) {
+        session.remove(key);
+      }
 
       return () => clearTimeout(timer);
     }
@@ -132,8 +153,17 @@ export function storeWelcomeData(data: {
   roleName: string;
   rolePermissions?: string[];
 }): void {
-  const welcomeKey = ONBOARDING_STORAGE_KEYS.welcomeData(data.workspace.id);
-  session.setJSON(welcomeKey, data);
+  const welcomeIdKey = ONBOARDING_STORAGE_KEYS.welcomeData(
+    String(data.workspace.id),
+  );
+  const welcomeSlugKey = ONBOARDING_STORAGE_KEYS.welcomeData(
+    String(data.workspace.slug),
+  );
+
+  session.setJSON(welcomeIdKey, data);
+  if (welcomeSlugKey !== welcomeIdKey) {
+    session.setJSON(welcomeSlugKey, data);
+  }
 }
 
 /** @deprecated Use WorkspaceWelcomeGate */

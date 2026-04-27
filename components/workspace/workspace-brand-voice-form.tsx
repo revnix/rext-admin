@@ -185,65 +185,90 @@ export function WorkspaceBrandVoiceForm({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 w-full max-w-6xl mx-auto overflow-x-hidden">
       {/* Brand Voice Form Card */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-8 w-full"
+        >
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as TabValue)}
-            className="w-full"
+            className="w-full overflow-x-hidden"
           >
+            {/* Improved Tabs List */}
             <TabsList
               ref={tabsListRef}
-              className="mb-8 w-full border-b justify-start overflow-x-auto"
+              className="w-full bg-input justify-start overflow-x-auto"
             >
-              <TabsTrigger value="info">
+              <TabsTrigger
+                value="info"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Building2 className="w-4 h-4" />
                 Brand Information
               </TabsTrigger>
-              <TabsTrigger value="voice">
+              <TabsTrigger
+                value="voice"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <MessageSquare className="w-4 h-4" />
                 Brand Voice
               </TabsTrigger>
-              <TabsTrigger value="strategy">
+              <TabsTrigger
+                value="strategy"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <BookOpen className="w-4 h-4" />
                 Content Strategy
               </TabsTrigger>
-              <TabsTrigger value="competitors">
+              <TabsTrigger
+                value="competitors"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Swords className="w-4 h-4" />
                 Competitors
               </TabsTrigger>
-              <TabsTrigger value="audience">
+              <TabsTrigger
+                value="audience"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Target className="w-4 h-4" />
                 Target Audience
               </TabsTrigger>
-              <TabsTrigger value="personas">
+              <TabsTrigger
+                value="personas"
+                className="bg-white dark:bg-card w-full ml-0 border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+              >
                 <Users className="w-4 h-4" />
                 Personas
               </TabsTrigger>
             </TabsList>
-
             {/* Brand Information Tab */}
-            <TabsContent value="info" className="space-y-6">
+            <TabsContent value="info" className="space-y-6 py-6">
               {/* About Field */}
               <FormField
                 control={form.control}
                 name="about"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>About Your Brand</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        About Your Brand
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        A concise overview of what your brand does
+                      </FormDescription>
+                    </div>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Brief description of your company or brand"
+                        placeholder="Brief description of your company or brand. Example: We provide enterprise software solutions for data management..."
                         rows={3}
-                        className="resize-none"
+                        className="resize-none bg-background/50 border-border focus:bg-background transition-colors break-words whitespace-pre-wrap word-break"
                       />
                     </FormControl>
-                    <FormDescription>
-                      A concise overview of what your brand does
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -254,20 +279,27 @@ export function WorkspaceBrandVoiceForm({
                 control={form.control}
                 name="customer_profile"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Profile (Optional)</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Customer Profile{" "}
+                        <span className="text-muted-foreground font-normal">
+                          (Optional)
+                        </span>
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        Details about your target customer demographics and
+                        characteristics
+                      </FormDescription>
+                    </div>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Describe your ideal customer"
+                        placeholder="Describe your ideal customer. Example: Mid-size businesses with 50-500 employees..."
                         rows={2}
-                        className="resize-none"
+                        className="resize-none bg-background/50 border-border focus:bg-background transition-colors break-words whitespace-pre-wrap word-break"
                       />
                     </FormControl>
-                    <FormDescription>
-                      Details about your target customer demographics and
-                      characteristics
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -278,19 +310,23 @@ export function WorkspaceBrandVoiceForm({
                 control={form.control}
                 name="selling_position"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Selling Position</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Unique Selling Position
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        What makes your brand unique in the market
+                      </FormDescription>
+                    </div>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Your unique value proposition"
+                        placeholder="Your unique value proposition. Example: We offer the fastest deployment time with 99.9% uptime guarantee..."
                         rows={2}
-                        className="resize-none"
+                        className="resize-none bg-background/50 border-border focus:bg-background transition-colors break-words whitespace-pre-wrap word-break"
                       />
                     </FormControl>
-                    <FormDescription>
-                      What makes your brand unique in the market
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -298,15 +334,24 @@ export function WorkspaceBrandVoiceForm({
             </TabsContent>
 
             {/* Brand Voice Tab */}
-            <TabsContent value="voice" className="space-y-6">
+            <TabsContent value="voice" className="space-y-6 py-6">
               <FormField
                 control={form.control}
                 name="brand_voice"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand Voice Characteristics</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Brand Voice Characteristics
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        Words that describe your communication style (e.g.,
+                        Professional, Friendly, Technical)
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                        {/* Input Section */}
                         <div className="flex gap-2">
                           <div className="flex-1 min-w-0">
                             <Input
@@ -321,7 +366,8 @@ export function WorkspaceBrandVoiceForm({
                                   setBrandVoiceInput("");
                                 }
                               }}
-                              placeholder="e.g., Professional"
+                              placeholder="Type a characteristic and press Enter or click Add"
+                              className="bg-background/50 border-border focus:bg-background transition-colors"
                             />
                           </div>
                           <Button
@@ -331,33 +377,41 @@ export function WorkspaceBrandVoiceForm({
                               addItem("brand_voice", brandVoiceInput);
                               setBrandVoiceInput("");
                             }}
+                            className="bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary hover:text-primary font-medium"
                           >
                             Add
                           </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="default"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() => removeItem("brand_voice", index)}
-                                className="ml-1 hover:text-destructive-foreground"
+
+                        {/* Badges Container */}
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                          {field.value && field.value.length > 0 ? (
+                            field.value.map((item, index) => (
+                              <Badge
+                                key={item}
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
+                                {item}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeItem("brand_voice", index)
+                                  }
+                                  className="ml-0.5 hover:opacity-70 transition-opacity"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No characteristics added yet
+                            </p>
+                          )}
                         </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      Words that describe your communication style
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -365,15 +419,27 @@ export function WorkspaceBrandVoiceForm({
             </TabsContent>
 
             {/* Content Strategy Tab */}
-            <TabsContent value="strategy" className="space-y-6">
+            <TabsContent value="strategy" className="space-y-6 py-6">
               <FormField
                 control={form.control}
                 name="content_strategy"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Content Strategy (Optional)</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Content Strategy{" "}
+                        <span className="text-muted-foreground font-normal">
+                          (Optional)
+                        </span>
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        Key themes or pillars for your content (e.g.,
+                        Educational, Thought Leadership)
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                        {/* Input Section */}
                         <div className="flex gap-2">
                           <div className="flex-1 min-w-0">
                             <Input
@@ -391,7 +457,8 @@ export function WorkspaceBrandVoiceForm({
                                   setContentStrategyInput("");
                                 }
                               }}
-                              placeholder="e.g., Educational"
+                              placeholder="Type a content pillar and press Enter or click Add"
+                              className="bg-background/50 border-border focus:bg-background transition-colors"
                             />
                           </div>
                           <Button
@@ -401,35 +468,41 @@ export function WorkspaceBrandVoiceForm({
                               addItem("content_strategy", contentStrategyInput);
                               setContentStrategyInput("");
                             }}
+                            className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                           >
                             Add
                           </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="secondary"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("content_strategy", index)
-                                }
-                                className="ml-1 hover:text-destructive"
+
+                        {/* Badges Container */}
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                          {field.value && field.value.length > 0 ? (
+                            field.value.map((item, index) => (
+                              <Badge
+                                key={item}
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
+                                {item}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeItem("content_strategy", index)
+                                  }
+                                  className="ml-0.5 hover:opacity-70 transition-opacity"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No content pillars added yet
+                            </p>
+                          )}
                         </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      Key themes or pillars for your content
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -437,15 +510,27 @@ export function WorkspaceBrandVoiceForm({
             </TabsContent>
 
             {/* Competitors Tab */}
-            <TabsContent value="competitors" className="space-y-6">
+            <TabsContent value="competitors" className="space-y-6 py-6">
               <FormField
                 control={form.control}
                 name="competitors"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Competitors (Optional)</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Competitors{" "}
+                        <span className="text-muted-foreground font-normal">
+                          (Optional)
+                        </span>
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        List your main competitors to help define your market
+                        position
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                        {/* Input Section */}
                         <div className="flex gap-2">
                           <div className="flex-1 min-w-0">
                             <Input
@@ -460,7 +545,8 @@ export function WorkspaceBrandVoiceForm({
                                   setCompetitorsInput("");
                                 }
                               }}
-                              placeholder="e.g., Competitor Name"
+                              placeholder="Enter competitor name and press Enter or click Add"
+                              className="bg-background/50 border-border focus:bg-background transition-colors"
                             />
                           </div>
                           <Button
@@ -470,33 +556,41 @@ export function WorkspaceBrandVoiceForm({
                               addItem("competitors", competitorsInput);
                               setCompetitorsInput("");
                             }}
+                            className="bg-purple-50 hover:bg-purple-100 dark:bg-purple-950 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
                           >
                             Add
                           </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="outline"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() => removeItem("competitors", index)}
-                                className="ml-1 hover:text-destructive"
+
+                        {/* Badges Container */}
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                          {field.value && field.value.length > 0 ? (
+                            field.value.map((item, index) => (
+                              <Badge
+                                key={item}
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
+                                {item}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeItem("competitors", index)
+                                  }
+                                  className="ml-0.5 hover:opacity-70 transition-opacity"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No competitors added yet
+                            </p>
+                          )}
                         </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      List your main competitors
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -504,15 +598,23 @@ export function WorkspaceBrandVoiceForm({
             </TabsContent>
 
             {/* Target Audience Tab */}
-            <TabsContent value="audience" className="space-y-6">
+            <TabsContent value="audience" className="space-y-6 py-6">
               <FormField
                 control={form.control}
                 name="target_audience"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Audience</FormLabel>
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Target Audience
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        Add one or more audience segments you want to reach
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                        {/* Input Section */}
                         <div className="flex gap-2">
                           <div className="flex-1 min-w-0">
                             <Input
@@ -530,7 +632,8 @@ export function WorkspaceBrandVoiceForm({
                                   setTargetAudienceInput("");
                                 }
                               }}
-                              placeholder="e.g., Small Business Owners"
+                              placeholder="e.g., Small Business Owners, Startups, Enterprises"
+                              className="bg-background/50 border-border focus:bg-background transition-colors"
                             />
                           </div>
                           <Button
@@ -540,35 +643,41 @@ export function WorkspaceBrandVoiceForm({
                               addItem("target_audience", targetAudienceInput);
                               setTargetAudienceInput("");
                             }}
+                            className="bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:text-green-700 dark:hover:text-green-300 font-medium"
                           >
                             Add
                           </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value?.map((item, index) => (
-                            <Badge
-                              key={item}
-                              variant="secondary"
-                              className="gap-1"
-                            >
-                              {item}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  removeItem("target_audience", index)
-                                }
-                                className="ml-1 hover:text-destructive"
+
+                        {/* Badges Container */}
+                        <div className="bg-background/30 border border-border/50 rounded-lg p-4 min-h-[60px] flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-[200px] max-w-full">
+                          {field.value && field.value.length > 0 ? (
+                            field.value.map((item, index) => (
+                              <Badge
+                                key={item}
+                                variant="default"
+                                className="gap-2 px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
+                                {item}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeItem("target_audience", index)
+                                  }
+                                  className="ml-0.5 hover:opacity-70 transition-opacity"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No audience segments added yet
+                            </p>
+                          )}
                         </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      Add one or more audience segments
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -576,11 +685,11 @@ export function WorkspaceBrandVoiceForm({
             </TabsContent>
 
             {/* Personas Tab */}
-            <TabsContent value="personas" className="space-y-6">
+            <TabsContent value="personas" className="space-y-6 py-6">
               {workspaceId && onPersonaSelect && (
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">
+                <div className="space-y-4">
+                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
                       Select Persona (Optional)
                     </h4>
                     <p className="text-sm text-muted-foreground">
@@ -597,7 +706,10 @@ export function WorkspaceBrandVoiceForm({
               )}
 
               {data.personas && data.personas.length > 0 && (
-                <div className="pt-4 border-t">
+                <div className="pt-4 border-t border-border/50">
+                  <h4 className="text-sm font-semibold text-foreground mb-4">
+                    Associated Personas
+                  </h4>
                   <PersonasGrid personas={data.personas} />
                 </div>
               )}
@@ -605,18 +717,19 @@ export function WorkspaceBrandVoiceForm({
           </Tabs>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 mt-4 border-t">
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 items-center justify-between pt-8 mt-8 border-t border-border/50 -mx-6  px-6 py-6 rounded-b-lg">
+            {/* Navigation Buttons */}
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 type="button"
                 variant="ghost"
                 size="lg"
                 onClick={handlePrev}
                 disabled={activeTab === TABS[0]}
-                className="flex-1 sm:flex-none gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="flex-1 sm:flex-none gap-2 text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all disabled:opacity-50"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back
+                <span className="hidden sm:inline">Back</span>
               </Button>
               <Button
                 type="button"
@@ -624,28 +737,29 @@ export function WorkspaceBrandVoiceForm({
                 size="lg"
                 onClick={handleNext}
                 disabled={activeTab === TABS[TABS.length - 1]}
-                className="flex-1 sm:flex-none gap-2 hover:bg-secondary/80 transition-all font-medium"
+                className="flex-1 sm:flex-none gap-2 font-medium transition-all disabled:opacity-50"
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
+            {/* Save Button */}
             <Button
               type="submit"
               disabled={isLoading}
               size="lg"
-              className="w-full sm:w-auto min-w-[180px] gap-2 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] bg-primary text-primary-foreground font-semibold"
+              className="w-full sm:w-auto min-w-[200px] gap-2.5 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving Changes...
+                  <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  Save & Finish
-                  <Sparkles className="h-4 w-4 fill-primary-foreground/20" />
+                  <Sparkles className="h-4.5 w-4.5 fill-primary-foreground/30" />
+                  <span>Save & Finish</span>
                 </>
               )}
             </Button>

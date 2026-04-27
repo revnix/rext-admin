@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,8 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -34,10 +37,50 @@ function ResetPasswordForm() {
   const {
     register,
     handleSubmit,
+    watch,
+    clearErrors,
+    setError: setFieldError,
     formState: { errors },
   } = useForm<ResetPasswordData>({
     resolver: zodResolver(resetPasswordSchema),
   });
+
+  const passwordValue = watch("password") || "";
+  const confirmPasswordValue = watch("confirmPassword") || "";
+
+  useEffect(() => {
+    if (!confirmPasswordValue) {
+      clearErrors("confirmPassword");
+      return;
+    }
+
+    if (passwordValue !== confirmPasswordValue) {
+      setFieldError("confirmPassword", {
+        type: "manual",
+        message: "Passwords don't match",
+      });
+      return;
+    }
+
+    clearErrors("confirmPassword");
+  }, [clearErrors, confirmPasswordValue, passwordValue, setFieldError]);
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { label: "", color: "" };
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { label: "Weak", color: "text-red-500" };
+    if (score <= 4) return { label: "Fair", color: "text-yellow-500" };
+    return { label: "Strong", color: "text-green-500" };
+  };
+
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   const onSubmit = async (data: ResetPasswordData) => {
     if (!token) {
@@ -132,13 +175,42 @@ function ResetPasswordForm() {
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
                   <Label htmlFor="password">New Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter new password"
-                    {...register("password")}
-                    disabled={isLoading || success}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter new password"
+                      className="pr-10"
+                      {...register("password")}
+                      disabled={isLoading || success}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordValue && (
+                    <p className="text-sm text-muted-foreground">
+                      Password strength:{" "}
+                      <span className={passwordStrength.color}>
+                        {passwordStrength.label}
+                      </span>
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Must be at least 8 characters with uppercase, lowercase,
+                    number, and special character.
+                  </p>
                   {errors.password && (
                     <p className="text-sm text-red-600">
                       {errors.password.message}
@@ -147,13 +219,30 @@ function ResetPasswordForm() {
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Confirm new password"
-                    {...register("confirmPassword")}
-                    disabled={isLoading || success}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm new password"
+                      className="pr-10"
+                      {...register("confirmPassword")}
+                      disabled={isLoading || success}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={
+                        showConfirmPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
                     <p className="text-sm text-red-600">
                       {errors.confirmPassword.message}

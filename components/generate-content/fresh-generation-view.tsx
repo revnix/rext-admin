@@ -8,21 +8,21 @@ import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indica
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
+  CommonOutput,
   ContentOutline,
   ContentSection,
   FinalContent,
-  ReadabilityMetrics,
+  NodeOutput,
   ResumeOptions,
   RunStreamEvent,
-  SEORESULT,
   StreamUpdates,
-  TrustScore,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
   INITIAL_ANALYSIS_STEPS,
   KEYWORD_SELECTION_STEPS,
   TOPIC_GENERATION_STEPS,
+  TOPIC_REGENERATION_STEPS,
   CONTENT_TYPE_STEPS,
   FINAL_GENERATION_STEPS,
 } from "@/constants/loading-steps";
@@ -36,6 +36,7 @@ import {
 } from "@/components/generate-content/outline";
 import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
+import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -116,6 +117,9 @@ const htmlToMarkdownLite = (html: string) => {
       .replace(/<ol[^>]*>/gi, "\n")
       .replace(/<\/ol>/gi, "\n")
       .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
+      // Links
+      .replace(/<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+      .replace(/<a[^>]*href='([^']+)'[^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
       // Inline formatting
       .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
       .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
@@ -251,16 +255,15 @@ export function FreshGenerationView({
   });
 
   const showOutlineReview =
-    instructionType !== "outline_reject" &&
-    instructionType !== "content" &&
-    tokenTarget !== "content" &&
-    (outline.streamedText.length > 0 || !!parsedOutline);
+    instructionType === "outline_review" && tokenTarget !== "content";
 
   const showContentStream =
     instructionType === "content" ||
     tokenTarget === "content" ||
     content.streamedText.length > 0 ||
     !!allContent;
+
+  const isStreamingOutline = tokenTarget === "outline" && !parsedOutline;
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
@@ -332,12 +335,9 @@ export function FreshGenerationView({
     }
   }, [seoResult?.intent, selectedIntent]);
 
-  const [, setIsEnhancing] = useState(false);
-  const [, setEnhancingMsg] = useState("Enhancing content...");
-  const [, setEnhancingDescription] = useState("");
-
-  // ── Humanizing overlay state ──────────────────────────────────────────────
-  const [isHumanizing, setIsHumanizing] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  const [enhancingDescription, setEnhancingDescription] = useState("");
 
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
@@ -399,7 +399,7 @@ export function FreshGenerationView({
         const finalContent = parsed?.final_content || parsed;
         dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
         dispatch({ type: "SET_GENERATED_CONTENT", payload: body });
-        setTokenTarget("none");
+        setTokenTarget("outline");
         tokenTargetRef.current = "none";
       } catch {
         // Not valid JSON yet
@@ -549,7 +549,6 @@ export function FreshGenerationView({
             const name = String(d.name ?? "");
             const query = String(d.query ?? "");
             if (name === "humanize_content") {
-              setIsHumanizing(true);
               advancePipeline("Humanizing");
             }
             if (id) {
@@ -563,12 +562,8 @@ export function FreshGenerationView({
             }
           } else if (d?.type === "tool_end") {
             const id = String(d.id ?? "");
-            const name = String(d.name ?? "");
             const count = Number(d.count ?? 0);
             const output = d.output ? String(d.output) : undefined;
-            if (name === "humanize_content") {
-              setIsHumanizing(false);
-            }
             if (id) {
               setToolCalls((prev) =>
                 prev.map((tc) =>
@@ -592,6 +587,7 @@ export function FreshGenerationView({
 
         // ── updates|* — fully parsed objects ──────────────────────────────────
         const updates = chunk.data as StreamUpdates;
+        // console.log("Received updates:", updates);
 
         // generate_outline uses structured output (ainvoke) — no streaming tokens.
         // Extract the outline from the node update so it can be shown before the interrupt fires.
@@ -648,31 +644,7 @@ export function FreshGenerationView({
         }
 
         // Centralized handling for nodes that emit content updates
-        interface CommonOutput {
-          final_content?: FinalContent;
-          outline?: ContentOutline;
-          review?: {
-            on_page_metrics?: SEORESULT;
-            trust_score?: TrustScore;
-            readability_metrics?: ReadabilityMetrics;
-          };
-        }
-        interface NodeOutput {
-          content?: CommonOutput;
-          review_outline?: {
-            content?: {
-              outline?: ContentOutline;
-            };
-          };
-          generate_content?: { content?: CommonOutput };
-          humanize_content?: { content?: CommonOutput };
-          inject_eeat?: { content?: CommonOutput };
-          review_content?: { content?: CommonOutput };
-          calculate_readability?: { content?: CommonOutput };
-          calculate_on_page_seo?: { content?: CommonOutput };
-          calculate_eeat_trust?: { content?: CommonOutput };
-          content_engine?: { content?: CommonOutput };
-        }
+
         const u = updates as unknown as NodeOutput;
         const nodeOutputs = [
           u.content,
@@ -869,6 +841,10 @@ export function FreshGenerationView({
         // Clear topics and stale outline to provide visual indicator of regeneration
         dispatch({ type: "SET_TOPICS", payload: [] });
         dispatch({ type: "SET_OUTLINE", payload: null });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: TOPIC_REGENERATION_STEPS,
+        });
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
           status: "Regenerating topics...",
@@ -907,15 +883,20 @@ export function FreshGenerationView({
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
-        setTokenTarget("none");
-        tokenTargetRef.current = "none";
+        setTokenTarget("outline");
+        tokenTargetRef.current = "outline";
+        outline.resetStream();
+        dispatch({ type: "SET_OUTLINE", payload: null });
+        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         return resumeWorkflow({ payload: { action: "reject" } });
       case "OUTLINE_REJECT_REASON":
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
         outline.resetStream();
+        dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         dispatch({ type: "SUBMIT_REJECT_REASON" });
+
         return resumeWorkflow({ payload: { reason: value } });
       default: {
         const _never: never = step;
@@ -932,11 +913,16 @@ export function FreshGenerationView({
     instructionType === "topic_selection" ||
     instructionType === "keyword Selection";
 
+  const isRegeneratingTopics =
+    isManualLoading &&
+    (instructionType === "topic" || instructionType === "topic_selection") &&
+    topics.length === 0;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
     !showContentStream &&
-    !(isLibrary && isTopicLoading)
+    (isRegeneratingTopics || !(isLibrary && isTopicLoading))
   ) {
     return (
       <div
@@ -985,18 +971,6 @@ export function FreshGenerationView({
         keyword={primaryKeyword}
       />
     ),
-    topic_selection: (
-      <TopicsSection
-        instruction={displayedInstruction}
-        topics={topics}
-        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
-        onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
-        isRegenerating={
-          isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
-        }
-        keyword={primaryKeyword}
-      />
-    ),
     content_type: (
       <ContentType
         instruction={displayedInstruction}
@@ -1019,16 +993,63 @@ export function FreshGenerationView({
     ),
   };
 
+  const WORKFLOW_STEPS = [
+    { id: "keyword", label: "Search Keyword" },
+    { id: "keyword Selection", label: "Select Keyword" },
+    { id: "topic", label: "Topic Selection" },
+    { id: "content_type", label: "Type" },
+    { id: "outline_review", label: "Outline" },
+    { id: "content", label: "Article" },
+  ];
+
+  const activeStepIndex = (() => {
+    if (instructionType === "keyword") return 0;
+    if (instructionType === "keyword Selection") return 1;
+    if (instructionType === "topic" || instructionType === "topic_selection")
+      return 2;
+    if (instructionType === "content_type") return 3;
+    if (
+      instructionType === "outline_review" ||
+      instructionType === "outline_reject"
+    )
+      return 4;
+    if (instructionType === "content") return 5;
+    return 5;
+  })();
+
   return (
     <div className="relative">
       <div
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700",
+          "max-w-3xl mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
           instructionType === "keyword"
-            ? "min-h-[70vh] justify-center"
-            : "min-h-0",
+            ? "min-h-[70vh]"
+            : !showContentStream
+              ? "min-h-[85vh]"
+              : "min-h-0",
+          instructionType === "outline_review"
+            ? "justify-start"
+            : " justify-center",
         )}
       >
+        {/* Persistent workflow step indicator */}
+        {!showContentStream && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className={cn(
+              "mt-5",
+              activeStepIndex === 0 ? "mx-auto" : "mr-auto",
+            )}
+          >
+            <WorkflowStepIndicator
+              steps={WORKFLOW_STEPS}
+              activeStepIndex={activeStepIndex}
+            />
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           {instructionType === "keyword" && <HeroSection />}
         </AnimatePresence>
@@ -1054,11 +1075,11 @@ export function FreshGenerationView({
         </motion.div>
 
         {showOutlineReview ? (
-          <div className="w-full">
+          <div className="w-full mt-0">
             <OutlineDisplay
               outline={parsedOutline}
               rawTokens={outline.streamedText}
-              isLoading={isLoading || isManualLoading}
+              isLoading={isStreamingOutline}
               onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
               onUpdate={(updatedOutline) =>
@@ -1067,7 +1088,7 @@ export function FreshGenerationView({
             />
           </div>
         ) : (
-          instructionViewMap[instructionType]
+          <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
       </div>
 
@@ -1078,6 +1099,9 @@ export function FreshGenerationView({
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
             }
+            isEnhancing={isEnhancing}
+            enhancingMsg={enhancingMsg}
+            enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}
             seoScore={seoScore}
             trustScore={trustScore}
@@ -1089,7 +1113,6 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
-            isHumanizing={isHumanizing}
             onEditToggle={() =>
               dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
             }

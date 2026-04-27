@@ -988,6 +988,46 @@ function NewTabLinkPlugin() {
   return null;
 }
 // ---------------------------------------------------------------------------
+// ReadOnlyLinkClickPlugin — intercepts link clicks via DOM when editor is readonly
+// (editor.update() is blocked in readonly mode, so we can't mutate node targets)
+// ---------------------------------------------------------------------------
+function ReadOnlyLinkClickPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    let removeListener: (() => void) | null = null;
+
+    const unregister = editor.registerRootListener(
+      (rootElement, prevRootElement) => {
+        if (prevRootElement && removeListener) {
+          removeListener();
+          removeListener = null;
+        }
+        if (rootElement) {
+          const handleClick = (e: MouseEvent) => {
+            const anchor = (e.target as HTMLElement).closest("a");
+            if (anchor?.href) {
+              e.preventDefault();
+              window.open(anchor.href, "_blank", "noopener,noreferrer");
+            }
+          };
+          rootElement.addEventListener("click", handleClick);
+          removeListener = () =>
+            rootElement.removeEventListener("click", handleClick);
+        }
+      },
+    );
+
+    return () => {
+      unregister();
+      removeListener?.();
+    };
+  }, [editor]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 function MarkdownUpdatePlugin({
   markdown,
   shouldUpdate,
@@ -1203,6 +1243,7 @@ export default function LexicalEditor({
             />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
             <NewTabLinkPlugin />
+            {readOnly && <ReadOnlyLinkClickPlugin />}
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>
         </div>

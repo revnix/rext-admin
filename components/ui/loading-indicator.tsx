@@ -207,7 +207,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     return (
       <div
         className={cn(
-          "w-full border border-border/40 rounded-2xl overflow-hidden bg-card",
+          "w-full border border-border/40 rounded-xl overflow-hidden bg-card",
           props.className,
         )}
       >

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,25 @@ export function ChangePasswordForm() {
   };
 
   const newPassword = form.watch("newPassword");
+  const confirmPassword = form.watch("confirmPassword");
   const passwordStrength = getPasswordStrength(newPassword);
+
+  useEffect(() => {
+    if (!confirmPassword) {
+      form.clearErrors("confirmPassword");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      form.setError("confirmPassword", {
+        type: "manual",
+        message: "Passwords do not match",
+      });
+      return;
+    }
+
+    form.clearErrors("confirmPassword");
+  }, [confirmPassword, form, newPassword]);
 
   return (
     <Form {...form}>

@@ -1,7 +1,6 @@
 import type { Outline, ContentSection } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { motion } from "framer-motion";
 import {
   Check,
   X,
@@ -9,7 +8,6 @@ import {
   Mic2,
   Clock,
   ChevronRight,
-  ListChecks,
   MessageSquare,
   Pencil,
   Hash,
@@ -17,18 +15,10 @@ import {
   FileText,
   HelpCircle,
 } from "lucide-react";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
-import { useTypewriter } from "@/hooks/use-typewriter";
-
-// ─── Blinking cursor ──────────────────────────────────────────────────────────
-// Add to globals.css:
-//   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-//   .tw-cursor { animation: blink 0.85s step-end infinite; }
-
-function Cursor() {
-  return <span className="tw-cursor inline-block ml-px text-primary">▋</span>;
-}
+import { Skeleton } from "../ui/skeleton";
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 function extractJsonStringField(raw: string, field: string) {
   // Works even when JSON is incomplete; grabs the latest seen value.
@@ -75,6 +65,56 @@ function extractJsonStringArrayField(raw: string, field: string) {
     .filter((s: unknown) => typeof s === "string" && s.trim().length > 0);
 }
 
+function MetadataSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
+        >
+          <Skeleton className="w-10 h-10 rounded-xl" />
+
+          <div className="flex-1 space-y-2">
+            <Skeleton className="w-20 h-3" />
+            <Skeleton className="w-32 h-4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="relative pl-12">
+          {/* timeline dot */}
+          <Skeleton className="absolute left-0 top-1 w-10 h-10 rounded-full" />
+
+          <div className="p-5 rounded-xl border border-border/50 bg-card space-y-4">
+            <div className="flex justify-between items-center">
+              <Skeleton className="w-40 h-5" />
+              <Skeleton className="w-20 h-4" />
+            </div>
+
+            <Skeleton className="w-full h-4" />
+            <Skeleton className="w-5/6 h-4" />
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Skeleton className="h-3" />
+              <Skeleton className="h-3" />
+              <Skeleton className="h-3" />
+              <Skeleton className="h-3" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Section content renderer (handles all content types) ────────────────────
 function SectionContent({ section }: { section: ContentSection }) {
   const items: { label: string; content: string }[] = [];
@@ -83,19 +123,16 @@ function SectionContent({ section }: { section: ContentSection }) {
   if (section.key_points?.length) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {section.key_points.map((point: string, pIdx: number) => (
-          <motion.div
+        {section.key_points.map((point: string) => (
+          <div
             key={point}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.05 + pIdx * 0.05 }}
             className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
           >
             <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
             <span className="text-sm font-medium text-muted-foreground">
               {point}
             </span>
-          </motion.div>
+          </div>
         ))}
       </div>
     );
@@ -393,28 +430,6 @@ function deriveOutlineFromTokens(rawTokens: string): Outline {
   };
 }
 
-// ─── Single field with typewriter ────────────────────────────────────────────
-function TypeField({
-  text,
-  speed = 45,
-  retypeOnChange = false,
-}: {
-  text: string;
-  speed?: number;
-  retypeOnChange?: boolean;
-}) {
-  const { displayed, isDone } = useTypewriter(text, {
-    speed,
-    retypeOnChange,
-  });
-  return (
-    <>
-      {displayed}
-      {!isDone && <Cursor />}
-    </>
-  );
-}
-
 export function OutlineDisplay({
   outline,
   rawTokens, // ← NEW: the accumulating raw JSON string from messages/partial
@@ -435,10 +450,6 @@ export function OutlineDisplay({
   const [tone, setTone] = useState("");
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
-  const [_visiblePointsBySection, setVisiblePointsBySection] = useState<
-    Record<number, number>
-  >({});
-
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -447,95 +458,39 @@ export function OutlineDisplay({
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
 
-  // Header typing completion gates the section reveal for a smoother "one-by-one"
-  const titleTw = useTypewriter(effectiveOutline.title ?? "", {
-    speed: 55,
-    // ChatGPT style: never restart; keep typing forward as text grows
-    retypeOnChange: false,
-  });
-  const briefTw = useTypewriter(effectiveOutline.brief ?? "", {
-    speed: 50,
-    retypeOnChange: false,
-  });
-  const headerDone = !isDraft && titleTw.isDone && briefTw.isDone;
-
-  const startedRef = useRef<Set<string>>(new Set());
-
   useEffect(() => {
-    if (outline) {
-      setTone(outline.tone);
-      setAudience(outline.target_audience?.join(", ") || "");
-      // Reset started set when a fresh outline arrives
-      startedRef.current = new Set();
-    }
-  }, [outline]); // only reset when a genuinely new outline arrives
+    if (!outline) return;
+
+    setTone(outline.tone || "");
+    setAudience(outline.target_audience?.join(", ") || "");
+  }, [outline]);
 
   // Progressive reveal when the *final* outline arrives:
   // - show section cards one-by-one
   // - in the currently revealing section, show key points one-by-one
   useEffect(() => {
-    if (!outline || outline.sections.length === 0) {
+    if (!outline?.sections?.length) {
       setVisibleSectionCount(0);
-      setVisiblePointsBySection({});
-      return;
-    }
-    // Wait until title + brief have typed in before we start revealing sections.
-    if (!headerDone) {
-      setVisibleSectionCount(0);
-      setVisiblePointsBySection({});
       return;
     }
 
     let cancelled = false;
-    const timeouts: number[] = [];
 
-    setVisibleSectionCount(0);
-    setVisiblePointsBySection({});
+    const reveal = async () => {
+      for (let i = 0; i < outline.sections.length; i++) {
+        if (cancelled) return;
 
-    const revealSection = (idx: number) => {
-      if (cancelled) return;
-      setVisibleSectionCount((prev) => Math.max(prev, idx + 1));
-
-      // Reveal points for this section progressively
-      const points = outline.sections[idx]?.key_points ?? [];
-      if (points.length > 0) {
-        setVisiblePointsBySection((prev) => ({ ...prev, [idx]: 0 }));
-        for (let p = 0; p < points.length; p++) {
-          timeouts.push(
-            window.setTimeout(
-              () => {
-                if (cancelled) return;
-                setVisiblePointsBySection((prev) => ({
-                  ...prev,
-                  [idx]: Math.max(prev[idx] ?? 0, p + 1),
-                }));
-              },
-              350 + p * 220,
-            ),
-          );
-        }
-      } else {
-        setVisiblePointsBySection((prev) => ({ ...prev, [idx]: 0 }));
-      }
-
-      // Schedule next section after some time.
-      const nextDelay = 900 + Math.min(points.length, 6) * 220;
-      if (idx + 1 < outline.sections.length) {
-        timeouts.push(
-          window.setTimeout(() => revealSection(idx + 1), nextDelay),
-        );
+        setVisibleSectionCount(i + 1);
+        await wait(180);
       }
     };
 
-    timeouts.push(window.setTimeout(() => revealSection(0), 250));
+    reveal();
 
     return () => {
       cancelled = true;
-      timeouts.forEach((t) => {
-        window.clearTimeout(t);
-      });
     };
-  }, [outline, headerDone]);
+  }, [outline]);
 
   const handleToneSave = () => {
     if (onUpdate && outline) onUpdate({ ...outline, tone });
@@ -555,47 +510,30 @@ export function OutlineDisplay({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="w-full max-w-4xl mx-auto py-8"
-    >
+    <div className="w-full max-w-4xl mx-auto py-3">
       {/* Header */}
       <div className="mb-10 space-y-4">
-        <div className="flex items-center gap-3 mb-2">
-          <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase">
-            Step 05 — Content Outline
-          </p>
-          {isDraft && (
-            <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/50 ml-2">
-              <ListChecks className="w-3.5 h-3.5 animate-pulse" />
-              Generating…
-            </span>
-          )}
-        </div>
-
         <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
-          {titleTw.displayed}
-          {!titleTw.isDone && <Cursor />}
+          {effectiveOutline.title}
         </h2>
 
         <p className="text-[15px] text-muted-foreground leading-relaxed max-w-3xl">
-          {briefTw.displayed}
-          {!briefTw.isDone && <Cursor />}
+          {effectiveOutline.brief}
         </p>
       </div>
 
+      {isDraft && isLoading && (
+        <>
+          <MetadataSkeleton />
+          <SectionSkeleton />
+        </>
+      )}
+
       {/* Metadata Grid (show only after parsed outline arrives) */}
-      {outline && (
+      {!isDraft && outline && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-          >
+          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Mic2 className="w-5 h-5 text-primary" />
             </div>
@@ -633,11 +571,7 @@ export function OutlineDisplay({
               ) : (
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-700 dark:text-white">
-                    <TypeField
-                      text={outline.tone}
-                      speed={60}
-                      retypeOnChange={false}
-                    />
+                    {outline.tone}
                   </p>
                   {canEdit && (
                     <Button
@@ -652,15 +586,10 @@ export function OutlineDisplay({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Audience */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-          >
+          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
             <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
               <Target className="w-5 h-5 text-primary" />
             </div>
@@ -698,11 +627,7 @@ export function OutlineDisplay({
               ) : (
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-foreground truncate">
-                    <TypeField
-                      text={outline.target_audience?.join(", ") || ""}
-                      speed={55}
-                      retypeOnChange={false}
-                    />
+                    {outline.target_audience?.join(", ") || ""}
                   </p>
                   {canEdit && (
                     <Button
@@ -717,16 +642,11 @@ export function OutlineDisplay({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Focus Keyphrase */}
           {outline.focus_keyphrase && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-            >
+            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
               <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
                 <Hash className="w-5 h-5 text-primary" />
               </div>
@@ -735,24 +655,15 @@ export function OutlineDisplay({
                   Focus Keyphrase
                 </p>
                 <p className="text-sm font-bold text-foreground">
-                  <TypeField
-                    text={outline.focus_keyphrase}
-                    speed={55}
-                    retypeOnChange={false}
-                  />
+                  {outline.focus_keyphrase}
                 </p>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Schema Type + Target Word Count */}
           {(outline.schema_type || outline.target_word_count) && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.35 }}
-              className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
-            >
+            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
               <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
                 <FileText className="w-5 h-5 text-primary" />
               </div>
@@ -778,18 +689,13 @@ export function OutlineDisplay({
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Keywords to include */}
           {outline.keywords_to_include &&
             outline.keywords_to_include.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.4 }}
-                className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50"
-              >
+              <div className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50">
                 <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border shrink-0">
                   <Tag className="w-5 h-5 text-primary" />
                 </div>
@@ -808,27 +714,19 @@ export function OutlineDisplay({
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
         </div>
       )}
 
       {/* Sections — each section staggers in and types its own fields */}
       <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
-        {(effectiveOutline.sections?.length ?? 0) > 0
+        {!isDraft && (effectiveOutline.sections?.length ?? 0) > 0
           ? (effectiveOutline.sections ?? [])
-              .slice(
-                0,
-                outline
-                  ? visibleSectionCount
-                  : (effectiveOutline.sections?.length ?? 0),
-              )
+              .slice(0, visibleSectionCount)
               .map((section, idx) => (
-                <motion.div
+                <div
                   key={section.heading || `section-${idx}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + idx * 0.12 }}
                   className="relative pl-12 group"
                 >
                   <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
@@ -840,11 +738,7 @@ export function OutlineDisplay({
                   <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                       <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                        <TypeField
-                          text={section.heading}
-                          speed={55}
-                          retypeOnChange={false}
-                        />
+                        {section.heading}
                       </h3>
                       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
                         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
@@ -855,11 +749,7 @@ export function OutlineDisplay({
                     </div>
 
                     <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
-                      <TypeField
-                        text={section.description}
-                        speed={48}
-                        retypeOnChange={false}
-                      />
+                      {section.description}
                     </p>
 
                     {/* questions_to_answer */}
@@ -889,20 +779,13 @@ export function OutlineDisplay({
                     {/* Section-type specific content */}
                     <SectionContent section={section} />
                   </div>
-                </motion.div>
+                </div>
               ))
           : null}
       </div>
 
       {/* Action Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          delay: 0.3 + (effectiveOutline.sections?.length ?? 0) * 0.12,
-        }}
-        className="mt-10 flex items-center justify-end gap-3"
-      >
+      <div className="mt-10 flex items-center justify-end gap-3">
         <Button
           onClick={onReject}
           disabled={isLoading || isDraft}
@@ -918,8 +801,8 @@ export function OutlineDisplay({
         >
           <Check className="w-4 h-4" /> Approve & Generate
         </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -936,11 +819,7 @@ export function OutlineRejectSection({
   onSubmit: () => void;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="w-full max-w-2xl mx-auto py-12"
-    >
+    <div className="w-full max-w-2xl mx-auto py-3">
       <div className="p-7 rounded-2xl bg-card border border-border/50">
         <div className="flex items-center gap-4 mb-7">
           <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
@@ -971,6 +850,6 @@ export function OutlineRejectSection({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

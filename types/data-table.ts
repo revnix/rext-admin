@@ -228,8 +228,8 @@ export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   href?: string | ((row: T) => string);
   variant?: "default" | "destructive";
   requiresConfirmation?: boolean;
-  confirmationTitle?: string;
-  confirmationDescription?: string;
+  confirmationTitle?: string | ((row: T) => string);
+  confirmationDescription?: string | ((row: T) => string);
   tooltip?: string;
   disabled?: boolean | ((row: T) => boolean);
   showLabel?: boolean;

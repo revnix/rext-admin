@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
@@ -39,6 +39,7 @@ const ITEMS_PER_PAGE = 20;
 
 export function UnifiedActivity() {
   const user = usePermissionUser();
+  const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AuditLogFilters>({
     limit: ITEMS_PER_PAGE,
@@ -63,7 +64,16 @@ export function UnifiedActivity() {
     isLoading: auditLoading,
     error: auditError,
   } = useQuery({
-    queryKey: ["audit-logs", filters],
+    queryKey: [
+      "audit-logs",
+      filters.action ?? null,
+      filters.status ?? null,
+      filters.resource_type ?? null,
+      filters.date_from ?? null,
+      filters.date_to ?? null,
+      filters.limit ?? null,
+      filters.offset ?? null,
+    ],
     queryFn: () =>
       apiClient.auditLogs.getMyLogs({
         action: filters.action,
@@ -146,13 +156,13 @@ export function UnifiedActivity() {
 
   return (
     <Tabs defaultValue="all" className="space-y-6">
-      <div className="flex items-center justify-between">
-        <TabsList>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <TabsList className="w-full md:w-auto justify-start overflow-x-auto">
           <TabsTrigger value="all">All Activity</TabsTrigger>
           <TabsTrigger value="logins">Login History</TabsTrigger>
         </TabsList>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <DownloadAuditLog filters={filters} />
           <Button
             variant={showFilters ? "default" : "outline"}
@@ -282,8 +292,8 @@ export function UnifiedActivity() {
             {logs.length > 0 && (
               <>
                 <Separator />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground text-center md:text-left">
                     Showing {(filters.offset || 0) + 1} to{" "}
                     {Math.min(
                       (filters.offset || 0) + ITEMS_PER_PAGE,
