@@ -12,7 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings } from "lucide-react";
+import { Loader2, Plus, Settings } from "lucide-react";
 import { AddIntegrationModal } from "./add-integration-modal";
 import { CustomIntegrationDetailsModal } from "./custom-integration-details-modal";
 import {
@@ -23,9 +23,14 @@ import { log } from "@/lib/logger";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 
 export default function IntegrationsPage() {
   const { workspace } = useWorkspace();
+  const { hasPermission: canManage, isLoading: isPermLoading } =
+    useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspace?.id);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,15 +134,35 @@ export default function IntegrationsPage() {
     setViewIntegration(null);
   };
 
+  if (!workspace?.id || isPermLoading) {
+    return (
+      <PageLayout title="Loading Permissions...">
+        <div className="space-y-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Integrations"
       description="Connect your workspace with third-party platforms."
       actions={
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Integration
-        </Button>
+        canManage ? (
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Integration
+          </Button>
+        ) : (
+          <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+            <Button disabled>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Integration
+            </Button>
+          </LockedFeatureTooltip>
+        )
       }
     >
       <div className="space-y-8">
@@ -182,29 +207,51 @@ export default function IntegrationsPage() {
                   <CardTitle className="text-base font-semibold mb-2 capitalize">
                     {integration.name || integration.integration_type}
                   </CardTitle>
-                  <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                  <CardDescription className="line-clamp-2 min-h-10">
                     {integration.description ||
                       `Connect ${integration.name || integration.integration_type} to sync your content automatically.`}
                   </CardDescription>
                 </CardContent>
                 <CardFooter className="flex items-center justify-between p-6 border-t border-slate-100">
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9"
-                      onClick={() => handleIntegrationClick(integration)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span className="sr-only">Settings</span>
-                    </Button>
+                    {canManage ? (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => handleIntegrationClick(integration)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span className="sr-only">Settings</span>
+                      </Button>
+                    ) : (
+                      <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9"
+                          disabled
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span className="sr-only">Settings</span>
+                        </Button>
+                      </LockedFeatureTooltip>
+                    )}
                   </div>
-                  <Switch
-                    checked={integration.is_active}
-                    onCheckedChange={(checked) =>
-                      handleToggleActive(integration, checked)
-                    }
-                  />
+                  {canManage ? (
+                    <Switch
+                      checked={integration.is_active}
+                      onCheckedChange={(checked) =>
+                        handleToggleActive(integration, checked)
+                      }
+                    />
+                  ) : (
+                    <div className="className">
+                      <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+                        <Switch checked={integration.is_active} disabled />
+                      </LockedFeatureTooltip>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}

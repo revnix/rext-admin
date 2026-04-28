@@ -18,6 +18,7 @@ import type { Workspace } from "@/types/workspace";
 
 interface EditableBrandVoiceCardProps {
   workspace: Workspace;
+  readOnly?: boolean;
 }
 
 interface BrandVoiceFormData {
@@ -42,6 +43,7 @@ const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
 
 export function EditableBrandVoiceCard({
   workspace,
+  readOnly = false,
 }: EditableBrandVoiceCardProps) {
   const queryClient = useQueryClient();
   const brandVoice = workspace.brand_voice;
@@ -170,58 +172,60 @@ export function EditableBrandVoiceCard({
           description="AI-extracted brand characteristics and positioning"
           className="mb-0"
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {isEditing ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancel}
-                disabled={updateMutation.isPending}
-                className="w-full sm:w-auto"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={updateMutation.isPending}
-                className="w-full sm:w-auto"
-              >
-                {updateMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save
-              </Button>
-            </>
-          ) : (
-            <>
-              <BrandVoiceRefreshControl
-                workspaceId={workspace.id}
-                buttonVariant="outline"
-                buttonSize="sm"
-                buttonClassName="w-full sm:w-auto"
-              >
-                <span className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Refresh</span>
-                </span>
-              </BrandVoiceRefreshControl>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="w-full sm:w-auto"
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </>
-          )}
-        </div>
+        {!readOnly && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {isEditing ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={updateMutation.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  className="w-full sm:w-auto"
+                >
+                  {updateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save
+                </Button>
+              </>
+            ) : (
+              <>
+                <BrandVoiceRefreshControl
+                  workspaceId={workspace.id}
+                  buttonVariant="outline"
+                  buttonSize="sm"
+                  buttonClassName="w-full sm:w-auto"
+                >
+                  <span className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Refresh</span>
+                  </span>
+                </BrandVoiceRefreshControl>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {brandVoiceRefresh.refreshError && (

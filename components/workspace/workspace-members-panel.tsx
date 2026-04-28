@@ -32,6 +32,7 @@ import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceMembersPanelProps {
   workspace: Workspace;
+  canManage?: boolean;
 }
 
 interface WorkspaceMember {
@@ -71,6 +72,7 @@ interface MemberData extends Record<string, unknown> {
 
 export function WorkspaceMembersPanel({
   workspace,
+  canManage = false,
 }: WorkspaceMembersPanelProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
@@ -298,7 +300,7 @@ export function WorkspaceMembersPanel({
           columns={columns.filter((col) => col.key !== "email")} // Hide email column since it's in Member column
           data={tableData}
           isLoading={isLoading}
-          rowActions={rowActions}
+          rowActions={canManage ? rowActions : []}
           emptyTitle="No members yet"
           emptyDescription="Invite members to collaborate on this workspace"
           emptyIcon={<Users className="h-12 w-12" />}

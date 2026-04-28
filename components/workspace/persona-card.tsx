@@ -52,7 +52,10 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               Expertise
             </h4>
             <div className="flex flex-wrap gap-1.5">
-              {persona.areas_of_expertise.split(",").map((area) => (
+              {(Array.isArray(persona.areas_of_expertise)
+                ? persona.areas_of_expertise
+                : persona.areas_of_expertise.split(",")
+              ).map((area) => (
                 <Badge
                   key={area.trim()}
                   variant="secondary"

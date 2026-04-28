@@ -2,13 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { PermissionGuard } from "@/components/permission/permission-guard";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditableBrandVoiceCard } from "@/components/workspace";
 import { workspaceQueries } from "@/lib/query-keys";
@@ -36,37 +29,32 @@ export function BrandVoiceSection() {
         </p>
       </div>
 
-      <PermissionGuard
-        permission={WORKSPACE_PERMISSIONS.UPDATE}
-        fallback={
-          <Card>
-            <CardHeader>
-              <CardTitle>Brand Voice Profile</CardTitle>
-              <CardDescription>
-                AI-extracted brand characteristics and positioning
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                You don't have permission to edit brand voice settings.
-              </p>
-            </CardContent>
-          </Card>
-        }
-      >
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-[400px] w-full" />
-          </div>
-        ) : (
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      ) : (
+        <PermissionGuard
+          permission={WORKSPACE_PERMISSIONS.UPDATE}
+          fallback={
+            <EditableBrandVoiceCard
+              workspace={{
+                ...workspace,
+                brand_voice:
+                  brandVoiceData?.brand_voice || workspace.brand_voice,
+              }}
+              readOnly
+            />
+          }
+        >
           <EditableBrandVoiceCard
             workspace={{
               ...workspace,
               brand_voice: brandVoiceData?.brand_voice || workspace.brand_voice,
             }}
           />
-        )}
-      </PermissionGuard>
+        </PermissionGuard>
+      )}
     </div>
   );
 }

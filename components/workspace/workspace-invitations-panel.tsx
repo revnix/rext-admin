@@ -22,6 +22,7 @@ import type { Column, RowAction } from "@/types/data-table";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
+  canManage?: boolean;
 }
 
 interface Invitation {
@@ -51,6 +52,7 @@ interface InvitationData extends Record<string, unknown> {
 
 export function WorkspaceInvitationsPanel({
   workspaceId,
+  canManage = false,
 }: WorkspaceInvitationsPanelProps) {
   const queryClient = useQueryClient();
 
@@ -345,7 +347,7 @@ export function WorkspaceInvitationsPanel({
           columns={columns}
           data={tableData}
           isLoading={isLoading}
-          rowActions={rowActions}
+          rowActions={canManage ? rowActions : []}
           emptyTitle="No invitations sent"
           emptyDescription="Invitations you send will appear here"
           emptyIcon={<Mail className="h-12 w-12" />}

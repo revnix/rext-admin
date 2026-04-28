@@ -185,7 +185,7 @@ export function LockedFeatureTooltip({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1.5 w-full">
           {disabledChild}
           {showIcon && (
             <Lock className="h-3 w-3 text-muted-foreground opacity-60" />

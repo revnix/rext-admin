@@ -25,6 +25,9 @@ import {
   useDeletePersona,
 } from "@/hooks/use-personas";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,14 +40,37 @@ interface PersonaDetailProps {
   persona: Persona;
 }
 
+const toArray = (value: string | string[] | undefined): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+};
+
+const toStringValue = (value: string | string[] | undefined): string => {
+  if (!value) return "";
+  if (Array.isArray(value)) return value.join(", ");
+  return value;
+};
+
 export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
   const personaId = initialPersona.id || "";
 
-  // Fetch the latest persona data directly to ensure synchronization
   const { data: personaData } = usePersona(workspace?.id || null, personaId);
   const persona = personaData?.persona || initialPersona;
+
+  const { hasPermission: canEdit } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.UPDATE,
+    workspace?.id,
+  );
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.DELETE,
+    workspace?.id,
+  );
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
@@ -126,36 +152,69 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           </div>
         ) : (
           <div className="flex gap-2">
-            <ConfirmationDialog
-              title="Delete Persona"
-              description={`Are you sure you want to delete "${persona.name}"? This action cannot be undone.`}
-              confirmText="Delete"
-              variant="destructive"
-              onConfirm={handleDelete}
-            >
+            {canDelete ? (
+              <ConfirmationDialog
+                title="Delete Persona"
+                description={`Are you sure you want to delete "${persona.name}"? This action cannot be undone.`}
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={handleDelete}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/20 hover:bg-destructive/5"
+                  disabled={deletePersona.isPending}
+                >
+                  {deletePersona.isPending ? (
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 size={16} className="mr-2" />
+                  )}
+                  Delete Persona
+                </Button>
+              </ConfirmationDialog>
+            ) : (
+              <LockedFeatureTooltip
+                permission={CONTENT_PERMISSIONS.DELETE}
+                message="Deleting personas requires Editor role or above"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/20"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Delete Persona
+                </Button>
+              </LockedFeatureTooltip>
+            )}
+
+            {canEdit ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="text-destructive border-destructive/20 hover:bg-destructive/5"
-                disabled={deletePersona.isPending}
+                onClick={() => setIsEditing(true)}
+                className="border-primary/20 text-primary hover:bg-primary/5"
               >
-                {deletePersona.isPending ? (
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <Trash2 size={16} className="mr-2" />
-                )}
-                Delete Persona
+                <Edit2 size={16} className="mr-2" />
+                Edit Persona
               </Button>
-            </ConfirmationDialog>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="border-primary/20 text-primary hover:bg-primary/5"
-            >
-              <Edit2 size={16} className="mr-2" />
-              Edit Persona
-            </Button>
+            ) : (
+              <LockedFeatureTooltip
+                permission={CONTENT_PERMISSIONS.UPDATE}
+                message="Editing personas requires Editor role or above"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/20 text-primary"
+                >
+                  <Edit2 size={16} className="mr-2" />
+                  Edit Persona
+                </Button>
+              </LockedFeatureTooltip>
+            )}
           </div>
         )}
       </div>
@@ -373,20 +432,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 {isEditing ? (
                   <Input
                     id="areas_of_expertise"
-                    value={formData.areas_of_expertise || ""}
+                    value={toStringValue(formData.areas_of_expertise)}
                     onChange={handleChange}
                     placeholder="Comma separated values"
                   />
                 ) : (
-                  persona.areas_of_expertise && (
+                  toArray(persona.areas_of_expertise).length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {persona.areas_of_expertise.split(",").map((area) => (
+                      {toArray(persona.areas_of_expertise).map((area) => (
                         <Badge
-                          key={area.trim()}
+                          key={area}
                           variant="secondary"
                           className="px-3 py-1 text-sm"
                         >
-                          {area.trim()}
+                          {area}
                         </Badge>
                       ))}
                     </div>
@@ -441,16 +500,18 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 {isEditing ? (
                   <Textarea
                     id="goals"
-                    value={formData.goals || ""}
+                    value={toStringValue(formData.goals)}
                     onChange={handleChange}
                     placeholder="Primary objectives and goals"
                     className="min-h-[80px]"
                   />
                 ) : (
-                  persona.goals && (
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {persona.goals}
-                    </p>
+                  toArray(persona.goals).length > 0 && (
+                    <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
+                      {toArray(persona.goals).map((goal) => (
+                        <li key={goal}>{goal}</li>
+                      ))}
+                    </ul>
                   )
                 )}
               </div>
@@ -466,16 +527,18 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 {isEditing ? (
                   <Textarea
                     id="pain_points"
-                    value={formData.pain_points || ""}
+                    value={toStringValue(formData.pain_points)}
                     onChange={handleChange}
                     placeholder="Main challenges and pain points"
                     className="min-h-[80px]"
                   />
                 ) : (
-                  persona.pain_points && (
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {persona.pain_points}
-                    </p>
+                  toArray(persona.pain_points).length > 0 && (
+                    <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
+                      {toArray(persona.pain_points).map((point) => (
+                        <li key={point}>{point}</li>
+                      ))}
+                    </ul>
                   )
                 )}
               </div>
@@ -494,16 +557,18 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
               {isEditing ? (
                 <Textarea
                   id="behaviors"
-                  value={formData.behaviors || ""}
+                  value={toStringValue(formData.behaviors)}
                   onChange={handleChange}
                   placeholder="Key behaviors and habits"
                   className="min-h-[100px]"
                 />
               ) : (
-                persona.behaviors && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {persona.behaviors}
-                  </p>
+                toArray(persona.behaviors).length > 0 && (
+                  <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
+                    {toArray(persona.behaviors).map((behavior) => (
+                      <li key={behavior}>{behavior}</li>
+                    ))}
+                  </ul>
                 )
               )}
             </CardContent>

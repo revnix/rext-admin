@@ -24,7 +24,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { storeInvitationContext } from "@/hooks/use-invited-user-onboarding";
 import { apiClient } from "@/lib/api-client";
 import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
 import type { Route } from "next";
@@ -76,22 +75,16 @@ export default function AcceptInvitationPage() {
             "Workspace Admin";
 
       const roleName =
-        invitation.role?.display_name || invitation.role?.name || "Member";
+        result.role ||
+        invitation.role?.display_name ||
+        invitation.role?.name ||
+        "Member";
 
-      // Store welcome modal data (shows first)
+      // Store welcome modal data
       storeWelcomeData({
         workspace: workspaceData,
         inviterName,
         roleName,
-      });
-
-      // Store invitation context for onboarding (shows after welcome modal)
-      storeInvitationContext({
-        workspace: workspaceData,
-        inviterName,
-        roleName,
-        roleDescription: undefined,
-        acceptedAt: new Date().toISOString(),
       });
 
       toast.success(`Welcome to ${result.workspace_name}!`);

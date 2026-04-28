@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
@@ -39,7 +39,6 @@ const ITEMS_PER_PAGE = 20;
 
 export function UnifiedActivity() {
   const user = usePermissionUser();
-  const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AuditLogFilters>({
     limit: ITEMS_PER_PAGE,
