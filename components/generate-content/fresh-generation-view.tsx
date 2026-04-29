@@ -327,10 +327,10 @@ export function FreshGenerationView({
     ) {
       setSelectedIntent(
         norm as
-          | "informational"
-          | "commercial"
-          | "transactional"
-          | "navigational",
+        | "informational"
+        | "commercial"
+        | "transactional"
+        | "navigational",
       );
     }
   }, [seoResult?.intent, selectedIntent]);
@@ -358,9 +358,9 @@ export function FreshGenerationView({
       const base =
         prev.length === 0
           ? CONTENT_PIPELINE.map((label) => ({
-              label,
-              status: "pending" as const,
-            }))
+            label,
+            status: "pending" as const,
+          }))
           : prev;
       return base.map((step) => {
         if (step.label === activeLabel) return { ...step, status: "active" };
@@ -432,31 +432,31 @@ export function FreshGenerationView({
 
         const normalizedSections = Array.isArray(parsed.sections)
           ? (parsed.sections as Array<Partial<ContentSection> | null>).map(
-              (s) => {
-                const section = s ?? {};
-                const keyPoints = Array.isArray(section.key_points)
-                  ? section.key_points.filter(
-                      (p: unknown) => typeof p === "string",
-                    )
-                  : [];
-                const suggested =
-                  typeof section.suggested_word_count === "number"
-                    ? section.suggested_word_count
-                    : undefined;
-                return {
-                  heading:
-                    typeof section.heading === "string" ? section.heading : "",
-                  description:
-                    typeof section.description === "string"
-                      ? section.description
-                      : "",
-                  key_points: keyPoints,
-                  ...(suggested !== undefined
-                    ? { suggested_word_count: suggested }
-                    : {}),
-                };
-              },
-            )
+            (s) => {
+              const section = s ?? {};
+              const keyPoints = Array.isArray(section.key_points)
+                ? section.key_points.filter(
+                  (p: unknown) => typeof p === "string",
+                )
+                : [];
+              const suggested =
+                typeof section.suggested_word_count === "number"
+                  ? section.suggested_word_count
+                  : undefined;
+              return {
+                heading:
+                  typeof section.heading === "string" ? section.heading : "",
+                description:
+                  typeof section.description === "string"
+                    ? section.description
+                    : "",
+                key_points: keyPoints,
+                ...(suggested !== undefined
+                  ? { suggested_word_count: suggested }
+                  : {}),
+              };
+            },
+          )
           : [];
 
         const normalized = {
@@ -569,11 +569,11 @@ export function FreshGenerationView({
                 prev.map((tc) =>
                   tc.id === id
                     ? {
-                        ...tc,
-                        status: "done" as const,
-                        resultCount: count,
-                        output,
-                      }
+                      ...tc,
+                      status: "done" as const,
+                      resultCount: count,
+                      output,
+                    }
                     : tc,
                 ),
               );
@@ -822,18 +822,28 @@ export function FreshGenerationView({
             "Primary Keyword": value,
             ...(selectedIntent ? { intent: selectedIntent } : {}),
           },
-          status: "Keyword Recommendation...",
+          status: "Content Type Selection...",
+        });
+       case "CONTENT_TYPE_SELECT":
+        setTokenTarget("outline");
+        tokenTargetRef.current = "outline";
+        outline.resetStream();
+        dispatch({ type: "SUBMIT_REJECT_REASON" });
+        dispatch({ type: "SET_LOADING_STEPS", payload: TOPIC_GENERATION_STEPS });
+        return resumeWorkflow({
+          payload: { "Selected Content Type": value },
+          status: "Topic Suggestions...",
         });
       case "TOPIC_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
         dispatch({
           type: "SET_LOADING_STEPS",
-          payload: TOPIC_GENERATION_STEPS,
+          payload: CONTENT_TYPE_STEPS,
         });
         return resumeWorkflow({
           payload: { selected_topic: value },
-          status: "Content Type Generation...",
+          status: "Content Outline Generation...",
         });
       case "TOPIC_REGENERATE":
         setTokenTarget("none");
@@ -849,17 +859,7 @@ export function FreshGenerationView({
           payload: { action: "regenerate", feedback: value || "" },
           status: "Regenerating topics...",
         });
-      case "CONTENT_TYPE_SELECT":
-        setTokenTarget("outline");
-        tokenTargetRef.current = "outline";
-        outline.resetStream();
-        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        dispatch({ type: "SUBMIT_REJECT_REASON" });
-        dispatch({ type: "SET_LOADING_STEPS", payload: CONTENT_TYPE_STEPS });
-        return resumeWorkflow({
-          payload: { "Selected Content Type": value },
-          status: "Topic Type...",
-        });
+     
       case "OUTLINE_APPROVE":
         setTokenTarget("content");
         tokenTargetRef.current = "content";
@@ -996,25 +996,17 @@ export function FreshGenerationView({
   const WORKFLOW_STEPS = [
     { id: "keyword", label: "Search Keyword" },
     { id: "keyword Selection", label: "Select Keyword" },
-    { id: "topic", label: "Topic Selection" },
-    { id: "content_type", label: "Type" },
-    { id: "outline_review", label: "Outline" },
+    { id: "content_type", label: "Content Type" },
+    { id: "topic", label: "Topic Selection", aliases: ["topic_selection"] },
+    { id: "outline_review", label: "Content Outline", aliases: ["outline_reject"] },
     { id: "content", label: "Article" },
   ];
 
   const activeStepIndex = (() => {
-    if (instructionType === "keyword") return 0;
-    if (instructionType === "keyword Selection") return 1;
-    if (instructionType === "topic" || instructionType === "topic_selection")
-      return 2;
-    if (instructionType === "content_type") return 3;
-    if (
-      instructionType === "outline_review" ||
-      instructionType === "outline_reject"
-    )
-      return 4;
-    if (instructionType === "content") return 5;
-    return 5;
+    const idx = WORKFLOW_STEPS.findIndex(
+      (s) => s.id === instructionType || (s.aliases ?? []).includes(instructionType),
+    );
+    return idx === -1 ? WORKFLOW_STEPS.length - 1 : idx;
   })();
 
   return (

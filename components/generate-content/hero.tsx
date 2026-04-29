@@ -9,7 +9,7 @@ export function HeroSection() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="text-center select-none"
+      className="text-center"
     >
       {/* Main heading */}
       <motion.h1
