@@ -231,10 +231,25 @@ export function FreshGenerationView({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
-    if (_initialKeyword) {
+    // When coming from the library, we may render before auth/workspace context
+    // is ready. Starting the run without these can skip key interrupts and
+    // stall the UI, so wait until they're available.
+    if (_initialKeyword && user?.id && workspaceId) {
       handleKeywordSubmit();
     }
-  }, [_initialKeyword]);
+  }, [_initialKeyword, user?.id, workspaceId]);
+
+  // When coming from the library, the agent stream sometimes enters
+  // "keyword Selection" without emitting Recommendations/Primary Keyword.
+  // That used to create a "blank" step (selection UI is hidden for library mode).
+  // Seed the primary keyword from the library param so auto-advance can work.
+  useEffect(() => {
+    if (!isLibrary) return;
+    if (!_initialKeyword) return;
+    if (primaryKeyword) return;
+    dispatch({ type: "SET_USER_KEYWORD", payload: _initialKeyword });
+    dispatch({ type: "SET_PRIMARY_KEYWORD", payload: _initialKeyword });
+  }, [isLibrary, _initialKeyword, primaryKeyword]);
 
   // Auto-skip keyword selection step when coming from library
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleWorkflow is declared after this effect and is not stable
@@ -922,7 +937,13 @@ export function FreshGenerationView({
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
     !showContentStream &&
-    (isRegeneratingTopics || !(isLibrary && isTopicLoading))
+    // In library mode we hide the keyword selection UI, so we must keep a loading
+    // screen visible until we can auto-advance past the selection step.
+    (isRegeneratingTopics ||
+      !(isLibrary && isTopicLoading) ||
+      (isLibrary &&
+        instructionType === "keyword Selection" &&
+        !primaryKeyword))
   ) {
     return (
       <div
