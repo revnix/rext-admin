@@ -229,23 +229,23 @@ export function RolePermissionAuditLog({
                   Object.keys(detailedLog.new_values).length > 0;
 
                 return (
-                  <Card key={log.id} className={`${colors.border} border-2`}>
-                    <CardHeader className={`${colors.bg} rounded-t-lg`}>
+                  <Card key={log.id} className={`${colors.border} border-2 !w-[95%]`}>
+                    <CardHeader className={`${colors.bg} rounded-t-lg !p-3`}>
                       <div className="flex items-center justify-between">
                         <CardTitle
                           className={`text-base flex items-center gap-2 ${colors.text}`}
                         >
                           <Icon className="h-4 w-4" />
                           <span className="capitalize">{log.action}</span>
-                          <Badge variant="outline" className="capitalize">
+                          <Badge variant="outline" className="capitalize dark:text-gray-800">
                             {log.resource_type}
                           </Badge>
                         </CardTitle>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground dark:text-gray-800">
                           {format(new Date(log.created_at), "PPp")}
                         </span>
                       </div>
-                      <CardDescription>
+                      <CardDescription className="dark:text-gray-800">
                         by <strong>{log.user_email || "System"}</strong>
                       </CardDescription>
                     </CardHeader>

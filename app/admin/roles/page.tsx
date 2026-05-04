@@ -472,7 +472,6 @@ export default function AdminRolesPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
                         onClick={() => setDialogState({ type: "auditLog" })}
                       >
                         <History className="h-4 w-4 mr-2" />

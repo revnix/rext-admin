@@ -64,7 +64,7 @@ export function EditPermissionDialog({
       });
     },
     onSuccess: async () => {
-      toast.success("Role updated successfully");
+      toast.success("Permission updated successfully");
       invalidateWorkspacePermissions();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
