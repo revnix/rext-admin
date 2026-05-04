@@ -108,6 +108,103 @@ type PlanDistribution = Array<{
   percentage: number;
 }>;
 
+type PlanDistributionItem = PlanDistribution[number];
+
+const toNumber = (value: unknown): number => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const toPlanDistributionArray = (value: unknown): PlanDistribution => {
+  if (!Array.isArray(value)) return [];
+
+  const normalized = value
+    .map((item): PlanDistributionItem | null => {
+      if (!isRecord(item)) return null;
+
+      const planName = String(item.plan_name ?? item.name ?? "").trim();
+      if (!planName) return null;
+
+      return {
+        plan_id: String(item.plan_id ?? item.id ?? planName),
+        plan_name: planName,
+        plan_display_name: String(
+          item.plan_display_name ?? item.display_name ?? planName,
+        ),
+        subscription_count: toNumber(
+          item.subscription_count ?? item.count ?? item.subscriptions,
+        ),
+        revenue_monthly: toNumber(
+          item.revenue_monthly ?? item.monthly_revenue ?? item.mrr,
+        ),
+        revenue_yearly: toNumber(
+          item.revenue_yearly ?? item.yearly_revenue ?? item.arr,
+        ),
+        percentage: toNumber(item.percentage),
+      };
+    })
+    .filter((item): item is PlanDistributionItem => item !== null);
+
+  if (normalized.length === 0) return normalized;
+
+  const hasPercentage = normalized.some((item) => item.percentage > 0);
+  if (hasPercentage) return normalized;
+
+  const total = normalized.reduce(
+    (acc, item) => acc + item.subscription_count,
+    0,
+  );
+  if (total <= 0) return normalized;
+
+  return normalized.map((item) => ({
+    ...item,
+    percentage: (item.subscription_count / total) * 100,
+  }));
+};
+
+const normalizePlanDistribution = (payload: unknown): PlanDistribution => {
+  const directArray = toPlanDistributionArray(payload);
+  if (directArray.length > 0) return directArray;
+
+  if (!isRecord(payload)) return [];
+
+  const candidateKeys = [
+    "plan_distribution",
+    "distribution",
+    "plans",
+    "items",
+    "by_plan",
+    "revenue_by_plan",
+    "data",
+  ] as const;
+
+  const nestedCandidates: unknown[] = [payload];
+  for (const key of candidateKeys) {
+    nestedCandidates.push(payload[key]);
+  }
+
+  for (const candidate of nestedCandidates) {
+    const candidateArray = toPlanDistributionArray(candidate);
+    if (candidateArray.length > 0) return candidateArray;
+
+    if (isRecord(candidate)) {
+      for (const key of candidateKeys) {
+        const deepCandidate = toPlanDistributionArray(candidate[key]);
+        if (deepCandidate.length > 0) return deepCandidate;
+      }
+    }
+  }
+
+  return toPlanDistributionArray(payload);
+};
+
 interface CohortRetention {
   cohorts: Array<{
     cohort: string;
@@ -153,9 +250,11 @@ export default function SubscriptionAnalyticsPage() {
   const { data: planDistribution, isLoading: distributionLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "plan-distribution"],
     queryFn: async () => {
-      return apiClient.request<PlanDistribution>(
+      const response = await apiClient.request<unknown>(
         `/api/v1/admin/subscriptions/analytics/plan-distribution`,
       );
+
+      return normalizePlanDistribution(response);
     },
   });
 
@@ -190,9 +289,13 @@ export default function SubscriptionAnalyticsPage() {
   }
 
   const stats = overview?.stats;
-  const _revenueByPlan = overview?.revenue_by_plan;
+  const revenueByPlan = overview?.revenue_by_plan;
   const growthMetrics = overview?.growth_metrics;
   const recentSubscriptions = overview?.recent_subscriptions;
+  const normalizedPlanDistribution: PlanDistribution =
+    Array.isArray(planDistribution) && planDistribution.length > 0
+      ? planDistribution
+      : normalizePlanDistribution(revenueByPlan);
 
   return (
     <PageLayout
@@ -285,7 +388,7 @@ export default function SubscriptionAnalyticsPage() {
                       <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                   ) : (
-                    <PlanDistributionChart data={planDistribution || []} />
+                    <PlanDistributionChart data={normalizedPlanDistribution} />
                   )}
                 </CardContent>
               </Card>
