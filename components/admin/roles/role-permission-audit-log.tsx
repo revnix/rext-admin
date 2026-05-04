@@ -231,9 +231,9 @@ export function RolePermissionAuditLog({
                 return (
                   <Card key={log.id} className={`${colors.border} border-2 !w-[95%]`}>
                     <CardHeader className={`${colors.bg} rounded-t-lg !p-3`}>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
                         <CardTitle
-                          className={`text-base flex items-center gap-2 ${colors.text}`}
+                          className={`text-base flex items-center flex-wrap gap-2 ${colors.text}`}
                         >
                           <Icon className="h-4 w-4" />
                           <span className="capitalize">{log.action}</span>
