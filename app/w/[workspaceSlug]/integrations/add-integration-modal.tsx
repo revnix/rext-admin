@@ -242,114 +242,6 @@ function WordPressForm({
   );
 }
 
-// ── Shopify form ──────────────────────────────────────────────────────────────
-
-function ShopifyForm({
-  onSuccess,
-  onClose,
-  workspaceId,
-}: {
-  onSuccess: () => void;
-  onClose: () => void;
-  workspaceId: string;
-}) {
-  const form = useForm<ShopifyIntegrationFormData>({
-    resolver: zodResolver(shopifyIntegrationSchema),
-    defaultValues: { store_url: "", access_token: "", is_active: true },
-  });
-  const { isSubmitting } = form.formState;
-
-  const onSubmit = async (data: ShopifyIntegrationFormData) => {
-    try {
-      const storeHostname = new URL(data.store_url).hostname;
-
-      await integrationsApiService.createShopifyConnection(workspaceId, {
-        store_url: data.store_url,
-        access_token: data.access_token,
-        is_active: data.is_active,
-      });
-      toast.success(`Shopify store ${storeHostname} connected successfully`);
-      form.reset();
-      onSuccess();
-    } catch (error: unknown) {
-      log.error("Failed to add Shopify integration", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to add integration",
-      );
-    }
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex items-center space-x-2 space-y-0">
-              <FormLabel>Enable Integration</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="store_url"
-          render={({ field }) => (
-            <FormItem className="grid gap-2 space-y-0">
-              <FormLabel>Shopify Store URL *</FormLabel>
-              <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://yourstore.myshopify.com"
-                  {...field}
-                />
-              </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
-                Your Shopify store URL (e.g. https://yourstore.myshopify.com)
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="access_token"
-          render={({ field }) => (
-            <FormItem className="grid gap-2 space-y-0">
-              <FormLabel>Admin API Access Token *</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
-                  {...field}
-                />
-              </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
-                Create a custom app in your Shopify admin → Apps → App
-                development
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <DialogFooter className="mt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Connecting..." : "Connect Store"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
-  );
-}
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 
@@ -396,7 +288,16 @@ export function AddIntegrationModal({
               <button
                 key={opt.type}
                 type="button"
-                onClick={() => setSelectedType(opt.type)}
+                onClick={() => {
+                  if (opt.type === "shopify") {
+                    const url =
+                      process.env.NEXT_PUBLIC_SHOPIFY_CONNECT_URL ??
+                      "https://shopify.connectxeo.com/";
+                    window.open(url, "_blank", "noopener,noreferrer");
+                    return;
+                  }
+                  setSelectedType(opt.type);
+                }}
                 className={cn(
                   "flex flex-col items-center gap-3 p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-accent/10 transition-all duration-200 cursor-pointer text-left group",
                 )}
@@ -434,13 +335,7 @@ export function AddIntegrationModal({
             onClose={handleClose}
           />
         )}
-        {selectedType === "shopify" && workspace?.id && (
-          <ShopifyForm
-            workspaceId={workspace.id}
-            onSuccess={handleSuccess}
-            onClose={handleClose}
-          />
-        )}
+        
       </DialogContent>
     </Dialog>
   );
