@@ -237,6 +237,16 @@ export function WorkspaceCreateWizard() {
         log.info(
           `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
         );
+
+        const toArray = (value: string | string[] | undefined): string[] => {
+          if (!value) return [];
+          if (Array.isArray(value)) return value;
+          return value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        };
+
         await Promise.all(
           brandVoiceData.personas.map((persona: Persona) =>
             apiClient.personas.create(workspaceId, {
@@ -245,14 +255,14 @@ export function WorkspaceCreateWizard() {
                 persona.description || persona.professional_title || "",
               full_name: persona.full_name || persona.name,
               professional_title: persona.professional_title,
-              areas_of_expertise: persona.areas_of_expertise,
+              areas_of_expertise: toArray(persona.areas_of_expertise),
               tone_of_voice: persona.tone_of_voice,
               bio: persona.bio,
               linkedin_url: persona.linkedin_url,
               demographics: persona.demographics,
-              pain_points: persona.pain_points,
-              goals: persona.goals,
-              behaviors: persona.behaviors,
+              pain_points: toArray(persona.pain_points),
+              goals: toArray(persona.goals),
+              behaviors: toArray(persona.behaviors),
             }),
           ),
         );
