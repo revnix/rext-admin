@@ -23,9 +23,11 @@ const COLORS = [
 ];
 
 export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
-  const chartData = data.map((plan) => ({
+  const safeData = Array.isArray(data) ? data : [];
+
+  const chartData = safeData.map((plan) => ({
     id: plan.plan_name,
-    name: plan.plan_display_name,
+    name: plan.plan_display_name || plan.plan_name,
     value: plan.subscription_count,
     revenue: plan.revenue_monthly,
     percentage: plan.percentage,
@@ -79,7 +81,7 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
       <div className="flex-1">
         <div className="space-y-4">
           <h4 className="font-semibold">Revenue Breakdown</h4>
-          {data.map((plan, index) => (
+          {safeData.map((plan, index) => (
             <div
               key={plan.plan_name}
               className="flex items-center justify-between p-3 rounded-lg border"
@@ -90,10 +92,16 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
                 <div>
-                  <p className="font-medium">{plan.plan_display_name}</p>
+                  <p className="font-medium">
+                    {plan.plan_display_name || plan.plan_name}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {plan.subscription_count} subscriptions (
-                    {plan.percentage.toFixed(1)}%)
+                    {(Number.isFinite(plan.percentage)
+                      ? plan.percentage
+                      : 0
+                    ).toFixed(1)}
+                    %)
                   </p>
                 </div>
               </div>
