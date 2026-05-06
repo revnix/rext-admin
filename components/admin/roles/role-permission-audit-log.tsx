@@ -229,7 +229,10 @@ export function RolePermissionAuditLog({
                   Object.keys(detailedLog.new_values).length > 0;
 
                 return (
-                  <Card key={log.id} className={`${colors.border} border-2 !w-[95%]`}>
+                  <Card
+                    key={log.id}
+                    className={`${colors.border} border-2 !w-[95%]`}
+                  >
                     <CardHeader className={`${colors.bg} rounded-t-lg !p-3`}>
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <CardTitle
@@ -237,7 +240,10 @@ export function RolePermissionAuditLog({
                         >
                           <Icon className="h-4 w-4" />
                           <span className="capitalize">{log.action}</span>
-                          <Badge variant="outline" className="capitalize dark:text-gray-800">
+                          <Badge
+                            variant="outline"
+                            className="capitalize dark:text-gray-800"
+                          >
                             {log.resource_type}
                           </Badge>
                         </CardTitle>

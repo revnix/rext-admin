@@ -28,8 +28,6 @@ import { toast } from "sonner";
 import {
   integrationSchema,
   type IntegrationFormData,
-  shopifyIntegrationSchema,
-  type ShopifyIntegrationFormData,
 } from "@/schemas/integration-schemas";
 import { log } from "@/lib/logger";
 import { useState } from "react";
@@ -242,7 +240,6 @@ function WordPressForm({
   );
 }
 
-
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export function AddIntegrationModal({
@@ -335,7 +332,6 @@ export function AddIntegrationModal({
             onClose={handleClose}
           />
         )}
-        
       </DialogContent>
     </Dialog>
   );

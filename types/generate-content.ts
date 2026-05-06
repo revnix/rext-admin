@@ -112,6 +112,28 @@ export type KeyConcept = {
   examples?: string[];
 };
 
+// ── _render: normalized display shape sent in outline_review interrupt ────────
+export type OutlineRenderItem = {
+  label: string;
+  points: string[];
+};
+
+export type OutlineRenderBlock = {
+  heading: string;
+  items: OutlineRenderItem[];
+};
+
+export type OutlineRender = {
+  title: string;
+  schema_type: string;
+  slug_suggestion: string;
+  focus_keyphrase: string;
+  target_word_count: number;
+  rejected_reason: string;
+  status: string;
+  blocks: OutlineRenderBlock[];
+};
+
 // ── ContentSection covers all backend section variants ────────────────────────
 export type ContentSection = {
   heading: string;
@@ -319,6 +341,9 @@ export type ContentOutline = {
   draft_retries?: number;
   review_retries?: number;
   max_retries?: number;
+
+  // ── Normalized display shape from outline_review interrupt ────────────────
+  _render?: OutlineRender;
 };
 
 export type ContentDraft = {
