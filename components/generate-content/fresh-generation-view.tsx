@@ -921,11 +921,16 @@ export function FreshGenerationView({
     (instructionType === "topic" || instructionType === "topic_selection") &&
     topics.length === 0;
 
+  // Suppress the loader in the library flow only when passively waiting for topics
+  // (no steps dispatched). Once a topic is selected and steps are set, show the loader.
+  const suppressLibraryTopicLoader =
+    isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
     !showContentStream &&
-    (isRegeneratingTopics || !(isLibrary && isTopicLoading))
+    (isRegeneratingTopics || !suppressLibraryTopicLoader)
   ) {
     return (
       <div
