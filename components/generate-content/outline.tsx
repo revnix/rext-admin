@@ -473,7 +473,7 @@ function RenderBlocks({
                       {/* Points (key points / questions / tips) */}
                       {item.points.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {item.points.map((pt, k) => (
+                          {item.points.map((pt) => (
                             <div
                               key={pt}
                               className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"

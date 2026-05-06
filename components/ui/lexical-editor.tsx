@@ -995,13 +995,13 @@ function ReadOnlyLinkClickPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    let removeListener: (() => void) | null = null;
+    let removeListeners: (() => void) | null = null;
 
     const unregister = editor.registerRootListener(
       (rootElement, prevRootElement) => {
-        if (prevRootElement && removeListener) {
-          removeListener();
-          removeListener = null;
+        if (prevRootElement && removeListeners) {
+          removeListeners();
+          removeListeners = null;
         }
         if (rootElement) {
           const handleClick = (e: MouseEvent) => {
@@ -1011,16 +1011,27 @@ function ReadOnlyLinkClickPlugin() {
               window.open(anchor.href, "_blank", "noopener,noreferrer");
             }
           };
+          const blockDrag = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
           rootElement.addEventListener("click", handleClick);
-          removeListener = () =>
+          rootElement.addEventListener("drop", blockDrag);
+          rootElement.addEventListener("dragover", blockDrag);
+          rootElement.addEventListener("dragenter", blockDrag);
+          removeListeners = () => {
             rootElement.removeEventListener("click", handleClick);
+            rootElement.removeEventListener("drop", blockDrag);
+            rootElement.removeEventListener("dragover", blockDrag);
+            rootElement.removeEventListener("dragenter", blockDrag);
+          };
         }
       },
     );
 
     return () => {
       unregister();
-      removeListener?.();
+      removeListeners?.();
     };
   }, [editor]);
 
@@ -1090,7 +1101,7 @@ export default function LexicalEditor({
       namespace: "my-editor",
       theme,
       nodes: NODES,
-      readOnly,
+      editable: !readOnly,
       onError: (error: Error) => {
         lexicalLog.error("Lexical editor runtime error", error);
       },
@@ -1217,13 +1228,15 @@ export default function LexicalEditor({
           )}
         >
           {!readOnly && <ToolbarPlugin className={toolbarClass} />}
-          <div className="relative grow">
+          <div
+            className="relative grow"
+          >
             <RichTextPlugin
               contentEditable={
                 <ContentEditable
                   className={cn(
                     "min-h-[150px] outline-none",
-                    readOnly ? "p-0" : "p-6",
+                    readOnly ? "p-0 cursor-default" : "p-6",
                   )}
                 />
               }
@@ -1242,7 +1255,7 @@ export default function LexicalEditor({
               attributes={{ target: "_blank", rel: "noopener noreferrer" }}
             />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-            <NewTabLinkPlugin />
+            {!readOnly && <NewTabLinkPlugin />}
             {readOnly && <ReadOnlyLinkClickPlugin />}
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>

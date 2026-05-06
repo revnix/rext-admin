@@ -163,9 +163,7 @@ export default function LibraryDetail({
                           name="search-intent"
                           value={opt.value}
                           checked={selectedIntent === opt.value}
-                          onChange={() =>
-                            setSelectedIntent(opt.value)
-                          }
+                          onChange={() => setSelectedIntent(opt.value)}
                           className="sr-only"
                         />
                         <span
@@ -300,7 +298,9 @@ export default function LibraryDetail({
                 <Tags className="w-4 h-4 text-blue-500" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground leading-tight">Related Topics</h3>
+                <h3 className="font-semibold text-foreground leading-tight">
+                  Related Topics
+                </h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   Keyword clusters &amp; topic ideas to explore
                 </p>
@@ -320,7 +320,9 @@ export default function LibraryDetail({
                   key={topic}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-muted/30 hover:bg-primary/10 border border-border/60 hover:border-primary/40 text-foreground/90 hover:text-foreground transition-all duration-200 cursor-default group"
                 >
-                  <span className="text-primary text-[11px] font-black leading-none">#</span>
+                  <span className="text-primary text-[11px] font-black leading-none">
+                    #
+                  </span>
                   {topic}
                 </span>
               ))}
