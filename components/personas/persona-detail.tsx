@@ -87,10 +87,18 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const handleSave = () => {
     if (!workspace?.id || !persona.id) return;
 
+    const payload = {
+      ...formData,
+      areas_of_expertise: toArray(formData.areas_of_expertise),
+      goals: toArray(formData.goals),
+      pain_points: toArray(formData.pain_points),
+      behaviors: toArray(formData.behaviors),
+    };
+
     updatePersona.mutate(
       {
         personaId: persona.id,
-        data: formData,
+        data: payload,
       },
       {
         onSuccess: () => {
