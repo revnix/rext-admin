@@ -7,7 +7,7 @@ import {
   FileText,
   Globe,
   Plus,
-  Settings,
+  RefreshCw,
   Trash2,
   Users,
 } from "lucide-react";
@@ -23,6 +23,7 @@ import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { workspaceQueries } from "@/lib/query-keys";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
 import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
@@ -33,6 +34,7 @@ export default function WorkspacePage() {
   const queryClient = useQueryClient();
   const [deleteDialogWorkspace, setDeleteDialogWorkspace] =
     useState<WorkspaceData | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
@@ -49,7 +51,7 @@ export default function WorkspacePage() {
   const {
     data: workspacesResponse,
     isLoading,
-    refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["workspaces"],
     queryFn: () => apiClient.workspaces.list(),
@@ -74,6 +76,22 @@ export default function WorkspacePage() {
     // Flatten some fields for easier global search
     owner_name: workspace.name, // Assuming the workspace name reflects the owner context in this view if no explicit owner
   }));
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: workspaceQueries.all(),
+        refetchType: "none",
+      });
+      await queryClient.refetchQueries({
+        queryKey: workspaceQueries.all(),
+        type: "all",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Define columns for the DataTable
   const columns: Column<WorkspaceData>[] = [
@@ -180,8 +198,15 @@ export default function WorkspacePage() {
   // Define table actions
   const tableActions = (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => refetch()}>
-        <Settings className="h-4 w-4 mr-2" />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={isLoading || isFetching || isRefreshing}
+      >
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${isLoading || isFetching || isRefreshing ? "animate-spin" : ""}`}
+        />
         Refresh
       </Button>
       <Button size="sm" onClick={() => router.push("/w/create" as Route)}>
