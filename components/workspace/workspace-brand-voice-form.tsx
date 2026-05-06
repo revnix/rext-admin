@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Loader2,
   MessageSquare,
-  Sparkles,
+  Save,
   Swords,
   Target,
   Users,
@@ -749,16 +749,16 @@ export function WorkspaceBrandVoiceForm({
               type="submit"
               disabled={isLoading}
               size="lg"
-              className="w-full sm:w-auto min-w-[200px] gap-2.5 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold"
+              className="w-full sm:w-auto min-w-[200px] gap-2 transition-colors bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4.5 w-4.5 fill-primary-foreground/30" />
+                  <Save className="h-4 w-4" />
                   <span>Save & Finish</span>
                 </>
               )}
