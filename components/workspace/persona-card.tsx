@@ -52,18 +52,42 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               Expertise
             </h4>
             <div className="flex flex-wrap gap-1.5">
-              {(Array.isArray(persona.areas_of_expertise)
-                ? persona.areas_of_expertise
-                : persona.areas_of_expertise.split(",")
-              ).map((area) => (
-                <Badge
-                  key={area.trim()}
-                  variant="secondary"
-                  className="text-xs"
-                >
-                  {area.trim()}
-                </Badge>
-              ))}
+              {(() => {
+                const v = persona.areas_of_expertise;
+                const clean = (s: string) =>
+                  s
+                    .trim()
+                    .replace(/^[["'\s]+|[\]"'\s]+$/g, "")
+                    .trim();
+                let items: string[];
+                if (Array.isArray(v)) {
+                  items = v.map(clean).filter(Boolean);
+                } else if (typeof v === "string") {
+                  const t = v.trim();
+                  if (t.startsWith("[")) {
+                    try {
+                      items = (JSON.parse(t) as unknown[])
+                        .map((s) => clean(String(s)))
+                        .filter(Boolean);
+                    } catch {
+                      items = t
+                        .replace(/^\[|\]$/g, "")
+                        .split(",")
+                        .map(clean)
+                        .filter(Boolean);
+                    }
+                  } else {
+                    items = t.split(",").map(clean).filter(Boolean);
+                  }
+                } else {
+                  items = [];
+                }
+                return items.map((area) => (
+                  <Badge key={area} variant="secondary" className="text-xs">
+                    {area}
+                  </Badge>
+                ));
+              })()}
             </div>
           </div>
         )}

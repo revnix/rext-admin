@@ -1228,9 +1228,7 @@ export default function LexicalEditor({
           )}
         >
           {!readOnly && <ToolbarPlugin className={toolbarClass} />}
-          <div
-            className="relative grow"
-          >
+          <div className="relative grow">
             <RichTextPlugin
               contentEditable={
                 <ContentEditable
