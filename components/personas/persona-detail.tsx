@@ -42,11 +42,35 @@ interface PersonaDetailProps {
 
 const toArray = (value: string | string[] | undefined): string[] => {
   if (!value) return [];
-  if (Array.isArray(value)) return value;
-  return value
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+
+  // Helper: strip surrounding quotes/brackets from a single string value
+  const clean = (s: string) =>
+    s
+      .trim()
+      .replace(/^[["'\s]+|[\]"'\s]+$/g, "")
+      .trim();
+
+  if (Array.isArray(value)) return value.map(clean).filter(Boolean);
+
+  const trimmed = value.trim();
+
+  // Handle JSON-encoded arrays: '["Digital Marketing","Content Creation"]'
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed))
+        return parsed.map((s: unknown) => clean(String(s))).filter(Boolean);
+    } catch {
+      // fall through — strip brackets and split by comma
+      return trimmed
+        .replace(/^\[|\]$/g, "")
+        .split(",")
+        .map(clean)
+        .filter(Boolean);
+    }
+  }
+
+  return trimmed.split(",").map(clean).filter(Boolean);
 };
 
 const toStringValue = (value: string | string[] | undefined): string => {

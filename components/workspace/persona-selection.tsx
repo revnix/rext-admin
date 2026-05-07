@@ -13,6 +13,32 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Persona } from "@/types/workspace";
 
+/** Safely parse areas_of_expertise whether it's an array, JSON string, or CSV string. */
+function parseAreas(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  const clean = (s: string) =>
+    s
+      .trim()
+      .replace(/^[["'\s]+|[\]"'\s]+$/g, "")
+      .trim();
+  if (Array.isArray(value)) return value.map(clean).filter(Boolean);
+  const t = value.trim();
+  if (t.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(t);
+      if (Array.isArray(parsed))
+        return parsed.map((s: unknown) => clean(String(s))).filter(Boolean);
+    } catch {
+      return t
+        .replace(/^\[|\]$/g, "")
+        .split(",")
+        .map(clean)
+        .filter(Boolean);
+    }
+  }
+  return t.split(",").map(clean).filter(Boolean);
+}
+
 interface PersonaSelectionProps {
   personas: Persona[];
   selectedPersonaId?: string | null;
@@ -122,31 +148,16 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
         {persona.areas_of_expertise && (
           <div className="mt-3">
             <div className="flex flex-wrap gap-1.5">
-              {(Array.isArray(persona.areas_of_expertise)
-                ? persona.areas_of_expertise
-                : persona.areas_of_expertise.split(",")
-              )
+              {parseAreas(persona.areas_of_expertise)
                 .slice(0, 3)
                 .map((area) => (
-                  <Badge
-                    key={area.trim()}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {area.trim()}
+                  <Badge key={area} variant="secondary" className="text-xs">
+                    {area}
                   </Badge>
                 ))}
-              {(Array.isArray(persona.areas_of_expertise)
-                ? persona.areas_of_expertise
-                : persona.areas_of_expertise.split(",")
-              ).length > 3 && (
+              {parseAreas(persona.areas_of_expertise).length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +
-                  {(Array.isArray(persona.areas_of_expertise)
-                    ? persona.areas_of_expertise
-                    : persona.areas_of_expertise.split(",")
-                  ).length - 3}{" "}
-                  more
+                  +{parseAreas(persona.areas_of_expertise).length - 3} more
                 </Badge>
               )}
             </div>
