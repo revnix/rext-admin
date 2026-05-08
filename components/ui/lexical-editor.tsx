@@ -15,7 +15,22 @@ import {
   $convertToMarkdownString,
   $convertFromMarkdownString,
   type TextMatchTransformer,
+  type MultilineElementTransformer,
 } from "@lexical/markdown";
+import {
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  INSERT_TABLE_COMMAND,
+  $createTableNode,
+  $createTableRowNode,
+  $createTableCellNode,
+  $isTableNode,
+  $isTableRowNode,
+  $isTableCellNode,
+  TableCellHeaderStates,
+} from "@lexical/table";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import {
   HeadingNode,
   QuoteNode,
@@ -94,6 +109,7 @@ import {
   Check,
   X,
   ImageIcon,
+  Table2 as TableIcon,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -140,6 +156,12 @@ const theme = {
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
   },
+  table: "border-collapse w-full my-4",
+  tableRow: "",
+  tableCell:
+    "border border-border px-3 py-2 !pb-0 align-top min-w-[80px] relative outline-none",
+  tableCellHeader: "!pb-0 font-semibold",
+  tableScrollableWrapper: "overflow-x-auto my-4",
 };
 
 const lexicalLog = log.forComponent("LexicalEditor");
@@ -332,6 +354,9 @@ const NODES = [
   LinkNode,
   AutoLinkNode,
   ImageNode,
+  TableNode,
+  TableCellNode,
+  TableRowNode,
 ];
 
 const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
@@ -372,7 +397,90 @@ const IMAGE_TRANSFORMER: TextMatchTransformer = {
   type: "text-match",
 };
 
+// ---------------------------------------------------------------------------
+// TABLE_TRANSFORMER — GFM table import/export
+// ---------------------------------------------------------------------------
+const TABLE_TRANSFORMER: MultilineElementTransformer = {
+  dependencies: [TableNode, TableCellNode, TableRowNode],
+  export: (node) => {
+    if (!$isTableNode(node)) return null;
+    const rows = node.getChildren();
+    if (!rows.length) return null;
+    const lines: string[] = [];
+    rows.forEach((row, rowIndex) => {
+      if (!$isTableRowNode(row)) return;
+      const cells = row.getChildren();
+      const cellTexts = cells.map((cell) => {
+        if (!$isTableCellNode(cell)) return "";
+        return cell.getTextContent().trim().replace(/\|/g, "\\|");
+      });
+      lines.push(`| ${cellTexts.join(" | ")} |`);
+      if (rowIndex === 0) {
+        lines.push(`| ${cells.map(() => "---").join(" | ")} |`);
+      }
+    });
+    return lines.join("\n");
+  },
+  regExpStart: /^\|.+\|/,
+  replace: () => false,
+  handleImportAfterStartMatch: ({
+    lines,
+    rootNode,
+    startLineIndex,
+    startMatch,
+  }) => {
+    const allTableLines: string[] = [startMatch[0]];
+    let currentIndex = startLineIndex + 1;
+    while (currentIndex < lines.length) {
+      const line = lines[currentIndex];
+      if (!line.trim().startsWith("|")) break;
+      allTableLines.push(line);
+      currentIndex++;
+    }
+
+    const parseRow = (rowText: string): string[] =>
+      rowText
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim());
+
+    const isSeparator = (line: string): boolean => {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return false;
+      const cells = trimmed.slice(1, -1).split("|");
+      return cells.length > 0 && cells.every((c) => /^\s*:?-+:?\s*$/.test(c));
+    };
+
+    const dataRows = allTableLines.filter((line) => !isSeparator(line));
+    if (!dataRows.length) return null;
+
+    const tableNode = $createTableNode();
+    dataRows.forEach((rowText, rowIndex) => {
+      const cells = parseRow(rowText);
+      const rowNode = $createTableRowNode();
+      cells.forEach((cellText) => {
+        const cellNode = $createTableCellNode(
+          rowIndex === 0
+            ? TableCellHeaderStates.ROW
+            : TableCellHeaderStates.NO_STATUS,
+        );
+        const paragraph = $createParagraphNode();
+        if (cellText) paragraph.append($createTextNode(cellText));
+        cellNode.append(paragraph);
+        rowNode.append(cellNode);
+      });
+      tableNode.append(rowNode);
+    });
+    rootNode.append(tableNode);
+    return [true, currentIndex - 1];
+  },
+  type: "multiline-element",
+};
+
 const CUSTOM_TRANSFORMERS = [
+  TABLE_TRANSFORMER,
   UNDERLINE_TRANSFORMER,
   IMAGE_TRANSFORMER,
   ...TRANSFORMERS,
@@ -572,6 +680,97 @@ function ImageInsertPopover() {
             onClick={handleInsert}
             type="button"
             disabled={!url.trim()}
+          >
+            <Check size={13} className="mr-1" /> Insert
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TableInsertPopover
+// ---------------------------------------------------------------------------
+function TableInsertPopover() {
+  const [editor] = useLexicalComposerContext();
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState("3");
+  const [cols, setCols] = useState("3");
+
+  const handleInsert = useCallback(() => {
+    editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+      rows,
+      columns: cols,
+      includeHeaders: { rows: true, columns: false },
+    });
+    setOpen(false);
+    setRows("3");
+    setCols("3");
+  }, [editor, rows, cols]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "p-2 rounded hover:bg-muted transition-colors",
+            open ? "bg-muted text-foreground" : "text-muted-foreground",
+          )}
+          title="Insert Table"
+          type="button"
+        >
+          <TableIcon size={16} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-4 space-y-3" align="end">
+        <h4 className="font-semibold text-sm leading-none">Insert Table</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="tbl-rows" className="text-xs">
+              Rows
+            </Label>
+            <Input
+              id="tbl-rows"
+              type="number"
+              min="1"
+              max="20"
+              value={rows}
+              onChange={(e) => setRows(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tbl-cols" className="text-xs">
+              Columns
+            </Label>
+            <Input
+              id="tbl-cols"
+              type="number"
+              min="1"
+              max="10"
+              value={cols}
+              onChange={(e) => setCols(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => setOpen(false)}
+            type="button"
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={handleInsert}
+            type="button"
+            disabled={!rows || !cols || Number(rows) < 1 || Number(cols) < 1}
           >
             <Check size={13} className="mr-1" /> Insert
           </Button>
@@ -938,6 +1137,9 @@ function ToolbarPlugin({ className }: { className?: string }) {
 
       {/* Image popover — rendered inside LexicalComposer context */}
       <ImageInsertPopover />
+
+      {/* Table popover */}
+      <TableInsertPopover />
     </div>
   );
 }
@@ -1252,6 +1454,7 @@ export default function LexicalEditor({
             <LinkPlugin
               attributes={{ target: "_blank", rel: "noopener noreferrer" }}
             />
+            <TablePlugin hasHorizontalScroll />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
             {!readOnly && <NewTabLinkPlugin />}
             {readOnly && <ReadOnlyLinkClickPlugin />}

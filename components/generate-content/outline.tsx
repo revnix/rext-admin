@@ -760,7 +760,10 @@ export function OutlineDisplay({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-foreground truncate" title={outline.target_audience?.join(", ") || ""}>
+                  <p
+                    className="text-sm font-bold text-foreground truncate"
+                    title={outline.target_audience?.join(", ") || ""}
+                  >
                     {outline.target_audience?.join(", ") || ""}
                   </p>
                   {canEdit && (
