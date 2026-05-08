@@ -381,8 +381,8 @@ export function ProfileEdit() {
             )}
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
+          <div className="grid gap-4 md:grid-cols-1">
+             {/* <FormField
               control={form.control}
               name="language"
               render={({ field }) => {
@@ -411,7 +411,7 @@ export function ProfileEdit() {
                   </FormItem>
                 );
               }}
-            />
+            /> */}
 
             <FormField
               control={form.control}
