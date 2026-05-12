@@ -458,6 +458,8 @@ export class IntegrationsApiService {
       }
 
       const result = await response.json();
+      // Documentation says it returns { "install_url": "string" }
+      // We handle wrappers just in case
       return result.data || result.result || result;
     } catch (error) {
       if (error instanceof IntegrationsApiError) throw error;
