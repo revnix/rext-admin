@@ -28,6 +28,8 @@ import { toast } from "sonner";
 import {
   integrationSchema,
   type IntegrationFormData,
+  shopifyIntegrationSchema,
+  type ShopifyIntegrationFormData,
 } from "@/schemas/integration-schemas";
 import { log } from "@/lib/logger";
 import { useState } from "react";
@@ -240,6 +242,99 @@ function WordPressForm({
   );
 }
 
+function ShopifyForm({
+  onSuccess,
+  onClose,
+  workspaceId,
+}: {
+  onSuccess: () => void;
+  onClose: () => void;
+  workspaceId: string;
+}) {
+  const form = useForm<
+    Pick<ShopifyIntegrationFormData, "store_url" | "is_active">
+  >({
+    resolver: zodResolver(
+      shopifyIntegrationSchema.pick({ store_url: true, is_active: true }),
+    ),
+    defaultValues: {
+      store_url: "",
+      is_active: true,
+    },
+  });
+  const { isSubmitting } = form.formState;
+
+  const onSubmit = async (
+    data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
+  ) => {
+    try {
+      await integrationsApiService.createShopifyConnection(workspaceId, {
+        store_url: data.store_url,
+        is_active: data.is_active,
+      });
+      toast.success("Shopify connection added successfully");
+      form.reset();
+      onSuccess();
+    } catch (error: unknown) {
+      log.error("Failed to add Shopify integration", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add integration",
+      );
+    }
+  };
+
+  const handleEnableChange = (checked: boolean) => {
+    form.setValue("is_active", checked);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+        <FormField
+          control={form.control}
+          name="is_active"
+          render={({ field }) => (
+            <FormItem className="flex items-center space-x-2 space-y-0">
+              <FormLabel>Enable Integration</FormLabel>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={handleEnableChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="store_url"
+          render={({ field }) => (
+            <FormItem className="grid gap-2 space-y-0">
+              <FormLabel>Store URL *</FormLabel>
+              <FormControl>
+                <Input
+                  type="url"
+                  placeholder="https://yourstore.myshopify.com"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <DialogFooter className="mt-4">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Adding..." : "Add Connection"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export function AddIntegrationModal({
@@ -286,13 +381,6 @@ export function AddIntegrationModal({
                 key={opt.type}
                 type="button"
                 onClick={() => {
-                  if (opt.type === "shopify") {
-                    const url =
-                      process.env.NEXT_PUBLIC_SHOPIFY_CONNECT_URL ??
-                      "https://shopify.connectxeo.com/";
-                    window.open(url, "_blank", "noopener,noreferrer");
-                    return;
-                  }
                   setSelectedType(opt.type);
                 }}
                 className={cn(
@@ -327,6 +415,13 @@ export function AddIntegrationModal({
         {/* Forms */}
         {selectedType === "wordpress" && workspace?.id && (
           <WordPressForm
+            workspaceId={workspace.id}
+            onSuccess={handleSuccess}
+            onClose={handleClose}
+          />
+        )}
+        {selectedType === "shopify" && workspace?.id && (
+          <ShopifyForm
             workspaceId={workspace.id}
             onSuccess={handleSuccess}
             onClose={handleClose}

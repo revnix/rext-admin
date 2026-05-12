@@ -46,8 +46,19 @@ export interface CreateIntegrationRequest {
 
 export interface CreateShopifyConnectionRequest {
   store_url: string;
-  access_token: string;
+  access_token?: string | null;
   is_active: boolean;
+}
+
+export interface StartShopifyInstallRequest {
+  store_url: string;
+  return_path?: string;
+}
+
+export interface StartShopifyInstallResponse {
+  install_url?: string;
+  redirect_url?: string;
+  url?: string;
 }
 
 export interface ShopifyConnection {
@@ -365,10 +376,19 @@ export class IntegrationsApiService {
     });
 
     try {
+      const payload: CreateShopifyConnectionRequest = {
+        store_url: data.store_url,
+        is_active: data.is_active,
+      };
+
+      if (data.access_token) {
+        payload.access_token = data.access_token;
+      }
+
       const response = await authenticatedFetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -386,6 +406,59 @@ export class IntegrationsApiService {
 
       const result = await response.json();
       return result.connection || result.data || result;
+    } catch (error) {
+      if (error instanceof IntegrationsApiError) throw error;
+      throw new IntegrationsApiError(
+        "CREATE_FAILED",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
+  }
+
+  /**
+   * Start Shopify OAuth install flow and return install URL
+   */
+  async startShopifyInstall(
+    workspaceId: string,
+    data: StartShopifyInstallRequest,
+  ): Promise<StartShopifyInstallResponse> {
+    const url = `${this.baseUrl}/api/v1/integrations/shopify/install/start?workspace_id=${workspaceId}`;
+
+    this.log.info("Starting Shopify install", {
+      workspaceId,
+      store_url: data.store_url,
+    });
+
+    try {
+      const payload: StartShopifyInstallRequest = {
+        store_url: data.store_url,
+      };
+
+      if (data.return_path) {
+        payload.return_path = data.return_path;
+      }
+
+      const response = await authenticatedFetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await safeParseErrorBody(response);
+        const errorMessage = extractApiError(
+          errorData,
+          "Failed to start Shopify installation",
+        );
+        throw new IntegrationsApiError(
+          "CREATE_FAILED",
+          errorMessage,
+          response.status,
+        );
+      }
+
+      const result = await response.json();
+      return result.data || result.result || result;
     } catch (error) {
       if (error instanceof IntegrationsApiError) throw error;
       throw new IntegrationsApiError(
