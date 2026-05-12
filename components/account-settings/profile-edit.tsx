@@ -30,10 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
-import {
-  PROFILE_LANGUAGE_OPTIONS,
-  PROFILE_TIMEZONE_OPTIONS,
-} from "@/lib/constants/localization";
+import { PROFILE_TIMEZONE_OPTIONS } from "@/lib/constants/localization";
 import {
   AVATAR_ACCEPT_ATTRIBUTE,
   type ProfileFormData,
@@ -382,7 +379,7 @@ export function ProfileEdit() {
           />
 
           <div className="grid gap-4 md:grid-cols-1">
-             {/* <FormField
+            {/* <FormField
               control={form.control}
               name="language"
               render={({ field }) => {

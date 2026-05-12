@@ -9,6 +9,11 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import {
+  HorizontalRuleNode,
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+} from "@lexical/extension";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   TRANSFORMERS,
@@ -16,6 +21,7 @@ import {
   $convertFromMarkdownString,
   type TextMatchTransformer,
   type MultilineElementTransformer,
+  type ElementTransformer,
 } from "@lexical/markdown";
 import {
   TableNode,
@@ -156,12 +162,13 @@ const theme = {
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
   },
+  hr: "my-4 border-0 h-px bg-border",
   table: "border-collapse w-full my-4",
   tableRow: "",
   tableCell:
-    "border border-border px-3 py-2 !pb-0 align-top min-w-[80px] relative outline-none",
+    "border border-border px-2 py-2 !pb-0 align-top min-w-0 w-auto relative outline-none text-sm",
   tableCellHeader: "!pb-0 font-semibold",
-  tableScrollableWrapper: "overflow-x-auto my-4",
+  tableScrollableWrapper: "overflow-x-auto my-4 w-full",
 };
 
 const lexicalLog = log.forComponent("LexicalEditor");
@@ -357,6 +364,7 @@ const NODES = [
   TableNode,
   TableCellNode,
   TableRowNode,
+  HorizontalRuleNode,
 ];
 
 const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
@@ -398,6 +406,72 @@ const IMAGE_TRANSFORMER: TextMatchTransformer = {
 };
 
 // ---------------------------------------------------------------------------
+// Inline markdown helpers for table cell import / export
+// ---------------------------------------------------------------------------
+function parseInlineMarkdown(text: string): TextNode[] {
+  const pattern =
+    /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|~~(.+?)~~|`(.+?)`|\*(.+?)\*)/g;
+  const nodes: TextNode[] = [];
+  let lastIndex = 0;
+  let match = pattern.exec(text);
+  while (match !== null) {
+    if (match.index > lastIndex)
+      nodes.push($createTextNode(text.slice(lastIndex, match.index)));
+    const full = match[0];
+    let node: TextNode;
+    if (full.startsWith("***")) {
+      node = $createTextNode(match[2] ?? "");
+      node.toggleFormat("bold");
+      node.toggleFormat("italic");
+    } else if (full.startsWith("**")) {
+      node = $createTextNode(match[3] ?? "");
+      node.toggleFormat("bold");
+    } else if (full.startsWith("~~")) {
+      node = $createTextNode(match[4] ?? "");
+      node.toggleFormat("strikethrough");
+    } else if (full[0] === "`") {
+      node = $createTextNode(match[5] ?? "");
+      node.toggleFormat("code");
+    } else {
+      node = $createTextNode(match[6] ?? "");
+      node.toggleFormat("italic");
+    }
+    nodes.push(node);
+    lastIndex = match.index + full.length;
+    match = pattern.exec(text);
+  }
+  if (lastIndex < text.length)
+    nodes.push($createTextNode(text.slice(lastIndex)));
+  return nodes.length ? nodes : [$createTextNode(text)];
+}
+
+function serializeCellToMarkdown(cell: TableCellNode): string {
+  let result = "";
+  for (const block of cell.getChildren()) {
+    const getChildren = (
+      block as unknown as { getChildren?: () => LexicalNode[] }
+    ).getChildren;
+    const inlines: LexicalNode[] =
+      typeof getChildren === "function" ? getChildren.call(block) : [block];
+    for (const child of inlines) {
+      if ($isTextNode(child)) {
+        let t = child.getTextContent();
+        if (child.hasFormat("code")) t = `\`${t}\``;
+        if (child.hasFormat("strikethrough")) t = `~~${t}~~`;
+        if (child.hasFormat("bold") && child.hasFormat("italic"))
+          t = `***${t}***`;
+        else if (child.hasFormat("bold")) t = `**${t}**`;
+        else if (child.hasFormat("italic")) t = `*${t}*`;
+        result += t;
+      } else {
+        result += child.getTextContent();
+      }
+    }
+  }
+  return result.trim().replace(/\|/g, "\\|");
+}
+
+// ---------------------------------------------------------------------------
 // TABLE_TRANSFORMER — GFM table import/export
 // ---------------------------------------------------------------------------
 const TABLE_TRANSFORMER: MultilineElementTransformer = {
@@ -412,7 +486,7 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
       const cells = row.getChildren();
       const cellTexts = cells.map((cell) => {
         if (!$isTableCellNode(cell)) return "";
-        return cell.getTextContent().trim().replace(/\|/g, "\\|");
+        return serializeCellToMarkdown(cell);
       });
       lines.push(`| ${cellTexts.join(" | ")} |`);
       if (rowIndex === 0) {
@@ -467,7 +541,10 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
             : TableCellHeaderStates.NO_STATUS,
         );
         const paragraph = $createParagraphNode();
-        if (cellText) paragraph.append($createTextNode(cellText));
+        if (cellText)
+          parseInlineMarkdown(cellText).forEach((n) => {
+            paragraph.append(n);
+          });
         cellNode.append(paragraph);
         rowNode.append(cellNode);
       });
@@ -479,7 +556,18 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
   type: "multiline-element",
 };
 
+const HORIZONTAL_RULE_TRANSFORMER: ElementTransformer = {
+  dependencies: [HorizontalRuleNode],
+  export: (node) => ($isHorizontalRuleNode(node) ? "---" : null),
+  regExp: /^(-{3,}|\*{3,}|_{3,})\s*$/,
+  replace: (parentNode) => {
+    parentNode.replace($createHorizontalRuleNode());
+  },
+  type: "element",
+};
+
 const CUSTOM_TRANSFORMERS = [
+  HORIZONTAL_RULE_TRANSFORMER,
   TABLE_TRANSFORMER,
   UNDERLINE_TRANSFORMER,
   IMAGE_TRANSFORMER,
@@ -821,20 +909,31 @@ function ToolbarPlugin({ className }: { className?: string }) {
       }
 
       const anchorNode = selection.anchor.getNode();
-      const element =
+      // getTopLevelElementOrThrow() returns TableNode when the cursor is inside
+      // a table cell. Walk up instead to find the nearest block that is a direct
+      // child of root OR a table cell so the toolbar reflects the real block type.
+      let element: LexicalNode =
         anchorNode.getKey() === "root"
           ? anchorNode
           : anchorNode.getTopLevelElementOrThrow();
+      if (anchorNode.getKey() !== "root") {
+        let current: LexicalNode = anchorNode;
+        while (current) {
+          const p = current.getParent();
+          if (!p) break;
+          if ($isTableCellNode(p) || p.getKey() === "root") {
+            element = current;
+            break;
+          }
+          current = p;
+        }
+      }
       const elementKey = element.getKey();
       const elementDOM = editor.getElementByKey(elementKey);
 
       if (elementDOM !== null) {
         if ($isListNode(element)) {
-          const parentList = element.getParent();
-          if ($isListNode(parentList)) {
-            const listType = parentList.getListType();
-            setBlockType(listType === "number" ? "ol" : "ul");
-          }
+          setBlockType(element.getListType() === "number" ? "ol" : "ul");
         } else {
           const type = element.getType();
           if (type === "heading") {
