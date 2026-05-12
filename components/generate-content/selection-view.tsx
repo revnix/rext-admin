@@ -78,7 +78,7 @@ export function SelectionView({
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-6 lg:py-0">
       <div className="text-center mb-12 space-y-4">
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
           How would you like to start?
