@@ -164,7 +164,7 @@ export default function SecuritySettingsPage() {
             </CardContent>
           </Card>
         ) : securityStats ? (
-          <Card className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20">
+          <Card className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20 overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-orange-600" />
@@ -326,10 +326,16 @@ export default function SecuritySettingsPage() {
         ) : null)}
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="sessions">Sessions</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+        <TabsList className="w-full justify-start overflow-x-auto flex-nowrap shrink-0">
+          <TabsTrigger value="overview" className="min-w-fit">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="min-w-fit">
+            Sessions
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="min-w-fit">
+            Activity
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
