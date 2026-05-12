@@ -102,7 +102,7 @@ marked.use({
       text: string;
     }) {
       const titleAttr = title ? ` title="${title}"` : "";
-      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="prose-link">${text}</a>`;
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
     },
     image({
       href,
