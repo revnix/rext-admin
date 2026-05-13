@@ -310,8 +310,8 @@ export function ActivityLog() {
                 key={log.id}
                 className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
+                <div className="flex items-start justify-between gap-4 min-w-0">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className="rounded-full bg-muted p-2 mt-0.5">
                       <Monitor className="h-4 w-4" />
                     </div>
@@ -347,7 +347,7 @@ export function ActivityLog() {
                       </div>
 
                       {log.user_agent && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-muted-foreground break-all line-clamp-2 mt-1">
                           {log.user_agent}
                         </p>
                       )}
