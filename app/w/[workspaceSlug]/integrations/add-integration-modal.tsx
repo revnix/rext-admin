@@ -268,17 +268,30 @@ function ShopifyForm({
     data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
   ) => {
     try {
-      await integrationsApiService.createShopifyConnection(workspaceId, {
-        store_url: data.store_url,
-        is_active: data.is_active,
-      });
-      toast.success("Shopify connection added successfully");
-      form.reset();
-      onSuccess();
+      const result = await integrationsApiService.startShopifyInstall(
+        workspaceId,
+        {
+          store_url: data.store_url,
+          return_path:
+            typeof window !== "undefined"
+              ? window.location.origin + window.location.pathname
+              : undefined,
+        },
+      );
+
+      const installUrl =
+        result.install_url || result.redirect_url || result.url;
+
+      if (installUrl) {
+        toast.success("Opening Shopify installation in a new tab...");
+        window.open(installUrl, "_blank", "noopener,noreferrer");
+      } else {
+        throw new Error("Failed to get installation URL from Shopify");
+      }
     } catch (error: unknown) {
-      log.error("Failed to add Shopify integration", error);
+      log.error("Failed to start Shopify installation", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add integration",
+        error instanceof Error ? error.message : "Failed to start installation",
       );
     }
   };
@@ -327,7 +340,7 @@ function ShopifyForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Adding..." : "Add Connection"}
+            {isSubmitting ? "Connecting..." : "Install on Shopify"}
           </Button>
         </DialogFooter>
       </form>
