@@ -11,7 +11,6 @@ import { apiClient } from "@/lib/api-client";
 import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Route } from "next";
 
 /**
@@ -80,7 +79,7 @@ export function ImpersonationBanner() {
       queryClient.invalidateQueries();
 
       startTransition(() => {
-        router.push("/admin/customers" as Route);
+        router.push("/admin/users" as Route);
         // Refresh the page to update UI
         router.refresh();
       });
@@ -100,35 +99,35 @@ export function ImpersonationBanner() {
   }
 
   return (
-    <Alert className="rounded-none border-x-0 border-t-0 bg-amber-200 dark:bg-amber-950/20 border-amber-600 dark:border-amber-500">
-      <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-2" />
-      <AlertDescription className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
+    <div className="w-full border-b border-amber-600 dark:border-amber-500 bg-amber-200 dark:bg-amber-950/20 px-4 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex items-start gap-3 min-w-0">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-6 min-w-0">
+            <span className="text-sm font-semibold text-yellow-900 dark:text-yellow-100 shrink-0">
               Impersonating User
             </span>
-          </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-yellow-700 dark:text-yellow-300" />
-              <span className="font-medium text-yellow-900 dark:text-yellow-100">
-                {status.impersonated_user_name ||
-                  status.impersonated_user_email}
-              </span>
-              {status.impersonated_user_name && (
-                <span className="text-yellow-700 dark:text-yellow-300">
-                  ({status.impersonated_user_email})
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <User className="h-4 w-4 text-yellow-700 dark:text-yellow-300 shrink-0" />
+                <span className="font-medium text-yellow-900 dark:text-yellow-100 truncate">
+                  {status.impersonated_user_name ||
+                    status.impersonated_user_email}
+                </span>
+                {status.impersonated_user_name && (
+                  <span className="text-yellow-700 dark:text-yellow-300 truncate">
+                    ({status.impersonated_user_email})
+                  </span>
+                )}
+              </div>
+
+              {status.started_at && (
+                <span className="text-yellow-700 dark:text-yellow-300 shrink-0">
+                  Since {new Date(status.started_at).toLocaleTimeString()}
                 </span>
               )}
             </div>
-
-            {status.started_at && (
-              <span className="text-yellow-700 dark:text-yellow-300">
-                Since {new Date(status.started_at).toLocaleTimeString()}
-              </span>
-            )}
           </div>
         </div>
 
@@ -137,14 +136,14 @@ export function ImpersonationBanner() {
           size="sm"
           onClick={handleStopImpersonation}
           disabled={stopImpersonationMutation.isPending || isPendingRoute}
-          className="border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
+          className="w-full sm:w-auto shrink-0 border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {stopImpersonationMutation.isPending || isPendingRoute
             ? "Stopping..."
             : "Stop Impersonation"}
         </Button>
-      </AlertDescription>
-    </Alert>
+      </div>
+    </div>
   );
 }

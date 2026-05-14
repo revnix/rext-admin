@@ -393,6 +393,7 @@ export default function WebhookMonitoringPage() {
         description="Monitor and manage webhook events from LemonSqueezy"
         actions={
           <Button
+          className="w-full sm:w-auto"
             onClick={() => {
               fetchEvents();
               fetchStats();
@@ -415,7 +416,7 @@ export default function WebhookMonitoringPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <label
                   htmlFor="event-name-filter"
@@ -425,6 +426,7 @@ export default function WebhookMonitoringPage() {
                 </label>
                 <Input
                   id="event-name-filter"
+                  className="!h-10"
                   placeholder="Filter by event name..."
                   value={eventNameFilter}
                   onChange={(e) => {
@@ -433,7 +435,7 @@ export default function WebhookMonitoringPage() {
                   }}
                 />
               </div>
-              <div className="w-48">
+              <div className="w-full sm:w-48">
                 <label
                   htmlFor="status-filter"
                   className="text-sm font-medium mb-2 block"

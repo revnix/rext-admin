@@ -177,7 +177,7 @@ export function UsageMetrics({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row gap-2 items-start justify-between">
           <div>
             <CardTitle>Usage Statistics</CardTitle>
             <CardDescription className="mt-1">

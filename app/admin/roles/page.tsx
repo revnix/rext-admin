@@ -526,7 +526,7 @@ export default function AdminRolesPage() {
             <TabsContent value="permissions" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:items-center justify-between">
                     <div>
                       <CardTitle>Permissions</CardTitle>
                       <CardDescription>
@@ -537,6 +537,7 @@ export default function AdminRolesPage() {
                       permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}
                     >
                       <Button
+                        className="w-full sm:w-auto"
                         onClick={() =>
                           setDialogState({ type: "createPermission" })
                         }

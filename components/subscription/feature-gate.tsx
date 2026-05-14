@@ -142,7 +142,7 @@ export function FeatureGate({
   };
 
   const handleManageSubscription = () => {
-    const route = "/dashboard/subscription";
+    const route = "/subscription";
     router.push(route as unknown as never);
   };
 
