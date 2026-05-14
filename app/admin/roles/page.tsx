@@ -462,16 +462,17 @@ export default function AdminRolesPage() {
             <TabsContent value="roles" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start gap-2 sm:items-center sm:justify-between">
                     <div>
                       <CardTitle>Roles</CardTitle>
                       <CardDescription>
                         Manage system and custom roles
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="w-full sm:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
                       <Button
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => setDialogState({ type: "auditLog" })}
                       >
                         <History className="h-4 w-4 mr-2" />
@@ -482,6 +483,7 @@ export default function AdminRolesPage() {
                       >
                         <Button
                           variant="outline"
+                          className="w-full sm:w-auto"
                           onClick={() => setDialogState({ type: "bulkAssign" })}
                         >
                           <Users className="h-4 w-4 mr-2" />
@@ -493,6 +495,7 @@ export default function AdminRolesPage() {
                       >
                         <Button
                           onClick={() => setDialogState({ type: "createRole" })}
+                          className="w-full sm:w-auto"
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Create Role
