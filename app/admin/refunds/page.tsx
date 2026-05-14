@@ -409,7 +409,7 @@ export default function RefundManagementPage() {
         title="Refund Management"
         description="View refund history and process new refunds"
         actions={
-          <>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               onClick={() =>
@@ -429,7 +429,7 @@ export default function RefundManagementPage() {
               />
               Refresh
             </Button>
-          </>
+          </div>
         }
       >
         {/* Info Banner */}

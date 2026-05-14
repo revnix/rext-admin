@@ -82,7 +82,7 @@ export function EmailPerformanceTable({
           Email engagement metrics broken down by template type
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-auto">
         {data && data.length > 0 ? (
           <Table>
             <TableHeader>

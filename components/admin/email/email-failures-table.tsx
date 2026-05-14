@@ -98,7 +98,7 @@ export function EmailFailuresTable({
           Emails that failed to send or bounced (last 100 failures)
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-auto">
         {data && data.length > 0 ? (
           <Table>
             <TableHeader>

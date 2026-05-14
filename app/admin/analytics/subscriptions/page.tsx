@@ -349,7 +349,7 @@ export default function SubscriptionAnalyticsPage() {
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
         actions={
-          <Button onClick={handleRefresh} disabled={refreshing}>
+          <Button className="w-full sm:w-auto" onClick={handleRefresh} disabled={refreshing}>
             {refreshing ? "Refreshing..." : "Refresh Data"}
           </Button>
         }
@@ -504,7 +504,7 @@ export default function SubscriptionAnalyticsPage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Trial Conversion Funnel</CardTitle>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-start mt-4 sm:items-center gap-4 text-sm text-muted-foreground">
               <span>
                 Total Trials:{" "}
                 <Badge variant="secondary">
@@ -564,10 +564,10 @@ export default function SubscriptionAnalyticsPage() {
         {/* Churn Analysis */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
               <div>
                 <CardTitle>Churn Analysis</CardTitle>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                <div className="flex flex-wrap items-start sm:items-center gap-4 text-sm text-muted-foreground my-4">
                   <span>
                     Cancellations:{" "}
                     <Badge variant="destructive">{churn.cancellations}</Badge>
@@ -590,7 +590,7 @@ export default function SubscriptionAnalyticsPage() {
                 value={churnPeriod.toString()}
                 onValueChange={(value) => setChurnPeriod(Number(value))}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
                 <SelectContent>

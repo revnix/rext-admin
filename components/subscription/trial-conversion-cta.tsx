@@ -162,7 +162,7 @@ export function TrialConversionCTA({
           </Button>
           {daysRemaining !== null && daysRemaining > 0 && (
             <Button asChild variant="outline" className="flex-1" size="lg">
-              <Link href={`/dashboard/subscription` as Route}>
+              <Link href={`/subscription` as Route}>
                 View Trial Status
               </Link>
             </Button>

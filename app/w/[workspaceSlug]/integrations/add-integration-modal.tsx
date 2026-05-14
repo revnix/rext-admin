@@ -268,13 +268,13 @@ function ShopifyForm({
     data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
   ) => {
     try {
-      const result = await integrationsApiService.startShopifyInstall(
+     const result = await integrationsApiService.startShopifyInstall(
         workspaceId,
         {
           store_url: data.store_url,
           return_path:
             typeof window !== "undefined"
-              ? window.location.origin + window.location.pathname
+              ? window.location.pathname
               : undefined,
         },
       );

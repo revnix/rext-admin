@@ -332,7 +332,7 @@ export function UsageLimitWarning({
                   size="sm"
                   variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
                   onClick={() =>
-                    router.push("/dashboard/subscription" as Route)
+                    router.push("/subscription" as Route)
                   }
                 >
                   View Usage
