@@ -3,7 +3,6 @@ A modern Next.js application for generating, managing, and utilizing AI-powered 
 
 ## 🔒 Security Notice  
 
-
 **This application has been updated with comprehensive security measures (September 2024).**
 
 Key security features implemented:  
