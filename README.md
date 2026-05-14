@@ -1,6 +1,5 @@
 # Rext Admin     
 
-
 A modern Next.js application for generating, managing, and utilizing AI-powered content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
 
 ## 🔒 Security Notice  
