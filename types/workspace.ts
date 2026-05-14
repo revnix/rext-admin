@@ -86,15 +86,15 @@ export interface Persona {
   description: string;
   full_name?: string | null;
   professional_title?: string | null;
-  areas_of_expertise?: string;
+  areas_of_expertise?: string | string[];
   tone_of_voice?: string;
   bio?: string;
   avatar_url?: string | null;
   linkedin_url?: string | null;
   demographics?: string;
-  pain_points?: string;
-  goals?: string;
-  behaviors?: string;
+  pain_points?: string | string[];
+  goals?: string | string[];
+  behaviors?: string | string[];
 }
 
 /**

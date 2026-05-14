@@ -39,6 +39,9 @@ import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import {
   Dialog,
   DialogContent,
@@ -99,7 +102,7 @@ marked.use({
       text: string;
     }) {
       const titleAttr = title ? ` title="${title}"` : "";
-      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="prose-link">${text}</a>`;
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
     },
     image({
       href,
@@ -359,6 +362,14 @@ function ContentEditorInner(props: ContentEditorProps) {
   const { label, color, barColor } = getReadabilityMeta(score);
   const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
   const workspaceId = useCurrentWorkspaceId();
+  const { hasPermission: canUpdate } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.UPDATE,
+    workspaceId ?? undefined,
+  );
+  const { hasPermission: canPublish } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.PUBLISH,
+    workspaceId ?? undefined,
+  );
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // State
@@ -614,55 +625,101 @@ function ContentEditorInner(props: ContentEditorProps) {
   const analysisSidebarContent = (
     <div className="flex flex-col h-full bg-sidebar">
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-8 px-2! text-xs font-bold transition-all flex-1"
-          onClick={onEditToggle}
-          disabled={!isFinal}
-        >
-          {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
-        </Button>
-        <Button
-          onClick={saveContent}
-          disabled={!isFinal || isSaving || isPublishing}
-          variant="secondary"
-          size="sm"
-          className="h-8 px-2! text-xs font-bold transition-all flex-1"
-        >
-          <Save size={14} className={isSaving ? "animate-pulse" : ""} />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <div className="flex-1">
+          {canUpdate ? (
             <Button
-              disabled={!isFinal}
               variant="secondary"
               size="sm"
-              className="h-8 px-2! text-xs font-bold transition-all flex-1"
+              className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+              onClick={onEditToggle}
+              disabled={!isFinal}
             >
-              <Copy size={14} />
+              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48" align="center">
-            <DropdownMenuItem onClick={() => handleCopy("html")}>
-              Copy HTML
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-              Copy MD
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCopy("formatted")}>
-              Copy Text
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button
-          onClick={publishContent}
-          disabled={!isFinal || isPublishing || isSaving}
-          size="sm"
-          className="h-8 px-2! text-xs font-bold flex-1"
-        >
-          <Send size={14} className={isPublishing ? "animate-pulse" : ""} />
-        </Button>
+          ) : (
+            <LockedFeatureTooltip message="Editing requires Editor role or above">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+                disabled
+              >
+                <Pencil size={14} />
+              </Button>
+            </LockedFeatureTooltip>
+          )}
+        </div>
+        <div className="flex-1">
+          {canUpdate ? (
+            <Button
+              onClick={saveContent}
+              disabled={!isFinal || isSaving || isPublishing}
+              variant="secondary"
+              size="sm"
+              className="h-8 px-2! text-xs font-bold transition-all !w-full"
+            >
+              <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+            </Button>
+          ) : (
+            <LockedFeatureTooltip message="Saving requires Editor role or above">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                disabled
+              >
+                <Save size={14} />
+              </Button>
+            </LockedFeatureTooltip>
+          )}
+        </div>
+        <div className="flex-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={!isFinal}
+                variant="secondary"
+                size="sm"
+                className="h-8 px-2! text-xs font-bold transition-all !w-full"
+              >
+                <Copy size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48" align="center">
+              <DropdownMenuItem onClick={() => handleCopy("html")}>
+                Copy HTML
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+                Copy MD
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+                Copy Text
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex-1">
+          {canPublish ? (
+            <Button
+              onClick={publishContent}
+              disabled={!isFinal || isPublishing || isSaving}
+              size="sm"
+              className="h-8 px-2! text-xs font-bold w-full!"
+            >
+              <Send size={14} className={isPublishing ? "animate-pulse" : ""} />
+            </Button>
+          ) : (
+            <LockedFeatureTooltip message="Publishing requires Editor role or above">
+              <Button
+                size="sm"
+                className="h-8 px-2! text-xs font-bold w-full!"
+                disabled
+              >
+                <Send size={14} />
+              </Button>
+            </LockedFeatureTooltip>
+          )}
+        </div>
       </div>
 
       <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">

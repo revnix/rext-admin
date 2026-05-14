@@ -19,7 +19,7 @@ export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [
 ];
 
 export const TOPIC_GENERATION_STEPS: LoadingStep[] = [
-  { id: "Topic Generation", label: "Content Type Generation" },
+  { id: "Topic Generation", label: "Content Topic Generation" },
 ];
 
 export const TOPIC_REGENERATION_STEPS: LoadingStep[] = [
@@ -27,7 +27,6 @@ export const TOPIC_REGENERATION_STEPS: LoadingStep[] = [
 ];
 
 export const CONTENT_TYPE_STEPS: LoadingStep[] = [
-  { id: "Topic Type", label: "Determining Content Type" },
   { id: "Generate Outline", label: "Generating Content Outline" },
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
@@ -39,7 +39,6 @@ const ITEMS_PER_PAGE = 20;
 
 export function UnifiedActivity() {
   const user = usePermissionUser();
-  const queryClient = useQueryClient();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<AuditLogFilters>({
     limit: ITEMS_PER_PAGE,
@@ -157,9 +156,13 @@ export function UnifiedActivity() {
   return (
     <Tabs defaultValue="all" className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <TabsList className="w-full md:w-auto justify-start overflow-x-auto">
-          <TabsTrigger value="all">All Activity</TabsTrigger>
-          <TabsTrigger value="logins">Login History</TabsTrigger>
+        <TabsList className="w-full md:w-auto justify-start overflow-x-auto flex-nowrap shrink-0">
+          <TabsTrigger value="all" className="min-w-fit">
+            All Activity
+          </TabsTrigger>
+          <TabsTrigger value="logins" className="min-w-fit">
+            Login History
+          </TabsTrigger>
         </TabsList>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -239,8 +242,8 @@ export function UnifiedActivity() {
                     key={log.id}
                     className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3 flex-1">
+                    <div className="flex items-start justify-between gap-4 min-w-0">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
                         <div className="rounded-full bg-muted p-2 mt-0.5">
                           <Monitor className="h-4 w-4" />
                         </div>
@@ -276,7 +279,7 @@ export function UnifiedActivity() {
                           </div>
 
                           {log.user_agent && (
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-xs text-muted-foreground break-all line-clamp-2 mt-1">
                               {log.user_agent}
                             </p>
                           )}
@@ -463,7 +466,7 @@ export function UnifiedActivity() {
                                 )}
                               </div>
                               {event.browser && (
-                                <p className="text-xs text-muted-foreground truncate max-w-md">
+                                <p className="text-xs text-muted-foreground break-all line-clamp-2 mt-1">
                                   {event.browser}
                                 </p>
                               )}

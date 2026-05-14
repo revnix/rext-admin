@@ -71,13 +71,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
-  const storeRole = currentWorkspace
+  const _storeRole = currentWorkspace
     ? (workspacePermissions[currentWorkspace.id]?.role ??
       workspacePermissions[currentWorkspace.slug]?.role)
     : undefined;
-  const { role: fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
-  const activeRole = fetchedRole || storeRole;
-
+  const { role: _fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const { state: sidebarState } = useSidebar();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
@@ -109,8 +107,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: currentWorkspace?.slug
             ? workspaceRoutes.generate_content(currentWorkspace.slug)
             : "/",
-          icon: Sparkles, // Or Sparkles if better suited, keeping FileText for now as seemingly standard
-          permission: "content.read",
+          icon: Sparkles,
+          permission: "content.create",
         },
         {
           title: "Content Library",
@@ -150,7 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.integrations(currentWorkspace.slug)
             : "/",
           icon: Plug,
-          permission: "workspace.update",
+          permission: "workspace.read",
         },
         {
           title: "Settings",
@@ -160,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: Settings2,
           permission: "workspace.update",
         },
-      ].filter((item) => item.title !== "Members" || activeRole !== "viewer"),
+      ],
     },
   ];
 

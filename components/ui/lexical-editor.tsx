@@ -9,13 +9,34 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import {
+  HorizontalRuleNode,
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+} from "@lexical/extension";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   TRANSFORMERS,
   $convertToMarkdownString,
   $convertFromMarkdownString,
   type TextMatchTransformer,
+  type MultilineElementTransformer,
+  type ElementTransformer,
 } from "@lexical/markdown";
+import {
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  INSERT_TABLE_COMMAND,
+  $createTableNode,
+  $createTableRowNode,
+  $createTableCellNode,
+  $isTableNode,
+  $isTableRowNode,
+  $isTableCellNode,
+  TableCellHeaderStates,
+} from "@lexical/table";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import {
   HeadingNode,
   QuoteNode,
@@ -94,6 +115,7 @@ import {
   Check,
   X,
   ImageIcon,
+  Table2 as TableIcon,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -140,6 +162,13 @@ const theme = {
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
   },
+  hr: "my-4 border-0 h-px bg-border",
+  table: "border-collapse w-full my-4",
+  tableRow: "",
+  tableCell:
+    "border border-border px-2 py-2 !pb-0 align-top min-w-0 w-auto relative outline-none text-sm",
+  tableCellHeader: "!pb-0 font-semibold",
+  tableScrollableWrapper: "overflow-x-auto my-4 w-full",
 };
 
 const lexicalLog = log.forComponent("LexicalEditor");
@@ -332,6 +361,10 @@ const NODES = [
   LinkNode,
   AutoLinkNode,
   ImageNode,
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  HorizontalRuleNode,
 ];
 
 const UNDERLINE_TRANSFORMER: TextMatchTransformer = {
@@ -372,7 +405,170 @@ const IMAGE_TRANSFORMER: TextMatchTransformer = {
   type: "text-match",
 };
 
+// ---------------------------------------------------------------------------
+// Inline markdown helpers for table cell import / export
+// ---------------------------------------------------------------------------
+function parseInlineMarkdown(text: string): TextNode[] {
+  const pattern =
+    /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|~~(.+?)~~|`(.+?)`|\*(.+?)\*)/g;
+  const nodes: TextNode[] = [];
+  let lastIndex = 0;
+  let match = pattern.exec(text);
+  while (match !== null) {
+    if (match.index > lastIndex)
+      nodes.push($createTextNode(text.slice(lastIndex, match.index)));
+    const full = match[0];
+    let node: TextNode;
+    if (full.startsWith("***")) {
+      node = $createTextNode(match[2] ?? "");
+      node.toggleFormat("bold");
+      node.toggleFormat("italic");
+    } else if (full.startsWith("**")) {
+      node = $createTextNode(match[3] ?? "");
+      node.toggleFormat("bold");
+    } else if (full.startsWith("~~")) {
+      node = $createTextNode(match[4] ?? "");
+      node.toggleFormat("strikethrough");
+    } else if (full[0] === "`") {
+      node = $createTextNode(match[5] ?? "");
+      node.toggleFormat("code");
+    } else {
+      node = $createTextNode(match[6] ?? "");
+      node.toggleFormat("italic");
+    }
+    nodes.push(node);
+    lastIndex = match.index + full.length;
+    match = pattern.exec(text);
+  }
+  if (lastIndex < text.length)
+    nodes.push($createTextNode(text.slice(lastIndex)));
+  return nodes.length ? nodes : [$createTextNode(text)];
+}
+
+function serializeCellToMarkdown(cell: TableCellNode): string {
+  let result = "";
+  for (const block of cell.getChildren()) {
+    const getChildren = (
+      block as unknown as { getChildren?: () => LexicalNode[] }
+    ).getChildren;
+    const inlines: LexicalNode[] =
+      typeof getChildren === "function" ? getChildren.call(block) : [block];
+    for (const child of inlines) {
+      if ($isTextNode(child)) {
+        let t = child.getTextContent();
+        if (child.hasFormat("code")) t = `\`${t}\``;
+        if (child.hasFormat("strikethrough")) t = `~~${t}~~`;
+        if (child.hasFormat("bold") && child.hasFormat("italic"))
+          t = `***${t}***`;
+        else if (child.hasFormat("bold")) t = `**${t}**`;
+        else if (child.hasFormat("italic")) t = `*${t}*`;
+        result += t;
+      } else {
+        result += child.getTextContent();
+      }
+    }
+  }
+  return result.trim().replace(/\|/g, "\\|");
+}
+
+// ---------------------------------------------------------------------------
+// TABLE_TRANSFORMER — GFM table import/export
+// ---------------------------------------------------------------------------
+const TABLE_TRANSFORMER: MultilineElementTransformer = {
+  dependencies: [TableNode, TableCellNode, TableRowNode],
+  export: (node) => {
+    if (!$isTableNode(node)) return null;
+    const rows = node.getChildren();
+    if (!rows.length) return null;
+    const lines: string[] = [];
+    rows.forEach((row, rowIndex) => {
+      if (!$isTableRowNode(row)) return;
+      const cells = row.getChildren();
+      const cellTexts = cells.map((cell) => {
+        if (!$isTableCellNode(cell)) return "";
+        return serializeCellToMarkdown(cell);
+      });
+      lines.push(`| ${cellTexts.join(" | ")} |`);
+      if (rowIndex === 0) {
+        lines.push(`| ${cells.map(() => "---").join(" | ")} |`);
+      }
+    });
+    return lines.join("\n");
+  },
+  regExpStart: /^\|.+\|/,
+  replace: () => false,
+  handleImportAfterStartMatch: ({
+    lines,
+    rootNode,
+    startLineIndex,
+    startMatch,
+  }) => {
+    const allTableLines: string[] = [startMatch[0]];
+    let currentIndex = startLineIndex + 1;
+    while (currentIndex < lines.length) {
+      const line = lines[currentIndex];
+      if (!line.trim().startsWith("|")) break;
+      allTableLines.push(line);
+      currentIndex++;
+    }
+
+    const parseRow = (rowText: string): string[] =>
+      rowText
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim());
+
+    const isSeparator = (line: string): boolean => {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return false;
+      const cells = trimmed.slice(1, -1).split("|");
+      return cells.length > 0 && cells.every((c) => /^\s*:?-+:?\s*$/.test(c));
+    };
+
+    const dataRows = allTableLines.filter((line) => !isSeparator(line));
+    if (!dataRows.length) return null;
+
+    const tableNode = $createTableNode();
+    dataRows.forEach((rowText, rowIndex) => {
+      const cells = parseRow(rowText);
+      const rowNode = $createTableRowNode();
+      cells.forEach((cellText) => {
+        const cellNode = $createTableCellNode(
+          rowIndex === 0
+            ? TableCellHeaderStates.ROW
+            : TableCellHeaderStates.NO_STATUS,
+        );
+        const paragraph = $createParagraphNode();
+        if (cellText)
+          parseInlineMarkdown(cellText).forEach((n) => {
+            paragraph.append(n);
+          });
+        cellNode.append(paragraph);
+        rowNode.append(cellNode);
+      });
+      tableNode.append(rowNode);
+    });
+    rootNode.append(tableNode);
+    return [true, currentIndex - 1];
+  },
+  type: "multiline-element",
+};
+
+const HORIZONTAL_RULE_TRANSFORMER: ElementTransformer = {
+  dependencies: [HorizontalRuleNode],
+  export: (node) => ($isHorizontalRuleNode(node) ? "---" : null),
+  regExp: /^(-{3,}|\*{3,}|_{3,})\s*$/,
+  replace: (parentNode) => {
+    parentNode.replace($createHorizontalRuleNode());
+  },
+  type: "element",
+};
+
 const CUSTOM_TRANSFORMERS = [
+  HORIZONTAL_RULE_TRANSFORMER,
+  TABLE_TRANSFORMER,
   UNDERLINE_TRANSFORMER,
   IMAGE_TRANSFORMER,
   ...TRANSFORMERS,
@@ -582,6 +778,97 @@ function ImageInsertPopover() {
 }
 
 // ---------------------------------------------------------------------------
+// TableInsertPopover
+// ---------------------------------------------------------------------------
+function TableInsertPopover() {
+  const [editor] = useLexicalComposerContext();
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState("3");
+  const [cols, setCols] = useState("3");
+
+  const handleInsert = useCallback(() => {
+    editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+      rows,
+      columns: cols,
+      includeHeaders: { rows: true, columns: false },
+    });
+    setOpen(false);
+    setRows("3");
+    setCols("3");
+  }, [editor, rows, cols]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "p-2 rounded hover:bg-muted transition-colors",
+            open ? "bg-muted text-foreground" : "text-muted-foreground",
+          )}
+          title="Insert Table"
+          type="button"
+        >
+          <TableIcon size={16} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-4 space-y-3" align="end">
+        <h4 className="font-semibold text-sm leading-none">Insert Table</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="tbl-rows" className="text-xs">
+              Rows
+            </Label>
+            <Input
+              id="tbl-rows"
+              type="number"
+              min="1"
+              max="20"
+              value={rows}
+              onChange={(e) => setRows(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tbl-cols" className="text-xs">
+              Columns
+            </Label>
+            <Input
+              id="tbl-cols"
+              type="number"
+              min="1"
+              max="10"
+              value={cols}
+              onChange={(e) => setCols(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => setOpen(false)}
+            type="button"
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={handleInsert}
+            type="button"
+            disabled={!rows || !cols || Number(rows) < 1 || Number(cols) < 1}
+          >
+            <Check size={13} className="mr-1" /> Insert
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ToolbarPlugin
 // ---------------------------------------------------------------------------
 function ToolbarPlugin({ className }: { className?: string }) {
@@ -622,20 +909,31 @@ function ToolbarPlugin({ className }: { className?: string }) {
       }
 
       const anchorNode = selection.anchor.getNode();
-      const element =
+      // getTopLevelElementOrThrow() returns TableNode when the cursor is inside
+      // a table cell. Walk up instead to find the nearest block that is a direct
+      // child of root OR a table cell so the toolbar reflects the real block type.
+      let element: LexicalNode =
         anchorNode.getKey() === "root"
           ? anchorNode
           : anchorNode.getTopLevelElementOrThrow();
+      if (anchorNode.getKey() !== "root") {
+        let current: LexicalNode = anchorNode;
+        while (current) {
+          const p = current.getParent();
+          if (!p) break;
+          if ($isTableCellNode(p) || p.getKey() === "root") {
+            element = current;
+            break;
+          }
+          current = p;
+        }
+      }
       const elementKey = element.getKey();
       const elementDOM = editor.getElementByKey(elementKey);
 
       if (elementDOM !== null) {
         if ($isListNode(element)) {
-          const parentList = element.getParent();
-          if ($isListNode(parentList)) {
-            const listType = parentList.getListType();
-            setBlockType(listType === "number" ? "ol" : "ul");
-          }
+          setBlockType(element.getListType() === "number" ? "ol" : "ul");
         } else {
           const type = element.getType();
           if (type === "heading") {
@@ -938,6 +1236,9 @@ function ToolbarPlugin({ className }: { className?: string }) {
 
       {/* Image popover — rendered inside LexicalComposer context */}
       <ImageInsertPopover />
+
+      {/* Table popover */}
+      <TableInsertPopover />
     </div>
   );
 }
@@ -995,13 +1296,13 @@ function ReadOnlyLinkClickPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    let removeListener: (() => void) | null = null;
+    let removeListeners: (() => void) | null = null;
 
     const unregister = editor.registerRootListener(
       (rootElement, prevRootElement) => {
-        if (prevRootElement && removeListener) {
-          removeListener();
-          removeListener = null;
+        if (prevRootElement && removeListeners) {
+          removeListeners();
+          removeListeners = null;
         }
         if (rootElement) {
           const handleClick = (e: MouseEvent) => {
@@ -1011,16 +1312,27 @@ function ReadOnlyLinkClickPlugin() {
               window.open(anchor.href, "_blank", "noopener,noreferrer");
             }
           };
+          const blockDrag = (e: DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+          };
           rootElement.addEventListener("click", handleClick);
-          removeListener = () =>
+          rootElement.addEventListener("drop", blockDrag);
+          rootElement.addEventListener("dragover", blockDrag);
+          rootElement.addEventListener("dragenter", blockDrag);
+          removeListeners = () => {
             rootElement.removeEventListener("click", handleClick);
+            rootElement.removeEventListener("drop", blockDrag);
+            rootElement.removeEventListener("dragover", blockDrag);
+            rootElement.removeEventListener("dragenter", blockDrag);
+          };
         }
       },
     );
 
     return () => {
       unregister();
-      removeListener?.();
+      removeListeners?.();
     };
   }, [editor]);
 
@@ -1090,7 +1402,7 @@ export default function LexicalEditor({
       namespace: "my-editor",
       theme,
       nodes: NODES,
-      readOnly,
+      editable: !readOnly,
       onError: (error: Error) => {
         lexicalLog.error("Lexical editor runtime error", error);
       },
@@ -1223,7 +1535,7 @@ export default function LexicalEditor({
                 <ContentEditable
                   className={cn(
                     "min-h-[150px] outline-none",
-                    readOnly ? "p-0" : "p-6",
+                    readOnly ? "p-0 cursor-default" : "p-6",
                   )}
                 />
               }
@@ -1241,8 +1553,9 @@ export default function LexicalEditor({
             <LinkPlugin
               attributes={{ target: "_blank", rel: "noopener noreferrer" }}
             />
+            <TablePlugin hasHorizontalScroll />
             <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-            <NewTabLinkPlugin />
+            {!readOnly && <NewTabLinkPlugin />}
             {readOnly && <ReadOnlyLinkClickPlugin />}
             {!readOnly && <OnChangePlugin onChange={handleChange} />}
           </div>

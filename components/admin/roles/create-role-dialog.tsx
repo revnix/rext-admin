@@ -66,7 +66,7 @@ export function CreateRoleDialog({
       return roleResponse;
     },
     onSuccess: async () => {
-      toast.success("Role updated successfully");
+      toast.success("Role created successfully");
       invalidateWorkspacePermissions();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
@@ -110,7 +110,7 @@ export function CreateRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create New Role</DialogTitle>

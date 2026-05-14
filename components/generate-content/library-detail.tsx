@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Globe,
@@ -9,7 +8,7 @@ import {
   ChevronRight,
   TrendingUp,
   Loader2,
-  ChevronDown,
+  Tags,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import type { LibraryItem, StoredKeyword } from "@/types/generate-content";
@@ -153,21 +152,42 @@ export default function LibraryDetail({
               <div className="space-y-2">
                 {selectedIntent && <SearchIntentCard intent={selectedIntent} />}
                 {intentOptions.length > 0 && (
-                  <div className="relative w-full mt-1">
-                    <select
-                      value={selectedIntent}
-                      onChange={(e) =>
-                        setSelectedIntent(e.target.value as IntentOption)
-                      }
-                      className="w-full appearance-none bg-background border border-border rounded-lg px-3 py-2 pr-8 text-[11px] font-bold uppercase tracking-widest text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
-                    >
-                      {intentOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
+                  <div className="flex flex-col gap-2 mt-4">
+                    {intentOptions.map((opt) => (
+                      <label
+                        key={opt.value}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <input
+                          type="radio"
+                          name="search-intent"
+                          value={opt.value}
+                          checked={selectedIntent === opt.value}
+                          onChange={() => setSelectedIntent(opt.value)}
+                          className="sr-only"
+                        />
+                        <span
+                          className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${
+                            selectedIntent === opt.value
+                              ? "border-primary bg-primary"
+                              : "border-border bg-background group-hover:border-primary/50"
+                          }`}
+                        >
+                          {selectedIntent === opt.value && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                          )}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                            selectedIntent === opt.value
+                              ? "text-foreground"
+                              : "text-muted-foreground group-hover:text-foreground"
+                          }`}
+                        >
                           {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 )}
               </div>
@@ -269,36 +289,50 @@ export default function LibraryDetail({
         </Card>
       </div>
 
-      {/* Related Topics / Recommendations */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-4">
-          <h3 className="font-bold text-foreground">Related Topics</h3>
-          <div className="flex flex-wrap gap-2">
-            {data.related_topics?.map((topic) => (
-              <Badge
-                key={topic}
-                variant="outline"
-                className="bg-white dark:bg-card hover:bg-primary/5 cursor-pointer py-1.5 px-3"
-              >
-                {topic}
-              </Badge>
-            )) || <p className="text-sm text-muted-foreground">None found</p>}
+      {/* Related Topics */}
+      <div className="mt-12">
+        <Card className="overflow-hidden border-border/50 shadow-sm bg-white dark:bg-card">
+          <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20 flex items-center justify-center shrink-0">
+                <Tags className="w-4 h-4 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground leading-tight">
+                  Related Topics
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Keyword clusters &amp; topic ideas to explore
+                </p>
+              </div>
+            </div>
+            {!!data.related_topics?.length && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-full border border-border/50 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
+                {data.related_topics.length} topics
+              </div>
+            )}
           </div>
-        </div>
-        <div className="space-y-4">
-          <h3 className="font-bold text-foreground">Smart Recommendations</h3>
-          <div className="flex flex-wrap gap-2">
-            {data.recommendations?.map((rec) => (
-              <Badge
-                key={rec}
-                variant="outline"
-                className="bg-white dark:bg-card hover:bg-primary/5 cursor-pointer py-1.5 px-3"
-              >
-                {rec}
-              </Badge>
-            )) || <p className="text-sm text-muted-foreground">None found</p>}
-          </div>
-        </div>
+          {data.related_topics?.length ? (
+            <div className="p-6 flex flex-wrap gap-2.5">
+              {data.related_topics.map((topic) => (
+                <span
+                  key={topic}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-muted/30 hover:bg-primary/10 border border-border/60 hover:border-primary/40 text-foreground/90 hover:text-foreground transition-all duration-200 cursor-default group"
+                >
+                  <span className="text-primary text-[11px] font-black leading-none">
+                    #
+                  </span>
+                  {topic}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="px-6 py-12 text-center text-sm text-muted-foreground">
+              No related topics found.
+            </p>
+          )}
+        </Card>
       </div>
 
       <div className="flex justify-between items-center fixed bottom-0 right-0 p-6 z-20">

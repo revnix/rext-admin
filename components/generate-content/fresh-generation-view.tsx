@@ -822,18 +822,31 @@ export function FreshGenerationView({
             "Primary Keyword": value,
             ...(selectedIntent ? { intent: selectedIntent } : {}),
           },
-          status: "Keyword Recommendation...",
+          status: "Content Type Selection...",
+        });
+      case "CONTENT_TYPE_SELECT":
+        setTokenTarget("outline");
+        tokenTargetRef.current = "outline";
+        outline.resetStream();
+        dispatch({ type: "SUBMIT_REJECT_REASON" });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: TOPIC_GENERATION_STEPS,
+        });
+        return resumeWorkflow({
+          payload: { "Selected Content Type": value },
+          status: "Topic Suggestions...",
         });
       case "TOPIC_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
         dispatch({
           type: "SET_LOADING_STEPS",
-          payload: TOPIC_GENERATION_STEPS,
+          payload: CONTENT_TYPE_STEPS,
         });
         return resumeWorkflow({
           payload: { selected_topic: value },
-          status: "Content Type Generation...",
+          status: "Content Outline Generation...",
         });
       case "TOPIC_REGENERATE":
         setTokenTarget("none");
@@ -849,17 +862,7 @@ export function FreshGenerationView({
           payload: { action: "regenerate", feedback: value || "" },
           status: "Regenerating topics...",
         });
-      case "CONTENT_TYPE_SELECT":
-        setTokenTarget("outline");
-        tokenTargetRef.current = "outline";
-        outline.resetStream();
-        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        dispatch({ type: "SUBMIT_REJECT_REASON" });
-        dispatch({ type: "SET_LOADING_STEPS", payload: CONTENT_TYPE_STEPS });
-        return resumeWorkflow({
-          payload: { "Selected Content Type": value },
-          status: "Topic Type...",
-        });
+
       case "OUTLINE_APPROVE":
         setTokenTarget("content");
         tokenTargetRef.current = "content";
@@ -918,11 +921,16 @@ export function FreshGenerationView({
     (instructionType === "topic" || instructionType === "topic_selection") &&
     topics.length === 0;
 
+  // Suppress the loader in the library flow only when passively waiting for topics
+  // (no steps dispatched). Once a topic is selected and steps are set, show the loader.
+  const suppressLibraryTopicLoader =
+    isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
     !showContentStream &&
-    (isRegeneratingTopics || !(isLibrary && isTopicLoading))
+    (isRegeneratingTopics || !suppressLibraryTopicLoader)
   ) {
     return (
       <div
@@ -996,25 +1004,22 @@ export function FreshGenerationView({
   const WORKFLOW_STEPS = [
     { id: "keyword", label: "Search Keyword" },
     { id: "keyword Selection", label: "Select Keyword" },
-    { id: "topic", label: "Topic Selection" },
-    { id: "content_type", label: "Type" },
-    { id: "outline_review", label: "Outline" },
+    { id: "content_type", label: "Content Type" },
+    { id: "topic", label: "Topic Selection", aliases: ["topic_selection"] },
+    {
+      id: "outline_review",
+      label: "Content Outline",
+      aliases: ["outline_reject"],
+    },
     { id: "content", label: "Article" },
   ];
 
   const activeStepIndex = (() => {
-    if (instructionType === "keyword") return 0;
-    if (instructionType === "keyword Selection") return 1;
-    if (instructionType === "topic" || instructionType === "topic_selection")
-      return 2;
-    if (instructionType === "content_type") return 3;
-    if (
-      instructionType === "outline_review" ||
-      instructionType === "outline_reject"
-    )
-      return 4;
-    if (instructionType === "content") return 5;
-    return 5;
+    const idx = WORKFLOW_STEPS.findIndex(
+      (s) =>
+        s.id === instructionType || (s.aliases ?? []).includes(instructionType),
+    );
+    return idx === -1 ? WORKFLOW_STEPS.length - 1 : idx;
   })();
 
   return (

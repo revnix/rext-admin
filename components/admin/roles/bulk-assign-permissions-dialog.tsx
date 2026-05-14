@@ -131,7 +131,7 @@ export function BulkAssignPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export function BulkAssignPermissionsDialog({
                     : "Select All"}
                 </Button>
               </div>
-              <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto space-y-2">
+              <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                 {roles.map((role) => (
                   <label
                     key={role.id}

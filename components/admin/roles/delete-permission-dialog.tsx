@@ -38,7 +38,7 @@ export function DeletePermissionDialog({
       return await apiClient.roles.deletePermission(permission.id);
     },
     onSuccess: async () => {
-      toast.success("Role updated successfully");
+      toast.success("Permission deleted successfully");
       invalidateWorkspacePermissions();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["roles"] }),

@@ -1,4 +1,8 @@
-import type { Outline, ContentSection } from "@/types/generate-content";
+import type {
+  Outline,
+  ContentSection,
+  OutlineRenderBlock,
+} from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import {
@@ -371,6 +375,129 @@ function SectionContent({ section }: { section: ContentSection }) {
   return null;
 }
 
+function RenderBlocks({
+  blocks,
+  visibleSectionCount,
+  sections,
+}: {
+  blocks: OutlineRenderBlock[];
+  visibleSectionCount: number;
+  sections?: ContentSection[];
+}) {
+  // Build heading → section lookup so we can augment block items with
+  // word count, description and questions_to_answer from the raw outline.
+  const sectionByHeading = useMemo(() => {
+    if (!sections?.length) return new Map<string, ContentSection>();
+    return new Map(sections.map((s) => [s.heading, s]));
+  }, [sections]);
+
+  let cumulativeStart = 0;
+  const blockRanges = blocks.map((block) => {
+    const start = cumulativeStart;
+    cumulativeStart += block.items.length;
+    return { block, start };
+  });
+
+  return (
+    <div className="space-y-8">
+      {blockRanges.map(({ block, start }) => {
+        const visibleItems = block.items.slice(
+          0,
+          Math.max(0, visibleSectionCount - start),
+        );
+        if (!visibleItems.length) return null;
+        return (
+          <div key={block.heading}>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-3">
+              {block.heading}
+            </p>
+            <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
+              {visibleItems.map((item, j) => {
+                const section = sectionByHeading.get(item.label);
+                return (
+                  <div key={item.label || j} className="relative pl-12 group">
+                    <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
+                      <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                        {String(start + j + 1).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                      {/* Heading row with optional word-count badge */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        {item.label && (
+                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                            {item.label}
+                          </h3>
+                        )}
+                        {section?.suggested_word_count && (
+                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
+                            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-[11px] font-bold text-muted-foreground">
+                              ~{section.suggested_word_count} words
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Section description */}
+                      {section?.description && (
+                        <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
+                          {section.description}
+                        </p>
+                      )}
+
+                      {/* Questions to answer */}
+                      {section?.questions_to_answer &&
+                        section.questions_to_answer.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                              <HelpCircle className="w-3.5 h-3.5" /> Questions
+                              to Answer
+                            </p>
+                            <div className="space-y-1.5">
+                              {section.questions_to_answer.map((q: string) => (
+                                <div
+                                  key={q}
+                                  className="flex items-start gap-2 text-sm text-muted-foreground"
+                                >
+                                  <span className="text-primary mt-0.5 shrink-0">
+                                    •
+                                  </span>
+                                  <span>{q}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Points (key points / questions / tips) */}
+                      {item.points.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {item.points.map((pt) => (
+                            <div
+                              key={pt}
+                              className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
+                            >
+                              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {pt}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function deriveOutlineFromTokens(rawTokens: string): Outline {
   // Best-effort: if we can parse a full object, use it; otherwise extract a few key fields.
   const start = rawTokens.indexOf("{");
@@ -465,11 +592,19 @@ export function OutlineDisplay({
     setAudience(outline.target_audience?.join(", ") || "");
   }, [outline]);
 
-  // Progressive reveal when the *final* outline arrives:
-  // - show section cards one-by-one
-  // - in the currently revealing section, show key points one-by-one
+  // Progressive reveal when the *final* outline arrives — item by item.
+  // Uses _render blocks (flattened item count) when available, sections otherwise.
   useEffect(() => {
-    if (!outline?.sections?.length) {
+    if (!outline) {
+      setVisibleSectionCount(0);
+      return;
+    }
+
+    const totalItems = outline._render?.blocks
+      ? outline._render.blocks.reduce((sum, b) => sum + b.items.length, 0)
+      : (outline.sections?.length ?? 0);
+
+    if (!totalItems) {
       setVisibleSectionCount(0);
       return;
     }
@@ -477,9 +612,8 @@ export function OutlineDisplay({
     let cancelled = false;
 
     const reveal = async () => {
-      for (let i = 0; i < outline.sections.length; i++) {
+      for (let i = 0; i < totalItems; i++) {
         if (cancelled) return;
-
         setVisibleSectionCount(i + 1);
         await wait(180);
       }
@@ -626,7 +760,10 @@ export function OutlineDisplay({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-foreground truncate">
+                  <p
+                    className="text-sm font-bold text-foreground truncate"
+                    title={outline.target_audience?.join(", ") || ""}
+                  >
                     {outline.target_audience?.join(", ") || ""}
                   </p>
                   {canEdit && (
@@ -719,70 +856,74 @@ export function OutlineDisplay({
         </div>
       )}
 
-      {/* Sections — each section staggers in and types its own fields */}
-      <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
-        {!isDraft && (effectiveOutline.sections?.length ?? 0) > 0
-          ? (effectiveOutline.sections ?? [])
-              .slice(0, visibleSectionCount)
-              .map((section, idx) => (
-                <div
-                  key={section.heading || `section-${idx}`}
-                  className="relative pl-12 group"
-                >
-                  <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
-                    <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                  </div>
-
-                  <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
-                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                        {section.heading}
-                      </h3>
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
-                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="text-[11px] font-bold text-muted-foreground">
-                          ~{section.suggested_word_count} words
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
-                      {section.description}
-                    </p>
-
-                    {/* questions_to_answer */}
-                    {section.questions_to_answer &&
-                      section.questions_to_answer.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                            <HelpCircle className="w-3.5 h-3.5" /> Questions to
-                            Answer
-                          </p>
-                          <div className="space-y-1.5">
-                            {section.questions_to_answer.map((q: string) => (
-                              <div
-                                key={q}
-                                className="flex items-start gap-2 text-sm text-muted-foreground"
-                              >
-                                <span className="text-primary mt-0.5 shrink-0">
-                                  •
-                                </span>
-                                <span>{q}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Section-type specific content */}
-                    <SectionContent section={section} />
-                  </div>
+      {/* Structure — use _render blocks when available, fall back to legacy sections */}
+      {!isDraft && effectiveOutline._render?.blocks?.length ? (
+        <RenderBlocks
+          blocks={effectiveOutline._render.blocks}
+          visibleSectionCount={visibleSectionCount}
+          sections={outline?.sections}
+        />
+      ) : !isDraft && (effectiveOutline.sections?.length ?? 0) > 0 ? (
+        <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
+          {(effectiveOutline.sections ?? [])
+            .slice(0, visibleSectionCount)
+            .map((section, idx) => (
+              <div
+                key={section.heading || `section-${idx}`}
+                className="relative pl-12 group"
+              >
+                <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
+                  <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
                 </div>
-              ))
-          : null}
-      </div>
+
+                <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                      {section.heading}
+                    </h3>
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-[11px] font-bold text-muted-foreground">
+                        ~{section.suggested_word_count} words
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
+                    {section.description}
+                  </p>
+
+                  {section.questions_to_answer &&
+                    section.questions_to_answer.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <HelpCircle className="w-3.5 h-3.5" /> Questions to
+                          Answer
+                        </p>
+                        <div className="space-y-1.5">
+                          {section.questions_to_answer.map((q: string) => (
+                            <div
+                              key={q}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <span className="text-primary mt-0.5 shrink-0">
+                                •
+                              </span>
+                              <span>{q}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  <SectionContent section={section} />
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : null}
 
       {/* Action Bar */}
       <div className="mt-10 flex items-center justify-end gap-3">

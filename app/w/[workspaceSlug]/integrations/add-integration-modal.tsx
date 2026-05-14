@@ -242,8 +242,6 @@ function WordPressForm({
   );
 }
 
-// ── Shopify form ──────────────────────────────────────────────────────────────
-
 function ShopifyForm({
   onSuccess,
   onClose,
@@ -253,30 +251,53 @@ function ShopifyForm({
   onClose: () => void;
   workspaceId: string;
 }) {
-  const form = useForm<ShopifyIntegrationFormData>({
-    resolver: zodResolver(shopifyIntegrationSchema),
-    defaultValues: { store_url: "", access_token: "", is_active: true },
+  const form = useForm<
+    Pick<ShopifyIntegrationFormData, "store_url" | "is_active">
+  >({
+    resolver: zodResolver(
+      shopifyIntegrationSchema.pick({ store_url: true, is_active: true }),
+    ),
+    defaultValues: {
+      store_url: "",
+      is_active: true,
+    },
   });
   const { isSubmitting } = form.formState;
 
-  const onSubmit = async (data: ShopifyIntegrationFormData) => {
+  const onSubmit = async (
+    data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
+  ) => {
     try {
-      const storeHostname = new URL(data.store_url).hostname;
+      const result = await integrationsApiService.startShopifyInstall(
+        workspaceId,
+        {
+          store_url: data.store_url,
+          return_path:
+            typeof window !== "undefined"
+              ? window.location.origin + window.location.pathname
+              : undefined,
+        },
+      );
 
-      await integrationsApiService.createShopifyConnection(workspaceId, {
-        store_url: data.store_url,
-        access_token: data.access_token,
-        is_active: data.is_active,
-      });
-      toast.success(`Shopify store ${storeHostname} connected successfully`);
-      form.reset();
-      onSuccess();
+      const installUrl =
+        result.install_url || result.redirect_url || result.url;
+
+      if (installUrl) {
+        toast.success("Opening Shopify installation in a new tab...");
+        window.open(installUrl, "_blank", "noopener,noreferrer");
+      } else {
+        throw new Error("Failed to get installation URL from Shopify");
+      }
     } catch (error: unknown) {
-      log.error("Failed to add Shopify integration", error);
+      log.error("Failed to start Shopify installation", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add integration",
+        error instanceof Error ? error.message : "Failed to start installation",
       );
     }
+  };
+
+  const handleEnableChange = (checked: boolean) => {
+    form.setValue("is_active", checked);
   };
 
   return (
@@ -291,7 +312,7 @@ function ShopifyForm({
               <FormControl>
                 <Switch
                   checked={field.value}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={handleEnableChange}
                 />
               </FormControl>
             </FormItem>
@@ -302,7 +323,7 @@ function ShopifyForm({
           name="store_url"
           render={({ field }) => (
             <FormItem className="grid gap-2 space-y-0">
-              <FormLabel>Shopify Store URL *</FormLabel>
+              <FormLabel>Store URL *</FormLabel>
               <FormControl>
                 <Input
                   type="url"
@@ -310,30 +331,6 @@ function ShopifyForm({
                   {...field}
                 />
               </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
-                Your Shopify store URL (e.g. https://yourstore.myshopify.com)
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="access_token"
-          render={({ field }) => (
-            <FormItem className="grid gap-2 space-y-0">
-              <FormLabel>Admin API Access Token *</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
-                  {...field}
-                />
-              </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
-                Create a custom app in your Shopify admin → Apps → App
-                development
-              </p>
               <FormMessage />
             </FormItem>
           )}
@@ -343,7 +340,7 @@ function ShopifyForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Connecting..." : "Connect Store"}
+            {isSubmitting ? "Connecting..." : "Install on Shopify"}
           </Button>
         </DialogFooter>
       </form>
@@ -396,7 +393,9 @@ export function AddIntegrationModal({
               <button
                 key={opt.type}
                 type="button"
-                onClick={() => setSelectedType(opt.type)}
+                onClick={() => {
+                  setSelectedType(opt.type);
+                }}
                 className={cn(
                   "flex flex-col items-center gap-3 p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-accent/10 transition-all duration-200 cursor-pointer text-left group",
                 )}

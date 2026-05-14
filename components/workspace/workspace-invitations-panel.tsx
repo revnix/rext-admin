@@ -22,6 +22,7 @@ import type { Column, RowAction } from "@/types/data-table";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
+  canManage?: boolean;
 }
 
 interface Invitation {
@@ -51,6 +52,7 @@ interface InvitationData extends Record<string, unknown> {
 
 export function WorkspaceInvitationsPanel({
   workspaceId,
+  canManage = false,
 }: WorkspaceInvitationsPanelProps) {
   const queryClient = useQueryClient();
 
@@ -249,7 +251,7 @@ export function WorkspaceInvitationsPanel({
       header: "Sent",
       width: "150px",
       cell: (value) => (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-26 xl:min-w-auto">
           <Calendar className="h-3 w-3" />
           <span>{value as string}</span>
         </div>
@@ -261,7 +263,7 @@ export function WorkspaceInvitationsPanel({
       width: "150px",
       cell: (value, row) => (
         <div
-          className={`flex items-center gap-1 text-sm ${
+          className={`flex items-center gap-1 text-sm min-w-30 xl:min-w-auto ${
             row.expired ? "text-destructive" : "text-muted-foreground"
           }`}
         >
@@ -345,7 +347,7 @@ export function WorkspaceInvitationsPanel({
           columns={columns}
           data={tableData}
           isLoading={isLoading}
-          rowActions={rowActions}
+          rowActions={canManage ? rowActions : []}
           emptyTitle="No invitations sent"
           emptyDescription="Invitations you send will appear here"
           emptyIcon={<Mail className="h-12 w-12" />}
