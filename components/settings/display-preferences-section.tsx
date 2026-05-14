@@ -194,7 +194,7 @@ function DisplayPreferencesForm({
                 control={form.control}
                 name="date_format"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
+                  <FormItem className="grid xl:grid-cols-3 gap-6 items-center space-y-0">
                     <FormLabel>Date Format</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="col-span-2">
@@ -226,7 +226,7 @@ function DisplayPreferencesForm({
                 control={form.control}
                 name="time_format"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
+                  <FormItem className="grid xl:grid-cols-3 gap-6 items-center space-y-0">
                     <FormLabel>Time Format</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl className="col-span-2">
@@ -248,7 +248,7 @@ function DisplayPreferencesForm({
                 control={form.control}
                 name="items_per_page"
                 render={({ field }) => (
-                  <FormItem className="grid grid-cols-3 gap-6 items-center space-y-0">
+                  <FormItem className="grid xl:grid-cols-3 gap-6 items-center space-y-0">
                     <FormLabel>Items Per Page</FormLabel>
                     <Select
                       onValueChange={(value) =>
@@ -256,7 +256,7 @@ function DisplayPreferencesForm({
                       }
                       value={field.value?.toString()}
                     >
-                      <FormControl className="col-span-2 justify-self-end">
+                      <FormControl className="col-span-3 justify-self-end">
                         <SelectTrigger>
                           <SelectValue placeholder="Select item count" />
                         </SelectTrigger>
