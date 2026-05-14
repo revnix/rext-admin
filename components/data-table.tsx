@@ -385,7 +385,7 @@ export function DataTable<
                 <div
                   className={`relative w-full sm:flex-1 min-w-0 sm:max-w-md ${searchWidth}`}
                 >
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}
                     className="pl-9 pr-9 w-full"

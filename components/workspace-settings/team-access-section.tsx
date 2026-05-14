@@ -43,44 +43,44 @@ export function TeamAccessSection() {
         <div className="space-y-3">
           <h4 className="text-sm font-medium">Workspace Roles</h4>
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+              <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Owner</h5>
                 <p className="text-sm text-muted-foreground">
                   Full access to all workspace features and settings
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+              <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Admin</h5>
                 <p className="text-sm text-muted-foreground">
                   Can manage members, content, and most settings
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+              <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Editor</h5>
                 <p className="text-sm text-muted-foreground">
                   Can create and edit content
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+              <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Viewer</h5>
                 <p className="text-sm text-muted-foreground">
                   Read-only access to workspace content
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@ export function TeamAccessSection() {
         <div className="space-y-3">
           <h4 className="text-sm font-medium">Invitation Settings</h4>
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="text-sm font-medium">Invitation Expiry</p>
                 <p className="text-sm text-muted-foreground">
@@ -98,7 +98,7 @@ export function TeamAccessSection() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="text-sm font-medium">Who Can Invite</p>
                 <p className="text-sm text-muted-foreground">

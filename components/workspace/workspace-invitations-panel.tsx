@@ -251,7 +251,7 @@ export function WorkspaceInvitationsPanel({
       header: "Sent",
       width: "150px",
       cell: (value) => (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-26 xl:min-w-auto">
           <Calendar className="h-3 w-3" />
           <span>{value as string}</span>
         </div>
@@ -263,7 +263,7 @@ export function WorkspaceInvitationsPanel({
       width: "150px",
       cell: (value, row) => (
         <div
-          className={`flex items-center gap-1 text-sm ${
+          className={`flex items-center gap-1 text-sm min-w-30 xl:min-w-auto ${
             row.expired ? "text-destructive" : "text-muted-foreground"
           }`}
         >
