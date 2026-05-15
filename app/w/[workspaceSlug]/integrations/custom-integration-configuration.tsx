@@ -48,7 +48,7 @@ export function CustomIntegrationConfiguration({
       ? z.string().min(1, "Store URL is required")
       : integrationSchema.shape.site_url,
     api_key: isShopify
-      ? z.string().min(1, "Admin API access token is required")
+      ? z.string().optional()
       : integrationSchema.shape.api_key,
     api_endpoint: isShopify
       ? z.string().optional()
@@ -180,61 +180,63 @@ export function CustomIntegrationConfiguration({
           />
 
           {/* API Key */}
-          <div className="pt-2">
-            <FormLabel className="text-base font-medium text-slate-700">
-              {isShopify ? "Admin API Access Token" : "API Key"}
-            </FormLabel>
-          </div>
-          <FormField
-            control={form.control}
-            name="api_key"
-            render={({ field }) => (
-              <FormItem className="space-y-2">
-                <div className="max-w-xl">
-                  <FormControl>
-                    <Input
-                      type={showApiKey ? "text" : "password"}
-                      {...field}
-                      placeholder={isShopify ? "shpat_..." : "rext_..."}
-                      className="bg-white font-mono text-sm mb-2"
-                    />
-                  </FormControl>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="text-slate-600"
-                      type="button"
-                    >
-                      {showApiKey ? "Hide" : "Show"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        field.value && copyToClipboard(field.value, "key")
-                      }
-                      className="text-slate-600"
-                      type="button"
-                    >
-                      {copiedField === "key" ? (
-                        <Check className="h-4 w-4 text-green-600" />
-                      ) : (
-                        "Copy"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {isShopify
-                    ? "The admin API access token for authentication."
-                    : "The API key used for authentication."}
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isShopify && (
+            <>
+              <div className="pt-2">
+                <FormLabel className="text-base font-medium text-slate-700">
+                  API Key
+                </FormLabel>
+              </div>
+              <FormField
+                control={form.control}
+                name="api_key"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <div className="max-w-xl">
+                      <FormControl>
+                        <Input
+                          type={showApiKey ? "text" : "password"}
+                          {...field}
+                          placeholder="rext_..."
+                          className="bg-white font-mono text-sm mb-2"
+                        />
+                      </FormControl>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="text-slate-600"
+                          type="button"
+                        >
+                          {showApiKey ? "Hide" : "Show"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            field.value && copyToClipboard(field.value, "key")
+                          }
+                          className="text-slate-600"
+                          type="button"
+                        >
+                          {copiedField === "key" ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            "Copy"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      The API key used for authentication.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           {/* API Endpoint */}
           {!isShopify && (
