@@ -208,6 +208,7 @@ export function FreshGenerationView({
     trustScore,
     allContent,
     currentLoadingSteps,
+    keywordClusters,
   } = state;
 
   const isEditingRef = useRef(isEditing);
@@ -965,6 +966,7 @@ export function FreshGenerationView({
         seoResult={seoResult}
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
+        keywordClusters={keywordClusters}
       />
     ),
     topic: (

@@ -1,6 +1,14 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import type { LoadingStep } from "@/constants/loading-steps";
 
+export type KeywordCluster = {
+  cluster_id: number;
+  label: string;
+  keywords: string[];
+  representative_keyword?: string;
+  size: number;
+};
+
 export type Interrupt = {
   id: string;
   value: {
@@ -12,6 +20,7 @@ export type Interrupt = {
     Recommendations?: string[];
     seo_state?: SEORESULT;
     "Primary Keyword"?: string;
+    "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;
   };
 };
@@ -700,6 +709,7 @@ export type SEORESULT = {
   keyword_difficulty?: KeywordDifficultyState | number;
   keyword_difficulty2?: KeywordDifficultyState2;
   keyword_recommendations?: KeywordRecommendationState;
+  keyword_clusters?: KeywordCluster[];
   intent?: SearchIntentState | string;
   content_pattern?: ContentPatternState;
   content_gaps?: ContentGapState;
@@ -797,6 +807,7 @@ export interface PageState {
   allContent: FinalContent | null;
   currentLoadingSteps: LoadingStep[];
   keywordDifficulty: number | null;
+  keywordClusters: KeywordCluster[];
 }
 
 export type PageAction =
@@ -825,6 +836,7 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
+  | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }
   | { type: "SET_OUTLINE"; payload: ContentOutline | null };
 

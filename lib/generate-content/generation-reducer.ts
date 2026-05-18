@@ -36,6 +36,7 @@ export const initialState: PageState = {
   allContent: null,
   currentLoadingSteps: [],
   keywordDifficulty: null,
+  keywordClusters: [],
 };
 
 export function generationReducer(
@@ -94,6 +95,8 @@ export function generationReducer(
             ? "keyword Selection"
             : state.instructionType,
       };
+    case "SET_KEYWORD_CLUSTERS":
+      return { ...state, keywordClusters: action.payload };
     case "SET_LOADING_STEPS":
       return { ...state, currentLoadingSteps: action.payload };
     case "SET_LOADING_STATUS":
@@ -172,6 +175,10 @@ function handleStreamUpdate(
           newState.suggestedKeywords = keywords;
           if (interruptValue.seo_state) {
             newState.seoResult = interruptValue.seo_state;
+          }
+          const clusters = interruptValue["Keyword Clusters"];
+          if (Array.isArray(clusters) && clusters.length > 0) {
+            newState.keywordClusters = clusters as import("@/types/generate-content").KeywordCluster[];
           }
           changed = true;
         }

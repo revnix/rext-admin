@@ -1,6 +1,6 @@
 "use client";
 
-import type { SEORESULT } from "@/types/generate-content";
+import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 import {
   Zap,
   Compass,
@@ -8,11 +8,13 @@ import {
   ArrowRight,
   ArrowUpRight,
   Loader2,
+  Layers,
+  ChevronDown,
 } from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 type IntentOption =
@@ -59,6 +61,7 @@ export function SuggestionsSection({
   seoResult,
   selectedIntent,
   onIntentChange,
+  keywordClusters = [],
 }: {
   instruction: string;
   primaryKeyword: string;
@@ -67,7 +70,9 @@ export function SuggestionsSection({
   seoResult: SEORESULT | null;
   selectedIntent: IntentOption | "";
   onIntentChange: (intent: IntentOption) => void;
+  keywordClusters?: KeywordCluster[];
 }) {
+  const [expandedCluster, setExpandedCluster] = useState<number | null>(null);
   const difficultyScore = useMemo(() => {
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
@@ -306,6 +311,86 @@ export function SuggestionsSection({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Semantic keyword clusters */}
+      <AnimatePresence>
+        {keywordClusters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="mt-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-3.5 h-3.5 text-primary/60" />
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
+                Semantic Clusters
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {keywordClusters.map((cluster) => {
+                const isOpen = expandedCluster === cluster.cluster_id;
+                return (
+                  <motion.div
+                    key={cluster.cluster_id}
+                    variants={itemVariants}
+                    className="border border-border/50 rounded-xl overflow-hidden bg-card"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedCluster(isOpen ? null : cluster.cluster_id)
+                      }
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-[10px] font-black text-primary/50 uppercase tracking-widest shrink-0">
+                          {cluster.size} kw
+                        </span>
+                        <span className="text-[13px] font-semibold text-foreground/80 truncate capitalize">
+                          {cluster.label}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 text-muted-foreground/40 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-4 pb-3 pt-0 flex flex-wrap gap-1.5 border-t border-border/30">
+                            {cluster.keywords.map((kw) => (
+                              <button
+                                key={kw}
+                                type="button"
+                                onClick={() => onSelect(kw)}
+                                className="group flex items-center gap-1.5 px-2.5 py-1 bg-background hover:bg-primary/5 border border-border hover:border-primary/30 rounded-md transition-all duration-150 text-left cursor-pointer"
+                              >
+                                <span className="text-[12px] font-medium text-foreground/70 group-hover:text-primary transition-colors">
+                                  {kw}
+                                </span>
+                                <ArrowUpRight className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
