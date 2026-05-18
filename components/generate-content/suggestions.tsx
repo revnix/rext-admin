@@ -329,28 +329,31 @@ export function SuggestionsSection({
             <div className="flex flex-col gap-4">
               {keywordClusters.map((cluster) => (
                 <motion.div
-                  key={cluster.cluster_id}
+                  key={cluster.cluster_name}
                   variants={itemVariants}
                   className="border border-border/50 rounded-xl bg-card px-4 py-3"
                 >
                   <div className="flex items-center gap-2 mb-2.5">
                     <span className="text-[13px] font-semibold text-foreground/80 capitalize">
-                      {cluster.label}
+                      {cluster.cluster_name}
                     </span>
                     <span className="text-[10px] font-black text-primary/50 uppercase tracking-widest">
-                      {cluster.size} kw
+                      {cluster.keywords.length} kw
+                    </span>
+                    <span className="text-[10px] font-medium text-muted-foreground/50 capitalize ml-auto">
+                      {cluster.main_intent}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {cluster.keywords.map((kw) => (
                       <button
-                        key={kw}
+                        key={kw.keyword}
                         type="button"
-                        onClick={() => onSelect(kw)}
+                        onClick={() => onSelect(kw.keyword)}
                         className="group flex items-center gap-1.5 px-2.5 py-1 bg-background hover:bg-primary/5 border border-border hover:border-primary/30 rounded-md transition-all duration-150 text-left cursor-pointer"
                       >
                         <span className="text-[12px] font-medium text-foreground/70 group-hover:text-primary transition-colors">
-                          {kw}
+                          {kw.keyword}
                         </span>
                         <ArrowUpRight className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
                       </button>

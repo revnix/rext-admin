@@ -2,11 +2,11 @@ import type { Message } from "@langchain/langgraph-sdk";
 import type { LoadingStep } from "@/constants/loading-steps";
 
 export type KeywordCluster = {
-  cluster_id: number;
-  label: string;
-  keywords: string[];
-  representative_keyword?: string;
-  size: number;
+  cluster_name: string;
+  keywords: ExtractedKeyword[];
+  total_score: number;
+  main_intent: string;
+  confidence_score?: number;
 };
 
 export type Interrupt = {
