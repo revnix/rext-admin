@@ -121,6 +121,12 @@ export type KeyConcept = {
   examples?: string[];
 };
 
+// ── cluster_heading_map: flat array mapping each section heading to its cluster ─
+export type ClusterHeadingMapItem = {
+  cluster: string;
+  heading: string;
+};
+
 // ── _render: normalized display shape sent in outline_review interrupt ────────
 export type OutlineRenderItem = {
   label: string;
@@ -350,6 +356,9 @@ export type ContentOutline = {
   draft_retries?: number;
   review_retries?: number;
   max_retries?: number;
+
+  // ── Cluster-to-heading mapping from outline generation ───────────────────
+  cluster_heading_map?: ClusterHeadingMapItem[];
 
   // ── Normalized display shape from outline_review interrupt ────────────────
   _render?: OutlineRender;

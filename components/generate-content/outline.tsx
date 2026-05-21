@@ -2,6 +2,7 @@ import type {
   Outline,
   ContentSection,
   OutlineRenderBlock,
+  ClusterHeadingMapItem,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -585,6 +586,26 @@ export function OutlineDisplay({
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
 
+  // Derive render blocks from cluster_heading_map + sections when _render is absent.
+  const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
+    const map: ClusterHeadingMapItem[] | undefined =
+      effectiveOutline.cluster_heading_map;
+    if (!map?.length) return null;
+    const sectionByHeading = new Map(
+      (effectiveOutline.sections ?? []).map((s) => [s.heading, s]),
+    );
+    const grouped = new Map<string, OutlineRenderBlock>();
+    for (const { cluster, heading } of map) {
+      if (!grouped.has(cluster)) grouped.set(cluster, { heading: cluster, items: [] });
+      const section = sectionByHeading.get(heading);
+      grouped.get(cluster)!.items.push({
+        label: heading,
+        points: section?.key_points ?? [],
+      });
+    }
+    return Array.from(grouped.values());
+  }, [effectiveOutline.cluster_heading_map, effectiveOutline.sections]);
+
   useEffect(() => {
     if (!outline) return;
 
@@ -600,8 +621,9 @@ export function OutlineDisplay({
       return;
     }
 
-    const totalItems = outline._render?.blocks
-      ? outline._render.blocks.reduce((sum, b) => sum + b.items.length, 0)
+    const activeBlocks = outline._render?.blocks ?? clusterBlocks ?? null;
+    const totalItems = activeBlocks
+      ? activeBlocks.reduce((sum, b) => sum + b.items.length, 0)
       : (outline.sections?.length ?? 0);
 
     if (!totalItems) {
@@ -624,7 +646,7 @@ export function OutlineDisplay({
     return () => {
       cancelled = true;
     };
-  }, [outline]);
+  }, [outline, clusterBlocks]);
 
   const handleToneSave = () => {
     if (onUpdate && outline) onUpdate({ ...outline, tone });
@@ -856,10 +878,10 @@ export function OutlineDisplay({
         </div>
       )}
 
-      {/* Structure — use _render blocks when available, fall back to legacy sections */}
-      {!isDraft && effectiveOutline._render?.blocks?.length ? (
+      {/* Structure — prefer _render blocks, fall back to cluster_heading_map, then legacy sections */}
+      {!isDraft && (effectiveOutline._render?.blocks?.length || clusterBlocks?.length) ? (
         <RenderBlocks
-          blocks={effectiveOutline._render.blocks}
+          blocks={effectiveOutline._render?.blocks ?? clusterBlocks!}
           visibleSectionCount={visibleSectionCount}
           sections={outline?.sections}
         />
