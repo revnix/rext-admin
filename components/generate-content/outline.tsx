@@ -3,6 +3,7 @@ import type {
   ContentSection,
   OutlineRenderBlock,
   ClusterHeadingMapItem,
+  KeywordCluster,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -19,6 +20,7 @@ import {
   Tag,
   FileText,
   HelpCircle,
+  Layers,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -536,6 +538,9 @@ function deriveOutlineFromTokens(rawTokens: string): Outline {
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         };
       }
     } catch {
@@ -565,6 +570,7 @@ export function OutlineDisplay({
   onApprove,
   onReject,
   onUpdate,
+  keywordClusters = [],
 }: {
   outline: Outline | null; // null while still streaming
   rawTokens: string; // grows token by token from SSE
@@ -572,6 +578,7 @@ export function OutlineDisplay({
   onApprove: () => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
+  keywordClusters?: KeywordCluster[];
 }) {
   const [editingTone, setEditingTone] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
@@ -585,6 +592,32 @@ export function OutlineDisplay({
   );
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
+
+  const clusterHeadingMapping = useMemo(() => {
+    const map = new Map<string, string[]>();
+    if (!effectiveOutline.cluster_heading_map) return map;
+    for (const { cluster, heading } of effectiveOutline.cluster_heading_map) {
+      const normalizedCluster = cluster.toLowerCase().trim();
+      if (!map.has(normalizedCluster)) {
+        map.set(normalizedCluster, []);
+      }
+      map.get(normalizedCluster)!.push(heading);
+    }
+    return map;
+  }, [effectiveOutline.cluster_heading_map]);
+
+  const getMappedHeadings = (clusterName: string) => {
+    const normalized = clusterName.toLowerCase().trim();
+    if (clusterHeadingMapping.has(normalized)) {
+      return clusterHeadingMapping.get(normalized) || [];
+    }
+    for (const [key, value] of clusterHeadingMapping.entries()) {
+      if (key.includes(normalized) || normalized.includes(key)) {
+        return value;
+      }
+    }
+    return [];
+  };
 
   // Derive render blocks from cluster_heading_map + sections when _render is absent.
   const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
@@ -875,6 +908,84 @@ export function OutlineDisplay({
                 </div>
               </div>
             )}
+        </div>
+      )}
+
+      {/* Keyword Clusters & Topic Mapping */}
+      {!isDraft && keywordClusters && keywordClusters.length > 0 && (
+        <div className="mb-12 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold text-foreground">
+              Keyword Clusters & Heading Mapping
+            </h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {keywordClusters.map((cluster) => {
+              const mappedHeadings = getMappedHeadings(cluster.cluster_name);
+              return (
+                <div 
+                  key={cluster.cluster_name}
+                  className="flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
+                >
+                  {/* Header info */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground capitalize">
+                        {cluster.cluster_name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {cluster.main_intent}
+                        </span>
+                        {cluster.confidence_score !== undefined && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Conf: {Math.round(cluster.confidence_score * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-muted-foreground/40 bg-muted px-2 py-1 rounded-md shrink-0">
+                      {cluster.keywords.length} keywords
+                    </span>
+                  </div>
+
+                  {/* Keywords */}
+                  <div className="flex flex-wrap gap-1.5 mb-4 flex-1">
+                    {cluster.keywords.map((kw) => (
+                      <span
+                        key={kw.keyword}
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/60 border border-border/40 text-foreground/80"
+                      >
+                        {kw.keyword}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Mapped Outline Headings */}
+                  {mappedHeadings.length > 0 && (
+                    <div className="pt-3 border-t border-border/40">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        Mapped to Outline Headings:
+                      </p>
+                      <div className="space-y-1.5">
+                        {mappedHeadings.map((heading) => (
+                          <div 
+                            key={heading}
+                            className="flex items-start gap-2 text-xs font-medium text-foreground/90 bg-muted/40 p-2 rounded-lg border border-border/20"
+                          >
+                            <span className="text-primary font-bold mt-0.5">→</span>
+                            <span>{heading}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -488,6 +488,9 @@ export function FreshGenerationView({
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         } satisfies ContentOutline;
 
         dispatch({ type: "SET_OUTLINE", payload: normalized });
@@ -1092,6 +1095,7 @@ export function FreshGenerationView({
               onUpdate={(updatedOutline) =>
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
               }
+              keywordClusters={keywordClusters}
             />
           </div>
         ) : (
