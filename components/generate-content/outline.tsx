@@ -595,7 +595,7 @@ export function OutlineDisplay({
 
   const clusterHeadingMapping = useMemo(() => {
     const map = new Map<string, string[]>();
-    if (!effectiveOutline.cluster_heading_map) return map;
+    if (!effectiveOutline.cluster_heading_map || !Array.isArray(effectiveOutline.cluster_heading_map)) return map;
     for (const { cluster, heading } of effectiveOutline.cluster_heading_map) {
       const normalizedCluster = cluster.toLowerCase().trim();
       if (!map.has(normalizedCluster)) {
@@ -623,7 +623,7 @@ export function OutlineDisplay({
   const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
     const map: ClusterHeadingMapItem[] | undefined =
       effectiveOutline.cluster_heading_map;
-    if (!map?.length) return null;
+    if (!map || !Array.isArray(map) || !map.length) return null;
     const sectionByHeading = new Map(
       (effectiveOutline.sections ?? []).map((s) => [s.heading, s]),
     );
