@@ -437,7 +437,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
-    status: "draft" as ContentStatus,
+    status: "publish" as ContentStatus,
     workspace_id: workspaceId ?? undefined,
     introduction: allContent?.meta_description || "",
     body_markdown: body,
