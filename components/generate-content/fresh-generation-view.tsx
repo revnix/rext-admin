@@ -1,7 +1,7 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -12,6 +12,7 @@ import type {
   ContentOutline,
   ContentSection,
   FinalContent,
+  InternalLinkSuggestion,
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
@@ -210,6 +211,14 @@ export function FreshGenerationView({
     allContent,
     currentLoadingSteps,
   } = state;
+
+  const interruptInternalLinks = useMemo(
+    () =>
+      state.interrupt?.[0]?.value?.internal_links as
+        | InternalLinkSuggestion[]
+        | undefined,
+    [state.interrupt],
+  );
 
   const isEditingRef = useRef(isEditing);
   useEffect(() => {
@@ -1114,7 +1123,33 @@ export function FreshGenerationView({
               outline={parsedOutline}
               rawTokens={outline.streamedText}
               isLoading={isStreamingOutline}
-              onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
+              internalLinks={interruptInternalLinks}
+              onApprove={(selectedLinks) => {
+                setTokenTarget("content");
+                tokenTargetRef.current = "content";
+                content.resetStream();
+                setToolCalls([]);
+                setPipelineSteps([]);
+                dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
+                dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+                dispatch({
+                  type: "SET_LOADING_STEPS",
+                  payload: FINAL_GENERATION_STEPS,
+                });
+                void resumeWorkflow({
+                  payload: {
+                    action: "approve",
+                    ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
+                    ...(parsedOutline?.target_audience?.length
+                      ? { target_audience: parsedOutline.target_audience }
+                      : {}),
+                    ...(interruptInternalLinks?.length
+                      ? { selected_internal_links: selectedLinks }
+                      : {}),
+                  },
+                  status: "Approving and generating content...",
+                });
+              }}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
               onUpdate={(updatedOutline) =>
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
