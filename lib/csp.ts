@@ -30,7 +30,7 @@ export function getCSPHeader(_nonce: string): string {
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
   const posthogHost =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
 
   const thirdPartyDomains = {
     lemonsqueezy: {
