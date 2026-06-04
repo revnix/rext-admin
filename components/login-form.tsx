@@ -18,6 +18,7 @@ import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
+import { analytics } from "@/lib/analytics";
 import type { Route } from "next";
 
 export function LoginForm({
@@ -136,6 +137,7 @@ export function LoginForm({
       }
 
       toast.success("Login successful!");
+      analytics.track("user_signed_in", { method: "credentials" });
       resetAuthRedirectState();
 
       if (hasValidInvitation && invitationToken) {
