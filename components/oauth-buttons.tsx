@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { log } from "@/lib/logger";
+import { analytics } from "@/lib/analytics";
 
 interface OAuthButtonsProps {
   callbackUrl?: string;
@@ -22,6 +23,7 @@ export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
         setIsGitHubLoading(true);
       }
 
+      analytics.track("user_signed_in", { method: provider });
       await signIn(provider, { callbackUrl });
     } catch (error) {
       log.error(`[OAuth] ${provider} sign in error:`, error);
