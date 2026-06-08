@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import {
   Activity,
   AlertCircle,
+  Clock,
   Copy,
   Eye,
   ChevronDown,
@@ -33,6 +34,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
@@ -47,7 +49,11 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "../ui/dialog";
+import { Calendar } from "../ui/calendar";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
@@ -268,8 +274,6 @@ const slugify = (text: string) => {
     .trim();
 };
 
-// levelToStatus was unused and removed
-
 const getStatusMessage = (score: number) => {
   if (score >= 80) return "Excellent EEAT signals detected";
   if (score >= 60) return "Good EEAT signals detected";
@@ -392,6 +396,27 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [contentSavedId, setContentSavedId] = useState<string | undefined>(
     contentId,
   );
+
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
+  const [scheduleTime, setScheduleTime] = useState("10:00");
+
+  const isDateDisabled = useCallback((d: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
+  }, []);
+
+  const isScheduleDateToday = scheduleDate
+    ? scheduleDate.toDateString() === new Date().toDateString()
+    : false;
+
+  const minScheduleTime = isScheduleDateToday
+    ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`
+    : undefined;
+
+  const isScheduleTimeInPast =
+    isScheduleDateToday && scheduleTime < (minScheduleTime ?? "");
 
   const [isStructureOpen, setIsStructureOpen] = useState(false);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
@@ -583,6 +608,52 @@ function ContentEditorInner(props: ContentEditorProps) {
     setIntegrationModalOpen(false);
   };
 
+  const scheduleContent = async () => {
+    if (!isFinal || !workspaceId || !scheduleDate) return;
+    try {
+      setIsPublishing(true);
+      setScheduleDialogOpen(false);
+      const [hours, minutes] = scheduleTime.split(":").map(Number);
+      const dt = new Date(scheduleDate);
+      dt.setHours(hours, minutes, 0, 0);
+      const scheduledAt = dt.toISOString();
+
+      if (contentSavedId) {
+        await apiClient.content.schedule(
+          workspaceId,
+          contentSavedId,
+          scheduledAt,
+        );
+      } else {
+        const payload = getContentPayload();
+        const response = await apiClient.content.saveAndSchedule(
+          workspaceId,
+          payload,
+          scheduledAt,
+        );
+        if (response?.id) setContentSavedId(response.id);
+      }
+      setStatusModal({
+        title: "Content Scheduled!",
+        isOpen: true,
+        type: "success",
+        action: "publish",
+        message: `Content scheduled for ${dt.toLocaleString()}.`,
+      });
+    } catch (error) {
+      const err = error as Error;
+      setStatusModal({
+        title: "Failed to Schedule",
+        isOpen: true,
+        type: "error",
+        action: "publish",
+        message: err.message || "Failed to schedule content.",
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleCopy = async (format: "formatted" | "markdown" | "html") => {
     try {
       const htmlContent = `<h1>${displayTitle}</h1><p><em>${allContent?.meta_description || ""}</em></p>${previewHtml}`;
@@ -700,14 +771,37 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div className="flex-1">
           {canPublish ? (
-            <Button
-              onClick={publishContent}
-              disabled={!isFinal || isPublishing || isSaving}
-              size="sm"
-              className="h-8 px-2! text-xs font-bold w-full!"
-            >
-              <Send size={14} className={isPublishing ? "animate-pulse" : ""} />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-8 px-2! text-xs font-bold w-full! gap-1"
+                >
+                  <Send
+                    size={14}
+                    className={isPublishing ? "animate-pulse" : ""}
+                  />
+                  <ChevronDown size={11} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={publishContent}
+                >
+                  <Send size={13} className="mr-2" />
+                  Publish Now
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={() => setScheduleDialogOpen(true)}
+                >
+                  <Clock size={13} className="mr-2" />
+                  Schedule for Later
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <LockedFeatureTooltip message="Publishing requires Editor role or above">
               <Button
@@ -1308,6 +1402,58 @@ function ContentEditorInner(props: ContentEditorProps) {
               </DialogDescription>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule dialog */}
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogTitle>Schedule Publication</DialogTitle>
+          <DialogDescription>
+            Pick a date and time. Content publishes automatically via WordPress.
+          </DialogDescription>
+          <div className="flex flex-col items-center gap-4 py-2">
+            <Calendar
+              mode="single"
+              selected={scheduleDate}
+              onSelect={setScheduleDate}
+              disabled={isDateDisabled}
+            />
+            <div className="w-full space-y-1.5">
+              <Label htmlFor="schedule-time" className="text-xs">
+                Time
+              </Label>
+              <Input
+                id="schedule-time"
+                type="time"
+                value={scheduleTime}
+                min={minScheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScheduleDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!scheduleDate || isPublishing || isScheduleTimeInPast}
+              onClick={scheduleContent}
+            >
+              {isPublishing ? (
+                <Loader2 size={13} className="animate-spin mr-1" />
+              ) : (
+                <Clock size={13} className="mr-1" />
+              )}
+              Schedule
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

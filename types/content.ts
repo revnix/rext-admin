@@ -288,3 +288,23 @@ export interface ContentListResponse {
   limit: number;
   offset: number;
 }
+
+/**
+ * A single entry in the content calendar (published or scheduled)
+ */
+export interface CalendarEntry {
+  id: string;
+  title: string;
+  status: ContentStatus;
+  platform: string;
+  date: string;
+  url?: string;
+}
+
+/**
+ * Response schema for the calendar endpoint
+ */
+export interface CalendarResponse {
+  calendar: Record<string, CalendarEntry[]>;
+  total_items: number;
+}
