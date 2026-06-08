@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
@@ -20,7 +20,8 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
-import { safeJsonParse } from "@/lib/utils";
+import { cn, safeJsonParse } from "@/lib/utils";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import type { Route } from "next";
 
 type WorkspaceContentDetailPageProps = {
@@ -277,6 +278,59 @@ export default function WorkspaceContentDetailPage({
         className="!py-0"
         hideTitle
       >
+        {content.publishing_results && content.publishing_results.length > 0 && (
+          <div className="px-6 pt-4">
+            <div className="rounded-xl border border-border/50 bg-card p-4 mb-2">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                CMS Publishing Status
+              </p>
+              <div className="space-y-2">
+                {content.publishing_results.map((result) => {
+                  const isSuccess =
+                    result.status === "published" ||
+                    result.status === "synced";
+                  const isError =
+                    result.status === "failed" || result.status === "error";
+                  return (
+                    <div
+                      key={result.site_id}
+                      className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30"
+                    >
+                      <span className="text-sm font-semibold text-foreground flex-1 truncate">
+                        {result.site_name || result.site_id}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold px-2.5 py-1 rounded-full",
+                          isSuccess && "bg-green-100 text-green-700",
+                          isError && "bg-red-100 text-red-700",
+                          !isSuccess && !isError && "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {result.status}
+                      </span>
+                      {result.last_synced_at && (
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {dateFormat.short(result.last_synced_at)}
+                        </span>
+                      )}
+                      {result.external_url && (
+                        <a
+                          href={result.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
         {finalContent && (
           <ContentEditor
             allContent={finalContent}

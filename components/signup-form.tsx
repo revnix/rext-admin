@@ -25,6 +25,7 @@ import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
 import { apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
+import { analytics } from "@/lib/analytics";
 import { useToast } from "@/hooks/use-toast";
 import { checkPasswordBreach } from "@/lib/password-utils";
 import type { Route } from "next";
@@ -132,6 +133,9 @@ export function SignupForm({
         await apiClient.users.register(payload);
       }
 
+      analytics.track("user_signed_up", {
+        method: isInvitationSignup ? "invitation" : "credentials",
+      });
       // Show success toast
       toast.success("Account created successfully! Logging you in...");
 

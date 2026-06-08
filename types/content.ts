@@ -9,7 +9,9 @@ export type ContentStatus =
   | "published"
   | "scheduled"
   | "review"
-  | "cancelled";
+  | "cancelled"
+  | "trashed"
+  | "deleted";
 
 export interface ContentStatusInfo {
   label: string;
@@ -84,6 +86,22 @@ export const CONTENT_STATUS_CONFIG: Record<ContentStatus, ContentStatusInfo> = {
     borderColor: "border-gray-200",
     icon: "X",
     description: "Content generation was cancelled",
+  },
+  trashed: {
+    label: "Trashed",
+    color: "text-amber-700",
+    bgColor: "bg-amber-100",
+    borderColor: "border-amber-200",
+    icon: "Trash2",
+    description: "Content has been moved to trash",
+  },
+  deleted: {
+    label: "Deleted",
+    color: "text-red-700",
+    bgColor: "bg-red-100",
+    borderColor: "border-red-200",
+    icon: "Trash2",
+    description: "Content has been permanently deleted",
   },
 };
 
@@ -197,6 +215,14 @@ export interface UpdateContentRequest {
   schema_markup?: SchemaMarkup | Record<string, unknown>;
 }
 
+export interface PublishingResult {
+  site_id: string;
+  site_name?: string;
+  status: string;
+  external_url?: string;
+  last_synced_at?: string;
+}
+
 /**
  * Content item schema
  */
@@ -232,6 +258,9 @@ export interface ContentItem {
   wordpress_post_id?: number;
   wordpress_url?: string;
   wordpress_published_at?: string;
+
+  // CMS sync results per site
+  publishing_results?: PublishingResult[];
 
   // Timestamps
   created_at: string;

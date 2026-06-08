@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
 import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -105,6 +106,7 @@ export default function RootLayout({
 
         <ThemeProvider defaultTheme="system">
           <AuthProvider>
+            <PostHogProvider>
             <SSEProvider>
               <UserNotificationsListener />
               <QueryProvider>
@@ -118,6 +120,7 @@ export default function RootLayout({
                 </TooltipProvider>
               </QueryProvider>
             </SSEProvider>
+            </PostHogProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>

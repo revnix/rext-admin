@@ -1,6 +1,13 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import type { LoadingStep } from "@/constants/loading-steps";
 
+export type InternalLinkSuggestion = {
+  title: string;
+  url: string;
+  score: number;
+  status: string;
+};
+
 export type Interrupt = {
   id: string;
   value: {
@@ -11,6 +18,7 @@ export type Interrupt = {
     data?: ContentOutline;
     Recommendations?: string[];
     seo_state?: SEORESULT;
+    internal_links?: InternalLinkSuggestion[];
     "Primary Keyword"?: string;
     [key: string]: unknown;
   };
