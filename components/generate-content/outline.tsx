@@ -640,7 +640,7 @@ export function OutlineDisplay({
 
   useEffect(() => {
     if (!sortedInternalLinks.length) return;
-    setCheckedUrls(new Set(sortedInternalLinks.slice(0, 3).map((l) => l.url)));
+    setCheckedUrls(new Set(sortedInternalLinks.filter((l) => l.score >= 0.5).map((l) => l.url)));
   }, [sortedInternalLinks]);
 
   const handleToneSave = () => {
@@ -955,7 +955,7 @@ export function OutlineDisplay({
               </p>
               <p className="text-xs text-muted-foreground">
                 {checkedUrls.size} of {sortedInternalLinks.length} selected —
-                top 3 pre-selected by relevance
+                links ≥ 50% relevance pre-selected
               </p>
             </div>
           </div>
