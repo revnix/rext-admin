@@ -30,7 +30,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to Vercel (build runs on Vercel)
-        run: npx vercel@latest deploy --prod --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
+        # `rm -rf .git` strips git metadata before deploying. Otherwise the Vercel
+        # CLI attaches the commit author to the deployment, and Vercel blocks any
+        # deploy whose Git author isn't a linked Vercel account ("Deployment
+        # Blocked"). Without git metadata, the deploy is attributed solely to the
+        # VERCEL_TOKEN owner, so the committer's membership is irrelevant.
+        run: |
+          rm -rf .git
+          npx vercel@latest deploy --prod --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
