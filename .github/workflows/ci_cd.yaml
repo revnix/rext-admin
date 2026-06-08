@@ -1,12 +1,16 @@
 name: deploy
 
-# Token-based Vercel deploy.
+# Token-based Vercel deploy (single project: rext-app).
+#
+# Branch -> environment:
+#   main    -> Production           (vercel deploy --prod)
+#   staging -> "staging" Custom Env (vercel deploy --target=staging)
 #
 # Why this exists (do not re-enable Vercel's native GitHub integration):
 #   The native Git integration attributes each deploy to the commit author and,
-#   for non-members, fails and prompts them to join the team — which mutates the
-#   member/seat list. This token-based deploy is attributed to the VERCEL_TOKEN
-#   owner instead, so the committer's membership is irrelevant.
+#   for non-members, blocks the deploy and prompts them to join the team — which
+#   mutates the member/seat list. This token-based deploy is attributed to the
+#   VERCEL_TOKEN owner instead, so the committer's membership is irrelevant.
 #
 # Cost notes:
 #   - The build runs ON VERCEL (no `--prebuilt`), so it's covered by the Vercel
@@ -20,11 +24,12 @@ on:
   push:
     branches:
       - main
+      - staging
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,9 +40,13 @@ jobs:
         # deploy whose Git author isn't a linked Vercel account ("Deployment
         # Blocked"). Without git metadata, the deploy is attributed solely to the
         # VERCEL_TOKEN owner, so the committer's membership is irrelevant.
-        run: |
-          rm -rf .git
-          npx vercel@latest deploy --prod --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          rm -rf .git
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            npx vercel@latest deploy --prod --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
+          else
+            npx vercel@latest deploy --target=staging --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
+          fi
