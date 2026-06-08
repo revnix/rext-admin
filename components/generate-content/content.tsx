@@ -274,8 +274,6 @@ const slugify = (text: string) => {
     .trim();
 };
 
-// levelToStatus was unused and removed
-
 const getStatusMessage = (score: number) => {
   if (score >= 80) return "Excellent EEAT signals detected";
   if (score >= 60) return "Good EEAT signals detected";
@@ -402,6 +400,12 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
+
+  const isDateDisabled = useCallback((d: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
+  }, []);
 
   const isScheduleDateToday = scheduleDate
     ? scheduleDate.toDateString() === new Date().toDateString()
@@ -615,10 +619,18 @@ function ContentEditorInner(props: ContentEditorProps) {
       const scheduledAt = dt.toISOString();
 
       if (contentSavedId) {
-        await apiClient.content.schedule(workspaceId, contentSavedId, scheduledAt);
+        await apiClient.content.schedule(
+          workspaceId,
+          contentSavedId,
+          scheduledAt,
+        );
       } else {
         const payload = getContentPayload();
-        const response = await apiClient.content.saveAndSchedule(workspaceId, payload, scheduledAt);
+        const response = await apiClient.content.saveAndSchedule(
+          workspaceId,
+          payload,
+          scheduledAt,
+        );
         if (response?.id) setContentSavedId(response.id);
       }
       setStatusModal({
@@ -765,7 +777,10 @@ function ContentEditorInner(props: ContentEditorProps) {
                   size="sm"
                   className="h-8 px-2! text-xs font-bold w-full! gap-1"
                 >
-                  <Send size={14} className={isPublishing ? "animate-pulse" : ""} />
+                  <Send
+                    size={14}
+                    className={isPublishing ? "animate-pulse" : ""}
+                  />
                   <ChevronDown size={11} />
                 </Button>
               </DropdownMenuTrigger>
@@ -800,52 +815,6 @@ function ContentEditorInner(props: ContentEditorProps) {
           )}
         </div>
       </div>
-
-      {/* Schedule dialog */}
-      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogTitle>Schedule Publication</DialogTitle>
-          <DialogDescription>
-            Pick a date and time. Content publishes automatically via WordPress.
-          </DialogDescription>
-          <div className="flex flex-col items-center gap-4 py-2">
-            <Calendar
-              mode="single"
-              selected={scheduleDate}
-              onSelect={setScheduleDate}
-              disabled={(d) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return d < today;
-              }}
-            />
-            <div className="w-full space-y-1.5">
-              <Label htmlFor="schedule-time" className="text-xs">Time</Label>
-              <Input
-                id="schedule-time"
-                type="time"
-                value={scheduleTime}
-                min={minScheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              disabled={!scheduleDate || isPublishing || isScheduleTimeInPast}
-              onClick={scheduleContent}
-            >
-              {isPublishing ? <Loader2 size={13} className="animate-spin mr-1" /> : <Clock size={13} className="mr-1" />}
-              Schedule
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── Agent Activity Feed (shown while generating) ───────────── */}
@@ -1433,6 +1402,58 @@ function ContentEditorInner(props: ContentEditorProps) {
               </DialogDescription>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule dialog */}
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogTitle>Schedule Publication</DialogTitle>
+          <DialogDescription>
+            Pick a date and time. Content publishes automatically via WordPress.
+          </DialogDescription>
+          <div className="flex flex-col items-center gap-4 py-2">
+            <Calendar
+              mode="single"
+              selected={scheduleDate}
+              onSelect={setScheduleDate}
+              disabled={isDateDisabled}
+            />
+            <div className="w-full space-y-1.5">
+              <Label htmlFor="schedule-time" className="text-xs">
+                Time
+              </Label>
+              <Input
+                id="schedule-time"
+                type="time"
+                value={scheduleTime}
+                min={minScheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScheduleDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!scheduleDate || isPublishing || isScheduleTimeInPast}
+              onClick={scheduleContent}
+            >
+              {isPublishing ? (
+                <Loader2 size={13} className="animate-spin mr-1" />
+              ) : (
+                <Clock size={13} className="mr-1" />
+              )}
+              Schedule
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -208,7 +208,11 @@ export function createContentNamespace(client: ApiClient) {
      * Cancel a pending scheduled publish — resets content to draft
      */
     cancelSchedule: async (workspaceId: string, contentId: string) => {
-      return client.request<{ content_id: string; status: string; cancelled_records: number }>(
+      return client.request<{
+        content_id: string;
+        status: string;
+        cancelled_records: number;
+      }>(
         `${ENDPOINTS.CONTENT.cancel_schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         { method: "DELETE" },
       );

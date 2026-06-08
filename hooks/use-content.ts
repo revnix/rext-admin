@@ -108,9 +108,12 @@ export function useScheduleContent() {
       contentId: string;
       scheduledAt: string;
       siteId?: string;
-    }) => apiClient.content.schedule(workspaceId, contentId, scheduledAt, siteId),
+    }) =>
+      apiClient.content.schedule(workspaceId, contentId, scheduledAt, siteId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["content", variables.workspaceId] });
+      queryClient.invalidateQueries({
+        queryKey: ["content", variables.workspaceId],
+      });
       queryClient.invalidateQueries({ queryKey: ["content-calendar"] });
       toast.success("Content scheduled successfully!");
     },
@@ -136,7 +139,9 @@ export function useCancelSchedule() {
     }) => apiClient.content.cancelSchedule(workspaceId, contentId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["content-calendar"] });
-      queryClient.invalidateQueries({ queryKey: ["content", variables.workspaceId] });
+      queryClient.invalidateQueries({
+        queryKey: ["content", variables.workspaceId],
+      });
       toast.success("Scheduled publish cancelled.");
     },
     onError: (error: Error) => {

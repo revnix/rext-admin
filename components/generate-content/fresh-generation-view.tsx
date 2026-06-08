@@ -1,7 +1,7 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -926,6 +926,24 @@ export function FreshGenerationView({
   const suppressLibraryTopicLoader =
     isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
 
+  const handleEditToggle = useCallback(
+    () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
+    [isEditing],
+  );
+
+  const handleContentChange = useCallback(
+    (val: string) => {
+      dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+      if (allContent) {
+        dispatch({
+          type: "SET_ALL_CONTENT",
+          payload: { ...allContent, body_markdown: val },
+        });
+      }
+    },
+    [allContent],
+  );
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1118,18 +1136,8 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
-            onEditToggle={() =>
-              dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
-            }
-            onContentChange={(val) => {
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-              if (allContent) {
-                dispatch({
-                  type: "SET_ALL_CONTENT",
-                  payload: { ...allContent, body_markdown: val },
-                });
-              }
-            }}
+            onEditToggle={handleEditToggle}
+            onContentChange={handleContentChange}
           />
         </div>
       )}

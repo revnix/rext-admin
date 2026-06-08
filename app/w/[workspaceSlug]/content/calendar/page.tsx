@@ -15,11 +15,7 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useContentCalendar, useCancelSchedule } from "@/hooks/use-content";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -28,13 +24,25 @@ import { cn } from "@/lib/utils";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function entryBadgeClass(entry: CalendarEntry) {
-  if (entry.status === "scheduled") return "bg-purple-100 text-purple-700 border-purple-200";
-  if (entry.platform === "shopify") return "bg-green-100 text-green-700 border-green-200";
+  if (entry.status === "scheduled")
+    return "bg-purple-100 text-purple-700 border-purple-200";
+  if (entry.platform === "shopify")
+    return "bg-green-100 text-green-700 border-green-200";
   return "bg-blue-100 text-blue-700 border-blue-200";
 }
 
@@ -50,7 +58,11 @@ export default function ContentCalendarPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useContentCalendar(workspaceId, year, month);
+  const { data, isLoading, error } = useContentCalendar(
+    workspaceId,
+    year,
+    month,
+  );
   const cancelSchedule = useCancelSchedule();
 
   const calendarMap = data?.calendar ?? {};
@@ -59,20 +71,26 @@ export default function ContentCalendarPage() {
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
 
   const prevMonth = () => {
-    if (month === 1) { setYear(y => y - 1); setMonth(12); }
-    else setMonth(m => m - 1);
+    if (month === 1) {
+      setYear((y) => y - 1);
+      setMonth(12);
+    } else setMonth((m) => m - 1);
     setSelectedDay(null);
   };
   const nextMonth = () => {
-    if (month === 12) { setYear(y => y + 1); setMonth(1); }
-    else setMonth(m => m + 1);
+    if (month === 12) {
+      setYear((y) => y + 1);
+      setMonth(1);
+    } else setMonth((m) => m + 1);
     setSelectedDay(null);
   };
 
   const dayKey = (day: number) =>
     `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-  const selectedEntries: CalendarEntry[] = selectedDay ? (calendarMap[selectedDay] ?? []) : [];
+  const selectedEntries: CalendarEntry[] = selectedDay
+    ? (calendarMap[selectedDay] ?? [])
+    : [];
 
   const handleCancelSchedule = async (contentId: string) => {
     setCancellingId(contentId);
@@ -113,13 +131,16 @@ export default function ContentCalendarPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>Failed to load calendar. Please try again.</AlertDescription>
+          <AlertDescription>
+            Failed to load calendar. Please try again.
+          </AlertDescription>
         </Alert>
       ) : (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold text-muted-foreground">
-              {data?.total_items ?? 0} item{data?.total_items !== 1 ? "s" : ""} this month
+              {data?.total_items ?? 0} item{data?.total_items !== 1 ? "s" : ""}{" "}
+              this month
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -135,72 +156,89 @@ export default function ContentCalendarPage() {
             </div>
 
             <div className="grid grid-cols-7">
-              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[80px] border-b border-r last:border-r-0 bg-muted/20" />
-              ))}
-
-              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-                const key = dayKey(day);
-                const entries = calendarMap[key] ?? [];
-                const isToday =
-                  day === now.getDate() &&
-                  month === now.getMonth() + 1 &&
-                  year === now.getFullYear();
-
-                return (
+              {Array.from({ length: firstDayOfWeek }, (_, i) => i).map(
+                (offset) => (
                   <div
-                    key={key}
-                    onClick={() => entries.length > 0 && setSelectedDay(key)}
-                    className={cn(
-                      "min-h-[80px] border-b border-r last:border-r-0 p-1.5 flex flex-col gap-1",
-                      entries.length > 0 && "cursor-pointer hover:bg-muted/40 transition-colors",
-                    )}
-                  >
-                    <span
+                    key={`pre-${year}-${month}-${offset}`}
+                    className="min-h-[80px] border-b border-r last:border-r-0 bg-muted/20"
+                  />
+                ),
+              )}
+
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
+                (day) => {
+                  const key = dayKey(day);
+                  const entries = calendarMap[key] ?? [];
+                  const isToday =
+                    day === now.getDate() &&
+                    month === now.getMonth() + 1 &&
+                    year === now.getFullYear();
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      disabled={entries.length === 0}
+                      onClick={() => setSelectedDay(key)}
                       className={cn(
-                        "text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full self-end",
-                        isToday && "bg-primary text-primary-foreground",
-                        !isToday && "text-foreground",
+                        "min-h-[80px] border-b border-r last:border-r-0 p-1.5 flex flex-col gap-1 w-full text-left bg-transparent",
+                        entries.length > 0 &&
+                          "cursor-pointer hover:bg-muted/40 transition-colors",
+                        entries.length === 0 && "cursor-default",
                       )}
                     >
-                      {day}
-                    </span>
-                    <div className="flex flex-col gap-0.5 overflow-hidden">
-                      {entries.slice(0, 3).map((entry) => (
-                        <div
-                          key={`${entry.id}-${entry.platform}`}
-                          className={cn(
-                            "text-[10px] truncate rounded px-1 py-0.5 border font-medium",
-                            entryBadgeClass(entry),
-                          )}
-                        >
-                          {entry.title}
-                        </div>
-                      ))}
-                      {entries.length > 3 && (
-                        <span className="text-[10px] text-muted-foreground pl-1">
-                          +{entries.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                      <span
+                        className={cn(
+                          "text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full self-end",
+                          isToday && "bg-primary text-primary-foreground",
+                          !isToday && "text-foreground",
+                        )}
+                      >
+                        {day}
+                      </span>
+                      <div className="flex flex-col gap-0.5 overflow-hidden">
+                        {entries.slice(0, 3).map((entry) => (
+                          <div
+                            key={`${entry.id}-${entry.platform}`}
+                            className={cn(
+                              "text-[10px] truncate rounded px-1 py-0.5 border font-medium",
+                              entryBadgeClass(entry),
+                            )}
+                          >
+                            {entry.title}
+                          </div>
+                        ))}
+                        {entries.length > 3 && (
+                          <span className="text-[10px] text-muted-foreground pl-1">
+                            +{entries.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                },
+              )}
             </div>
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
+      <Dialog
+        open={!!selectedDay}
+        onOpenChange={(open) => !open && setSelectedDay(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>
             {selectedDay
-              ? new Date(selectedDay + "T00:00:00").toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })
+              ? new Date(`${selectedDay}T00:00:00`).toLocaleDateString(
+                  undefined,
+                  {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  },
+                )
               : ""}
           </DialogTitle>
           <div className="space-y-3 mt-2">
@@ -214,7 +252,10 @@ export default function ContentCalendarPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <Badge
                       variant="outline"
-                      className={cn("text-[10px] px-1.5 py-0", entryBadgeClass(entry))}
+                      className={cn(
+                        "text-[10px] px-1.5 py-0",
+                        entryBadgeClass(entry),
+                      )}
                     >
                       {entry.status === "scheduled" ? (
                         <Clock className="h-2.5 w-2.5 mr-1" />

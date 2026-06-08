@@ -243,7 +243,7 @@ function WordPressForm({
 }
 
 function ShopifyForm({
-  onSuccess,
+  onSuccess: _onSuccess,
   onClose,
   workspaceId,
 }: {
@@ -268,7 +268,7 @@ function ShopifyForm({
     data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
   ) => {
     try {
-     const result = await integrationsApiService.startShopifyInstall(
+      const result = await integrationsApiService.startShopifyInstall(
         workspaceId,
         {
           store_url: data.store_url,

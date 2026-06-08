@@ -393,7 +393,7 @@ export default function WebhookMonitoringPage() {
         description="Monitor and manage webhook events from LemonSqueezy"
         actions={
           <Button
-          className="w-full sm:w-auto"
+            className="w-full sm:w-auto"
             onClick={() => {
               fetchEvents();
               fetchStats();
