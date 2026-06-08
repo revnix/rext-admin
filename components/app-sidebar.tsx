@@ -89,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       groupLabel: "",
       items: [
         {
-          title: "Dashboard Test",
+          title: "Dashboard",
           url: "/",
           icon: LayoutDashboard,
         },
