@@ -248,8 +248,8 @@ export default function ContentCalendarPage() {
                 className="flex items-start gap-3 p-3 rounded-lg border bg-card"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{entry.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm font-medium break-words">{entry.title}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
                     <Badge
                       variant="outline"
                       className={cn(
