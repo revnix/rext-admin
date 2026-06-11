@@ -331,9 +331,7 @@ export function UsageLimitWarning({
                 <Button
                   size="sm"
                   variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-                  onClick={() =>
-                    router.push("/subscription" as Route)
-                  }
+                  onClick={() => router.push("/subscription" as Route)}
                 >
                   View Usage
                 </Button>

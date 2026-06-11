@@ -349,7 +349,11 @@ export default function SubscriptionAnalyticsPage() {
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
         actions={
-          <Button className="w-full sm:w-auto" onClick={handleRefresh} disabled={refreshing}>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
             {refreshing ? "Refreshing..." : "Refresh Data"}
           </Button>
         }

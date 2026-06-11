@@ -1,7 +1,7 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -12,6 +12,7 @@ import type {
   ContentOutline,
   ContentSection,
   FinalContent,
+  InternalLinkSuggestion,
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
@@ -49,6 +50,7 @@ import {
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
 import type { ToolCall } from "@/components/generate-content/agent-feed";
+import { analytics } from "@/lib/analytics";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -210,6 +212,14 @@ export function FreshGenerationView({
     currentLoadingSteps,
   } = state;
 
+  const interruptInternalLinks = useMemo(
+    () =>
+      state.interrupt?.[0]?.value?.internal_links as
+        | InternalLinkSuggestion[]
+        | undefined,
+    [state.interrupt],
+  );
+
   const isEditingRef = useRef(isEditing);
   useEffect(() => {
     isEditingRef.current = isEditing;
@@ -217,6 +227,9 @@ export function FreshGenerationView({
 
   // Abort controller — cancelled on unmount or when a new stream starts
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Track generation completion once per thread to avoid duplicate events
+  const trackedThreadRef = useRef<string | null>(null);
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
@@ -267,6 +280,20 @@ export function FreshGenerationView({
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
+
+  // Track content_generation_completed once per thread when all scores are ready
+  useEffect(() => {
+    if (!isContentFinal || !threadId) return;
+    if (trackedThreadRef.current === threadId) return;
+    trackedThreadRef.current = threadId;
+
+    analytics.track("content_generation_completed", {
+      keyword: userKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      word_count: allContent?.word_count,
+    });
+  }, [isContentFinal, threadId, userKeyword, workspaceId, allContent?.word_count]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -717,6 +744,17 @@ export function FreshGenerationView({
           });
       }
     } catch (_e) {
+      const isAbort =
+        _e instanceof DOMException && _e.name === "AbortError";
+      if (!isAbort) {
+        analytics.track("content_generation_failed", {
+          keyword: userKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
+          error_message:
+            _e instanceof Error ? _e.message : "Unknown stream error",
+        });
+      }
     } finally {
       if (loadingStatus?.endsWith("..."))
         dispatch({
@@ -926,6 +964,24 @@ export function FreshGenerationView({
   const suppressLibraryTopicLoader =
     isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
 
+  const handleEditToggle = useCallback(
+    () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
+    [isEditing],
+  );
+
+  const handleContentChange = useCallback(
+    (val: string) => {
+      dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+      if (allContent) {
+        dispatch({
+          type: "SET_ALL_CONTENT",
+          payload: { ...allContent, body_markdown: val },
+        });
+      }
+    },
+    [allContent],
+  );
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1085,7 +1141,33 @@ export function FreshGenerationView({
               outline={parsedOutline}
               rawTokens={outline.streamedText}
               isLoading={isStreamingOutline}
-              onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
+              internalLinks={interruptInternalLinks}
+              onApprove={(selectedLinks) => {
+                setTokenTarget("content");
+                tokenTargetRef.current = "content";
+                content.resetStream();
+                setToolCalls([]);
+                setPipelineSteps([]);
+                dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
+                dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+                dispatch({
+                  type: "SET_LOADING_STEPS",
+                  payload: FINAL_GENERATION_STEPS,
+                });
+                void resumeWorkflow({
+                  payload: {
+                    action: "approve",
+                    ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
+                    ...(parsedOutline?.target_audience?.length
+                      ? { target_audience: parsedOutline.target_audience }
+                      : {}),
+                    ...(interruptInternalLinks?.length
+                      ? { selected_internal_links: selectedLinks }
+                      : {}),
+                  },
+                  status: "Approving and generating content...",
+                });
+              }}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
               onUpdate={(updatedOutline) =>
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
@@ -1118,18 +1200,8 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
-            onEditToggle={() =>
-              dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
-            }
-            onContentChange={(val) => {
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-              if (allContent) {
-                dispatch({
-                  type: "SET_ALL_CONTENT",
-                  payload: { ...allContent, body_markdown: val },
-                });
-              }
-            }}
+            onEditToggle={handleEditToggle}
+            onContentChange={handleContentChange}
           />
         </div>
       )}

@@ -2,9 +2,11 @@ import type {
   Outline,
   ContentSection,
   OutlineRenderBlock,
+  InternalLinkSuggestion,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Check,
   X,
@@ -18,6 +20,7 @@ import {
   Tag,
   FileText,
   HelpCircle,
+  Link2,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -561,6 +564,7 @@ export function OutlineDisplay({
   outline,
   rawTokens, // ← NEW: the accumulating raw JSON string from messages/partial
   isLoading,
+  internalLinks,
   onApprove,
   onReject,
   onUpdate,
@@ -568,7 +572,8 @@ export function OutlineDisplay({
   outline: Outline | null; // null while still streaming
   rawTokens: string; // grows token by token from SSE
   isLoading: boolean;
-  onApprove: () => void;
+  internalLinks?: InternalLinkSuggestion[];
+  onApprove: (selectedLinks: InternalLinkSuggestion[]) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
 }) {
@@ -577,6 +582,7 @@ export function OutlineDisplay({
   const [tone, setTone] = useState("");
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
+  const [checkedUrls, setCheckedUrls] = useState<Set<string>>(new Set());
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -625,6 +631,17 @@ export function OutlineDisplay({
       cancelled = true;
     };
   }, [outline]);
+
+  const sortedInternalLinks = useMemo(
+    () =>
+      internalLinks ? [...internalLinks].sort((a, b) => b.score - a.score) : [],
+    [internalLinks],
+  );
+
+  useEffect(() => {
+    if (!sortedInternalLinks.length) return;
+    setCheckedUrls(new Set(sortedInternalLinks.filter((l) => l.score >= 0.5).map((l) => l.url)));
+  }, [sortedInternalLinks]);
 
   const handleToneSave = () => {
     if (onUpdate && outline) onUpdate({ ...outline, tone });
@@ -925,6 +942,89 @@ export function OutlineDisplay({
         </div>
       ) : null}
 
+      {/* Internal Links Panel */}
+      {sortedInternalLinks.length > 0 && (
+        <div className="mt-8 p-5 rounded-xl border border-border/50 bg-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
+              <Link2 className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Internal Links
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {checkedUrls.size} of {sortedInternalLinks.length} selected —
+                links ≥ 50% relevance pre-selected
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {sortedInternalLinks.map((link) => {
+              const isChecked = checkedUrls.has(link.url);
+              return (
+                <label
+                  key={link.url}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+                    isChecked
+                      ? "bg-primary/5 border-primary/30"
+                      : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      const next = new Set(checkedUrls);
+                      if (e.target.checked) next.add(link.url);
+                      else next.delete(link.url);
+                      setCheckedUrls(next);
+                    }}
+                    className="sr-only"
+                  />
+                  <div
+                    className={cn(
+                      "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                      isChecked
+                        ? "bg-primary border-primary"
+                        : "bg-background border-border",
+                    )}
+                  >
+                    {isChecked && (
+                      <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {link.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {link.url}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        link.status === "published"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {link.status}
+                    </span>
+                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                      {Math.round(link.score * 100)}%
+                    </span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Action Bar */}
       <div className="mt-10 flex items-center justify-end gap-3">
         <Button
@@ -936,7 +1036,12 @@ export function OutlineDisplay({
           <X className="w-4 h-4 mr-2" /> Reject
         </Button>
         <Button
-          onClick={onApprove}
+          onClick={() => {
+            const selected = sortedInternalLinks.filter((l) =>
+              checkedUrls.has(l.url),
+            );
+            onApprove(selected);
+          }}
           disabled={isLoading || isDraft}
           className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
         >
