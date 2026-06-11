@@ -5,6 +5,7 @@
  * API requests using AuthJS (next-auth) sessions.
  */
 
+import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
@@ -59,6 +60,10 @@ export function getPrimaryRole(data: {
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
+
+// Mutex: all concurrent 401 handlers share one getSession() call so only one
+// JWT callback fires and only one backend refresh attempt is made.
+let refreshPromise: Promise<Session | null> | null = null;
 
 /**
  * Debounced redirect to login page.
@@ -214,7 +219,12 @@ export async function authenticatedFetch(
 
       // For client-side, we can try to get a fresh session which triggers refresh logic
       if (typeof window !== "undefined") {
-        const session = await getSession();
+        if (!refreshPromise) {
+          refreshPromise = getSession().finally(() => {
+            refreshPromise = null;
+          });
+        }
+        const session = await refreshPromise;
 
         if (session?.user?.accessToken && !session.error) {
           log.info("[AuthJS] Session refreshed successfully, retrying request");
