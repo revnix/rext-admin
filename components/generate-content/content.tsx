@@ -931,7 +931,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Performance & SEO
               </h4>
             </div>
-
+{/* 
             <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
               <h4 className="text-lg font-bold text-foreground">Readability</h4>
 
@@ -947,7 +947,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
           </>
         ) : null}
 
