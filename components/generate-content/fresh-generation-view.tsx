@@ -1,7 +1,14 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -210,6 +217,7 @@ export function FreshGenerationView({
     trustScore,
     allContent,
     currentLoadingSteps,
+    keywordClusters,
   } = state;
 
   const interruptInternalLinks = useMemo(
@@ -293,7 +301,13 @@ export function FreshGenerationView({
       thread_id: threadId,
       word_count: allContent?.word_count,
     });
-  }, [isContentFinal, threadId, userKeyword, workspaceId, allContent?.word_count]);
+  }, [
+    isContentFinal,
+    threadId,
+    userKeyword,
+    workspaceId,
+    allContent?.word_count,
+  ]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -514,6 +528,9 @@ export function FreshGenerationView({
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         } satisfies ContentOutline;
 
         dispatch({ type: "SET_OUTLINE", payload: normalized });
@@ -744,8 +761,7 @@ export function FreshGenerationView({
           });
       }
     } catch (_e) {
-      const isAbort =
-        _e instanceof DOMException && _e.name === "AbortError";
+      const isAbort = _e instanceof DOMException && _e.name === "AbortError";
       if (!isAbort) {
         analytics.track("content_generation_failed", {
           keyword: userKeyword,
@@ -1021,6 +1037,7 @@ export function FreshGenerationView({
         seoResult={seoResult}
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
+        keywordClusters={keywordClusters}
       />
     ),
     topic: (
@@ -1157,7 +1174,9 @@ export function FreshGenerationView({
                 void resumeWorkflow({
                   payload: {
                     action: "approve",
-                    ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
+                    ...(parsedOutline?.tone
+                      ? { tone: parsedOutline.tone }
+                      : {}),
                     ...(parsedOutline?.target_audience?.length
                       ? { target_audience: parsedOutline.target_audience }
                       : {}),
@@ -1172,6 +1191,7 @@ export function FreshGenerationView({
               onUpdate={(updatedOutline) =>
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
               }
+              keywordClusters={keywordClusters}
             />
           </div>
         ) : (

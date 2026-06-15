@@ -107,19 +107,19 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system">
           <AuthProvider>
             <PostHogProvider>
-            <SSEProvider>
-              <UserNotificationsListener />
-              <QueryProvider>
-                <TooltipProvider>
-                  {/* Welcome modal shows first, then invited user onboarding */}
-                  <WorkspaceWelcomeGate>
-                    <InvitedUserOnboardingGate>
-                      {children}
-                    </InvitedUserOnboardingGate>
-                  </WorkspaceWelcomeGate>
-                </TooltipProvider>
-              </QueryProvider>
-            </SSEProvider>
+              <SSEProvider>
+                <UserNotificationsListener />
+                <QueryProvider>
+                  <TooltipProvider>
+                    {/* Welcome modal shows first, then invited user onboarding */}
+                    <WorkspaceWelcomeGate>
+                      <InvitedUserOnboardingGate>
+                        {children}
+                      </InvitedUserOnboardingGate>
+                    </WorkspaceWelcomeGate>
+                  </TooltipProvider>
+                </QueryProvider>
+              </SSEProvider>
             </PostHogProvider>
           </AuthProvider>
           <Toaster />

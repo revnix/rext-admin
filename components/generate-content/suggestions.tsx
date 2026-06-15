@@ -1,6 +1,6 @@
 "use client";
 
-import type { SEORESULT } from "@/types/generate-content";
+import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 import {
   Zap,
   Compass,
@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Loader2,
+  Layers,
 } from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
@@ -59,6 +60,7 @@ export function SuggestionsSection({
   seoResult,
   selectedIntent,
   onIntentChange,
+  keywordClusters = [],
 }: {
   instruction: string;
   primaryKeyword: string;
@@ -67,6 +69,7 @@ export function SuggestionsSection({
   seoResult: SEORESULT | null;
   selectedIntent: IntentOption | "";
   onIntentChange: (intent: IntentOption) => void;
+  keywordClusters?: KeywordCluster[];
 }) {
   const difficultyScore = useMemo(() => {
     const value = seoResult?.keyword_difficulty;
@@ -306,6 +309,62 @@ export function SuggestionsSection({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Semantic keyword clusters */}
+      <AnimatePresence>
+        {keywordClusters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className="mt-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-3.5 h-3.5 text-primary/60" />
+              <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
+                Semantic Clusters
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {keywordClusters.map((cluster) => (
+                <motion.div
+                  key={cluster.cluster_name}
+                  variants={itemVariants}
+                  className="border border-border/50 rounded-xl bg-card px-4 py-3"
+                >
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className="text-[13px] font-semibold text-foreground/80 capitalize">
+                      {cluster.cluster_name}
+                    </span>
+                    <span className="text-[10px] font-black text-primary/50 uppercase tracking-widest">
+                      {cluster.keywords.length} kw
+                    </span>
+                    <span className="text-[10px] font-medium text-muted-foreground/50 capitalize ml-auto">
+                      {cluster.main_intent}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {cluster.keywords.map((kw) => (
+                      <button
+                        key={kw.keyword}
+                        type="button"
+                        onClick={() => onSelect(kw.keyword)}
+                        className="group flex items-center gap-1.5 px-2.5 py-1 bg-background hover:bg-primary/5 border border-border hover:border-primary/30 rounded-md transition-all duration-150 text-left cursor-pointer"
+                      >
+                        <span className="text-[12px] font-medium text-foreground/70 group-hover:text-primary transition-colors">
+                          {kw.keyword}
+                        </span>
+                        <ArrowUpRight className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -36,6 +36,7 @@ export const initialState: PageState = {
   allContent: null,
   currentLoadingSteps: [],
   keywordDifficulty: null,
+  keywordClusters: [],
 };
 
 export function generationReducer(
@@ -94,6 +95,8 @@ export function generationReducer(
             ? "keyword Selection"
             : state.instructionType,
       };
+    case "SET_KEYWORD_CLUSTERS":
+      return { ...state, keywordClusters: action.payload };
     case "SET_LOADING_STEPS":
       return { ...state, currentLoadingSteps: action.payload };
     case "SET_LOADING_STATUS":
@@ -173,6 +176,11 @@ function handleStreamUpdate(
           if (interruptValue.seo_state) {
             newState.seoResult = interruptValue.seo_state;
           }
+          const clusters = interruptValue["Keyword Clusters"];
+          if (Array.isArray(clusters) && clusters.length > 0) {
+            newState.keywordClusters =
+              clusters as import("@/types/generate-content").KeywordCluster[];
+          }
           changed = true;
         }
         if (state.step === "keyword") {
@@ -196,11 +204,81 @@ function handleStreamUpdate(
         changed = true;
       }
     } else if (interruptValue.type === "outline_review") {
-      const newOutline = interruptValue.data as ContentOutline;
-      if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
-        newState.outline = newOutline;
-        changed = true;
+      const outlineData = (interruptValue.outline_dict ||
+        interruptValue.data) as ContentOutline;
+      if (outlineData) {
+        const clusterHeadingMap =
+          outlineData.cluster_heading_map ||
+          (interruptValue.outline_dict as Record<string, unknown>)
+            ?.cluster_heading_map ||
+          (interruptValue.data as Record<string, unknown>)?.cluster_heading_map;
+
+        let normalizedMap: import("@/types/generate-content").ClusterHeadingMapItem[] =
+          [];
+        if (clusterHeadingMap) {
+          if (Array.isArray(clusterHeadingMap)) {
+            normalizedMap = clusterHeadingMap;
+          } else if (typeof clusterHeadingMap === "object") {
+            const sections = outlineData.sections || [];
+            const sectionHeadings = new Set(
+              sections.map((s) => s.heading.toLowerCase().trim()),
+            );
+
+            normalizedMap = Object.entries(clusterHeadingMap).flatMap(
+              ([key, val]) => {
+                if (Array.isArray(val)) {
+                  return val.map((heading) => ({
+                    cluster: key,
+                    heading: String(heading),
+                  }));
+                } else if (typeof val === "string") {
+                  const kNorm = key.toLowerCase().trim();
+                  const vNorm = val.toLowerCase().trim();
+                  if (sectionHeadings.has(kNorm)) {
+                    return [{ heading: key, cluster: val }];
+                  } else if (sectionHeadings.has(vNorm)) {
+                    return [{ heading: val, cluster: key }];
+                  } else {
+                    return [{ heading: key, cluster: val }];
+                  }
+                }
+                return [];
+              },
+            );
+          }
+        }
+
+        const newOutline = {
+          ...outlineData,
+          cluster_heading_map: normalizedMap,
+        };
+
+        if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
+          newState.outline = newOutline;
+          changed = true;
+        }
       }
+
+      const rawClusters =
+        interruptValue.clusters ||
+        interruptValue.keyword_clusters ||
+        interruptValue["Keyword Clusters"] ||
+        (interruptValue.outline_dict as Record<string, unknown>)?.clusters ||
+        (interruptValue.outline_dict as Record<string, unknown>)
+          ?.keyword_clusters ||
+        (interruptValue.outline_dict as Record<string, unknown>)?.[
+          "Keyword Clusters"
+        ];
+      if (Array.isArray(rawClusters)) {
+        if (
+          JSON.stringify(state.keywordClusters) !== JSON.stringify(rawClusters)
+        ) {
+          newState.keywordClusters =
+            rawClusters as import("@/types/generate-content").KeywordCluster[];
+          changed = true;
+        }
+      }
+
       if (
         state.step !== "outline" &&
         state.step !== "outline-reject" &&

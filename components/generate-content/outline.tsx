@@ -2,6 +2,8 @@ import type {
   Outline,
   ContentSection,
   OutlineRenderBlock,
+  ClusterHeadingMapItem,
+  KeywordCluster,
   InternalLinkSuggestion,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
@@ -20,6 +22,7 @@ import {
   Tag,
   FileText,
   HelpCircle,
+  Layers,
   Link2,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
@@ -538,6 +541,9 @@ function deriveOutlineFromTokens(rawTokens: string): Outline {
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         };
       }
     } catch {
@@ -568,6 +574,7 @@ export function OutlineDisplay({
   onApprove,
   onReject,
   onUpdate,
+  keywordClusters = [],
 }: {
   outline: Outline | null; // null while still streaming
   rawTokens: string; // grows token by token from SSE
@@ -576,6 +583,7 @@ export function OutlineDisplay({
   onApprove: (selectedLinks: InternalLinkSuggestion[]) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
+  keywordClusters?: KeywordCluster[];
 }) {
   const [editingTone, setEditingTone] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
@@ -590,6 +598,57 @@ export function OutlineDisplay({
   );
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
+
+  const clusterHeadingMapping = useMemo(() => {
+    const map = new Map<string, string[]>();
+    if (
+      !effectiveOutline.cluster_heading_map ||
+      !Array.isArray(effectiveOutline.cluster_heading_map)
+    )
+      return map;
+    for (const { cluster, heading } of effectiveOutline.cluster_heading_map) {
+      const normalizedCluster = cluster.toLowerCase().trim();
+      if (!map.has(normalizedCluster)) {
+        map.set(normalizedCluster, []);
+      }
+      map.get(normalizedCluster)?.push(heading);
+    }
+    return map;
+  }, [effectiveOutline.cluster_heading_map]);
+
+  const getMappedHeadings = (clusterName: string) => {
+    const normalized = clusterName.toLowerCase().trim();
+    if (clusterHeadingMapping.has(normalized)) {
+      return clusterHeadingMapping.get(normalized) || [];
+    }
+    for (const [key, value] of clusterHeadingMapping.entries()) {
+      if (key.includes(normalized) || normalized.includes(key)) {
+        return value;
+      }
+    }
+    return [];
+  };
+
+  // Derive render blocks from cluster_heading_map + sections when _render is absent.
+  const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
+    const map: ClusterHeadingMapItem[] | undefined =
+      effectiveOutline.cluster_heading_map;
+    if (!map || !Array.isArray(map) || !map.length) return null;
+    const sectionByHeading = new Map(
+      (effectiveOutline.sections ?? []).map((s) => [s.heading, s]),
+    );
+    const grouped = new Map<string, OutlineRenderBlock>();
+    for (const { cluster, heading } of map) {
+      if (!grouped.has(cluster))
+        grouped.set(cluster, { heading: cluster, items: [] });
+      const section = sectionByHeading.get(heading);
+      grouped.get(cluster)?.items.push({
+        label: heading,
+        points: section?.key_points ?? [],
+      });
+    }
+    return Array.from(grouped.values());
+  }, [effectiveOutline.cluster_heading_map, effectiveOutline.sections]);
 
   useEffect(() => {
     if (!outline) return;
@@ -606,8 +665,9 @@ export function OutlineDisplay({
       return;
     }
 
-    const totalItems = outline._render?.blocks
-      ? outline._render.blocks.reduce((sum, b) => sum + b.items.length, 0)
+    const activeBlocks = outline._render?.blocks ?? clusterBlocks ?? null;
+    const totalItems = activeBlocks
+      ? activeBlocks.reduce((sum, b) => sum + b.items.length, 0)
       : (outline.sections?.length ?? 0);
 
     if (!totalItems) {
@@ -630,7 +690,7 @@ export function OutlineDisplay({
     return () => {
       cancelled = true;
     };
-  }, [outline]);
+  }, [outline, clusterBlocks]);
 
   const sortedInternalLinks = useMemo(
     () =>
@@ -640,7 +700,11 @@ export function OutlineDisplay({
 
   useEffect(() => {
     if (!sortedInternalLinks.length) return;
-    setCheckedUrls(new Set(sortedInternalLinks.filter((l) => l.score >= 0.5).map((l) => l.url)));
+    setCheckedUrls(
+      new Set(
+        sortedInternalLinks.filter((l) => l.score >= 0.5).map((l) => l.url),
+      ),
+    );
   }, [sortedInternalLinks]);
 
   const handleToneSave = () => {
@@ -873,10 +937,70 @@ export function OutlineDisplay({
         </div>
       )}
 
-      {/* Structure — use _render blocks when available, fall back to legacy sections */}
-      {!isDraft && effectiveOutline._render?.blocks?.length ? (
+      {/* Keyword Clusters & Topic Mapping */}
+      {!isDraft && keywordClusters && keywordClusters.length > 0 && (
+        <div className="mb-12 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold text-foreground">
+              Keyword Clusters & Heading Mapping
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 mt-5">
+            {keywordClusters.map((cluster) => {
+              const mappedHeadings = getMappedHeadings(cluster.cluster_name);
+              return (
+                <div
+                  key={cluster.cluster_name}
+                  className="flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
+                >
+                  {/* Header info */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground capitalize">
+                        {cluster.cluster_name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {cluster.main_intent}
+                        </span>
+                        {cluster.confidence_score !== undefined && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Conf: {Math.round(cluster.confidence_score * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-muted-foreground/40 bg-muted px-2 py-1 rounded-md shrink-0">
+                      {cluster.keywords.length} keywords
+                    </span>
+                  </div>
+
+                  {/* Keywords */}
+                  <div className="flex flex-wrap gap-1.5 flex-1">
+                    {cluster.keywords.map((kw) => (
+                      <span
+                        key={kw.keyword}
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/60 border border-border/40 text-foreground/80"
+                      >
+                        {kw.keyword}
+                      </span>
+                    ))}
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Structure — prefer _render blocks, fall back to cluster_heading_map, then legacy sections */}
+      {!isDraft &&
+      (effectiveOutline._render?.blocks?.length || clusterBlocks?.length) ? (
         <RenderBlocks
-          blocks={effectiveOutline._render.blocks}
+          blocks={effectiveOutline._render?.blocks ?? clusterBlocks ?? []}
           visibleSectionCount={visibleSectionCount}
           sections={outline?.sections}
         />

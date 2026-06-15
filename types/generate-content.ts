@@ -1,6 +1,14 @@
 import type { Message } from "@langchain/langgraph-sdk";
 import type { LoadingStep } from "@/constants/loading-steps";
 
+export type KeywordCluster = {
+  cluster_name: string;
+  keywords: ExtractedKeyword[];
+  total_score: number;
+  main_intent: string;
+  confidence_score?: number;
+};
+
 export type InternalLinkSuggestion = {
   title: string;
   url: string;
@@ -20,6 +28,7 @@ export type Interrupt = {
     seo_state?: SEORESULT;
     internal_links?: InternalLinkSuggestion[];
     "Primary Keyword"?: string;
+    "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;
   };
 };
@@ -118,6 +127,12 @@ export type KeyConcept = {
   term: string;
   definition: string;
   examples?: string[];
+};
+
+// ── cluster_heading_map: flat array mapping each section heading to its cluster ─
+export type ClusterHeadingMapItem = {
+  cluster: string;
+  heading: string;
 };
 
 // ── _render: normalized display shape sent in outline_review interrupt ────────
@@ -349,6 +364,9 @@ export type ContentOutline = {
   draft_retries?: number;
   review_retries?: number;
   max_retries?: number;
+
+  // ── Cluster-to-heading mapping from outline generation ───────────────────
+  cluster_heading_map?: ClusterHeadingMapItem[];
 
   // ── Normalized display shape from outline_review interrupt ────────────────
   _render?: OutlineRender;
@@ -708,6 +726,7 @@ export type SEORESULT = {
   keyword_difficulty?: KeywordDifficultyState | number;
   keyword_difficulty2?: KeywordDifficultyState2;
   keyword_recommendations?: KeywordRecommendationState;
+  keyword_clusters?: KeywordCluster[];
   intent?: SearchIntentState | string;
   content_pattern?: ContentPatternState;
   content_gaps?: ContentGapState;
@@ -805,6 +824,7 @@ export interface PageState {
   allContent: FinalContent | null;
   currentLoadingSteps: LoadingStep[];
   keywordDifficulty: number | null;
+  keywordClusters: KeywordCluster[];
 }
 
 export type PageAction =
@@ -833,6 +853,7 @@ export type PageAction =
   | { type: "ADD_COMPLETED_NODE"; payload: string }
   | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
+  | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }
   | { type: "SET_OUTLINE"; payload: ContentOutline | null };
 

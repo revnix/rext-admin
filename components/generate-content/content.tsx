@@ -2,7 +2,7 @@ import type { ContentStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
-  ReadabilityMeta,
+  // ReadabilityMeta,
   ReadabilityMetrics,
   SEORESULT,
   Issue,
@@ -209,61 +209,61 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
   );
 }
 
-function getReadabilityMeta(score: number): ReadabilityMeta {
-  if (score >= 90) {
-    return {
-      label: "Very Easy",
-      color: "text-emerald-600",
-      barColor: "bg-emerald-500",
-    };
-  }
+// function getReadabilityMeta(score: number): ReadabilityMeta {
+//   if (score >= 90) {
+//     return {
+//       label: "Very Easy",
+//       color: "text-emerald-600",
+//       barColor: "bg-emerald-500",
+//     };
+//   }
 
-  if (score >= 80) {
-    return {
-      label: "Easy",
-      color: "text-emerald-600",
-      barColor: "bg-emerald-500",
-    };
-  }
+//   if (score >= 80) {
+//     return {
+//       label: "Easy",
+//       color: "text-emerald-600",
+//       barColor: "bg-emerald-500",
+//     };
+//   }
 
-  if (score >= 70) {
-    return {
-      label: "Fairly Easy",
-      color: "text-emerald-600",
-      barColor: "bg-emerald-500",
-    };
-  }
+//   if (score >= 70) {
+//     return {
+//       label: "Fairly Easy",
+//       color: "text-emerald-600",
+//       barColor: "bg-emerald-500",
+//     };
+//   }
 
-  if (score >= 60) {
-    return {
-      label: "Standard",
-      color: "text-emerald-600",
-      barColor: "bg-emerald-500",
-    };
-  }
+//   if (score >= 60) {
+//     return {
+//       label: "Standard",
+//       color: "text-emerald-600",
+//       barColor: "bg-emerald-500",
+//     };
+//   }
 
-  if (score >= 50) {
-    return {
-      label: "Fairly Difficult",
-      color: "text-yellow-600",
-      barColor: "bg-yellow-500",
-    };
-  }
+//   if (score >= 50) {
+//     return {
+//       label: "Fairly Difficult",
+//       color: "text-yellow-600",
+//       barColor: "bg-yellow-500",
+//     };
+//   }
 
-  if (score >= 30) {
-    return {
-      label: "Difficult",
-      color: "text-orange-600",
-      barColor: "bg-orange-500",
-    };
-  }
+//   if (score >= 30) {
+//     return {
+//       label: "Difficult",
+//       color: "text-orange-600",
+//       barColor: "bg-orange-500",
+//     };
+//   }
 
-  return {
-    label: "Very Confusing",
-    color: "text-red-600",
-    barColor: "bg-red-500",
-  };
-}
+//   return {
+//     label: "Very Confusing",
+//     color: "text-red-600",
+//     barColor: "bg-red-500",
+//   };
+// }
 
 const slugify = (text: string) => {
   return text
@@ -363,8 +363,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     },
   );
   const score = readabilityScore?.flesch_reading_ease ?? 0;
-  const { label, color, barColor } = getReadabilityMeta(score);
-  const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
+  // const { label, color, barColor } = getReadabilityMeta(score);
+  // const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
   const workspaceId = useCurrentWorkspaceId();
   const { hasPermission: canUpdate } = useWorkspacePermission(
     CONTENT_PERMISSIONS.UPDATE,
@@ -931,7 +931,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Performance & SEO
               </h4>
             </div>
-{/* 
+            {/* 
             <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
               <h4 className="text-lg font-bold text-foreground">Readability</h4>
 
