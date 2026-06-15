@@ -178,7 +178,8 @@ function handleStreamUpdate(
           }
           const clusters = interruptValue["Keyword Clusters"];
           if (Array.isArray(clusters) && clusters.length > 0) {
-            newState.keywordClusters = clusters as import("@/types/generate-content").KeywordCluster[];
+            newState.keywordClusters =
+              clusters as import("@/types/generate-content").KeywordCluster[];
           }
           changed = true;
         }
@@ -203,42 +204,53 @@ function handleStreamUpdate(
         changed = true;
       }
     } else if (interruptValue.type === "outline_review") {
-      const outlineData = (interruptValue.outline_dict || interruptValue.data) as ContentOutline;
+      const outlineData = (interruptValue.outline_dict ||
+        interruptValue.data) as ContentOutline;
       if (outlineData) {
-        const clusterHeadingMap = outlineData.cluster_heading_map || 
-                                 (interruptValue.outline_dict as any)?.cluster_heading_map || 
-                                 (interruptValue.data as any)?.cluster_heading_map;
+        const clusterHeadingMap =
+          outlineData.cluster_heading_map ||
+          (interruptValue.outline_dict as Record<string, unknown>)
+            ?.cluster_heading_map ||
+          (interruptValue.data as Record<string, unknown>)?.cluster_heading_map;
 
-        let normalizedMap: import("@/types/generate-content").ClusterHeadingMapItem[] = [];
+        let normalizedMap: import("@/types/generate-content").ClusterHeadingMapItem[] =
+          [];
         if (clusterHeadingMap) {
           if (Array.isArray(clusterHeadingMap)) {
             normalizedMap = clusterHeadingMap;
           } else if (typeof clusterHeadingMap === "object") {
             const sections = outlineData.sections || [];
-            const sectionHeadings = new Set(sections.map(s => s.heading.toLowerCase().trim()));
-            
-            normalizedMap = Object.entries(clusterHeadingMap).flatMap(([key, val]) => {
-              if (Array.isArray(val)) {
-                return val.map(heading => ({ cluster: key, heading: String(heading) }));
-              } else if (typeof val === "string") {
-                const kNorm = key.toLowerCase().trim();
-                const vNorm = val.toLowerCase().trim();
-                if (sectionHeadings.has(kNorm)) {
-                  return [{ heading: key, cluster: val }];
-                } else if (sectionHeadings.has(vNorm)) {
-                  return [{ heading: val, cluster: key }];
-                } else {
-                  return [{ heading: key, cluster: val }];
+            const sectionHeadings = new Set(
+              sections.map((s) => s.heading.toLowerCase().trim()),
+            );
+
+            normalizedMap = Object.entries(clusterHeadingMap).flatMap(
+              ([key, val]) => {
+                if (Array.isArray(val)) {
+                  return val.map((heading) => ({
+                    cluster: key,
+                    heading: String(heading),
+                  }));
+                } else if (typeof val === "string") {
+                  const kNorm = key.toLowerCase().trim();
+                  const vNorm = val.toLowerCase().trim();
+                  if (sectionHeadings.has(kNorm)) {
+                    return [{ heading: key, cluster: val }];
+                  } else if (sectionHeadings.has(vNorm)) {
+                    return [{ heading: val, cluster: key }];
+                  } else {
+                    return [{ heading: key, cluster: val }];
+                  }
                 }
-              }
-              return [];
-            });
+                return [];
+              },
+            );
           }
         }
 
         const newOutline = {
           ...outlineData,
-          cluster_heading_map: normalizedMap
+          cluster_heading_map: normalizedMap,
         };
 
         if (JSON.stringify(state.outline) !== JSON.stringify(newOutline)) {
@@ -247,15 +259,22 @@ function handleStreamUpdate(
         }
       }
 
-      const rawClusters = interruptValue.clusters || 
-                           interruptValue.keyword_clusters || 
-                           interruptValue["Keyword Clusters"] || 
-                           (interruptValue.outline_dict as any)?.clusters ||
-                           (interruptValue.outline_dict as any)?.keyword_clusters || 
-                           (interruptValue.outline_dict as any)?.["Keyword Clusters"];
+      const rawClusters =
+        interruptValue.clusters ||
+        interruptValue.keyword_clusters ||
+        interruptValue["Keyword Clusters"] ||
+        (interruptValue.outline_dict as Record<string, unknown>)?.clusters ||
+        (interruptValue.outline_dict as Record<string, unknown>)
+          ?.keyword_clusters ||
+        (interruptValue.outline_dict as Record<string, unknown>)?.[
+          "Keyword Clusters"
+        ];
       if (Array.isArray(rawClusters)) {
-        if (JSON.stringify(state.keywordClusters) !== JSON.stringify(rawClusters)) {
-          newState.keywordClusters = rawClusters as import("@/types/generate-content").KeywordCluster[];
+        if (
+          JSON.stringify(state.keywordClusters) !== JSON.stringify(rawClusters)
+        ) {
+          newState.keywordClusters =
+            rawClusters as import("@/types/generate-content").KeywordCluster[];
           changed = true;
         }
       }

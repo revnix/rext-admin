@@ -50,7 +50,9 @@ export function TeamAccessSection() {
                   Full access to all workspace features and settings
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">
+                System Role
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
@@ -60,7 +62,9 @@ export function TeamAccessSection() {
                   Can manage members, content, and most settings
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">
+                System Role
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
@@ -70,7 +74,9 @@ export function TeamAccessSection() {
                   Can create and edit content
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">
+                System Role
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
@@ -80,7 +86,9 @@ export function TeamAccessSection() {
                   Read-only access to workspace content
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">System Role</span>
+              <span className="text-xs text-muted-foreground mt-2 xl:mt-0">
+                System Role
+              </span>
             </div>
           </div>
         </div>

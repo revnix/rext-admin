@@ -17,6 +17,7 @@ import {
   Sparkles,
   Library,
   Palette,
+  CalendarDays,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -116,6 +117,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.content(currentWorkspace.slug)
             : "/",
           icon: Library,
+          permission: "content.read",
+        },
+        {
+          title: "Content Calendar",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.content_calendar(currentWorkspace.slug)
+            : "/",
+          icon: CalendarDays,
           permission: "content.read",
         },
         {

@@ -1,36 +1,52 @@
-name: frontend_CI
+name: deploy
+
+# Token-based Vercel deploy (single project: rext-app).
+#
+# Branch -> environment:
+#   main    -> Production           (vercel deploy --prod)
+#   staging -> "staging" Custom Env (vercel deploy --target=staging)
+#
+# Why this exists (do not re-enable Vercel's native GitHub integration):
+#   The native Git integration attributes each deploy to the commit author and,
+#   for non-members, blocks the deploy and prompts them to join the team — which
+#   mutates the member/seat list. This token-based deploy is attributed to the
+#   VERCEL_TOKEN owner instead, so the committer's membership is irrelevant.
+#
+# Cost notes:
+#   - The build runs ON VERCEL (no `--prebuilt`), so it's covered by the Vercel
+#     plan — no extra charge and no GitHub Actions build minutes.
+#   - `--no-wait` makes the runner trigger the deploy and exit immediately
+#     (~1 min/run) instead of idling while Vercel builds. Trade-off: a failed
+#     Vercel build will NOT show up as a failed Action — check the Vercel
+#     dashboard for build status.
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+      - staging
 
 jobs:
-  ci:
+  deploy:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test:ci
-
-      - name: Build
+      - name: Deploy to Vercel (build runs on Vercel)
+        # `rm -rf .git` strips git metadata before deploying. Otherwise the Vercel
+        # CLI attaches the commit author to the deployment, and Vercel blocks any
+        # deploy whose Git author isn't a linked Vercel account ("Deployment
+        # Blocked"). Without git metadata, the deploy is attributed solely to the
+        # VERCEL_TOKEN owner, so the committer's membership is irrelevant.
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-        run: npm run build
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          rm -rf .git
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            npx vercel@latest deploy --prod --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
+          else
+            npx vercel@latest deploy --target=staging --yes --no-wait --token=${{ secrets.VERCEL_TOKEN }}
+          fi

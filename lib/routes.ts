@@ -65,6 +65,8 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/content/create`,
   contentProgress: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/progress/${contentId}`,
+  content_calendar: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/content/calendar`,
 
   /**
    * Members route

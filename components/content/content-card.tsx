@@ -81,6 +81,18 @@ const statusConfig: Record<ContentStatus, StatusConfig> = {
     variant: "outline",
     color: "text-slate-400",
   },
+  trashed: {
+    icon: Trash2,
+    label: "Trashed",
+    variant: "secondary",
+    color: "text-amber-500",
+  },
+  deleted: {
+    icon: Trash2,
+    label: "Deleted",
+    variant: "destructive",
+    color: "text-red-600",
+  },
 };
 
 export function ContentCard({

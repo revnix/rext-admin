@@ -256,7 +256,7 @@ function DisplayPreferencesForm({
                       }
                       value={field.value?.toString()}
                     >
-                      <FormControl className="col-span-3 justify-self-end">
+                      <FormControl className="col-span-2">
                         <SelectTrigger>
                           <SelectValue placeholder="Select item count" />
                         </SelectTrigger>
@@ -268,7 +268,7 @@ function DisplayPreferencesForm({
                         <SelectItem value="100">100</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription className="col-span-3 col-start-1 ms-auto -mt-4">
+                    <FormDescription className="col-span-2 col-start-2 mt-0">
                       Default number of items to display in lists
                     </FormDescription>
                     <FormMessage className="col-span-3 col-start-2" />

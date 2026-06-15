@@ -151,6 +151,8 @@ export const ENDPOINTS = {
     save_publish: "/api/v1/content/publish",
     publish: (id: string) => `/api/v1/content/${id}/publish` as const,
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
+    cancel_schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
+    calendar: "/api/v1/content/calendar",
   },
 
   /**
