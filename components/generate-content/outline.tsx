@@ -943,7 +943,7 @@ export function OutlineDisplay({
           <div className="flex items-center gap-2 mb-2">
             <Layers className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-bold text-foreground">
-              Keyword Clusters & Heading Mapping
+              Keyword Clusters
             </h3>
           </div>
 
