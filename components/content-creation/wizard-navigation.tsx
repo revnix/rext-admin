@@ -14,6 +14,8 @@ interface WizardNavigationProps {
   canGoBack: boolean;
   /** Whether can submit form */
   canSubmit: boolean;
+  /** Whether submit should be forcefully disabled (e.g. insufficient credits) */
+  isSubmitDisabled?: boolean;
   /** Whether operations are loading */
   isLoading: boolean;
   /** Navigation handlers */
@@ -34,6 +36,7 @@ export function WizardNavigation({
   canGoNext,
   canGoBack,
   canSubmit,
+  isSubmitDisabled = false,
   isLoading,
   onNext,
   onBack,
@@ -84,7 +87,7 @@ export function WizardNavigation({
           {isLastStep ? (
             <Button
               onClick={onSubmit}
-              disabled={!canSubmit || isLoading}
+              disabled={!canSubmit || isLoading || isSubmitDisabled}
               className="gap-2"
             >
               {isLoading ? (

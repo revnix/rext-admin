@@ -215,7 +215,23 @@ export function PricingTable({
                         </span>
                       </li>
                     ))}
-                  {/* Limits */}
+                  {/* Credits & Limits */}
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm font-semibold">
+                      {plan.credits_per_month
+                        ? `${plan.credits_per_month.toLocaleString()} Credits/mo`
+                        : "Unlimited Credits"}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-muted-foreground">
+                    <Check className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5 opacity-50" />
+                    <span className="text-sm">
+                      {plan.credits_per_month
+                        ? `~${Math.floor(plan.credits_per_month / 15)} Articles/mo`
+                        : "Unlimited Articles"}
+                    </span>
+                  </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
                     <span className="text-sm">
@@ -228,10 +244,19 @@ export function PricingTable({
                   <li className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
                     <span className="text-sm">
-                      {plan.max_topics === -1
+                      {plan.max_members_per_workspace === -1
                         ? "Unlimited"
-                        : plan.max_topics.toLocaleString()}{" "}
-                      topic{plan.max_topics !== 1 ? "s" : ""}
+                        : plan.max_members_per_workspace}{" "}
+                      members/ws
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      {plan.max_knowledge_items === -1
+                        ? "Unlimited"
+                        : plan.max_knowledge_items.toLocaleString()}{" "}
+                      Knowledge Items
                     </span>
                   </li>
                   <li className="flex items-start gap-2">

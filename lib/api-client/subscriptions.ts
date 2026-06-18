@@ -16,6 +16,8 @@ import type {
   TrialStatus,
   UsageStats,
   UserSubscription,
+  CreditBalance,
+  CouponValidation,
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -260,6 +262,49 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       return client.request<TrialStatus>(ENDPOINTS.SUBSCRIPTIONS.trialStatus, {
         method: "GET",
       });
+    },
+
+    /**
+     * Get current credit balance
+     *
+     * @returns Current credit balance and limits
+     */
+    getCredits: async (): Promise<CreditBalance> => {
+      return client.request<CreditBalance>(ENDPOINTS.SUBSCRIPTIONS.credits, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Validate a coupon code
+     *
+     * @param code - Coupon code to validate
+     * @returns Validation result
+     */
+    validateCoupon: async (code: string): Promise<CouponValidation> => {
+      return client.request<CouponValidation>(
+        ENDPOINTS.SUBSCRIPTIONS.coupons.validate(code),
+        {
+          method: "GET",
+        },
+      );
+    },
+
+    /**
+     * Redeem a coupon code
+     *
+     * @param code - Coupon code to redeem
+     * @returns Updated subscription
+     */
+    redeemCoupon: async (code: string): Promise<UserSubscription> => {
+      return client.request<UserSubscription>(
+        ENDPOINTS.SUBSCRIPTIONS.coupons.redeem,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        },
+      );
     },
   };
 }

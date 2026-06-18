@@ -43,14 +43,14 @@ export function UsageMetrics({
   className,
   detailed = false,
 }: UsageMetricsProps) {
-  const { usage, fetchSubscription, isLoading } = useSubscriptionStore();
+  const { usage, credits, fetchSubscription, isLoading } = useSubscriptionStore();
 
   // Fetch usage on mount
   useEffect(() => {
-    if (!usage) {
+    if (!usage || !credits) {
       fetchSubscription();
     }
-  }, [fetchSubscription, usage]);
+  }, [fetchSubscription, usage, credits]);
 
   // Get color based on usage percentage
   const getUsageColor = (percentage: number): string => {
@@ -199,6 +199,44 @@ export function UsageMetrics({
                 {formatDate(usage.usage_reset_date)}
               </span>
             </span>
+          </div>
+        )}
+
+        {/* Credits Section */}
+        {credits && (
+          <div className="space-y-3 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Content Credits</span>
+                {credits.bypass_limits && (
+                  <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    Internal / Bypass
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={cn("text-sm font-medium", !credits.bypass_limits && getUsageColor(credits.credits_per_month ? ((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100 : 0))}>
+                  {credits.current_credits.toLocaleString()} {credits.credits_per_month ? `/ ${credits.credits_per_month.toLocaleString()}` : "Remaining"}
+                </span>
+              </div>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {credits.articles_remaining !== null ? (
+                <>You have enough credits for approximately <span className="font-semibold text-foreground">{credits.articles_remaining} articles</span> this month.</>
+              ) : (
+                <>Unlimited articles generation available.</>
+              )}
+            </div>
+            
+            {!credits.bypass_limits && credits.credits_per_month && (
+              <div className="relative mt-2">
+                <Progress
+                  value={((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100}
+                  className="h-2"
+                />
+              </div>
+            )}
           </div>
         )}
 

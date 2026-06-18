@@ -72,6 +72,7 @@ export interface SubscriptionPlan extends Record<string, unknown> {
   max_topics: number;
   max_knowledge_items: number;
   max_api_calls_per_month: number;
+  credits_per_month: number | null;
   is_active: boolean;
   is_public: boolean;
   created_at: string;
@@ -130,6 +131,10 @@ export interface UserSubscriptionDetail {
   trial_end_date: string | null;
   cancelled_at: string | null;
   current_api_calls: number;
+  current_credits: number;
+  credits_reset_date: string | null;
+  bypass_limits: boolean;
+  applied_coupon_code: string | null;
   created_at: string;
   // LemonSqueezy integration fields
   lemonsqueezy_subscription_id: string | null;
@@ -231,6 +236,28 @@ export interface TrialStatus {
   trial_end_date: string | null;
   days_remaining: number | null;
   trial_expired: boolean;
+}
+
+// ============================================================================
+// CREDITS & COUPONS
+// ============================================================================
+
+export interface CreditBalance {
+  current_credits: number;
+  credits_per_month: number | null;
+  credits_reset_date: string | null;
+  articles_remaining: number | null;
+  bypass_limits: boolean;
+  plan_name: string | null;
+}
+
+export interface CouponValidation {
+  valid: boolean;
+  coupon_type: "bypass" | "percent" | "fixed" | null;
+  bypass_limits: boolean;
+  plan_name: string | null;
+  discount_value: number | null;
+  message: string;
 }
 
 // ============================================================================

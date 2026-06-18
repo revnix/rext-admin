@@ -75,6 +75,10 @@ export const UserSubscriptionSchema = z.object({
   trial_end_date: z.string().nullable(),
   cancelled_at: z.string().nullable(),
   current_api_calls: z.number().int().nonnegative(),
+  current_credits: z.number().int().nonnegative(),
+  credits_reset_date: z.string().nullable(),
+  bypass_limits: z.boolean(),
+  applied_coupon_code: z.string().nullable(),
   created_at: z.string(), // ISO date string
   // LemonSqueezy fields
   lemonsqueezy_subscription_id: z.string().nullable(),
@@ -174,6 +178,28 @@ export const TrialStatusSchema = z.object({
   trial_end_date: z.string().nullable(),
   days_remaining: z.number().int().nullable(),
   trial_expired: z.boolean(),
+});
+
+// ============================================================================
+// CREDITS & COUPONS SCHEMAS
+// ============================================================================
+
+export const CreditBalanceSchema = z.object({
+  current_credits: z.number().int().nonnegative(),
+  credits_per_month: z.number().int().nullable(),
+  credits_reset_date: z.string().nullable(),
+  articles_remaining: z.number().int().nullable(),
+  bypass_limits: z.boolean(),
+  plan_name: z.string().nullable(),
+});
+
+export const CouponValidationSchema = z.object({
+  valid: z.boolean(),
+  coupon_type: z.enum(["bypass", "percent", "fixed"]).nullable(),
+  bypass_limits: z.boolean(),
+  plan_name: z.string().nullable(),
+  discount_value: z.number().nullable(),
+  message: z.string(),
 });
 
 // ============================================================================
@@ -322,6 +348,8 @@ export type SubscriptionListResponse = z.infer<
 >;
 export type UsageStats = z.infer<typeof UsageStatsSchema>;
 export type TrialStatus = z.infer<typeof TrialStatusSchema>;
+export type CreditBalance = z.infer<typeof CreditBalanceSchema>;
+export type CouponValidation = z.infer<typeof CouponValidationSchema>;
 export type InvoiceItem = z.infer<typeof InvoiceItemSchema>;
 export type Invoice = z.infer<typeof InvoiceSchema>;
 export type InvoiceListResponse = z.infer<typeof InvoiceListResponseSchema>;

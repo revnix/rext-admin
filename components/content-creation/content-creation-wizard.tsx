@@ -24,6 +24,7 @@ import { useTopicPrefilling } from "@/hooks/content-creation/use-topic-prefillin
 import { useWizardNavigation } from "@/hooks/content-creation/use-wizard-navigation";
 import { useWizardState } from "@/hooks/content-creation/use-wizard-state";
 import { useWizardValidation } from "@/hooks/content-creation/use-wizard-validation";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 import {
   applyCascadingUpdates,
   createDependencyEngine,
@@ -92,6 +93,20 @@ export function ContentCreationWizard({
   // Current workspace
   const currentWorkspace = useCurrentWorkspace();
   const workspaceId = currentWorkspace?.id || "";
+
+  // Credits & Subscription
+  const { credits, fetchCredits } = useSubscriptionStore();
+  
+  useEffect(() => {
+    fetchCredits().catch(console.error);
+  }, [fetchCredits]);
+
+  const hasEnoughCredits = (() => {
+    if (!credits) return true; // Default to true while loading
+    if (credits.bypass_limits) return true;
+    if (credits.articles_remaining === null) return true; // Unlimited
+    return credits.current_credits >= 15;
+  })();
 
   // ==========================================================================
   // DEPENDENCY ENGINE INTEGRATION
@@ -289,6 +304,7 @@ export function ContentCreationWizard({
           canGoNext={canGoNext}
           canGoBack={canGoBack}
           canSubmit={canSubmit}
+          isSubmitDisabled={!hasEnoughCredits}
           isLoading={state.isSaving}
           onNext={handleNextStep}
           onBack={handlePreviousStep}

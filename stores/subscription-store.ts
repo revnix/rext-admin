@@ -19,6 +19,7 @@ import type {
   SubscriptionPlan,
   UsageStats,
   UserSubscription,
+  CreditBalance,
 } from "@/types/subscription";
 import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
 import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
@@ -34,6 +35,7 @@ let inFlightSubscriptionFetch: Promise<void> | null = null;
 interface SubscriptionStore {
   subscription: UserSubscription | null;
   usage: UsageStats | null;
+  credits: CreditBalance | null;
   subscriptionFetchedAt: number | null;
 
   // ========================================
@@ -71,6 +73,11 @@ interface SubscriptionStore {
    * Fetch usage stats only
    */
   fetchUsage: () => Promise<void>;
+
+  /**
+   * Fetch credit balance
+   */
+  fetchCredits: () => Promise<void>;
 
   /**
    * Fetch available subscription plans
@@ -161,6 +168,7 @@ interface SubscriptionStore {
 const initialState = {
   subscription: null,
   usage: null,
+  credits: null,
   subscriptionFetchedAt: null,
 
   // Subscription state
@@ -199,9 +207,10 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
           try {
             // Use allSettled so that if usage stats fail (500), we still get the subscription
-            const [subscriptionResult, usageResult] = await Promise.allSettled([
+            const [subscriptionResult, usageResult, creditsResult] = await Promise.allSettled([
               apiClient.subscriptions.getCurrentPlan(),
               apiClient.subscriptions.getUsageStats(),
+              apiClient.subscriptions.getCredits(),
             ]);
 
             const nextSubscription =
@@ -210,6 +219,8 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                 : null;
             const nextUsage =
               usageResult.status === "fulfilled" ? usageResult.value : null;
+            const nextCredits = 
+              creditsResult.status === "fulfilled" ? creditsResult.value : null;
 
             if (subscriptionResult.status === "rejected") {
               log.error(
@@ -227,6 +238,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             set({
               subscription: nextSubscription,
               usage: nextUsage,
+              credits: nextCredits,
               subscriptionFetchedAt: Date.now(),
               isLoading: false,
               error:
@@ -259,6 +271,21 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             error instanceof Error
               ? error.message
               : "Failed to fetch usage stats";
+
+          set({ error: errorMessage });
+          throw error;
+        }
+      },
+
+      fetchCredits: async () => {
+        try {
+          const credits = await apiClient.subscriptions.getCredits();
+          set({ credits });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch credit balance";
 
           set({ error: errorMessage });
           throw error;
