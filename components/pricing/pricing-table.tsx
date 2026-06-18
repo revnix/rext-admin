@@ -283,7 +283,6 @@ export function PricingTable({
                     billingPeriod={billingPeriod}
                     variant={isPopular ? "default" : "outline"}
                     buttonText={`Subscribe to ${plan.display_name}`}
-                    showDiscountByDefault={false}
                   />
                 )}
               </CardFooter>

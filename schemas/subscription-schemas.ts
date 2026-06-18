@@ -127,6 +127,7 @@ export const SubscriptionPlanSchema = z.object({
   max_topics: z.number().int(),
   max_knowledge_items: z.number().int(),
   max_api_calls_per_month: z.number().int(),
+  credits_per_month: z.number().nullable().catch(null),
   is_active: z.boolean(),
   is_public: z.boolean(),
   created_at: z.string(),
