@@ -18,7 +18,6 @@ import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
 import { SubscriptionStatusCard } from "@/components/subscription/subscription-status-card";
 import { TrialStatusBanner } from "@/components/subscription/trial-status-banner";
 import { UsageMetrics } from "@/components/subscription/usage-metrics";
-import { CouponRedemption } from "@/components/subscription/coupon-redemption";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -349,8 +348,6 @@ export default function SubscriptionDashboardPage() {
               </div>
             </CardContent>
           </Card>
-
-          <CouponRedemption />
 
           <SubscriptionStatusCard />
 

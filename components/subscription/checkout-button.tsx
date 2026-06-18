@@ -38,8 +38,6 @@ export interface CheckoutButtonProps {
   onCheckoutSuccess?: (checkoutUrl: string) => void;
   /** Whether to disable the button */
   disabled?: boolean;
-  /** Optional discount code to apply */
-  discountCode?: string;
 }
 
 /**
@@ -56,7 +54,6 @@ export function CheckoutButton({
   onCheckoutError,
   onCheckoutSuccess,
   disabled = false,
-  discountCode,
 }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { initiateCheckout, openCheckout } = useSubscriptionStore();
@@ -66,20 +63,14 @@ export function CheckoutButton({
       setIsLoading(true);
       onCheckoutStart?.();
 
-      // Create checkout session with optional discount code
-      const checkoutSession = await initiateCheckout(
-        plan,
-        billingPeriod,
-        discountCode,
-      );
+      const checkoutSession = await initiateCheckout(plan, billingPeriod);
 
-      // Open LemonSqueezy checkout overlay
       openCheckout(checkoutSession.checkout_url);
 
       onCheckoutSuccess?.(checkoutSession.checkout_url);
 
       toast.success("Opening checkout...", {
-        description: `Subscribing to ${plan.display_name} (${billingPeriod})${discountCode ? ` with code ${discountCode}` : ""}`,
+        description: `Subscribing to ${plan.display_name} (${billingPeriod})`,
       });
     } catch (error) {
       const errorMessage =

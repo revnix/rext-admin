@@ -240,10 +240,6 @@ export const ENDPOINTS = {
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
     credits: "/api/v1/subscriptions/credits",
-    coupons: {
-      validate: (code: string) => `/api/v1/subscriptions/coupons/validate/${code}` as const,
-      redeem: "/api/v1/subscriptions/coupons/redeem",
-    },
     trialStatus: "/api/v1/subscriptions/trial-status",
   },
 

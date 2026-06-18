@@ -2,7 +2,6 @@
 
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { Coins } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -32,9 +31,6 @@ export function CreditBalanceWidget() {
           <div className="space-y-2">
             <div className="font-medium text-sm flex items-center justify-between">
               <span>Available Credits</span>
-              {credits.bypass_limits && (
-                <Badge variant="secondary" className="text-[10px] h-4 py-0 leading-none">Bypass</Badge>
-              )}
             </div>
             <p className="text-xs text-muted-foreground">
               {credits.articles_remaining !== null 

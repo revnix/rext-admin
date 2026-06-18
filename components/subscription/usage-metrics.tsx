@@ -208,14 +208,9 @@ export function UsageMetrics({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Content Credits</span>
-                {credits.bypass_limits && (
-                  <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                    Internal / Bypass
-                  </Badge>
-                )}
               </div>
               <div className="flex items-center gap-2">
-                <span className={cn("text-sm font-medium", !credits.bypass_limits && getUsageColor(credits.credits_per_month ? ((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100 : 0))}>
+                <span className={cn("text-sm font-medium", getUsageColor(credits.credits_per_month ? ((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100 : 0))}>
                   {credits.current_credits.toLocaleString()} {credits.credits_per_month ? `/ ${credits.credits_per_month.toLocaleString()}` : "Remaining"}
                 </span>
               </div>
@@ -229,7 +224,7 @@ export function UsageMetrics({
               )}
             </div>
             
-            {!credits.bypass_limits && credits.credits_per_month && (
+            {credits.credits_per_month && (
               <div className="relative mt-2">
                 <Progress
                   value={((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100}

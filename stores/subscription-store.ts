@@ -123,7 +123,6 @@ interface SubscriptionStore {
   initiateCheckout: (
     plan: SubscriptionPlan,
     billingPeriod: BillingPeriod,
-    discountCode?: string,
     affiliateCode?: string,
   ) => Promise<CheckoutSessionResponse>;
 
@@ -465,7 +464,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       initiateCheckout: async (
         plan: SubscriptionPlan,
         billingPeriod: BillingPeriod,
-        discountCode?: string,
         affiliateCode?: string,
       ) => {
         set({
@@ -483,7 +481,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                 billingPeriod,
                 undefined,
                 undefined,
-                discountCode,
+                undefined,
                 affiliateCode,
               ),
             { maxAttempts: 2, baseDelayMs: 500, maxDelayMs: 3000 },

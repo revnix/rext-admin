@@ -133,8 +133,6 @@ export interface UserSubscriptionDetail {
   current_api_calls: number;
   current_credits: number;
   credits_reset_date: string | null;
-  bypass_limits: boolean;
-  applied_coupon_code: string | null;
   created_at: string;
   // LemonSqueezy integration fields
   lemonsqueezy_subscription_id: string | null;
@@ -239,7 +237,7 @@ export interface TrialStatus {
 }
 
 // ============================================================================
-// CREDITS & COUPONS
+// CREDITS
 // ============================================================================
 
 export interface CreditBalance {
@@ -247,17 +245,7 @@ export interface CreditBalance {
   credits_per_month: number | null;
   credits_reset_date: string | null;
   articles_remaining: number | null;
-  bypass_limits: boolean;
   plan_name: string | null;
-}
-
-export interface CouponValidation {
-  valid: boolean;
-  coupon_type: "bypass" | "percent" | "fixed" | null;
-  bypass_limits: boolean;
-  plan_name: string | null;
-  discount_value: number | null;
-  message: string;
 }
 
 // ============================================================================
@@ -298,7 +286,6 @@ export interface CheckoutSessionRequest {
   billing_period: BillingPeriod;
   success_url: string;
   cancel_url: string;
-  discount_code?: string;
   affiliate_code?: string;
 }
 

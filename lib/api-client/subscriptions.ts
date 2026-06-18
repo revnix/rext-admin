@@ -17,7 +17,6 @@ import type {
   UsageStats,
   UserSubscription,
   CreditBalance,
-  CouponValidation,
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -73,7 +72,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       billingPeriod: BillingPeriod,
       successUrl?: string,
       cancelUrl?: string,
-      discountCode?: string,
+      _discountCode?: string,
       affiliateCode?: string,
     ): Promise<CheckoutSessionResponse> => {
       const baseUrl =
@@ -98,7 +97,6 @@ export function createSubscriptionsNamespace(client: ApiClient) {
             billing_period: billingPeriod,
             success_url: successUrl || `${baseUrl}/checkout/success`,
             cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
-            ...(discountCode && { discount_code: discountCode }),
             ...(affiliateCode && { affiliate_code: affiliateCode }),
           }),
         },
@@ -275,36 +273,5 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       });
     },
 
-    /**
-     * Validate a coupon code
-     *
-     * @param code - Coupon code to validate
-     * @returns Validation result
-     */
-    validateCoupon: async (code: string): Promise<CouponValidation> => {
-      return client.request<CouponValidation>(
-        ENDPOINTS.SUBSCRIPTIONS.coupons.validate(code),
-        {
-          method: "GET",
-        },
-      );
-    },
-
-    /**
-     * Redeem a coupon code
-     *
-     * @param code - Coupon code to redeem
-     * @returns Updated subscription
-     */
-    redeemCoupon: async (code: string): Promise<UserSubscription> => {
-      return client.request<UserSubscription>(
-        ENDPOINTS.SUBSCRIPTIONS.coupons.redeem,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
-        },
-      );
-    },
   };
 }

@@ -205,7 +205,7 @@ export function PricingTable({
               <CardContent className="grow">
                 {/* Features List */}
                 <ul className="space-y-3">
-                  {Object.entries(features)
+                  {Object.entries(features ?? {})
                     .filter(([_, value]) => value === true) // STRICT: only keep true
                     .map(([key]) => (
                       <li key={key} className="flex items-center gap-2">

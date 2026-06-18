@@ -103,8 +103,7 @@ export function ContentCreationWizard({
 
   const hasEnoughCredits = (() => {
     if (!credits) return true; // Default to true while loading
-    if (credits.bypass_limits) return true;
-    if (credits.articles_remaining === null) return true; // Unlimited
+    if (credits.articles_remaining === null) return true; // Unlimited (Enterprise)
     return credits.current_credits >= 15;
   })();
 
