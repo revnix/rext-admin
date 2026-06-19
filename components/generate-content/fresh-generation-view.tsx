@@ -809,6 +809,14 @@ export function FreshGenerationView({
 
     const keyword = _initialKeyword || userKeyword;
 
+    analytics.track("content_generation_started", {
+      keyword,
+      country,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: newThreadId,
+      from_library: isLibrary,
+    });
+
     const stream = streamFromSSE(
       `/api/generate/${newThreadId}/stream`,
       {

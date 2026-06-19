@@ -59,6 +59,7 @@ import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
 import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
+import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
@@ -527,6 +528,13 @@ function ContentEditorInner(props: ContentEditorProps) {
             )
           : await apiClient.content.save_publish(workspaceId, payload);
 
+        analytics.track("content_published", {
+          title: displayTitle,
+          keyword: userKeyword,
+          workspace_id: workspaceId ?? undefined,
+          content_id: contentSavedId ?? response?.id ?? undefined,
+          seo_score: seoScore?.seo_health_score,
+        });
         setStatusModal({
           title: "Content Published Successfully!",
           isOpen: true,
@@ -633,6 +641,13 @@ function ContentEditorInner(props: ContentEditorProps) {
         );
         if (response?.id) setContentSavedId(response.id);
       }
+      analytics.track("content_scheduled", {
+        title: displayTitle,
+        keyword: userKeyword,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? undefined,
+        scheduled_at: scheduledAt,
+      });
       setStatusModal({
         title: "Content Scheduled!",
         isOpen: true,

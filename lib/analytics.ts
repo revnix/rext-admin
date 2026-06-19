@@ -13,7 +13,6 @@ type AnalyticsEvent =
   | "onboarding_empty_switcher_view"
   | "onboarding_cta_click"
   | "onboarding_workspace_created"
-  | "onboarding_first_topic_created"
   | "onboarding_first_content_created"
   | "onboarding_completed"
   | "onboarding_milestone_completed"
@@ -25,8 +24,12 @@ type AnalyticsEvent =
   | "workspace_empty_state_view"
   | "workspace_empty_state_action_click"
   // Content generation events
+  | "content_generation_started"
   | "content_generation_completed"
   | "content_generation_failed"
+  // Content publish events
+  | "content_published"
+  | "content_scheduled"
   // Subscription events
   | "subscription_purchased"
   // General events
