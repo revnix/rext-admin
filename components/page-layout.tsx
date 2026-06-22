@@ -54,6 +54,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
+import { CreditBalanceWidget } from "@/components/subscription/credit-balance-widget";
 
 interface PageLayoutProps {
   title: string;
@@ -189,6 +190,9 @@ export function PageLayout({
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Credits Widget */}
+            <CreditBalanceWidget />
+
             {/* Notifications */}
             <Button
               variant="ghost"

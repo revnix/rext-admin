@@ -75,6 +75,8 @@ export const UserSubscriptionSchema = z.object({
   trial_end_date: z.string().nullable(),
   cancelled_at: z.string().nullable(),
   current_api_calls: z.number().int().nonnegative(),
+  current_credits: z.number().int().nonnegative(),
+  credits_reset_date: z.string().nullable(),
   created_at: z.string(), // ISO date string
   // LemonSqueezy fields
   lemonsqueezy_subscription_id: z.string().nullable(),
@@ -125,6 +127,7 @@ export const SubscriptionPlanSchema = z.object({
   max_topics: z.number().int(),
   max_knowledge_items: z.number().int(),
   max_api_calls_per_month: z.number().int(),
+  credits_per_month: z.number().nullable().catch(null),
   is_active: z.boolean(),
   is_public: z.boolean(),
   created_at: z.string(),
@@ -174,6 +177,18 @@ export const TrialStatusSchema = z.object({
   trial_end_date: z.string().nullable(),
   days_remaining: z.number().int().nullable(),
   trial_expired: z.boolean(),
+});
+
+// ============================================================================
+// CREDITS SCHEMAS
+// ============================================================================
+
+export const CreditBalanceSchema = z.object({
+  current_credits: z.number().int().nonnegative(),
+  credits_per_month: z.number().int().nullable(),
+  credits_reset_date: z.string().nullable(),
+  articles_remaining: z.number().int().nullable(),
+  plan_name: z.string().nullable(),
 });
 
 // ============================================================================
@@ -322,6 +337,7 @@ export type SubscriptionListResponse = z.infer<
 >;
 export type UsageStats = z.infer<typeof UsageStatsSchema>;
 export type TrialStatus = z.infer<typeof TrialStatusSchema>;
+export type CreditBalance = z.infer<typeof CreditBalanceSchema>;
 export type InvoiceItem = z.infer<typeof InvoiceItemSchema>;
 export type Invoice = z.infer<typeof InvoiceSchema>;
 export type InvoiceListResponse = z.infer<typeof InvoiceListResponseSchema>;

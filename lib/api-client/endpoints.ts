@@ -239,6 +239,7 @@ export const ENDPOINTS = {
     invoices: "/api/v1/subscriptions/invoices",
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
+    credits: "/api/v1/subscriptions/credits",
     trialStatus: "/api/v1/subscriptions/trial-status",
   },
 

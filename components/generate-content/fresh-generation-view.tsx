@@ -58,6 +58,8 @@ import {
 } from "@/lib/generate-content/stream-utils";
 import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { analytics } from "@/lib/analytics";
+import { useSubscriptionStore } from "@/stores/subscription-store";
+import { toast } from "sonner";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -181,6 +183,7 @@ export function FreshGenerationView({
   const [state, dispatch] = useReducer(generationReducer, initialState);
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
+  const { patchCredits } = useSubscriptionStore();
 
   // ── Streaming text buffers — one per "phase" ──────────────────────────────
   // outlineStream  → accumulates tokens while LLM writes the outline JSON
@@ -621,6 +624,22 @@ export function FreshGenerationView({
                     : tc,
                 ),
               );
+            }
+          } else if (d?.type === "credits") {
+            const credits = Number(d.current_credits ?? 0);
+            const step = String(d.step ?? "credits.updated");
+            if (step === "credits.updated") {
+              patchCredits(credits);
+            } else if (step === "credits.low") {
+              patchCredits(credits);
+              toast.warning(`Low credits: ${credits} remaining. Generation may not complete.`, {
+                duration: 10000,
+              });
+            } else if (step === "credits.exhausted") {
+              patchCredits(credits);
+              toast.error("Out of credits. Upgrade your plan to continue generating content.", {
+                duration: 10000,
+              });
             }
           }
           continue;

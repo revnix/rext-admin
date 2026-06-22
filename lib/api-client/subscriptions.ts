@@ -16,6 +16,7 @@ import type {
   TrialStatus,
   UsageStats,
   UserSubscription,
+  CreditBalance,
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -71,7 +72,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       billingPeriod: BillingPeriod,
       successUrl?: string,
       cancelUrl?: string,
-      discountCode?: string,
+      _discountCode?: string,
       affiliateCode?: string,
     ): Promise<CheckoutSessionResponse> => {
       const baseUrl =
@@ -96,7 +97,6 @@ export function createSubscriptionsNamespace(client: ApiClient) {
             billing_period: billingPeriod,
             success_url: successUrl || `${baseUrl}/checkout/success`,
             cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
-            ...(discountCode && { discount_code: discountCode }),
             ...(affiliateCode && { affiliate_code: affiliateCode }),
           }),
         },
@@ -261,5 +261,17 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         method: "GET",
       });
     },
+
+    /**
+     * Get current credit balance
+     *
+     * @returns Current credit balance and limits
+     */
+    getCredits: async (): Promise<CreditBalance> => {
+      return client.request<CreditBalance>(ENDPOINTS.SUBSCRIPTIONS.credits, {
+        method: "GET",
+      });
+    },
+
   };
 }

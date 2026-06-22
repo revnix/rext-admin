@@ -7,6 +7,7 @@ import type {
   CreateContentRequest,
   UpdateContentRequest,
 } from "@/types/content";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 /**
  * Hook to fetch content for a workspace
@@ -25,10 +26,23 @@ export function useContent(workspaceId: string, status?: string) {
  * Hook to get single content item
  */
 export function useContentDetail(workspaceId: string, contentId: string) {
+  const { fetchCredits } = useSubscriptionStore();
+
   return useQuery({
     queryKey: ["content", workspaceId, contentId],
-    queryFn: () => apiClient.content.get(workspaceId, contentId),
+    queryFn: async () => {
+      const result = await apiClient.content.get(workspaceId, contentId);
+      // If it's still generating, refetch credits to show live burn-down
+      if (result?.content?.status === "generating") {
+        fetchCredits().catch(console.error);
+      }
+      return result;
+    },
     enabled: !!workspaceId && !!contentId,
+    refetchInterval: (query) => {
+      const state = query.state.data;
+      return state?.content?.status === "generating" ? 5000 : false;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
