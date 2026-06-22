@@ -194,7 +194,7 @@ export function PricingTable({
                     </span>
                   </div>
                   {billingPeriod === BillingPeriod.YEARLY &&
-                  savingsPercent > 0 ? (
+                    savingsPercent > 0 ? (
                     <p className="text-sm text-green-600 dark:text-green-500 mt-1">
                       Save {savingsPercent}% with yearly billing
                     </p>
@@ -224,8 +224,8 @@ export function PricingTable({
                         : "Unlimited Credits"}
                     </span>
                   </li>
-                  <li className="flex items-start gap-2 text-muted-foreground">
-                    <Check className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5 opacity-50" />
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
                     <span className="text-sm">
                       {plan.credits_per_month
                         ? `~${Math.floor(plan.credits_per_month / 15)} Articles/mo`
