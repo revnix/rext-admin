@@ -80,6 +80,11 @@ interface SubscriptionStore {
   fetchCredits: () => Promise<void>;
 
   /**
+   * Patch current_credits in place (from live SSE update — no round-trip)
+   */
+  patchCredits: (currentCredits: number) => void;
+
+  /**
    * Fetch available subscription plans
    */
   fetchPlans: () => Promise<void>;
@@ -289,6 +294,18 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           set({ error: errorMessage });
           throw error;
         }
+      },
+
+      patchCredits: (currentCredits: number) => {
+        const prev = useSubscriptionStore.getState().credits;
+        if (!prev) return;
+        const articlesRemaining =
+          prev.credits_per_month !== null
+            ? Math.floor(currentCredits / 15)
+            : null;
+        set({
+          credits: { ...prev, current_credits: currentCredits, articles_remaining: articlesRemaining },
+        });
       },
 
       fetchPlans: async () => {

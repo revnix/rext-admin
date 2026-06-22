@@ -33,7 +33,7 @@ export function CreditBalanceWidget() {
               <span>Available Credits</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {credits.articles_remaining !== null 
+              {credits.articles_remaining !== null
                 ? `Enough for ~${credits.articles_remaining} articles`
                 : "Unlimited articles"}
             </p>
