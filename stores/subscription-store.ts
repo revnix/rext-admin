@@ -16,6 +16,7 @@ import type {
   CheckoutSessionResponse,
   CustomerPortalResponse,
   Invoice,
+  PlanChangeResponse,
   SubscriptionPlan,
   UsageStats,
   UserSubscription,
@@ -95,7 +96,7 @@ interface SubscriptionStore {
   upgradeSubscription: (
     planId: string,
     billingPeriod?: BillingPeriod,
-  ) => Promise<void>;
+  ) => Promise<PlanChangeResponse>;
 
   /**
    * Downgrade to a new subscription plan
@@ -103,7 +104,7 @@ interface SubscriptionStore {
   downgradeSubscription: (
     planId: string,
     billingPeriod?: BillingPeriod,
-  ) => Promise<void>;
+  ) => Promise<PlanChangeResponse>;
 
   /**
    * Cancel current subscription
@@ -340,7 +341,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription = await retryTransient(
+          const result = await retryTransient(
             () =>
               apiClient.subscriptions.upgradeSubscription(
                 planId,
@@ -349,25 +350,15 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
           );
 
-          set({
-            subscription: updatedSubscription,
-            isLoading: false,
-            error: null,
-          });
-
-          // Refresh usage stats after upgrade
-          await get().fetchSubscription({ force: true });
+          set({ isLoading: false, error: null });
+          return result;
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "Failed to upgrade subscription";
 
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
+          set({ isLoading: false, error: errorMessage });
           throw error;
         }
       },
@@ -379,7 +370,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const updatedSubscription = await retryTransient(
+          const result = await retryTransient(
             () =>
               apiClient.subscriptions.downgradeSubscription(
                 planId,
@@ -388,25 +379,15 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             { maxAttempts: 3, baseDelayMs: 500, maxDelayMs: 4000 },
           );
 
-          set({
-            subscription: updatedSubscription,
-            isLoading: false,
-            error: null,
-          });
-
-          // Refresh usage stats after downgrade
-          await get().fetchSubscription({ force: true });
+          set({ isLoading: false, error: null });
+          return result;
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "Failed to downgrade subscription";
 
-          set({
-            isLoading: false,
-            error: errorMessage,
-          });
-
+          set({ isLoading: false, error: errorMessage });
           throw error;
         }
       },

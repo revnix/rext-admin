@@ -128,15 +128,18 @@ export function PlanChangeModal({
 
     try {
       if (isDowngrade) {
-        await downgradeSubscription(selectedPlanId);
-        toast.success("Plan downgraded", {
-          description: `${selectedPlan.name} limits are now active.`,
+        const result = await downgradeSubscription(selectedPlanId);
+        toast.success("Plan change scheduled", {
+          description: result.message ?? `Your plan will be downgraded at the end of your billing cycle.`,
         });
       } else {
-        // Upgrade or equal-price change
-        await upgradeSubscription(selectedPlanId);
-        toast.success("Plan changed successfully!", {
-          description: `You are now on the ${selectedPlan.name} plan.`,
+        const result = await upgradeSubscription(selectedPlanId);
+        if (result.action === "checkout_required" && result.checkout_url) {
+          window.location.href = result.checkout_url;
+          return;
+        }
+        toast.success("Plan upgraded", {
+          description: result.message ?? `You are now on the ${result.plan_display_name} plan.`,
         });
       }
 
@@ -321,8 +324,8 @@ export function PlanChangeModal({
               <Alert>
                 <ArrowDownCircle className="h-4 w-4 text-orange-600" />
                 <AlertDescription>
-                  Downgrades are applied immediately. Review limit changes
-                  before you confirm.
+                  Your plan will be downgraded at the end of your current
+                  billing cycle. Review limit changes before you confirm.
                 </AlertDescription>
               </Alert>
             )}
@@ -374,12 +377,12 @@ export function PlanChangeModal({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Immediate Downgrade</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Plan Downgrade</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  This downgrade is applied immediately and may reduce available
-                  limits right away.
+                  Your plan will be downgraded at the end of your current
+                  billing cycle. The following limits will change:
                 </p>
                 <ul className="list-disc pl-5 text-sm space-y-1">
                   <li>
