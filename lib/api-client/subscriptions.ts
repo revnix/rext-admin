@@ -9,6 +9,7 @@ import type {
   CheckoutSessionResponse,
   CustomerPortalResponse,
   InvoiceListResponse,
+  PlanChangeResponse,
   SubscriptionCancelRequest,
   SubscriptionHistoryResponse,
   SubscriptionListResponse,
@@ -131,13 +132,13 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     upgradeSubscription: async (
       newPlanId: string,
       billingPeriod?: BillingPeriod,
-    ): Promise<UserSubscription> => {
+    ): Promise<PlanChangeResponse> => {
       const requestData: SubscriptionUpgradeRequest = {
         new_plan_id: newPlanId,
         billing_period: billingPeriod,
       };
 
-      return client.request<UserSubscription>(ENDPOINTS.SUBSCRIPTIONS.upgrade, {
+      return client.request<PlanChangeResponse>(ENDPOINTS.SUBSCRIPTIONS.upgrade, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
@@ -149,18 +150,18 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      *
      * @param newPlanId - UUID of the new plan
      * @param billingPeriod - Optional billing period change
-     * @returns Updated subscription details
+     * @returns Plan change result with action and optional message
      */
     downgradeSubscription: async (
       newPlanId: string,
       billingPeriod?: BillingPeriod,
-    ): Promise<UserSubscription> => {
+    ): Promise<PlanChangeResponse> => {
       const requestData: SubscriptionUpgradeRequest = {
         new_plan_id: newPlanId,
         billing_period: billingPeriod,
       };
 
-      return client.request<UserSubscription>(
+      return client.request<PlanChangeResponse>(
         ENDPOINTS.SUBSCRIPTIONS.downgrade,
         {
           method: "POST",

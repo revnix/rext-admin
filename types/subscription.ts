@@ -305,6 +305,16 @@ export interface CustomerPortalResponse {
 }
 
 /**
+ * Response from upgrade/downgrade subscription endpoints
+ */
+export interface PlanChangeResponse {
+  action: "checkout_required" | "upgraded" | "downgraded";
+  checkout_url?: string;
+  plan_display_name?: string;
+  message?: string;
+}
+
+/**
  * Invoice line item
  */
 export interface InvoiceItem {
