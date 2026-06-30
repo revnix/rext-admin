@@ -5,6 +5,7 @@ import type {
   ClusterHeadingMapItem,
   KeywordCluster,
   InternalLinkSuggestion,
+  BrandVoicePromotion,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -24,6 +25,7 @@ import {
   HelpCircle,
   Layers,
   Link2,
+  Megaphone,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -571,6 +573,7 @@ export function OutlineDisplay({
   rawTokens, // ← NEW: the accumulating raw JSON string from messages/partial
   isLoading,
   internalLinks,
+  brandVoicePromotion,
   onApprove,
   onReject,
   onUpdate,
@@ -580,7 +583,8 @@ export function OutlineDisplay({
   rawTokens: string; // grows token by token from SSE
   isLoading: boolean;
   internalLinks?: InternalLinkSuggestion[];
-  onApprove: (selectedLinks: InternalLinkSuggestion[]) => void;
+  brandVoicePromotion?: BrandVoicePromotion;
+  onApprove: (selectedLinks: InternalLinkSuggestion[], promoteBrand: boolean) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
   keywordClusters?: KeywordCluster[];
@@ -591,6 +595,13 @@ export function OutlineDisplay({
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
   const [checkedUrls, setCheckedUrls] = useState<Set<string>>(new Set());
+  const [promoteBrand, setPromoteBrand] = useState<boolean>(
+    brandVoicePromotion?.recommended ?? false,
+  );
+
+  useEffect(() => {
+    setPromoteBrand(brandVoicePromotion?.recommended ?? false);
+  }, [brandVoicePromotion]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -1149,6 +1160,85 @@ export function OutlineDisplay({
         </div>
       )}
 
+      {/* Brand Voice Promotion Panel */}
+      {brandVoicePromotion && (
+        <div className="mt-6 p-5 rounded-xl border border-border/50 bg-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
+              <Megaphone className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Brand Promotion
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Naturally mention{" "}
+                <span className="font-semibold text-foreground">
+                  {brandVoicePromotion.brand_name}
+                </span>{" "}
+                in the content
+              </p>
+            </div>
+            {brandVoicePromotion.recommended && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                Recommended
+              </span>
+            )}
+            <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+              {Math.round(brandVoicePromotion.score * 100)}% match
+            </span>
+          </div>
+
+          {(brandVoicePromotion.about || brandVoicePromotion.selling_position) && (
+            <div className="mb-4 space-y-1.5 pl-1">
+              {brandVoicePromotion.about && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  <span className="font-semibold text-foreground/70">About: </span>
+                  {brandVoicePromotion.about}
+                </p>
+              )}
+              {brandVoicePromotion.selling_position && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  <span className="font-semibold text-foreground/70">Position: </span>
+                  {brandVoicePromotion.selling_position}
+                </p>
+              )}
+            </div>
+          )}
+
+          <label
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+              promoteBrand
+                ? "bg-primary/5 border-primary/30"
+                : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={promoteBrand}
+              onChange={(e) => setPromoteBrand(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={cn(
+                "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                promoteBrand
+                  ? "bg-primary border-primary"
+                  : "bg-background border-border",
+              )}
+            >
+              {promoteBrand && (
+                <Check className="w-2.5 h-2.5 text-primary-foreground" />
+              )}
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Include brand mention in generated content
+            </p>
+          </label>
+        </div>
+      )}
+
       {/* Action Bar */}
       <div className="mt-10 flex items-center justify-end gap-3">
         <Button
@@ -1164,7 +1254,7 @@ export function OutlineDisplay({
             const selected = sortedInternalLinks.filter((l) =>
               checkedUrls.has(l.url),
             );
-            onApprove(selected);
+            onApprove(selected, promoteBrand);
           }}
           disabled={isLoading || isDraft}
           className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
