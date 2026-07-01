@@ -641,14 +641,20 @@ export function FreshGenerationView({
               patchCredits(credits);
             } else if (step === "credits.low") {
               patchCredits(credits);
-              toast.warning(`Low credits: ${credits} remaining. Generation may not complete.`, {
-                duration: 10000,
-              });
+              toast.warning(
+                `Low credits: ${credits} remaining. Generation may not complete.`,
+                {
+                  duration: 10000,
+                },
+              );
             } else if (step === "credits.exhausted") {
               patchCredits(credits);
-              toast.error("Out of credits. Upgrade your plan to continue generating content.", {
-                duration: 10000,
-              });
+              toast.error(
+                "Out of credits. Upgrade your plan to continue generating content.",
+                {
+                  duration: 10000,
+                },
+              );
             }
           }
           continue;

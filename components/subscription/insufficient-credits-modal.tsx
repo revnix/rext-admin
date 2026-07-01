@@ -44,12 +44,15 @@ export function InsufficientCreditsModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isNoSubscription ? "Subscription Required" : "Insufficient Credits"}
+            {isNoSubscription
+              ? "Subscription Required"
+              : "Insufficient Credits"}
           </DialogTitle>
           <DialogDescription className="pt-3 pb-2 text-base">
             {isNoSubscription
               ? "You need an active subscription to generate articles."
-              : errorDetail || "You do not have enough credits to generate this article."}
+              : errorDetail ||
+                "You do not have enough credits to generate this article."}
             {!isNoSubscription && resetDate && (
               <span className="block mt-2 font-medium text-foreground">
                 Your credits will reset on {resetDate}.

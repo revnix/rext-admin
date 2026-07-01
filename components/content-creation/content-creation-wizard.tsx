@@ -96,7 +96,7 @@ export function ContentCreationWizard({
 
   // Credits & Subscription
   const { credits, fetchCredits } = useSubscriptionStore();
-  
+
   useEffect(() => {
     fetchCredits().catch(console.error);
   }, [fetchCredits]);

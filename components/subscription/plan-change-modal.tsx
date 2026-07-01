@@ -130,7 +130,9 @@ export function PlanChangeModal({
       if (isDowngrade) {
         const result = await downgradeSubscription(selectedPlanId);
         toast.success("Plan change scheduled", {
-          description: result.message ?? `Your plan will be downgraded at the end of your billing cycle.`,
+          description:
+            result.message ??
+            `Your plan will be downgraded at the end of your billing cycle.`,
         });
       } else {
         const result = await upgradeSubscription(selectedPlanId);
@@ -139,7 +141,9 @@ export function PlanChangeModal({
           return;
         }
         toast.success("Plan upgraded", {
-          description: result.message ?? `You are now on the ${result.plan_display_name} plan.`,
+          description:
+            result.message ??
+            `You are now on the ${result.plan_display_name} plan.`,
         });
       }
 

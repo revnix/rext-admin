@@ -11,89 +11,166 @@ import { getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
+// Substrings of backend rejection messages that mean the refresh token is
+// genuinely dead — retrying will never help, the user must log in again.
+// Anything else (network error, 5xx, a lost concurrent-refresh race, etc.)
+// is treated as transient and retried before giving up.
+const DEFINITIVE_REFRESH_REJECTIONS = [
+  "refresh token has expired",
+  "refresh token has been revoked",
+  "invalid refresh token",
+  "invalid token type",
+  "token missing jti",
+  "user not active",
+  "user not found",
+];
+
+function isDefinitiveRefreshRejection(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return DEFINITIVE_REFRESH_REJECTIONS.some((pattern) =>
+    normalized.includes(pattern),
+  );
+}
+
+class RefreshAttemptError extends Error {
+  definitive: boolean;
+  constructor(message: string, definitive: boolean) {
+    super(message);
+    this.definitive = definitive;
+  }
+}
+
 /**
- * Refresh the access token using the refresh token
+ * Single attempt to exchange the refresh token for a new token pair.
+ * Throws RefreshAttemptError with `definitive` set when the backend has
+ * explicitly rejected the refresh token (vs. a transient/race failure).
+ */
+async function attemptRefresh(token: JWT): Promise<JWT> {
+  const refreshPayload = {
+    refresh_token: token.refreshToken,
+  };
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(refreshPayload),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const errorData = safeJsonParse(
+      errorText,
+      { rawError: errorText },
+      "[Auth] refresh response error",
+    );
+    const message = extractApiError(
+      errorData,
+      `Token refresh failed with status ${response.status}`,
+    );
+
+    // 401 covers both "genuinely invalid/expired" and "lost a concurrent
+    // refresh race" — only the message tells them apart. 5xx/network-level
+    // failures are always transient.
+    const definitive =
+      response.status === 403 || isDefinitiveRefreshRejection(message);
+
+    throw new RefreshAttemptError(message, definitive);
+  }
+
+  const refreshResponseText = await response.text();
+
+  // biome-ignore lint/suspicious/noExplicitAny: dynamic backend auth response
+  const refreshResponseData = safeJsonParse<{ data?: any }>(
+    refreshResponseText,
+    null,
+    "[Auth] refresh response",
+  );
+  if (!refreshResponseData) {
+    throw new RefreshAttemptError("Invalid refresh response format", false);
+  }
+
+  // Extract data from wrapped response
+  const refreshedTokens = refreshResponseData.data || refreshResponseData;
+
+  if (!refreshedTokens.access_token) {
+    throw new RefreshAttemptError("No access token in refresh response", false);
+  }
+
+  // Derive expiry from backend response: prefer `expires_in` (seconds), fall back to `expires_at` (ISO/epoch)
+  const expiresIn = refreshedTokens.expires_in;
+  const expiresAt = refreshedTokens.expires_at;
+  const accessTokenExpires = expiresIn
+    ? Date.now() + expiresIn * 1000
+    : expiresAt
+      ? new Date(expiresAt).getTime()
+      : token.accessTokenExpires; // keep previous if backend doesn't provide one
+
+  return {
+    ...token,
+    accessToken: refreshedTokens.access_token,
+    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+    accessTokenExpires,
+  };
+}
+
+const REFRESH_RETRY_DELAYS_MS = [300, 800];
+
+/**
+ * Refresh the access token using the refresh token.
+ *
+ * Retries transient failures (network errors, 5xx, losing a concurrent
+ * refresh race against another tab or the proactive-refresh path) before
+ * forcing the user out. Only a definitive backend rejection — refresh token
+ * actually expired/revoked/invalid — sets RefreshAccessTokenError immediately.
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  try {
-    if (!token.refreshToken) {
-      log.error("[Auth] No refresh token available");
-      throw new Error("No refresh token available");
-    }
+  if (!token.refreshToken) {
+    log.error("[Auth] No refresh token available");
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
 
-    const refreshPayload = {
-      refresh_token: token.refreshToken,
-    };
+  const maxAttempts = REFRESH_RETRY_DELAYS_MS.length + 1;
+  let lastError: unknown;
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(refreshPayload),
-      },
-    );
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await attemptRefresh(token);
+    } catch (error) {
+      lastError = error;
+      const definitive =
+        error instanceof RefreshAttemptError && error.definitive;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      log.error("[Auth] Refresh response error text:", errorText);
-
-      const errorData = safeJsonParse(
-        errorText,
-        { rawError: errorText },
-        "[Auth] refresh response error",
+      log.error(
+        `[Auth] Token refresh attempt ${attempt}/${maxAttempts} failed`,
+        error,
       );
 
-      log.error("[Auth] Token refresh failed with status:", response.status);
-      log.error("[Auth] Token refresh error data:", errorData);
-      throw new Error("Token refresh failed");
+      if (definitive) {
+        break;
+      }
+
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, REFRESH_RETRY_DELAYS_MS[attempt - 1]),
+        );
+      }
     }
-
-    const refreshResponseText = await response.text();
-
-    // biome-ignore lint/suspicious/noExplicitAny: dynamic backend auth response
-    const refreshResponseData = safeJsonParse<{ data?: any }>(
-      refreshResponseText,
-      null,
-      "[Auth] refresh response",
-    );
-    if (!refreshResponseData) {
-      throw new Error("Invalid refresh response format");
-    }
-
-    // Extract data from wrapped response
-    const refreshedTokens = refreshResponseData.data || refreshResponseData;
-
-    if (!refreshedTokens.access_token) {
-      log.error("[Auth] No access token in refresh response");
-      throw new Error("No access token in refresh response");
-    }
-
-    // Derive expiry from backend response: prefer `expires_in` (seconds), fall back to `expires_at` (ISO/epoch)
-    const expiresIn = refreshedTokens.expires_in;
-    const expiresAt = refreshedTokens.expires_at;
-    const accessTokenExpires = expiresIn
-      ? Date.now() + expiresIn * 1000
-      : expiresAt
-        ? new Date(expiresAt).getTime()
-        : token.accessTokenExpires; // keep previous if backend doesn't provide one
-
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-      accessTokenExpires,
-    };
-  } catch (error) {
-    log.error("[Auth] Error refreshing access token:", error);
-
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
   }
+
+  log.error(
+    "[Auth] Token refresh exhausted all attempts, forcing re-login",
+    lastError,
+  );
+
+  return {
+    ...token,
+    error: "RefreshAccessTokenError",
+  };
 }
 
 export default {

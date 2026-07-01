@@ -3,7 +3,12 @@
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { Coins } from "lucide-react";
 import { useEffect } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function CreditBalanceWidget() {
   const { credits, fetchCredits } = useSubscriptionStore();
