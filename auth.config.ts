@@ -120,6 +120,11 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
 
 const REFRESH_RETRY_DELAYS_MS = [300, 800];
 
+// Treat the access token as needing refresh slightly before its real expiry.
+// Without this, a request can be dispatched at the last valid millisecond
+// and arrive at the backend after the token has actually expired.
+const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30_000;
+
 /**
  * Refresh the access token using the refresh token.
  *
@@ -451,7 +456,11 @@ export default {
       }
 
       // Return previous token if the access token has not expired yet
-      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+      // (with a small buffer so we refresh slightly ahead of actual expiry)
+      if (
+        token.accessTokenExpires &&
+        Date.now() < token.accessTokenExpires - ACCESS_TOKEN_EXPIRY_BUFFER_MS
+      ) {
         return token;
       }
 
