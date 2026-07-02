@@ -43,7 +43,8 @@ export function UsageMetrics({
   className,
   detailed = false,
 }: UsageMetricsProps) {
-  const { usage, credits, fetchSubscription, isLoading } = useSubscriptionStore();
+  const { usage, credits, fetchSubscription, isLoading } =
+    useSubscriptionStore();
 
   // Fetch usage on mount
   useEffect(() => {
@@ -98,8 +99,9 @@ export function UsageMetrics({
   };
 
   // Format number
-  const formatNumber = (value: number): string => {
-    if (value === -1) return "Unlimited";
+  const formatNumber = (value: number | null | undefined): string => {
+    if (value === null || value === undefined || value === -1)
+      return "Unlimited";
     return value.toLocaleString();
   };
 
@@ -210,24 +212,49 @@ export function UsageMetrics({
                 <span className="text-sm font-medium">Content Credits</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={cn("text-sm font-medium", getUsageColor(credits.credits_per_month ? ((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100 : 0))}>
-                  {credits.current_credits.toLocaleString()} {credits.credits_per_month ? `/ ${credits.credits_per_month.toLocaleString()}` : "Remaining"}
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    getUsageColor(
+                      credits.credits_per_month
+                        ? ((credits.credits_per_month -
+                            credits.current_credits) /
+                            credits.credits_per_month) *
+                            100
+                        : 0,
+                    ),
+                  )}
+                >
+                  {credits.current_credits.toLocaleString()}{" "}
+                  {credits.credits_per_month
+                    ? `/ ${credits.credits_per_month.toLocaleString()}`
+                    : "Remaining"}
                 </span>
               </div>
             </div>
-            
+
             <div className="text-sm text-muted-foreground">
               {credits.articles_remaining !== null ? (
-                <>You have enough credits for approximately <span className="font-semibold text-foreground">{credits.articles_remaining} articles</span> this month.</>
+                <>
+                  You have enough credits for approximately{" "}
+                  <span className="font-semibold text-foreground">
+                    {credits.articles_remaining} articles
+                  </span>{" "}
+                  this month.
+                </>
               ) : (
                 <>Unlimited articles generation available.</>
               )}
             </div>
-            
+
             {credits.credits_per_month && (
               <div className="relative mt-2">
                 <Progress
-                  value={((credits.credits_per_month - credits.current_credits) / credits.credits_per_month) * 100}
+                  value={
+                    ((credits.credits_per_month - credits.current_credits) /
+                      credits.credits_per_month) *
+                    100
+                  }
                   className="h-2"
                 />
               </div>
@@ -238,7 +265,10 @@ export function UsageMetrics({
         {/* Usage Metrics */}
         <div className="space-y-5">
           {usageMetrics?.map((metric) => {
-            const isUnlimited = metric.max === -1;
+            const isUnlimited =
+              metric.max === -1 ||
+              metric.max === null ||
+              metric.max === undefined;
             const percentage = isUnlimited ? 0 : metric.percentage;
 
             return (

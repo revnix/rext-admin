@@ -36,7 +36,10 @@ export default function WorkspaceContentCreatePage({
   const topicId = searchParams.get("topicId");
 
   const [showCreditsModal, setShowCreditsModal] = useState(false);
-  const [creditsError, setCreditsError] = useState<{code: 402 | 429; detail: string}>();
+  const [creditsError, setCreditsError] = useState<{
+    code: 402 | 429;
+    detail: string;
+  }>();
 
   const handleSubmit = async (formData: ContentCreationFormData) => {
     try {
@@ -126,10 +129,13 @@ export default function WorkspaceContentCreatePage({
         workspaceRoutes.contentDetail(workspaceSlug, contentId) as Route,
       );
     } catch (error) {
-      if (error instanceof ApiError && (error.statusCode === 402 || error.statusCode === 429)) {
+      if (
+        error instanceof ApiError &&
+        (error.statusCode === 402 || error.statusCode === 429)
+      ) {
         setCreditsError({
           code: error.statusCode as 402 | 429,
-          detail: error.message
+          detail: error.message,
         });
         setShowCreditsModal(true);
         return;

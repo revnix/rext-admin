@@ -212,11 +212,12 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
           try {
             // Use allSettled so that if usage stats fail (500), we still get the subscription
-            const [subscriptionResult, usageResult, creditsResult] = await Promise.allSettled([
-              apiClient.subscriptions.getCurrentPlan(),
-              apiClient.subscriptions.getUsageStats(),
-              apiClient.subscriptions.getCredits(),
-            ]);
+            const [subscriptionResult, usageResult, creditsResult] =
+              await Promise.allSettled([
+                apiClient.subscriptions.getCurrentPlan(),
+                apiClient.subscriptions.getUsageStats(),
+                apiClient.subscriptions.getCredits(),
+              ]);
 
             const nextSubscription =
               subscriptionResult.status === "fulfilled"
@@ -224,7 +225,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                 : null;
             const nextUsage =
               usageResult.status === "fulfilled" ? usageResult.value : null;
-            const nextCredits = 
+            const nextCredits =
               creditsResult.status === "fulfilled" ? creditsResult.value : null;
 
             if (subscriptionResult.status === "rejected") {
@@ -305,7 +306,11 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             ? Math.floor(currentCredits / 15)
             : null;
         set({
-          credits: { ...prev, current_credits: currentCredits, articles_remaining: articlesRemaining },
+          credits: {
+            ...prev,
+            current_credits: currentCredits,
+            articles_remaining: articlesRemaining,
+          },
         });
       },
 

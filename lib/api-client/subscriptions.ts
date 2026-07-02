@@ -138,11 +138,14 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         billing_period: billingPeriod,
       };
 
-      return client.request<PlanChangeResponse>(ENDPOINTS.SUBSCRIPTIONS.upgrade, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
-      });
+      return client.request<PlanChangeResponse>(
+        ENDPOINTS.SUBSCRIPTIONS.upgrade,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestData),
+        },
+      );
     },
 
     /**
@@ -273,6 +276,5 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         method: "GET",
       });
     },
-
   };
 }

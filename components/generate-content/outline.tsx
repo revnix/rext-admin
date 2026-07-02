@@ -584,7 +584,10 @@ export function OutlineDisplay({
   isLoading: boolean;
   internalLinks?: InternalLinkSuggestion[];
   brandVoicePromotion?: BrandVoicePromotion;
-  onApprove: (selectedLinks: InternalLinkSuggestion[], promoteBrand: boolean) => void;
+  onApprove: (
+    selectedLinks: InternalLinkSuggestion[],
+    promoteBrand: boolean,
+  ) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
   keywordClusters?: KeywordCluster[];
@@ -999,7 +1002,6 @@ export function OutlineDisplay({
                       </span>
                     ))}
                   </div>
-
                 </div>
               );
             })}
@@ -1189,17 +1191,22 @@ export function OutlineDisplay({
             </span>
           </div>
 
-          {(brandVoicePromotion.about || brandVoicePromotion.selling_position) && (
+          {(brandVoicePromotion.about ||
+            brandVoicePromotion.selling_position) && (
             <div className="mb-4 space-y-1.5 pl-1">
               {brandVoicePromotion.about && (
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                  <span className="font-semibold text-foreground/70">About: </span>
+                  <span className="font-semibold text-foreground/70">
+                    About:{" "}
+                  </span>
                   {brandVoicePromotion.about}
                 </p>
               )}
               {brandVoicePromotion.selling_position && (
                 <p className="text-xs text-muted-foreground line-clamp-2">
-                  <span className="font-semibold text-foreground/70">Position: </span>
+                  <span className="font-semibold text-foreground/70">
+                    Position:{" "}
+                  </span>
                   {brandVoicePromotion.selling_position}
                 </p>
               )}

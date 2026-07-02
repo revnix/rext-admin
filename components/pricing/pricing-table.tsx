@@ -194,7 +194,7 @@ export function PricingTable({
                     </span>
                   </div>
                   {billingPeriod === BillingPeriod.YEARLY &&
-                    savingsPercent > 0 ? (
+                  savingsPercent > 0 ? (
                     <p className="text-sm text-green-600 dark:text-green-500 mt-1">
                       Save {savingsPercent}% with yearly billing
                     </p>
