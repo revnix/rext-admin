@@ -16,6 +16,14 @@ export type InternalLinkSuggestion = {
   status: string;
 };
 
+export type BrandVoicePromotion = {
+  brand_name: string;
+  about: string;
+  selling_position: string;
+  score: number;
+  recommended: boolean;
+};
+
 export type Interrupt = {
   id: string;
   value: {
@@ -27,6 +35,7 @@ export type Interrupt = {
     Recommendations?: string[];
     seo_state?: SEORESULT;
     internal_links?: InternalLinkSuggestion[];
+    brand_voice_promotion?: BrandVoicePromotion;
     "Primary Keyword"?: string;
     "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;

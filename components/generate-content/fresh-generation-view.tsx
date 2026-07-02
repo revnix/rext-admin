@@ -17,6 +17,7 @@ import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
   CommonOutput,
   ContentOutline,
+  BrandVoicePromotion,
   ContentSection,
   FinalContent,
   InternalLinkSuggestion,
@@ -227,6 +228,14 @@ export function FreshGenerationView({
     () =>
       state.interrupt?.[0]?.value?.internal_links as
         | InternalLinkSuggestion[]
+        | undefined,
+    [state.interrupt],
+  );
+
+  const interruptBrandVoicePromotion = useMemo(
+    () =>
+      state.interrupt?.[0]?.value?.brand_voice_promotion as
+        | BrandVoicePromotion
         | undefined,
     [state.interrupt],
   );
@@ -1186,7 +1195,8 @@ export function FreshGenerationView({
               rawTokens={outline.streamedText}
               isLoading={isStreamingOutline}
               internalLinks={interruptInternalLinks}
-              onApprove={(selectedLinks) => {
+              brandVoicePromotion={interruptBrandVoicePromotion}
+              onApprove={(selectedLinks, promoteBrand) => {
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
                 content.resetStream();
@@ -1209,6 +1219,9 @@ export function FreshGenerationView({
                       : {}),
                     ...(interruptInternalLinks?.length
                       ? { selected_internal_links: selectedLinks }
+                      : {}),
+                    ...(interruptBrandVoicePromotion
+                      ? { promote_brand: promoteBrand }
                       : {}),
                   },
                   status: "Approving and generating content...",
