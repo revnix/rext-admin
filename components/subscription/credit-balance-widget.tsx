@@ -15,7 +15,7 @@ export function CreditBalanceWidget() {
 
   useEffect(() => {
     if (!credits) {
-      fetchCredits().catch(console.error);
+      fetchCredits().catch(() => {});
     }
   }, [credits, fetchCredits]);
 

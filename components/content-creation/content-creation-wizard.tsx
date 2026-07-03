@@ -98,7 +98,7 @@ export function ContentCreationWizard({
   const { credits, fetchCredits } = useSubscriptionStore();
 
   useEffect(() => {
-    fetchCredits().catch(console.error);
+    fetchCredits().catch(() => {});
   }, [fetchCredits]);
 
   const hasEnoughCredits = (() => {

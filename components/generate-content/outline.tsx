@@ -613,36 +613,6 @@ export function OutlineDisplay({
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
 
-  const clusterHeadingMapping = useMemo(() => {
-    const map = new Map<string, string[]>();
-    if (
-      !effectiveOutline.cluster_heading_map ||
-      !Array.isArray(effectiveOutline.cluster_heading_map)
-    )
-      return map;
-    for (const { cluster, heading } of effectiveOutline.cluster_heading_map) {
-      const normalizedCluster = cluster.toLowerCase().trim();
-      if (!map.has(normalizedCluster)) {
-        map.set(normalizedCluster, []);
-      }
-      map.get(normalizedCluster)?.push(heading);
-    }
-    return map;
-  }, [effectiveOutline.cluster_heading_map]);
-
-  const getMappedHeadings = (clusterName: string) => {
-    const normalized = clusterName.toLowerCase().trim();
-    if (clusterHeadingMapping.has(normalized)) {
-      return clusterHeadingMapping.get(normalized) || [];
-    }
-    for (const [key, value] of clusterHeadingMapping.entries()) {
-      if (key.includes(normalized) || normalized.includes(key)) {
-        return value;
-      }
-    }
-    return [];
-  };
-
   // Derive render blocks from cluster_heading_map + sections when _render is absent.
   const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
     const map: ClusterHeadingMapItem[] | undefined =
@@ -963,7 +933,6 @@ export function OutlineDisplay({
 
           <div className="grid grid-cols-1 gap-4 mt-5">
             {keywordClusters.map((cluster) => {
-              const mappedHeadings = getMappedHeadings(cluster.cluster_name);
               return (
                 <div
                   key={cluster.cluster_name}
