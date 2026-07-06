@@ -502,6 +502,7 @@ export default {
         pathname.startsWith("/invitations/accept") ||
         pathname.startsWith("/accept-invitation") ||
         pathname.startsWith("/accept-admin-invitation");
+      const isVerifyEmailPage = pathname.startsWith(AUTH_PAGES.VERIFY_EMAIL);
 
       // CRITICAL: If there is a refresh error, the session is essentially invalid.
       // We must force the user to the login page and NOT allow them to be redirected
@@ -519,13 +520,15 @@ export default {
       }
 
       // Redirect authenticated users away from auth pages (login, signup, etc.)
-      // but NOT from invitation routes which support auto-acceptance
-      if (isLoggedIn && isOnAuthPage && !isInvitationPage) {
+      // but NOT from invitation or verify-email routes, since a freshly
+      // signed-up user is auto-logged-in with an unverified email and must
+      // still be able to open the verification link while logged in.
+      if (isLoggedIn && isOnAuthPage && !isInvitationPage && !isVerifyEmailPage) {
         return Response.redirect(new URL("/", nextUrl));
       }
 
       // Require authentication for protected pages
-      // Public paths are auth pages or invitation pages
+      // Public paths are auth pages, invitation pages, or verify-email
       if (!isLoggedIn && !isOnAuthPage && !isInvitationPage) {
         return false; // Will redirect to /login
       }
