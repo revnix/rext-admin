@@ -473,4 +473,30 @@ export const ENDPOINTS = {
   KEYWORD_LIBRARY: {
     base: "/store/items",
   },
+
+  /**
+   * Google Search Console / GA4 Integration Endpoints
+   * @note Uses query parameter for workspace scoping (`?workspace_id=`),
+   * matching CONTENT/DASHBOARD/TOPICS' existing convention for this backend.
+   * Covers connection setup, per-site GSC/GA4 mapping, and Modules 1-4
+   * (Dashboard, Content Inventory, Content Health Score, Opportunity Score).
+   */
+  GOOGLE_INTEGRATION: {
+    status: "/api/v1/integrations/google/",
+    connect: "/api/v1/integrations/google/connect",
+    disconnect: "/api/v1/integrations/google/",
+    searchConsoleSites: "/api/v1/integrations/google/search-console/sites",
+    siteMapping: (siteId: string) =>
+      `/api/v1/integrations/google/sites/${siteId}/mapping` as const,
+
+    dashboard: "/api/v1/integrations/google/dashboard/",
+    contentInventory: "/api/v1/integrations/google/content-inventory/",
+    contentPerformance: (contentId: string) =>
+      `/api/v1/integrations/google/content/${contentId}/performance` as const,
+    healthScore: (contentId: string) =>
+      `/api/v1/integrations/google/content/${contentId}/health-score` as const,
+    opportunityScore: (contentId: string) =>
+      `/api/v1/integrations/google/content/${contentId}/opportunity-score` as const,
+    opportunities: "/api/v1/integrations/google/opportunities",
+  },
 } as const;

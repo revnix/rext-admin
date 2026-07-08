@@ -91,6 +91,20 @@ export const workspaceRoutes = {
   integrations: (workspaceSlug: string) => `/w/${workspaceSlug}/integrations`,
 
   /**
+   * Google Search Console / GA4 integration routes (Modules 1-4)
+   */
+  googleIntegration: {
+    dashboard: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/integrations/google`,
+    contentInventory: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/integrations/google/content-inventory`,
+    contentDetail: (workspaceSlug: string, contentId: string) =>
+      `/w/${workspaceSlug}/integrations/google/content-inventory/${contentId}`,
+    opportunities: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/integrations/google/opportunities`,
+  },
+
+  /**
    * Personas route
    */
   personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,

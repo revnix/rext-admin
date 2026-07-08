@@ -54,6 +54,7 @@ import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createOnboardingNamespace } from "./onboarding";
 import { createPersonasNamespace } from "./personas";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
+import { createGoogleIntegrationNamespace } from "./google";
 import { createRolesNamespace } from "./roles";
 import {
   createNotificationsNamespace,
@@ -99,6 +100,7 @@ function createApiClient() {
     account: createAccountNamespace(client),
     onboarding: createOnboardingNamespace(client),
     personas: createPersonasNamespace(client),
+    googleIntegration: createGoogleIntegrationNamespace(client),
 
     // Admin namespaces
     users: createUsersNamespace(client),

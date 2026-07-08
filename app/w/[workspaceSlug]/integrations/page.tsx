@@ -24,11 +24,12 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { GoogleConnectionCard } from "@/components/integrations/google/google-connection-card";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 
 export default function IntegrationsPage() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
   const { hasPermission: canManage, isLoading: isPermLoading } =
     useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspace?.id);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -166,13 +167,24 @@ export default function IntegrationsPage() {
       }
     >
       <div className="space-y-8">
+        {workspace?.id && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <GoogleConnectionCard
+              workspaceId={workspace.id}
+              workspaceSlug={workspaceSlug}
+              canManage={canManage}
+            />
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : integrations.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
-            No integrations connected yet. Click "Add Integration" to start.
+            No other integrations connected yet. Click "Add Integration" to
+            start.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

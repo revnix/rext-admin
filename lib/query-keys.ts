@@ -13,6 +13,10 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import type {
+  ContentInventoryFilter,
+  ContentInventorySortField,
+} from "@/types/google-integration";
 
 // ============================================================================
 // WORKSPACE QUERIES
@@ -326,5 +330,134 @@ export const personaQueries = {
       queryFn: () => apiClient.personas.get(workspaceId, personaId),
       enabled: !!workspaceId && !!personaId,
       staleTime: 5 * 60 * 1000,
+    }),
+};
+
+// ============================================================================
+// GOOGLE SEARCH CONSOLE / GA4 INTEGRATION QUERIES (Modules 1-4)
+// ============================================================================
+
+export const googleIntegrationQueries = {
+  all: (workspaceId: string) => ["google-integration", workspaceId] as const,
+  status: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [
+        ...googleIntegrationQueries.all(workspaceId),
+        "status",
+      ] as const,
+      queryFn: () => apiClient.googleIntegration.getStatus(workspaceId),
+      enabled: !!workspaceId,
+      staleTime: 60 * 1000,
+    }),
+  searchConsoleSites: (workspaceId: string, enabled = true) =>
+    queryOptions({
+      queryKey: [
+        ...googleIntegrationQueries.all(workspaceId),
+        "search-console-sites",
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.listSearchConsoleSites(workspaceId),
+      enabled: !!workspaceId && enabled,
+      staleTime: 5 * 60 * 1000,
+    }),
+  siteMapping: (workspaceId: string, siteId: string) =>
+    queryOptions({
+      queryKey: [
+        ...googleIntegrationQueries.all(workspaceId),
+        "site-mapping",
+        siteId,
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getSiteMapping(workspaceId, siteId),
+      enabled: !!workspaceId && !!siteId,
+    }),
+};
+
+export const googleDashboardQueries = {
+  all: (workspaceId: string) => ["google-dashboard", workspaceId] as const,
+  detail: (workspaceId: string, days = 28) =>
+    queryOptions({
+      queryKey: [...googleDashboardQueries.all(workspaceId), days] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getDashboard(workspaceId, days),
+      enabled: !!workspaceId,
+      staleTime: 2 * 60 * 1000,
+    }),
+};
+
+export const googleContentInventoryQueries = {
+  all: (workspaceId: string) =>
+    ["google-content-inventory", workspaceId] as const,
+  list: (
+    workspaceId: string,
+    options?: {
+      days?: number;
+      page?: number;
+      pageSize?: number;
+      filters?: ContentInventoryFilter[];
+      sortBy?: ContentInventorySortField;
+      sortOrder?: "asc" | "desc";
+    },
+  ) =>
+    queryOptions({
+      queryKey: [
+        ...googleContentInventoryQueries.all(workspaceId),
+        options ?? {},
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getContentInventory(workspaceId, options),
+      enabled: !!workspaceId,
+      staleTime: 2 * 60 * 1000,
+    }),
+};
+
+export const googleScoreQueries = {
+  all: (workspaceId: string) => ["google-scores", workspaceId] as const,
+  healthScore: (workspaceId: string, contentId: string) =>
+    queryOptions({
+      queryKey: [
+        ...googleScoreQueries.all(workspaceId),
+        "health",
+        contentId,
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getHealthScore(workspaceId, contentId),
+      enabled: !!workspaceId && !!contentId,
+      staleTime: 2 * 60 * 1000,
+    }),
+  opportunityScore: (workspaceId: string, contentId: string, days = 28) =>
+    queryOptions({
+      queryKey: [
+        ...googleScoreQueries.all(workspaceId),
+        "opportunity",
+        contentId,
+        days,
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getOpportunityScore(
+          workspaceId,
+          contentId,
+          days,
+        ),
+      enabled: !!workspaceId && !!contentId,
+      staleTime: 2 * 60 * 1000,
+    }),
+  rankedOpportunities: (
+    workspaceId: string,
+    options?: { days?: number; page?: number; pageSize?: number },
+  ) =>
+    queryOptions({
+      queryKey: [
+        ...googleScoreQueries.all(workspaceId),
+        "ranked-opportunities",
+        options ?? {},
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getRankedOpportunities(
+          workspaceId,
+          options,
+        ),
+      enabled: !!workspaceId,
+      staleTime: 2 * 60 * 1000,
     }),
 };
