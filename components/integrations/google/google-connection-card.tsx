@@ -141,7 +141,12 @@ export function GoogleConnectionCard({
         ) : canManage ? (
           <Button
             size="sm"
-            onClick={() => connectMutation.mutate({ workspaceId })}
+            onClick={() =>
+              connectMutation.mutate({
+                workspaceId,
+                returnPath: workspaceRoutes.integrations(workspaceSlug),
+              })
+            }
             disabled={connectMutation.isPending}
           >
             {connectMutation.isPending ? (
