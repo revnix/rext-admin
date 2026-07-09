@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   googleContentInventoryQueries,
+  googleContentPerformanceQueries,
   googleScoreQueries,
 } from "@/lib/query-keys";
 import type {
@@ -47,4 +48,19 @@ export function useGoogleRankedOpportunities(
   options?: { days?: number; page?: number; pageSize?: number },
 ) {
   return useQuery(googleScoreQueries.rankedOpportunities(workspaceId, options));
+}
+
+/**
+ * Daily GSC/GA4 metrics for one article — backs the Overview section
+ * (organic traffic/CTR/impressions/position trend) and the Keyword
+ * Analytics section's ranking history on the article detail page.
+ */
+export function useGoogleContentPerformance(
+  workspaceId: string,
+  contentId: string,
+  days = 90,
+) {
+  return useQuery(
+    googleContentPerformanceQueries.detail(workspaceId, contentId, days),
+  );
 }

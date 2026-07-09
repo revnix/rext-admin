@@ -1,15 +1,15 @@
 "use client";
 
 import { PageLayout } from "@/components/page-layout";
+import { ContentHealthList } from "@/components/integrations/google/content-health-list";
 import { GoogleConnectionGate } from "@/components/integrations/google/google-connection-gate";
 import { GoogleSectionTabs } from "@/components/integrations/google/google-section-tabs";
-import { OpportunityRankedList } from "@/components/integrations/google/opportunity-ranked-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 
-export default function GoogleOpportunitiesPage() {
+export default function ContentHealthPage() {
   const { workspace, workspaceSlug } = useWorkspace();
   const { hasPermission: canManage, isLoading: isPermLoading } =
     useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspace?.id);
@@ -24,8 +24,8 @@ export default function GoogleOpportunitiesPage() {
 
   return (
     <PageLayout
-      title="Opportunity Score"
-      description="Published articles ranked by expected traffic growth after optimization."
+      title="Content Health"
+      description="Composite quality scores for tracked articles, including indexing and freshness signals."
     >
       <GoogleConnectionGate
         workspaceId={workspace.id}
@@ -34,7 +34,7 @@ export default function GoogleOpportunitiesPage() {
       >
         <div className="space-y-6">
           <GoogleSectionTabs workspaceSlug={workspaceSlug} />
-          <OpportunityRankedList
+          <ContentHealthList
             workspaceId={workspace.id}
             workspaceSlug={workspaceSlug}
           />

@@ -461,3 +461,24 @@ export const googleScoreQueries = {
       staleTime: 2 * 60 * 1000,
     }),
 };
+
+export const googleContentPerformanceQueries = {
+  all: (workspaceId: string) =>
+    ["google-content-performance", workspaceId] as const,
+  detail: (workspaceId: string, contentId: string, days = 90) =>
+    queryOptions({
+      queryKey: [
+        ...googleContentPerformanceQueries.all(workspaceId),
+        contentId,
+        days,
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getContentPerformance(
+          workspaceId,
+          contentId,
+          { days },
+        ),
+      enabled: !!workspaceId && !!contentId,
+      staleTime: 2 * 60 * 1000,
+    }),
+};

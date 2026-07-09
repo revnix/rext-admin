@@ -314,6 +314,7 @@ export function DataTable<
     emptyActions.length > 0 ? emptyActions : defaultEmptyActions;
 
   const displayRowActions = rowActions.length > 0 ? rowActions : [];
+  const hasRowActions = displayRowActions.length > 0;
 
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {
@@ -483,7 +484,9 @@ export function DataTable<
                           </div>
                         </TableHead>
                       ))}
-                      <TableHead className="w-[50px]"></TableHead>
+                      {hasRowActions && (
+                        <TableHead className="w-[50px]"></TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -507,13 +510,15 @@ export function DataTable<
                                 ] as string) || "--"}
                           </TableCell>
                         ))}
-                        <TableCell className="w-[200px]">
-                          <ActionsCell
-                            actions={displayRowActions}
-                            row={row as T}
-                            showOnHover={shouldShowActionsOnHover()}
-                          />
-                        </TableCell>
+                        {hasRowActions && (
+                          <TableCell className="w-[200px]">
+                            <ActionsCell
+                              actions={displayRowActions}
+                              row={row as T}
+                              showOnHover={shouldShowActionsOnHover()}
+                            />
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

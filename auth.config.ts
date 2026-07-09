@@ -523,7 +523,12 @@ export default {
       // but NOT from invitation or verify-email routes, since a freshly
       // signed-up user is auto-logged-in with an unverified email and must
       // still be able to open the verification link while logged in.
-      if (isLoggedIn && isOnAuthPage && !isInvitationPage && !isVerifyEmailPage) {
+      if (
+        isLoggedIn &&
+        isOnAuthPage &&
+        !isInvitationPage &&
+        !isVerifyEmailPage
+      ) {
         return Response.redirect(new URL("/", nextUrl));
       }
 

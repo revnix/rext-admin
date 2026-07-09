@@ -11,9 +11,8 @@ interface GoogleSectionTabsProps {
 }
 
 /**
- * Tab nav shared by the 3 top-level Google pages (Dashboard, Content
- * Inventory, Opportunities) — NOT used on the per-article detail page,
- * which renders via DetailPageWrapper's own PageLayout instead.
+ * Tab nav shared by the top-level Google pages for the backend's separate
+ * content performance modules.
  */
 export function GoogleSectionTabs({ workspaceSlug }: GoogleSectionTabsProps) {
   const pathname = usePathname();
@@ -28,7 +27,11 @@ export function GoogleSectionTabs({ workspaceSlug }: GoogleSectionTabsProps) {
       href: workspaceRoutes.googleIntegration.contentInventory(workspaceSlug),
     },
     {
-      name: "Opportunities",
+      name: "Content Health",
+      href: workspaceRoutes.googleIntegration.contentHealth(workspaceSlug),
+    },
+    {
+      name: "Opportunity Score",
       href: workspaceRoutes.googleIntegration.opportunities(workspaceSlug),
     },
   ];

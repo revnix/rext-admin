@@ -206,3 +206,32 @@ export interface OpportunityRankedListResponse {
   page_size: number;
   total_pages: number;
 }
+
+// ============================================================================
+// CONTENT PERFORMANCE — daily GSC/GA4 metrics backing the article Overview
+// and Keyword Analytics (ranking history) sections.
+// ============================================================================
+
+export interface ContentSearchConsoleDailyMetric {
+  date: string;
+  clicks: number;
+  impressions: number;
+  ctr: number; // 0-1 ratio
+  position: number;
+}
+
+export interface ContentAnalyticsDailyMetric {
+  date: string;
+  sessions?: number;
+  active_users?: number;
+  screen_page_views?: number;
+  engagement_rate?: number;
+  average_session_duration?: number;
+  bounce_rate?: number;
+}
+
+export interface ContentPerformanceResponse {
+  content_id: string;
+  search_console: ContentSearchConsoleDailyMetric[];
+  analytics: ContentAnalyticsDailyMetric[];
+}

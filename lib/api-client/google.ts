@@ -14,6 +14,7 @@ import type {
   ContentInventoryFilter,
   ContentInventoryResponse,
   ContentInventorySortField,
+  ContentPerformanceResponse,
   GoogleAuthorizationUrlResponse,
   GoogleConnectionStatus,
   GoogleDashboardResponse,
@@ -62,12 +63,13 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
     },
 
     listSearchConsoleSites: async (workspaceId: string) => {
-      return client.request<GoogleSearchConsoleSite[]>(
+      const result = await client.request<{ sites: GoogleSearchConsoleSite[] }>(
         buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.searchConsoleSites, {
           workspace_id: workspaceId,
         }),
         { method: "GET" },
       );
+      return result.sites;
     },
 
     getSiteMapping: async (workspaceId: string, siteId: string) => {
@@ -189,6 +191,27 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
           days: options?.days,
           page: options?.page,
           page_size: options?.pageSize,
+        }),
+        { method: "GET" },
+      );
+    },
+
+    // ------------------------------------------------------------------
+    // Content performance — daily GSC/GA4 metrics for one article, backing
+    // the Overview (organic traffic/CTR/impressions/position trend) and
+    // Keyword Analytics (ranking history) sections of the article detail page.
+    // ------------------------------------------------------------------
+
+    getContentPerformance: async (
+      workspaceId: string,
+      contentId: string,
+      options?: { days?: number; refresh?: boolean },
+    ) => {
+      return client.request<ContentPerformanceResponse>(
+        buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.contentPerformance(contentId), {
+          workspace_id: workspaceId,
+          days: options?.days,
+          refresh: options?.refresh,
         }),
         { method: "GET" },
       );

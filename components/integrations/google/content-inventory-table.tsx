@@ -1,11 +1,25 @@
 "use client";
 
-import { ExternalLink, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ExternalLink,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DataTable } from "@/components/data-table";
 import type { Column } from "@/types/data-table";
 import { useGoogleContentInventory } from "@/hooks/use-google-content";
@@ -14,7 +28,22 @@ import {
   CONTENT_INVENTORY_FILTERS,
   type ContentInventoryFilter,
   type ContentInventoryItem,
+  type ContentInventorySortField,
 } from "@/types/google-integration";
+
+const SORT_FIELD_LABELS: Record<ContentInventorySortField, string> = {
+  title: "Title",
+  status: "Status",
+  opportunity_score: "Opportunity Score",
+  organic_clicks: "Clicks",
+  organic_impressions: "Impressions",
+  ctr: "CTR",
+  average_position: "Avg. Position",
+  last_updated: "Last Updated",
+};
+const SORT_FIELDS = Object.keys(
+  SORT_FIELD_LABELS,
+) as ContentInventorySortField[];
 
 const FILTER_LABELS: Record<ContentInventoryFilter, string> = {
   published: "Published",
@@ -103,11 +132,16 @@ export function ContentInventoryTable({
   const [activeFilters, setActiveFilters] = useState<ContentInventoryFilter[]>(
     [],
   );
+  const [sortBy, setSortBy] =
+    useState<ContentInventorySortField>("opportunity_score");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const { data, isLoading } = useGoogleContentInventory(workspaceId, {
     days,
     pageSize: 200,
     filters: activeFilters.length > 0 ? activeFilters : undefined,
+    sortBy,
+    sortOrder,
   });
 
   const toggleFilter = (filter: ContentInventoryFilter) => {
@@ -261,31 +295,71 @@ export function ContentInventoryTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {CONTENT_INVENTORY_FILTERS.map((filter) => {
-          const isActive = activeFilters.includes(filter);
-          return (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {CONTENT_INVENTORY_FILTERS.map((filter) => {
+            const isActive = activeFilters.includes(filter);
+            return (
+              <Button
+                key={filter}
+                size="sm"
+                variant={isActive ? "default" : "outline"}
+                onClick={() => toggleFilter(filter)}
+                aria-pressed={isActive}
+              >
+                {FILTER_LABELS[filter]}
+              </Button>
+            );
+          })}
+          {activeFilters.length > 0 && (
             <Button
-              key={filter}
+              variant="ghost"
               size="sm"
-              variant={isActive ? "default" : "outline"}
-              onClick={() => toggleFilter(filter)}
-              aria-pressed={isActive}
+              onClick={() => setActiveFilters([])}
+              className="text-muted-foreground"
             >
-              {FILTER_LABELS[filter]}
+              Clear filters
             </Button>
-          );
-        })}
-        {activeFilters.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setActiveFilters([])}
-            className="text-muted-foreground"
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Sort by</span>
+          <Select
+            value={sortBy}
+            onValueChange={(value) =>
+              setSortBy(value as ContentInventorySortField)
+            }
           >
-            Clear filters
+            <SelectTrigger className="h-8 w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_FIELDS.map((field) => (
+                <SelectItem key={field} value={field}>
+                  {SORT_FIELD_LABELS[field]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() =>
+              setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+            }
+            aria-label={
+              sortOrder === "asc" ? "Sort ascending" : "Sort descending"
+            }
+          >
+            {sortOrder === "asc" ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
           </Button>
-        )}
+        </div>
       </div>
 
       <DataTable<InventoryRow>

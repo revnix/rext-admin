@@ -100,8 +100,14 @@ export const workspaceRoutes = {
       `/w/${workspaceSlug}/integrations/google/content-inventory`,
     contentDetail: (workspaceSlug: string, contentId: string) =>
       `/w/${workspaceSlug}/integrations/google/content-inventory/${contentId}`,
+    contentHealth: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/integrations/google/content-health`,
+    contentHealthDetail: (workspaceSlug: string, contentId: string) =>
+      `/w/${workspaceSlug}/integrations/google/content-health/${contentId}`,
     opportunities: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/integrations/google/opportunities`,
+    reports: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/integrations/google/reports`,
   },
 
   /**
