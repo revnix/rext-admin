@@ -140,7 +140,7 @@ export function ContentHealthList({
       width: "280px",
       searchable: true,
       cell: (value, row) => (
-        <div className="w-[260px] min-w-0">
+        <div className="w-[260px] min-w-0 overflow-hidden">
           <p className="truncate font-medium text-sm">{value as string}</p>
           {row.url && (
             <a
@@ -148,9 +148,10 @@ export function ContentHealthList({
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground truncate"
+              className="flex max-w-full items-center gap-1 overflow-hidden text-xs text-muted-foreground hover:text-foreground"
             >
-              {row.url} <ExternalLink className="h-3 w-3 shrink-0" />
+              <span className="min-w-0 truncate">{row.url}</span>
+              <ExternalLink className="h-3 w-3 shrink-0" />
             </a>
           )}
         </div>

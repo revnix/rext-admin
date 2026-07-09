@@ -499,7 +499,10 @@ export function DataTable<
                         onClick={() => onRowClick?.(row)}
                       >
                         {columns.map((column) => (
-                          <TableCell key={column.key}>
+                          <TableCell
+                            key={column.key}
+                            style={{ width: column.width }}
+                          >
                             {column.cell
                               ? column.cell(
                                   (row as Record<string, unknown>)[column.key],
