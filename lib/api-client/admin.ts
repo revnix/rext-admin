@@ -100,12 +100,15 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
+      const formattedDateFrom = filters?.date_from && filters.date_from.length === 10 ? `${filters.date_from}T00:00:00.000Z` : filters?.date_from;
+      const formattedDateTo = filters?.date_to && filters.date_to.length === 10 ? `${filters.date_to}T23:59:59.999Z` : filters?.date_to;
+
       const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.myLogs, {
         action: filters?.action,
-        status: filters?.status,
+        status_filter: filters?.status,
         resource_type: filters?.resource_type,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
+        date_from: formattedDateFrom,
+        date_to: formattedDateTo,
         limit: filters?.limit,
         offset: filters?.offset,
       });
@@ -167,6 +170,9 @@ export function createAuditLogsNamespace(client: ApiClient) {
       limit?: number;
       offset?: number;
     }) => {
+      const formattedDateFrom = filters?.date_from && filters.date_from.length === 10 ? `${filters.date_from}T00:00:00.000Z` : filters?.date_from;
+      const formattedDateTo = filters?.date_to && filters.date_to.length === 10 ? `${filters.date_to}T23:59:59.999Z` : filters?.date_to;
+
       const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.allLogs, {
         user_id: filters?.user_id,
         full_name: filters?.full_name,
@@ -176,8 +182,8 @@ export function createAuditLogsNamespace(client: ApiClient) {
         resource_id: filters?.resource_id,
         workspace_id: filters?.workspace_id,
         status_filter: filters?.status_filter,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
+        date_from: formattedDateFrom,
+        date_to: formattedDateTo,
         limit: filters?.limit,
         offset: filters?.offset,
       });
