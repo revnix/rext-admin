@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link2, Loader2, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -126,7 +125,6 @@ export function OAuthAccounts() {
                     alt={account.provider}
                     width={20}
                     height={20}
-                    unoptimized
                     className="h-5 w-5"
                   />
                 </div>
@@ -176,7 +174,6 @@ export function OAuthAccounts() {
                       alt={provider}
                       width={20}
                       height={20}
-                      unoptimized
                       className="h-5 w-5"
                     />
                   </div>
@@ -193,8 +190,8 @@ export function OAuthAccounts() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // Redirect to OAuth flow using NextAuth
-                    signIn(provider, { callbackUrl: "/settings" });
+                    // Redirect to OAuth flow
+                    window.location.href = `/api/auth/signin/${provider}?callbackUrl=/settings`;
                   }}
                 >
                   <Link2 className="mr-2 h-4 w-4" />
