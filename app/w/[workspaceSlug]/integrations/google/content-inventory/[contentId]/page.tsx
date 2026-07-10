@@ -61,7 +61,10 @@ export default function GoogleContentScoreDetailPage() {
               supportingKeywords={content?.seo_data?.secondary_keywords}
             />
 
-            <ContentAiInsightsPanel />
+            <ContentAiInsightsPanel
+              workspaceId={workspace.id}
+              contentId={contentId}
+            />
           </>
         )}
       </div>

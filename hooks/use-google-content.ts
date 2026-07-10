@@ -64,3 +64,19 @@ export function useGoogleContentPerformance(
     googleContentPerformanceQueries.detail(workspaceId, contentId, days),
   );
 }
+
+/**
+ * Module 5: rule-based ranking diagnosis for one article (free, always
+ * fetched). The AI-narrated summary is a separate, credit-gated, imperative
+ * fetch triggered by an "Explain with AI" action — see
+ * `ContentAiInsightsPanel`, not this hook.
+ */
+export function useGoogleRankingDiagnosis(
+  workspaceId: string,
+  contentId: string,
+  days = 28,
+) {
+  return useQuery(
+    googleScoreQueries.rankingDiagnosis(workspaceId, contentId, days),
+  );
+}

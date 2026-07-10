@@ -460,6 +460,27 @@ export const googleScoreQueries = {
       enabled: !!workspaceId,
       staleTime: 2 * 60 * 1000,
     }),
+  // Rule-based diagnosis only (generate_ai_summary=false) — free, safe to
+  // auto-fetch. The AI-narrated version is fetched imperatively (not via
+  // this cached query) when the user clicks "Explain with AI", since it's
+  // credit-gated and shouldn't fire on page load or refetch.
+  rankingDiagnosis: (workspaceId: string, contentId: string, days = 28) =>
+    queryOptions({
+      queryKey: [
+        ...googleScoreQueries.all(workspaceId),
+        "ranking-diagnosis",
+        contentId,
+        days,
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.getRankingDiagnosis(
+          workspaceId,
+          contentId,
+          { days, generateAiSummary: false },
+        ),
+      enabled: !!workspaceId && !!contentId,
+      staleTime: 2 * 60 * 1000,
+    }),
 };
 
 export const googleContentPerformanceQueries = {

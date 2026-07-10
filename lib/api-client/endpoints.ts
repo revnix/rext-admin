@@ -498,5 +498,7 @@ export const ENDPOINTS = {
     opportunityScore: (contentId: string) =>
       `/api/v1/integrations/google/content/${contentId}/opportunity-score` as const,
     opportunities: "/api/v1/integrations/google/opportunities",
+    rankingDiagnosis: (contentId: string) =>
+      `/api/v1/integrations/google/content/${contentId}/ranking-diagnosis` as const,
   },
 } as const;

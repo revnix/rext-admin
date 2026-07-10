@@ -235,3 +235,47 @@ export interface ContentPerformanceResponse {
   search_console: ContentSearchConsoleDailyMetric[];
   analytics: ContentAnalyticsDailyMetric[];
 }
+
+// ============================================================================
+// MODULE 5 — AI DIAGNOSIS (ranking diagnosis)
+// ============================================================================
+
+export type RankingDiagnosisClassification =
+  | "ranking_drop"
+  | "ctr_collapse"
+  | "visibility_drop"
+  | "improving"
+  | "stable"
+  | "no_data";
+
+export interface RankingSignalItem {
+  key: string;
+  label: string;
+  detail: string;
+}
+
+export interface RankingDiagnosisResponse {
+  content_id: string;
+  classification: RankingDiagnosisClassification;
+  window_days: number;
+
+  position_current: number | null;
+  position_previous: number | null;
+  position_delta: number | null;
+  clicks_current: number;
+  clicks_previous: number;
+  clicks_delta_pct: number | null;
+  impressions_current: number;
+  impressions_previous: number;
+  impressions_delta_pct: number | null;
+
+  top_query: string | null;
+  top_query_position: number | null;
+
+  signals: RankingSignalItem[];
+  summary: string;
+  reasons: string[];
+
+  ai_generated: boolean;
+  ai_unavailable_reason: string | null;
+}

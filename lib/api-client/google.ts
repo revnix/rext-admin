@@ -23,6 +23,7 @@ import type {
   GoogleSiteMappingRequest,
   OpportunityRankedListResponse,
   OpportunityScoreResponse,
+  RankingDiagnosisResponse,
 } from "@/types/google-integration";
 import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
@@ -212,6 +213,25 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
           workspace_id: workspaceId,
           days: options?.days,
           refresh: options?.refresh,
+        }),
+        { method: "GET" },
+      );
+    },
+
+    // ------------------------------------------------------------------
+    // Module 5 — AI Diagnosis (ranking diagnosis)
+    // ------------------------------------------------------------------
+
+    getRankingDiagnosis: async (
+      workspaceId: string,
+      contentId: string,
+      options?: { days?: number; generateAiSummary?: boolean },
+    ) => {
+      return client.request<RankingDiagnosisResponse>(
+        buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.rankingDiagnosis(contentId), {
+          workspace_id: workspaceId,
+          days: options?.days,
+          generate_ai_summary: options?.generateAiSummary,
         }),
         { method: "GET" },
       );
