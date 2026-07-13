@@ -2,7 +2,7 @@
 
 import { getSession, useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { log } from "@/lib/logger";
 
@@ -17,18 +17,23 @@ export function SessionTimeoutWarning() {
   const { data: session, update } = useSession();
   const [isExtending, setIsExtending] = useState(false);
 
-  // Handle session expiry - redirect to login
-  useEffect(() => {
-    if (sessionExpired && session) {
-      log.warn("[Auth] Session expired, performing logout");
-      performLogout("/login?session=expired");
-    }
-  }, [sessionExpired, session]);
-
   const handleExtendSession = useCallback(async () => {
-    if (isExtending) return;
+    if (isExtending) {
+      log.debug(
+        "[Auth] handleExtendSession called while already extending — skipping",
+      );
+      return;
+    }
 
     setIsExtending(true);
+    log.debug("[Auth] handleExtendSession starting", {
+      accessExpiryIso: session?.accessTokenExpires
+        ? new Date(session.accessTokenExpires).toISOString()
+        : undefined,
+      msUntilAccessExpiry: session?.accessTokenExpires
+        ? session.accessTokenExpires - Date.now()
+        : undefined,
+    });
     try {
       if (!session?.user?.refreshToken) {
         log.error("[Auth] No refresh token available for automatic refresh");
@@ -46,6 +51,18 @@ export function SessionTimeoutWarning() {
       const expiryBeforeSync = session.accessTokenExpires;
       const freshSession = await getSession();
 
+      log.debug("[Auth] Cross-tab sync check", {
+        expiryBeforeSyncIso: expiryBeforeSync
+          ? new Date(expiryBeforeSync).toISOString()
+          : undefined,
+        freshExpiryIso: freshSession?.accessTokenExpires
+          ? new Date(freshSession.accessTokenExpires).toISOString()
+          : undefined,
+        changedByAnotherTab:
+          !!freshSession?.accessTokenExpires &&
+          freshSession.accessTokenExpires !== expiryBeforeSync,
+      });
+
       if (
         freshSession?.accessTokenExpires &&
         freshSession.accessTokenExpires !== expiryBeforeSync &&
@@ -57,33 +74,105 @@ export function SessionTimeoutWarning() {
         return;
       }
 
-      // Delegate refresh to NextAuth's JWT callback (trigger === "update" path).
-      // Calling update() with no data triggers refreshAccessToken() server-side,
-      // keeping one canonical refresh path and preventing races with the 401 handler.
-      const updatedSession = await update();
+      // A no-argument update() is a GET in next-auth/react beta.31 and does
+      // not set `trigger === "update"`. Send an explicit action so the JWT
+      // callback performs one intentional backend rotation.
+      log.debug("[Auth] Requesting an explicit server-side token refresh");
+      const updatedSession = await update({
+        authAction: "refresh-backend-token",
+      });
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
-        log.error("[Auth] Session refresh failed");
+        log.error("[Auth] Session refresh failed", updatedSession.error);
         performLogout("/login?session=expired");
         return;
       }
 
-      log.info("[Auth] Session refreshed automatically");
+      log.info("[Auth] Session refreshed automatically", {
+        newAccessExpiryIso: updatedSession?.accessTokenExpires
+          ? new Date(updatedSession.accessTokenExpires).toISOString()
+          : undefined,
+      });
     } catch (error) {
-      log.error("[Auth] Failed to extend session:", error);
-      performLogout("/login?session=expired");
+      // A thrown exception here (e.g. a network blip calling getSession()/
+      // update()) is not the same as a definitive "refresh token rejected"
+      // response — that's handled above via updatedSession?.error. Forcing
+      // a logout on any transient error was itself a bug: a single flaky
+      // request could end a session whose refresh token was still valid
+      // for days. Log it and let the next check — or the reactive 401
+      // handler in authenticatedFetch, which has its own retry/classify
+      // logic — resolve it instead.
+      log.error("[Auth] Failed to extend session, will retry later:", error);
     } finally {
       setIsExtending(false);
     }
   }, [isExtending, session, update]);
 
-  // Handle automatic refresh when session is about to expire
+  // Handle automatic refresh when session is about to expire.
+  //
+  // Edge-triggered via `hasTriggeredRef` rather than firing on every
+  // dependency change: `session` (and therefore `handleExtendSession`) gets
+  // a new identity on every refresh, which re-runs this effect immediately
+  // after a refresh completes — but `showWarning` from useSessionTimeout()
+  // hasn't been recomputed to `false` yet in that same render pass (it's
+  // updated by a separate effect). Without the ref guard, that one-render
+  // staleness caused an immediate second refresh, which caused a third, and
+  // so on — a tight refresh loop that rotates the refresh token far faster
+  // than intended.
+  const hasTriggeredRef = useRef(false);
+
   useEffect(() => {
-    if (showWarning && !isExtending && session?.user?.refreshToken) {
-      log.info("[Auth] Session expiring soon, triggering automatic refresh...");
-      handleExtendSession();
+    if (!showWarning) {
+      hasTriggeredRef.current = false;
+      return;
     }
+
+    if (hasTriggeredRef.current) {
+      log.debug(
+        "[Auth] Auto-refresh effect re-fired while already triggered this warning window — ignoring (loop guard)",
+      );
+      return;
+    }
+
+    if (isExtending || !session?.user?.refreshToken) {
+      return;
+    }
+
+    hasTriggeredRef.current = true;
+    log.info("[Auth] Session expiring soon, triggering automatic refresh...");
+    handleExtendSession();
   }, [showWarning, isExtending, session, handleExtendSession]);
+
+  // `sessionExpired` is a local wall-clock check against a cached
+  // access-token timestamp (see useSessionTimeout) — it's computed on a 10s
+  // poll and can go stale, e.g. a backgrounded tab whose interval was
+  // throttled past the real expiry. Treat it as "go verify" rather than
+  // "the refresh token is dead": attempt one refresh first, and only log
+  // out if that refresh itself comes back with a definitive rejection
+  // (handled inside handleExtendSession via updatedSession?.error).
+  // Logging out unconditionally here was the bug — it could end a session
+  // whose refresh token was still valid for days. Edge-triggered via
+  // `hasTriggeredExpiredRef` for the same reason as the warning effect
+  // above: `session` changes identity on every refresh attempt, which
+  // would otherwise re-fire this effect and re-attempt on every settle.
+  const hasTriggeredExpiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!sessionExpired) {
+      hasTriggeredExpiredRef.current = false;
+      return;
+    }
+
+    if (hasTriggeredExpiredRef.current || isExtending || !session) {
+      return;
+    }
+
+    hasTriggeredExpiredRef.current = true;
+    log.warn(
+      "[Auth] Local expiry check fired, verifying via refresh before logout",
+    );
+    handleExtendSession();
+  }, [sessionExpired, isExtending, session, handleExtendSession]);
 
   // Don't render if session doesn't exist or has error
   if (!session || session.error) {

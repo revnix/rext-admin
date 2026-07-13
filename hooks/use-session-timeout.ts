@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
+import { log } from "@/lib/logger";
 
 /**
  * Hook for monitoring session timeout and showing warnings.
@@ -29,6 +30,7 @@ export function useSessionTimeout() {
   // We snapshot Date.now() whenever `accessTokenExpires` changes.
   const issuedAtRef = useRef<number | null>(null);
   const prevExpiresRef = useRef<number | null>(null);
+  const prevShowWarningRef = useRef<boolean>(false);
 
   // When accessTokenExpires changes (token refreshed / new login),
   // record the issue timestamp so we can compute total duration.
@@ -87,7 +89,20 @@ export function useSessionTimeout() {
 
       // Show warning during the last 2 minutes
       const warningThreshold = 2 * 60 * 1000;
-      setShowWarning(remaining < warningThreshold);
+      const nextShowWarning = remaining < warningThreshold;
+
+      if (nextShowWarning !== prevShowWarningRef.current) {
+        log.debug(
+          `[Auth] Session timeout warning ${nextShowWarning ? "activated" : "cleared"}`,
+          {
+            remainingMs: remaining,
+            accessExpiryIso: new Date(expiresAt).toISOString(),
+          },
+        );
+        prevShowWarningRef.current = nextShowWarning;
+      }
+
+      setShowWarning(nextShowWarning);
     };
 
     // Check immediately
