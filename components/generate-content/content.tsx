@@ -519,6 +519,12 @@ function ContentEditorInner(props: ContentEditorProps) {
           action: "publish",
           message: "Publishing content to your connected site...",
         });
+        const cmsType = integrationsData[0]?.integration_type;
+        analytics.track("cms_publish_attempted", {
+          cms_type: cmsType,
+          workspace_id: workspaceId ?? undefined,
+          content_id: contentSavedId ?? undefined,
+        });
         const payload = getContentPayload();
         const response = contentSavedId
           ? await apiClient.content.publish(
@@ -535,6 +541,11 @@ function ContentEditorInner(props: ContentEditorProps) {
           content_id: contentSavedId ?? response?.id ?? undefined,
           seo_score: seoScore?.seo_health_score,
         });
+        analytics.track("cms_publish_succeeded", {
+          cms_type: cmsType,
+          workspace_id: workspaceId ?? undefined,
+          content_id: contentSavedId ?? response?.id ?? undefined,
+        });
         setStatusModal({
           title: "Content Published Successfully!",
           isOpen: true,
@@ -547,6 +558,11 @@ function ContentEditorInner(props: ContentEditorProps) {
       }
     } catch (error) {
       const err = error as Error;
+      analytics.track("cms_publish_failed", {
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? undefined,
+        error_message: err.message,
+      });
       setStatusModal({
         title: "Failed to Publish Content",
         isOpen: true,
