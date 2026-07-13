@@ -1,6 +1,6 @@
 # Rext Admin     
 A modern Next.js application for generating, managing, and utilizing AI-powered content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
- 
+   
 
 ## 🔒 Security Notice  
 **This application has been updated with comprehensive security measures (September 2024).**
@@ -301,3 +301,5 @@ npm start
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
