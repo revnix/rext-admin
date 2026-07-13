@@ -2,9 +2,14 @@ import type {
   Outline,
   ContentSection,
   OutlineRenderBlock,
+  ClusterHeadingMapItem,
+  KeywordCluster,
+  InternalLinkSuggestion,
+  BrandVoicePromotion,
 } from "@/types/generate-content";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Check,
   X,
@@ -18,6 +23,9 @@ import {
   Tag,
   FileText,
   HelpCircle,
+  Layers,
+  Link2,
+  Megaphone,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -535,6 +543,9 @@ function deriveOutlineFromTokens(rawTokens: string): Outline {
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         };
       }
     } catch {
@@ -561,22 +572,39 @@ export function OutlineDisplay({
   outline,
   rawTokens, // ← NEW: the accumulating raw JSON string from messages/partial
   isLoading,
+  internalLinks,
+  brandVoicePromotion,
   onApprove,
   onReject,
   onUpdate,
+  keywordClusters = [],
 }: {
   outline: Outline | null; // null while still streaming
   rawTokens: string; // grows token by token from SSE
   isLoading: boolean;
-  onApprove: () => void;
+  internalLinks?: InternalLinkSuggestion[];
+  brandVoicePromotion?: BrandVoicePromotion;
+  onApprove: (
+    selectedLinks: InternalLinkSuggestion[],
+    promoteBrand: boolean,
+  ) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
+  keywordClusters?: KeywordCluster[];
 }) {
   const [editingTone, setEditingTone] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
   const [tone, setTone] = useState("");
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
+  const [checkedUrls, setCheckedUrls] = useState<Set<string>>(new Set());
+  const [promoteBrand, setPromoteBrand] = useState<boolean>(
+    brandVoicePromotion?.recommended ?? false,
+  );
+
+  useEffect(() => {
+    setPromoteBrand(brandVoicePromotion?.recommended ?? false);
+  }, [brandVoicePromotion]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -584,6 +612,27 @@ export function OutlineDisplay({
   );
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
+
+  // Derive render blocks from cluster_heading_map + sections when _render is absent.
+  const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
+    const map: ClusterHeadingMapItem[] | undefined =
+      effectiveOutline.cluster_heading_map;
+    if (!map || !Array.isArray(map) || !map.length) return null;
+    const sectionByHeading = new Map(
+      (effectiveOutline.sections ?? []).map((s) => [s.heading, s]),
+    );
+    const grouped = new Map<string, OutlineRenderBlock>();
+    for (const { cluster, heading } of map) {
+      if (!grouped.has(cluster))
+        grouped.set(cluster, { heading: cluster, items: [] });
+      const section = sectionByHeading.get(heading);
+      grouped.get(cluster)?.items.push({
+        label: heading,
+        points: section?.key_points ?? [],
+      });
+    }
+    return Array.from(grouped.values());
+  }, [effectiveOutline.cluster_heading_map, effectiveOutline.sections]);
 
   useEffect(() => {
     if (!outline) return;
@@ -600,8 +649,9 @@ export function OutlineDisplay({
       return;
     }
 
-    const totalItems = outline._render?.blocks
-      ? outline._render.blocks.reduce((sum, b) => sum + b.items.length, 0)
+    const activeBlocks = outline._render?.blocks ?? clusterBlocks ?? null;
+    const totalItems = activeBlocks
+      ? activeBlocks.reduce((sum, b) => sum + b.items.length, 0)
       : (outline.sections?.length ?? 0);
 
     if (!totalItems) {
@@ -624,7 +674,22 @@ export function OutlineDisplay({
     return () => {
       cancelled = true;
     };
-  }, [outline]);
+  }, [outline, clusterBlocks]);
+
+  const sortedInternalLinks = useMemo(
+    () =>
+      internalLinks ? [...internalLinks].sort((a, b) => b.score - a.score) : [],
+    [internalLinks],
+  );
+
+  useEffect(() => {
+    if (!sortedInternalLinks.length) return;
+    setCheckedUrls(
+      new Set(
+        sortedInternalLinks.filter((l) => l.score >= 0.5).map((l) => l.url),
+      ),
+    );
+  }, [sortedInternalLinks]);
 
   const handleToneSave = () => {
     if (onUpdate && outline) onUpdate({ ...outline, tone });
@@ -856,10 +921,68 @@ export function OutlineDisplay({
         </div>
       )}
 
-      {/* Structure — use _render blocks when available, fall back to legacy sections */}
-      {!isDraft && effectiveOutline._render?.blocks?.length ? (
+      {/* Keyword Clusters & Topic Mapping */}
+      {!isDraft && keywordClusters && keywordClusters.length > 0 && (
+        <div className="mb-12 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold text-foreground">
+              Keyword Clusters
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 mt-5">
+            {keywordClusters.map((cluster) => {
+              return (
+                <div
+                  key={cluster.cluster_name}
+                  className="flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
+                >
+                  {/* Header info */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground capitalize">
+                        {cluster.cluster_name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {cluster.main_intent}
+                        </span>
+                        {cluster.confidence_score !== undefined && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Conf: {Math.round(cluster.confidence_score * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-muted-foreground/40 bg-muted px-2 py-1 rounded-md shrink-0">
+                      {cluster.keywords.length} keywords
+                    </span>
+                  </div>
+
+                  {/* Keywords */}
+                  <div className="flex flex-wrap gap-1.5 flex-1">
+                    {cluster.keywords.map((kw) => (
+                      <span
+                        key={kw.keyword}
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/60 border border-border/40 text-foreground/80"
+                      >
+                        {kw.keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Structure — prefer _render blocks, fall back to cluster_heading_map, then legacy sections */}
+      {!isDraft &&
+      (effectiveOutline._render?.blocks?.length || clusterBlocks?.length) ? (
         <RenderBlocks
-          blocks={effectiveOutline._render.blocks}
+          blocks={effectiveOutline._render?.blocks ?? clusterBlocks ?? []}
           visibleSectionCount={visibleSectionCount}
           sections={outline?.sections}
         />
@@ -925,6 +1048,173 @@ export function OutlineDisplay({
         </div>
       ) : null}
 
+      {/* Internal Links Panel */}
+      {sortedInternalLinks.length > 0 && (
+        <div className="mt-8 p-5 rounded-xl border border-border/50 bg-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
+              <Link2 className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Internal Links
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {checkedUrls.size} of {sortedInternalLinks.length} selected —
+                links ≥ 50% relevance pre-selected
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {sortedInternalLinks.map((link) => {
+              const isChecked = checkedUrls.has(link.url);
+              return (
+                <label
+                  key={link.url}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+                    isChecked
+                      ? "bg-primary/5 border-primary/30"
+                      : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      const next = new Set(checkedUrls);
+                      if (e.target.checked) next.add(link.url);
+                      else next.delete(link.url);
+                      setCheckedUrls(next);
+                    }}
+                    className="sr-only"
+                  />
+                  <div
+                    className={cn(
+                      "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                      isChecked
+                        ? "bg-primary border-primary"
+                        : "bg-background border-border",
+                    )}
+                  >
+                    {isChecked && (
+                      <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {link.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {link.url}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        link.status === "published"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {link.status}
+                    </span>
+                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                      {Math.round(link.score * 100)}%
+                    </span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Brand Voice Promotion Panel */}
+      {brandVoicePromotion && (
+        <div className="mt-6 p-5 rounded-xl border border-border/50 bg-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
+              <Megaphone className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Brand Promotion
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Naturally mention{" "}
+                <span className="font-semibold text-foreground">
+                  {brandVoicePromotion.brand_name}
+                </span>{" "}
+                in the content
+              </p>
+            </div>
+            {brandVoicePromotion.recommended && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                Recommended
+              </span>
+            )}
+            <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+              {Math.round(brandVoicePromotion.score * 100)}% match
+            </span>
+          </div>
+
+          {(brandVoicePromotion.about ||
+            brandVoicePromotion.selling_position) && (
+            <div className="mb-4 space-y-1.5 pl-1">
+              {brandVoicePromotion.about && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  <span className="font-semibold text-foreground/70">
+                    About:{" "}
+                  </span>
+                  {brandVoicePromotion.about}
+                </p>
+              )}
+              {brandVoicePromotion.selling_position && (
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  <span className="font-semibold text-foreground/70">
+                    Position:{" "}
+                  </span>
+                  {brandVoicePromotion.selling_position}
+                </p>
+              )}
+            </div>
+          )}
+
+          <label
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+              promoteBrand
+                ? "bg-primary/5 border-primary/30"
+                : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={promoteBrand}
+              onChange={(e) => setPromoteBrand(e.target.checked)}
+              className="sr-only"
+            />
+            <div
+              className={cn(
+                "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                promoteBrand
+                  ? "bg-primary border-primary"
+                  : "bg-background border-border",
+              )}
+            >
+              {promoteBrand && (
+                <Check className="w-2.5 h-2.5 text-primary-foreground" />
+              )}
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Include brand mention in generated content
+            </p>
+          </label>
+        </div>
+      )}
+
       {/* Action Bar */}
       <div className="mt-10 flex items-center justify-end gap-3">
         <Button
@@ -936,7 +1226,12 @@ export function OutlineDisplay({
           <X className="w-4 h-4 mr-2" /> Reject
         </Button>
         <Button
-          onClick={onApprove}
+          onClick={() => {
+            const selected = sortedInternalLinks.filter((l) =>
+              checkedUrls.has(l.url),
+            );
+            onApprove(selected, promoteBrand);
+          }}
           disabled={isLoading || isDraft}
           className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
         >

@@ -4,6 +4,9 @@ import { z } from "zod";
  * Zod Validation Schemas for Integrations
  */
 
+const domainRegex =
+  /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i;
+
 const urlSchema = z
   .string()
   .min(1, "Site URL is required")
@@ -14,14 +17,13 @@ const urlSchema = z
   .refine(
     (url) => {
       try {
-        const hostname = new URL(url).hostname;
-        return hostname.endsWith(".com");
+        return domainRegex.test(new URL(url).hostname);
       } catch {
         return false;
       }
     },
     {
-      message: "URL must be a .com domain",
+      message: "URL must include a valid domain with a TLD (e.g. yoursite.com)",
     },
   );
 

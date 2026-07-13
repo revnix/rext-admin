@@ -162,5 +162,70 @@ export function createContentNamespace(client: ApiClient) {
         },
       );
     },
+
+    /**
+     * Schedule existing content for future publication
+     */
+    schedule: async (
+      workspaceId: string,
+      contentId: string,
+      scheduledAt: string,
+      siteId?: string,
+    ) => {
+      return client.request<ContentResponse>(
+        `${ENDPOINTS.CONTENT.publish(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "future",
+            scheduled_at: scheduledAt,
+            ...(siteId ? { site_id: siteId } : {}),
+          }),
+        },
+      );
+    },
+
+    /**
+     * Save new content and schedule for future publication
+     */
+    saveAndSchedule: async (
+      workspaceId: string,
+      data: Record<string, unknown>,
+      scheduledAt: string,
+    ) => {
+      return client.request<ContentResponse>(
+        `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}&scheduled_at=${encodeURIComponent(scheduledAt)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+    },
+
+    /**
+     * Cancel a pending scheduled publish — resets content to draft
+     */
+    cancelSchedule: async (workspaceId: string, contentId: string) => {
+      return client.request<{
+        content_id: string;
+        status: string;
+        cancelled_records: number;
+      }>(
+        `${ENDPOINTS.CONTENT.cancel_schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        { method: "DELETE" },
+      );
+    },
+
+    /**
+     * Fetch published + scheduled content grouped by day for a given month
+     */
+    calendar: async (workspaceId: string, year: number, month: number) => {
+      return client.request<import("@/types/content").CalendarResponse>(
+        `${ENDPOINTS.CONTENT.calendar}?workspace_id=${encodeURIComponent(workspaceId)}&year=${year}&month=${month}`,
+        { method: "GET" },
+      );
+    },
   };
 }

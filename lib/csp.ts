@@ -29,14 +29,15 @@ export function getCSPHeader(_nonce: string): string {
 
   // Third-party service domains that need to be whitelisted
   // Add new services here as needed for payment processing, analytics, etc.
+  const posthogHost =
+    process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
+
   const thirdPartyDomains = {
     lemonsqueezy: {
       app: "https://app.lemonsqueezy.com",
       assets: "https://assets.lemonsqueezy.com",
     },
-    // Add more third-party services here as needed:
-    // stripe: "https://js.stripe.com",
-    // analytics: "https://www.google-analytics.com",
+    posthog: posthogHost,
   };
 
   // Build CSP directives
@@ -61,7 +62,7 @@ export function getCSPHeader(_nonce: string): string {
     "font-src 'self' data:",
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app}`,
+    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
     `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.app}`,

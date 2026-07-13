@@ -34,6 +34,7 @@ import {
 import { log } from "@/lib/logger";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 
 interface AddIntegrationModalProps {
   isOpen: boolean;
@@ -146,6 +147,10 @@ function WordPressForm({
         api_key: data.api_key,
       });
       toast.success("WordPress connection added successfully");
+      analytics.track("cms_connection_completed", {
+        cms_type: "wordpress",
+        workspace_id: workspaceId,
+      });
       form.reset();
       onSuccess();
     } catch (error: unknown) {
@@ -153,6 +158,11 @@ function WordPressForm({
       toast.error(
         error instanceof Error ? error.message : "Failed to add integration",
       );
+      analytics.track("cms_connection_failed", {
+        cms_type: "wordpress",
+        workspace_id: workspaceId,
+        error_message: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
 
@@ -188,7 +198,8 @@ function WordPressForm({
                 />
               </FormControl>
               <p className="text-[0.8rem] text-muted-foreground">
-                Must start with https:// and use a .com domain
+                Must start with https:// and include a valid domain (e.g.
+                yoursite.com)
               </p>
               <FormMessage />
             </FormItem>
@@ -243,7 +254,7 @@ function WordPressForm({
 }
 
 function ShopifyForm({
-  onSuccess,
+  onSuccess: _onSuccess,
   onClose,
   workspaceId,
 }: {
@@ -268,7 +279,7 @@ function ShopifyForm({
     data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
   ) => {
     try {
-     const result = await integrationsApiService.startShopifyInstall(
+      const result = await integrationsApiService.startShopifyInstall(
         workspaceId,
         {
           store_url: data.store_url,
@@ -284,6 +295,12 @@ function ShopifyForm({
 
       if (installUrl) {
         toast.success("Opening Shopify installation in a new tab...");
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(
+            `shopify_install_pending_${workspaceId}`,
+            "true",
+          );
+        }
         window.open(installUrl, "_blank", "noopener,noreferrer");
       } else {
         throw new Error("Failed to get installation URL from Shopify");
@@ -293,6 +310,11 @@ function ShopifyForm({
       toast.error(
         error instanceof Error ? error.message : "Failed to start installation",
       );
+      analytics.track("cms_connection_failed", {
+        cms_type: "shopify",
+        workspace_id: workspaceId,
+        error_message: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
 

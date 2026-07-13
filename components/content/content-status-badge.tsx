@@ -8,6 +8,7 @@ import {
   Eye,
   Globe,
   Loader2,
+  Trash2,
   X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ const ICON_COMPONENTS = {
   Calendar,
   Eye,
   X,
+  Trash2,
 } as const;
 
 export function ContentStatusBadge({

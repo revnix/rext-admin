@@ -130,6 +130,26 @@ const nextConfig: NextConfig = {
         hostname: "staging-api.rext.ai",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "www.google.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "github.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "microsoft.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "facebook.com",
+        pathname: "/**",
+      },
     ],
   },
 

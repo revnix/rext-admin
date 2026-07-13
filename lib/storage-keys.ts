@@ -18,6 +18,16 @@ export const ONBOARDING_STORAGE_KEYS = {
       ? `onboarding-skipped-${workspaceId}`
       : "onboarding-skipped-global",
 
+  /**
+   * Array of milestone IDs already reported via analytics.
+   * Scoped per workspace — prevents re-firing `onboarding_milestone_completed`
+   * when the hook remounts after the milestone was completed elsewhere.
+   */
+  trackedMilestones: (workspaceId?: string) =>
+    workspaceId
+      ? `onboarding-tracked-milestones-${workspaceId}`
+      : "onboarding-tracked-milestones-global",
+
   /** Serialized InvitationContext stored after invitation acceptance. */
   recentInvitationAcceptance: "recent_invitation_acceptance",
 

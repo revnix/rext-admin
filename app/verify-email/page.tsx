@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import { analytics } from "@/lib/analytics";
 import type { Route } from "next";
 
 function VerifyEmailContent() {
@@ -91,6 +92,7 @@ function VerifyEmailContent() {
         }
 
         setSuccess(true);
+        analytics.track("email_verified");
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push("/login" as Route);

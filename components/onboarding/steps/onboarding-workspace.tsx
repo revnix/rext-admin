@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
+import { analytics } from "@/lib/analytics";
 import type { Route } from "next";
 
 interface OnboardingWorkspaceProps {
@@ -75,6 +76,10 @@ export function OnboardingWorkspace({
         url: normalizedUrl,
       });
       toast.success("Workspace created successfully!");
+      analytics.track("onboarding_workspace_created", {
+        workspace_id: response.workspace.id,
+        workspace_slug: response.workspace.slug,
+      });
 
       // Navigate to the new workspace
       router.push(`/w/${response.workspace.slug}/overview` as Route);

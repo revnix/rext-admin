@@ -72,6 +72,7 @@ export interface SubscriptionPlan extends Record<string, unknown> {
   max_topics: number;
   max_knowledge_items: number;
   max_api_calls_per_month: number;
+  credits_per_month: number | null;
   is_active: boolean;
   is_public: boolean;
   created_at: string;
@@ -130,6 +131,8 @@ export interface UserSubscriptionDetail {
   trial_end_date: string | null;
   cancelled_at: string | null;
   current_api_calls: number;
+  current_credits: number;
+  credits_reset_date: string | null;
   created_at: string;
   // LemonSqueezy integration fields
   lemonsqueezy_subscription_id: string | null;
@@ -234,6 +237,18 @@ export interface TrialStatus {
 }
 
 // ============================================================================
+// CREDITS
+// ============================================================================
+
+export interface CreditBalance {
+  current_credits: number;
+  credits_per_month: number | null;
+  credits_reset_date: string | null;
+  articles_remaining: number | null;
+  plan_name: string | null;
+}
+
+// ============================================================================
 // SUBSCRIPTION HISTORY
 // ============================================================================
 
@@ -271,7 +286,6 @@ export interface CheckoutSessionRequest {
   billing_period: BillingPeriod;
   success_url: string;
   cancel_url: string;
-  discount_code?: string;
   affiliate_code?: string;
 }
 
@@ -288,6 +302,16 @@ export interface CheckoutSessionResponse {
  */
 export interface CustomerPortalResponse {
   portal_url: string;
+}
+
+/**
+ * Response from upgrade/downgrade subscription endpoints
+ */
+export interface PlanChangeResponse {
+  action: "checkout_required" | "upgraded" | "downgraded";
+  checkout_url?: string;
+  plan_display_name?: string;
+  message?: string;
 }
 
 /**

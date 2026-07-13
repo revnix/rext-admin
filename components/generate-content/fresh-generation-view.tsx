@@ -1,7 +1,14 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import { useEffect, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -10,8 +17,10 @@ import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
   CommonOutput,
   ContentOutline,
+  BrandVoicePromotion,
   ContentSection,
   FinalContent,
+  InternalLinkSuggestion,
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
@@ -49,6 +58,9 @@ import {
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
 import type { ToolCall } from "@/components/generate-content/agent-feed";
+import { analytics } from "@/lib/analytics";
+import { useSubscriptionStore } from "@/stores/subscription-store";
+import { toast } from "sonner";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -172,6 +184,7 @@ export function FreshGenerationView({
   const [state, dispatch] = useReducer(generationReducer, initialState);
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
+  const { patchCredits } = useSubscriptionStore();
 
   // ── Streaming text buffers — one per "phase" ──────────────────────────────
   // outlineStream  → accumulates tokens while LLM writes the outline JSON
@@ -208,7 +221,24 @@ export function FreshGenerationView({
     trustScore,
     allContent,
     currentLoadingSteps,
+    keywordClusters,
   } = state;
+
+  const interruptInternalLinks = useMemo(
+    () =>
+      state.interrupt?.[0]?.value?.internal_links as
+        | InternalLinkSuggestion[]
+        | undefined,
+    [state.interrupt],
+  );
+
+  const interruptBrandVoicePromotion = useMemo(
+    () =>
+      state.interrupt?.[0]?.value?.brand_voice_promotion as
+        | BrandVoicePromotion
+        | undefined,
+    [state.interrupt],
+  );
 
   const isEditingRef = useRef(isEditing);
   useEffect(() => {
@@ -217,6 +247,12 @@ export function FreshGenerationView({
 
   // Abort controller — cancelled on unmount or when a new stream starts
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Track generation completion once per thread to avoid duplicate events
+  const trackedThreadRef = useRef<string | null>(null);
+  const trackedKeywordSearchRef = useRef<string | null>(null);
+  const trackedTitleSuggestionsRef = useRef<string | null>(null);
+  const trackedOutlineGeneratedRef = useRef<string | null>(null);
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
@@ -267,6 +303,68 @@ export function FreshGenerationView({
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
+
+  // Track content_generation_completed once per thread when all scores are ready
+  useEffect(() => {
+    if (!isContentFinal || !threadId) return;
+    if (trackedThreadRef.current === threadId) return;
+    trackedThreadRef.current = threadId;
+
+    analytics.track("content_generation_completed", {
+      keyword: userKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      word_count: allContent?.word_count,
+    });
+  }, [
+    isContentFinal,
+    threadId,
+    userKeyword,
+    workspaceId,
+    allContent?.word_count,
+  ]);
+
+  // Track keyword_search_completed once per thread when SEO/keyword data arrives
+  useEffect(() => {
+    if (!threadId || !suggestedKeywords.length) return;
+    if (trackedKeywordSearchRef.current === threadId) return;
+    trackedKeywordSearchRef.current = threadId;
+
+    analytics.track("keyword_search_completed", {
+      keyword: userKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      suggested_keyword_count: suggestedKeywords.length,
+    });
+  }, [threadId, suggestedKeywords.length, userKeyword, workspaceId]);
+
+  // Track title_suggestions_generated once per thread when topics arrive
+  useEffect(() => {
+    if (!threadId || !topics.length) return;
+    if (trackedTitleSuggestionsRef.current === threadId) return;
+    trackedTitleSuggestionsRef.current = threadId;
+
+    analytics.track("title_suggestions_generated", {
+      keyword: primaryKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      title_count: topics.length,
+    });
+  }, [threadId, topics.length, primaryKeyword, workspaceId]);
+
+  // Track outline_generated once per thread when the parsed outline arrives
+  useEffect(() => {
+    if (!threadId || !parsedOutline) return;
+    if (trackedOutlineGeneratedRef.current === threadId) return;
+    trackedOutlineGeneratedRef.current = threadId;
+
+    analytics.track("outline_generated", {
+      keyword: primaryKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      section_count: parsedOutline.sections?.length ?? 0,
+    });
+  }, [threadId, parsedOutline, primaryKeyword, workspaceId]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -487,6 +585,9 @@ export function FreshGenerationView({
               : 0,
           max_retries:
             typeof parsed.max_retries === "number" ? parsed.max_retries : 0,
+          cluster_heading_map: Array.isArray(parsed.cluster_heading_map)
+            ? parsed.cluster_heading_map
+            : undefined,
         } satisfies ContentOutline;
 
         dispatch({ type: "SET_OUTLINE", payload: normalized });
@@ -576,6 +677,28 @@ export function FreshGenerationView({
                       }
                     : tc,
                 ),
+              );
+            }
+          } else if (d?.type === "credits") {
+            const credits = Number(d.current_credits ?? 0);
+            const step = String(d.step ?? "credits.updated");
+            if (step === "credits.updated") {
+              patchCredits(credits);
+            } else if (step === "credits.low") {
+              patchCredits(credits);
+              toast.warning(
+                `Low credits: ${credits} remaining. Generation may not complete.`,
+                {
+                  duration: 10000,
+                },
+              );
+            } else if (step === "credits.exhausted") {
+              patchCredits(credits);
+              toast.error(
+                "Out of credits. Upgrade your plan to continue generating content.",
+                {
+                  duration: 10000,
+                },
               );
             }
           }
@@ -717,6 +840,16 @@ export function FreshGenerationView({
           });
       }
     } catch (_e) {
+      const isAbort = _e instanceof DOMException && _e.name === "AbortError";
+      if (!isAbort) {
+        analytics.track("content_generation_failed", {
+          keyword: userKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
+          error_message:
+            _e instanceof Error ? _e.message : "Unknown stream error",
+        });
+      }
     } finally {
       if (loadingStatus?.endsWith("..."))
         dispatch({
@@ -754,6 +887,14 @@ export function FreshGenerationView({
     dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
     const keyword = _initialKeyword || userKeyword;
+
+    analytics.track("content_generation_started", {
+      keyword,
+      country,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: newThreadId,
+      from_library: isLibrary,
+    });
 
     const stream = streamFromSSE(
       `/api/generate/${newThreadId}/stream`,
@@ -817,6 +958,11 @@ export function FreshGenerationView({
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
+        analytics.track("keyword_selected", {
+          keyword: value,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
+        });
         return resumeWorkflow({
           payload: {
             "Primary Keyword": value,
@@ -843,6 +989,12 @@ export function FreshGenerationView({
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: CONTENT_TYPE_STEPS,
+        });
+        analytics.track("title_selected", {
+          title: value,
+          keyword: primaryKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
         });
         return resumeWorkflow({
           payload: { selected_topic: value },
@@ -874,6 +1026,11 @@ export function FreshGenerationView({
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: FINAL_GENERATION_STEPS,
+        });
+        analytics.track("outline_approved", {
+          keyword: primaryKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
         });
         return resumeWorkflow({
           payload: {
@@ -926,6 +1083,24 @@ export function FreshGenerationView({
   const suppressLibraryTopicLoader =
     isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
 
+  const handleEditToggle = useCallback(
+    () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
+    [isEditing],
+  );
+
+  const handleContentChange = useCallback(
+    (val: string) => {
+      dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
+      if (allContent) {
+        dispatch({
+          type: "SET_ALL_CONTENT",
+          payload: { ...allContent, body_markdown: val },
+        });
+      }
+    },
+    [allContent],
+  );
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -965,6 +1140,7 @@ export function FreshGenerationView({
         seoResult={seoResult}
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
+        keywordClusters={keywordClusters}
       />
     ),
     topic: (
@@ -1085,11 +1261,49 @@ export function FreshGenerationView({
               outline={parsedOutline}
               rawTokens={outline.streamedText}
               isLoading={isStreamingOutline}
-              onApprove={() => handleWorkflow("OUTLINE_APPROVE", "")}
+              internalLinks={interruptInternalLinks}
+              brandVoicePromotion={interruptBrandVoicePromotion}
+              onApprove={(selectedLinks, promoteBrand) => {
+                setTokenTarget("content");
+                tokenTargetRef.current = "content";
+                content.resetStream();
+                setToolCalls([]);
+                setPipelineSteps([]);
+                dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
+                dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+                dispatch({
+                  type: "SET_LOADING_STEPS",
+                  payload: FINAL_GENERATION_STEPS,
+                });
+                analytics.track("outline_approved", {
+                  keyword: primaryKeyword,
+                  workspace_id: workspaceId ?? undefined,
+                  thread_id: threadId ?? undefined,
+                });
+                void resumeWorkflow({
+                  payload: {
+                    action: "approve",
+                    ...(parsedOutline?.tone
+                      ? { tone: parsedOutline.tone }
+                      : {}),
+                    ...(parsedOutline?.target_audience?.length
+                      ? { target_audience: parsedOutline.target_audience }
+                      : {}),
+                    ...(interruptInternalLinks?.length
+                      ? { selected_internal_links: selectedLinks }
+                      : {}),
+                    ...(interruptBrandVoicePromotion
+                      ? { promote_brand: promoteBrand }
+                      : {}),
+                  },
+                  status: "Approving and generating content...",
+                });
+              }}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
               onUpdate={(updatedOutline) =>
                 dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
               }
+              keywordClusters={keywordClusters}
             />
           </div>
         ) : (
@@ -1118,18 +1332,8 @@ export function FreshGenerationView({
             outline={parsedOutline}
             toolCalls={toolCalls}
             pipelineSteps={pipelineSteps}
-            onEditToggle={() =>
-              dispatch({ type: "SET_IS_EDITING", payload: !isEditing })
-            }
-            onContentChange={(val) => {
-              dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-              if (allContent) {
-                dispatch({
-                  type: "SET_ALL_CONTENT",
-                  payload: { ...allContent, body_markdown: val },
-                });
-              }
-            }}
+            onEditToggle={handleEditToggle}
+            onContentChange={handleContentChange}
           />
         </div>
       )}
