@@ -189,9 +189,7 @@ export function useOnboardingProgress(
   useEffect(() => {
     if (isLoading || isFetching) return;
 
-    const tracked = new Set(
-      local.getJSON<string[]>(trackedMilestonesKey, []),
-    );
+    const tracked = new Set(local.getJSON<string[]>(trackedMilestonesKey, []));
     let didTrackCompletion = false;
 
     milestones.forEach((milestone) => {
