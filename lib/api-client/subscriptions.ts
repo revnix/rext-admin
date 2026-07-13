@@ -9,6 +9,7 @@ import type {
   CheckoutSessionResponse,
   CustomerPortalResponse,
   InvoiceListResponse,
+  PlanChangeResponse,
   SubscriptionCancelRequest,
   SubscriptionHistoryResponse,
   SubscriptionListResponse,
@@ -16,6 +17,7 @@ import type {
   TrialStatus,
   UsageStats,
   UserSubscription,
+  CreditBalance,
 } from "@/types/subscription";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
@@ -71,7 +73,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       billingPeriod: BillingPeriod,
       successUrl?: string,
       cancelUrl?: string,
-      discountCode?: string,
+      _discountCode?: string,
       affiliateCode?: string,
     ): Promise<CheckoutSessionResponse> => {
       const baseUrl =
@@ -96,7 +98,6 @@ export function createSubscriptionsNamespace(client: ApiClient) {
             billing_period: billingPeriod,
             success_url: successUrl || `${baseUrl}/checkout/success`,
             cancel_url: cancelUrl || `${baseUrl}/checkout/cancel`,
-            ...(discountCode && { discount_code: discountCode }),
             ...(affiliateCode && { affiliate_code: affiliateCode }),
           }),
         },
@@ -131,17 +132,20 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     upgradeSubscription: async (
       newPlanId: string,
       billingPeriod?: BillingPeriod,
-    ): Promise<UserSubscription> => {
+    ): Promise<PlanChangeResponse> => {
       const requestData: SubscriptionUpgradeRequest = {
         new_plan_id: newPlanId,
         billing_period: billingPeriod,
       };
 
-      return client.request<UserSubscription>(ENDPOINTS.SUBSCRIPTIONS.upgrade, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
-      });
+      return client.request<PlanChangeResponse>(
+        ENDPOINTS.SUBSCRIPTIONS.upgrade,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestData),
+        },
+      );
     },
 
     /**
@@ -149,18 +153,18 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      *
      * @param newPlanId - UUID of the new plan
      * @param billingPeriod - Optional billing period change
-     * @returns Updated subscription details
+     * @returns Plan change result with action and optional message
      */
     downgradeSubscription: async (
       newPlanId: string,
       billingPeriod?: BillingPeriod,
-    ): Promise<UserSubscription> => {
+    ): Promise<PlanChangeResponse> => {
       const requestData: SubscriptionUpgradeRequest = {
         new_plan_id: newPlanId,
         billing_period: billingPeriod,
       };
 
-      return client.request<UserSubscription>(
+      return client.request<PlanChangeResponse>(
         ENDPOINTS.SUBSCRIPTIONS.downgrade,
         {
           method: "POST",
@@ -258,6 +262,17 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getTrialStatus: async (): Promise<TrialStatus> => {
       return client.request<TrialStatus>(ENDPOINTS.SUBSCRIPTIONS.trialStatus, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Get current credit balance
+     *
+     * @returns Current credit balance and limits
+     */
+    getCredits: async (): Promise<CreditBalance> => {
+      return client.request<CreditBalance>(ENDPOINTS.SUBSCRIPTIONS.credits, {
         method: "GET",
       });
     },

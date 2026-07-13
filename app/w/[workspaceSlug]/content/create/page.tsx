@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { use } from "react";
+import { use, useState } from "react";
 import { toast } from "sonner";
 import { ContentCreationWizard } from "@/components/content-creation/content-creation-wizard";
 import { PageLayout } from "@/components/page-layout";
@@ -14,12 +14,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client/core";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentCreationFormData } from "@/types/content-creation";
 import type { Route } from "next";
+import { InsufficientCreditsModal } from "@/components/subscription/insufficient-credits-modal";
 
 export default function WorkspaceContentCreatePage({
   params,
@@ -32,6 +34,12 @@ export default function WorkspaceContentCreatePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topicId");
+
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [creditsError, setCreditsError] = useState<{
+    code: 402 | 429;
+    detail: string;
+  }>();
 
   const handleSubmit = async (formData: ContentCreationFormData) => {
     try {
@@ -121,6 +129,17 @@ export default function WorkspaceContentCreatePage({
         workspaceRoutes.contentDetail(workspaceSlug, contentId) as Route,
       );
     } catch (error) {
+      if (
+        error instanceof ApiError &&
+        (error.statusCode === 402 || error.statusCode === 429)
+      ) {
+        setCreditsError({
+          code: error.statusCode as 402 | 429,
+          detail: error.message,
+        });
+        setShowCreditsModal(true);
+        return;
+      }
       log.error("Failed to submit content creation", error);
       toast.error("Failed to start content generation. Please try again.");
       throw error;
@@ -161,6 +180,12 @@ export default function WorkspaceContentCreatePage({
           initialTopicId={topicId || undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+        />
+        <InsufficientCreditsModal
+          open={showCreditsModal}
+          onOpenChange={setShowCreditsModal}
+          statusCode={creditsError?.code}
+          errorDetail={creditsError?.detail}
         />
       </PermissionGuard>
     </PageLayout>

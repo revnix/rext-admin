@@ -20,6 +20,7 @@ import {
 } from "@/components/workspace";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
+import { analytics } from "@/lib/analytics";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
@@ -98,6 +99,7 @@ export function WorkspaceCreateWizard() {
   );
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
+  const workspaceList = useWorkspaceStore((state) => state.workspaceList);
 
   // Warn if approaching limit when wizard opens
   useEffect(() => {
@@ -167,6 +169,9 @@ export function WorkspaceCreateWizard() {
       return;
     }
 
+    // Capture before creation — workspaceList won't include the new workspace yet
+    const isFirstWorkspace = workspaceList.length === 0;
+
     try {
       // Real API call - returns workspace (operation_id is stored in currentOperation)
       const workspace = await createWorkspace({
@@ -178,6 +183,14 @@ export function WorkspaceCreateWizard() {
       // Store workspace IDs
       setWorkspaceId(workspace.id);
       setWorkspaceSlug(workspace.slug);
+
+      analytics.track(
+        isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
+        {
+          workspace_id: workspace.id,
+          workspace_slug: workspace.slug,
+        },
+      );
 
       // Get operation_id from store (set by createWorkspace)
       const operation = useWorkspaceCrudStore.getState().currentOperation;

@@ -12,7 +12,7 @@
 import confetti from "canvas-confetti";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { analytics } from "@/lib/analytics";
 import type { Route } from "next";
 
 // Polling configuration
@@ -65,6 +66,24 @@ export default function CheckoutSuccessPage() {
   // Get query parameters from LemonSqueezy redirect
   const checkoutId = searchParams.get("checkout_id");
   const sessionId = searchParams.get("session_id");
+
+  // Track subscription purchased once the subscription status is confirmed
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (trackedRef.current) return;
+    if (!subscription?.subscription) return;
+    const status = subscription.subscription.status ?? "";
+    if (!READY_STATUSES.has(status)) return;
+
+    trackedRef.current = true;
+    analytics.track("subscription_purchased", {
+      plan_name: subscription.subscription.plan_display_name ?? undefined,
+      billing_period: subscription.subscription.billing_period ?? undefined,
+      status,
+      checkout_id: checkoutId ?? undefined,
+      session_id: sessionId ?? undefined,
+    });
+  }, [subscription, checkoutId, sessionId]);
 
   // Trigger confetti
   useEffect(() => {
