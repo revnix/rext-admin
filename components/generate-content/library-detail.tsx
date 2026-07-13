@@ -241,7 +241,7 @@ export default function LibraryDetail({
                     <td className="px-6 py-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-primary dark:text-white truncate max-w-[400px] block cursor-pointer hover:underline">
+                          <span className="font-semibold text-primary dark:text-white truncate max-w-[400px] block cursor-default">
                             {res.title}
                           </span>
                         </div>
