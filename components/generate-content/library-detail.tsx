@@ -167,20 +167,22 @@ export default function LibraryDetail({
                           className="sr-only"
                         />
                         <span
-                          className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${selectedIntent === opt.value
-                            ? "border-primary bg-primary"
-                            : "border-border bg-background group-hover:border-primary/50"
-                            }`}
+                          className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors ${
+                            selectedIntent === opt.value
+                              ? "border-primary bg-primary"
+                              : "border-border bg-background group-hover:border-primary/50"
+                          }`}
                         >
                           {selectedIntent === opt.value && (
                             <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
                           )}
                         </span>
                         <span
-                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${selectedIntent === opt.value
-                            ? "text-foreground"
-                            : "text-muted-foreground group-hover:text-foreground"
-                            }`}
+                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                            selectedIntent === opt.value
+                              ? "text-foreground"
+                              : "text-muted-foreground group-hover:text-foreground"
+                          }`}
                         >
                           {opt.label}
                         </span>
@@ -266,15 +268,15 @@ export default function LibraryDetail({
                     </td>
                   </tr>
                 )) || (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="px-6 py-12 text-center text-muted-foreground"
-                      >
-                        No organic results data available for this keyword.
-                      </td>
-                    </tr>
-                  )}
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-12 text-center text-muted-foreground"
+                    >
+                      No organic results data available for this keyword.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
