@@ -42,6 +42,7 @@ interface OpportunityRow
 interface OpportunityRankedListProps {
   workspaceId: string;
   workspaceSlug: string;
+  siteId?: string;
   days?: number;
 }
 
@@ -49,12 +50,14 @@ interface OpportunityRankedListProps {
 export function OpportunityRankedList({
   workspaceId,
   workspaceSlug,
+  siteId,
   days = 28,
 }: OpportunityRankedListProps) {
   const router = useRouter();
   const { data, isLoading } = useGoogleRankedOpportunities(workspaceId, {
     days,
     pageSize: 200,
+    siteId,
   });
 
   const columns: Column<OpportunityRow>[] = [

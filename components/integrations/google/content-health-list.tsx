@@ -26,6 +26,7 @@ interface ContentHealthRow
 interface ContentHealthListProps {
   workspaceId: string;
   workspaceSlug: string;
+  siteId?: string;
   days?: number;
 }
 
@@ -78,6 +79,7 @@ function MetricScoreCell({
 export function ContentHealthList({
   workspaceId,
   workspaceSlug,
+  siteId,
   days = 28,
 }: ContentHealthListProps) {
   const router = useRouter();
@@ -85,6 +87,7 @@ export function ContentHealthList({
   const { data, isLoading } = useGoogleContentInventory(workspaceId, {
     days,
     pageSize: 200,
+    siteId,
   });
 
   const rows: ContentHealthRow[] = useMemo(() => {

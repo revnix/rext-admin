@@ -360,6 +360,17 @@ export const googleIntegrationQueries = {
       enabled: !!workspaceId && enabled,
       staleTime: 5 * 60 * 1000,
     }),
+  analyticsProperties: (workspaceId: string, enabled = true) =>
+    queryOptions({
+      queryKey: [
+        ...googleIntegrationQueries.all(workspaceId),
+        "analytics-properties",
+      ] as const,
+      queryFn: () =>
+        apiClient.googleIntegration.listAnalyticsProperties(workspaceId),
+      enabled: !!workspaceId && enabled,
+      staleTime: 5 * 60 * 1000,
+    }),
   siteMapping: (workspaceId: string, siteId: string) =>
     queryOptions({
       queryKey: [
@@ -375,11 +386,15 @@ export const googleIntegrationQueries = {
 
 export const googleDashboardQueries = {
   all: (workspaceId: string) => ["google-dashboard", workspaceId] as const,
-  detail: (workspaceId: string, days = 28) =>
+  detail: (workspaceId: string, days = 28, siteId?: string) =>
     queryOptions({
-      queryKey: [...googleDashboardQueries.all(workspaceId), days] as const,
+      queryKey: [
+        ...googleDashboardQueries.all(workspaceId),
+        days,
+        siteId ?? "all",
+      ] as const,
       queryFn: () =>
-        apiClient.googleIntegration.getDashboard(workspaceId, days),
+        apiClient.googleIntegration.getDashboard(workspaceId, days, siteId),
       enabled: !!workspaceId,
       staleTime: 2 * 60 * 1000,
     }),
@@ -397,6 +412,7 @@ export const googleContentInventoryQueries = {
       filters?: ContentInventoryFilter[];
       sortBy?: ContentInventorySortField;
       sortOrder?: "asc" | "desc";
+      siteId?: string;
     },
   ) =>
     queryOptions({
@@ -444,7 +460,12 @@ export const googleScoreQueries = {
     }),
   rankedOpportunities: (
     workspaceId: string,
-    options?: { days?: number; page?: number; pageSize?: number },
+    options?: {
+      days?: number;
+      page?: number;
+      pageSize?: number;
+      siteId?: string;
+    },
   ) =>
     queryOptions({
       queryKey: [

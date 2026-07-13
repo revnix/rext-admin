@@ -28,6 +28,13 @@ export interface GoogleSearchConsoleSite {
   permissionLevel: string;
 }
 
+/** One GA4 property from the Analytics Admin API (site-mapping picker). */
+export interface GA4PropertySummary {
+  property_id: string; // e.g. "properties/123456789"
+  display_name: string | null;
+  account_display_name: string | null;
+}
+
 export interface GoogleSiteMapping {
   id: string;
   site_id: string;
@@ -71,10 +78,26 @@ export interface DashboardCharts {
   ctr_trend: TrendPoint[];
 }
 
+/** Site-wide GA4 totals for the current window (whole property, not per-article). */
+export interface SiteGA4Summary {
+  sessions: number;
+  active_users: number;
+  screen_page_views: number;
+  engagement_rate: number | null; // 0-1 ratio
+  average_session_duration: number | null; // seconds
+  bounce_rate: number | null; // 0-1 ratio
+}
+
 export interface GoogleDashboardResponse {
   workspace_id: string;
   kpis: DashboardKPIs;
   charts: DashboardCharts;
+  /**
+   * "site" = whole-property GSC totals (SiteDailyMetric); "content_sum" =
+   * legacy fallback summing per-article rows until the first site-level sync.
+   */
+  traffic_data_source: "site" | "content_sum";
+  site_ga4: SiteGA4Summary | null;
 }
 
 // ============================================================================

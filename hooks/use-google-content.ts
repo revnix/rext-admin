@@ -21,6 +21,7 @@ export function useGoogleContentInventory(
     filters?: ContentInventoryFilter[];
     sortBy?: ContentInventorySortField;
     sortOrder?: "asc" | "desc";
+    siteId?: string;
   },
 ) {
   return useQuery(googleContentInventoryQueries.list(workspaceId, options));
@@ -45,7 +46,12 @@ export function useGoogleOpportunityScore(
 /** Module 4: published articles ranked by opportunity score. */
 export function useGoogleRankedOpportunities(
   workspaceId: string,
-  options?: { days?: number; page?: number; pageSize?: number },
+  options?: {
+    days?: number;
+    page?: number;
+    pageSize?: number;
+    siteId?: string;
+  },
 ) {
   return useQuery(googleScoreQueries.rankedOpportunities(workspaceId, options));
 }

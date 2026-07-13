@@ -21,6 +21,16 @@ export function useGoogleSearchConsoleSites(
   );
 }
 
+/** GA4 properties the connected account can access (site-mapping picker). */
+export function useGoogleAnalyticsProperties(
+  workspaceId: string,
+  enabled = true,
+) {
+  return useQuery(
+    googleIntegrationQueries.analyticsProperties(workspaceId, enabled),
+  );
+}
+
 /** Current GSC/GA4 mapping for one connected WordPress site. */
 export function useGoogleSiteMapping(workspaceId: string, siteId: string) {
   return useQuery(googleIntegrationQueries.siteMapping(workspaceId, siteId));

@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
+  useGoogleAnalyticsProperties,
   useGoogleSearchConsoleSites,
   useGoogleSiteMapping,
   useSaveGoogleSiteMapping,
@@ -165,6 +165,8 @@ function MappingDialog({
 
   const { data: gscSites, isLoading: sitesLoading } =
     useGoogleSearchConsoleSites(workspaceId, open);
+  const { data: ga4Properties, isLoading: propertiesLoading } =
+    useGoogleAnalyticsProperties(workspaceId, open);
   const saveMutation = useSaveGoogleSiteMapping();
 
   const handleSave = () => {
@@ -193,8 +195,8 @@ function MappingDialog({
         <DialogHeader>
           <DialogTitle>Map Search Console &amp; GA4</DialogTitle>
           <DialogDescription>
-            Pick the verified Search Console property for this site, and paste
-            its GA4 Property ID (found in GA4 → Admin → Property Settings).
+            Pick the verified Search Console property and the GA4 property for
+            this site — both lists come from the connected Google account.
           </DialogDescription>
         </DialogHeader>
 
@@ -225,13 +227,37 @@ function MappingDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ga4-property">GA4 Property ID</Label>
-            <Input
-              id="ga4-property"
-              placeholder="properties/123456789"
-              value={ga4PropertyId}
-              onChange={(e) => setGa4PropertyId(e.target.value)}
-            />
+            <Label htmlFor="ga4-property">GA4 property</Label>
+            <Select value={ga4PropertyId} onValueChange={setGa4PropertyId}>
+              <SelectTrigger id="ga4-property">
+                <SelectValue
+                  placeholder={
+                    propertiesLoading
+                      ? "Loading properties…"
+                      : "Select a property"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {ga4Properties?.map((property) => (
+                  <SelectItem
+                    key={property.property_id}
+                    value={property.property_id}
+                  >
+                    {property.display_name ?? property.property_id}
+                    {property.account_display_name
+                      ? ` — ${property.account_display_name}`
+                      : ""}{" "}
+                    ({property.property_id})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!propertiesLoading && ga4Properties?.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No GA4 properties found for the connected Google account.
+              </p>
+            )}
           </div>
         </div>
 

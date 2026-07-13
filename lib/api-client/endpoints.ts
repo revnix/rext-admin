@@ -486,6 +486,7 @@ export const ENDPOINTS = {
     connect: "/api/v1/integrations/google/connect",
     disconnect: "/api/v1/integrations/google/",
     searchConsoleSites: "/api/v1/integrations/google/search-console/sites",
+    analyticsProperties: "/api/v1/integrations/google/analytics/properties",
     siteMapping: (siteId: string) =>
       `/api/v1/integrations/google/sites/${siteId}/mapping` as const,
 

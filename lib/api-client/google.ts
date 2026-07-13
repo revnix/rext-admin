@@ -15,6 +15,7 @@ import type {
   ContentInventoryResponse,
   ContentInventorySortField,
   ContentPerformanceResponse,
+  GA4PropertySummary,
   GoogleAuthorizationUrlResponse,
   GoogleConnectionStatus,
   GoogleDashboardResponse,
@@ -73,6 +74,18 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
       return result.sites;
     },
 
+    listAnalyticsProperties: async (workspaceId: string) => {
+      const result = await client.request<{
+        properties: GA4PropertySummary[];
+      }>(
+        buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.analyticsProperties, {
+          workspace_id: workspaceId,
+        }),
+        { method: "GET" },
+      );
+      return result.properties;
+    },
+
     getSiteMapping: async (workspaceId: string, siteId: string) => {
       return client.request<GoogleSiteMapping>(
         buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.siteMapping(siteId), {
@@ -112,11 +125,12 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
     // Module 1 — Dashboard
     // ------------------------------------------------------------------
 
-    getDashboard: async (workspaceId: string, days = 28) => {
+    getDashboard: async (workspaceId: string, days = 28, siteId?: string) => {
       return client.request<GoogleDashboardResponse>(
         buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.dashboard, {
           workspace_id: workspaceId,
           days,
+          site_id: siteId,
         }),
         { method: "GET" },
       );
@@ -135,6 +149,7 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
         filters?: ContentInventoryFilter[];
         sortBy?: ContentInventorySortField;
         sortOrder?: "asc" | "desc";
+        siteId?: string;
       },
     ) => {
       return client.request<ContentInventoryResponse>(
@@ -146,6 +161,7 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
           filter: options?.filters,
           sort_by: options?.sortBy,
           sort_order: options?.sortOrder,
+          site_id: options?.siteId,
         }),
         { method: "GET" },
       );
@@ -184,7 +200,12 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
 
     getRankedOpportunities: async (
       workspaceId: string,
-      options?: { days?: number; page?: number; pageSize?: number },
+      options?: {
+        days?: number;
+        page?: number;
+        pageSize?: number;
+        siteId?: string;
+      },
     ) => {
       return client.request<OpportunityRankedListResponse>(
         buildUrl(ENDPOINTS.GOOGLE_INTEGRATION.opportunities, {
@@ -192,6 +213,7 @@ export function createGoogleIntegrationNamespace(client: ApiClient) {
           days: options?.days,
           page: options?.page,
           page_size: options?.pageSize,
+          site_id: options?.siteId,
         }),
         { method: "GET" },
       );

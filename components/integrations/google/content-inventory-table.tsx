@@ -120,12 +120,14 @@ function formatNumber(value: number | null): string {
 interface ContentInventoryTableProps {
   workspaceId: string;
   workspaceSlug: string;
+  siteId?: string;
   days?: number;
 }
 
 export function ContentInventoryTable({
   workspaceId,
   workspaceSlug,
+  siteId,
   days = 28,
 }: ContentInventoryTableProps) {
   const router = useRouter();
@@ -142,6 +144,7 @@ export function ContentInventoryTable({
     filters: activeFilters.length > 0 ? activeFilters : undefined,
     sortBy,
     sortOrder,
+    siteId,
   });
 
   const toggleFilter = (filter: ContentInventoryFilter) => {
