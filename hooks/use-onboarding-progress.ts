@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
@@ -90,6 +90,8 @@ export function useOnboardingProgress(
   // Get localStorage keys for this workspace
   const dismissedKey = ONBOARDING_STORAGE_KEYS.dismissed(workspaceId);
   const skippedKey = ONBOARDING_STORAGE_KEYS.skipped(workspaceId);
+  const trackedMilestonesKey =
+    ONBOARDING_STORAGE_KEYS.trackedMilestones(workspaceId);
 
   // Get UI preferences from localStorage
   const isDismissed = local.getBoolean(dismissedKey);
@@ -179,41 +181,55 @@ export function useOnboardingProgress(
     return milestones.find((m) => !m.completed && !m.skipped) || null;
   }, [milestones]);
 
-  // Track milestone completion with analytics
-  const prevMilestones = useRef<OnboardingMilestone[]>([]);
+  // Track milestone completion with analytics.
+  // Persisted per-workspace (rather than diffed against an in-memory ref) so that
+  // a milestone completed while this hook wasn't mounted (e.g. on another page)
+  // still gets reported the next time it mounts, instead of being silently
+  // treated as the starting baseline.
   useEffect(() => {
-    // Skip on first render
-    if (prevMilestones.current.length === 0) {
-      prevMilestones.current = milestones;
-      return;
-    }
+    if (isLoading || isFetching) return;
 
-    // Check for newly completed milestones
-    milestones.forEach((milestone, index) => {
-      const prevMilestone = prevMilestones.current[index];
-      if (milestone.completed && prevMilestone && !prevMilestone.completed) {
-        // Track milestone completion
-        analytics.track("onboarding_milestone_completed", {
-          milestone_id: milestone.id,
-          milestone_label: milestone.label,
-          workspace_id: workspaceId,
-          user_id: user?.id,
-          progress_percentage: progress,
-        });
+    const tracked = new Set(
+      local.getJSON<string[]>(trackedMilestonesKey, []),
+    );
+    let didTrackCompletion = false;
 
-        // Track full onboarding completion
-        if (isComplete) {
-          analytics.track("onboarding_completed", {
-            workspace_id: workspaceId,
-            user_id: user?.id,
-            completion_time_ms: Date.now(), // You could track actual time from start
-          });
-        }
-      }
+    milestones.forEach((milestone) => {
+      if (!milestone.completed || tracked.has(milestone.id)) return;
+
+      tracked.add(milestone.id);
+      didTrackCompletion = true;
+
+      analytics.track("onboarding_milestone_completed", {
+        milestone_id: milestone.id,
+        milestone_label: milestone.label,
+        workspace_id: workspaceId,
+        user_id: user?.id,
+        progress_percentage: progress,
+      });
     });
 
-    prevMilestones.current = milestones;
-  }, [milestones, progress, isComplete, workspaceId, user?.id]);
+    if (didTrackCompletion) {
+      local.setJSON(trackedMilestonesKey, Array.from(tracked));
+
+      if (isComplete) {
+        analytics.track("onboarding_completed", {
+          workspace_id: workspaceId,
+          user_id: user?.id,
+          completion_time_ms: Date.now(),
+        });
+      }
+    }
+  }, [
+    milestones,
+    progress,
+    isComplete,
+    isLoading,
+    isFetching,
+    workspaceId,
+    user?.id,
+    trackedMilestonesKey,
+  ]);
 
   // Helper: Dismiss onboarding
   const dismissOnboarding = useCallback(() => {

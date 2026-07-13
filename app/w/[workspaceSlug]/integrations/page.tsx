@@ -20,6 +20,7 @@ import {
   type Integration,
 } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
+import { analytics } from "@/lib/analytics";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
@@ -44,6 +45,19 @@ export default function IntegrationsPage() {
       setIsLoading(true);
       const data = await integrationsApiService.listIntegrations(workspace.id);
       setIntegrations(data);
+
+      const pendingKey = `shopify_install_pending_${workspace.id}`;
+      if (
+        typeof window !== "undefined" &&
+        window.sessionStorage.getItem(pendingKey) &&
+        data.some((i) => i.integration_type?.toLowerCase() === "shopify")
+      ) {
+        window.sessionStorage.removeItem(pendingKey);
+        analytics.track("cms_connection_completed", {
+          cms_type: "shopify",
+          workspace_id: workspace.id,
+        });
+      }
     } catch (error) {
       log.error("Failed to fetch integrations", error);
     } finally {

@@ -7,12 +7,14 @@ type AnalyticsEvent =
   // Auth events
   | "user_signed_in"
   | "user_signed_up"
+  | "email_verified"
   // Onboarding events
   | "onboarding_empty_dashboard_view"
   | "onboarding_empty_sidebar_view"
   | "onboarding_empty_switcher_view"
   | "onboarding_cta_click"
   | "onboarding_workspace_created"
+  | "workspace_created"
   | "onboarding_first_content_created"
   | "onboarding_completed"
   | "onboarding_milestone_completed"
@@ -24,14 +26,28 @@ type AnalyticsEvent =
   | "workspace_empty_state_view"
   | "workspace_empty_state_action_click"
   // Content generation events
+  | "keyword_search_completed"
+  | "keyword_selected"
+  | "title_suggestions_generated"
+  | "title_selected"
+  | "outline_generated"
+  | "outline_approved"
   | "content_generation_started"
   | "content_generation_completed"
   | "content_generation_failed"
   // Content publish events
   | "content_published"
   | "content_scheduled"
+  // CMS events
+  | "cms_connection_completed"
+  | "cms_connection_failed"
+  | "cms_publish_attempted"
+  | "cms_publish_succeeded"
+  | "cms_publish_failed"
   // Subscription events
+  | "checkout_started"
   | "subscription_purchased"
+  | "payment_failed"
   // General events
   | "page_view"
   | "button_click"

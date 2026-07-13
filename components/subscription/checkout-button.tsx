@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { analytics } from "@/lib/analytics";
 import type { BillingPeriod, SubscriptionPlan } from "@/types/subscription";
 
 export interface CheckoutButtonProps {
@@ -62,6 +63,11 @@ export function CheckoutButton({
     try {
       setIsLoading(true);
       onCheckoutStart?.();
+      analytics.track("checkout_started", {
+        plan_id: plan.id,
+        plan_name: plan.display_name,
+        billing_period: billingPeriod,
+      });
 
       const checkoutSession = await initiateCheckout(plan, billingPeriod);
 
@@ -75,6 +81,13 @@ export function CheckoutButton({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to initiate checkout";
+
+      analytics.track("payment_failed", {
+        plan_id: plan.id,
+        plan_name: plan.display_name,
+        billing_period: billingPeriod,
+        error_message: errorMessage,
+      });
 
       toast.error("Checkout failed", {
         description: errorMessage,

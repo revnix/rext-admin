@@ -250,6 +250,9 @@ export function FreshGenerationView({
 
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
+  const trackedKeywordSearchRef = useRef<string | null>(null);
+  const trackedTitleSuggestionsRef = useRef<string | null>(null);
+  const trackedOutlineGeneratedRef = useRef<string | null>(null);
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
@@ -320,6 +323,48 @@ export function FreshGenerationView({
     workspaceId,
     allContent?.word_count,
   ]);
+
+  // Track keyword_search_completed once per thread when SEO/keyword data arrives
+  useEffect(() => {
+    if (!threadId || !suggestedKeywords.length) return;
+    if (trackedKeywordSearchRef.current === threadId) return;
+    trackedKeywordSearchRef.current = threadId;
+
+    analytics.track("keyword_search_completed", {
+      keyword: userKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      suggested_keyword_count: suggestedKeywords.length,
+    });
+  }, [threadId, suggestedKeywords.length, userKeyword, workspaceId]);
+
+  // Track title_suggestions_generated once per thread when topics arrive
+  useEffect(() => {
+    if (!threadId || !topics.length) return;
+    if (trackedTitleSuggestionsRef.current === threadId) return;
+    trackedTitleSuggestionsRef.current = threadId;
+
+    analytics.track("title_suggestions_generated", {
+      keyword: primaryKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      title_count: topics.length,
+    });
+  }, [threadId, topics.length, primaryKeyword, workspaceId]);
+
+  // Track outline_generated once per thread when the parsed outline arrives
+  useEffect(() => {
+    if (!threadId || !parsedOutline) return;
+    if (trackedOutlineGeneratedRef.current === threadId) return;
+    trackedOutlineGeneratedRef.current = threadId;
+
+    analytics.track("outline_generated", {
+      keyword: primaryKeyword,
+      workspace_id: workspaceId ?? undefined,
+      thread_id: threadId,
+      section_count: parsedOutline.sections?.length ?? 0,
+    });
+  }, [threadId, parsedOutline, primaryKeyword, workspaceId]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -913,6 +958,11 @@ export function FreshGenerationView({
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
+        analytics.track("keyword_selected", {
+          keyword: value,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
+        });
         return resumeWorkflow({
           payload: {
             "Primary Keyword": value,
@@ -939,6 +989,12 @@ export function FreshGenerationView({
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: CONTENT_TYPE_STEPS,
+        });
+        analytics.track("title_selected", {
+          title: value,
+          keyword: primaryKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
         });
         return resumeWorkflow({
           payload: { selected_topic: value },
@@ -970,6 +1026,11 @@ export function FreshGenerationView({
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: FINAL_GENERATION_STEPS,
+        });
+        analytics.track("outline_approved", {
+          keyword: primaryKeyword,
+          workspace_id: workspaceId ?? undefined,
+          thread_id: threadId ?? undefined,
         });
         return resumeWorkflow({
           payload: {
@@ -1213,6 +1274,11 @@ export function FreshGenerationView({
                 dispatch({
                   type: "SET_LOADING_STEPS",
                   payload: FINAL_GENERATION_STEPS,
+                });
+                analytics.track("outline_approved", {
+                  keyword: primaryKeyword,
+                  workspace_id: workspaceId ?? undefined,
+                  thread_id: threadId ?? undefined,
                 });
                 void resumeWorkflow({
                   payload: {
