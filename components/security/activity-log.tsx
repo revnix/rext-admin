@@ -150,6 +150,8 @@ export function ActivityLog() {
   }
 
   let logs = data?.logs || [];
+  // Filter out noisy notification preferences logs as requested
+  logs = logs.filter((log) => log.resource_type !== "notification_preferences");
   if (filters.status && filters.status !== "all") {
     logs = logs.filter(
       (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
