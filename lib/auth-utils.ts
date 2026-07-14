@@ -6,7 +6,7 @@
  */
 
 import type { Session } from "next-auth";
-import { getSession } from "next-auth/react";
+import { getCsrfToken, getSession } from "next-auth/react";
 import { auth } from "@/auth";
 import { log } from "@/lib/logger";
 import { useAuthStore } from "@/stores/auth-store";
@@ -61,9 +61,33 @@ export function getPrimaryRole(data: {
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
 
-// Mutex: all concurrent 401 handlers share one getSession() call so only one
+// Mutex: all concurrent 401 handlers share one refresh call so only one
 // JWT callback fires and only one backend refresh attempt is made.
 let refreshPromise: Promise<Session | null> | null = null;
+
+/**
+ * Force an actual backend token refresh, bypassing the JWT callback's
+ * "still within accessTokenExpires" short-circuit. A plain getSession()
+ * only refreshes when the client's cached expiry has passed — but a 401
+ * means the backend already rejected the token (revoked, blacklisted,
+ * clock skew), regardless of what the client's local timestamp says. This
+ * replicates what next-auth/react's `update()` does internally (POST to
+ * the session endpoint), since `update` is only available via the
+ * useSession() hook and this file isn't a component.
+ */
+async function forceSessionRefresh(): Promise<Session | null> {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      csrfToken,
+      data: { authAction: "refresh-backend-token" },
+    }),
+  });
+  if (!response.ok) return null;
+  return (await response.json()) as Session;
+}
 
 /**
  * Debounced redirect to login page.
@@ -217,10 +241,12 @@ export async function authenticatedFetch(
       // Clear the auth headers cache to force a fresh session check
       clearAuthHeadersCache();
 
-      // For client-side, we can try to get a fresh session which triggers refresh logic
+      // For client-side, force a real backend refresh (not a conditional
+      // getSession(), which no-ops if the local expiry clock hasn't caught
+      // up with the backend's 401).
       if (typeof window !== "undefined") {
         if (!refreshPromise) {
-          refreshPromise = getSession().finally(() => {
+          refreshPromise = forceSessionRefresh().finally(() => {
             refreshPromise = null;
           });
         }

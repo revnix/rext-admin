@@ -21,7 +21,7 @@ const DEFINITIVE_REFRESH_REJECTIONS = [
   "invalid refresh token",
   "invalid token type",
   "token missing jti",
-  "user not active",
+  "user account is not active",
   "user not found",
 ];
 
@@ -30,6 +30,30 @@ function isDefinitiveRefreshRejection(message: string): boolean {
   return DEFINITIVE_REFRESH_REJECTIONS.some((pattern) =>
     normalized.includes(pattern),
   );
+}
+
+// Decodes a JWT payload without verifying its signature — for debug logging
+// only (jti/exp are not secret and let us correlate frontend refresh logs
+// with backend token_blacklist rows, e.g. "was this jti already rotated by
+// another session before we tried to use it?"). Never use this for auth
+// decisions; the frontend has no way to verify the signature.
+function decodeJwtPayloadForLogging(
+  token: string | undefined,
+): { jti?: string; exp?: number; sub?: string } | null {
+  if (!token) return null;
+  try {
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return null;
+    const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const json =
+      typeof atob === "function"
+        ? atob(base64)
+        : Buffer.from(base64, "base64").toString("utf-8");
+    const payload = JSON.parse(json);
+    return { jti: payload.jti, exp: payload.exp, sub: payload.id };
+  } catch {
+    return null;
+  }
 }
 
 class RefreshAttemptError extends Error {
@@ -50,6 +74,23 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
     refresh_token: token.refreshToken,
   };
 
+  // NOTE: key names deliberately avoid the substring "token" (and
+  // "refresh_token"/"access_token") — lib/logger.ts's sanitize() redacts any
+  // key containing those substrings, which would blank out these timestamps.
+  const outgoingJwt = decodeJwtPayloadForLogging(token.refreshToken as string);
+  log.debug("[Auth] Sending refresh request", {
+    refreshJti: outgoingJwt?.jti,
+    refreshExpiryIso: outgoingJwt?.exp
+      ? new Date(outgoingJwt.exp * 1000).toISOString()
+      : undefined,
+    accessExpiryIso: token.accessTokenExpires
+      ? new Date(token.accessTokenExpires as number).toISOString()
+      : undefined,
+    msUntilAccessExpiry: token.accessTokenExpires
+      ? (token.accessTokenExpires as number) - Date.now()
+      : undefined,
+  });
+
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
     {
@@ -60,6 +101,12 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       body: JSON.stringify(refreshPayload),
     },
   );
+
+  log.debug("[Auth] Refresh response received", {
+    refreshJti: outgoingJwt?.jti,
+    status: response.status,
+    ok: response.ok,
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -78,6 +125,13 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
     // failures are always transient.
     const definitive =
       response.status === 403 || isDefinitiveRefreshRejection(message);
+
+    log.debug("[Auth] Refresh rejected", {
+      refreshJti: outgoingJwt?.jti,
+      status: response.status,
+      message,
+      definitive,
+    });
 
     throw new RefreshAttemptError(message, definitive);
   }
@@ -110,11 +164,23 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       ? new Date(expiresAt).getTime()
       : token.accessTokenExpires; // keep previous if backend doesn't provide one
 
+  const incomingJwt = decodeJwtPayloadForLogging(refreshedTokens.refresh_token);
+  log.debug("[Auth] Refresh succeeded", {
+    oldRefreshJti: outgoingJwt?.jti,
+    newRefreshJti: incomingJwt?.jti,
+    newAccessExpiryIso: accessTokenExpires
+      ? new Date(accessTokenExpires).toISOString()
+      : undefined,
+  });
+
   return {
     ...token,
     accessToken: refreshedTokens.access_token,
     refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     accessTokenExpires,
+    // A successful exchange is authoritative; do not preserve an earlier
+    // terminal error through the object spread above.
+    error: undefined,
   };
 }
 
@@ -124,14 +190,33 @@ const REFRESH_RETRY_DELAYS_MS = [300, 800];
 // Without this, a request can be dispatched at the last valid millisecond
 // and arrive at the backend after the token has actually expired.
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30_000;
+const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
+
+// De-dupes concurrent refresh attempts for the same refresh token. Without
+// this, multiple jwt() callback invocations that land within the same ~30s
+// expiry buffer (e.g. SessionTimeoutWarning's proactive update() racing a
+// normal per-request expiry check, or several server components calling
+// auth() at once) each read the same not-yet-rotated refresh token from
+// their own invocation and independently hit the backend. The backend's
+// refresh tokens are single-use: the first call rotates it, and every other
+// concurrent call is rejected as "revoked" — which previously counted as a
+// *definitive* rejection and forced an immediate logout, even though the
+// session was never actually invalid. Sharing one in-flight promise per jti
+// means every concurrent caller gets the same successful result instead of
+// racing each other.
+// NOTE: process-local only — does not de-dupe across multiple server
+// instances, only concurrent calls within this one Node process.
+const inFlightRefreshes = new Map<string, Promise<JWT>>();
 
 /**
  * Refresh the access token using the refresh token.
  *
- * Retries transient failures (network errors, 5xx, losing a concurrent
- * refresh race against another tab or the proactive-refresh path) before
- * forcing the user out. Only a definitive backend rejection — refresh token
- * actually expired/revoked/invalid — sets RefreshAccessTokenError immediately.
+ * Retries transient failures (network errors, 5xx) before forcing the user
+ * out. Only a definitive backend rejection — refresh token actually
+ * expired/revoked/invalid — sets RefreshAccessTokenError immediately.
+ * Concurrent callers for the same refresh token share one in-flight attempt
+ * (see `inFlightRefreshes`) rather than racing the backend's single-use
+ * rotation against each other.
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {
@@ -139,8 +224,39 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
+  const refreshJti = decodeJwtPayloadForLogging(
+    token.refreshToken as string,
+  )?.jti;
+
+  if (refreshJti) {
+    const existing = inFlightRefreshes.get(refreshJti);
+    if (existing) {
+      log.debug("[Auth] Reusing in-flight refresh for this token", {
+        refreshJti,
+      });
+      return existing;
+    }
+  }
+
+  const refreshPromise = performRefreshWithRetries(token, refreshJti);
+
+  if (refreshJti) {
+    inFlightRefreshes.set(refreshJti, refreshPromise);
+    refreshPromise.finally(() => {
+      inFlightRefreshes.delete(refreshJti);
+    });
+  }
+
+  return refreshPromise;
+}
+
+async function performRefreshWithRetries(
+  token: JWT,
+  refreshJti: string | undefined,
+): Promise<JWT> {
   const maxAttempts = REFRESH_RETRY_DELAYS_MS.length + 1;
   let lastError: unknown;
+  let wasDefinitive = false;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -153,9 +269,11 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       log.error(
         `[Auth] Token refresh attempt ${attempt}/${maxAttempts} failed`,
         error,
+        { refreshJti, definitive },
       );
 
       if (definitive) {
+        wasDefinitive = true;
         break;
       }
 
@@ -167,15 +285,34 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     }
   }
 
+  if (wasDefinitive) {
+    log.error(
+      "[Auth] Token refresh definitively rejected, forcing re-login",
+      lastError,
+      { refreshJti },
+    );
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
+
+  // Every attempt failed transiently (network error, 5xx, a lost
+  // concurrent-refresh race) — the backend never definitively rejected the
+  // refresh token. Setting the error flag here was itself a bug: this same
+  // flag is what the middleware's `authorized` callback (auth.config.ts)
+  // uses to force an IMMEDIATE redirect to /login on the very next page
+  // navigation — a much more aggressive trigger than anything in the React
+  // component tree, and completely bypasses any client-side retry/verify
+  // logic. A momentary backend/network blip should never end a session
+  // whose refresh token is still valid for days. Return the token
+  // unchanged — accessTokenExpires is still in the past, so the next
+  // expiry check (proactive, reactive-401, or the next middleware
+  // invocation) will simply try again.
   log.error(
-    "[Auth] Token refresh exhausted all attempts, forcing re-login",
+    "[Auth] Token refresh exhausted all attempts without a definitive rejection — will retry later",
     lastError,
+    { refreshJti },
   );
 
-  return {
-    ...token,
-    error: "RefreshAccessTokenError",
-  };
+  return token;
 }
 
 export default {
@@ -410,8 +547,22 @@ export default {
         }
       }
 
-      // Handle session updates (e.g., impersonation token swap)
-      if (trigger === "update" && session) {
+      const requestedBackendRefresh =
+        trigger === "update" &&
+        (session as { authAction?: string } | undefined)?.authAction ===
+          AUTH_SESSION_UPDATE_ACTION;
+
+      // Handle explicit token swaps (e.g., impersonation). A generic update
+      // must not silently bypass the explicit refresh action below.
+      if (
+        trigger === "update" &&
+        session &&
+        !requestedBackendRefresh &&
+        (session.accessToken ||
+          session.refreshToken ||
+          session.accessTokenExpires ||
+          session.user)
+      ) {
         if (session.accessToken) token.accessToken = session.accessToken;
         if (session.refreshToken) token.refreshToken = session.refreshToken;
         if (session.accessTokenExpires)
@@ -430,8 +581,14 @@ export default {
         return token;
       }
 
-      if (trigger === "update") {
-        log.info("[Auth] Session update triggered manually");
+      if (requestedBackendRefresh) {
+        log.info("[Auth] Explicit backend-token refresh requested", {
+          refreshJti: decodeJwtPayloadForLogging(token.refreshToken as string)
+            ?.jti,
+          msUntilAccessExpiry: token.accessTokenExpires
+            ? (token.accessTokenExpires as number) - Date.now()
+            : undefined,
+        });
         if (token.refreshToken) {
           log.info("[Auth] Refreshing backend token via refresh token...");
           return await refreshAccessToken(token);
@@ -446,6 +603,13 @@ export default {
           return token;
         }
 
+        return token;
+      }
+
+      if (trigger === "update") {
+        log.debug(
+          "[Auth] Session metadata update completed without token rotation",
+        );
         return token;
       }
 
@@ -470,6 +634,13 @@ export default {
       }
 
       // Access token has expired, try to refresh it
+      log.info("[Auth] Expiry-driven backend-token refresh requested", {
+        refreshJti: decodeJwtPayloadForLogging(token.refreshToken as string)
+          ?.jti,
+        msUntilAccessExpiry: token.accessTokenExpires
+          ? (token.accessTokenExpires as number) - Date.now()
+          : undefined,
+      });
       return await refreshAccessToken(token);
     },
     async session({ session, token }) {
@@ -508,6 +679,11 @@ export default {
       // We must force the user to the login page and NOT allow them to be redirected
       // back to the dashboard even if NextAuth technically still considers them "logged in".
       if (hasRefreshError || hasOAuthError) {
+        log.warn("[Auth] Middleware is rejecting the session", {
+          pathname,
+          sessionError: auth?.error,
+          redirectTarget: isOnAuthPage || isInvitationPage ? null : "/login",
+        });
         if (isOnAuthPage || isInvitationPage) {
           // Allow them to stay on the auth/invitation page to log in again
           return true;

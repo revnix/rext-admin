@@ -58,6 +58,7 @@ export function useAuthSession() {
     ) {
       log.error(
         "[Auth] RefreshAccessTokenError detected in hook, triggering logout...",
+        session.error,
       );
       performLogout("/login?error=SessionExpired");
     }
