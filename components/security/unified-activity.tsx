@@ -152,7 +152,7 @@ export function UnifiedActivity() {
   let logs = auditData?.logs || [];
   if (filters.status && filters.status !== "all") {
     logs = logs.filter(
-      (log) => log.status?.toLowerCase() === filters.status?.toLowerCase()
+      (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
     );
   }
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
