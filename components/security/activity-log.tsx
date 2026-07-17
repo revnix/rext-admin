@@ -149,7 +149,14 @@ export function ActivityLog() {
     );
   }
 
-  const logs = data?.logs || [];
+  let logs = data?.logs || [];
+  // Filter out noisy notification preferences logs as requested
+  logs = logs.filter((log) => log.resource_type !== "notification_preferences");
+  if (filters.status && filters.status !== "all") {
+    logs = logs.filter(
+      (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
+    );
+  }
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
   const totalPages = Math.ceil((data?.total || 0) / ITEMS_PER_PAGE);
 
