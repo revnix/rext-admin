@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 /**
  * Workspaces API Namespace
  *
@@ -162,11 +163,33 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toCreatePayload(payload)),
         },
       );
-      return validateResponse(
+
+      const result = validateResponse(
         createWorkspaceResponseSchema,
         response,
         "workspaces.create",
       );
+
+      // Record audit log
+      if (result && result.workspace) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "workspace.create",
+              resource_type: "workspace",
+              resource_id: result.workspace.id,
+              workspace_id: result.workspace.id,
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log workspace.create", e),
+          );
+      }
+
+      return result;
     },
 
     update: async (
@@ -187,11 +210,33 @@ export function createWorkspacesNamespace(client: ApiClient) {
           body: JSON.stringify(toUpdatePayload(payload)),
         },
       );
-      return validateResponse(
+
+      const result = validateResponse(
         workspaceResponseSchema,
         response,
         "workspaces.update",
       );
+
+      // Record audit log
+      if (result) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "workspace.update",
+              resource_type: "workspace",
+              resource_id: workspaceId,
+              workspace_id: workspaceId,
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log workspace.update", e),
+          );
+      }
+
+      return result;
     },
 
     /**
@@ -204,11 +249,31 @@ export function createWorkspacesNamespace(client: ApiClient) {
           method: "DELETE",
         },
       );
-      return validateResponse(
+
+      const result = validateResponse(
         workspaceResponseSchema,
         response,
         "workspaces.delete",
       );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "workspace.delete",
+            resource_type: "workspace",
+            resource_id: workspaceId,
+            workspace_id: workspaceId,
+            status: "success",
+          }),
+        })
+        .catch((e) =>
+          log.error("[AuditLog] Failed to log workspace.delete", e),
+        );
+
+      return result;
     },
 
     /**

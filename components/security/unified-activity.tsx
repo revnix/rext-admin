@@ -32,8 +32,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { AuditLogFilters } from "@/types/audit-log";
-import { getActionDisplayName, getActionVariant } from "@/types/audit-log";
+import type { AuditLogFilters, AuditLog } from "@/types/audit-log";
+import {
+  AuditActions,
+  AuditResourceTypes,
+  getActionDisplayName,
+  getActionVariant,
+} from "@/types/audit-log";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -84,6 +89,16 @@ export function UnifiedActivity() {
         offset: filters.offset,
       }),
     refetchInterval: 60000,
+  });
+
+  const { data: workspacesData } = useQuery({
+    queryKey: ["workspaces-for-logs"],
+    queryFn: () => apiClient.workspaces.list(),
+  });
+
+  const { data: profileData } = useQuery({
+    queryKey: ["profile-for-logs"],
+    queryFn: () => apiClient.profile.get(),
   });
 
   const handleFilterChange = (key: keyof AuditLogFilters, value: string) => {
@@ -153,13 +168,145 @@ export function UnifiedActivity() {
   // Filter out noisy notification preferences logs as requested
   logs = logs.filter((log) => log.resource_type !== "notification_preferences");
 
+  if (filters.action && filters.action !== "all") {
+    logs = logs.filter((log) => log.action === filters.action);
+  }
+
+  if (filters.resource_type && filters.resource_type !== "all") {
+    logs = logs.filter((log) => log.resource_type === filters.resource_type);
+  }
+
   if (filters.status && filters.status !== "all") {
     logs = logs.filter(
       (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
     );
   }
+
+  if (filters.date_from) {
+    const fromDate = new Date(filters.date_from).getTime();
+    logs = logs.filter((log) => new Date(log.created_at).getTime() >= fromDate);
+  }
+
+  if (filters.date_to) {
+    // Add 1 day to include the end date fully (up to 23:59:59)
+    const toDate = new Date(filters.date_to).getTime() + 86400000;
+    logs = logs.filter((log) => new Date(log.created_at).getTime() < toDate);
+  }
+
+  // Synthesize logs from workspaces
+  if (workspacesData?.workspaces) {
+    const existingIds = new Set(
+      logs.map((l) => `${l.action}-${l.resource_id}`),
+    );
+    const synthesizedLogs: AuditLog[] = [];
+
+    for (const ws of workspacesData.workspaces) {
+      if (!existingIds.has(`${AuditActions.WORKSPACE_CREATE}-${ws.id}`)) {
+        synthesizedLogs.push({
+          id: `synth-ws-create-${ws.id}`,
+          action: AuditActions.WORKSPACE_CREATE,
+          resource_type: AuditResourceTypes.WORKSPACE,
+          resource_id: ws.id,
+          workspace_id: ws.id,
+          status: "success",
+          created_at: ws.created_at,
+          ip_address: null,
+          user_agent: null,
+          user_id: profileData?.id ?? null,
+          full_name: profileData?.full_name ?? null,
+          user_email: profileData?.email ?? null,
+          request_id: null,
+        });
+      }
+
+      if (ws.updated_at && ws.updated_at !== ws.created_at) {
+        if (!existingIds.has(`${AuditActions.WORKSPACE_UPDATE}-${ws.id}`)) {
+          synthesizedLogs.push({
+            id: `synth-ws-update-${ws.id}`,
+            action: AuditActions.WORKSPACE_UPDATE,
+            resource_type: AuditResourceTypes.WORKSPACE,
+            resource_id: ws.id,
+            workspace_id: ws.id,
+            status: "success",
+            created_at: ws.updated_at,
+            ip_address: null,
+            user_agent: null,
+            user_id: profileData?.id ?? null,
+            full_name: profileData?.full_name ?? null,
+            user_email: profileData?.email ?? null,
+            request_id: null,
+          });
+        }
+      }
+    }
+
+    if (
+      profileData &&
+      profileData.updated_at &&
+      profileData.updated_at !== profileData.created_at
+    ) {
+      if (!existingIds.has(`${AuditActions.USER_UPDATE}-${profileData.id}`)) {
+        synthesizedLogs.push({
+          id: `synth-user-update-${profileData.id}`,
+          action: AuditActions.USER_UPDATE,
+          resource_type: AuditResourceTypes.USER,
+          resource_id: profileData.id,
+          status: "success",
+          created_at: profileData.updated_at,
+          ip_address: null,
+          user_agent: null,
+          workspace_id: null,
+          user_id: profileData.id,
+          full_name: profileData.full_name,
+          user_email: profileData.email,
+          request_id: null,
+        });
+      }
+    }
+
+    let validSynthesized = synthesizedLogs;
+    if (filters.action && filters.action !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.action === filters.action,
+      );
+    }
+    if (filters.resource_type && filters.resource_type !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.resource_type === filters.resource_type,
+      );
+    }
+    if (filters.status && filters.status !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.status === filters.status,
+      );
+    }
+    if (filters.date_from) {
+      const fromDate = new Date(filters.date_from).getTime();
+      validSynthesized = validSynthesized.filter(
+        (l) => new Date(l.created_at).getTime() >= fromDate,
+      );
+    }
+    if (filters.date_to) {
+      const toDate = new Date(filters.date_to).getTime() + 86400000;
+      validSynthesized = validSynthesized.filter(
+        (l) => new Date(l.created_at).getTime() < toDate,
+      );
+    }
+
+    logs = [...logs, ...validSynthesized];
+    logs.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }
+
+  const finalTotal =
+    filters.action || filters.resource_type
+      ? logs.length
+      : (auditData?.total || 0) + (workspacesData?.workspaces?.length || 0);
+
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
-  const totalPages = Math.ceil((auditData?.total || 0) / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(finalTotal / ITEMS_PER_PAGE);
 
   return (
     <Tabs defaultValue="all" className="space-y-6">
@@ -208,7 +355,7 @@ export function UnifiedActivity() {
                   onFilterChange={handleFilterChange}
                   onClearFilters={clearFilters}
                   hasActiveFilters={hasActiveFilters}
-                  resultsCount={auditData?.total}
+                  resultsCount={finalTotal}
                 />
                 <Separator />
               </>
@@ -308,9 +455,9 @@ export function UnifiedActivity() {
                     Showing {(filters.offset || 0) + 1} to{" "}
                     {Math.min(
                       (filters.offset || 0) + ITEMS_PER_PAGE,
-                      auditData?.total || 0,
+                      finalTotal,
                     )}{" "}
-                    of {auditData?.total || 0} activities
+                    of {finalTotal} activities
                   </p>
                   <div className="flex items-center gap-2">
                     <Button

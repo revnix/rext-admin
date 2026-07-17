@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 /**
  * Members & Invitations API Namespace
  *
@@ -56,7 +57,7 @@ export function createMembersNamespace(client: ApiClient) {
      * Add workspace member
      */
     add: async (workspaceId: string, email: string) => {
-      return client.request<{
+      const response = await client.request<{
         member: {
           id: string;
           user_id: string;
@@ -69,18 +70,55 @@ export function createMembersNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
+      // Record audit log
+      if (response && response.member) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "role.assign",
+              resource_type: "role",
+              resource_id: response.member.user_id,
+              workspace_id: workspaceId,
+              details: { email },
+              status: "success",
+            }),
+          })
+          .catch((e) => log.error("[AuditLog] Failed to log role.assign", e));
+      }
+
+      return response;
     },
 
     /**
      * Remove workspace member
      */
     remove: async (workspaceId: string, memberId: string) => {
-      return client.request<{ member_id: string }>(
+      const response = await client.request<{ member_id: string }>(
         ENDPOINTS.MEMBERS.remove(workspaceId, memberId),
         {
           method: "DELETE",
         },
       );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "role.revoke",
+            resource_type: "role",
+            resource_id: memberId,
+            workspace_id: workspaceId,
+            status: "success",
+          }),
+        })
+        .catch((e) => log.error("[AuditLog] Failed to log role.revoke", e));
+
+      return response;
     },
 
     /**
@@ -91,7 +129,7 @@ export function createMembersNamespace(client: ApiClient) {
       memberId: string,
       roleId: string,
     ) => {
-      return client.request<{
+      const response = await client.request<{
         member: {
           id: string;
           role_id: string;
@@ -101,6 +139,28 @@ export function createMembersNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role_id: roleId }),
       });
+
+      // Record audit log
+      if (response && response.member) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "role.assign",
+              resource_type: "role",
+              resource_id: memberId,
+              workspace_id: workspaceId,
+              details: { role_id: roleId },
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log role.assign (changeRole)", e),
+          );
+      }
+
+      return response;
     },
   };
 }
@@ -144,7 +204,7 @@ export function createInvitationsNamespace(client: ApiClient) {
      * Uses public invitation endpoint
      */
     accept: async (token: string) => {
-      return client.request<{
+      const response = await client.request<{
         membership_id: string;
         workspace_id: string;
         workspace_name: string;
@@ -154,6 +214,26 @@ export function createInvitationsNamespace(client: ApiClient) {
       }>(ENDPOINTS.INVITATIONS.accept(token), {
         method: "POST",
       });
+
+      // Record audit log
+      if (response && response.workspace_id) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "invitation.accept",
+              resource_type: "invitation",
+              workspace_id: response.workspace_id,
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log invitation.accept", e),
+          );
+      }
+
+      return response;
     },
 
     /**
@@ -309,7 +389,7 @@ export function createInvitationsNamespace(client: ApiClient) {
       invitationId: string,
       reason?: string,
     ) => {
-      return client.request<{
+      const response = await client.request<{
         invitation_id: string;
         status: string;
       }>(ENDPOINTS.INVITATIONS.revoke(workspaceId, invitationId), {
@@ -317,6 +397,27 @@ export function createInvitationsNamespace(client: ApiClient) {
         headers: reason ? { "Content-Type": "application/json" } : undefined,
         body: reason ? JSON.stringify({ reason }) : undefined,
       });
+
+      // Record audit log
+      if (response && response.invitation_id) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "invitation.revoke",
+              resource_type: "invitation",
+              resource_id: invitationId,
+              workspace_id: workspaceId,
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log invitation.revoke", e),
+          );
+      }
+
+      return response;
     },
 
     /**
