@@ -65,6 +65,24 @@ let isRedirectingToLogin = false;
 // JWT callback fires and only one backend refresh attempt is made.
 let refreshPromise: Promise<Session | null> | null = null;
 
+// Mutex: getAuthHeaders() is called concurrently by every service on the
+// page (profile, subscription, permissions, notifications, ...) whenever a
+// page mounts. The headers cache below is only written *after* getSession()
+// resolves, so without this, every one of those concurrent callers would
+// independently hit GET /api/auth/session before the first response lands
+// — a stampede of duplicate requests for the same session. Sharing one
+// in-flight promise collapses them into a single network call.
+let sessionFetchPromise: Promise<Session | null> | null = null;
+
+function fetchSessionSingleFlight(): Promise<Session | null> {
+  if (!sessionFetchPromise) {
+    sessionFetchPromise = getSession().finally(() => {
+      sessionFetchPromise = null;
+    });
+  }
+  return sessionFetchPromise;
+}
+
 /**
  * Force an actual backend token refresh, bypassing the JWT callback's
  * "still within accessTokenExpires" short-circuit. A plain getSession()
@@ -174,8 +192,8 @@ export async function getAuthHeaders(
     return {};
   }
 
-  // Client-side: use getSession()
-  const session = await getSession();
+  // Client-side: use getSession(), coalesced across concurrent callers
+  const session = await fetchSessionSingleFlight();
   const headers: Record<string, string> = {};
 
   if (session?.user?.accessToken) {
