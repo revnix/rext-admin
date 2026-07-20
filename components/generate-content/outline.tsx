@@ -1148,6 +1148,15 @@ export function OutlineDisplay({
                   {brandVoicePromotion.brand_name}
                 </span>{" "}
                 in the content
+                {brandVoicePromotion.brand_url && (
+                  <>
+                    {" "}
+                    — linked to{" "}
+                    <span className="font-medium text-foreground/80">
+                      {brandVoicePromotion.brand_url}
+                    </span>
+                  </>
+                )}
               </p>
             </div>
             {brandVoicePromotion.recommended && (

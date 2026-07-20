@@ -232,6 +232,7 @@ export function WorkspaceCreateWizard() {
 
       // Update brand voice via API
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
+        brand_name: brandVoiceData.brand_name,
         about: brandVoiceData.about,
         customer_profile: brandVoiceData.customer_profile,
         selling_position: brandVoiceData.selling_position,

@@ -18,6 +18,7 @@ export type InternalLinkSuggestion = {
 
 export type BrandVoicePromotion = {
   brand_name: string;
+  brand_url?: string;
   about: string;
   selling_position: string;
   score: number;

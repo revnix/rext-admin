@@ -66,6 +66,7 @@ function toUpdatePayload(data: {
 }
 
 interface BrandVoicePayload {
+  brand_name: string;
   about: string;
   customer_profile: string;
   selling_position: string;
@@ -77,6 +78,7 @@ interface BrandVoicePayload {
 }
 
 function toBrandVoicePayload(data: {
+  brand_name?: string;
   about?: string;
   customer_profile?: string;
   selling_position?: string;
@@ -87,6 +89,7 @@ function toBrandVoicePayload(data: {
   personas?: Persona[];
 }): BrandVoicePayload {
   return {
+    brand_name: data.brand_name ?? "",
     about: data.about ?? "",
     customer_profile: data.customer_profile ?? "",
     selling_position: data.selling_position ?? "",
@@ -252,6 +255,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     updateBrandVoice: async (
       workspaceId: string,
       data: {
+        brand_name?: string;
         about?: string;
         customer_profile?: string;
         selling_position?: string;
@@ -263,6 +267,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       },
     ) => {
       const payload = {
+        brand_name: data.brand_name ?? "",
         about: data.about ?? "",
         customer_profile: data.customer_profile ?? "",
         selling_position: data.selling_position ?? "",
