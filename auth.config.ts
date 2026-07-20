@@ -32,6 +32,30 @@ function isDefinitiveRefreshRejection(message: string): boolean {
   );
 }
 
+// Decodes a JWT payload without verifying its signature — only used to pull
+// `jti` out of the refresh token so concurrent refresh attempts for the same
+// token can be de-duped/cached (see inFlightRefreshes/recentRotations below).
+// Never use this for auth decisions; the frontend has no way to verify the
+// signature.
+function decodeJwtPayloadForLogging(
+  token: string | undefined,
+): { jti?: string; exp?: number; sub?: string } | null {
+  if (!token) return null;
+  try {
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return null;
+    const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const json =
+      typeof atob === "function"
+        ? atob(base64)
+        : Buffer.from(base64, "base64").toString("utf-8");
+    const payload = JSON.parse(json);
+    return { jti: payload.jti, exp: payload.exp, sub: payload.id };
+  } catch {
+    return null;
+  }
+}
+
 class RefreshAttemptError extends Error {
   definitive: boolean;
   constructor(message: string, definitive: boolean) {
@@ -219,6 +243,7 @@ async function performRefreshWithRetries(
 ): Promise<JWT> {
   const maxAttempts = REFRESH_RETRY_DELAYS_MS.length + 1;
   let lastError: unknown;
+  let wasDefinitive = false;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -236,6 +261,7 @@ async function performRefreshWithRetries(
       );
 
       if (definitive) {
+        wasDefinitive = true;
         break;
       }
 
@@ -527,8 +553,26 @@ export default {
         }
       }
 
-      // Handle session updates (e.g., impersonation token swap)
-      if (trigger === "update" && session) {
+      const requestedBackendRefresh =
+        trigger === "update" &&
+        (session as { authAction?: string } | undefined)?.authAction ===
+          AUTH_SESSION_UPDATE_ACTION;
+
+      // Handle explicit token swaps (e.g., impersonation). A generic update
+      // must not silently swallow the explicit refresh action below — an
+      // update() call with only `authAction` set has no accessToken/
+      // refreshToken/user fields, so without the `!requestedBackendRefresh`
+      // guard this branch used to catch it first and return the token
+      // completely unchanged, silently no-op'ing every proactive refresh.
+      if (
+        trigger === "update" &&
+        session &&
+        !requestedBackendRefresh &&
+        (session.accessToken ||
+          session.refreshToken ||
+          session.accessTokenExpires ||
+          session.user)
+      ) {
         if (session.accessToken) token.accessToken = session.accessToken;
         if (session.refreshToken) token.refreshToken = session.refreshToken;
         if (session.accessTokenExpires)
@@ -547,8 +591,8 @@ export default {
         return token;
       }
 
-      if (trigger === "update") {
-        log.info("[Auth] Session update triggered manually");
+      if (requestedBackendRefresh) {
+        log.info("[Auth] Explicit backend-token refresh requested");
         if (token.refreshToken) {
           log.info("[Auth] Refreshing backend token via refresh token...");
           return await refreshAccessToken(token);
@@ -563,6 +607,13 @@ export default {
           return token;
         }
 
+        return token;
+      }
+
+      if (trigger === "update") {
+        log.debug(
+          "[Auth] Session metadata update completed without token rotation",
+        );
         return token;
       }
 
