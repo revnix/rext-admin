@@ -58,12 +58,65 @@ export function getPrimaryRole(data: {
   );
 }
 
+// Shared with auth.config.ts's jwt() callback, which checks this exact
+// value on trigger === "update" to decide whether to force a real backend
+// refresh. Defined here (not there) so both this file and any client
+// component can import one source of truth instead of hardcoding the string.
+export const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
+
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
 
-// Mutex: all concurrent 401 handlers share one refresh call so only one
-// JWT callback fires and only one backend refresh attempt is made.
-let refreshPromise: Promise<Session | null> | null = null;
+// Mutex: shared by EVERY trigger of an explicit backend refresh — the
+// reactive 401 handler below, and the proactive timer in
+// SessionTimeoutWarning (which passes its own `update()` call in as
+// `performRefresh` so React's session state still updates correctly, while
+// still sharing this same lock). Without a shared lock, the proactive and
+// reactive paths have no knowledge of each other and can independently fire
+// the same "refresh-backend-token" action within milliseconds of each other
+// — racing the backend's single-use refresh token and getting one of them
+// hard-rejected as "revoked" instead of gracefully reusing the other's result.
+let backendRefreshPromise: Promise<Session | null> | null = null;
+
+/**
+ * Request an explicit backend token refresh, single-flight across every
+ * caller regardless of which trigger (proactive timer, reactive 401, a
+ * second tab's own attempt) started it first.
+ *
+ * `performRefresh` defaults to the raw-fetch replica below (for callers
+ * outside a React component). A component can instead pass NextAuth's own
+ * `update()` so SessionProvider's context updates too — that still shares
+ * this same mutex, so a caller that loses the race just awaits the winner's
+ * result instead of firing its own request.
+ */
+export function requestBackendTokenRefresh(
+  performRefresh: () => Promise<Session | null> = forceSessionRefresh,
+): Promise<Session | null> {
+  if (!backendRefreshPromise) {
+    backendRefreshPromise = performRefresh().finally(() => {
+      backendRefreshPromise = null;
+    });
+  }
+  return backendRefreshPromise;
+}
+
+// Mutex: getAuthHeaders() is called concurrently by every service on the
+// page (profile, subscription, permissions, notifications, ...) whenever a
+// page mounts. The headers cache below is only written *after* getSession()
+// resolves, so without this, every one of those concurrent callers would
+// independently hit GET /api/auth/session before the first response lands
+// — a stampede of duplicate requests for the same session. Sharing one
+// in-flight promise collapses them into a single network call.
+let sessionFetchPromise: Promise<Session | null> | null = null;
+
+export function fetchSessionSingleFlight(): Promise<Session | null> {
+  if (!sessionFetchPromise) {
+    sessionFetchPromise = getSession().finally(() => {
+      sessionFetchPromise = null;
+    });
+  }
+  return sessionFetchPromise;
+}
 
 /**
  * Force an actual backend token refresh, bypassing the JWT callback's
@@ -82,7 +135,7 @@ async function forceSessionRefresh(): Promise<Session | null> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       csrfToken,
-      data: { authAction: "refresh-backend-token" },
+      data: { authAction: AUTH_SESSION_UPDATE_ACTION },
     }),
   });
   if (!response.ok) return null;
@@ -174,8 +227,8 @@ export async function getAuthHeaders(
     return {};
   }
 
-  // Client-side: use getSession()
-  const session = await getSession();
+  // Client-side: use getSession(), coalesced across concurrent callers
+  const session = await fetchSessionSingleFlight();
   const headers: Record<string, string> = {};
 
   if (session?.user?.accessToken) {
@@ -245,12 +298,7 @@ export async function authenticatedFetch(
       // getSession(), which no-ops if the local expiry clock hasn't caught
       // up with the backend's 401).
       if (typeof window !== "undefined") {
-        if (!refreshPromise) {
-          refreshPromise = forceSessionRefresh().finally(() => {
-            refreshPromise = null;
-          });
-        }
-        const session = await refreshPromise;
+        const session = await requestBackendTokenRefresh();
 
         if (session?.user?.accessToken && !session.error) {
           log.info("[AuthJS] Session refreshed successfully, retrying request");
