@@ -8,6 +8,7 @@
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
 import { auth } from "@/auth";
+import { withRefreshLock } from "@/lib/auth-refresh-lock";
 import { log } from "@/lib/logger";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -220,7 +221,10 @@ export async function authenticatedFetch(
       // For client-side, we can try to get a fresh session which triggers refresh logic
       if (typeof window !== "undefined") {
         if (!refreshPromise) {
-          refreshPromise = getSession().finally(() => {
+          // Route through the cross-tab refresh lock so this reactive check
+          // never races SessionTimeoutWarning's proactive refresh (or another
+          // tab's) for the same refresh token — see lib/auth-refresh-lock.ts.
+          refreshPromise = withRefreshLock(() => getSession()).finally(() => {
             refreshPromise = null;
           });
         }

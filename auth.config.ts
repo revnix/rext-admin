@@ -124,6 +124,46 @@ const REFRESH_RETRY_DELAYS_MS = [300, 800];
 // Without this, a request can be dispatched at the last valid millisecond
 // and arrive at the backend after the token has actually expired.
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30_000;
+const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
+
+// De-dupes concurrent refresh attempts for the same refresh token. Without
+// this, multiple jwt() callback invocations that land within the same ~30s
+// expiry buffer (e.g. SessionTimeoutWarning's proactive update() racing a
+// normal per-request expiry check, or several server components calling
+// auth() at once) each read the same not-yet-rotated refresh token from
+// their own invocation and independently hit the backend. The backend's
+// refresh tokens are single-use: the first call rotates it, and every other
+// concurrent call is rejected as "revoked" — which previously counted as a
+// *definitive* rejection and forced an immediate logout, even though the
+// session was never actually invalid. Sharing one in-flight promise per jti
+// means every concurrent caller gets the same successful result instead of
+// racing each other.
+// NOTE: process-local only — does not de-dupe across multiple server
+// instances, only concurrent calls within this one Node process.
+const inFlightRefreshes = new Map<string, Promise<JWT>>();
+
+// Short grace window caching the outcome of a successful rotation, keyed by
+// the refresh token it replaced. inFlightRefreshes alone only catches calls
+// that overlap while the winning request is still in flight — it does NOT
+// catch a "straggler" request that captured the pre-rotation cookie (e.g.
+// NextAuth's own automatic session refetch on window focus, or another
+// concurrent getSession() call) but doesn't reach this function until AFTER
+// the winner has already finished and cleared its in-flight entry. That
+// straggler would otherwise call the backend with an already-rotated-away
+// refresh token, get a definitive "revoked" rejection, and force a spurious
+// logout seconds after a perfectly valid refresh just succeeded. Caching the
+// result for a few seconds lets stragglers reuse the winner's outcome
+// instead of racing the backend a second time.
+const RECENT_ROTATION_GRACE_MS = 15_000;
+const recentRotations = new Map<string, JWT>();
+
+function rememberRotation(oldJti: string | undefined, result: JWT): void {
+  if (!oldJti) return;
+  recentRotations.set(oldJti, result);
+  setTimeout(() => {
+    recentRotations.delete(oldJti);
+  }, RECENT_ROTATION_GRACE_MS);
+}
 
 /**
  * Refresh the access token using the refresh token.
@@ -139,12 +179,52 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
+  const refreshJti = decodeJwtPayloadForLogging(
+    token.refreshToken as string,
+  )?.jti;
+
+  if (refreshJti) {
+    const recent = recentRotations.get(refreshJti);
+    if (recent) {
+      log.debug("[Auth] Reusing recently completed rotation for this token", {
+        refreshJti,
+      });
+      return recent;
+    }
+
+    const existing = inFlightRefreshes.get(refreshJti);
+    if (existing) {
+      log.debug("[Auth] Reusing in-flight refresh for this token", {
+        refreshJti,
+      });
+      return existing;
+    }
+  }
+
+  const refreshPromise = performRefreshWithRetries(token, refreshJti);
+
+  if (refreshJti) {
+    inFlightRefreshes.set(refreshJti, refreshPromise);
+    refreshPromise.finally(() => {
+      inFlightRefreshes.delete(refreshJti);
+    });
+  }
+
+  return refreshPromise;
+}
+
+async function performRefreshWithRetries(
+  token: JWT,
+  refreshJti: string | undefined,
+): Promise<JWT> {
   const maxAttempts = REFRESH_RETRY_DELAYS_MS.length + 1;
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await attemptRefresh(token);
+      const result = await attemptRefresh(token);
+      rememberRotation(refreshJti, result);
+      return result;
     } catch (error) {
       lastError = error;
       const definitive =
@@ -167,6 +247,43 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     }
   }
 
+  if (wasDefinitive) {
+    // One last check: another request may have completed a rotation for
+    // this exact token while our own backend call was in flight — the
+    // definitive "revoked"/"invalid" rejection we just got is what a lost
+    // race looks like from the backend's point of view. If a rotation landed
+    // in the meantime, use it instead of forcing a spurious logout.
+    if (refreshJti) {
+      const recent = recentRotations.get(refreshJti);
+      if (recent) {
+        log.warn(
+          "[Auth] Definitive rejection followed a concurrent rotation — using the winning result instead of logging out",
+          { refreshJti },
+        );
+        return recent;
+      }
+    }
+
+    log.error(
+      "[Auth] Token refresh definitively rejected, forcing re-login",
+      lastError,
+      { refreshJti },
+    );
+    return { ...token, error: "RefreshAccessTokenError" };
+  }
+
+  // Every attempt failed transiently (network error, 5xx, a lost
+  // concurrent-refresh race) — the backend never definitively rejected the
+  // refresh token. Setting the error flag here was itself a bug: this same
+  // flag is what the middleware's `authorized` callback (auth.config.ts)
+  // uses to force an IMMEDIATE redirect to /login on the very next page
+  // navigation — a much more aggressive trigger than anything in the React
+  // component tree, and completely bypasses any client-side retry/verify
+  // logic. A momentary backend/network blip should never end a session
+  // whose refresh token is still valid for days. Return the token
+  // unchanged — accessTokenExpires is still in the past, so the next
+  // expiry check (proactive, reactive-401, or the next middleware
+  // invocation) will simply try again.
   log.error(
     "[Auth] Token refresh exhausted all attempts, forcing re-login",
     lastError,

@@ -4,6 +4,17 @@ import { getQueryClient } from "@/lib/query-client";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { resetAllStores } from "./store-registry";
 
+// `performLogout` is called independently from several uncoordinated places
+// (use-auth-session.ts's error effect, SessionTimeoutWarning's definitive-
+// rejection path, auth-utils.ts's redirectToLogin) whenever they each notice
+// the same dead session. Without a shared guard, a single expired/invalid
+// session triggers several concurrent full logout sequences — duplicate
+// store resets, duplicate signOut() calls, and re-rendered components that
+// can re-trigger their own refresh/logout effects mid-flight. Since
+// performLogout always ends by navigating away, this flag only needs to
+// suppress re-entry for the lifetime of this page load.
+let logoutInProgress = false;
+
 /**
  * Performs a comprehensive and secure logout operation.
  *
@@ -17,6 +28,12 @@ import { resetAllStores } from "./store-registry";
  * @param callbackUrl - The URL to redirect to after logout. Defaults to "/login"
  */
 export async function performLogout(callbackUrl: string = "/login") {
+  if (logoutInProgress) {
+    log.debug("[Auth] Logout already in progress, ignoring duplicate call");
+    return;
+  }
+  logoutInProgress = true;
+
   try {
     log.info("[Auth] Initiating comprehensive logout via utility...");
 
