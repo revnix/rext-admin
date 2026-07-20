@@ -161,6 +161,7 @@ export const workspaceAnalyticsSchema = z.object({
 export const brandVoiceSchema = z.object({
   id: z.string().optional(),
   workspace_id: z.string(),
+  brand_name: z.string().optional(),
   about: z.string().optional(),
   customer_profile: z.string().optional(),
   selling_position: z.string().optional(),

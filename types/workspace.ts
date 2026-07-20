@@ -103,6 +103,7 @@ export interface Persona {
 export interface BrandVoice {
   id?: string;
   workspace_id: string;
+  brand_name?: string; // The actual brand/product name — distinct from the workspace name
   about?: string; // Brand description
   customer_profile?: string; // Target customer details
   selling_position?: string; // Unique selling proposition

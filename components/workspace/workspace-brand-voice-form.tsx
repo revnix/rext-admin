@@ -39,6 +39,7 @@ import type { BrandVoice, Persona } from "@/types/workspace";
  * Validation schema for brand voice form
  */
 const brandVoiceSchema = z.object({
+  brand_name: z.string().optional(),
   about: z.string().optional(),
   customer_profile: z.string().optional(),
   selling_position: z.string().optional(),
@@ -119,6 +120,7 @@ export function WorkspaceBrandVoiceForm({
   const form = useForm<BrandVoiceFormData>({
     resolver: zodResolver(brandVoiceSchema),
     defaultValues: {
+      brand_name: data.brand_name || "",
       about: data.about || "",
       customer_profile: data.customer_profile || "",
       selling_position: data.selling_position || "",
@@ -246,6 +248,34 @@ export function WorkspaceBrandVoiceForm({
             </TabsList>
             {/* Brand Information Tab */}
             <TabsContent value="info" className="space-y-6 py-6">
+              {/* Brand Name Field */}
+              <FormField
+                control={form.control}
+                name="brand_name"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <div>
+                      <FormLabel className="text-base font-semibold">
+                        Brand Name
+                      </FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground mt-1">
+                        The actual name of your brand or product, exactly as
+                        it should appear in generated content. This is not
+                        the same as your workspace name.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g., Everlane"
+                        className="bg-background/50 border-border focus:bg-background transition-colors"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* About Field */}
               <FormField
                 control={form.control}
