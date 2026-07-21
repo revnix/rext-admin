@@ -129,7 +129,7 @@ export default function CreatePersonaPage() {
       >
         <div className="max-w-3xl space-y-8 pb-12">
           <Card className="shadow-sm border border-border bg-card rounded-2xl overflow-hidden">
-            <CardContent className="p-8 space-y-6">
+            <CardContent className="p-4 sm:p-8 space-y-6">
               {/* Full Name */}
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name *</Label>
@@ -209,7 +209,7 @@ export default function CreatePersonaPage() {
                     type="button"
                     variant="outline"
                     onClick={handleAddExpertise}
-                    className="bg-background rounded-xl border-border h-auto shrink-0"
+                    className="bg-background rounded-xl border-border h-auto shrink-0 px-3 sm:px-4"
                   >
                     Add
                   </Button>

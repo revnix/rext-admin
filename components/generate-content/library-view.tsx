@@ -187,32 +187,29 @@ export function LibraryView() {
         </p>
       </div>
 
-      <div className="flex gap-4 mb-8">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-          <Input
-            placeholder="Search saved keywords..."
-            className="pl-10 bg-white text-foreground shadow-none h-11 border-border/50 focus-visible:ring-primary/20"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearch(search);
-              }
-            }}
-          />
-        </div>
+      <div className="flex gap-3 mb-8 max-w-xl">
+        <Input
+          placeholder="Search saved keywords..."
+          className="bg-white text-foreground shadow-none h-11 text-base border-border/50 focus-visible:ring-primary/20 flex-1"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch(search);
+            }
+          }}
+        />
         <Button
-          className="h-11 px-6 font-semibold"
+          className="h-11 px-3 sm:px-6 font-semibold shrink-0"
           onClick={() => handleSearch(search)}
           disabled={isLoading}
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
           ) : (
-            <Search className="h-4 w-4 mr-2" />
+            <Search className="h-4 w-4 sm:mr-2" />
           )}
-          Search Library
+          <span className="hidden sm:inline">Search Library</span>
         </Button>
       </div>
 

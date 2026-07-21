@@ -372,7 +372,7 @@ export function WorkspaceCreateWizard() {
                   type="text"
                   placeholder="e.g., My Company Workspace"
                   {...register("name")}
-                  className={`text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
+                  className={`text-base sm:text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
                   autoFocus
                 />
                 {errors.name && (
@@ -392,7 +392,7 @@ export function WorkspaceCreateWizard() {
                   type="url"
                   placeholder="https://your-company.com"
                   {...register("url")}
-                  className={`text-lg h-12 ${errors.url ? "border-destructive" : ""}`}
+                  className={`text-base sm:text-lg h-12 ${errors.url ? "border-destructive" : ""}`}
                 />
                 {errors.url && (
                   <p className="text-sm text-destructive">
