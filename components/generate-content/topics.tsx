@@ -92,7 +92,7 @@ export function TopicsSection({
               onClick={handleRegenerate}
               disabled={isRegenerating}
               className={cn(
-                "shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-border/70 cursor-pointer",
+                "shrink-0 inline-flex items-center gap-2 px-2.5 sm:px-4 h-9 rounded-lg border border-border/70 cursor-pointer",
                 "bg-background text-foreground text-sm font-medium",
                 "hover:bg-accent transition-colors duration-150",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -103,7 +103,9 @@ export function TopicsSection({
               ) : (
                 <RefreshCcw className="w-4 h-4" />
               )}
-              <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
+              <span className="hidden sm:inline">
+                {isRegenerating ? "Regenerating..." : "Regenerate"}
+              </span>
             </button>
 
             <input
@@ -111,7 +113,7 @@ export function TopicsSection({
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Or describe what you're looking for..."
-              className="flex-1 min-w-0 h-9 rounded-lg border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="flex-1 min-w-0 h-11 sm:h-9 rounded-lg border border-border/60 bg-background px-3 text-sm text-ellipsis text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleRegenerate();
               }}
