@@ -339,6 +339,9 @@ export default {
           const { email, password } = validatedFields.data;
           const rememberMe =
             (credentials as { rememberMe?: string }).rememberMe === "true";
+          const confirmReactivation =
+            (credentials as { confirmReactivation?: string })
+              .confirmReactivation === "true";
 
           // Call backend login endpoint
           const response = await fetch(
@@ -346,7 +349,11 @@ export default {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
+              body: JSON.stringify({
+                email,
+                password,
+                confirm_reactivation: confirmReactivation,
+              }),
             },
           );
 
@@ -359,10 +366,20 @@ export default {
             );
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
 
-            // Throw CredentialsSignin with the message as the code
-            // This allows the client to access the specific message
+            // Deactivated account: surface a distinct code so the login form
+            // can show a reactivation confirmation popup instead of a plain
+            // error toast.
+            const backendCode = (
+              errorData as { error?: { code?: string } } | undefined
+            )?.error?.code;
+
+            // Throw CredentialsSignin with the code (or message as fallback)
+            // as the code. This allows the client to access the specific error.
             const error = new CredentialsSignin(errorMessage);
-            error.code = errorMessage;
+            error.code =
+              backendCode === "account_deactivated"
+                ? "ACCOUNT_DEACTIVATED"
+                : errorMessage;
             throw error;
           }
 
