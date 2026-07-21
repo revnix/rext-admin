@@ -21,6 +21,16 @@ export function SessionTimeoutWarning() {
   const handleExtendSession = useCallback(async () => {
     if (isExtending) return;
 
+    // The session already carries a definitive rejection from a previous
+    // refresh attempt — retrying here would reuse the same dead refresh
+    // token and get the same rejection, re-triggering useAuthSession's
+    // logout effect in a tight loop (repeated backend calls, repeated
+    // signOut()/redirect cycles) instead of letting that single effect
+    // own the logout.
+    if (session?.error) {
+      return;
+    }
+
     setIsExtending(true);
     try {
       if (!session?.user?.refreshToken) {
@@ -137,7 +147,12 @@ export function SessionTimeoutWarning() {
       return;
     }
 
-    if (hasTriggeredRef.current || isExtending || !session?.user?.refreshToken) {
+    if (
+      hasTriggeredRef.current ||
+      isExtending ||
+      !session?.user?.refreshToken ||
+      session?.error
+    ) {
       return;
     }
 
@@ -166,7 +181,12 @@ export function SessionTimeoutWarning() {
       return;
     }
 
-    if (hasTriggeredExpiredRef.current || isExtending || !session) {
+    if (
+      hasTriggeredExpiredRef.current ||
+      isExtending ||
+      !session ||
+      session.error
+    ) {
       return;
     }
 
