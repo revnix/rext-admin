@@ -7,7 +7,7 @@ import Google from "next-auth/providers/google";
 import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-import { getPrimaryRole } from "@/lib/auth-utils";
+import { AUTH_SESSION_UPDATE_ACTION, getPrimaryRole } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
@@ -190,7 +190,6 @@ const REFRESH_RETRY_DELAYS_MS = [300, 800];
 // Without this, a request can be dispatched at the last valid millisecond
 // and arrive at the backend after the token has actually expired.
 const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30_000;
-const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
 
 // De-dupes concurrent refresh attempts for the same refresh token. Without
 // this, multiple jwt() callback invocations that land within the same ~30s

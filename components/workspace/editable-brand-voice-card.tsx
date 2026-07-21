@@ -254,9 +254,7 @@ export function EditableBrandVoiceCard({
             />
           ) : (
             <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
-              {brandVoice.brand_name || (
-                <span className="italic">Not set</span>
-              )}
+              {brandVoice.brand_name || <span className="italic">Not set</span>}
             </p>
           )}
         </div>
