@@ -61,7 +61,7 @@ export function KeywordForm({
           <Button
             type="submit"
             size="sm"
-            className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0"
+            className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0 w-[70%] sm:w-auto"
           >
             Analyze
             <ArrowRight className="w-3 h-3" />
