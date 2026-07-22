@@ -18,6 +18,22 @@ let authHeadersCache: {
 } | null = null;
 const CACHE_TTL_MS = 10000; // Cache for 10 seconds
 
+// DEBUG: decode a JWT payload without verifying it, for tracing token
+// identity (jti) across the refresh/session/request pipeline. Not for
+// trust decisions — logging only.
+function decodeJwtForDebug(token: string | undefined | null): { jti?: string } | null {
+  if (!token) return null;
+  try {
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return null;
+    const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const json = typeof atob === "function" ? atob(base64) : Buffer.from(base64, "base64").toString("utf-8");
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 export const ROLE_HIERARCHY = [
   "super_admin",
   "admin",
@@ -198,6 +214,9 @@ export async function getAuthHeaders(
     const { accessToken } = store;
 
     if (accessToken) {
+      log.info(
+        `[DEBUG-TOKEN] getAuthHeaders using IMPERSONATION STORE token jti=${decodeJwtForDebug(accessToken)?.jti}`,
+      );
       return {
         Authorization: `Bearer ${accessToken}`,
       };
@@ -208,6 +227,9 @@ export async function getAuthHeaders(
   if (typeof window !== "undefined" && !skipCache && authHeadersCache) {
     const now = Date.now();
     if (now - authHeadersCache.timestamp < CACHE_TTL_MS) {
+      log.info(
+        `[DEBUG-TOKEN] getAuthHeaders using CACHED headers (age=${now - authHeadersCache.timestamp}ms) jti=${decodeJwtForDebug(authHeadersCache.headers.Authorization?.replace("Bearer ", ""))?.jti}`,
+      );
       return authHeadersCache.headers;
     }
   }
@@ -216,6 +238,9 @@ export async function getAuthHeaders(
   if (typeof window === "undefined") {
     const session = await auth();
     if (session?.user?.accessToken) {
+      log.info(
+        `[DEBUG-TOKEN] getAuthHeaders(server) using session token jti=${decodeJwtForDebug(session.user.accessToken)?.jti}`,
+      );
       return {
         Authorization: `Bearer ${session.user.accessToken}`,
       };
@@ -237,6 +262,9 @@ export async function getAuthHeaders(
       tokenLength: session.user.accessToken.length,
       tokenPreview: `${session.user.accessToken.substring(0, 10)}...`,
     });
+    log.info(
+      `[DEBUG-TOKEN] getAuthHeaders(client, skipCache=${skipCache}) using FRESH session token jti=${decodeJwtForDebug(session.user.accessToken)?.jti}`,
+    );
   } else {
     log.warn("[AuthJS] No access token in client session", {
       hasSession: !!session,
@@ -281,6 +309,10 @@ export async function authenticatedFetch(
     headers.set("Content-Type", "application/json");
   }
 
+  log.info(
+    `[DEBUG-TOKEN] authenticatedFetch -> ${url} using access_token jti=${decodeJwtForDebug(headers.get("Authorization")?.replace("Bearer ", ""))?.jti} retry=${retry}`,
+  );
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -288,6 +320,9 @@ export async function authenticatedFetch(
 
   // Handle 401 Unauthorized - session might be expired
   if (response.status === 401) {
+    log.info(
+      `[DEBUG-TOKEN] authenticatedFetch <- ${url} got 401 with access_token jti=${decodeJwtForDebug(headers.get("Authorization")?.replace("Bearer ", ""))?.jti}`,
+    );
     if (retry) {
       log.info("[AuthJS] Got 401, attempting to refresh session and retry...");
 

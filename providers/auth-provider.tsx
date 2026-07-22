@@ -14,8 +14,9 @@ interface AuthProviderProps {
  * Wraps the app with NextAuth SessionProvider and includes:
  * - Session timeout warnings
  * - Automatic session refresh
- * - Disabled automatic refetch to prevent cross-tab interference
- * - Session changes only detected on user interaction (navigation, etc.)
+ * - Refetch on window focus so a backgrounded tab picks up the latest
+ *   rotated refresh token instead of retrying its own stale one (which the
+ *   backend has already permanently revoked) and getting logged out.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
@@ -27,7 +28,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   return (
-    <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
+    <SessionProvider refetchOnWindowFocus={true} refetchInterval={0}>
       {children}
       <SessionTimeoutWarning />
     </SessionProvider>
