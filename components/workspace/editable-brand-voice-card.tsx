@@ -22,6 +22,7 @@ interface EditableBrandVoiceCardProps {
 }
 
 interface BrandVoiceFormData {
+  brand_name: string;
   about: string;
   customer_profile: string;
   selling_position: string;
@@ -32,6 +33,7 @@ interface BrandVoiceFormData {
 }
 
 const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
+  brand_name: voice?.brand_name ?? "",
   about: voice?.about ?? "",
   customer_profile: voice?.customer_profile ?? "",
   selling_position: voice?.selling_position ?? "",
@@ -60,6 +62,7 @@ export function EditableBrandVoiceCard({
   const updateMutation = useMutation({
     mutationFn: async (data: BrandVoiceFormData) => {
       return apiClient.workspaces.updateBrandVoice(workspace.id, {
+        brand_name: data.brand_name,
         about: data.about,
         customer_profile: data.customer_profile,
         selling_position: data.selling_position,
@@ -235,6 +238,27 @@ export function EditableBrandVoiceCard({
       )}
 
       <div className="space-y-6">
+        {/* Brand Name */}
+        <div className="space-y-2">
+          <Label htmlFor="brand_name" className="text-sm font-semibold">
+            Brand Name
+          </Label>
+          {isEditing ? (
+            <Input
+              id="brand_name"
+              value={formData.brand_name}
+              onChange={(e) =>
+                setFormData({ ...formData, brand_name: e.target.value })
+              }
+              placeholder="The actual brand/product name (not the workspace name)"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
+              {brandVoice.brand_name || <span className="italic">Not set</span>}
+            </p>
+          )}
+        </div>
+
         {/* About */}
         <div className="space-y-2">
           <Label htmlFor="about" className="text-sm font-semibold">

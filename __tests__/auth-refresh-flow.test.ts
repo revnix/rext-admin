@@ -10,6 +10,7 @@ jest.mock("@/lib/logger", () => ({
 }));
 jest.mock("@/lib/auth-utils", () => ({
   getPrimaryRole: () => "user",
+  AUTH_SESSION_UPDATE_ACTION: "refresh-backend-token",
 }));
 jest.mock("@/lib/error-utils", () => ({
   extractApiError: (_body: unknown, fallback: string) => fallback,

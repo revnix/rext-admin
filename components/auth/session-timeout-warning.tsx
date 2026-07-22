@@ -1,10 +1,15 @@
 "use client";
 
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { log } from "@/lib/logger";
+import {
+  AUTH_SESSION_UPDATE_ACTION,
+  fetchSessionSingleFlight,
+  requestBackendTokenRefresh,
+} from "@/lib/auth-utils";
 
 /**
  * Session Manager Component
@@ -49,7 +54,7 @@ export function SessionTimeoutWarning() {
       // instead of reusing a refresh token that's about to be (or already
       // was) blacklisted by that other tab's rotation.
       const expiryBeforeSync = session.accessTokenExpires;
-      const freshSession = await getSession();
+      const freshSession = await fetchSessionSingleFlight();
 
       log.debug("[Auth] Cross-tab sync check", {
         expiryBeforeSyncIso: expiryBeforeSync
@@ -77,10 +82,16 @@ export function SessionTimeoutWarning() {
       // A no-argument update() is a GET in next-auth/react beta.31 and does
       // not set `trigger === "update"`. Send an explicit action so the JWT
       // callback performs one intentional backend rotation.
+      //
+      // Routed through requestBackendTokenRefresh() so this proactive trigger
+      // shares the same mutex as authenticatedFetch()'s reactive 401 handler —
+      // without it, a background API call 401ing right as this timer crosses
+      // its threshold would fire two independent "refresh-backend-token"
+      // requests, racing the backend's single-use refresh token.
       log.debug("[Auth] Requesting an explicit server-side token refresh");
-      const updatedSession = await update({
-        authAction: "refresh-backend-token",
-      });
+      const updatedSession = await requestBackendTokenRefresh(() =>
+        update({ authAction: AUTH_SESSION_UPDATE_ACTION }),
+      );
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
         log.error("[Auth] Session refresh failed", updatedSession.error);
