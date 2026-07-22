@@ -30,6 +30,8 @@ export async function getMyAuditLogs(
   const url = buildUrl(`${API_BASE_URL}/api/v1/audit-logs/user/my-logs`, {
     action: filters?.action,
     resource_type: filters?.resource_type,
+    status_filter: filters?.status,
+    status: filters?.status,
     date_from: filters?.date_from,
     date_to: filters?.date_to,
     limit: filters?.limit,

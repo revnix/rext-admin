@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 /**
  * Subscriptions API Namespace
  *
@@ -138,7 +139,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         billing_period: billingPeriod,
       };
 
-      return client.request<PlanChangeResponse>(
+      const response = await client.request<PlanChangeResponse>(
         ENDPOINTS.SUBSCRIPTIONS.upgrade,
         {
           method: "POST",
@@ -146,6 +147,23 @@ export function createSubscriptionsNamespace(client: ApiClient) {
           body: JSON.stringify(requestData),
         },
       );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "subscription.upgrade",
+            resource_type: "subscription",
+            status: "success",
+          }),
+        })
+        .catch((e) =>
+          log.error("[AuditLog] Failed to log subscription.upgrade", e),
+        );
+
+      return response;
     },
 
     /**
@@ -164,7 +182,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         billing_period: billingPeriod,
       };
 
-      return client.request<PlanChangeResponse>(
+      const response = await client.request<PlanChangeResponse>(
         ENDPOINTS.SUBSCRIPTIONS.downgrade,
         {
           method: "POST",
@@ -172,6 +190,23 @@ export function createSubscriptionsNamespace(client: ApiClient) {
           body: JSON.stringify(requestData),
         },
       );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "subscription.upgrade", // using upgrade as generic change action per AuditActions
+            resource_type: "subscription",
+            status: "success",
+          }),
+        })
+        .catch((e) =>
+          log.error("[AuditLog] Failed to log subscription downgrade", e),
+        );
+
+      return response;
     },
 
     /**
@@ -190,7 +225,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         cancel_immediately: cancelImmediately,
       };
 
-      return client.request<{
+      const response = await client.request<{
         success: boolean;
         message: string;
       }>(ENDPOINTS.SUBSCRIPTIONS.cancel, {
@@ -198,6 +233,25 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestData),
       });
+
+      // Record audit log
+      if (response && response.success !== false) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "subscription.cancel",
+              resource_type: "subscription",
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log subscription.cancel", e),
+          );
+      }
+
+      return response;
     },
 
     // ============================================================================
