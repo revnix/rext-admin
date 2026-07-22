@@ -259,9 +259,9 @@ export function WorkspaceBrandVoiceForm({
                         Brand Name
                       </FormLabel>
                       <FormDescription className="text-sm text-muted-foreground mt-1">
-                        The actual name of your brand or product, exactly as
-                        it should appear in generated content. This is not
-                        the same as your workspace name.
+                        The actual name of your brand or product, exactly as it
+                        should appear in generated content. This is not the same
+                        as your workspace name.
                       </FormDescription>
                     </div>
                     <FormControl>
