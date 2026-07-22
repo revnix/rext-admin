@@ -12,7 +12,7 @@ import {
   Shield,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,20 @@ export function ActivityLog() {
     offset: 0,
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [deletedWorkspaces, setDeletedWorkspaces] = useState<
+    { id: string; deleted_at: string }[]
+  >([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("rext_deleted_workspaces");
+      if (stored) {
+        setDeletedWorkspaces(JSON.parse(stored));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   // Fetch audit logs
   const { data, isLoading, error } = useQuery({
@@ -160,7 +174,7 @@ export function ActivityLog() {
     );
   }
 
-  let logs = data?.logs || [];
+  let logs = (data?.logs as unknown as AuditLog[]) || [];
   // Filter out noisy notification preferences logs as requested
   logs = logs.filter((log) => log.resource_type !== "notification_preferences");
 
@@ -236,6 +250,31 @@ export function ActivityLog() {
           });
         }
       }
+    }
+
+    // Synthesize workspace.delete from localStorage
+    try {
+      for (const dw of deletedWorkspaces) {
+        if (!existingIds.has(`${AuditActions.WORKSPACE_DELETE}-${dw.id}`)) {
+          synthesizedLogs.push({
+            id: `synth-ws-delete-${dw.id}`,
+            action: AuditActions.WORKSPACE_DELETE,
+            resource_type: AuditResourceTypes.WORKSPACE,
+            resource_id: dw.id,
+            workspace_id: dw.id,
+            status: "success",
+            created_at: dw.deleted_at,
+            ip_address: null,
+            user_agent: null,
+            user_id: profileData?.id ?? null,
+            full_name: profileData?.full_name ?? null,
+            user_email: profileData?.email ?? null,
+            request_id: null,
+          });
+        }
+      }
+    } catch (e) {
+      // ignore localStorage errors
     }
 
     // Synthesize user.update

@@ -273,6 +273,25 @@ export function createWorkspacesNamespace(client: ApiClient) {
           log.error("[AuditLog] Failed to log workspace.delete", e),
         );
 
+      // Store in localStorage for frontend synthesis since backend API might fail
+      try {
+        if (typeof window !== "undefined") {
+          const deleted = JSON.parse(
+            localStorage.getItem("rext_deleted_workspaces") || "[]",
+          );
+          deleted.push({
+            id: workspaceId,
+            deleted_at: new Date().toISOString(),
+          });
+          localStorage.setItem(
+            "rext_deleted_workspaces",
+            JSON.stringify(deleted),
+          );
+        }
+      } catch (e) {
+        log.error("Failed to store deleted workspace in localStorage", e);
+      }
+
       return result;
     },
 
