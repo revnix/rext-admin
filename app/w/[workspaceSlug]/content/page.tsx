@@ -89,8 +89,8 @@ export default function WorkspaceContentPage() {
   });
 
   const headerActions = canCreateContent ? (
-    <div className="flex items-center gap-2">
-      <Button asChild>
+    <div className="flex w-full sm:w-auto items-center gap-2">
+      <Button asChild className="w-full sm:w-auto">
         <Link href={workspaceRoutes.generate_content(workspaceSlug) as Route}>
           <Plus className="h-4 w-4 mr-2" />
           Generate Content

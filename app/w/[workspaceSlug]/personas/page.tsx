@@ -53,7 +53,7 @@ export default function PersonaForgePage() {
       fullWidth
       actions={
         canCreate ? (
-          <div className="flex gap-2">
+          <div className="flex gap-2 ">
             <Link href={workspaceRoutes.persona_create(workspaceSlug) as Route}>
               <Button>
                 <Plus size={16} className="mr-2" />

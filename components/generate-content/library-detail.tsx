@@ -336,7 +336,11 @@ export default function LibraryDetail({
       </div>
 
       <div className="w-full sm:w-auto flex justify-between items-center fixed bottom-0 right-0 p-6 z-20">
-        <Button size="lg" onClick={handleContinue} className="w-full sm:w-auto px-10 font-bold">
+        <Button
+          size="lg"
+          onClick={handleContinue}
+          className="w-full sm:w-auto px-10 font-bold"
+        >
           Continue with this Keyword <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
