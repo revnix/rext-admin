@@ -344,10 +344,10 @@ export default function ContentCalendarPage() {
                           {platformLabel(entry.platform)}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          {new Date(entry.date).toLocaleTimeString(
-                            undefined,
-                            { hour: "2-digit", minute: "2-digit" },
-                          )}
+                          {new Date(entry.date).toLocaleTimeString(undefined, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       </div>
                     </div>
