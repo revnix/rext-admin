@@ -325,6 +325,7 @@ export function WorkspaceInvitationsPanel({
     <Button
       variant="outline"
       size="sm"
+      className="w-full sm:w-auto"
       onClick={() => refetch()}
       disabled={isLoading}
     >

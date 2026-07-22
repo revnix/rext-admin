@@ -258,13 +258,13 @@ export function WorkspaceMembersPanel({
   ];
 
   const headerActions = (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center justify-between sm:justify-end gap-2 flex-row w-full sm:w-56">
       <Button
         variant="outline"
         size="sm"
         onClick={() => refetch()}
         disabled={isLoading}
-        className="shrink-0"
+        className="shrink-0 w-[29%] sm:w-auto"
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       </Button>
@@ -276,7 +276,7 @@ export function WorkspaceMembersPanel({
         <Button
           size="sm"
           onClick={() => setShowInviteDialog(true)}
-          className="w-full sm:w-auto min-w-0"
+          className="!w-[69%] sm:w-70"
         >
           <UserPlus className="h-4 w-4 mr-2 shrink-0" />
           <span className="truncate">Invite Members</span>

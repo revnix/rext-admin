@@ -344,6 +344,7 @@ export function EditableBrandVoiceCard({
                 <Button
                   type="button"
                   size="sm"
+                  className="!w-10 !h-11 p-0"
                   onClick={() => handleArrayItemAdd("target_audience")}
                 >
                   <Plus className="h-4 w-4" />
@@ -404,6 +405,7 @@ export function EditableBrandVoiceCard({
                 <Button
                   type="button"
                   size="sm"
+                  className="!w-10 !h-11 p-0"
                   onClick={() => handleArrayItemAdd("brand_voice")}
                 >
                   <Plus className="h-4 w-4" />
@@ -464,6 +466,7 @@ export function EditableBrandVoiceCard({
                 <Button
                   type="button"
                   size="sm"
+                  className="!w-10 !h-11 p-0"
                   onClick={() => handleArrayItemAdd("content_strategy")}
                 >
                   <Plus className="h-4 w-4" />
@@ -524,6 +527,7 @@ export function EditableBrandVoiceCard({
                 <Button
                   type="button"
                   size="sm"
+                  className="!w-10 !h-11 p-0"
                   onClick={() => handleArrayItemAdd("competitors")}
                 >
                   <Plus className="h-4 w-4" />
