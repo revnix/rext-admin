@@ -165,13 +165,16 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       : token.accessTokenExpires; // keep previous if backend doesn't provide one
 
   const incomingJwt = decodeJwtPayloadForLogging(refreshedTokens.refresh_token);
+  const incomingAccessJwt = decodeJwtPayloadForLogging(refreshedTokens.access_token);
   log.debug("[Auth] Refresh succeeded", {
     oldRefreshJti: outgoingJwt?.jti,
     newRefreshJti: incomingJwt?.jti,
+    newAccessJti: incomingAccessJwt?.jti,
     newAccessExpiryIso: accessTokenExpires
       ? new Date(accessTokenExpires).toISOString()
       : undefined,
   });
+  log.info(`[DEBUG-TOKEN] attemptRefresh received access_token jti=${incomingAccessJwt?.jti} refresh_token jti=${incomingJwt?.jti}`);
 
   return {
     ...token,
@@ -220,6 +223,7 @@ const inFlightRefreshes = new Map<string, Promise<JWT>>();
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {
     log.error("[Auth] No refresh token available");
+    console.log("Test-1");
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
@@ -290,6 +294,7 @@ async function performRefreshWithRetries(
       lastError,
       { refreshJti },
     );
+    console.log("Test-2")
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
@@ -580,7 +585,9 @@ export default {
         return token;
       }
 
+      console.log("requestedBackendRefresh", requestedBackendRefresh)
       if (requestedBackendRefresh) {
+
         log.info("[Auth] Explicit backend-token refresh requested", {
           refreshJti: decodeJwtPayloadForLogging(token.refreshToken as string)
             ?.jti,
@@ -614,6 +621,8 @@ export default {
 
       // If there's a previous refresh error, don't retry - just return the error token
       // This prevents infinite loops
+    console.log("Test-3")
+
       if (token.error === "RefreshAccessTokenError") {
         return token;
       }
@@ -659,11 +668,16 @@ export default {
           | number
           | undefined;
         session.error = token.error as string | undefined;
+        log.info(
+          `[DEBUG-TOKEN] session() serving access_token jti=${decodeJwtPayloadForLogging(token.accessToken as string)?.jti} refresh_token jti=${decodeJwtPayloadForLogging(token.refreshToken as string)?.jti} error=${token.error ?? "none"}`,
+        );
       }
       return session;
     },
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user && !auth?.error;
+    console.log("Test-4")
+
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
       const hasOAuthError = auth?.error === "OAuthBackendError";
       const pathname = nextUrl.pathname;
