@@ -104,7 +104,7 @@ export function DangerZoneSection() {
                   Transfer workspace ownership to another member
                 </p>
               </div>
-              <Button variant="outline" size="sm" disabled>
+              <Button className="w-full sm:w-auto" variant="outline" size="sm" disabled>
                 Coming Soon
               </Button>
             </div>
@@ -122,7 +122,7 @@ export function DangerZoneSection() {
                 onOpenChange={setDeleteDialogOpen}
               >
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={isDeleting}>
+                  <Button className="w-full sm:w-auto" variant="destructive" size="sm" disabled={isDeleting}>
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Workspace
                   </Button>
