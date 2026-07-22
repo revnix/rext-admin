@@ -396,7 +396,7 @@ export function AddIntegrationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] sm:h-auto overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {selected ? `Connect ${selected.label}` : "Add Integration"}
