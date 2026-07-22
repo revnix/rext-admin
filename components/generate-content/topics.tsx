@@ -93,7 +93,8 @@ export function TopicsSection({
               variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="!bg-background !border !border-border/60 text-foreground h-9 w-full sm:w-auto">
+              className="!bg-background !border !border-border/60 text-foreground h-9 w-full sm:w-auto"
+            >
               {isRegenerating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
@@ -109,7 +110,8 @@ export function TopicsSection({
               placeholder="Or describe what you're looking for..."
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleRegenerate();
-              }} />
+              }}
+            />
 
             <Button
               variant="outline"

@@ -6,6 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { Client } from "@langchain/langgraph-sdk";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
@@ -51,6 +61,7 @@ export function LibraryView() {
   const { user } = useAuthSession();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<LibraryItem | null>(null);
   const router = useRouter();
   const { workspace } = useWorkspace();
 
@@ -138,14 +149,18 @@ export function LibraryView() {
     setView("detail");
   };
 
-  const handleDelete = async (e: MouseEvent, item: LibraryItem) => {
+  const handleDelete = (e: MouseEvent, item: LibraryItem) => {
     e.stopPropagation();
     if (!workspace?.id) return;
 
-    if (!window.confirm(`Are you sure you want to delete "${item.keyword}"?`)) {
-      return;
-    }
+    setPendingDelete(item);
+  };
 
+  const confirmDelete = async () => {
+    const item = pendingDelete;
+    if (!item) return;
+
+    setPendingDelete(null);
     setDeletingId(item.id);
     try {
       await apiClient.keywordLibrary.delete(item.id, item.namespace);
@@ -314,6 +329,37 @@ export function LibraryView() {
           </p>
         </div>
       )}
+
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Delete Keyword
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently delete{" "}
+              <span className="font-semibold text-foreground">
+                "{pendingDelete?.keyword}"
+              </span>{" "}
+              from your keyword library. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
