@@ -4,6 +4,8 @@ import { ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 interface TopicsSectionProps {
   instruction: string;
@@ -86,50 +88,37 @@ export function TopicsSection({
         className="relative"
       >
         <div className="w-full max-w-3xl rounded-xl border border-border/70 bg-card/70 p-1.5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <Button
+              variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className={cn(
-                "shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-lg border border-border/70 cursor-pointer",
-                "bg-background text-foreground text-sm font-medium",
-                "hover:bg-accent transition-colors duration-150",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-              )}
-            >
+              className="!bg-background !border !border-border/60 text-foreground h-9 w-full sm:w-auto">
               {isRegenerating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <RefreshCcw className="w-4 h-4" />
               )}
               <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
-            </button>
-
-            <input
+            </Button>
+            <Input
               type="text"
+              className="!bg-background !border !border-border/60 !h-9 placeholder:text-muted-foreground"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Or describe what you're looking for..."
-              className="flex-1 min-w-0 h-9 rounded-lg border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleRegenerate();
-              }}
-            />
+              }} />
 
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className={cn(
-                "shrink-0 w-9 h-9 rounded-lg border border-border/70 cursor-pointer",
-                "bg-background text-foreground inline-flex items-center justify-center",
-                "hover:bg-accent transition-colors duration-150",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-              )}
+              className="!bg-background h-9 !border !border-border/60 w-full sm:w-auto"
             >
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>
