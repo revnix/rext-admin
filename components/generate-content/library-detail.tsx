@@ -117,7 +117,7 @@ export default function LibraryDetail({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         {/* Difficulty Section */}
-        <Card className="lg:col-span-4 p-8 flex flex-col items-center justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+        <Card className="xl:col-span-4 lg:col-span-5 p-8 flex flex-col items-center justify-center bg-white shadow-sm border-border/50 dark:bg-card">
           <SafeChartRadialStacked difficultyScore={kd} />
           <p className="text-sm text-muted-foreground mt-6 text-center max-w-[240px]">
             We estimate that you&apos;ll need followed backlinks from
@@ -130,7 +130,7 @@ export default function LibraryDetail({
         </Card>
 
         {/* Quick Metrics */}
-        <div className="lg:col-span-8 grid grid-cols-2 grid-rows-2 md:grid-cols-4 gap-4">
+        <div className="xl:col-span-8 lg:col-span-7 grid grid-cols-2 grid-rows-2 md:grid-cols-4 gap-4">
           <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">

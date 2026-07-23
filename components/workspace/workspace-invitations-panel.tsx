@@ -343,7 +343,7 @@ export function WorkspaceInvitationsPanel({
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="w-full lg:w-[68vw] xl:w-full">
         <DataTable
           columns={columns}
           data={tableData}

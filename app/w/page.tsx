@@ -288,22 +288,24 @@ export default function WorkspacePage() {
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
     >
-      <DataTable<WorkspaceData>
-        columns={columns}
-        data={transformedWorkspaces}
-        emptyTitle="No workspaces yet"
-        emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
-        emptyActions={emptyActions}
-        emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search workspaces by name, URL ..."
-        actions={tableActions}
-        rowActions={rowActions}
-        pageSize={10}
-        searchFields={["title", "url", "timezone", "status"]}
-        isLoading={isLoading}
-        searchWidth="md:w-[450px]"
-        tableId="workspaces"
-      />
+      <div className="w-full lg:w-[68vw] xl:w-auto overflow-x-auto xl:overflow-hidden">
+        <DataTable<WorkspaceData>
+          columns={columns}
+          data={transformedWorkspaces}
+          emptyTitle="No workspaces yet"
+          emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
+          emptyActions={emptyActions}
+          emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
+          searchPlaceholder="Search workspaces by name, URL ..."
+          actions={tableActions}
+          rowActions={rowActions}
+          pageSize={10}
+          searchFields={["title", "url", "timezone", "status"]}
+          isLoading={isLoading}
+          searchWidth="md:w-[450px]"
+          tableId="workspaces"
+        />
+      </div>
 
       {/* Delete Dialog */}
       {deleteDialogWorkspace && (
