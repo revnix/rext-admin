@@ -96,6 +96,7 @@ export function DownloadAuditLog({
       size={size}
       onClick={handleDownload}
       disabled={isDownloading}
+      className="w-full sm:w-auto"
     >
       {isDownloading ? (
         <>

@@ -53,7 +53,10 @@ export function useAuthSession() {
 
   // Proactively handle session refresh errors to break redirect loops
   useEffect(() => {
-    if (status !== "authenticated" || session?.error !== "RefreshAccessTokenError") {
+    if (
+      status !== "authenticated" ||
+      session?.error !== "RefreshAccessTokenError"
+    ) {
       return;
     }
 

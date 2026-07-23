@@ -227,7 +227,7 @@ export function ProfileEdit() {
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           {/* Avatar Display */}
-          <div className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden bg-muted">
+          <div className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden bg-muted mx-auto sm:mx-0">
             {currentAvatar ? (
               <img
                 src={currentAvatar}
@@ -242,7 +242,7 @@ export function ProfileEdit() {
           </div>
 
           {/* Avatar Actions */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 w-full sm:w-auto">
             <input
               ref={fileInputRef}
               type="file"
@@ -284,6 +284,7 @@ export function ProfileEdit() {
                 <Button
                   size="sm"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="mr-2 h-4 w-4" />
@@ -443,7 +444,11 @@ export function ProfileEdit() {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={updateMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending}
+              className="w-full sm:w-auto"
+            >
               {updateMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

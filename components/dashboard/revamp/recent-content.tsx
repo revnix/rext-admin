@@ -86,8 +86,8 @@ export function RecentContent({ workspace }: RecentContentProps) {
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/30 text-xs text-muted-foreground uppercase font-semibold">
               <tr>
-                <th className="px-6 py-3">Content Title</th>
-                <th className="px-6 py-3">Author</th>
+                <th className="px-6 py-3 min-w-60">Content Title</th>
+                <th className="px-6 py-3 min-w-46">Author</th>
                 <th className="px-6 py-3">Status</th>
               </tr>
             </thead>

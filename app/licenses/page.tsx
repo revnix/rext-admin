@@ -292,6 +292,7 @@ export default function LicensesPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => loadActivations(license.id)}
                       disabled={loadingActivations[license.id]}
                     >
@@ -316,6 +317,7 @@ export default function LicensesPage() {
                           license.activation_limit) && (
                         <Button
                           size="sm"
+                          className="w-full sm:w-auto"
                           onClick={() => handleActivateClick(license)}
                         >
                           <Plus className="mr-2 h-4 w-4" />

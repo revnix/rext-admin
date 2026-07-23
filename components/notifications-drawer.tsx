@@ -127,7 +127,7 @@ export function NotificationsDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-96 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-300">
+      <SheetContent className="w-full sm:w-96 sm:max-w-96 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-300">
         <SheetHeader className="p-6 pb-4">
           <SheetTitle className="flex items-center gap-2">
             Notifications

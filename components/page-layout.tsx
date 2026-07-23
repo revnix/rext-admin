@@ -172,17 +172,17 @@ export function PageLayout({
         <header className="sticky top-0 md:top-0 z-40 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-background text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
               <Button
                 variant="outline"
-                className="justify-start w-10 md:w-96 h-10 rounded-md bg-white border-input px-0 md:px-3 overflow-hidden relative shadow-none hover:border-input text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                className="justify-start w-96 h-10 rounded-md bg-white border-input px-3 overflow-hidden relative shadow-none hover:border-input text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                 onClick={() => setSearchOpen(true)}
               >
-                <Search className="h-4 w-4 md:mr-2 opacity-50 shrink-0 mx-auto md:mx-0" />
-                <span className="text-sm font-normal hidden md:inline-block truncate">
+                <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />
+                <span className="text-sm font-normal inline-block truncate">
                   Search or type command...
                 </span>
-                <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex border border-border">
+                <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </Button>
@@ -191,7 +191,7 @@ export function PageLayout({
 
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Credits Widget */}
-            <CreditBalanceWidget />
+            <CreditBalanceWidget className="hidden sm:flex" />
 
             {/* Notifications */}
             <Button
@@ -397,6 +397,11 @@ export function PageLayout({
                     </div>
                   </div>
                 </DropdownMenuLabel>
+
+                <div className="sm:hidden px-0.5 pb-1">
+                  <CreditBalanceWidget variant="row" />
+                </div>
+
                 <DropdownMenuSeparator className="bg-border my-1" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem

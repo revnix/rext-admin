@@ -21,7 +21,8 @@
       "!build",
       "!app/tasks",
       "!app/api/tasks",
-      "!scripts"
+      "!scripts",
+      "!public"
     ]
   },
   "formatter": {

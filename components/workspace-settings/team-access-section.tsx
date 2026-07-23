@@ -31,7 +31,7 @@ export function TeamAccessSection() {
           <p className="text-sm text-muted-foreground">
             Add, remove, or manage individual team members and their roles
           </p>
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="w-full sm:w-auto">
             <Link href={`/w/${workspaceSlug}/members` as Route}>
               <Users className="h-4 w-4 mr-2" />
               Manage Team Members

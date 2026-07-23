@@ -725,7 +725,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   };
 
   const analysisSidebarContent = (
-    <div className="flex flex-col h-full bg-sidebar">
+    <div className="flex flex-col h-full bg-sidebar pb-20 sm:pb-0">
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
         <div className="flex-1">
           {canUpdate ? (
@@ -1238,9 +1238,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="flex-1 bg-background px-2 py-4 scroll-smooth"
+          className="w-full flex-1 bg-background px-2 py-4 scroll-smooth"
         >
-          <article className="mx-auto max-w-3xl px-4 pb-16">
+          <article className="overflow-hidden w-full sm:mx-auto sm:max-w-3xl sm:px-4 pb-16">
             <div>
               {isEditing ? (
                 <div className="space-y-4">
@@ -1438,7 +1438,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       {/* Schedule dialog */}
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
           <DialogTitle>Schedule Publication</DialogTitle>
           <DialogDescription>
             Pick a date and time. Content publishes automatically via WordPress.

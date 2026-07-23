@@ -287,7 +287,7 @@ export function SuggestionsSection({
                   duration: 0.35,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
+                className="w-full sm:w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
                 onClick={() => onSelect(kw)}
               >
                 <span className="text-[13px] font-medium text-foreground/80 group-hover:text-primary transition-colors">

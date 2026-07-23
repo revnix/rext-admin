@@ -269,7 +269,7 @@ The project uses Tailwind CSS v4 with custom design tokens:
 - **Testing**: Comprehensive test coverage with Jest
 
 ## 📱 Browser Support
-
+  
 - Chrome (last 2 versions)
 - Firefox (last 2 versions)
 - Safari (last 2 versions)

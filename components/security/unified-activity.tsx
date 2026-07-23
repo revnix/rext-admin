@@ -365,6 +365,7 @@ export function UnifiedActivity() {
           <Button
             variant={showFilters ? "default" : "outline"}
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="mr-2 h-4 w-4" />
@@ -438,12 +439,12 @@ export function UnifiedActivity() {
                     className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4 min-w-0">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 flex-1">
                         <div className="rounded-full bg-muted p-2 mt-0.5">
                           <Monitor className="h-4 w-4" />
                         </div>
                         <div className="space-y-1 flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex justify-center sm:justify-start items-center gap-2 flex-wrap">
                             <p className="font-medium text-sm">
                               {getActionDisplayName(log.action)}
                             </p>
@@ -460,7 +461,7 @@ export function UnifiedActivity() {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                          <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatTimestamp(log.created_at)}
@@ -474,7 +475,7 @@ export function UnifiedActivity() {
                           </div>
 
                           {log.user_agent && (
-                            <p className="text-xs text-muted-foreground break-all line-clamp-2 mt-1">
+                            <p className="text-xs text-center sm:text-start text-muted-foreground break-all line-clamp-2 mt-1">
                               {log.user_agent}
                             </p>
                           )}
@@ -499,22 +500,24 @@ export function UnifiedActivity() {
                     )}{" "}
                     of {finalTotal} activities
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto order-0 sm:order-0"
                       onClick={() => handlePageChange("prev")}
                       disabled={(filters.offset || 0) === 0}
                     >
                       <ChevronLeft className="h-4 w-4" />
                       Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground order-2 sm:order-1">
                       Page {currentPage} of {totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto order-1 sm:order-2"
                       onClick={() => handlePageChange("next")}
                       disabled={!auditData?.has_more}
                     >
@@ -533,11 +536,11 @@ export function UnifiedActivity() {
       <TabsContent value="logins" className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex justify-center sm:justify-start items-center gap-2">
               <History className="h-5 w-5" />
               Login History
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-center sm:text-start">
               Recent successful and failed login attempts
             </CardDescription>
           </CardHeader>
@@ -558,24 +561,24 @@ export function UnifiedActivity() {
                 {/* Summary Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <LogIn className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Total Logins
                       </p>
                     </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl text-center sm:text-start font-bold">
                       {loginHistory.total_count}
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Last Login
                       </p>
                     </div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm text-center sm:text-start font-medium">
                       {(loginHistory.history ?? [])[0]?.created_at
                         ? formatTimestamp(
                             (loginHistory.history ?? [])[0]?.created_at,
@@ -584,13 +587,13 @@ export function UnifiedActivity() {
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <AlertCircle className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Failed Attempts
                       </p>
                     </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl text-center sm:text-start font-bold">
                       {
                         (loginHistory.history ?? []).filter((h) => !h.success)
                           .length
@@ -618,7 +621,7 @@ export function UnifiedActivity() {
                           key={event.created_at}
                           className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                             <div
                               className={`rounded-full p-2 ${
                                 event.success
@@ -633,7 +636,7 @@ export function UnifiedActivity() {
                               )}
                             </div>
                             <div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex justify-center sm:justify-start items-center gap-2">
                                 <p className="text-sm font-medium">
                                   {event.success
                                     ? "Successful Login"
@@ -648,7 +651,7 @@ export function UnifiedActivity() {
                                   {event.success ? "Success" : "Failed"}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex justify-center sm:justify-start mt-2 sm:mt-0 items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
                                   {formatLoginEventTime(event.created_at)}

@@ -156,12 +156,13 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex sm:justify-end w-full sm:w-auto">
         {isEditing ? (
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-72 justify-between">
             <Button
               variant="outline"
               size="sm"
+              className="!w-[49%] sm:w-auto"
               onClick={handleCancel}
               disabled={updatePersona.isPending}
             >
@@ -171,6 +172,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             <Button
               variant="default"
               size="sm"
+              className="!w-[49%] sm:w-36"
               onClick={handleSave}
               disabled={updatePersona.isPending}
             >
@@ -183,7 +185,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto justify-between">
             {canDelete ? (
               <ConfirmationDialog
                 title="Delete Persona"
@@ -195,7 +197,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-destructive border-destructive/20 hover:bg-destructive/5"
+                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20 hover:bg-destructive/5"
                   disabled={deletePersona.isPending}
                 >
                   {deletePersona.isPending ? (
@@ -214,7 +216,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-destructive border-destructive/20"
+                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20"
                 >
                   <Trash2 size={16} className="mr-2" />
                   Delete Persona
@@ -227,7 +229,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="border-primary/20 text-primary hover:bg-primary/5"
+                className="!w-[49%] sm:w-auto border-primary/20 text-primary hover:bg-primary/5"
               >
                 <Edit2 size={16} className="mr-2" />
                 Edit Persona
@@ -240,7 +242,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-primary/20 text-primary"
+                  className="!w-[49%] sm:w-auto border-primary/20 text-primary"
                 >
                   <Edit2 size={16} className="mr-2" />
                   Edit Persona

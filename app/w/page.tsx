@@ -223,11 +223,12 @@ export default function WorkspacePage() {
 
   // Define table actions
   const tableActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
       <Button
         variant="outline"
         size="sm"
         onClick={handleRefresh}
+        className="!w-[39%] sm:w-4"
         disabled={isLoading || isFetching || isRefreshing}
       >
         <RefreshCw
@@ -235,7 +236,11 @@ export default function WorkspacePage() {
         />
         Refresh
       </Button>
-      <Button size="sm" onClick={() => router.push("/w/create" as Route)}>
+      <Button
+        size="sm"
+        className="!w-[59%] sm:w-4"
+        onClick={() => router.push("/w/create" as Route)}
+      >
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>

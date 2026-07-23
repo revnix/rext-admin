@@ -179,6 +179,7 @@ export function GeneralInfoSection() {
 
               <Button
                 type="submit"
+                className="w-full sm:w-auto"
                 disabled={
                   form.formState.isSubmitting || !form.formState.isDirty
                 }

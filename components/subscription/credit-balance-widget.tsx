@@ -5,8 +5,18 @@ import { CircleDollarSign } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { Coins } from "lucide-react";
 
-export function CreditBalanceWidget() {
+interface CreditBalanceWidgetProps {
+  className?: string;
+  /** "pill" is the compact header badge; "row" is a full-width row for menus. */
+  variant?: "pill" | "row";
+}
+
+export function CreditBalanceWidget({
+  className,
+  variant = "pill",
+}: CreditBalanceWidgetProps) {
   const { credits, fetchCredits } = useSubscriptionStore();
 
   useEffect(() => {
@@ -16,6 +26,29 @@ export function CreditBalanceWidget() {
   }, [credits, fetchCredits]);
 
   if (!credits) return null;
+
+  if (variant === "row") {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-2.5 py-2",
+          className,
+        )}
+      >
+        <div className="flex items-center gap-1.5">
+          <Coins className="h-4 w-4 text-amber-500" />
+          <span className="text-sm font-medium">
+            {credits.current_credits.toLocaleString()} credits
+          </span>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {credits.articles_remaining !== null
+            ? `~${credits.articles_remaining} articles`
+            : "Unlimited"}
+        </span>
+      </div>
+    );
+  }
 
   const usedPercent =
     credits.credits_per_month && credits.credits_per_month > 0
@@ -36,7 +69,12 @@ export function CreditBalanceWidget() {
     <TooltipPrimitive.Provider delayDuration={0}>
       <TooltipPrimitive.Root>
         <TooltipPrimitive.Trigger asChild>
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 mr-2 rounded-full border border-border bg-muted/30 hover:bg-muted/50 transition-colors cursor-default">
+          <div
+            className={cn(
+              "flex items-center gap-1.5 px-2 sm:px-3 py-1.5 mr-1 sm:mr-2 rounded-full border border-border bg-muted/30 hover:bg-muted/50 transition-colors cursor-default",
+              className,
+            )}
+          >
             <CircleDollarSign className="h-4 w-4 text-[#0061FF]" />
             <span className="text-sm font-medium">
               {credits.current_credits.toLocaleString()}
