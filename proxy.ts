@@ -1,8 +1,9 @@
-import { AUTH_PAGE_PATHS } from "@/lib/auth-routes";
+import { AUTH_PAGES, AUTH_PAGE_PATHS, isAuthPage } from "@/lib/auth-routes";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { Session } from "next-auth";
-import { auth } from "@/auth";
+import type { JWT } from "next-auth/jwt";
+import { getToken } from "next-auth/jwt";
 import { getCSPHeader } from "@/lib/csp";
 import { ROLES } from "@/lib/permissions";
 
@@ -16,9 +17,58 @@ function generateNonce(): string {
   return btoa(String.fromCharCode(...buffer));
 }
 
-// Extend NextRequest to include auth session from NextAuth middleware
-interface AuthenticatedRequest extends NextRequest {
-  auth: Session | null;
+function toSession(token: JWT | null): Session | null {
+  if (!token) return null;
+
+  const id = String(token.id ?? token.sub ?? "");
+  if (!id) return null;
+
+  return {
+    user: {
+      id,
+      email: String(token.email ?? ""),
+      name: typeof token.name === "string" ? token.name : null,
+      full_name:
+        typeof token.full_name === "string"
+          ? token.full_name
+          : typeof token.name === "string"
+            ? token.name
+            : "",
+      display_name:
+        typeof token.display_name === "string" ? token.display_name : null,
+      image: typeof token.picture === "string" ? token.picture : null,
+      accessToken: String(token.accessToken ?? ""),
+      role: typeof token.role === "string" ? token.role : undefined,
+      permissions: Array.isArray(token.permissions)
+        ? (token.permissions as string[])
+        : [],
+    },
+    expires: token.exp
+      ? new Date(token.exp * 1000).toISOString()
+      : new Date(0).toISOString(),
+    accessTokenExpires:
+      typeof token.accessTokenExpires === "number"
+        ? token.accessTokenExpires
+        : undefined,
+    error: typeof token.error === "string" ? token.error : undefined,
+  };
+}
+
+async function readSessionWithoutWritingCookie(
+  request: NextRequest,
+): Promise<Session | null> {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!secret) return null;
+
+  const configuredUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
+  const secureCookie = configuredUrl
+    ? configuredUrl.startsWith("https://")
+    : process.env.NODE_ENV === "production";
+
+  const token = await getToken({ req: request, secret, secureCookie }).catch(
+    () => null,
+  );
+  return toSession(token);
 }
 
 /**
@@ -40,6 +90,14 @@ const PROTECTED_ROUTES: Record<string, string | string[]> = {
   "/admin/monitoring": "audit.read",
   "/admin/reports": "audit.read",
 };
+
+const PROTECTED_ROUTE_ENTRIES = Object.entries(PROTECTED_ROUTES).sort(
+  ([left], [right]) => right.length - left.length,
+);
+
+function matchesRoute(pathname: string, routePattern: string): boolean {
+  return pathname === routePattern || pathname.startsWith(`${routePattern}/`);
+}
 
 /**
  * Workspace-scoped routes that require workspace-specific permission checks
@@ -80,9 +138,8 @@ function checkAccess(
   return user.permissions?.includes(requirement) || false;
 }
 
-export default auth((request) => {
-  const { nextUrl } = request as NextRequest;
-  const session = (request as AuthenticatedRequest).auth;
+export default async function proxy(request: NextRequest) {
+  const { nextUrl } = request;
 
   // Handle legacy invitation route redirect
   if (nextUrl.pathname === "/accept-invitation") {
@@ -98,6 +155,20 @@ export default auth((request) => {
     return NextResponse.redirect(redirectedUrl);
   }
 
+  // Decode the encrypted Auth.js JWT without invoking Auth.js's session
+  // action. The session action re-encodes and Set-Cookies on every read;
+  // middleware requests completing out of order could otherwise overwrite a
+  // newly rotated backend refresh token with an older cookie.
+  const session = await readSessionWithoutWritingCookie(request);
+  const isLoggedIn = !!session?.user && !session.error;
+  const isInvitationPage =
+    nextUrl.pathname.startsWith("/invitations/accept") ||
+    nextUrl.pathname.startsWith("/accept-invitation") ||
+    nextUrl.pathname.startsWith("/accept-admin-invitation");
+  const isVerifyEmailPage = nextUrl.pathname.startsWith(
+    AUTH_PAGES.VERIFY_EMAIL,
+  );
+
   // Public routes that don't require authentication
   const publicRoutes = [
     ...AUTH_PAGE_PATHS,
@@ -108,8 +179,26 @@ export default auth((request) => {
     nextUrl.pathname.startsWith(route),
   );
 
+  if (session?.error && !isPublicRoute) {
+    const loginUrl = new URL("/login", nextUrl.origin);
+    loginUrl.searchParams.set(
+      "error",
+      session.error === "OAuthBackendError" ? "OAuthError" : "SessionExpired",
+    );
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (
+    isLoggedIn &&
+    isAuthPage(nextUrl.pathname) &&
+    !isInvitationPage &&
+    !isVerifyEmailPage
+  ) {
+    return NextResponse.redirect(new URL("/", nextUrl.origin));
+  }
+
   // Redirect to login if not authenticated and trying to access protected route
-  if (!session && !isPublicRoute) {
+  if (!isLoggedIn && !isPublicRoute) {
     const loginUrl = new URL("/login", nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
@@ -117,8 +206,8 @@ export default auth((request) => {
 
   // Permission-based route protection
   // Check each protected route pattern and enforce permissions
-  for (const [routePattern, requirement] of Object.entries(PROTECTED_ROUTES)) {
-    if (nextUrl.pathname.startsWith(routePattern)) {
+  for (const [routePattern, requirement] of PROTECTED_ROUTE_ENTRIES) {
+    if (matchesRoute(nextUrl.pathname, routePattern)) {
       const hasAccess = checkAccess(session, requirement);
 
       if (!hasAccess) {
@@ -144,7 +233,7 @@ export default auth((request) => {
   // Note: Detailed workspace membership is checked at page level via WorkspaceProvider
   // This is a basic check to ensure user is authenticated for workspace routes
   if (nextUrl.pathname.startsWith("/w/") && nextUrl.pathname !== "/w/create") {
-    if (!session) {
+    if (!isLoggedIn) {
       const loginUrl = new URL("/login", nextUrl.origin);
       loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
@@ -192,7 +281,7 @@ export default auth((request) => {
   }
 
   return response;
-});
+}
 
 export const config = {
   matcher: [
