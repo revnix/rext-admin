@@ -167,9 +167,9 @@ export function OAuthAccounts() {
             {unconnectedProviders.map((provider) => (
               <div
                 key={provider}
-                className="flex items-center justify-between rounded-lg border p-4"
+                className="flex flex-col sm:flex-row items-center justify-between rounded-lg border p-4"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center flex-col sm:flex-row gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                     <Image
                       src={providerIcons[provider] || "/placeholder-icon.png"}
@@ -181,10 +181,10 @@ export function OAuthAccounts() {
                     />
                   </div>
                   <div>
-                    <p className="font-medium">
+                    <p className="font-medium text-center sm:text-start">
                       {providerDisplayNames[provider] || provider}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-center sm:text-start text-muted-foreground">
                       Not connected
                     </p>
                   </div>
@@ -192,6 +192,7 @@ export function OAuthAccounts() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="mt-2 sm:mt-0 h-8 w-full sm:w-auto"
                   onClick={() => {
                     // Redirect to OAuth flow using NextAuth
                     signIn(provider, { callbackUrl: "/settings" });

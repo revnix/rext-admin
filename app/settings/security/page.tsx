@@ -359,6 +359,7 @@ export default function SecuritySettingsPage() {
                   <Button
                     variant="destructive"
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => revokeAllMutation.mutate()}
                     disabled={revokeAllMutation.isPending}
                   >
@@ -382,18 +383,18 @@ export default function SecuritySettingsPage() {
               {currentSession && (
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full sm:w-auto">
                       <div className="rounded-full bg-primary/10 p-2">
                         {getDeviceIcon(currentSession.device_type)}
                       </div>
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
                           <p className="font-medium">
                             {currentSession.device_name ?? "Unknown Device"}
                           </p>
                           <Badge variant="default">Current Session</Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center justify-center sm:justify-start mt-2 sm:mt-0 gap-4 text-sm text-muted-foreground">
                           {currentSession.ip_address && (
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
@@ -432,17 +433,17 @@ export default function SecuritySettingsPage() {
                     {otherSessions.map((session) => (
                       <div key={session.id} className="rounded-lg border p-4">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                          <div className="flex items-start gap-4">
+                          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full sm:w-auto">
                             <div className="rounded-full bg-muted p-2">
                               {getDeviceIcon(session.device_type)}
                             </div>
                             <div className="space-y-1">
-                              <p className="font-medium">
+                              <p className="font-medium text-center sm:text-start">
                                 {session.device_name ?? "Unknown Device"}
                               </p>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center justify-center sm:justify-start gap-4 text-sm text-muted-foreground">
                                 {session.ip_address && (
-                                  <span className="flex items-center gap-1">
+                                  <span className="flex items-center  gap-1">
                                     <MapPin className="h-3 w-3" />
                                     {session.ip_address}
                                   </span>
@@ -470,6 +471,7 @@ export default function SecuritySettingsPage() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={() => revokeMutation.mutate(session.id)}
                             disabled={revokingSessionId === session.id}
                           >

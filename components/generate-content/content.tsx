@@ -1438,7 +1438,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       {/* Schedule dialog */}
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-sm h-[80vh] overflow-auto">
+        <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
           <DialogTitle>Schedule Publication</DialogTitle>
           <DialogDescription>
             Pick a date and time. Content publishes automatically via WordPress.

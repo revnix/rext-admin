@@ -195,7 +195,7 @@ export function AccountDeactivation() {
                 Deactivate My Account
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-2xl">
+            <AlertDialogContent className="max-w-2xl max-h-[80vh] sm:max-h-[98vh] overflow-y-auto">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-destructive">
                   Deactivate Account
