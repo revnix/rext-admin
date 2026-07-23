@@ -12,6 +12,7 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import type { Route } from "next";
+import { AUTH_SESSION_TOKEN_SWAP_ACTION } from "@/lib/auth-utils";
 
 /**
  * Impersonation Banner Component
@@ -23,7 +24,7 @@ export function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { update } = useSession();
-  const { setTokens } = useAuthStore();
+  const { clearTokens } = useAuthStore();
   const [isPendingRoute, startTransition] = useTransition();
 
   // Check impersonation status
@@ -44,14 +45,15 @@ export function ImpersonationBanner() {
   const stopImpersonationMutation = useMutation({
     mutationFn: () => apiClient.impersonation.stop(),
     onSuccess: async (data) => {
-      // Update tokens to original user
-      setTokens(data.access_token, data.refresh_token);
-
       // Update NextAuth session with restored tokens
       await update({
+        authAction: AUTH_SESSION_TOKEN_SWAP_ACTION,
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
       });
+      // The Zustand store is only an impersonation override. Keeping the
+      // restored token there would bypass future NextAuth refreshes forever.
+      clearTokens();
 
       // Fetch and update original user profile
       try {

@@ -7,7 +7,11 @@ import Google from "next-auth/providers/google";
 import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
-import { AUTH_SESSION_UPDATE_ACTION, getPrimaryRole } from "@/lib/auth-utils";
+import {
+  AUTH_SESSION_TOKEN_SWAP_ACTION,
+  AUTH_SESSION_UPDATE_ACTION,
+  getPrimaryRole,
+} from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
@@ -120,11 +124,13 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       `Token refresh failed with status ${response.status}`,
     );
 
-    // 401 covers both "genuinely invalid/expired" and "lost a concurrent
-    // refresh race" — only the message tells them apart. 5xx/network-level
-    // failures are always transient.
+    // PostgreSQL-authoritative replay now absorbs concurrent rotation races.
+    // A refresh-endpoint 401/403 therefore means this credential is genuinely
+    // unusable; network failures and 5xx responses remain transient.
     const definitive =
-      response.status === 403 || isDefinitiveRefreshRejection(message);
+      response.status === 401 ||
+      response.status === 403 ||
+      isDefinitiveRefreshRejection(message);
 
     log.debug("[Auth] Refresh rejected", {
       refreshJti: outgoingJwt?.jti,
@@ -151,8 +157,11 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
   // Extract data from wrapped response
   const refreshedTokens = refreshResponseData.data || refreshResponseData;
 
-  if (!refreshedTokens.access_token) {
-    throw new RefreshAttemptError("No access token in refresh response", false);
+  if (!refreshedTokens.access_token || !refreshedTokens.refresh_token) {
+    throw new RefreshAttemptError(
+      "Refresh response did not contain a complete token pair",
+      false,
+    );
   }
 
   // Derive expiry from backend response: prefer `expires_in` (seconds), fall back to `expires_at` (ISO/epoch)
@@ -165,7 +174,9 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       : token.accessTokenExpires; // keep previous if backend doesn't provide one
 
   const incomingJwt = decodeJwtPayloadForLogging(refreshedTokens.refresh_token);
-  const incomingAccessJwt = decodeJwtPayloadForLogging(refreshedTokens.access_token);
+  const incomingAccessJwt = decodeJwtPayloadForLogging(
+    refreshedTokens.access_token,
+  );
   log.debug("[Auth] Refresh succeeded", {
     oldRefreshJti: outgoingJwt?.jti,
     newRefreshJti: incomingJwt?.jti,
@@ -174,13 +185,23 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       ? new Date(accessTokenExpires).toISOString()
       : undefined,
   });
-  log.info(`[DEBUG-TOKEN] attemptRefresh received access_token jti=${incomingAccessJwt?.jti} refresh_token jti=${incomingJwt?.jti}`);
+
+  const refreshedUser = refreshedTokens.user ?? {};
+  const refreshedRoles = refreshedTokens.roles ?? refreshedUser.roles;
+  const refreshedPermissions =
+    refreshedTokens.permissions ?? refreshedUser.permissions;
 
   return {
     ...token,
     accessToken: refreshedTokens.access_token,
-    refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+    refreshToken: refreshedTokens.refresh_token,
     accessTokenExpires,
+    role: Array.isArray(refreshedRoles)
+      ? getPrimaryRole({ roles: refreshedRoles })
+      : token.role,
+    permissions: Array.isArray(refreshedPermissions)
+      ? refreshedPermissions
+      : token.permissions,
     // A successful exchange is authoritative; do not preserve an earlier
     // terminal error through the object spread above.
     error: undefined,
@@ -188,11 +209,6 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
 }
 
 const REFRESH_RETRY_DELAYS_MS = [300, 800];
-
-// Treat the access token as needing refresh slightly before its real expiry.
-// Without this, a request can be dispatched at the last valid millisecond
-// and arrive at the backend after the token has actually expired.
-const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30_000;
 
 // De-dupes concurrent refresh attempts for the same refresh token. Without
 // this, multiple jwt() callback invocations that land within the same ~30s
@@ -223,7 +239,6 @@ const inFlightRefreshes = new Map<string, Promise<JWT>>();
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {
     log.error("[Auth] No refresh token available");
-    console.log("Test-1");
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
@@ -294,7 +309,6 @@ async function performRefreshWithRetries(
       lastError,
       { refreshJti },
     );
-    console.log("Test-2")
     return { ...token, error: "RefreshAccessTokenError" };
   }
 
@@ -532,10 +546,13 @@ export default {
             token.role = getPrimaryRole(oauthData.user);
             token.permissions =
               oauthData.user.permissions || oauthData.permissions || [];
-            // Derive expiry from backend OAuth response: prefer `expires_in` (seconds), fall back to `expires_at`
-            token.accessTokenExpires = oauthData.expires_at
-              ? new Date(oauthData.expires_at).getTime()
-              : undefined;
+            // Derive expiry from backend OAuth response: prefer `expires_in`
+            // (seconds), then fall back to `expires_at`.
+            token.accessTokenExpires = oauthData.expires_in
+              ? Date.now() + oauthData.expires_in * 1000
+              : oauthData.expires_at
+                ? new Date(oauthData.expires_at).getTime()
+                : undefined;
           } catch (error) {
             log.error("[AuthJS] OAuth backend integration error:", error);
             log.error(
@@ -555,39 +572,42 @@ export default {
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
           AUTH_SESSION_UPDATE_ACTION;
-
-      // Handle explicit token swaps (e.g., impersonation). A generic update
-      // must not silently bypass the explicit refresh action below.
-      if (
+      const requestedTokenSwap =
         trigger === "update" &&
-        session &&
-        !requestedBackendRefresh &&
-        (session.accessToken ||
-          session.refreshToken ||
-          session.accessTokenExpires ||
-          session.user)
-      ) {
-        if (session.accessToken) token.accessToken = session.accessToken;
-        if (session.refreshToken) token.refreshToken = session.refreshToken;
-        if (session.accessTokenExpires)
-          token.accessTokenExpires = session.accessTokenExpires;
+        (session as { authAction?: string } | undefined)?.authAction ===
+          AUTH_SESSION_TOKEN_SWAP_ACTION;
 
+      // Token replacement is limited to the explicit impersonation action;
+      // arbitrary session update payloads cannot overwrite credentials.
+      if (requestedTokenSwap && session?.accessToken && session.refreshToken) {
+        token.accessToken = session.accessToken;
+        token.refreshToken = session.refreshToken;
+        if (session.accessTokenExpires) {
+          token.accessTokenExpires = session.accessTokenExpires;
+        } else if (session.accessToken) {
+          const accessPayload = decodeJwtPayloadForLogging(session.accessToken);
+          if (accessPayload?.exp) {
+            token.accessTokenExpires = accessPayload.exp * 1000;
+          }
+        }
+
+        token.error = undefined;
+        return token;
+      }
+
+      if (trigger === "update" && !requestedBackendRefresh && session?.user) {
         // Update non-sensitive user details only
         // SECURITY: Do NOT accept role or permissions from client-side update()
         // calls — these must come from the backend to prevent privilege escalation
-        if (session.user) {
-          if (session.user.id) token.id = session.user.id;
-          if (session.user.email) token.email = session.user.email;
-          if (session.user.name) token.name = session.user.name;
-          if (session.user.image) token.picture = session.user.image;
-        }
+        if (session.user.id) token.id = session.user.id;
+        if (session.user.email) token.email = session.user.email;
+        if (session.user.name) token.name = session.user.name;
+        if (session.user.image) token.picture = session.user.image;
 
         return token;
       }
 
-      console.log("requestedBackendRefresh", requestedBackendRefresh)
       if (requestedBackendRefresh) {
-
         log.info("[Auth] Explicit backend-token refresh requested", {
           refreshJti: decodeJwtPayloadForLogging(token.refreshToken as string)
             ?.jti,
@@ -619,40 +639,18 @@ export default {
         return token;
       }
 
-      // If there's a previous refresh error, don't retry - just return the error token
-      // This prevents infinite loops
-    console.log("Test-3")
-
-      if (token.error === "RefreshAccessTokenError") {
-        return token;
-      }
-
-      // Return previous token if the access token has not expired yet
-      // (with a small buffer so we refresh slightly ahead of actual expiry)
-      if (
-        token.accessTokenExpires &&
-        Date.now() < token.accessTokenExpires - ACCESS_TOKEN_EXPIRY_BUFFER_MS
-      ) {
-        return token;
-      }
-
-      // Only attempt refresh if we have a refresh token
-      if (!token.refreshToken) {
-        return token;
-      }
-
-      // Access token has expired, try to refresh it
-      log.info("[Auth] Expiry-driven backend-token refresh requested", {
-        refreshJti: decodeJwtPayloadForLogging(token.refreshToken as string)
-          ?.jti,
-        msUntilAccessExpiry: token.accessTokenExpires
-          ? (token.accessTokenExpires as number) - Date.now()
-          : undefined,
-      });
-      return await refreshAccessToken(token);
+      // Ordinary session reads must be side-effect free. Middleware, RSC
+      // `auth()`, SessionProvider, and getSession() can all execute this
+      // callback concurrently. Rotating a single-use backend refresh token
+      // here lets an older Set-Cookie response overwrite the successor and
+      // strand every tab with an already-consumed token. Backend rotation is
+      // therefore performed only by the explicit update action above; the
+      // proactive timer and typed access-token-expiry recovery both use it.
+      return token;
     },
     async session({ session, token }) {
-      // Expose user info and backend tokens in session
+      // Expose the access token needed by the API client. The rotating
+      // refresh token remains server-only inside the encrypted Auth.js JWT.
       if (token) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
@@ -661,23 +659,17 @@ export default {
         session.user.display_name = (token.display_name as string) || null;
         session.user.image = token.picture as string | null;
         session.user.accessToken = token.accessToken as string;
-        session.user.refreshToken = token.refreshToken as string;
         session.user.role = token.role as string | undefined;
         session.user.permissions = token.permissions as string[] | undefined;
         session.accessTokenExpires = token.accessTokenExpires as
           | number
           | undefined;
         session.error = token.error as string | undefined;
-        log.info(
-          `[DEBUG-TOKEN] session() serving access_token jti=${decodeJwtPayloadForLogging(token.accessToken as string)?.jti} refresh_token jti=${decodeJwtPayloadForLogging(token.refreshToken as string)?.jti} error=${token.error ?? "none"}`,
-        );
       }
       return session;
     },
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user && !auth?.error;
-    console.log("Test-4")
-
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
       const hasOAuthError = auth?.error === "OAuthBackendError";
       const pathname = nextUrl.pathname;
@@ -728,6 +720,68 @@ export default {
       }
 
       return true;
+    },
+  },
+  events: {
+    async signOut(message) {
+      if (!("token" in message) || !message.token) return;
+
+      const accessToken = message.token.accessToken as string | undefined;
+      const refreshToken = message.token.refreshToken as string | undefined;
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!accessToken || !refreshToken || !apiBaseUrl) return;
+
+      try {
+        const revoke = (access: string, refresh: string) =>
+          fetch(`${apiBaseUrl}/api/v1/user/logout`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${access}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh_token: refresh }),
+            signal: AbortSignal.timeout(3_000),
+          });
+
+        let response = await revoke(accessToken, refreshToken);
+
+        // Manual sign-out can happen after the access credential expires.
+        // Exchange the still-server-only refresh token once, then revoke the
+        // resulting pair so clearing the Auth.js cookie does not leave a live
+        // backend refresh credential behind.
+        if (response.status === 401) {
+          const refreshResponse = await fetch(
+            `${apiBaseUrl}/api/v1/user/refresh`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+              signal: AbortSignal.timeout(3_000),
+            },
+          );
+          if (refreshResponse.ok) {
+            const body = await refreshResponse.json();
+            const refreshed = body.data ?? body;
+            if (refreshed.access_token && refreshed.refresh_token) {
+              response = await revoke(
+                refreshed.access_token,
+                refreshed.refresh_token,
+              );
+            }
+          }
+        }
+
+        if (!response.ok) {
+          log.warn("[Auth] Backend token revocation during sign-out failed", {
+            status: response.status,
+          });
+        }
+      } catch (error) {
+        // Auth.js must still clear its cookie if the backend is unavailable.
+        // Expired/revoked tokens are already unusable; a manual logout will
+        // normally complete this best-effort server-side revocation.
+        log.warn("[Auth] Backend token revocation was unavailable", error);
+      }
     },
   },
   session: {

@@ -4,6 +4,8 @@ import { getQueryClient } from "@/lib/query-client";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { resetAllStores } from "./store-registry";
 
+let logoutPromise: Promise<void> | null = null;
+
 /**
  * Performs a comprehensive and secure logout operation.
  *
@@ -16,7 +18,14 @@ import { resetAllStores } from "./store-registry";
  *
  * @param callbackUrl - The URL to redirect to after logout. Defaults to "/login"
  */
-export async function performLogout(callbackUrl: string = "/login") {
+export function performLogout(callbackUrl: string = "/login"): Promise<void> {
+  if (!logoutPromise) {
+    logoutPromise = executeLogout(callbackUrl);
+  }
+  return logoutPromise;
+}
+
+async function executeLogout(callbackUrl: string): Promise<void> {
   try {
     log.info("[Auth] Initiating comprehensive logout via utility...");
 
