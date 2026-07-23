@@ -175,7 +175,7 @@ export function PageLayout({
             <div className="hidden lg:flex items-center gap-4">
               <Button
                 variant="outline"
-                className="justify-start w-96 h-10 rounded-md bg-white border-input px-3 overflow-hidden relative shadow-none hover:border-input text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                className="justify-start w-74 xl:w-96 h-10 rounded-md bg-white border-input px-3 overflow-hidden relative shadow-none hover:border-input text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                 onClick={() => setSearchOpen(true)}
               >
                 <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />

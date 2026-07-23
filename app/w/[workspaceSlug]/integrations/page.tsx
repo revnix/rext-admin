@@ -192,7 +192,7 @@ export default function IntegrationsPage() {
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {integrations.map((integration) => (
               <Card
                 key={integration.id}

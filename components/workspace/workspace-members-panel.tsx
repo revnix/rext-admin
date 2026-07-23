@@ -295,7 +295,7 @@ export function WorkspaceMembersPanel({
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="w-full lg:w-[68vw] xl:w-full">
         <DataTable
           columns={columns.filter((col) => col.key !== "email")} // Hide email column since it's in Member column
           data={tableData}

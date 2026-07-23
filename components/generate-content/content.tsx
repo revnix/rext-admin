@@ -1153,7 +1153,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="flex flex-1 relative border-b border-border">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+          <aside className="hidden xl:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-3 py-4">
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
@@ -1354,7 +1354,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* Mobile Responsive Drawers */}
       <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
         {sidebarSections && sidebarSections.length > 0 && (
-          <div className="lg:hidden pointer-events-auto">
+          <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
               <Button
                 onClick={() => setIsStructureOpen(true)}
