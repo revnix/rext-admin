@@ -148,7 +148,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
       </TableRow>
       {isExpanded && (
         <TableRow>
-          <TableCell colSpan={5} className="bg-gray-50">
+          <TableCell colSpan={5} className="bg-gray-50 dark:bg-gray-800">
             <div className="space-y-4 p-4">
               {/* Event Details */}
               <div>
@@ -178,7 +178,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
               {/* Payload */}
               <div>
                 <h4 className="font-semibold mb-2">Payload</h4>
-                <pre className="bg-white p-3 rounded border text-xs overflow-x-auto max-h-64">
+                <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
                   {JSON.stringify(event.payload, null, 2)}
                 </pre>
               </div>
@@ -465,7 +465,7 @@ export default function WebhookMonitoringPage() {
         </Card>
 
         {/* Events Table with Tabs */}
-        <Card>
+        <Card className="w-[68vw] ">
           <CardHeader>
             <CardTitle>Webhook Events</CardTitle>
           </CardHeader>
@@ -510,7 +510,7 @@ export default function WebhookMonitoringPage() {
                     </p>
                   </div>
                 ) : (
-                  <>
+                  <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -560,7 +560,7 @@ export default function WebhookMonitoringPage() {
                         </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>

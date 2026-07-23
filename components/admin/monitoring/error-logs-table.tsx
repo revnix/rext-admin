@@ -168,7 +168,7 @@ export function ErrorLogsTable({
             })
           }
         >
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="All Severities" />
           </SelectTrigger>
           <SelectContent>

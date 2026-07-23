@@ -237,6 +237,7 @@ export function SubscriptionPlanForm({
                       type="number"
                       step="0.01"
                       placeholder="299.99"
+                      className="mt-1"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />
