@@ -109,14 +109,14 @@ export function TopicsSection({
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Or describe what you're looking for..."
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleRegenerate();
+                if (e.key === "Enter" && feedback.trim()) handleRegenerate();
               }}
             />
 
             <Button
               variant="outline"
               onClick={handleRegenerate}
-              disabled={isRegenerating}
+              disabled={isRegenerating || !feedback.trim()}
               className="!bg-background h-9 !border !border-border/60 w-full sm:w-auto"
             >
               <ArrowRight className="w-4 h-4" />
