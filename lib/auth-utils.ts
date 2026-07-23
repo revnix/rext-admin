@@ -439,6 +439,24 @@ export async function authenticatedFetch(
   ) {
     impersonationStore.clearTokens();
     clearAuthHeadersCache();
+
+    // If this 401 came from an active-impersonation token (useAuthStore,
+    // populated only while impersonating — see stores/auth-store.ts), it
+    // can't be salvaged by the session refresh below: that refreshes the
+    // NextAuth-backed session, which belongs to the ORIGINAL admin, not
+    // the impersonated user, and getAuthHeaders() prefers this store over
+    // the session unconditionally. Left alone, the retry a few lines down
+    // would just resend the same dead impersonation token, get a second
+    // (non-retryable) 401, and force the ADMIN's whole session out — even
+    // though their real session is still perfectly valid. Clear it now so
+    // the retry naturally falls back to the admin's own session instead,
+    // ending impersonation gracefully on expiry rather than logging out.
+    if (typeof window !== "undefined" && useAuthStore.getState().accessToken) {
+      log.warn(
+        "[AuthJS] Impersonation token rejected — clearing impersonation state and falling back to the admin session",
+      );
+      useAuthStore.getState().clearTokens();
+    }
     return authenticatedFetch(url, options, false);
   }
 

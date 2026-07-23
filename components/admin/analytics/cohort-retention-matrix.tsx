@@ -81,7 +81,10 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
                   }
 
                   return (
-                    <TableCell key={cellKey} className={getRetentionColor(value)}>
+                    <TableCell
+                      key={cellKey}
+                      className={getRetentionColor(value)}
+                    >
                       {value.toFixed(1)}%
                     </TableCell>
                   );

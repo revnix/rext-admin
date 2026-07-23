@@ -209,7 +209,7 @@ export default function CreatePersonaPage() {
                     type="button"
                     variant="outline"
                     onClick={handleAddExpertise}
-                    className="bg-background rounded-xl border-border h-auto shrink-0"
+                    className="bg-background rounded-xl border-border h-auto shrink-0 px-3 sm:px-4"
                   >
                     Add
                   </Button>

@@ -6,7 +6,11 @@ import { log } from "@/lib/logger";
  */
 
 import { z } from "zod";
-import type { UpdateProfileRequest, UserProfile } from "@/types/profile";
+import type {
+  ChangePasswordRequest,
+  UpdateProfileRequest,
+  UserProfile,
+} from "@/types/profile";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 import type { DataExportFormValues } from "@/schemas/account-schemas";
@@ -212,7 +216,10 @@ export function createAccountNamespace(client: ApiClient) {
         // Proceed even if we can't get the ID
       }
 
-      const response = await client.request<{ success?: boolean }>(
+      const response = await client.request<{
+        success?: boolean;
+        message?: string;
+      }>(
         ENDPOINTS.ACCOUNT.deactivate,
         {
           method: "POST",

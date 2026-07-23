@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { confirm, ConfirmationComponent } = useConfirmation();
 
   // Invitation validation hook
   const {
@@ -80,6 +82,79 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
+  const attemptSignIn = async (confirmReactivation: boolean) => {
+    // Backend validated successfully, now use NextAuth for session creation
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      rememberMe: rememberMe.toString(),
+      confirmReactivation: confirmReactivation.toString(),
+    });
+
+    if (result?.error) {
+      if (result.code === "ACCOUNT_DEACTIVATED") {
+        const shouldReactivate = await confirm({
+          title: "Reactivate your account?",
+          description:
+            "This account was deactivated. Log in again to reactivate it and continue.",
+          confirmText: "Reactivate & Log In",
+          cancelText: "Cancel",
+        });
+
+        if (shouldReactivate) {
+          await attemptSignIn(true);
+        }
+        return;
+      }
+
+      // Use the error message from the backend if available (stored in result.code)
+      // Fallback to a generic message if result.code is just "CredentialsSignin" or missing
+      const errorMessage =
+        result.code && result.code !== "CredentialsSignin"
+          ? result.code
+          : "Authentication failed. Please check your credentials and try again.";
+
+      const isInvalidCredentials = errorMessage
+        .toLowerCase()
+        .includes("invalid email or password");
+
+      if (isInvalidCredentials) {
+        setHasInvalidCredentialsError(true);
+        emailInputRef.current?.focus();
+      }
+
+      toast.error(errorMessage);
+      return;
+    }
+
+    toast.success("Login successful!");
+    analytics.track("user_signed_in", { method: "credentials" });
+    resetAuthRedirectState();
+
+    if (hasValidInvitation && invitationToken) {
+      router.push(`/invitations/accept?token=${invitationToken}` as Route);
+    } else {
+      await getAuthHeaders(true);
+
+      try {
+        const response = await apiClient.workspaces.list();
+        const workspaces = response.workspaces || [];
+
+        if (workspaces.length === 0) {
+          router.push("/w/create" as Route);
+        } else {
+          const firstWorkspace = workspaces[0];
+          router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
+        }
+      } catch (error) {
+        log.error("[Auth] Failed to fetch workspaces:", error);
+        const redirect = searchParams.get("redirect") || "/";
+        router.push(redirect as Route);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasInvalidCredentialsError(false);
@@ -107,60 +182,7 @@ export function LoginForm({
     }
 
     try {
-      // Backend validated successfully, now use NextAuth for session creation
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        rememberMe: rememberMe.toString(),
-      });
-
-      if (result?.error) {
-        // Use the error message from the backend if available (stored in result.code)
-        // Fallback to a generic message if result.code is just "CredentialsSignin" or missing
-        const errorMessage =
-          result.code && result.code !== "CredentialsSignin"
-            ? result.code
-            : "Authentication failed. Please check your credentials and try again.";
-
-        const isInvalidCredentials = errorMessage
-          .toLowerCase()
-          .includes("invalid email or password");
-
-        if (isInvalidCredentials) {
-          setHasInvalidCredentialsError(true);
-          emailInputRef.current?.focus();
-        }
-
-        toast.error(errorMessage);
-        return;
-      }
-
-      toast.success("Login successful!");
-      analytics.track("user_signed_in", { method: "credentials" });
-      resetAuthRedirectState();
-
-      if (hasValidInvitation && invitationToken) {
-        router.push(`/invitations/accept?token=${invitationToken}` as Route);
-      } else {
-        await getAuthHeaders(true);
-
-        try {
-          const response = await apiClient.workspaces.list();
-          const workspaces = response.workspaces || [];
-
-          if (workspaces.length === 0) {
-            router.push("/w/create" as Route);
-          } else {
-            const firstWorkspace = workspaces[0];
-            router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
-          }
-        } catch (error) {
-          log.error("[Auth] Failed to fetch workspaces:", error);
-          const redirect = searchParams.get("redirect") || "/";
-          router.push(redirect as Route);
-        }
-      }
+      await attemptSignIn(false);
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       toast.error("An error occurred. Please try again.");
@@ -171,6 +193,7 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {ConfirmationComponent}
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner

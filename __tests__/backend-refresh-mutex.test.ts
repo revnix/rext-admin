@@ -25,7 +25,10 @@ jest.mock("next-auth/react", () => ({
   getCsrfToken: (...args: unknown[]) => getCsrfTokenMock(...args),
 }));
 
-import { requestBackendTokenRefresh } from "@/lib/auth-utils";
+import {
+  authenticatedFetch,
+  requestBackendTokenRefresh,
+} from "@/lib/auth-utils";
 
 describe("requestBackendTokenRefresh cross-path mutex", () => {
   const originalLocks = navigator.locks;
@@ -170,5 +173,39 @@ describe("requestBackendTokenRefresh cross-path mutex", () => {
 
     expect(performRefresh).toHaveBeenCalledTimes(1);
     expect(result?.user?.accessToken).toBe("actually-refreshed");
+  });
+});
+
+describe("authenticatedFetch 401 handling", () => {
+  beforeEach(() => {
+    getSessionMock.mockReset();
+    getCsrfTokenMock.mockReset();
+    getCsrfTokenMock.mockResolvedValue("csrf-token-123");
+    (global.fetch as jest.Mock).mockReset();
+  });
+
+  it("does NOT force a logout when the session-refresh round-trip itself fails transiently (network/5xx to /api/auth/session) — only a definitive backend rejection should log the user out", async () => {
+    getSessionMock.mockResolvedValue({ user: { accessToken: "stale-token" } });
+
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === "/api/auth/session") {
+          // Simulate a transient failure reaching our own session endpoint —
+          // NOT a definitive "refresh token revoked" response.
+          return { ok: false, status: 503 };
+        }
+        // The protected API call itself.
+        return { ok: false, status: 401 };
+      },
+    );
+
+    const response = await authenticatedFetch("/api/v1/some-protected-route");
+
+    // The original 401 is surfaced to the caller instead of throwing/redirecting.
+    expect(response.status).toBe(401);
+    // Only the protected call + the one failed session round-trip — no
+    // retry loop, no redirect side effects.
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });

@@ -218,16 +218,16 @@ export function LibraryView() {
           />
         </div>
         <Button
-          className="h-11 px-6 font-semibold"
+          className="h-11 px-3 sm:px-6 font-semibold shrink-0"
           onClick={() => handleSearch(search)}
           disabled={isLoading}
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
           ) : (
-            <Search className="h-4 w-4 mr-2" />
+            <Search className="h-4 w-4 sm:mr-2" />
           )}
-          Search Library
+          <span className="hidden sm:inline">Search Library</span>
         </Button>
       </div>
 
