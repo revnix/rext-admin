@@ -50,47 +50,48 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="sticky left-0 bg-background z-10">
-              Cohort
-            </TableHead>
-            <TableHead>Size</TableHead>
-            {monthColumns.map((month) => (
-              <TableHead key={month.id}>Month {month.index}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {cohorts.map((cohort) => (
-            <TableRow key={cohort.cohort}>
-              <TableCell className="sticky left-0 bg-background font-medium">
-                {cohort.cohort}
-              </TableCell>
-              <TableCell>{cohort.size}</TableCell>
-              {monthColumns.map((month) => {
-                const monthKey = `month_${month.index}`;
-                const value = cohort[monthKey];
-                const cellKey = `${cohort.cohort}-${month.id}`;
-
-                if (typeof value !== "number") {
-                  return <TableCell key={cellKey}>-</TableCell>;
-                }
-
-                return (
-                  <TableCell key={cellKey} className={getRetentionColor(value)}>
-                    {value.toFixed(1)}%
-                  </TableCell>
-                );
-              })}
+    <div>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="sticky left-0 bg-background z-10">
+                Cohort
+              </TableHead>
+              <TableHead>Size</TableHead>
+              {monthColumns.map((month) => (
+                <TableHead key={month.id}>Month {month.index}</TableHead>
+              ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {cohorts.map((cohort) => (
+              <TableRow key={cohort.cohort}>
+                <TableCell className="sticky left-0 bg-background font-medium">
+                  {cohort.cohort}
+                </TableCell>
+                <TableCell>{cohort.size}</TableCell>
+                {monthColumns.map((month) => {
+                  const monthKey = `month_${month.index}`;
+                  const value = cohort[monthKey];
+                  const cellKey = `${cohort.cohort}-${month.id}`;
 
-      <div className="mt-4 flex items-center gap-4 text-sm">
+                  if (typeof value !== "number") {
+                    return <TableCell key={cellKey}>-</TableCell>;
+                  }
+
+                  return (
+                    <TableCell key={cellKey} className={getRetentionColor(value)}>
+                      {value.toFixed(1)}%
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="mt-4 flex items-center gap-2 text-xs">
         <span className="font-medium">Legend:</span>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-green-100 rounded" />
