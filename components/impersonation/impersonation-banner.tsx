@@ -23,7 +23,7 @@ export function ImpersonationBanner() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { update } = useSession();
-  const { setTokens } = useAuthStore();
+  const { setTokens, clearTokens } = useAuthStore();
   const [isPendingRoute, startTransition] = useTransition();
 
   // Check impersonation status
@@ -70,6 +70,20 @@ export function ImpersonationBanner() {
           error,
         );
       }
+
+      // setTokens() above only exists to bridge the moment between this
+      // mutation resolving and the update() calls landing in React state —
+      // the NextAuth session is authoritative again now and must own the
+      // refresh lifecycle from here on. getAuthHeaders() (lib/auth-utils.ts)
+      // prefers this store over the session UNCONDITIONALLY whenever it's
+      // populated, with no expiry check of its own — leaving it populated
+      // after stopping impersonation would silently shadow the session with
+      // a token pair that never refreshes again. The next time that frozen
+      // access token expired, every request would 401, the retry would keep
+      // reading the same stale store token instead of the freshly-refreshed
+      // session one, and the (non-retryable) second 401 would force a full
+      // logout — even though the real session was still perfectly valid.
+      clearTokens();
 
       toast.success("Impersonation stopped", {
         description: "You have returned to your original account",
