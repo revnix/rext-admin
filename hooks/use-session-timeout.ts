@@ -87,12 +87,11 @@ export function useSessionTimeout() {
       setTimeUsed(usedSeconds);
       setTotalDurationSeconds(totalSecs);
 
-      // Show warning during the last 2 minutes
-      // const warningThreshold = 2 * 60 * 1000;
-      // Proactive refresh window: 30-60s before expiry (never a fixed
-      // interval — this is a threshold crossing, checked by the 10s poll
-      // below, not a "refresh every N seconds" timer).
-      const warningThreshold = 45 * 1000;
+      // Refresh near the end of the token lifetime without turning a short
+      // debugging lifetime into a tight rotation loop. For a 60-second
+      // token this is roughly the final 12 seconds; for normal ten-minute
+      // tokens it remains capped at 45 seconds.
+      const warningThreshold = Math.min(45_000, Math.max(5_000, totalMs * 0.2));
       const nextShowWarning = remaining < warningThreshold;
 
       if (nextShowWarning !== prevShowWarningRef.current) {

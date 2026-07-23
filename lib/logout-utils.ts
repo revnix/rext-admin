@@ -4,6 +4,8 @@ import { getQueryClient } from "@/lib/query-client";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { resetAllStores } from "./store-registry";
 
+let logoutPromise: Promise<void> | null = null;
+
 /**
  * Performs a comprehensive and secure logout operation.
  *
@@ -16,7 +18,14 @@ import { resetAllStores } from "./store-registry";
  *
  * @param callbackUrl - The URL to redirect to after logout. Defaults to "/login"
  */
-export async function performLogout(callbackUrl: string = "/login") {
+export function performLogout(callbackUrl: string = "/login"): Promise<void> {
+  if (!logoutPromise) {
+    logoutPromise = executeLogout(callbackUrl);
+  }
+  return logoutPromise;
+}
+
+async function executeLogout(callbackUrl: string): Promise<void> {
   try {
     log.info("[Auth] Initiating comprehensive logout via utility...");
 
@@ -64,12 +73,28 @@ export async function performLogout(callbackUrl: string = "/login") {
       if (sidebarState) localStorage.setItem("sidebar:state", sidebarState);
     }
 
-    // 5. Perform NextAuth sign out
+    // 5. Record the logout event in audit logs
+    try {
+      const { apiClient } = await import("@/lib/api-client");
+      await apiClient.request("/api/v1/audit-logs/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "auth.logout",
+          resource_type: "user",
+          status: "success",
+        }),
+      });
+    } catch (e) {
+      log.error("[Auth] Failed to log logout event", e);
+    }
+
+    // 6. Perform NextAuth sign out
     // redirect: false allows us to manually handle the hard reload
     log.info("[Auth] Calling NextAuth signOut...");
     await signOut({ redirect: false });
 
-    // 6. Force a hard reload to ensure all in-memory state is wiped.
+    // 7. Force a hard reload to ensure all in-memory state is wiped.
     log.info(`[Auth] Redirecting to ${callbackUrl}`);
     window.location.href = callbackUrl;
   } catch (error) {

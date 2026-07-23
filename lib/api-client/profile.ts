@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 /**
  * Profile & Account API Namespace
  *
@@ -70,6 +71,21 @@ export function createProfileNamespace(client: ApiClient) {
       if (!profile) {
         throw new Error("Invalid update response: missing profile data");
       }
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "user.update",
+            resource_type: "user",
+            resource_id: profile.id,
+            status: "success",
+          }),
+        })
+        .catch((e) => log.error("[AuditLog] Failed to log user.update", e));
+
       return profile;
     },
 
@@ -81,7 +97,7 @@ export function createProfileNamespace(client: ApiClient) {
       new_password: string;
       confirm_password: string;
     }) => {
-      return client.request<{
+      const response = await client.request<{
         success: boolean;
         message: string;
       }>(ENDPOINTS.PROFILE.changePassword, {
@@ -89,6 +105,25 @@ export function createProfileNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      // Record audit log
+      if (response.success !== false) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "auth.password_change",
+              resource_type: "user",
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log auth.password_change", e),
+          );
+      }
+
+      return response;
     },
 
     /**
@@ -154,7 +189,7 @@ export function createAccountNamespace(client: ApiClient) {
       password: string;
       cancel_subscriptions?: boolean;
     }) => {
-      return client.request<{
+      const response = await client.request<{
         success: boolean;
         message: string;
       }>(ENDPOINTS.ACCOUNT.deactivate, {
@@ -162,6 +197,25 @@ export function createAccountNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
+      // Record audit log
+      if (response.success !== false) {
+        client
+          .request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "user.deactivate",
+              resource_type: "user",
+              status: "success",
+            }),
+          })
+          .catch((e) =>
+            log.error("[AuditLog] Failed to log user.deactivate", e),
+          );
+      }
+
+      return response;
     },
   };
 }

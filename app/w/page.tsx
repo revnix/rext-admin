@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   Eye,
@@ -23,6 +23,7 @@ import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
@@ -76,6 +77,31 @@ export default function WorkspacePage() {
     // Flatten some fields for easier global search
     owner_name: workspace.name, // Assuming the workspace name reflects the owner context in this view if no explicit owner
   }));
+
+  // Fetch per-workspace delete permission so the Delete action can be hidden
+  // for members (e.g. viewers) who aren't allowed to delete a workspace.
+  const workspaceIds = transformedWorkspaces.map((w) => w.id);
+  const permissionQueries = useQueries({
+    queries: workspaceIds.map((workspaceId) => ({
+      queryKey: ["workspace-permissions", workspaceId],
+      queryFn: () => apiClient.workspaces.getPermissions(workspaceId),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const canDeleteWorkspace: Record<string, boolean> = {};
+  const canUpdateWorkspace: Record<string, boolean> = {};
+  workspaceIds.forEach((workspaceId, index) => {
+    const query = permissionQueries[index];
+    // Default to allowed while permissions are still loading to avoid
+    // flashing the action away; the backend still enforces the real check.
+    canDeleteWorkspace[workspaceId] = query.data
+      ? query.data.permissions.includes(WORKSPACE_PERMISSIONS.DELETE)
+      : true;
+    canUpdateWorkspace[workspaceId] = query.data
+      ? query.data.permissions.includes(WORKSPACE_PERMISSIONS.UPDATE)
+      : true;
+  });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -243,6 +269,7 @@ export default function WorkspacePage() {
         router.push(`/w/${row.slug}/settings` as Route);
       },
       tooltip: "View workspace details",
+      disabled: (row: WorkspaceData) => !canUpdateWorkspace[row.id],
     },
     {
       label: "Delete",
@@ -252,6 +279,7 @@ export default function WorkspacePage() {
       },
       variant: "destructive" as const,
       tooltip: "Delete workspace",
+      disabled: (row: WorkspaceData) => !canDeleteWorkspace[row.id],
     },
   ];
 
@@ -306,7 +334,6 @@ export default function WorkspacePage() {
           }}
           onError={(error) => {
             log.error("Failed to delete workspace:", error);
-            toast.error("Failed to delete workspace. Please try again.");
           }}
         />
       )}

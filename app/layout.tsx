@@ -12,6 +12,7 @@ import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
+import { auth } from "@/auth";
 
 // Design Tokens - Typography
 const outfit = Outfit({
@@ -87,11 +88,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Seed SessionProvider without a client `/api/auth/session` GET. Auth.js
+  // reissues its JWT cookie on every such GET, so an older in-flight read can
+  // otherwise overwrite a just-rotated refresh credential.
+  const session = await auth();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -105,7 +111,7 @@ export default function RootLayout({
         />
 
         <ThemeProvider defaultTheme="system">
-          <AuthProvider>
+          <AuthProvider session={session}>
             <PostHogProvider>
               <SSEProvider>
                 <UserNotificationsListener />
