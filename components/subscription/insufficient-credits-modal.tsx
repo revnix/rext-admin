@@ -31,7 +31,7 @@ export function InsufficientCreditsModal({
 
   const handleUpgrade = () => {
     onOpenChange(false);
-    router.push("/subscription");
+    router.push("/pricing");
   };
 
   const isNoSubscription = statusCode === 402;

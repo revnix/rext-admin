@@ -725,7 +725,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   };
 
   const analysisSidebarContent = (
-    <div className="flex flex-col h-full bg-sidebar">
+    <div className="flex flex-col h-full bg-sidebar pb-20 sm:pb-0">
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
         <div className="flex-1">
           {canUpdate ? (
@@ -1153,7 +1153,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="flex flex-1 relative border-b border-border">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
-          <aside className="hidden lg:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+          <aside className="hidden xl:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-3 py-4">
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
@@ -1238,9 +1238,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="flex-1 bg-background px-2 py-4 scroll-smooth"
+          className="w-full flex-1 bg-background px-2 py-4 scroll-smooth"
         >
-          <article className="mx-auto max-w-3xl px-4 pb-16">
+          <article className="overflow-hidden w-full sm:mx-auto sm:max-w-3xl sm:px-4 pb-16">
             <div>
               {isEditing ? (
                 <div className="space-y-4">
@@ -1354,7 +1354,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* Mobile Responsive Drawers */}
       <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
         {sidebarSections && sidebarSections.length > 0 && (
-          <div className="lg:hidden pointer-events-auto">
+          <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
               <Button
                 onClick={() => setIsStructureOpen(true)}
@@ -1438,7 +1438,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       {/* Schedule dialog */}
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
           <DialogTitle>Schedule Publication</DialogTitle>
           <DialogDescription>
             Pick a date and time. Content publishes automatically via WordPress.

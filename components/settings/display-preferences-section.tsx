@@ -249,14 +249,16 @@ function DisplayPreferencesForm({
                 name="items_per_page"
                 render={({ field }) => (
                   <FormItem className="grid xl:grid-cols-3 gap-6 items-center space-y-0">
-                    <FormLabel>Items Per Page</FormLabel>
+                    <FormLabel className="col-span-3 sm:col-span-1">
+                      Items Per Page
+                    </FormLabel>
                     <Select
                       onValueChange={(value) =>
                         field.onChange(parseInt(value, 10))
                       }
                       value={field.value?.toString()}
                     >
-                      <FormControl className="col-span-2">
+                      <FormControl className="col-span-3 xl:col-span-2">
                         <SelectTrigger>
                           <SelectValue placeholder="Select item count" />
                         </SelectTrigger>
@@ -268,10 +270,10 @@ function DisplayPreferencesForm({
                         <SelectItem value="100">100</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription className="col-span-2 col-start-2 mt-0">
+                    <FormDescription className="col-span-3 sm:col-span-2 xl:col-start-2 mt-0">
                       Default number of items to display in lists
                     </FormDescription>
-                    <FormMessage className="col-span-3 col-start-2" />
+                    <FormMessage className="col-span-3 xl:col-start-2" />
                   </FormItem>
                 )}
               />
@@ -281,6 +283,7 @@ function DisplayPreferencesForm({
               <Button
                 type="submit"
                 size="lg"
+                className="w-full sm:w-auto"
                 disabled={updateMutation.isPending}
               >
                 {updateMutation.isPending ? (

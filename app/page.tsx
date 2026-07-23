@@ -99,9 +99,9 @@ export default function DashboardPage() {
             {/* <DashboardCharts /> */}
 
             {/* Bottom Row: Recent Activities & Quick Actions */}
-            <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+            <div className="grid gap-8 xl:grid-cols-[1fr_360px]">
               {/* Main Content: Recent Activities Table */}
-              <div className="space-y-8">
+              <div className="space-y-8 overflow-x-auto">
                 <RecentContent workspace={currentWorkspace} />
               </div>
 

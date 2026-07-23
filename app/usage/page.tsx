@@ -71,6 +71,7 @@ export default function UsagePage() {
           onClick={handleRefresh}
           disabled={refreshing || isLoading}
           variant="outline"
+          className="w-full sm:w-auto"
         >
           <RefreshCw
             className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}

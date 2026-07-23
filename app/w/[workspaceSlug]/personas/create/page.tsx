@@ -161,7 +161,7 @@ export default function CreatePersonaPage() {
               {/* Areas of Expertise */}
               <div className="space-y-2">
                 <Label>Areas of Expertise</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 flex flex-wrap items-center gap-1.5 p-1.5 min-h-11 bg-background border border-input rounded-xl focus-within:ring-2 focus-within:ring-[#4465FF]/20 focus-within:border-[#4465FF] transition-colors dark:bg-input/30">
                     {expertiseTags.map((tag) => (
                       <Badge

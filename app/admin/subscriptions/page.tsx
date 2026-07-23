@@ -302,8 +302,8 @@ export default function SubscriptionAnalyticsPage() {
       title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
-        <Link href="/admin/subscriptions/plans">
-          <Button variant="outline">
+        <Link href="/admin/subscriptions/plans" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Settings className="mr-2 h-4 w-4" />
             Manage Plans
           </Button>

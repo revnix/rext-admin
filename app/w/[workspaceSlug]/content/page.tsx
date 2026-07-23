@@ -89,8 +89,8 @@ export default function WorkspaceContentPage() {
   });
 
   const headerActions = canCreateContent ? (
-    <div className="flex items-center gap-2">
-      <Button asChild>
+    <div className="flex w-full sm:w-auto items-center gap-2">
+      <Button asChild className="w-full sm:w-auto">
         <Link href={workspaceRoutes.generate_content(workspaceSlug) as Route}>
           <Plus className="h-4 w-4 mr-2" />
           Generate Content
@@ -164,7 +164,7 @@ export default function WorkspaceContentPage() {
             )}
 
             {filteredContent.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredContent.map((item) => (
                   <ContentCard
                     key={item.id}

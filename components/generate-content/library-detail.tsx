@@ -108,8 +108,8 @@ export default function LibraryDetail({
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Overview for &quot;{selectedItem.keyword}&quot;
           </h1>
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <Globe className="h-3 w-3" /> SERP & KD updated{" "}
+          <p className="text-sm text-muted-foreground flex items-start sm:items-center gap-2">
+            <Globe className="h-3 w-3 mt-1 sm:mt-0" /> SERP & KD updated{" "}
             {selectedItem.lastUpdated}
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function LibraryDetail({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         {/* Difficulty Section */}
-        <Card className="lg:col-span-4 p-8 flex flex-col items-center justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+        <Card className="xl:col-span-4 lg:col-span-5 p-8 flex flex-col items-center justify-center bg-white shadow-sm border-border/50 dark:bg-card">
           <SafeChartRadialStacked difficultyScore={kd} />
           <p className="text-sm text-muted-foreground mt-6 text-center max-w-[240px]">
             We estimate that you&apos;ll need followed backlinks from
@@ -130,7 +130,7 @@ export default function LibraryDetail({
         </Card>
 
         {/* Quick Metrics */}
-        <div className="lg:col-span-8 grid grid-cols-2 grid-rows-2 md:grid-cols-4 gap-4">
+        <div className="xl:col-span-8 lg:col-span-7 grid grid-cols-2 grid-rows-2 md:grid-cols-4 gap-4">
           <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">
@@ -292,7 +292,7 @@ export default function LibraryDetail({
       {/* Related Topics */}
       <div className="mt-12">
         <Card className="overflow-hidden border-border/50 shadow-sm bg-white dark:bg-card">
-          <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between">
+          <div className="px-6 py-5 border-b border-border/50 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20 flex items-center justify-center shrink-0">
                 <Tags className="w-4 h-4 text-blue-500" />
@@ -314,17 +314,17 @@ export default function LibraryDetail({
             )}
           </div>
           {data.related_topics?.length ? (
-            <div className="p-6 flex flex-wrap gap-2.5">
+            <div className="p-6 flex flex-wrap flex-col sm:flex-row gap-2.5">
               {data.related_topics.map((topic) => (
-                <span
+                <div
                   key={topic}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-muted/30 hover:bg-primary/10 border border-border/60 hover:border-primary/40 text-foreground/90 hover:text-foreground transition-all duration-200 cursor-default group"
                 >
-                  <span className="text-primary text-[11px] font-black leading-none">
+                  <span className="text-primary text-sm font-black leading-none">
                     #
                   </span>
                   {topic}
-                </span>
+                </div>
               ))}
             </div>
           ) : (
@@ -335,8 +335,12 @@ export default function LibraryDetail({
         </Card>
       </div>
 
-      <div className="flex justify-between items-center fixed bottom-0 right-0 p-6 z-20">
-        <Button size="lg" onClick={handleContinue} className="px-10 font-bold">
+      <div className="w-full sm:w-auto flex justify-between items-center fixed bottom-0 right-0 p-6 z-20">
+        <Button
+          size="lg"
+          onClick={handleContinue}
+          className="w-full sm:w-auto px-10 font-bold"
+        >
           Continue with this Keyword <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

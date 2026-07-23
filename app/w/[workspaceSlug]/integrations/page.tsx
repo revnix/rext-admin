@@ -165,13 +165,16 @@ export default function IntegrationsPage() {
       description="Connect your workspace with third-party platforms."
       actions={
         canManage ? (
-          <Button onClick={() => setIsAddModalOpen(true)}>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Integration
           </Button>
         ) : (
           <LockedFeatureTooltip message="Not available for your role — Admin or above required">
-            <Button disabled>
+            <Button className="w-full sm:w-auto" disabled>
               <Plus className="mr-2 h-4 w-4" />
               Add Integration
             </Button>
@@ -189,7 +192,7 @@ export default function IntegrationsPage() {
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {integrations.map((integration) => (
               <Card
                 key={integration.id}

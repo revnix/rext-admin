@@ -25,14 +25,26 @@ jest.mock("next-auth/react", () => ({
   getCsrfToken: (...args: unknown[]) => getCsrfTokenMock(...args),
 }));
 
-import { authenticatedFetch, requestBackendTokenRefresh } from "@/lib/auth-utils";
+import {
+  authenticatedFetch,
+  requestBackendTokenRefresh,
+} from "@/lib/auth-utils";
 
 describe("requestBackendTokenRefresh cross-path mutex", () => {
+  const originalLocks = navigator.locks;
+
   beforeEach(() => {
     getSessionMock.mockReset();
     getCsrfTokenMock.mockReset();
     getCsrfTokenMock.mockResolvedValue("csrf-token-123");
     (global.fetch as jest.Mock).mockReset();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: originalLocks,
+    });
   });
 
   it("coalesces concurrent default-path (reactive) callers into one fetch", async () => {
@@ -105,6 +117,62 @@ describe("requestBackendTokenRefresh cross-path mutex", () => {
 
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(second?.user?.accessToken).toBe("token-2");
+  });
+
+  it("re-reads inside the browser lock and skips a redundant tab refresh", async () => {
+    getSessionMock.mockResolvedValue({
+      user: { accessToken: "access-from-other-tab" },
+      accessTokenExpires: 200,
+    });
+    const performRefresh = jest.fn(async () => ({
+      user: { accessToken: "unnecessary-rotation" },
+    }));
+    const requestLock = jest.fn(
+      async (_name: string, callback: () => Promise<unknown>) => callback(),
+    );
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: { request: requestLock },
+    });
+
+    const result = await requestBackendTokenRefresh(performRefresh as never, {
+      accessToken: "stale-access",
+      accessTokenExpires: 100,
+    });
+
+    expect(requestLock).toHaveBeenCalledWith(
+      "rext-backend-token-refresh",
+      expect.any(Function),
+    );
+    expect(getSessionMock).toHaveBeenCalledWith({ broadcast: false });
+    expect(performRefresh).not.toHaveBeenCalled();
+    expect(result?.user?.accessToken).toBe("access-from-other-tab");
+  });
+
+  it("does not mistake a regressed cookie for a newer session", async () => {
+    getSessionMock.mockResolvedValue({
+      user: { accessToken: "older-access-from-late-response" },
+      accessTokenExpires: 50,
+    });
+    const performRefresh = jest.fn(async () => ({
+      user: { accessToken: "actually-refreshed" },
+      accessTokenExpires: 200,
+    }));
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: {
+        request: async (_name: string, callback: () => Promise<unknown>) =>
+          callback(),
+      },
+    });
+
+    const result = await requestBackendTokenRefresh(performRefresh as never, {
+      accessToken: "newer-snapshot",
+      accessTokenExpires: 100,
+    });
+
+    expect(performRefresh).toHaveBeenCalledTimes(1);
+    expect(result?.user?.accessToken).toBe("actually-refreshed");
   });
 });
 

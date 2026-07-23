@@ -40,9 +40,7 @@ export function SessionTimeoutWarning() {
         : undefined,
     });
     try {
-      if (!session?.user?.refreshToken) {
-        log.error("[Auth] No refresh token available for automatic refresh");
-        performLogout("/login?session=expired");
+      if (!session) {
         return;
       }
 
@@ -76,6 +74,7 @@ export function SessionTimeoutWarning() {
         log.info(
           "[Auth] Token already refreshed by another tab, skipping redundant refresh",
         );
+        await update();
         return;
       }
 
@@ -89,14 +88,31 @@ export function SessionTimeoutWarning() {
       // its threshold would fire two independent "refresh-backend-token"
       // requests, racing the backend's single-use refresh token.
       log.debug("[Auth] Requesting an explicit server-side token refresh");
-      const updatedSession = await requestBackendTokenRefresh(() =>
-        update({ authAction: AUTH_SESSION_UPDATE_ACTION }),
+      let performedLocalUpdate = false;
+      const updatedSession = await requestBackendTokenRefresh(
+        () => {
+          performedLocalUpdate = true;
+          return update({ authAction: AUTH_SESSION_UPDATE_ACTION });
+        },
+        {
+          accessToken: session.user?.accessToken,
+          accessTokenExpires: expiryBeforeSync,
+        },
       );
 
       if (updatedSession?.error === "RefreshAccessTokenError") {
         log.error("[Auth] Session refresh failed", updatedSession.error);
         performLogout("/login?session=expired");
         return;
+      }
+
+      // If another tab won the Web Lock, its cookie is already shared but
+      // this tab's SessionProvider still holds its old React state.
+      if (
+        !performedLocalUpdate &&
+        updatedSession?.accessTokenExpires !== session.accessTokenExpires
+      ) {
+        await update();
       }
 
       log.info("[Auth] Session refreshed automatically", {
@@ -145,7 +161,7 @@ export function SessionTimeoutWarning() {
       return;
     }
 
-    if (isExtending || !session?.user?.refreshToken) {
+    if (isExtending || !session) {
       return;
     }
 

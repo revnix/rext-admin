@@ -4,6 +4,8 @@ import { getQueryClient } from "@/lib/query-client";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { resetAllStores } from "./store-registry";
 
+let logoutPromise: Promise<void> | null = null;
+
 /**
  * Performs a comprehensive and secure logout operation.
  *
@@ -16,9 +18,46 @@ import { resetAllStores } from "./store-registry";
  *
  * @param callbackUrl - The URL to redirect to after logout. Defaults to "/login"
  */
-export async function performLogout(callbackUrl: string = "/login") {
+export function performLogout(callbackUrl: string = "/login"): Promise<void> {
+  if (!logoutPromise) {
+    logoutPromise = executeLogout(callbackUrl);
+  }
+  return logoutPromise;
+}
+
+async function executeLogout(callbackUrl: string): Promise<void> {
   try {
     log.info("[Auth] Initiating comprehensive logout via utility...");
+
+    // 0. Record the logout event FIRST, while auth tokens are still valid.
+    // This must happen before any cache clearing, store resets, or storage
+    // wipes — otherwise the API call will fail silently with a 401.
+    try {
+      const { apiClient } = await import("@/lib/api-client");
+      // Fetch user ID for resource_id before tokens are invalidated
+      let resourceId: string | undefined;
+      try {
+        const profileRes = await apiClient.request<{
+          profile?: { id?: string };
+          id?: string;
+        }>("/api/v1/user/profile", { method: "GET" });
+        resourceId = profileRes?.profile?.id ?? profileRes?.id;
+      } catch {
+        // Profile fetch failed — proceed without resource_id
+      }
+      await apiClient.request("/api/v1/audit-logs/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "auth.logout",
+          resource_type: "user",
+          resource_id: resourceId,
+          status: "success",
+        }),
+      });
+    } catch (e) {
+      log.error("[Auth] Failed to log logout event", e);
+    }
 
     // Mark session as invalid in sessionStorage to break redirect loops immediately
     if (typeof window !== "undefined") {
@@ -69,7 +108,7 @@ export async function performLogout(callbackUrl: string = "/login") {
     log.info("[Auth] Calling NextAuth signOut...");
     await signOut({ redirect: false });
 
-    // 6. Force a hard reload to ensure all in-memory state is wiped.
+    // 7. Force a hard reload to ensure all in-memory state is wiped.
     log.info(`[Auth] Redirecting to ${callbackUrl}`);
     window.location.href = callbackUrl;
   } catch (error) {

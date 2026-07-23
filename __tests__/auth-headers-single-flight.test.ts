@@ -48,6 +48,7 @@ describe("getAuthHeaders single-flight session fetch", () => {
     const results = await Promise.all(calls);
 
     expect(getSessionMock).toHaveBeenCalledTimes(1);
+    expect(getSessionMock).toHaveBeenCalledWith({ broadcast: false });
     for (const headers of results) {
       expect(headers.Authorization).toBe("Bearer token-123");
     }

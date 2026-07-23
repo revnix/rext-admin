@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { performLogout } from "@/lib/logout-utils";
 import { useEffect, useState } from "react";
 import { log } from "@/lib/logger";
+import { fetchSessionSingleFlight } from "@/lib/auth-utils";
 
 /**
  * Backward-compatible auth hook using AuthJS
@@ -53,15 +54,46 @@ export function useAuthSession() {
   // Proactively handle session refresh errors to break redirect loops
   useEffect(() => {
     if (
-      status === "authenticated" &&
-      session?.error === "RefreshAccessTokenError"
+      status !== "authenticated" ||
+      session?.error !== "RefreshAccessTokenError"
     ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      // This error can be stale: with multiple tabs/requests racing the
+      // backend's single-use refresh token, a failed attempt can write
+      // itself into the shared session cookie *after* a concurrent attempt
+      // (this tab or another) already rotated it successfully. Re-check the
+      // current session before logging the user out of a session that may
+      // already be valid again.
+      const fresh = await fetchSessionSingleFlight();
+      if (cancelled) return;
+
+      if (
+        fresh &&
+        !fresh.error &&
+        fresh.accessTokenExpires &&
+        fresh.accessTokenExpires > Date.now()
+      ) {
+        log.info(
+          "[Auth] Stale RefreshAccessTokenError superseded by a valid session — ignoring",
+        );
+        return;
+      }
+
       log.error(
         "[Auth] RefreshAccessTokenError detected in hook, triggering logout...",
         session.error,
       );
       performLogout("/login?error=SessionExpired");
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session?.error, status]);
 
   const logout = async () => {

@@ -130,7 +130,7 @@ export function SecurityOverview() {
             {securityItems.map((item) => (
               <div
                 key={item.label}
-                className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
               >
                 <div
                   className={`
@@ -143,15 +143,15 @@ export function SecurityOverview() {
                   <item.icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p className="font-medium">{item.label}</p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       {item.label === "Email Verification" &&
                         !profile.email_verified && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8"
+                            className="h-8 w-full sm:w-auto"
                             onClick={() => resendMutation.mutate()}
                             disabled={resendMutation.isPending}
                           >
@@ -176,7 +176,7 @@ export function SecurityOverview() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground text-center sm:text-start">
                     {item.description}
                   </p>
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -72,6 +73,8 @@ export function WorkspaceDeleteDialog({
 }: WorkspaceDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [confirmationText, setConfirmationText] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const deleteWorkspace = useWorkspaceStore((state) => state.deleteWorkspace);
@@ -85,7 +88,10 @@ export function WorkspaceDeleteDialog({
   const workspaceName = getWorkspaceDisplayTitle(workspace);
   const isConfirmationValid = confirmationText.trim() === workspaceName?.trim();
   const canDelete =
-    isConfirmationValid && !isDeleting && !loadingStates.deleting;
+    isConfirmationValid &&
+    !!passwordConfirmation &&
+    !isDeleting &&
+    !loadingStates.deleting;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -94,6 +100,19 @@ export function WorkspaceDeleteDialog({
     setIsDeleting(true);
 
     try {
+      // Verify password before proceeding with deletion
+      try {
+        await apiClient.request("/api/v1/user/verify-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: passwordConfirmation }),
+        });
+      } catch {
+        toast.error("The password you entered is incorrect.");
+        setIsDeleting(false);
+        return;
+      }
+
       await deleteWorkspace(workspace.id);
 
       // Success feedback
@@ -107,6 +126,8 @@ export function WorkspaceDeleteDialog({
       // Close dialog and reset state
       setDialogOpen(false);
       setConfirmationText("");
+      setPasswordConfirmation("");
+      setShowPassword(false);
 
       // Notify parent component
       onDeleted?.(workspace.id);
@@ -133,6 +154,8 @@ export function WorkspaceDeleteDialog({
     // Reset form when dialog closes
     if (!newOpen) {
       setConfirmationText("");
+      setPasswordConfirmation("");
+      setShowPassword(false);
       setIsDeleting(false);
     }
   };
@@ -220,6 +243,33 @@ export function WorkspaceDeleteDialog({
                 {workspaceName}"
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="relative">
+              <Input
+                id="password-confirm"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password to confirm"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                disabled={isDeleting || loadingStates.deleting}
+                className="pr-10"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

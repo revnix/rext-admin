@@ -116,7 +116,7 @@ export const AuditResourceTypes = {
 export function getActionDisplayName(action: string): string {
   const actionMap: Record<string, string> = {
     "user.create": "User Created",
-    "user.update": "User Updated",
+    "user.update": "Profile Updated",
     "user.delete": "User Deleted",
     "user.suspend": "User Suspended",
     "user.activate": "User Activated",

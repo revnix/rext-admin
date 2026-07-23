@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ export function DangerZoneSection() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleDelete = async () => {
     if (!passwordConfirmation) {
@@ -69,6 +70,7 @@ export function DangerZoneSection() {
 
       setDeleteDialogOpen(false);
       setPasswordConfirmation("");
+      setShowPassword(false);
       router.push("/" as Route);
     } catch (error) {
       const errorMessage =
@@ -104,7 +106,12 @@ export function DangerZoneSection() {
                   Transfer workspace ownership to another member
                 </p>
               </div>
-              <Button variant="outline" size="sm" disabled>
+              <Button
+                className="w-full sm:w-auto"
+                variant="outline"
+                size="sm"
+                disabled
+              >
                 Coming Soon
               </Button>
             </div>
@@ -122,7 +129,12 @@ export function DangerZoneSection() {
                 onOpenChange={setDeleteDialogOpen}
               >
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={isDeleting}>
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="destructive"
+                    size="sm"
+                    disabled={isDeleting}
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Workspace
                   </Button>
@@ -153,24 +165,44 @@ export function DangerZoneSection() {
                     <Label htmlFor="password-confirm">
                       Enter your password to confirm
                     </Label>
-                    <Input
-                      id="password-confirm"
-                      type="password"
-                      placeholder="Your password"
-                      value={passwordConfirmation}
-                      onChange={(e) => setPasswordConfirmation(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && passwordConfirmation) {
-                          handleDelete();
+                    <div className="relative">
+                      <Input
+                        id="password-confirm"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Your password"
+                        value={passwordConfirmation}
+                        onChange={(e) =>
+                          setPasswordConfirmation(e.target.value)
                         }
-                      }}
-                    />
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && passwordConfirmation) {
+                            handleDelete();
+                          }
+                        }}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <AlertDialogFooter>
                     <AlertDialogCancel
                       onClick={() => {
                         setPasswordConfirmation("");
+                        setShowPassword(false);
                         setDeleteDialogOpen(false);
                       }}
                     >

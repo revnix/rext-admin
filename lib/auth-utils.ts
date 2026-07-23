@@ -63,6 +63,7 @@ export function getPrimaryRole(data: {
 // refresh. Defined here (not there) so both this file and any client
 // component can import one source of truth instead of hardcoding the string.
 export const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
+export const AUTH_SESSION_TOKEN_SWAP_ACTION = "replace-backend-tokens";
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
@@ -77,6 +78,92 @@ let isRedirectingToLogin = false;
 // — racing the backend's single-use refresh token and getting one of them
 // hard-rejected as "revoked" instead of gracefully reusing the other's result.
 let backendRefreshPromise: Promise<Session | null> | null = null;
+const BACKEND_REFRESH_LOCK_NAME = "rext-backend-token-refresh";
+
+export interface BackendRefreshSnapshot {
+  accessToken?: string | null;
+  accessTokenExpires?: number;
+}
+
+function accessTokenExpiry(
+  token: string | null | undefined,
+): number | undefined {
+  if (!token) return undefined;
+  try {
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return undefined;
+    const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const json =
+      typeof atob === "function"
+        ? atob(base64)
+        : Buffer.from(base64, "base64").toString("utf-8");
+    const payload = JSON.parse(json) as { exp?: unknown };
+    return typeof payload.exp === "number" ? payload.exp * 1000 : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function sessionAdvancedPast(
+  session: Session | null,
+  snapshot: BackendRefreshSnapshot,
+): boolean {
+  if (!session || session.error) return false;
+  if (
+    snapshot.accessToken &&
+    session.user?.accessToken === snapshot.accessToken
+  ) {
+    return false;
+  }
+
+  const previousExpiry =
+    snapshot.accessTokenExpires ?? accessTokenExpiry(snapshot.accessToken);
+  const currentExpiry =
+    session.accessTokenExpires ??
+    accessTokenExpiry(session.user?.accessToken ?? null);
+
+  // Token inequality alone is not directionality: an out-of-order Auth.js
+  // response can regress the cookie from A1 to A0. Only a strictly later
+  // signed access expiry proves that another caller advanced the session.
+  return (
+    typeof previousExpiry === "number" &&
+    typeof currentExpiry === "number" &&
+    currentExpiry > previousExpiry
+  );
+}
+
+async function withBackendSessionLock<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  if (typeof navigator !== "undefined" && navigator.locks) {
+    return navigator.locks.request(BACKEND_REFRESH_LOCK_NAME, operation);
+  }
+  return operation();
+}
+
+async function runCoordinatedBackendRefresh(
+  performRefresh: () => Promise<Session | null>,
+  snapshot?: BackendRefreshSnapshot,
+): Promise<Session | null> {
+  const refreshIfStillNeeded = async () => {
+    // Re-read after acquiring the origin-wide lock. A different tab may have
+    // completed the rotation while this caller was waiting.
+    if (snapshot) {
+      const latestSession = await getSession({ broadcast: false });
+      if (sessionAdvancedPast(latestSession, snapshot)) {
+        return latestSession;
+      }
+    }
+
+    const refreshedSession = await performRefresh();
+    if (refreshedSession?.user?.accessToken) {
+      clearAuthHeadersCache();
+    }
+    return refreshedSession;
+  };
+
+  return withBackendSessionLock(refreshIfStillNeeded);
+}
 
 /**
  * Request an explicit backend token refresh, single-flight across every
@@ -91,9 +178,13 @@ let backendRefreshPromise: Promise<Session | null> | null = null;
  */
 export function requestBackendTokenRefresh(
   performRefresh: () => Promise<Session | null> = forceSessionRefresh,
+  snapshot?: BackendRefreshSnapshot,
 ): Promise<Session | null> {
   if (!backendRefreshPromise) {
-    backendRefreshPromise = performRefresh().finally(() => {
+    backendRefreshPromise = runCoordinatedBackendRefresh(
+      performRefresh,
+      snapshot,
+    ).finally(() => {
       backendRefreshPromise = null;
     });
   }
@@ -111,7 +202,20 @@ let sessionFetchPromise: Promise<Session | null> | null = null;
 
 export function fetchSessionSingleFlight(): Promise<Session | null> {
   if (!sessionFetchPromise) {
-    sessionFetchPromise = getSession().finally(() => {
+    // Internal reads must not broadcast. Auth.js responds to a broadcast by
+    // making every other tab read the session too, turning ten callers into
+    // a cross-tab request storm.
+    const readAfterCurrentRefresh = async () => {
+      if (backendRefreshPromise) {
+        try {
+          await backendRefreshPromise;
+        } catch {
+          // The read below remains useful after a transient refresh failure.
+        }
+      }
+      return withBackendSessionLock(() => getSession({ broadcast: false }));
+    };
+    sessionFetchPromise = readAfterCurrentRefresh().finally(() => {
       sessionFetchPromise = null;
     });
   }
@@ -255,6 +359,27 @@ export async function getAuthHeaders(
   return headers;
 }
 
+async function isExpiredAccessTokenResponse(
+  response: Response,
+): Promise<boolean> {
+  try {
+    const body = await response.clone().json();
+    const error = body?.error ?? body;
+    const code = String(error?.code ?? body?.code ?? "").toLowerCase();
+    const message = String(
+      error?.message ?? body?.message ?? body?.detail ?? "",
+    ).toLowerCase();
+
+    return (
+      code === "token_expired" ||
+      message.includes("authentication token has expired") ||
+      message === "token has expired"
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Authenticated fetch wrapper using AuthJS tokens
  * Automatically adds Authorization header from session
@@ -286,73 +411,99 @@ export async function authenticatedFetch(
     headers,
   });
 
-  // Handle 401 Unauthorized - session might be expired
-  if (response.status === 401) {
-    if (retry) {
-      log.info("[AuthJS] Got 401, attempting to refresh session and retry...");
+  if (response.status !== 401 || !retry || typeof window === "undefined") {
+    return response;
+  }
 
-      // Clear the auth headers cache to force a fresh session check
-      clearAuthHeadersCache();
+  // A 401 is not necessarily an expired access token. Permission failures,
+  // revoked impersonation sessions, and endpoint-specific authentication
+  // rules must not rotate credentials or sign every tab out. Only the
+  // backend's typed expiry response enters refresh recovery.
+  if (!(await isExpiredAccessTokenResponse(response))) {
+    return response;
+  }
 
-      // If this 401 came from an active-impersonation token (useAuthStore,
-      // populated only while impersonating — see stores/auth-store.ts), it
-      // can't be salvaged by the session refresh below: that refreshes the
-      // NextAuth-backed session, which belongs to the ORIGINAL admin, not
-      // the impersonated user, and getAuthHeaders() prefers this store over
-      // the session unconditionally. Left alone, the retry a few lines down
-      // would just resend the same dead impersonation token, get a second
-      // (non-retryable) 401, and force the ADMIN's whole session out — even
-      // though their real session is still perfectly valid. Clear it now so
-      // the retry naturally falls back to the admin's own session instead,
-      // ending impersonation gracefully on expiry rather than logging out.
-      if (typeof window !== "undefined" && useAuthStore.getState().accessToken) {
-        log.warn(
-          "[AuthJS] Impersonation token rejected — clearing impersonation state and falling back to the admin session",
-        );
-        useAuthStore.getState().clearTokens();
-      }
+  clearAuthHeadersCache();
+  const usedAccessToken = headers
+    .get("Authorization")
+    ?.replace(/^Bearer\s+/i, "");
 
-      // For client-side, force a real backend refresh (not a conditional
-      // getSession(), which no-ops if the local expiry clock hasn't caught
-      // up with the backend's 401).
-      if (typeof window !== "undefined") {
-        const session = await requestBackendTokenRefresh();
+  // Impersonation tokens deliberately cannot refresh into normal target-user
+  // tokens. Once the short-lived override expires, drop it and resume the
+  // still-valid original admin session instead of retrying the same expired
+  // Zustand token forever.
+  const impersonationStore = useAuthStore.getState();
+  if (
+    impersonationStore.accessToken &&
+    impersonationStore.accessToken === usedAccessToken
+  ) {
+    impersonationStore.clearTokens();
+    clearAuthHeadersCache();
 
-        if (session?.user?.accessToken && !session.error) {
-          log.info("[AuthJS] Session refreshed successfully, retrying request");
-          // Re-run the fetch once with the new token
-          return authenticatedFetch(url, options, false);
-        }
-
-        if (session?.error) {
-          log.error(
-            "[AuthJS] Session refresh failed with error:",
-            session.error,
-          );
-        } else if (!session) {
-          // forceSessionRefresh() returns null when the round-trip to our
-          // own /api/auth/session endpoint itself failed (network blip,
-          // transient 5xx) — that says nothing about whether the refresh
-          // token is still valid, since the jwt() callback (which does its
-          // own retry + definitive-rejection classification) never even got
-          // to run. Forcing a logout here would be the exact bug this file's
-          // other refresh paths were hardened against: a momentary failure
-          // ending a session that's still valid for days. Surface the
-          // original 401 to the caller instead and let the next request (or
-          // SessionTimeoutWarning's own retry loop) try again.
-          log.error(
-            "[AuthJS] Could not reach session endpoint during refresh — treating as transient, not forcing logout",
-          );
-          return response;
-        }
-      }
+    // If this 401 came from an active-impersonation token (useAuthStore,
+    // populated only while impersonating — see stores/auth-store.ts), it
+    // can't be salvaged by the session refresh below: that refreshes the
+    // NextAuth-backed session, which belongs to the ORIGINAL admin, not
+    // the impersonated user, and getAuthHeaders() prefers this store over
+    // the session unconditionally. Left alone, the retry a few lines down
+    // would just resend the same dead impersonation token, get a second
+    // (non-retryable) 401, and force the ADMIN's whole session out — even
+    // though their real session is still perfectly valid. Clear it now so
+    // the retry naturally falls back to the admin's own session instead,
+    // ending impersonation gracefully on expiry rather than logging out.
+    if (typeof window !== "undefined" && useAuthStore.getState().accessToken) {
+      log.warn(
+        "[AuthJS] Impersonation token rejected — clearing impersonation state and falling back to the admin session",
+      );
+      useAuthStore.getState().clearTokens();
     }
+    return authenticatedFetch(url, options, false);
+  }
 
-    // If refresh failed or already retried, redirect to login
+  const latestSession = await fetchSessionSingleFlight();
+
+  // Another tab may already have refreshed. Prefer its newer access token
+  // before rotating the shared refresh credential again.
+  if (
+    latestSession?.user?.accessToken &&
+    usedAccessToken &&
+    sessionAdvancedPast(latestSession, {
+      accessToken: usedAccessToken,
+      accessTokenExpires: accessTokenExpiry(usedAccessToken),
+    })
+  ) {
+    return authenticatedFetch(url, options, false);
+  }
+
+  const refreshedSession = await requestBackendTokenRefresh(
+    forceSessionRefresh,
+    {
+      accessToken: latestSession?.user?.accessToken ?? usedAccessToken,
+      accessTokenExpires: latestSession?.accessTokenExpires,
+    },
+  );
+
+  const refreshAdvanced = sessionAdvancedPast(refreshedSession, {
+    accessToken: latestSession?.user?.accessToken ?? usedAccessToken,
+    accessTokenExpires:
+      latestSession?.accessTokenExpires ?? accessTokenExpiry(usedAccessToken),
+  });
+
+  if (refreshAdvanced) {
+    return authenticatedFetch(url, options, false);
+  }
+
+  if (refreshedSession?.error === "RefreshAccessTokenError") {
     redirectToLogin();
     throw new Error("Session expired");
   }
 
+  // Network errors and 5xx refresh failures are transient. Return the
+  // original typed 401 so the caller can handle/retry it without destroying
+  // a refresh session that may still be valid for days.
+  log.warn("[AuthJS] Access-token refresh did not advance the session", {
+    url,
+  });
   return response;
 }
 

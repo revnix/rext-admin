@@ -223,11 +223,12 @@ export default function WorkspacePage() {
 
   // Define table actions
   const tableActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
       <Button
         variant="outline"
         size="sm"
         onClick={handleRefresh}
+        className="!w-[39%] sm:w-4"
         disabled={isLoading || isFetching || isRefreshing}
       >
         <RefreshCw
@@ -235,7 +236,11 @@ export default function WorkspacePage() {
         />
         Refresh
       </Button>
-      <Button size="sm" onClick={() => router.push("/w/create" as Route)}>
+      <Button
+        size="sm"
+        className="!w-[59%] sm:w-4"
+        onClick={() => router.push("/w/create" as Route)}
+      >
         <Plus className="h-4 w-4 mr-2" />
         New Workspace
       </Button>
@@ -283,22 +288,24 @@ export default function WorkspacePage() {
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
     >
-      <DataTable<WorkspaceData>
-        columns={columns}
-        data={transformedWorkspaces}
-        emptyTitle="No workspaces yet"
-        emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
-        emptyActions={emptyActions}
-        emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
-        searchPlaceholder="Search workspaces by name, URL ..."
-        actions={tableActions}
-        rowActions={rowActions}
-        pageSize={10}
-        searchFields={["title", "url", "timezone", "status"]}
-        isLoading={isLoading}
-        searchWidth="md:w-[450px]"
-        tableId="workspaces"
-      />
+      <div className="w-full lg:w-[68vw] xl:w-auto overflow-x-auto xl:overflow-hidden">
+        <DataTable<WorkspaceData>
+          columns={columns}
+          data={transformedWorkspaces}
+          emptyTitle="No workspaces yet"
+          emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
+          emptyActions={emptyActions}
+          emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
+          searchPlaceholder="Search workspaces by name, URL ..."
+          actions={tableActions}
+          rowActions={rowActions}
+          pageSize={10}
+          searchFields={["title", "url", "timezone", "status"]}
+          isLoading={isLoading}
+          searchWidth="md:w-[450px]"
+          tableId="workspaces"
+        />
+      </div>
 
       {/* Delete Dialog */}
       {deleteDialogWorkspace && (

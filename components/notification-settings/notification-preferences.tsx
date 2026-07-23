@@ -103,7 +103,7 @@ export function NotificationPreferencesForm({
         </div>
 
         <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="workspace_invitation">
                 Workspace Invitations
@@ -121,7 +121,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="invitation_accepted">Invitation Accepted</Label>
               <p className="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="role_changed">Role Changes</Label>
               <p className="text-sm text-muted-foreground">
@@ -153,7 +153,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="member_removed">Member Removal</Label>
               <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ export function NotificationPreferencesForm({
         </div>
 
         <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="content_generation_started">
                 Generation Started
@@ -204,7 +204,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="content_generation_completed">
                 Generation Completed
@@ -224,7 +224,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="content_generation_failed">
                 Generation Failed
@@ -244,7 +244,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="content_published">Content Published</Label>
               <p className="text-sm text-muted-foreground">
@@ -275,7 +275,7 @@ export function NotificationPreferencesForm({
         </div>
 
         <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="payment_succeeded">Payment Successful</Label>
               <p className="text-sm text-muted-foreground">
@@ -293,7 +293,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="payment_failed">Payment Failed</Label>
               <p className="text-sm text-muted-foreground">
@@ -311,7 +311,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="subscription_cancelled">
                 Subscription Cancelled
@@ -331,7 +331,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="subscription_expiring_soon">
                 Subscription Expiring
@@ -351,7 +351,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="trial_ending_soon">Trial Ending</Label>
               <p className="text-sm text-muted-foreground">
@@ -367,7 +367,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="usage_limit_warning">Usage Limit Warning</Label>
               <p className="text-sm text-muted-foreground">
@@ -385,7 +385,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="usage_limit_exceeded">Usage Limit Exceeded</Label>
               <p className="text-sm text-muted-foreground">
@@ -418,7 +418,7 @@ export function NotificationPreferencesForm({
         </div>
 
         <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="kb_processing_completed">
                 Processing Completed
@@ -438,7 +438,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="kb_processing_failed">Processing Failed</Label>
               <p className="text-sm text-muted-foreground">
@@ -466,7 +466,7 @@ export function NotificationPreferencesForm({
         </div>
 
         <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="digest_enabled">Enable Email Digest</Label>
               <p className="text-sm text-muted-foreground">
@@ -482,7 +482,7 @@ export function NotificationPreferencesForm({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="digest_frequency">Digest Frequency</Label>
               <p className="text-sm text-muted-foreground">
@@ -500,7 +500,7 @@ export function NotificationPreferencesForm({
                 )
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -518,7 +518,7 @@ export function NotificationPreferencesForm({
       {/* Marketing */}
       <div className="space-y-4">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="space-y-0.5">
               <Label htmlFor="marketing">Marketing Communications</Label>
               <p className="text-sm text-muted-foreground">
@@ -538,7 +538,11 @@ export function NotificationPreferencesForm({
 
       {/* Submit Button */}
       <div className="flex justify-end pt-4 border-t">
-        <Button type="submit" disabled={isLoading || !isDirty}>
+        <Button
+          type="submit"
+          disabled={isLoading || !isDirty}
+          className="w-full sm:w-auto"
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

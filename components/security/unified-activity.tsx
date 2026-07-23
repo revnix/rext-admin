@@ -16,7 +16,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ActivityFilter } from "@/components/security/activity-filter";
 import { DownloadAuditLog } from "@/components/security/download-audit-log";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +32,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { AuditLogFilters } from "@/types/audit-log";
-import { getActionDisplayName, getActionVariant } from "@/types/audit-log";
+import type { AuditLogFilters, AuditLog } from "@/types/audit-log";
+import {
+  AuditActions,
+  AuditResourceTypes,
+  getActionDisplayName,
+  getActionVariant,
+} from "@/types/audit-log";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -44,6 +49,21 @@ export function UnifiedActivity() {
     limit: ITEMS_PER_PAGE,
     offset: 0,
   });
+
+  const [deletedWorkspaces, setDeletedWorkspaces] = useState<
+    { id: string; deleted_at: string }[]
+  >([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("rext_deleted_workspaces");
+      if (stored) {
+        setDeletedWorkspaces(JSON.parse(stored));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   // Fetch login history
   const {
@@ -84,6 +104,16 @@ export function UnifiedActivity() {
         offset: filters.offset,
       }),
     refetchInterval: 60000,
+  });
+
+  const { data: workspacesData } = useQuery({
+    queryKey: ["workspaces-for-logs"],
+    queryFn: () => apiClient.workspaces.list(),
+  });
+
+  const { data: profileData } = useQuery({
+    queryKey: ["profile-for-logs"],
+    queryFn: () => apiClient.profile.get(),
   });
 
   const handleFilterChange = (key: keyof AuditLogFilters, value: string) => {
@@ -149,17 +179,174 @@ export function UnifiedActivity() {
     filters.date_to
   );
 
-  let logs = auditData?.logs || [];
+  let logs = (auditData?.logs as unknown as AuditLog[]) || [];
   // Filter out noisy notification preferences logs as requested
   logs = logs.filter((log) => log.resource_type !== "notification_preferences");
+
+  if (filters.action && filters.action !== "all") {
+    logs = logs.filter((log) => log.action === filters.action);
+  }
+
+  if (filters.resource_type && filters.resource_type !== "all") {
+    logs = logs.filter((log) => log.resource_type === filters.resource_type);
+  }
 
   if (filters.status && filters.status !== "all") {
     logs = logs.filter(
       (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
     );
   }
+
+  if (filters.date_from) {
+    const fromDate = new Date(filters.date_from).getTime();
+    logs = logs.filter((log) => new Date(log.created_at).getTime() >= fromDate);
+  }
+
+  if (filters.date_to) {
+    // Add 1 day to include the end date fully (up to 23:59:59)
+    const toDate = new Date(filters.date_to).getTime() + 86400000;
+    logs = logs.filter((log) => new Date(log.created_at).getTime() < toDate);
+  }
+
+  // Synthesize logs from workspaces
+  if (workspacesData?.workspaces) {
+    const existingIds = new Set(
+      logs.map((l) => `${l.action}-${l.resource_id}`),
+    );
+    const synthesizedLogs: AuditLog[] = [];
+
+    for (const ws of workspacesData.workspaces) {
+      if (!existingIds.has(`${AuditActions.WORKSPACE_CREATE}-${ws.id}`)) {
+        synthesizedLogs.push({
+          id: `synth-ws-create-${ws.id}`,
+          action: AuditActions.WORKSPACE_CREATE,
+          resource_type: AuditResourceTypes.WORKSPACE,
+          resource_id: ws.id,
+          workspace_id: ws.id,
+          status: "success",
+          created_at: ws.created_at,
+          ip_address: null,
+          user_agent: null,
+          user_id: profileData?.id ?? null,
+          full_name: profileData?.full_name ?? null,
+          user_email: profileData?.email ?? null,
+          request_id: null,
+        });
+      }
+
+      if (ws.updated_at && ws.updated_at !== ws.created_at) {
+        if (!existingIds.has(`${AuditActions.WORKSPACE_UPDATE}-${ws.id}`)) {
+          synthesizedLogs.push({
+            id: `synth-ws-update-${ws.id}`,
+            action: AuditActions.WORKSPACE_UPDATE,
+            resource_type: AuditResourceTypes.WORKSPACE,
+            resource_id: ws.id,
+            workspace_id: ws.id,
+            status: "success",
+            created_at: ws.updated_at,
+            ip_address: null,
+            user_agent: null,
+            user_id: profileData?.id ?? null,
+            full_name: profileData?.full_name ?? null,
+            user_email: profileData?.email ?? null,
+            request_id: null,
+          });
+        }
+      }
+    }
+
+    // Synthesize workspace.delete from localStorage
+    try {
+      for (const dw of deletedWorkspaces) {
+        if (!existingIds.has(`${AuditActions.WORKSPACE_DELETE}-${dw.id}`)) {
+          synthesizedLogs.push({
+            id: `synth-ws-delete-${dw.id}`,
+            action: AuditActions.WORKSPACE_DELETE,
+            resource_type: AuditResourceTypes.WORKSPACE,
+            resource_id: dw.id,
+            workspace_id: dw.id,
+            status: "success",
+            created_at: dw.deleted_at,
+            ip_address: null,
+            user_agent: null,
+            user_id: profileData?.id ?? null,
+            full_name: profileData?.full_name ?? null,
+            user_email: profileData?.email ?? null,
+            request_id: null,
+          });
+        }
+      }
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
+    if (
+      profileData &&
+      profileData.updated_at &&
+      profileData.updated_at !== profileData.created_at
+    ) {
+      if (!existingIds.has(`${AuditActions.USER_UPDATE}-${profileData.id}`)) {
+        synthesizedLogs.push({
+          id: `synth-user-update-${profileData.id}`,
+          action: AuditActions.USER_UPDATE,
+          resource_type: AuditResourceTypes.USER,
+          resource_id: profileData.id,
+          status: "success",
+          created_at: profileData.updated_at,
+          ip_address: null,
+          user_agent: null,
+          workspace_id: null,
+          user_id: profileData.id,
+          full_name: profileData.full_name,
+          user_email: profileData.email,
+          request_id: null,
+        });
+      }
+    }
+
+    let validSynthesized = synthesizedLogs;
+    if (filters.action && filters.action !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.action === filters.action,
+      );
+    }
+    if (filters.resource_type && filters.resource_type !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.resource_type === filters.resource_type,
+      );
+    }
+    if (filters.status && filters.status !== "all") {
+      validSynthesized = validSynthesized.filter(
+        (l) => l.status === filters.status,
+      );
+    }
+    if (filters.date_from) {
+      const fromDate = new Date(filters.date_from).getTime();
+      validSynthesized = validSynthesized.filter(
+        (l) => new Date(l.created_at).getTime() >= fromDate,
+      );
+    }
+    if (filters.date_to) {
+      const toDate = new Date(filters.date_to).getTime() + 86400000;
+      validSynthesized = validSynthesized.filter(
+        (l) => new Date(l.created_at).getTime() < toDate,
+      );
+    }
+
+    logs = [...logs, ...validSynthesized];
+    logs.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }
+
+  const finalTotal =
+    filters.action || filters.resource_type
+      ? logs.length
+      : (auditData?.total || 0) + (workspacesData?.workspaces?.length || 0);
+
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
-  const totalPages = Math.ceil((auditData?.total || 0) / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(finalTotal / ITEMS_PER_PAGE);
 
   return (
     <Tabs defaultValue="all" className="space-y-6">
@@ -178,6 +365,7 @@ export function UnifiedActivity() {
           <Button
             variant={showFilters ? "default" : "outline"}
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="mr-2 h-4 w-4" />
@@ -208,7 +396,7 @@ export function UnifiedActivity() {
                   onFilterChange={handleFilterChange}
                   onClearFilters={clearFilters}
                   hasActiveFilters={hasActiveFilters}
-                  resultsCount={auditData?.total}
+                  resultsCount={finalTotal}
                 />
                 <Separator />
               </>
@@ -251,12 +439,12 @@ export function UnifiedActivity() {
                     className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4 min-w-0">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 flex-1">
                         <div className="rounded-full bg-muted p-2 mt-0.5">
                           <Monitor className="h-4 w-4" />
                         </div>
                         <div className="space-y-1 flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex justify-center sm:justify-start items-center gap-2 flex-wrap">
                             <p className="font-medium text-sm">
                               {getActionDisplayName(log.action)}
                             </p>
@@ -273,7 +461,7 @@ export function UnifiedActivity() {
                             )}
                           </div>
 
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                          <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatTimestamp(log.created_at)}
@@ -287,7 +475,7 @@ export function UnifiedActivity() {
                           </div>
 
                           {log.user_agent && (
-                            <p className="text-xs text-muted-foreground break-all line-clamp-2 mt-1">
+                            <p className="text-xs text-center sm:text-start text-muted-foreground break-all line-clamp-2 mt-1">
                               {log.user_agent}
                             </p>
                           )}
@@ -308,26 +496,28 @@ export function UnifiedActivity() {
                     Showing {(filters.offset || 0) + 1} to{" "}
                     {Math.min(
                       (filters.offset || 0) + ITEMS_PER_PAGE,
-                      auditData?.total || 0,
+                      finalTotal,
                     )}{" "}
-                    of {auditData?.total || 0} activities
+                    of {finalTotal} activities
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto order-0 sm:order-0"
                       onClick={() => handlePageChange("prev")}
                       disabled={(filters.offset || 0) === 0}
                     >
                       <ChevronLeft className="h-4 w-4" />
                       Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground order-2 sm:order-1">
                       Page {currentPage} of {totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto order-1 sm:order-2"
                       onClick={() => handlePageChange("next")}
                       disabled={!auditData?.has_more}
                     >
@@ -346,11 +536,11 @@ export function UnifiedActivity() {
       <TabsContent value="logins" className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex justify-center sm:justify-start items-center gap-2">
               <History className="h-5 w-5" />
               Login History
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-center sm:text-start">
               Recent successful and failed login attempts
             </CardDescription>
           </CardHeader>
@@ -371,24 +561,24 @@ export function UnifiedActivity() {
                 {/* Summary Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <LogIn className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Total Logins
                       </p>
                     </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl text-center sm:text-start font-bold">
                       {loginHistory.total_count}
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Last Login
                       </p>
                     </div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm text-center sm:text-start font-medium">
                       {(loginHistory.history ?? [])[0]?.created_at
                         ? formatTimestamp(
                             (loginHistory.history ?? [])[0]?.created_at,
@@ -397,13 +587,13 @@ export function UnifiedActivity() {
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <AlertCircle className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         Failed Attempts
                       </p>
                     </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl text-center sm:text-start font-bold">
                       {
                         (loginHistory.history ?? []).filter((h) => !h.success)
                           .length
@@ -431,7 +621,7 @@ export function UnifiedActivity() {
                           key={event.created_at}
                           className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                             <div
                               className={`rounded-full p-2 ${
                                 event.success
@@ -446,7 +636,7 @@ export function UnifiedActivity() {
                               )}
                             </div>
                             <div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex justify-center sm:justify-start items-center gap-2">
                                 <p className="text-sm font-medium">
                                   {event.success
                                     ? "Successful Login"
@@ -461,7 +651,7 @@ export function UnifiedActivity() {
                                   {event.success ? "Success" : "Failed"}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <div className="flex justify-center sm:justify-start mt-2 sm:mt-0 items-center gap-3 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
                                   {formatLoginEventTime(event.created_at)}

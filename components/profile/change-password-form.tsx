@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -27,6 +27,7 @@ export function ChangePasswordForm() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const queryClient = useQueryClient();
 
   // Form
   const form = useForm<ChangePasswordFormData>({
@@ -48,6 +49,7 @@ export function ChangePasswordForm() {
     onSuccess: () => {
       toast.success("Password changed successfully");
       form.reset();
+      queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
     },
     onError: (error: Error) => {
       toast.error(`Password change failed: ${error.message}`);
@@ -211,7 +213,11 @@ export function ChangePasswordForm() {
           )}
         />
 
-        <Button type="submit" disabled={changePwdMutation.isPending}>
+        <Button
+          className="w-full sm:w-auto"
+          type="submit"
+          disabled={changePwdMutation.isPending}
+        >
           {changePwdMutation.isPending && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
