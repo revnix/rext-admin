@@ -406,7 +406,7 @@ export function WorkspaceBrandVoiceForm({
                               addItem("brand_voice", brandVoiceInput);
                               setBrandVoiceInput("");
                             }}
-                            className="bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary hover:text-primary font-medium"
+                            className="font-medium"
                           >
                             Add
                           </Button>
@@ -497,7 +497,7 @@ export function WorkspaceBrandVoiceForm({
                               addItem("content_strategy", contentStrategyInput);
                               setContentStrategyInput("");
                             }}
-                            className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                            className="font-medium"
                           >
                             Add
                           </Button>
@@ -585,7 +585,7 @@ export function WorkspaceBrandVoiceForm({
                               addItem("competitors", competitorsInput);
                               setCompetitorsInput("");
                             }}
-                            className="bg-purple-50 hover:bg-purple-100 dark:bg-purple-950 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                            className="font-medium"
                           >
                             Add
                           </Button>
@@ -672,7 +672,7 @@ export function WorkspaceBrandVoiceForm({
                               addItem("target_audience", targetAudienceInput);
                               setTargetAudienceInput("");
                             }}
-                            className="bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:text-green-700 dark:hover:text-green-300 font-medium"
+                            className="font-medium"
                           >
                             Add
                           </Button>

@@ -164,8 +164,8 @@ export function PageLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        {/* Mobile Workspace Switcher - Fixed at top on mobile only */}
-        <div className="md:hidden sticky top-0 z-50 bg-white dark:bg-sidebar border-b border-border px-4 py-3">
+        {/* Mobile/Tablet Workspace Switcher - Fixed at top when sidebar is off-canvas */}
+        <div className="lg:hidden sticky top-0 z-50 bg-white dark:bg-sidebar border-b border-border px-4 py-3">
           <WorkspaceSwitcher />
         </div>
 

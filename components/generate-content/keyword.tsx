@@ -41,7 +41,7 @@ export function KeywordForm({
           <Search className="w-6 h-6 text-muted-foreground mr-4" />
           <Input
             type="text"
-            placeholder="Enter a keyword or topic to write about..."
+            placeholder="Enter a keyword or topic..."
             className="flex-1 h-10 border-none shadow-none text-[15px] placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-4 font-medium"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
