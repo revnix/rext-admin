@@ -277,31 +277,6 @@ export function ActivityLog() {
       // ignore localStorage errors
     }
 
-    // Synthesize user.update
-    if (
-      profileData &&
-      profileData.updated_at &&
-      profileData.updated_at !== profileData.created_at
-    ) {
-      if (!existingIds.has(`${AuditActions.USER_UPDATE}-${profileData.id}`)) {
-        synthesizedLogs.push({
-          id: `synth-user-update-${profileData.id}`,
-          action: AuditActions.USER_UPDATE,
-          resource_type: AuditResourceTypes.USER,
-          resource_id: profileData.id,
-          status: "success",
-          created_at: profileData.updated_at,
-          ip_address: null,
-          user_agent: null,
-          workspace_id: null,
-          user_id: profileData.id,
-          full_name: profileData.full_name,
-          user_email: profileData.email,
-          request_id: null,
-        });
-      }
-    }
-
     // Append and re-apply filters to synthesized logs
     let validSynthesized = synthesizedLogs;
     if (filters.action && filters.action !== "all") {

@@ -47,6 +47,7 @@ import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useCreditGate } from "@/hooks/use-credit-gate";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
   generationReducer,
@@ -185,6 +186,12 @@ export function FreshGenerationView({
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
   const { patchCredits } = useSubscriptionStore();
+  const {
+    ensureCredits,
+    ensureCreditsToContinue,
+    openCreditsModal,
+    creditsModal,
+  } = useCreditGate();
 
   // ── Streaming text buffers — one per "phase" ──────────────────────────────
   // outlineStream  → accumulates tokens while LLM writes the outline JSON
@@ -247,6 +254,9 @@ export function FreshGenerationView({
 
   // Abort controller — cancelled on unmount or when a new stream starts
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // True while a stream is in flight — blocks repeated clicks from spawning duplicate runs
+  const streamBusyRef = useRef(false);
 
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
@@ -694,12 +704,10 @@ export function FreshGenerationView({
               );
             } else if (step === "credits.exhausted") {
               patchCredits(credits);
-              toast.error(
-                "Out of credits. Upgrade your plan to continue generating content.",
-                {
-                  duration: 10000,
-                },
-              );
+              // Stop the run immediately; `finally` below resets the loading state
+              cancelStream();
+              openCreditsModal();
+              return;
             }
           }
           continue;
@@ -867,58 +875,70 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
-    cancelStream();
-    abortControllerRef.current = new AbortController();
-    const { signal } = abortControllerRef.current;
+    // Not enough for a whole article → stop before a thread or stream is ever created
+    if (!ensureCredits()) return;
+    if (streamBusyRef.current) return;
+    streamBusyRef.current = true;
 
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
-    setTokenTarget("none");
-    tokenTargetRef.current = "none";
-    outline.resetStream();
-    content.resetStream();
+    try {
+      cancelStream();
+      abortControllerRef.current = new AbortController();
+      const { signal } = abortControllerRef.current;
 
-    const newThreadId = await createThread();
-    if (!newThreadId) return;
+      dispatch({ type: "CLEAR_COMPLETED_NODES" });
+      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+      dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
+      setTokenTarget("none");
+      tokenTargetRef.current = "none";
+      outline.resetStream();
+      content.resetStream();
 
-    dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
-    dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
+      const newThreadId = await createThread();
+      if (!newThreadId) {
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        return;
+      }
 
-    const keyword = _initialKeyword || userKeyword;
+      dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
+      dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
-    analytics.track("content_generation_started", {
-      keyword,
-      country,
-      workspace_id: workspaceId ?? undefined,
-      thread_id: newThreadId,
-      from_library: isLibrary,
-    });
+      const keyword = _initialKeyword || userKeyword;
 
-    const stream = streamFromSSE(
-      `/api/generate/${newThreadId}/stream`,
-      {
-        input: {
-          serp_payload: {
-            query: keyword,
-            country,
-            user_id: user?.id,
-            workspace_id: workspaceId ?? undefined,
-            is_library: isLibrary,
+      analytics.track("content_generation_started", {
+        keyword,
+        country,
+        workspace_id: workspaceId ?? undefined,
+        thread_id: newThreadId,
+        from_library: isLibrary,
+      });
+
+      const stream = streamFromSSE(
+        `/api/generate/${newThreadId}/stream`,
+        {
+          input: {
+            serp_payload: {
+              query: keyword,
+              country,
+              user_id: user?.id,
+              workspace_id: workspaceId ?? undefined,
+              is_library: isLibrary,
+            },
+            ...(selectedIntent || _initialIntent
+              ? { final_intent_type: selectedIntent || _initialIntent }
+              : {}),
           },
-          ...(selectedIntent || _initialIntent
-            ? { final_intent_type: selectedIntent || _initialIntent }
-            : {}),
+          streamMode: ["updates", "messages", "custom"],
+          streamSubgraphs: true,
+          onDisconnect: "cancel",
         },
-        streamMode: ["updates", "messages", "custom"],
-        streamSubgraphs: true,
-        onDisconnect: "cancel",
-      },
-      signal,
-    );
+        signal,
+      );
 
-    await processStream(stream);
+      await processStream(stream);
+    } finally {
+      streamBusyRef.current = false;
+    }
   };
 
   const resumeWorkflow = async ({
@@ -926,25 +946,36 @@ export function FreshGenerationView({
     status: statusMsg,
   }: ResumeOptions) => {
     if (!threadId) return;
-    cancelStream();
-    abortControllerRef.current = new AbortController();
-    const { signal } = abortControllerRef.current;
+    // Mid-article: the earlier stages are already paid for, so only a fully
+    // exhausted balance stops the workflow advancing to the next step
+    if (!ensureCreditsToContinue()) return;
+    if (streamBusyRef.current) return;
+    streamBusyRef.current = true;
 
-    dispatch({ type: "CLEAR_COMPLETED_NODES" });
-    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    if (statusMsg) dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
+    try {
+      cancelStream();
+      abortControllerRef.current = new AbortController();
+      const { signal } = abortControllerRef.current;
 
-    const stream = streamFromSSE(
-      `/api/generate/${threadId}/resume`,
-      {
-        payload,
-        streamMode: ["updates", "messages", "custom"],
-        streamSubgraphs: true,
-        onDisconnect: "cancel",
-      },
-      signal,
-    );
-    await processStream(stream);
+      dispatch({ type: "CLEAR_COMPLETED_NODES" });
+      dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+      if (statusMsg)
+        dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
+
+      const stream = streamFromSSE(
+        `/api/generate/${threadId}/resume`,
+        {
+          payload,
+          streamMode: ["updates", "messages", "custom"],
+          streamSubgraphs: true,
+          onDisconnect: "cancel",
+        },
+        signal,
+      );
+      await processStream(stream);
+    } finally {
+      streamBusyRef.current = false;
+    }
   };
 
   const handleWorkflow = (step: WorkflowStep, value: string) => {
@@ -1244,6 +1275,7 @@ export function FreshGenerationView({
             <KeywordForm
               userKeyword={userKeyword}
               country={country}
+              disabled={isManualLoading}
               onSubmit={handleKeywordSubmit}
               onKeywordChange={(val) =>
                 dispatch({ type: "SET_USER_KEYWORD", payload: val })
@@ -1337,6 +1369,8 @@ export function FreshGenerationView({
           />
         </div>
       )}
+
+      {creditsModal}
     </div>
   );
 }

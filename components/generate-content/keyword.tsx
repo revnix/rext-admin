@@ -7,12 +7,15 @@ import { useEffect, useState } from "react";
 export function KeywordForm({
   userKeyword,
   country,
+  disabled = false,
   onSubmit,
   onKeywordChange,
   onCountryChange,
 }: {
   userKeyword: string;
   country: string;
+  /** Blocks re-submission while a generation is already running */
+  disabled?: boolean;
   onSubmit: () => void;
   onKeywordChange: (val: string) => void;
   onCountryChange: (val: string) => void;
@@ -33,6 +36,7 @@ export function KeywordForm({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (disabled) return;
           onSubmit();
         }}
         className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-xl"
@@ -61,6 +65,7 @@ export function KeywordForm({
           <Button
             type="submit"
             size="sm"
+            disabled={disabled}
             className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0 w-[70%] sm:w-auto"
           >
             Analyze
