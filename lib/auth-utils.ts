@@ -294,6 +294,24 @@ export async function authenticatedFetch(
       // Clear the auth headers cache to force a fresh session check
       clearAuthHeadersCache();
 
+      // If this 401 came from an active-impersonation token (useAuthStore,
+      // populated only while impersonating — see stores/auth-store.ts), it
+      // can't be salvaged by the session refresh below: that refreshes the
+      // NextAuth-backed session, which belongs to the ORIGINAL admin, not
+      // the impersonated user, and getAuthHeaders() prefers this store over
+      // the session unconditionally. Left alone, the retry a few lines down
+      // would just resend the same dead impersonation token, get a second
+      // (non-retryable) 401, and force the ADMIN's whole session out — even
+      // though their real session is still perfectly valid. Clear it now so
+      // the retry naturally falls back to the admin's own session instead,
+      // ending impersonation gracefully on expiry rather than logging out.
+      if (typeof window !== "undefined" && useAuthStore.getState().accessToken) {
+        log.warn(
+          "[AuthJS] Impersonation token rejected — clearing impersonation state and falling back to the admin session",
+        );
+        useAuthStore.getState().clearTokens();
+      }
+
       // For client-side, force a real backend refresh (not a conditional
       // getSession(), which no-ops if the local expiry clock hasn't caught
       // up with the backend's 401).
@@ -311,6 +329,21 @@ export async function authenticatedFetch(
             "[AuthJS] Session refresh failed with error:",
             session.error,
           );
+        } else if (!session) {
+          // forceSessionRefresh() returns null when the round-trip to our
+          // own /api/auth/session endpoint itself failed (network blip,
+          // transient 5xx) — that says nothing about whether the refresh
+          // token is still valid, since the jwt() callback (which does its
+          // own retry + definitive-rejection classification) never even got
+          // to run. Forcing a logout here would be the exact bug this file's
+          // other refresh paths were hardened against: a momentary failure
+          // ending a session that's still valid for days. Surface the
+          // original 401 to the caller instead and let the next request (or
+          // SessionTimeoutWarning's own retry loop) try again.
+          log.error(
+            "[AuthJS] Could not reach session endpoint during refresh — treating as transient, not forcing logout",
+          );
+          return response;
         }
       }
     }
