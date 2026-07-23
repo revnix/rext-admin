@@ -24,7 +24,7 @@ import { useTopicPrefilling } from "@/hooks/content-creation/use-topic-prefillin
 import { useWizardNavigation } from "@/hooks/content-creation/use-wizard-navigation";
 import { useWizardState } from "@/hooks/content-creation/use-wizard-state";
 import { useWizardValidation } from "@/hooks/content-creation/use-wizard-validation";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useCreditGate } from "@/hooks/use-credit-gate";
 import {
   applyCascadingUpdates,
   createDependencyEngine,
@@ -94,18 +94,9 @@ export function ContentCreationWizard({
   const currentWorkspace = useCurrentWorkspace();
   const workspaceId = currentWorkspace?.id || "";
 
-  // Credits & Subscription
-  const { credits, fetchCredits } = useSubscriptionStore();
-
-  useEffect(() => {
-    fetchCredits().catch(() => {});
-  }, [fetchCredits]);
-
-  const hasEnoughCredits = (() => {
-    if (!credits) return true; // Default to true while loading
-    if (credits.articles_remaining === null) return true; // Unlimited (Enterprise)
-    return credits.current_credits >= 15;
-  })();
+  // Credits & Subscription — the gate fetches the balance, decides whether a
+  // whole article is affordable, and owns the upgrade popup
+  const { ensureCredits, creditsModal } = useCreditGate();
 
   // ==========================================================================
   // DEPENDENCY ENGINE INTEGRATION
@@ -175,6 +166,12 @@ export function ContentCreationWizard({
     onSubmit,
     onCancel,
   });
+
+  // Stop before the create request is sent unless a whole article is affordable
+  const handleGuardedSubmit = () => {
+    if (!ensureCredits()) return;
+    void handleSubmit();
+  };
 
   // ==========================================================================
   // TOPIC PREFILLING (via custom hook)
@@ -303,14 +300,15 @@ export function ContentCreationWizard({
           canGoNext={canGoNext}
           canGoBack={canGoBack}
           canSubmit={canSubmit}
-          isSubmitDisabled={!hasEnoughCredits}
           isLoading={state.isSaving}
           onNext={handleNextStep}
           onBack={handlePreviousStep}
-          onSubmit={handleSubmit}
+          onSubmit={handleGuardedSubmit}
           onCancel={handleCancel}
         />
       </div>
+
+      {creditsModal}
     </div>
   );
 }
