@@ -108,7 +108,7 @@ export function GeneralInfoSection() {
       <CardHeader>
         <CardTitle>General Information</CardTitle>
         <CardDescription>
-          Update your workspace name, and other basic informatio
+          Update your workspace name, and other basic information
         </CardDescription>
       </CardHeader>
       <CardContent>
