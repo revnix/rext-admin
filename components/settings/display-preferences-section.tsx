@@ -249,7 +249,9 @@ function DisplayPreferencesForm({
                 name="items_per_page"
                 render={({ field }) => (
                   <FormItem className="grid xl:grid-cols-3 gap-6 items-center space-y-0">
-                    <FormLabel className="col-span-3 sm:col-span-1">Items Per Page</FormLabel>
+                    <FormLabel className="col-span-3 sm:col-span-1">
+                      Items Per Page
+                    </FormLabel>
                     <Select
                       onValueChange={(value) =>
                         field.onChange(parseInt(value, 10))

@@ -85,7 +85,7 @@ export default function BillingHistoryPage() {
     <PageLayout
       title="Billing & Invoices"
       description="Manage your billing information and view invoice history"
-      actions={<CustomerPortalButton>Billing Portal</CustomerPortalButton>}
+      actions={<CustomerPortalButton className="w-full sm:w-auto">Billing Portal</CustomerPortalButton>}
     >
       <div className="space-y-8">
         {/* Current Billing Cycle Info */}
@@ -184,6 +184,7 @@ export default function BillingHistoryPage() {
                     </p>
                     <Button
                       variant="outline"
+                      className ="w-full sm:w-auto"
                       onClick={() => router.push("/pricing" as Route)}
                     >
                       View Pricing Plans

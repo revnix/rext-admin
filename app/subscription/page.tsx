@@ -340,7 +340,7 @@ export default function SubscriptionDashboardPage() {
                 Access the customer portal to update your payment method,
                 billing address, and download invoices.
               </p>
-              <CustomerPortalButton>Open Billing Portal</CustomerPortalButton>
+              <CustomerPortalButton className="w-full sm:w-auto">Open Billing Portal</CustomerPortalButton>
 
               {/* Security Information */}
               <div className="pt-4 mt-4 border-t">
@@ -370,7 +370,7 @@ export default function SubscriptionDashboardPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your invoice history is available in the dedicated billing page.
               </p>
-              <Button onClick={() => router.push("/billing" as Route)}>
+              <Button className="w-full sm:w-auto" onClick={() => router.push("/billing" as Route)}>
                 <FileText className="mr-2 h-4 w-4" />
                 View All Invoices
               </Button>

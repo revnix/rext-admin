@@ -444,7 +444,11 @@ export function ProfileEdit() {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={updateMutation.isPending} className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending}
+              className="w-full sm:w-auto"
+            >
               {updateMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
