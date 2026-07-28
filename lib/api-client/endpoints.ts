@@ -164,6 +164,7 @@ export const ENDPOINTS = {
     byId: (id: string) => `/api/v1/user/${id}` as const,
     register: "/api/v1/user/register",
     registerWithInvitation: "/api/v1/user/register-with-invitation",
+    logout: "/api/v1/user/logout",
 
     // Sessions
     sessions: {

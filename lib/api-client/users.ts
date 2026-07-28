@@ -155,5 +155,15 @@ export function createUsersNamespace(client: ApiClient) {
         },
       );
     },
+
+    /**
+     * Notify the backend of logout so the access token is blacklisted
+     * and the event is recorded in the security activity log.
+     */
+    logout: async (): Promise<void> => {
+      return client.request<void>(ENDPOINTS.USERS.logout, {
+        method: "POST",
+      });
+    },
   };
 }
