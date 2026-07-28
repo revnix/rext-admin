@@ -13,6 +13,8 @@ export type ContentStatus =
   | "trashed"
   | "deleted";
 
+export type WordPressPostStatus = "publish" | "draft" | "pending";
+
 export interface ContentStatusInfo {
   label: string;
   color: string;
@@ -172,6 +174,7 @@ export interface CreateContentRequest {
   body_markdown?: string;
   body_html?: string;
   tags?: string[];
+  category?: string;
   status?: ContentStatus;
   content_language?: string;
   content_format?: string;
@@ -198,6 +201,7 @@ export interface UpdateContentRequest {
   body_markdown?: string;
   body_html?: string;
   tags?: string[];
+  category?: string;
   status?: ContentStatus;
   content_language?: string;
   assigned_to_user_id?: string;
@@ -240,6 +244,7 @@ export interface ContentItem {
   body_markdown?: string;
   body_html?: string;
   tags?: string[];
+  category?: string;
 
   // Relations
   topic_id?: string;
