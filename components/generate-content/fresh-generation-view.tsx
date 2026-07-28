@@ -9,6 +9,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { AlertCircle, ArrowRight, CalendarDays } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -24,7 +26,9 @@ import type {
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
+  SEORESULT,
   StreamUpdates,
+  WREXT,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
@@ -61,13 +65,19 @@ import {
 import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
+import { useWorkspace } from "@/providers/workspace-provider";
+import { Button } from "@/components/ui/button";
+import { workspaceRoutes } from "@/lib/routes";
 import { toast } from "sonner";
+import type { Route } from "next";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
   initialIntent?: string;
   isLibrary?: boolean;
+  backgroundThreadId?: string;
 }
 
 const extractJsonStringFieldPartial = (raw: string, field: string) => {
@@ -181,10 +191,19 @@ export function FreshGenerationView({
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
+  backgroundThreadId,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
+  const router = useRouter();
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
+  const { workspaceSlug } = useWorkspace();
+  const upsertBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.upsertJob,
+  );
+  const updateBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.updateJob,
+  );
   const { patchCredits } = useSubscriptionStore();
   const {
     ensureCredits,
@@ -264,6 +283,7 @@ export function FreshGenerationView({
   const trackedKeywordSearchRef = useRef<string | null>(null);
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
@@ -275,6 +295,221 @@ export function FreshGenerationView({
   useEffect(() => {
     return () => cancelStream();
   }, []);
+
+  const hydrateFromBackgroundState = useCallback(
+    (values: Partial<WREXT>) => {
+      const restoredContent = values.content;
+      const finalContent = restoredContent?.final_content;
+      if (!finalContent) return false;
+
+      const review = restoredContent.review as
+        | (typeof restoredContent.review & {
+            on_page_metrics?: SEORESULT;
+          })
+        | undefined;
+
+      dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId ?? null });
+      dispatch({
+        type: "SET_USER_KEYWORD",
+        payload:
+          values.serp_payload?.query ??
+          finalContent.focus_keyphrase ??
+          finalContent.primary_keyword ??
+          "",
+      });
+      dispatch({
+        type: "SET_PRIMARY_KEYWORD",
+        payload:
+          finalContent.focus_keyphrase ??
+          finalContent.primary_keyword ??
+          values.serp_payload?.query ??
+          "",
+      });
+      dispatch({
+        type: "SET_OUTLINE",
+        payload: restoredContent.outline ?? null,
+      });
+      dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
+      dispatch({
+        type: "SET_GENERATED_CONTENT",
+        payload:
+          finalContent.body_markdown ||
+          htmlToMarkdownLite(finalContent.html_content ?? ""),
+      });
+      if (review?.readability_metrics) {
+        dispatch({
+          type: "SET_READABILITY_SCORE",
+          payload: review.readability_metrics,
+        });
+      }
+      if (review?.trust_score) {
+        dispatch({
+          type: "SET_TRUST_SCORE",
+          payload: review.trust_score,
+        });
+      }
+      if (review?.on_page_metrics) {
+        dispatch({
+          type: "SET_SEO_SCORE",
+          payload: review.on_page_metrics,
+        });
+      }
+      dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+      dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+      return true;
+    },
+    [backgroundThreadId],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: processStream/cancelStream are declared later and are intentionally not deps (accessed via ref / at call time)
+  useEffect(() => {
+    if (!backgroundThreadId) return;
+
+    let disposed = false;
+    let retryId: number | undefined;
+    let consecutiveFailures = 0;
+
+    dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
+    dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+    dispatch({
+      type: "SET_LOADING_STATUS",
+      payload: "Restoring background generation...",
+    });
+    setRestoreError(null);
+
+    const restore = async () => {
+      let terminalFailure = false;
+      try {
+        const response = await fetch(
+          `/api/generate/${encodeURIComponent(backgroundThreadId)}/status?includeState=true`,
+          { cache: "no-store" },
+        );
+        const payload = (await response.json()) as {
+          run?: { id?: string; status?: string };
+          state?: { values?: Partial<WREXT> };
+          progress?: number;
+          stage?: string;
+          error?: string;
+        };
+
+        if (!response.ok && response.status !== 202) {
+          throw new Error(payload.error || "Unable to restore this article");
+        }
+        if (disposed) return;
+
+        if (
+          payload.run?.status === "error" ||
+          payload.run?.status === "timeout" ||
+          payload.run?.status === "interrupted" ||
+          payload.error
+        ) {
+          terminalFailure = true;
+          throw new Error(
+            payload.error || "This article could not be generated.",
+          );
+        }
+        consecutiveFailures = 0;
+
+        updateBackgroundJob(backgroundThreadId, {
+          status: "running",
+          stage: payload.stage ?? "Generating your article",
+          progress: payload.progress ?? 24,
+        });
+
+        if (payload.run?.status === "success") {
+          if (
+            payload.state?.values &&
+            hydrateFromBackgroundState(payload.state.values)
+          ) {
+            updateBackgroundJob(backgroundThreadId, {
+              status: "completed",
+              stage: "Article ready",
+              progress: 100,
+            });
+            return;
+          }
+          terminalFailure = true;
+          throw new Error(
+            "Generation finished, but the article result was unavailable.",
+          );
+        }
+
+        // Run still in progress: reconnect to its live token stream so the
+        // article renders as it's written (same as staying on the page),
+        // instead of showing a poll-only skeleton until completion.
+        const runId = payload.run?.id;
+        if (runId) {
+          setTokenTarget("content");
+          tokenTargetRef.current = "content";
+          dispatch({
+            type: "SET_LOADING_STATUS",
+            payload: payload.stage ?? "Generating your article...",
+          });
+          cancelStream();
+          abortControllerRef.current = new AbortController();
+          const { signal } = abortControllerRef.current;
+          try {
+            const stream = streamFromSSE(
+              `/api/generate/${encodeURIComponent(backgroundThreadId)}/join`,
+              { runId },
+              signal,
+            );
+            await processStreamRef.current(stream);
+          } catch {
+            // Join dropped or the run just ended — the re-check below reconciles.
+          }
+          if (disposed) return;
+          // Re-check status to hydrate the final article (or catch a terminal
+          // state) once the joined stream ends.
+          retryId = window.setTimeout(restore, 800);
+          return;
+        }
+
+        dispatch({
+          type: "SET_LOADING_STATUS",
+          payload:
+            payload.stage ?? "Generating your article in the background...",
+        });
+        retryId = window.setTimeout(restore, 3000);
+      } catch (error) {
+        if (disposed) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to restore this article";
+        consecutiveFailures += 1;
+        if (!terminalFailure && consecutiveFailures < 3) {
+          dispatch({
+            type: "SET_LOADING_STATUS",
+            payload: "Reconnecting to background generation...",
+          });
+          retryId = window.setTimeout(restore, 3000);
+          return;
+        }
+        setRestoreError(message);
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        updateBackgroundJob(backgroundThreadId, {
+          status: "failed",
+          stage: "Generation failed",
+          error: message,
+        });
+      }
+    };
+
+    void restore();
+
+    return () => {
+      disposed = true;
+      if (retryId) window.clearTimeout(retryId);
+      // Abort any in-flight join stream; the server run continues
+      // (cancelOnDisconnect is false on the join route).
+      cancelStream();
+    };
+  }, [backgroundThreadId, hydrateFromBackgroundState, updateBackgroundJob]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
@@ -327,12 +562,19 @@ export function FreshGenerationView({
       thread_id: threadId,
       word_count: allContent?.word_count,
     });
+    updateBackgroundJob(threadId, {
+      status: "completed",
+      stage: "Article ready",
+      progress: 100,
+      error: undefined,
+    });
   }, [
     isContentFinal,
     threadId,
     userKeyword,
     workspaceId,
     allContent?.word_count,
+    updateBackgroundJob,
   ]);
 
   // Track keyword_search_completed once per thread when SEO/keyword data arrives
@@ -623,6 +865,23 @@ export function FreshGenerationView({
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
       for await (const chunk of stream) {
+        if (chunk.event === "run/created") {
+          const runData = chunk.data as {
+            run_id?: string;
+            thread_id?: string;
+          };
+          const activeThreadId = runData.thread_id ?? threadId;
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              runId: runData.run_id,
+              status: "running",
+              stage: "Drafting your article",
+              progress: 12,
+            });
+          }
+          continue;
+        }
+
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
         if (
@@ -751,20 +1010,48 @@ export function FreshGenerationView({
             "Creating the first draft based on the approved outline...",
           );
           advancePipeline("Generating Content");
+          if (threadId) {
+            updateBackgroundJob(threadId, {
+              status: "running",
+              stage: "Drafting your article",
+              progress: 28,
+            });
+          }
         }
 
         if (updates?.generate_content) {
           advancePipeline("Humanizing");
+          if (threadId) {
+            updateBackgroundJob(threadId, {
+              status: "running",
+              stage: "Refining tone and structure",
+              progress: 58,
+            });
+          }
         }
 
         if (updates?.humanize_content) {
           advancePipeline("Reviewing Content");
+          if (threadId) {
+            updateBackgroundJob(threadId, {
+              status: "running",
+              stage: "Running quality checks",
+              progress: 78,
+            });
+          }
         }
 
         if (updates?.review_content) {
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
+          if (threadId) {
+            updateBackgroundJob(threadId, {
+              status: "running",
+              stage: "Finalizing SEO and readability",
+              progress: 90,
+            });
+          }
         }
 
         if (updates?.content_engine) {
@@ -773,6 +1060,13 @@ export function FreshGenerationView({
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
+          if (threadId) {
+            updateBackgroundJob(threadId, {
+              status: "running",
+              stage: "Preparing your article",
+              progress: 96,
+            });
+          }
         }
 
         // Centralized handling for nodes that emit content updates
@@ -844,7 +1138,6 @@ export function FreshGenerationView({
               type: "SET_RECOMMENDED_CONTENT_TYPE",
               payload: recommendedContentType,
             });
-
           }
         }
 
@@ -868,6 +1161,16 @@ export function FreshGenerationView({
           error_message:
             _e instanceof Error ? _e.message : "Unknown stream error",
         });
+        if (threadId) {
+          updateBackgroundJob(threadId, {
+            status: "failed",
+            stage: "Generation failed",
+            error:
+              _e instanceof Error
+                ? _e.message
+                : "We could not finish this article.",
+          });
+        }
       }
     } finally {
       if (loadingStatus?.endsWith("..."))
@@ -881,6 +1184,11 @@ export function FreshGenerationView({
       dispatch({ type: "SET_LOADING_STEPS", payload: [] });
     }
   };
+
+  // Keep a live handle so the background-restore effect (declared earlier) always
+  // invokes the latest processStream closure instead of a stale one.
+  const processStreamRef = useRef(processStream);
+  processStreamRef.current = processStream;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Workflow handlers — UNCHANGED
@@ -941,7 +1249,7 @@ export function FreshGenerationView({
           },
           streamMode: ["updates", "messages", "custom"],
           streamSubgraphs: true,
-          onDisconnect: "cancel",
+          onDisconnect: "continue",
         },
         signal,
       );
@@ -979,7 +1287,7 @@ export function FreshGenerationView({
           payload,
           streamMode: ["updates", "messages", "custom"],
           streamSubgraphs: true,
-          onDisconnect: "cancel",
+          onDisconnect: "continue",
         },
         signal,
       );
@@ -987,6 +1295,47 @@ export function FreshGenerationView({
     } finally {
       streamBusyRef.current = false;
     }
+  };
+
+  const startBackgroundWorkflow = async ({
+    payload,
+    status: statusMsg,
+  }: ResumeOptions) => {
+    if (!threadId || !ensureCreditsToContinue()) return;
+
+    const now = new Date().toISOString();
+    const resultUrl = `${workspaceRoutes.generate_content(
+      workspaceSlug,
+    )}?thread=${encodeURIComponent(threadId)}`;
+
+    // Register the job so the background dock keeps tracking it (and can notify
+    // on completion) if the user navigates away. We do NOT fire a detached
+    // run or navigate: the stream below renders the draft on-page as before.
+    // The run is server-owned (onDisconnect: "continue"), so it survives
+    // navigation and the dock polls /status to completion from anywhere.
+    upsertBackgroundJob({
+      threadId,
+      workspaceId: workspaceId ?? undefined,
+      workspaceSlug,
+      title: parsedOutline?.title || primaryKeyword || "Untitled article",
+      keyword: primaryKeyword,
+      status: "running",
+      stage: "Drafting your article",
+      progress: 12,
+      createdAt: now,
+      updatedAt: now,
+      resultUrl,
+      completionNotified: false,
+    });
+
+    toast.info("Generating your article", {
+      description:
+        "You can leave this page — we'll keep working and notify you when it's ready.",
+    });
+
+    // Live-stream on the current page so the article appears as it is written
+    // (run/created + progress events keep the background job updated).
+    await resumeWorkflow({ payload, status: statusMsg });
   };
 
   const handleWorkflow = (step: WorkflowStep, value: string) => {
@@ -1074,7 +1423,7 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
-        return resumeWorkflow({
+        return startBackgroundWorkflow({
           payload: {
             action: "approve",
             ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
@@ -1327,7 +1676,7 @@ export function FreshGenerationView({
                   workspace_id: workspaceId ?? undefined,
                   thread_id: threadId ?? undefined,
                 });
-                void resumeWorkflow({
+                void startBackgroundWorkflow({
                   payload: {
                     action: "approve",
                     ...(parsedOutline?.tone
@@ -1361,10 +1710,65 @@ export function FreshGenerationView({
         )}
       </div>
 
+      {showContentStream && isManualLoading && !restoreError && (
+        <div className="mx-auto mb-4 mt-5 flex w-full max-w-5xl flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Generating in the background
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You can leave this page. We will notify you when your article is
+              ready.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full shrink-0 bg-background sm:w-auto"
+            onClick={() =>
+              router.push(
+                workspaceRoutes.content_calendar(workspaceSlug) as Route,
+              )
+            }
+          >
+            <CalendarDays className="h-4 w-4" />
+            Open content calendar
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {restoreError && (
+        <div className="mx-auto my-8 flex w-full max-w-2xl items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              We could not restore this article
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{restoreError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() =>
+                router.push(
+                  workspaceRoutes.generate_content(workspaceSlug) as Route,
+                )
+              }
+            >
+              Start a new article
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
-      {showContentStream && (
+      {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
+            threadId={threadId ?? undefined}
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
             }

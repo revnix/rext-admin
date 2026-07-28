@@ -120,6 +120,8 @@ export function useWorkspaceAutoSelect() {
     workspaceList,
     isLoading,
     error,
-    hasWorkspaces: workspaceList.length > 0,
+    // Use the query result here rather than the store. The store is synchronized
+    // in the effect above, so it is one render behind when the request resolves.
+    hasWorkspaces: workspaces.length > 0,
   };
 }

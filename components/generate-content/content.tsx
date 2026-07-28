@@ -306,6 +306,9 @@ type PipelineStep = { label: string; status: "pending" | "active" | "done" };
 
 type ContentEditorProps = {
   contentId?: string;
+  /** LangGraph thread id — lets a manual Save reconcile to the row the
+   *  generation graph already auto-saved (idempotent by thread on the backend). */
+  threadId?: string;
   isEnhancing?: boolean;
   enhancingMsg?: string;
   enhancingDescription?: string;
@@ -328,6 +331,7 @@ type ContentEditorProps = {
 function ContentEditorInner(props: ContentEditorProps) {
   const {
     contentId,
+    threadId,
     isEnhancing,
     enhancingMsg,
     enhancingDescription,
@@ -490,6 +494,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     images_data: {},
     links_data: {},
     schema_markup: {},
+    langgraph_thread_id: threadId,
   });
 
   const publishContent = async () => {

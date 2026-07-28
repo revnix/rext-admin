@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  ArrowUpRight,
   Bell,
   Check,
   CheckCircle,
@@ -11,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,6 +30,7 @@ import {
   markAllNotificationsAsRead,
   markNotificationsAsRead,
 } from "@/services/notification-api";
+import type { Route } from "next";
 
 interface NotificationsDrawerProps {
   open: boolean;
@@ -76,6 +79,7 @@ export function NotificationsDrawer({
   open,
   onClose,
 }: NotificationsDrawerProps) {
+  const router = useRouter();
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const isLoading = useNotificationStore((state) => state.isLoading);
@@ -123,6 +127,27 @@ export function NotificationsDrawer({
     } catch {
       return "";
     }
+  };
+
+  const getNotificationHref = (notification: OperationNotification) => {
+    const href = notification.metadata?.href;
+    return typeof href === "string" && href.startsWith("/") ? href : null;
+  };
+
+  const handleOpenNotification = async (
+    notification: OperationNotification,
+  ) => {
+    const href = getNotificationHref(notification);
+    if (!href) return;
+    if (!notification.read) {
+      if (notification.metadata?.kind === "content_generation") {
+        setNotificationRead(notification.id, true);
+      } else {
+        await handleMarkAsRead(notification.id);
+      }
+    }
+    onClose();
+    router.push(href as Route);
   };
 
   return (
@@ -206,7 +231,17 @@ export function NotificationsDrawer({
                         <span className="text-xs text-muted-foreground">
                           {getRelativeTime(notification.createdAt)}
                         </span>
-                        {!notification.read && (
+                        {getNotificationHref(notification) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenNotification(notification)}
+                            className="h-7 px-2 text-xs text-primary hover:text-primary"
+                          >
+                            Open
+                            <ArrowUpRight className="ml-1 h-3 w-3" />
+                          </Button>
+                        ) : !notification.read ? (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -216,7 +251,7 @@ export function NotificationsDrawer({
                             <Check className="h-3 w-3 mr-1" />
                             Mark as read
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>

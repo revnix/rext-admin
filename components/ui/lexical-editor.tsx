@@ -704,24 +704,19 @@ function ImageInsertPopover() {
           setError("Upload succeeded but no image URL was returned.");
           return;
         }
-        const alt =
-          altText.trim() ||
-          media.alt_text ||
-          file.name.replace(/\.[^/.]+$/, "");
-        insertAtSavedSelection(src, alt);
-        setUrl("");
-        setAltText("");
-        setPreview(null);
-        savedSelectionRef.current = null;
-        setOpen(false);
-        toast.success("Image uploaded");
+        // Fill the URL + preview and leave the Alt text field for the user to
+        // enter their own. Insertion happens on the Insert button, so uploaded
+        // images get a custom alt text just like pasted URLs (no filename default).
+        setUrl(src);
+        setPreview(src);
+        toast.success("Image uploaded — add alt text (optional), then Insert");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed.");
       } finally {
         setUploading(false);
       }
     },
-    [workspaceId, altText, insertAtSavedSelection],
+    [workspaceId],
   );
 
   const handleOpenChange = (o: boolean) => {
