@@ -55,6 +55,7 @@ import { PageHeader } from "@/components/page-header";
 import { NotificationsDrawer } from "./notifications-drawer";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { CreditBalanceWidget } from "@/components/subscription/credit-balance-widget";
+import { BackgroundGenerationDock } from "@/components/background-generation-dock";
 
 interface PageLayoutProps {
   title: string;
@@ -457,6 +458,7 @@ export function PageLayout({
               </DropdownMenu>
             </div>
           </header>
+          <BackgroundGenerationDock />
         </div>
         {/* Impersonation Banner */}
         <ImpersonationBanner />

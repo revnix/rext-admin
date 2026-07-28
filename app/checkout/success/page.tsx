@@ -149,7 +149,6 @@ export default function CheckoutSuccessPage() {
     refreshSubscription();
     return () => controller.abort();
   }, [waitForSubscriptionSync]);
-
   const handleGoToDashboard = () => {
     router.push("/" as Route);
   };

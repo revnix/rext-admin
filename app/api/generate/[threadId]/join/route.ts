@@ -3,8 +3,6 @@ import { Client } from "@langchain/langgraph-sdk";
 
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 
-const ASSISTANT_ID = "agent";
-
 const getClient = () =>
   new Client({
     apiUrl: resolveApiBaseUrl({
@@ -12,13 +10,18 @@ const getClient = () =>
     }),
   });
 
+// Reconnect to the live SSE stream of an already-running server-owned run so a
+// user returning to an in-progress generation sees tokens render live instead
+// of a poll-only skeleton. Relies on the run being started with
+// `streamResumable: true`. cancelOnDisconnect is false so viewing (and then
+// leaving again) never cancels the run.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ threadId: string }> },
 ) {
   const { threadId } = await params;
 
-  let body: { input: Record<string, unknown> };
+  let body: { runId?: string };
   try {
     body = await request.json();
   } catch {
@@ -28,41 +31,31 @@ export async function POST(
     });
   }
 
-  const client = getClient();
-  let createdRunId: string | undefined;
+  if (!body.runId) {
+    return new Response(JSON.stringify({ error: "runId is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
-  const stream = client.runs.stream(threadId, ASSISTANT_ID, {
-    input: body.input,
+  const client = getClient();
+  const { signal } = request;
+
+  const stream = client.runs.joinStream(threadId, body.runId, {
     streamMode: ["updates", "messages", "custom"],
-    streamSubgraphs: true,
-    streamResumable: true,
-    onDisconnect: "continue",
-    onRunCreated: ({ run_id }) => {
-      createdRunId = run_id;
-    },
+    cancelOnDisconnect: false,
+    signal,
   });
 
-  const { signal } = request;
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
-      let runAnnounced = false;
       try {
         for await (const chunk of stream) {
           if (signal.aborted) break;
-          if (createdRunId && !runAnnounced) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  event: "run/created",
-                  data: { run_id: createdRunId, thread_id: threadId },
-                })}\n\n`,
-              ),
-            );
-            runAnnounced = true;
-          }
-          const data = `data: ${JSON.stringify(chunk)}\n\n`;
-          controller.enqueue(encoder.encode(data));
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`),
+          );
         }
         if (signal.aborted) return;
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
@@ -77,7 +70,6 @@ export async function POST(
       }
     },
     cancel() {
-      // Called by the runtime when the client disconnects
       stream.return?.(undefined);
     },
   });

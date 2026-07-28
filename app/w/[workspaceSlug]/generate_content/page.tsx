@@ -37,6 +37,7 @@ export default function Page() {
   const urlParams = useSearchParams();
   const libraryKeyword = urlParams.get("library");
   const libraryIntent = urlParams.get("intent");
+  const backgroundThreadId = urlParams.get("thread");
   const isLibrary = libraryKeyword !== null;
 
   useEffect(() => {
@@ -45,6 +46,12 @@ export default function Page() {
       setView("fresh");
     }
   }, [libraryKeyword]);
+
+  useEffect(() => {
+    if (backgroundThreadId) {
+      setView("fresh");
+    }
+  }, [backgroundThreadId]);
 
   const handleStartFresh = () => {
     setSelectedLibraryKeyword(undefined);
@@ -117,6 +124,7 @@ export default function Page() {
               initialKeyword={selectedLibraryKeyword}
               initialIntent={libraryIntent ?? undefined}
               isLibrary={isLibrary}
+              backgroundThreadId={backgroundThreadId ?? undefined}
             />
           )}
         </div>
