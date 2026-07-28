@@ -112,10 +112,12 @@ export function createMediaNamespace(client: ApiClient) {
     /**
      * Upload a media file
      */
+    // The core client unwraps the `{ success, data, message }` envelope, so this
+    // resolves to the uploaded Media object directly (not a { data, message } wrapper).
     async upload(
       workspaceId: string,
       params: MediaUploadParams,
-    ): Promise<{ data: Media; message: string }> {
+    ): Promise<Media> {
       const formData = new FormData();
       formData.append("file", params.file);
 
@@ -127,13 +129,10 @@ export function createMediaNamespace(client: ApiClient) {
       if (params.is_public !== undefined)
         formData.append("is_public", String(params.is_public));
 
-      return client.request<{ data: Media; message: string }>(
-        ENDPOINTS.MEDIA.upload(workspaceId),
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      return client.request<Media>(ENDPOINTS.MEDIA.upload(workspaceId), {
+        method: "POST",
+        body: formData,
+      });
     },
 
     /**
