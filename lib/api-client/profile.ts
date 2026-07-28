@@ -219,14 +219,11 @@ export function createAccountNamespace(client: ApiClient) {
       const response = await client.request<{
         success?: boolean;
         message?: string;
-      }>(
-        ENDPOINTS.ACCOUNT.deactivate,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+      }>(ENDPOINTS.ACCOUNT.deactivate, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
       // Record audit log — awaited to ensure it completes before returning
       if (response.success !== false) {

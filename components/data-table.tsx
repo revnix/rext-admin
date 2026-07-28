@@ -407,7 +407,7 @@ export function DataTable<
                 </div>
               )}
               {/* Actions container */}
-              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:mr-2">
                 {actions}
               </div>
             </div>

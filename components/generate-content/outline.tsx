@@ -595,6 +595,8 @@ export function OutlineDisplay({
   const [editingTone, setEditingTone] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
   const [tone, setTone] = useState("");
+  const [editingTargetWords, setEditingTargetWords] = useState(false);
+  const [targetWordCount, setTargetWordCount] = useState("");
   const [audience, setAudience] = useState("");
   const [visibleSectionCount, setVisibleSectionCount] = useState(0);
   const [checkedUrls, setCheckedUrls] = useState<Set<string>>(new Set());
@@ -639,6 +641,7 @@ export function OutlineDisplay({
 
     setTone(outline.tone || "");
     setAudience(outline.target_audience?.join(", ") || "");
+    setTargetWordCount(outline.target_word_count?.toString() || "");
   }, [outline]);
 
   // Progressive reveal when the *final* outline arrives — item by item.
@@ -706,6 +709,19 @@ export function OutlineDisplay({
           .filter(Boolean),
       });
     setEditingAudience(false);
+  };
+
+  const handleTargetWordsSave = () => {
+    if (!onUpdate || !outline) return;
+
+    const count = Number(targetWordCount);
+
+    onUpdate({
+      ...outline,
+      target_word_count: Number.isNaN(count) ? 0 : count,
+    });
+
+    setEditingTargetWords(false);
   };
 
   return (
@@ -885,9 +901,63 @@ export function OutlineDisplay({
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                       Target Words
                     </p>
-                    <p className="text-sm font-bold text-foreground">
-                      {outline.target_word_count.toLocaleString()}
-                    </p>
+
+                    {editingTargetWords ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          value={targetWordCount}
+                          onChange={(e) => setTargetWordCount(e.target.value)}
+                          className="h-7 w-28 text-sm"
+                        />
+
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-primary hover:bg-muted"
+                          onClick={handleTargetWordsSave}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground"
+                          onClick={() => {
+                            setTargetWordCount(
+                              outline.target_word_count?.toString() || "",
+                            );
+                            setEditingTargetWords(false);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-foreground">
+                          {outline.target_word_count.toLocaleString()}
+                        </p>
+
+                        {canEdit && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-muted-foreground hover:text-primary"
+                            onClick={() => {
+                              setTargetWordCount(
+                                outline.target_word_count?.toString() ?? "",
+                              );
+                              setEditingTargetWords(true);
+                            }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
