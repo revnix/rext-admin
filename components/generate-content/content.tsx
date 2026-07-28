@@ -74,6 +74,11 @@ const CONTENT_SKELETON_KEYS = Array.from(
   (_, i) => `content-skeleton-${i + 1}`,
 );
 
+// Populated just before each marked.parse() call with rel values from
+// allContent.internal_links / outbound_links (url -> rel). Safe as a module-level
+// mutable since marked.parse() runs synchronously on the JS main thread.
+let currentLinkRelMap: Map<string, string | null> = new Map();
+
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
   renderer: {
@@ -109,7 +114,13 @@ marked.use({
       text: string;
     }) {
       const titleAttr = title ? ` title="${title}"` : "";
-      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+      // DoFollow (internal) links carry no rel override; NoFollow/sponsored
+      // (outbound) links get their rel appended alongside the safety attrs.
+      const linkRel = currentLinkRelMap.get(href);
+      const rel = linkRel
+        ? `noopener noreferrer ${linkRel}`
+        : "noopener noreferrer";
+      return `<a href="${href}"${titleAttr} target="_blank" rel="${rel}">${text}</a>`;
     },
     image({
       href,
@@ -353,9 +364,17 @@ function ContentEditorInner(props: ContentEditorProps) {
   const body = generatedContent;
   const previewHtml = useMemo(() => {
     if (!body) return "";
+    currentLinkRelMap = new Map([
+      ...(allContent?.internal_links ?? []).map(
+        (l) => [l.url, l.rel] as const,
+      ),
+      ...(allContent?.outbound_links ?? []).map(
+        (l) => [l.url, l.rel] as const,
+      ),
+    ]);
     const result = marked.parse(body);
     return typeof result === "string" ? result : "";
-  }, [body]);
+  }, [body, allContent]);
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
   const { displayed: typedIntro } = useTypewriter(
     allContent?.meta_description || "",
@@ -488,8 +507,11 @@ function ContentEditorInner(props: ContentEditorProps) {
     },
     media_items: [],
     images_data: {},
-    links_data: {},
-    schema_markup: {},
+    links_data: {
+      internal_links: allContent?.internal_links || [],
+      outbound_links: allContent?.outbound_links || [],
+    },
+    schema_markup: allContent?.schema_markup || {},
   });
 
   const publishContent = async () => {
