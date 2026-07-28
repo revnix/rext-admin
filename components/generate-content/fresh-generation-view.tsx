@@ -253,6 +253,7 @@ export function FreshGenerationView({
     currentLoadingSteps,
     keywordClusters,
     recommendedContentType,
+    recommendedTopic,
   } = state;
 
   const interruptInternalLinks = useMemo(
@@ -1170,11 +1171,19 @@ export function FreshGenerationView({
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
           const recommendedContentType =
             updates.__interrupt__?.[0]?.value?.recommended_content_type;
+          const recommendedTopic =
+            updates.__interrupt__?.[0]?.value?.recommended_topic;
 
           if (typeof recommendedContentType === "string") {
             dispatch({
               type: "SET_RECOMMENDED_CONTENT_TYPE",
               payload: recommendedContentType,
+            });
+          }
+          if (typeof recommendedTopic === "string") {
+            dispatch({
+              type: "SET_RECOMMENDED_TOPIC",
+              payload: recommendedTopic,
             });
           }
         }
@@ -1577,6 +1586,7 @@ export function FreshGenerationView({
     ),
     topic: (
       <TopicsSection
+        recommendedTopic={recommendedTopic}
         instruction={displayedInstruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}

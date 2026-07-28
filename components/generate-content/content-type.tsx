@@ -57,10 +57,10 @@ export default function ContentType({
               transition={{ delay: index * 0.05 }}
               onClick={() => setSelectedType(type)}
               className={cn(
-                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-xl border-2 transition-all duration-300 w-full outline-none h-full",
+                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-xl border transition-all duration-300 w-full outline-none h-full",
                 isSelected
-                  ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                  : "bg-card border-border hover:border-primary hover:shadow-xl hover:shadow-colored-sm active:scale-[0.98]",
+                  ? "border-primary bg-primary/5"
+                  : "bg-card border-border hover:border-primary active:scale-[0.98]",
               )}
             >
               {isRecommended && (

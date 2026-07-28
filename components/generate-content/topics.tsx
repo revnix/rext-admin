@@ -3,14 +3,17 @@
 import { ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
 interface TopicsSectionProps {
+  recommendedTopic?: string | null;
+  topic?: string | null;
   instruction: string;
   topics: string[];
   onSelect: (topic: string) => void;
+  onContinue?: (topic: string) => void;
   onRegenerate: (feedback: string) => void;
   isRegenerating?: boolean;
   keyword?: string;
@@ -20,15 +23,31 @@ export function TopicsSection({
   instruction,
   topics,
   onSelect,
+  onContinue,
   onRegenerate,
   isRegenerating = false,
+  recommendedTopic,
 }: TopicsSectionProps) {
   const [feedback, setFeedback] = useState("");
+
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(
+    recommendedTopic || null,
+  );
+
+  useEffect(() => {
+    if (recommendedTopic) {
+      setSelectedTopic(recommendedTopic);
+    }
+  }, [recommendedTopic]);
 
   const handleRegenerate = () => {
     if (isRegenerating) return;
     onRegenerate(feedback);
     setFeedback("");
+  };
+
+  const handleSelectTopic = (topic: string) => {
+    setSelectedTopic(topic);
   };
 
   return (
@@ -42,6 +61,7 @@ export function TopicsSection({
         >
           {instruction}
         </motion.h2>
+
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -53,31 +73,71 @@ export function TopicsSection({
       </div>
 
       {/* Topic cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {topics.map((topic, index) => (
-          <motion.button
-            key={topic}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.06 + 0.15, duration: 0.35 }}
-            onClick={() => onSelect(topic)}
-            disabled={isRegenerating}
-            className={cn(
-              "group relative flex items-start justify-between text-left p-6 rounded-xl cursor-pointer border outline-none",
-              "bg-card/60 border-border/50 backdrop-blur-sm",
-              "transition-all duration-200 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
-              "active:scale-[0.985] active:shadow-none",
-              isRegenerating && "opacity-40 pointer-events-none",
-            )}
-          >
-            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-4">
-              {topic}
-            </span>
-            <span className="shrink-0 mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center bg-muted/60 group-hover:bg-primary/10 transition-colors duration-200">
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-all duration-200 group-hover:translate-x-0.5" />
-            </span>
-          </motion.button>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {topics.map((topic, index) => {
+          const isSelected = selectedTopic === topic;
+          const isRecommended = recommendedTopic === topic;
+
+          return (
+            <motion.button
+              key={topic}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: index * 0.06 + 0.15,
+                duration: 0.35,
+              }}
+              onClick={() => handleSelectTopic(topic)}
+              disabled={isRegenerating}
+              className={cn(
+                "group relative flex flex-col items-start gap-2 text-left p-6 rounded-xl cursor-pointer border outline-none",
+                "transition-all duration-200",
+                "active:scale-[0.985] active:shadow-none",
+                isSelected
+                  ? "border-primary bg-primary/5"
+                  : "bg-card/60 border-border/50 backdrop-blur-sm hover:border-primary/40 hover:bg-card",
+                isRegenerating && "opacity-40 pointer-events-none",
+              )}
+            >
+              <div className="flex items-start justify-between w-full">
+                <span
+                  className={cn(
+                    "text-sm font-semibold leading-snug pr-4 transition-colors",
+                    isSelected
+                      ? "text-primary"
+                      : "text-foreground group-hover:text-primary",
+                  )}
+                >
+                  {topic}
+
+                  {isRecommended && (
+                    <span className="inline-block m-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                      Recommended
+                    </span>
+                  )}
+                </span>
+
+                <span
+                  className={cn(
+                    "shrink-0 mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center transition-colors duration-200",
+                    isSelected
+                      ? "bg-primary/10"
+                      : "bg-muted/60 group-hover:bg-primary/10",
+                  )}
+                >
+                  <ArrowRight
+                    className={cn(
+                      "w-4 h-4 transition-all duration-200",
+                      isSelected
+                        ? "text-primary translate-x-0.5"
+                        : "text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5",
+                    )}
+                  />
+                </span>
+              </div>
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Regenerate area */}
@@ -100,8 +160,10 @@ export function TopicsSection({
               ) : (
                 <RefreshCcw className="w-4 h-4" />
               )}
+
               <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
             </Button>
+
             <Input
               type="text"
               className="!bg-background !border !border-border/60 !h-9 placeholder:text-muted-foreground"
@@ -109,7 +171,9 @@ export function TopicsSection({
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Or describe what you're looking for..."
               onKeyDown={(e) => {
-                if (e.key === "Enter" && feedback.trim()) handleRegenerate();
+                if (e.key === "Enter" && feedback.trim()) {
+                  handleRegenerate();
+                }
               }}
             />
 
@@ -123,6 +187,28 @@ export function TopicsSection({
             </Button>
           </div>
         </div>
+      </motion.div>
+
+      {/* Continue Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="flex justify-end mt-8"
+      >
+        <Button
+          onClick={() => {
+            if (!selectedTopic) return;
+
+            onSelect(selectedTopic);
+            onContinue?.(selectedTopic);
+          }}
+          disabled={!selectedTopic || isRegenerating}
+          className="min-w-[140px]"
+        >
+          Continue
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
       </motion.div>
     </div>
   );
