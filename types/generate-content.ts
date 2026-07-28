@@ -836,6 +836,7 @@ export interface PageState {
   keywordDifficulty: number | null;
   keywordClusters: KeywordCluster[];
   recommendedContentType: string | null;
+  recommendedTopic: string | null;
 }
 
 export type PageAction =
@@ -857,6 +858,7 @@ export type PageAction =
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
   | { type: "SET_RECOMMENDED_CONTENT_TYPE"; payload: string | null }
+  | { type: "SET_RECOMMENDED_TOPIC"; payload: string | null }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
   | { type: "SET_LOADING_STEPS"; payload: LoadingStep[] }
