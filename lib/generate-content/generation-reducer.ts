@@ -37,6 +37,7 @@ export const initialState: PageState = {
   currentLoadingSteps: [],
   keywordDifficulty: null,
   keywordClusters: [],
+  recommendedContentType: null,
 };
 
 export function generationReducer(
@@ -82,6 +83,8 @@ export function generationReducer(
       return { ...state, step: "outline", rejectedReason: "", outline: null };
     case "SET_INTERRUPT":
       return { ...state, interrupt: action.payload };
+    case "SET_RECOMMENDED_CONTENT_TYPE":
+      return { ...state, recommendedContentType: action.payload };
     case "SET_TOPICS":
       return { ...state, topics: action.payload };
     case "SET_OUTLINE":

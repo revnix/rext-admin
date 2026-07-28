@@ -1,18 +1,34 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getContentTypeConfig } from "@/config/content-types";
 
 interface ContentTypeProps {
+  recommendedContentType?: string | null;
   instruction: string;
   contentTypes: string[];
   handleContentTypeSelect: (type: string) => void;
 }
 
 export default function ContentType({
+  recommendedContentType,
   instruction,
   contentTypes,
   handleContentTypeSelect,
 }: ContentTypeProps) {
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      recommendedContentType &&
+      contentTypes.includes(recommendedContentType)
+    ) {
+      setSelectedType(recommendedContentType);
+    }
+  }, [recommendedContentType, contentTypes]);
+
   return (
     <div className="w-full py-3">
       <div className="mb-4">
@@ -29,38 +45,87 @@ export default function ContentType({
         {contentTypes.map((type: string, index: number) => {
           const { icon: Icon, description } = getContentTypeConfig(type);
 
+          const isSelected = selectedType === type;
+          const isRecommended = recommendedContentType === type;
+
           return (
             <motion.button
               key={type}
+              type="button"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              onClick={() => handleContentTypeSelect(type)}
+              onClick={() => setSelectedType(type)}
               className={cn(
                 "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-xl border-2 transition-all duration-300 w-full outline-none h-full",
-                "bg-card border-border hover:border-primary hover:shadow-xl hover:shadow-colored-sm active:scale-[0.98]",
+                isSelected
+                  ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+                  : "bg-card border-border hover:border-primary hover:shadow-xl hover:shadow-colored-sm active:scale-[0.98]",
               )}
             >
-              {/* Icon Container */}
-              <div className="mb-1 p-3.5 rounded-xl bg-muted group-hover:bg-accent transition-colors">
-                <Icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+              {isRecommended && (
+                <span className="absolute top-3 right-3 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                  Recommended
+                </span>
+              )}
+
+              <div
+                className={cn(
+                  "mb-1 p-3.5 rounded-xl transition-colors",
+                  isSelected
+                    ? "bg-primary/10"
+                    : "bg-muted group-hover:bg-accent",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "w-6 h-6 transition-colors",
+                    isSelected
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-primary",
+                  )}
+                />
               </div>
 
-              {/* Content */}
               <div className="flex-1 w-full mb-2">
-                <h3 className="text-md font-bold text-foreground group-hover:text-primary transition-colors mb-3 capitalize">
+                <h3
+                  className={cn(
+                    "text-md font-bold mb-3 capitalize transition-colors",
+                    isSelected
+                      ? "text-primary"
+                      : "text-foreground group-hover:text-primary",
+                  )}
+                >
                   {type.replace(/[_-]/g, " ")}
                 </h3>
-                <p className="text-xs text-muted-foreground leading-[1.6] group-hover:text-foreground transition-colors">
+
+                <p className="text-xs text-muted-foreground leading-[1.6]">
                   {description}
                 </p>
               </div>
 
-              {/* Subtle hover gradient */}
-              <div className="absolute inset-0 bg-linear-to-br from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[22px] -z-10" />
+              {isSelected && (
+                <div className="absolute inset-0 rounded-xl border-2 border-primary pointer-events-none" />
+              )}
             </motion.button>
           );
         })}
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          disabled={!selectedType}
+          onClick={() => selectedType && handleContentTypeSelect(selectedType)}
+          className={cn(
+            "px-6 py-2.5 rounded-lg font-medium transition-all cursor-pointer",
+            selectedType
+              ? "bg-primary text-primary-foreground hover:opacity-90"
+              : "bg-muted text-muted-foreground cursor-not-allowed",
+          )}
+        >
+          Continue
+        </button>
       </div>
     </div>
   );

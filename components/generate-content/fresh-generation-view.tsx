@@ -229,6 +229,7 @@ export function FreshGenerationView({
     allContent,
     currentLoadingSteps,
     keywordClusters,
+    recommendedContentType,
   } = state;
 
   const interruptInternalLinks = useMemo(
@@ -835,6 +836,16 @@ export function FreshGenerationView({
 
         if (updates.__interrupt__) {
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
+          const recommendedContentType =
+            updates.__interrupt__?.[0]?.value?.recommended_content_type;
+
+          if (typeof recommendedContentType === "string") {
+            dispatch({
+              type: "SET_RECOMMENDED_CONTENT_TYPE",
+              payload: recommendedContentType,
+            });
+
+          }
         }
 
         dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
@@ -1070,6 +1081,9 @@ export function FreshGenerationView({
             ...(parsedOutline?.target_audience?.length
               ? { target_audience: parsedOutline.target_audience }
               : {}),
+            ...(parsedOutline?.target_word_count && {
+              target_word_count: parsedOutline.target_word_count,
+            }),
           },
           status: "Approving and generating content...",
         });
@@ -1188,6 +1202,7 @@ export function FreshGenerationView({
     ),
     content_type: (
       <ContentType
+        recommendedContentType={recommendedContentType}
         instruction={displayedInstruction}
         contentTypes={contentTypes}
         handleContentTypeSelect={(selected) =>
@@ -1321,6 +1336,9 @@ export function FreshGenerationView({
                     ...(parsedOutline?.target_audience?.length
                       ? { target_audience: parsedOutline.target_audience }
                       : {}),
+                    ...(parsedOutline?.target_word_count && {
+                      target_word_count: parsedOutline.target_word_count,
+                    }),
                     ...(interruptInternalLinks?.length
                       ? { selected_internal_links: selectedLinks }
                       : {}),
