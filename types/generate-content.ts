@@ -475,6 +475,7 @@ export type FinalContent = {
   meta_title: string;
   meta_description: string;
   tags: string[];
+  category?: string;
   primary_keyword?: string;
   focus_keyphrase?: string;
   keyphrase_density?: number;

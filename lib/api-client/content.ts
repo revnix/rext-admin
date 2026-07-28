@@ -19,6 +19,7 @@ import type {
   ContentResponse,
   CreateContentRequest,
   UpdateContentRequest,
+  WordPressPostStatus,
 } from "@/types/content";
 import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
@@ -137,9 +138,10 @@ export function createContentNamespace(client: ApiClient) {
     save_publish: async (
       workspaceId: string,
       data: Record<string, unknown>,
+      publishStatus: WordPressPostStatus = "publish",
     ) => {
       return client.request<ContentResponse>(
-        `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.save_publish}?workspace_id=${encodeURIComponent(workspaceId)}&publish_status=${encodeURIComponent(publishStatus)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -152,13 +154,17 @@ export function createContentNamespace(client: ApiClient) {
       workspaceId: string,
       data: Record<string, unknown>,
       contentId: string,
+      publishStatus: WordPressPostStatus = "publish",
     ) => {
       return client.request<ContentResponse>(
         `${ENDPOINTS.CONTENT.publish(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            ...data,
+            status: publishStatus,
+          }),
         },
       );
     },

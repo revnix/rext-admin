@@ -1,4 +1,4 @@
-import type { ContentStatus } from "@/types/content";
+import type { WordPressPostStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
@@ -73,6 +73,27 @@ const CONTENT_SKELETON_KEYS = Array.from(
   { length: 3 },
   (_, i) => `content-skeleton-${i + 1}`,
 );
+
+const WORDPRESS_STATUS_DETAILS: Record<
+  WordPressPostStatus,
+  { label: string; successTitle: string; successMessage: string }
+> = {
+  publish: {
+    label: "Publish",
+    successTitle: "Content Published Successfully!",
+    successMessage: "Your content is live on WordPress.",
+  },
+  draft: {
+    label: "Draft",
+    successTitle: "WordPress Draft Created!",
+    successMessage: "Your content was saved as a draft in WordPress.",
+  },
+  pending: {
+    label: "Review",
+    successTitle: "Submitted for Review!",
+    successMessage: "Your content is pending review in WordPress.",
+  },
+};
 
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
@@ -405,6 +426,8 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
+  const [pendingPublishStatus, setPendingPublishStatus] =
+    useState<WordPressPostStatus>("publish");
 
   const isDateDisabled = useCallback((d: Date) => {
     const today = new Date();
@@ -467,13 +490,13 @@ function ContentEditorInner(props: ContentEditorProps) {
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
-    status: "publish" as ContentStatus,
     workspace_id: workspaceId ?? undefined,
     introduction: allContent?.meta_description || "",
     body_markdown: body,
     body_html:
       previewHtml || allContent?.body_html || allContent?.html_content || "",
     tags: tags,
+    category: allContent?.category || undefined,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
       meta_description: allContent?.meta_description || "",
@@ -497,8 +520,17 @@ function ContentEditorInner(props: ContentEditorProps) {
     langgraph_thread_id: threadId,
   });
 
-  const publishContent = async () => {
+  const publishContent = async (
+    selectedStatus: WordPressPostStatus = "publish",
+  ) => {
     if (!isFinal || !workspaceId) return;
+    setPendingPublishStatus(selectedStatus);
+    const statusDetails = WORDPRESS_STATUS_DETAILS[selectedStatus];
+    log.info("[WordPress Publish] Selected post status", {
+      selected_status: selectedStatus,
+      content_id: contentSavedId,
+      workspace_id: workspaceId,
+    });
     try {
       setIsPublishing(true);
       setStatusModal({
@@ -518,15 +550,16 @@ function ContentEditorInner(props: ContentEditorProps) {
         return;
       } else {
         setStatusModal({
-          title: "Publishing Content...",
+          title: `${statusDetails.label} Content...`,
           isOpen: true,
           type: "success",
           action: "publish",
-          message: "Publishing content to your connected site...",
+          message: `Sending content to WordPress with status "${selectedStatus}"...`,
         });
         const cmsType = integrationsData[0]?.integration_type;
         analytics.track("cms_publish_attempted", {
           cms_type: cmsType,
+          wordpress_status: selectedStatus,
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? undefined,
         });
@@ -536,8 +569,13 @@ function ContentEditorInner(props: ContentEditorProps) {
               workspaceId,
               payload,
               contentSavedId,
+              selectedStatus,
             )
-          : await apiClient.content.save_publish(workspaceId, payload);
+          : await apiClient.content.save_publish(
+              workspaceId,
+              payload,
+              selectedStatus,
+            );
 
         analytics.track("content_published", {
           title: displayTitle,
@@ -545,20 +583,20 @@ function ContentEditorInner(props: ContentEditorProps) {
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? response?.id ?? undefined,
           seo_score: seoScore?.seo_health_score,
+          wordpress_status: selectedStatus,
         });
         analytics.track("cms_publish_succeeded", {
           cms_type: cmsType,
+          wordpress_status: selectedStatus,
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? response?.id ?? undefined,
         });
         setStatusModal({
-          title: "Content Published Successfully!",
+          title: statusDetails.successTitle,
           isOpen: true,
           type: "success",
           action: "publish",
-          message:
-            response?.message ||
-            "Your content has been published as a draft and is ready for review.",
+          message: statusDetails.successMessage,
         });
       }
     } catch (error) {
@@ -566,6 +604,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
+        wordpress_status: selectedStatus,
         error_message: err.message,
       });
       setStatusModal({
@@ -633,7 +672,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const handleIntegrationAdded = async () => {
     await fetchIntegrations();
-    publishContent();
+    publishContent(pendingPublishStatus);
     setIntegrationModalOpen(false);
   };
 
@@ -823,10 +862,24 @@ function ContentEditorInner(props: ContentEditorProps) {
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
                   disabled={!isFinal || isPublishing || isSaving}
-                  onClick={publishContent}
+                  onClick={() => publishContent("publish")}
                 >
                   <Send size={13} className="mr-2" />
-                  Publish Now
+                  Publish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={() => publishContent("draft")}
+                >
+                  <Save size={13} className="mr-2" />
+                  Save as Draft
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={() => publishContent("pending")}
+                >
+                  <Eye size={13} className="mr-2" />
+                  Submit for Review
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

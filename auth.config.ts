@@ -15,6 +15,22 @@ import {
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV !== "production" ? "development_auth_secret" : undefined);
+
+const authApiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ??
+  (process.env.NODE_ENV !== "production" ? "http://127.0.0.1:2024" : undefined);
+
+if (!authApiBaseUrl && process.env.NODE_ENV !== "production") {
+  log.warn(
+    "No NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_BACKEND_API_URL set; falling back to http://127.0.0.1:2024",
+  );
+}
+
 // Substrings of backend rejection messages that mean the refresh token is
 // genuinely dead — retrying will never help, the user must log in again.
 // Anything else (network error, 5xx, a lost concurrent-refresh race, etc.)
@@ -96,7 +112,7 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
   });
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
+    `${authApiBaseUrl}/api/v1/user/refresh`,
     {
       method: "POST",
       headers: {
@@ -363,7 +379,7 @@ export default {
 
           // Call backend login endpoint
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
+            `${authApiBaseUrl}/api/v1/user/login`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -506,7 +522,7 @@ export default {
             // Call dedicated OAuth login endpoint
             // This handles: login existing user, link to existing email, or create new user
             const oauthResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/oauth/login`,
+              `${authApiBaseUrl}/api/v1/user/oauth/login`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -801,6 +817,7 @@ export default {
       }
     },
   },
+  secret: authSecret,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // Default 30 days max

@@ -167,6 +167,11 @@ const nextConfig: NextConfig = {
   // ============================================================================
   output: "standalone", // For Docker/container deployments
 
+  // Turbopack root directory to avoid workspace-root inference warnings
+  turbopack: {
+    root: __dirname,
+  },
+
   // ============================================================================
   // 5. DEVELOPMENT CONFIGURATION
   // ============================================================================
