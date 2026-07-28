@@ -30,15 +30,17 @@ export default function Page() {
   );
   const { hasPermission: canCreate, isLoading: isCreatePermLoading } =
     useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
-  const [view, setView] = useState<PageView>("selection");
-  const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
-    string | undefined
-  >(undefined);
   const urlParams = useSearchParams();
   const libraryKeyword = urlParams.get("library");
   const libraryIntent = urlParams.get("intent");
   const backgroundThreadId = urlParams.get("thread");
   const isLibrary = libraryKeyword !== null;
+  const [view, setView] = useState<PageView>(() =>
+    libraryKeyword || backgroundThreadId ? "fresh" : "selection",
+  );
+  const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
+    string | undefined
+  >(libraryKeyword ?? undefined);
 
   useEffect(() => {
     if (libraryKeyword) {

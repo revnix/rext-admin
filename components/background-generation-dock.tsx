@@ -9,12 +9,13 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import {
   BACKGROUND_GENERATION_STORAGE_KEY,
   type BackgroundGenerationJob,
@@ -48,14 +49,19 @@ const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
   const router = useRouter();
-  const workspaceSlug = useCurrentWorkspaceSlug();
+  const workspaceContext = useWorkspaceOptional();
+  const storedWorkspaceSlug = useCurrentWorkspaceSlug();
+  const workspaceSlug =
+    workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
+  const [isMounted, setIsMounted] = useState(false);
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
-  const hasHydrated = useBackgroundGenerationStore(
-    (state) => state.hasHydrated,
-  );
   const updateJob = useBackgroundGenerationStore((state) => state.updateJob);
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
   const mergeJobs = useBackgroundGenerationStore((state) => state.mergeJobs);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const visibleJobs = useMemo(
     () =>
@@ -97,7 +103,7 @@ export function BackgroundGenerationDock() {
   }, [mergeJobs]);
 
   useEffect(() => {
-    if (!hasHydrated || !pollingKey) return;
+    if (!isMounted || !pollingKey) return;
 
     let disposed = false;
 
@@ -221,7 +227,7 @@ export function BackgroundGenerationDock() {
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [hasHydrated, pollingKey, updateJob]);
+  }, [isMounted, pollingKey, updateJob]);
 
   useEffect(() => {
     const unnotified = jobs.filter(
@@ -272,7 +278,7 @@ export function BackgroundGenerationDock() {
     }
   }, [jobs, router, updateJob]);
 
-  if (!hasHydrated || visibleJobs.length === 0) return null;
+  if (!isMounted || visibleJobs.length === 0) return null;
 
   const activeCount = visibleJobs.filter(isPending).length;
   const job = visibleJobs.find(isPending) ?? visibleJobs[0];

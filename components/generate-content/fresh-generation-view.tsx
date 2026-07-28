@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle, ArrowRight, CalendarDays } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -71,6 +71,10 @@ import { Button } from "@/components/ui/button";
 import { workspaceRoutes } from "@/lib/routes";
 import { toast } from "sonner";
 import type { Route } from "next";
+import {
+  deriveActiveGenerationViewState,
+  type GenerationPipelineStep,
+} from "@/lib/generate-content/background-generation-view-state";
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -284,6 +288,25 @@ export function FreshGenerationView({
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
+    useState(Boolean(backgroundThreadId));
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  const [enhancingDescription, setEnhancingDescription] = useState("");
+  const [pipelineSteps, setPipelineSteps] = useState<GenerationPipelineStep[]>(
+    [],
+  );
+
+  const restoreActiveGenerationView = useCallback(
+    (progress?: number, stage?: string) => {
+      const activeView = deriveActiveGenerationViewState(progress, stage);
+      setIsBackgroundGenerationActive(true);
+      setEnhancingMsg(activeView.message);
+      setEnhancingDescription(activeView.description);
+      setPipelineSteps(activeView.pipelineSteps);
+    },
+    [],
+  );
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
@@ -300,10 +323,9 @@ export function FreshGenerationView({
     (values: Partial<WREXT>) => {
       const restoredContent = values.content;
       const finalContent = restoredContent?.final_content;
-      if (!finalContent) return false;
 
-      const review = restoredContent.review as
-        | (typeof restoredContent.review & {
+      const review = restoredContent?.review as
+        | (NonNullable<typeof restoredContent>["review"] & {
             on_page_metrics?: SEORESULT;
           })
         | undefined;
@@ -313,29 +335,31 @@ export function FreshGenerationView({
         type: "SET_USER_KEYWORD",
         payload:
           values.serp_payload?.query ??
-          finalContent.focus_keyphrase ??
-          finalContent.primary_keyword ??
+          finalContent?.focus_keyphrase ??
+          finalContent?.primary_keyword ??
           "",
       });
       dispatch({
         type: "SET_PRIMARY_KEYWORD",
         payload:
-          finalContent.focus_keyphrase ??
-          finalContent.primary_keyword ??
+          finalContent?.focus_keyphrase ??
+          finalContent?.primary_keyword ??
           values.serp_payload?.query ??
           "",
       });
       dispatch({
         type: "SET_OUTLINE",
-        payload: restoredContent.outline ?? null,
+        payload: restoredContent?.outline ?? null,
       });
-      dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
-      dispatch({
-        type: "SET_GENERATED_CONTENT",
-        payload:
-          finalContent.body_markdown ||
-          htmlToMarkdownLite(finalContent.html_content ?? ""),
-      });
+      if (finalContent) {
+        dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
+        dispatch({
+          type: "SET_GENERATED_CONTENT",
+          payload:
+            finalContent.body_markdown ||
+            htmlToMarkdownLite(finalContent.html_content ?? ""),
+        });
+      }
       if (review?.readability_metrics) {
         dispatch({
           type: "SET_READABILITY_SCORE",
@@ -355,10 +379,7 @@ export function FreshGenerationView({
         });
       }
       dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
-      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: [] });
-      return true;
+      return Boolean(finalContent);
     },
     [backgroundThreadId],
   );
@@ -379,6 +400,10 @@ export function FreshGenerationView({
       type: "SET_LOADING_STATUS",
       payload: "Restoring background generation...",
     });
+    const trackedJob = useBackgroundGenerationStore
+      .getState()
+      .jobs.find((job) => job.threadId === backgroundThreadId);
+    restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
     setRestoreError(null);
 
     const restore = async () => {
@@ -414,17 +439,17 @@ export function FreshGenerationView({
         }
         consecutiveFailures = 0;
 
-        updateBackgroundJob(backgroundThreadId, {
-          status: "running",
-          stage: payload.stage ?? "Generating your article",
-          progress: payload.progress ?? 24,
-        });
+        const hasFinalContent = payload.state?.values
+          ? hydrateFromBackgroundState(payload.state.values)
+          : false;
 
         if (payload.run?.status === "success") {
-          if (
-            payload.state?.values &&
-            hydrateFromBackgroundState(payload.state.values)
-          ) {
+          if (hasFinalContent) {
+            setIsBackgroundGenerationActive(false);
+            setIsEnhancing(false);
+            dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+            dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+            dispatch({ type: "SET_LOADING_STEPS", payload: [] });
             updateBackgroundJob(backgroundThreadId, {
               status: "completed",
               stage: "Article ready",
@@ -437,6 +462,19 @@ export function FreshGenerationView({
             "Generation finished, but the article result was unavailable.",
           );
         }
+
+        updateBackgroundJob(backgroundThreadId, {
+          status: "running",
+          stage: payload.stage ?? "Generating your article",
+          progress: payload.progress ?? 24,
+        });
+
+        dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: FINAL_GENERATION_STEPS,
+        });
+        restoreActiveGenerationView(payload.progress, payload.stage);
 
         // Run still in progress: reconnect to its live token stream so the
         // article renders as it's written (same as staying on the page),
@@ -491,6 +529,8 @@ export function FreshGenerationView({
           return;
         }
         setRestoreError(message);
+        setIsBackgroundGenerationActive(false);
+        setIsEnhancing(false);
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         updateBackgroundJob(backgroundThreadId, {
           status: "failed",
@@ -509,7 +549,12 @@ export function FreshGenerationView({
       // (cancelOnDisconnect is false on the join route).
       cancelStream();
     };
-  }, [backgroundThreadId, hydrateFromBackgroundState, updateBackgroundJob]);
+  }, [
+    backgroundThreadId,
+    hydrateFromBackgroundState,
+    restoreActiveGenerationView,
+    updateBackgroundJob,
+  ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
@@ -686,15 +731,8 @@ export function FreshGenerationView({
     }
   }, [seoResult?.intent, selectedIntent]);
 
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
-  const [enhancingDescription, setEnhancingDescription] = useState("");
-
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
-  const [pipelineSteps, setPipelineSteps] = useState<
-    Array<{ label: string; status: "pending" | "active" | "done" }>
-  >([]);
 
   const CONTENT_PIPELINE = [
     "Generating Content",
@@ -1710,35 +1748,6 @@ export function FreshGenerationView({
         )}
       </div>
 
-      {showContentStream && isManualLoading && !restoreError && (
-        <div className="mx-auto mb-4 mt-5 flex w-full max-w-5xl flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              Generating in the background
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You can leave this page. We will notify you when your article is
-              ready.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full shrink-0 bg-background sm:w-auto"
-            onClick={() =>
-              router.push(
-                workspaceRoutes.content_calendar(workspaceSlug) as Route,
-              )
-            }
-          >
-            <CalendarDays className="h-4 w-4" />
-            Open content calendar
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
       {restoreError && (
         <div className="mx-auto my-8 flex w-full max-w-2xl items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
@@ -1772,7 +1781,7 @@ export function FreshGenerationView({
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
             }
-            isEnhancing={isEnhancing}
+            isEnhancing={isEnhancing || isBackgroundGenerationActive}
             enhancingMsg={enhancingMsg}
             enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}
