@@ -36,7 +36,6 @@ import { useIsAdmin } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
 import { formatSecurityDate } from "@/lib/formatters/security-date";
-import { settingsRoutes } from "@/lib/routes";
 
 export default function SecuritySettingsPage() {
   const queryClient = useQueryClient();
@@ -144,12 +143,6 @@ export default function SecuritySettingsPage() {
         <p className="text-muted-foreground">
           Manage your active sessions and monitor account activity
         </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" asChild>
-          <Link href={settingsRoutes.trash}>View trash</Link>
-        </Button>
       </div>
 
       {/* Admin Security Statistics */}

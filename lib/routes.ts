@@ -111,6 +111,7 @@ export const workspaceRoutes = {
     billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
     integrations: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/integrations`,
+    trash: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/trash`,
   },
 } as const;
 
