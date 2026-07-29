@@ -19,13 +19,19 @@ type GenerationThreadState = {
     };
   };
   next?: string[];
-  tasks?: Array<{ name?: string }>;
+  tasks?: Array<{
+    name?: string;
+    // The SDK types the interrupt payload as `unknown`; narrowed at read time.
+    interrupts?: Array<{ value?: unknown } | null>;
+  }>;
 };
 
 export type BackgroundProgress = {
   progress: number;
   stage: string;
   error?: string;
+  /** The run finished by pausing for user input rather than by finishing the article. */
+  awaitingInput?: boolean;
 };
 
 const REVIEW_STAGE_NAMES = new Set([
@@ -34,6 +40,58 @@ const REVIEW_STAGE_NAMES = new Set([
   "calculate_on_page_seo",
   "calculate_eeat_trust",
 ]);
+
+const SERP_STAGE_NAMES = new Set([
+  "serp_engine",
+  "fetch_serp",
+  "normalize_serp",
+  "extract_competitor",
+]);
+
+const KEYWORD_STAGE_NAMES = new Set([
+  "seo_engine",
+  "seo_entry",
+  "fetch_dataforseo_backlinks",
+  "keyword_recommendation",
+  "keyword_clustering",
+]);
+
+// A run that stops on `interrupt()` completes with run status "success" while the
+// thread keeps a pending task. Without this mapping every interactive step —
+// keyword selection above all — would be reported as a finished article.
+// Values stay ordered so the dock's monotonic progress guard never rewinds.
+const AWAITING_INPUT_STAGES: Record<
+  string,
+  { progress: number; stage: string }
+> = {
+  "keyword Selection": { progress: 14, stage: "Keywords ready to review" },
+  content_type: { progress: 26, stage: "Content types ready to review" },
+  topic: { progress: 32, stage: "Topics ready to review" },
+  topic_selection: { progress: 32, stage: "Topics ready to review" },
+  outline_review: { progress: 38, stage: "Outline ready to review" },
+  outline_reject: { progress: 38, stage: "Outline ready to review" },
+};
+
+/** Stage/progress for a workflow paused on the given `interrupt()` type. */
+export const deriveAwaitingInputStage = (interruptType?: string) =>
+  AWAITING_INPUT_STAGES[interruptType ?? ""] ?? {
+    progress: 24,
+    stage: "Waiting for your input",
+  };
+
+const findPendingInterruptType = (state?: GenerationThreadState | null) => {
+  for (const task of state?.tasks ?? []) {
+    for (const interrupt of task?.interrupts ?? []) {
+      const value = interrupt?.value;
+      const type =
+        value && typeof value === "object"
+          ? (value as { type?: unknown }).type
+          : undefined;
+      if (typeof type === "string" && type.trim()) return type;
+    }
+  }
+  return undefined;
+};
 
 export function deriveBackgroundProgress(
   runStatus: GenerationRunStatus,
@@ -73,6 +131,13 @@ export function deriveBackgroundProgress(
   }
 
   if (runStatus === "success") {
+    // Paused on an interrupt: the phase finished but the workflow needs the user.
+    if (state?.next?.length) {
+      return {
+        ...deriveAwaitingInputStage(findPendingInterruptType(state)),
+        awaitingInput: true,
+      };
+    }
     return { progress: 100, stage: "Article ready" };
   }
 
@@ -122,6 +187,14 @@ export function deriveBackgroundProgress(
       progress: 42,
       stage: "Drafting your article",
     };
+  }
+
+  if (activeNodes.some((node) => SERP_STAGE_NAMES.has(node))) {
+    return { progress: 5, stage: "Analyzing search results" };
+  }
+
+  if (activeNodes.some((node) => KEYWORD_STAGE_NAMES.has(node))) {
+    return { progress: 10, stage: "Researching keywords" };
   }
 
   return {
