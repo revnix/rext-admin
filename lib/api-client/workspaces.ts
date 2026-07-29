@@ -299,6 +299,43 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Restore a soft-deleted workspace within its 30-day recovery window
+     */
+    restore: async (workspaceId: string) => {
+      const response = await client.request<WorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.restore(workspaceId),
+        {
+          method: "POST",
+        },
+      );
+
+      const result = validateResponse(
+        workspaceResponseSchema,
+        response,
+        "workspaces.restore",
+      );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "workspace.restore",
+            resource_type: "workspace",
+            resource_id: workspaceId,
+            workspace_id: workspaceId,
+            status: "success",
+          }),
+        })
+        .catch((e) =>
+          log.error("[AuditLog] Failed to log workspace.restore", e),
+        );
+
+      return result;
+    },
+
+    /**
      * Trigger background refresh of workspace brand voice.
      * Returns operation identifier for SSE tracking.
      */

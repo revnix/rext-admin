@@ -38,6 +38,7 @@ export const ENDPOINTS = {
     BASE_ALL: "/api/v1/workspaces/all",
     byId: (id: string) => `/api/v1/workspaces/${id}` as const,
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
+    restore: (id: string) => `/api/v1/workspaces/${id}/restore` as const,
 
     // Brand Voice
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
