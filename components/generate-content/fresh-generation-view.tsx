@@ -76,7 +76,15 @@ import {
   deriveActiveGenerationViewState,
   type GenerationPipelineStep,
 } from "@/lib/generate-content/background-generation-view-state";
-import { deriveAwaitingInputStage } from "@/lib/generate-content/background-progress";
+import {
+  collectPendingInterrupts,
+  deriveAwaitingInputStage,
+} from "@/lib/generate-content/background-progress";
+import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import {
+  BACKGROUND_GENERATION_RESTORE_EVENT,
+  type BackgroundGenerationRestoreDetail,
+} from "@/lib/generate-content/background-generation-sync";
 
 // Derived progress at which the workflow has left the interactive research
 // steps and is writing the article — the only phase that gets the content
@@ -200,7 +208,7 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 };
 
 export function FreshGenerationView({
-  onBack: _onBack,
+  onBack,
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
@@ -216,6 +224,9 @@ export function FreshGenerationView({
   );
   const updateBackgroundJob = useBackgroundGenerationStore(
     (store) => store.updateJob,
+  );
+  const removeBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.removeJob,
   );
   const { patchCredits } = useSubscriptionStore();
   const {
@@ -298,6 +309,7 @@ export function FreshGenerationView({
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -322,6 +334,29 @@ export function FreshGenerationView({
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
   };
+
+  useEffect(() => {
+    if (!backgroundThreadId) return;
+
+    const handleRestoreRequest = (event: Event) => {
+      const { threadId: requestedThreadId } = (
+        event as CustomEvent<BackgroundGenerationRestoreDetail>
+      ).detail;
+      if (requestedThreadId === backgroundThreadId) {
+        setBackgroundRestoreRevision((revision) => revision + 1);
+      }
+    };
+
+    window.addEventListener(
+      BACKGROUND_GENERATION_RESTORE_EVENT,
+      handleRestoreRequest,
+    );
+    return () =>
+      window.removeEventListener(
+        BACKGROUND_GENERATION_RESTORE_EVENT,
+        handleRestoreRequest,
+      );
+  }, [backgroundThreadId]);
 
   // Cancel on unmount (e.g. user navigates away)
   // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
@@ -501,9 +536,11 @@ export function FreshGenerationView({
         consecutiveFailures = 0;
 
         const inArticlePhase = isArticlePhase(payload.progress);
-        const pendingInterrupts = (payload.state?.tasks ?? []).flatMap(
-          (task) => task?.interrupts ?? [],
-        );
+        // Interactive steps interrupt inside a subgraph, so the pending
+        // interrupt can sit one level down under `tasks[].state`.
+        const pendingInterrupts = collectPendingInterrupts(
+          payload.state,
+        ) as Interrupt[];
 
         // The run paused for user input: restore that step's interactive view
         // instead of the article editor. This is what makes leaving during
@@ -649,6 +686,7 @@ export function FreshGenerationView({
     };
   }, [
     backgroundThreadId,
+    backgroundRestoreRevision,
     hydrateFromBackgroundState,
     hydrateFromPendingInterrupt,
     restoreActiveGenerationView,
@@ -1273,6 +1311,12 @@ export function FreshGenerationView({
         }
 
         if (updates.__interrupt__) {
+          // The run just paused for the user, so no further tokens belong to
+          // the previous phase. Releasing the target matters most on restore:
+          // a stale "content" target keeps `showOutlineReview` false and the
+          // article overlay up, hiding the approve/reject step entirely.
+          setTokenTarget("none");
+          tokenTargetRef.current = "none";
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
           const recommendedContentType =
             updates.__interrupt__?.[0]?.value?.recommended_content_type;
@@ -1361,6 +1405,17 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
+    const activeGenerationJob = findActiveGenerationJob(
+      useBackgroundGenerationStore.getState().jobs,
+    );
+    if (activeGenerationJob) {
+      toast.info("An article is already in progress", {
+        description: `Returning to "${activeGenerationJob.title}".`,
+      });
+      router.push(activeGenerationJob.resultUrl as Route);
+      return;
+    }
+
     // Not enough for a whole article → stop before a thread or stream is ever created
     if (!ensureCredits()) return;
     if (streamBusyRef.current) return;
@@ -1932,11 +1987,13 @@ export function FreshGenerationView({
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={() =>
-                router.push(
-                  workspaceRoutes.generate_content(workspaceSlug) as Route,
-                )
-              }
+              onClick={() => {
+                if (backgroundThreadId) {
+                  removeBackgroundJob(backgroundThreadId);
+                }
+                setRestoreError(null);
+                onBack();
+              }}
             >
               Start a new article
             </Button>

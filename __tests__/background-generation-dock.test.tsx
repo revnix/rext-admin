@@ -1,6 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { BackgroundGenerationDock } from "@/components/background-generation-dock";
+import {
+  BACKGROUND_GENERATION_RESTORE_EVENT,
+  type BackgroundGenerationRestoreDetail,
+} from "@/lib/generate-content/background-generation-sync";
+import { BACKGROUND_GENERATION_STORAGE_KEY } from "@/stores/background-generation-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 
 describe("background generation dock", () => {
@@ -40,5 +45,49 @@ describe("background generation dock", () => {
     expect(
       screen.getByRole("button", { name: /view progress/i }),
     ).toBeInTheDocument();
+  });
+
+  it("applies a completion from another tab and makes the article actionable", async () => {
+    const restoreRequests: BackgroundGenerationRestoreDetail[] = [];
+    const handleRestore = (event: Event) => {
+      restoreRequests.push(
+        (event as CustomEvent<BackgroundGenerationRestoreDetail>).detail,
+      );
+    };
+    window.addEventListener(BACKGROUND_GENERATION_RESTORE_EVENT, handleRestore);
+    render(<BackgroundGenerationDock />);
+
+    const completedJob = {
+      ...useBackgroundGenerationStore.getState().jobs[0],
+      status: "completed" as const,
+      stage: "Article ready",
+      progress: 100,
+      updatedAt: new Date(Date.now() + 1_000).toISOString(),
+    };
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: BACKGROUND_GENERATION_STORAGE_KEY,
+          newValue: JSON.stringify({
+            state: { jobs: [completedJob] },
+            version: 0,
+          }),
+        }),
+      );
+    });
+
+    const openArticle = await screen.findByRole("button", {
+      name: /open article/i,
+    });
+    expect(screen.getByText("Article ready")).toBeInTheDocument();
+    expect(restoreRequests).toContainEqual({ threadId: "thread-1" });
+
+    fireEvent.click(openArticle);
+    expect(restoreRequests).toHaveLength(2);
+
+    window.removeEventListener(
+      BACKGROUND_GENERATION_RESTORE_EVENT,
+      handleRestore,
+    );
   });
 });

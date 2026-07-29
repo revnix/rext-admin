@@ -1,4 +1,5 @@
 import {
+  BACKGROUND_GENERATION_STORAGE_KEY,
   type BackgroundGenerationJob,
   useBackgroundGenerationStore,
 } from "@/stores/background-generation-store";
@@ -48,6 +49,19 @@ describe("background generation store", () => {
       status: "running",
       progress: 28,
     });
+  });
+
+  it("finishes hydration when the browser has no saved jobs", async () => {
+    useBackgroundGenerationStore.setState({ hasHydrated: false });
+    localStorage.removeItem(BACKGROUND_GENERATION_STORAGE_KEY);
+
+    await useBackgroundGenerationStore.persist.rehydrate();
+
+    expect(useBackgroundGenerationStore.getState()).toMatchObject({
+      hasHydrated: true,
+      jobs: [],
+    });
+    expect(useBackgroundGenerationStore.persist.hasHydrated()).toBe(true);
   });
 
   it("keeps completed jobs available for the notification and restore actions", () => {
@@ -115,5 +129,18 @@ describe("background generation store", () => {
       status: "running",
       progress: 58,
     });
+  });
+
+  it("does not write an unchanged cross-tab job back to storage", () => {
+    const store = useBackgroundGenerationStore.getState();
+    store.upsertJob(createJob());
+    const currentJob = useBackgroundGenerationStore.getState().jobs[0];
+    const listener = jest.fn();
+    const unsubscribe = useBackgroundGenerationStore.subscribe(listener);
+
+    store.mergeJobs([currentJob]);
+
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

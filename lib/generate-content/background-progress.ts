@@ -6,7 +6,23 @@ export type GenerationRunStatus =
   | "timeout"
   | "interrupted";
 
-type GenerationThreadState = {
+type GenerationTask = {
+  name?: string;
+  // The SDK types the interrupt payload as `unknown`; narrowed at read time.
+  interrupts?: Array<{ value?: unknown } | null>;
+  // Nested subgraph state — only present when the thread state was fetched
+  // with `subgraphs: true`.
+  state?: GenerationGraphState | null;
+};
+
+// Only the graph-shaped half of a thread state. Nested subgraph levels carry
+// their own untyped `values`, so the walkers below read structure, not values.
+type GenerationGraphState = {
+  next?: string[];
+  tasks?: Array<GenerationTask | null>;
+};
+
+type GenerationThreadState = GenerationGraphState & {
   values?: {
     content?: {
       error?: string;
@@ -18,12 +34,6 @@ type GenerationThreadState = {
       };
     };
   };
-  next?: string[];
-  tasks?: Array<{
-    name?: string;
-    // The SDK types the interrupt payload as `unknown`; narrowed at read time.
-    interrupts?: Array<{ value?: unknown } | null>;
-  }>;
 };
 
 export type BackgroundProgress = {
@@ -56,6 +66,19 @@ const KEYWORD_STAGE_NAMES = new Set([
   "keyword_clustering",
 ]);
 
+// Nodes of the `content_engine` subgraph that run *before* the article is
+// written. `content_engine` itself stays active for the whole content phase, so
+// only these nested names distinguish "still planning" from "drafting".
+const TOPIC_STAGE_NAMES = new Set(["content_type", "topic_generation"]);
+// `keyword_clustering` runs in both subgraphs; the content-phase check below
+// runs first, so the duplicate resolves to whichever phase is actually active.
+const OUTLINE_STAGE_NAMES = new Set([
+  "keyword_clustering",
+  "map_keyword_clusters",
+  "generate_outline",
+  "review_outline",
+]);
+
 // A run that stops on `interrupt()` completes with run status "success" while the
 // thread keeps a pending task. Without this mapping every interactive step —
 // keyword selection above all — would be reported as a finished article.
@@ -79,16 +102,41 @@ export const deriveAwaitingInputStage = (interruptType?: string) =>
     stage: "Waiting for your input",
   };
 
-const findPendingInterruptType = (state?: GenerationThreadState | null) => {
-  for (const task of state?.tasks ?? []) {
-    for (const interrupt of task?.interrupts ?? []) {
-      const value = interrupt?.value;
-      const type =
-        value && typeof value === "object"
-          ? (value as { type?: unknown }).type
-          : undefined;
-      if (typeof type === "string" && type.trim()) return type;
-    }
+/**
+ * Every pending interrupt on the thread, including the ones raised inside a
+ * subgraph (`seo_engine`, `content_engine`) — those only appear under
+ * `tasks[].state` when the thread state is read with `subgraphs: true`.
+ */
+export const collectPendingInterrupts = (
+  state?: GenerationGraphState | null,
+): Array<{ value?: unknown }> =>
+  (state?.tasks ?? []).flatMap((task) => [
+    ...((task?.interrupts ?? []).filter(Boolean) as Array<{ value?: unknown }>),
+    ...collectPendingInterrupts(task?.state),
+  ]);
+
+/**
+ * Every node currently active on the thread, flattened across subgraph levels.
+ * The top level only ever reports the container node (`content_engine`), which
+ * covers topic selection through the final review — far too coarse to derive a
+ * stage from.
+ */
+const collectActiveNodes = (state?: GenerationGraphState | null): string[] => [
+  ...(state?.next ?? []),
+  ...(state?.tasks ?? []).flatMap((task) => [
+    ...(task?.name ? [task.name] : []),
+    ...collectActiveNodes(task?.state),
+  ]),
+];
+
+const findPendingInterruptType = (state?: GenerationGraphState | null) => {
+  for (const interrupt of collectPendingInterrupts(state)) {
+    const value = interrupt?.value;
+    const type =
+      value && typeof value === "object"
+        ? (value as { type?: unknown }).type
+        : undefined;
+    if (typeof type === "string" && type.trim()) return type;
   }
   return undefined;
 };
@@ -122,11 +170,13 @@ export function deriveBackgroundProgress(
     };
   }
 
+  // LangGraph reports a cancelled run as "interrupted" (so does a run killed by
+  // a server restart) — either way the work stopped and will not resume.
   if (runStatus === "interrupted") {
     return {
       progress: 100,
-      stage: "Generation needs attention",
-      error: "Article generation paused and needs your attention.",
+      stage: "Generation stopped",
+      error: "This generation was stopped before it finished.",
     };
   }
 
@@ -166,10 +216,7 @@ export function deriveBackgroundProgress(
     };
   }
 
-  const activeNodes = [
-    ...(state?.next ?? []),
-    ...(state?.tasks ?? []).flatMap((task) => (task.name ? [task.name] : [])),
-  ];
+  const activeNodes = collectActiveNodes(state);
 
   if (activeNodes.some((node) => REVIEW_STAGE_NAMES.has(node))) {
     return {
@@ -178,15 +225,25 @@ export function deriveBackgroundProgress(
     };
   }
 
-  if (
-    activeNodes.some(
-      (node) => node === "generate_content" || node === "content_engine",
-    )
-  ) {
+  if (activeNodes.includes("generate_content")) {
     return {
       progress: 42,
       stage: "Drafting your article",
     };
+  }
+
+  // Somewhere inside the content subgraph but not yet writing. `content_engine`
+  // alone must never claim the article band: it is also active while the topic
+  // and outline steps run, and reporting 42 there makes the frontend restore an
+  // in-progress *outline* as if it were the article — skipping outline review.
+  if (activeNodes.includes("content_engine")) {
+    if (activeNodes.some((node) => OUTLINE_STAGE_NAMES.has(node))) {
+      return { progress: 34, stage: "Building your outline" };
+    }
+    if (activeNodes.some((node) => TOPIC_STAGE_NAMES.has(node))) {
+      return { progress: 28, stage: "Preparing your topics" };
+    }
+    return { progress: 26, stage: "Planning your article" };
   }
 
   if (activeNodes.some((node) => SERP_STAGE_NAMES.has(node))) {
