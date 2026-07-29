@@ -12,6 +12,24 @@ import type {
   WorkspaceResponse,
   Persona,
 } from "@/types/workspace";
+
+interface DeletedWorkspaceResponse {
+  total_count: number;
+  workspaces: Array<{
+    id: string;
+    user_id: string;
+    name: string;
+    slug: string;
+    timezone: string | null;
+    url: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+    recovery_deadline: string;
+    days_remaining: number;
+  }>;
+}
 import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
@@ -130,6 +148,18 @@ export function createWorkspacesNamespace(client: ApiClient) {
         { method: "GET" },
       );
       return validateResponse(workspaceResponseSchema, data, "workspaces.get");
+    },
+
+    /**
+     * List the caller's own soft-deleted workspaces that are still recoverable.
+     */
+    getDeleted: async () => {
+      const data = await client.request<DeletedWorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.deleted(),
+        { method: "GET" },
+      );
+
+      return data;
     },
 
     /**

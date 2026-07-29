@@ -451,12 +451,16 @@ function ContentEditorInner(props: ContentEditorProps) {
     [],
   );
   const timezoneMismatch =
-    !!accountProfile && !!browserTimezone && accountTimezone !== browserTimezone;
+    !!accountProfile &&
+    !!browserTimezone &&
+    accountTimezone !== browserTimezone;
 
   const syncTimezoneMutation = useMutation({
     mutationFn: () => apiClient.profile.update({ timezone: browserTimezone }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: profileQueries.detail().queryKey });
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
     },
   });
 
@@ -480,26 +484,24 @@ function ContentEditorInner(props: ContentEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timezoneMismatch]);
 
-  const getPartsInTimezone = useCallback(
-    (date: Date, tz: string) => {
-      const fmt = new Intl.DateTimeFormat("en-CA", {
-        timeZone: tz,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
-      });
-      const parts = fmt.formatToParts(date);
-      const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-      return {
-        dateStr: `${get("year")}-${get("month")}-${get("day")}`,
-        timeStr: `${get("hour")}:${get("minute")}`,
-      };
-    },
-    [],
-  );
+  const getPartsInTimezone = useCallback((date: Date, tz: string) => {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    const parts = fmt.formatToParts(date);
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? "";
+    return {
+      dateStr: `${get("year")}-${get("month")}-${get("day")}`,
+      timeStr: `${get("hour")}:${get("minute")}`,
+    };
+  }, []);
 
   const { dateStr: accountTodayStr, timeStr: accountNowTimeStr } = useMemo(
     () => getPartsInTimezone(new Date(), accountTimezone),
