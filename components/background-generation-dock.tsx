@@ -9,11 +9,18 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Progress } from "@/components/ui/progress";
+import {
+  announceBackgroundGenerationRemoval,
+  BACKGROUND_GENERATION_REMOVAL_STORAGE_KEY,
+  requestBackgroundGenerationRestore,
+} from "@/lib/generate-content/background-generation-sync";
+import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import {
@@ -60,6 +67,25 @@ export function BackgroundGenerationDock() {
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
   const mergeJobs = useBackgroundGenerationStore((state) => state.mergeJobs);
 
+  const dismissJob = useCallback(
+    (job: BackgroundGenerationJob) => {
+      removeJob(job.threadId);
+      announceBackgroundGenerationRemoval([job.threadId]);
+    },
+    [removeJob],
+  );
+
+  const openJob = useCallback(
+    (job: BackgroundGenerationJob) => {
+      requestBackgroundGenerationRestore(job.threadId);
+      router.push(job.resultUrl as Route);
+      if (job.status === "completed" && job.awaitingInput !== true) {
+        dismissJob(job);
+      }
+    },
+    [dismissJob, router],
+  );
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -83,6 +109,34 @@ export function BackgroundGenerationDock() {
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
+      if (
+        event.key === BACKGROUND_GENERATION_REMOVAL_STORAGE_KEY &&
+        event.newValue
+      ) {
+        try {
+          const removal = JSON.parse(event.newValue) as {
+            threadIds?: string[];
+            redirectUrl?: string;
+          };
+          for (const threadId of removal.threadIds ?? []) {
+            removeJob(threadId);
+          }
+          const currentThreadId = new URLSearchParams(
+            window.location.search,
+          ).get("thread");
+          if (
+            removal.redirectUrl &&
+            currentThreadId &&
+            removal.threadIds?.includes(currentThreadId)
+          ) {
+            router.replace(removal.redirectUrl as Route);
+          }
+        } catch {
+          // A malformed removal event should not affect the current session.
+        }
+        return;
+      }
+
       if (event.key !== BACKGROUND_GENERATION_STORAGE_KEY || !event.newValue) {
         return;
       }
@@ -92,7 +146,41 @@ export function BackgroundGenerationDock() {
           state?: { jobs?: BackgroundGenerationJob[] };
         };
         if (persisted.state?.jobs) {
+          const currentByThread = new Map(
+            useBackgroundGenerationStore
+              .getState()
+              .jobs.map((job) => [job.threadId, job]),
+          );
+          const terminalUpdates = persisted.state.jobs.filter((incoming) => {
+            if (
+              incoming.status !== "completed" &&
+              incoming.status !== "failed"
+            ) {
+              return false;
+            }
+
+            const current = currentByThread.get(incoming.threadId);
+            if (
+              current &&
+              new Date(incoming.updatedAt).getTime() <
+                new Date(current.updatedAt).getTime()
+            ) {
+              return false;
+            }
+            return (
+              !current ||
+              current.status !== incoming.status ||
+              current.awaitingInput !== incoming.awaitingInput ||
+              current.progress !== incoming.progress ||
+              current.stage !== incoming.stage ||
+              current.error !== incoming.error
+            );
+          });
+
           mergeJobs(persisted.state.jobs);
+          for (const job of terminalUpdates) {
+            requestBackgroundGenerationRestore(job.threadId);
+          }
         }
       } catch {
         // A malformed storage event should not affect the current session.
@@ -101,7 +189,7 @@ export function BackgroundGenerationDock() {
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [mergeJobs]);
+  }, [mergeJobs, removeJob, router]);
 
   useEffect(() => {
     if (!isMounted || !pollingKey) return;
@@ -117,7 +205,7 @@ export function BackgroundGenerationDock() {
         pendingJobs.map(async (job) => {
           if (
             !job.runId &&
-            Date.now() - new Date(job.createdAt).getTime() <
+            Date.now() - new Date(job.updatedAt).getTime() <
               RUN_DISCOVERY_GRACE_MS
           ) {
             return;
@@ -242,7 +330,12 @@ export function BackgroundGenerationDock() {
     );
 
     for (const job of unnotified) {
-      updateJob(job.threadId, { completionNotified: true });
+      // Notification bookkeeping must not make an old paused run look newer
+      // than a resume that has already started in another tab.
+      updateJob(job.threadId, {
+        completionNotified: true,
+        updatedAt: job.updatedAt,
+      });
       const completed = job.status === "completed";
       const awaiting = completed && job.awaitingInput === true;
       useNotificationStore.getState().addNotification({
@@ -277,7 +370,7 @@ export function BackgroundGenerationDock() {
           description: job.title,
           action: {
             label: "Continue",
-            onClick: () => router.push(job.resultUrl as Route),
+            onClick: () => openJob(job),
           },
         });
       } else if (completed) {
@@ -285,7 +378,7 @@ export function BackgroundGenerationDock() {
           description: job.title,
           action: {
             label: "Open article",
-            onClick: () => router.push(job.resultUrl as Route),
+            onClick: () => openJob(job),
           },
         });
       } else {
@@ -293,12 +386,47 @@ export function BackgroundGenerationDock() {
           description: job.title,
           action: {
             label: "View details",
-            onClick: () => router.push(job.resultUrl as Route),
+            onClick: () => openJob(job),
           },
         });
       }
     }
-  }, [jobs, router, updateJob]);
+  }, [jobs, openJob, updateJob]);
+
+  const cancelJob = async (target: BackgroundGenerationJob) => {
+    try {
+      const response = await fetch(
+        `/api/generate/${encodeURIComponent(target.threadId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId: target.runId }),
+        },
+      );
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(payload.error ?? "Unable to cancel this generation");
+      }
+      // The run is stopped server-side; drop the record so nothing keeps
+      // polling or notifying for work that will never finish.
+      const freshGenerationUrl = workspaceRoutes.generate_content(
+        target.workspaceSlug,
+      );
+      removeJob(target.threadId);
+      announceBackgroundGenerationRemoval([target.threadId], {
+        redirectUrl: freshGenerationUrl,
+      });
+      router.replace(freshGenerationUrl as Route);
+      toast.success("Generation cancelled", { description: target.title });
+    } catch (error) {
+      toast.error("Could not cancel this generation", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
+    }
+  };
 
   if (!isMounted || visibleJobs.length === 0) return null;
 
@@ -381,7 +509,7 @@ export function BackgroundGenerationDock() {
             variant={completed ? "default" : "outline"}
             size="sm"
             className="h-8 whitespace-nowrap"
-            onClick={() => router.push(job.resultUrl as Route)}
+            onClick={() => openJob(job)}
           >
             {awaitingInput
               ? "Continue"
@@ -393,14 +521,33 @@ export function BackgroundGenerationDock() {
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Button>
 
-          {!pending && (
+          {pending ? (
+            <ConfirmationDialog
+              title="Cancel this generation?"
+              description={`"${job.title}" will stop where it is. Credits already spent on the finished steps are not refunded.`}
+              confirmText="Cancel generation"
+              cancelText="Keep generating"
+              variant="destructive"
+              onConfirm={() => void cancelJob(job)}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                aria-label={`Cancel ${job.title}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </ConfirmationDialog>
+          ) : (
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground"
               aria-label={`Dismiss ${job.title}`}
-              onClick={() => removeJob(job.threadId)}
+              onClick={() => dismissJob(job)}
             >
               <X className="h-4 w-4" />
             </Button>

@@ -20,6 +20,71 @@ describe("background generation progress", () => {
     });
   });
 
+  // `content_engine` is a subgraph container: it stays active from topic
+  // selection all the way to the final review. Treating it as "drafting" put
+  // the outline phase in the article band, and the restore path then joined the
+  // stream as content — skipping the outline approve/reject step entirely.
+  it("keeps the outline phase below the article band", () => {
+    expect(
+      deriveBackgroundProgress("running", {
+        next: ["content_engine"],
+        tasks: [
+          {
+            name: "content_engine",
+            state: { next: ["generate_outline"], tasks: [] },
+          },
+        ],
+      }),
+    ).toEqual({ progress: 34, stage: "Building your outline" });
+
+    expect(
+      deriveBackgroundProgress("running", {
+        next: ["content_engine"],
+        tasks: [{ name: "content_engine" }],
+      }).progress,
+    ).toBeLessThan(42);
+  });
+
+  it("reports drafting from the nested content node", () => {
+    expect(
+      deriveBackgroundProgress("running", {
+        next: ["content_engine"],
+        tasks: [
+          {
+            name: "content_engine",
+            state: { tasks: [{ name: "generate_content" }] },
+          },
+        ],
+      }),
+    ).toEqual({ progress: 42, stage: "Drafting your article" });
+  });
+
+  it("finds an interrupt raised inside a subgraph", () => {
+    expect(
+      deriveBackgroundProgress("success", {
+        next: ["content_engine"],
+        tasks: [
+          {
+            name: "content_engine",
+            state: {
+              next: ["review_outline"],
+              tasks: [
+                {
+                  name: "review_outline",
+                  interrupts: [{ value: { type: "outline_review" } }],
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    ).toEqual({
+      progress: 38,
+      stage: "Outline ready to review",
+      awaitingInput: true,
+    });
+  });
+
   it("advances through persisted review milestones", () => {
     expect(
       deriveBackgroundProgress("running", {
