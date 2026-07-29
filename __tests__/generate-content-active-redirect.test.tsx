@@ -118,6 +118,37 @@ describe("content generation entry", () => {
 
   it("leaves a failed thread and returns to the new article selection", () => {
     mockSearchParams = new URLSearchParams("thread=failed-thread");
+    const now = "2026-07-29T08:00:00.000Z";
+    useBackgroundGenerationStore.setState({
+      jobs: [
+        {
+          threadId: "failed-thread",
+          workspaceSlug: "demo-workspace",
+          title: "Failed article",
+          keyword: "old keyword",
+          status: "failed",
+          stage: "Generation failed",
+          progress: 100,
+          createdAt: now,
+          updatedAt: now,
+          resultUrl: "/w/demo-workspace/generate_content?thread=failed-thread",
+        },
+        {
+          threadId: "previous-keyword-thread",
+          workspaceSlug: "demo-workspace",
+          title: "Previous keyword",
+          keyword: "previous keyword",
+          status: "completed",
+          stage: "Topics ready to review",
+          progress: 32,
+          createdAt: now,
+          updatedAt: now,
+          resultUrl:
+            "/w/demo-workspace/generate_content?thread=previous-keyword-thread",
+          awaitingInput: true,
+        },
+      ],
+    });
 
     render(<GenerateContentPage />);
     fireEvent.click(
@@ -127,6 +158,18 @@ describe("content generation entry", () => {
     expect(mockReplace).toHaveBeenCalledWith(
       "/w/demo-workspace/generate_content",
     );
+    expect(useBackgroundGenerationStore.getState().jobs).toEqual([]);
+    expect(screen.getByText("New content generation")).toBeInTheDocument();
+  });
+
+  it("resets the mounted workflow when cancellation removes the thread URL", () => {
+    mockSearchParams = new URLSearchParams("thread=cancelled-thread");
+    const { rerender } = render(<GenerateContentPage />);
+    expect(screen.getByText("Existing content generation")).toBeInTheDocument();
+
+    mockSearchParams = new URLSearchParams();
+    rerender(<GenerateContentPage />);
+
     expect(screen.getByText("New content generation")).toBeInTheDocument();
   });
 });

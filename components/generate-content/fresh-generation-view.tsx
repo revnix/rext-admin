@@ -225,9 +225,6 @@ export function FreshGenerationView({
   const updateBackgroundJob = useBackgroundGenerationStore(
     (store) => store.updateJob,
   );
-  const removeBackgroundJob = useBackgroundGenerationStore(
-    (store) => store.removeJob,
-  );
   const { patchCredits } = useSubscriptionStore();
   const {
     ensureCredits,
@@ -1533,8 +1530,11 @@ export function FreshGenerationView({
 
       // The workflow is moving again: reopen the tracking record so the dock
       // resumes polling (and can notify again) if the user leaves mid-step.
-      // The 4s poll refines the stage from graph state shortly after.
+      // Drop the previous paused run ID so other tabs do not keep polling that
+      // completed run and restore this same interactive step over the new run.
+      // `run/created` supplies the replacement ID as soon as the resume starts.
       updateBackgroundJob(threadId, {
+        runId: undefined,
         status: "running",
         awaitingInput: false,
         completionNotified: false,
@@ -1988,9 +1988,6 @@ export function FreshGenerationView({
               size="sm"
               className="mt-3"
               onClick={() => {
-                if (backgroundThreadId) {
-                  removeBackgroundJob(backgroundThreadId);
-                }
                 setRestoreError(null);
                 onBack();
               }}

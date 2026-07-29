@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -64,8 +65,14 @@ export default function Page() {
   useEffect(() => {
     if (backgroundThreadId) {
       setView("fresh");
+    } else if (!libraryKeyword) {
+      // Cancelling replaces `?thread=...` with the blank generation route.
+      // Reset the mounted workflow as well so its loading/editor state cannot
+      // remain visible after the URL changes.
+      setSelectedLibraryKeyword(undefined);
+      setView("selection");
     }
-  }, [backgroundThreadId]);
+  }, [backgroundThreadId, libraryKeyword]);
 
   useEffect(() => {
     if (!backgroundJobsHydrated) {
@@ -92,6 +99,24 @@ export default function Page() {
   };
 
   const handleBackToSelection = () => {
+    const currentJobs = useBackgroundGenerationStore.getState().jobs;
+    const discardedThreadIds = currentJobs
+      .filter(
+        (job) =>
+          job.threadId === backgroundThreadId ||
+          (job.workspaceSlug === workspace?.slug &&
+            job.status !== "queued" &&
+            job.status !== "running"),
+      )
+      .map((job) => job.threadId);
+    if (discardedThreadIds.length > 0) {
+      const discarded = new Set(discardedThreadIds);
+      useBackgroundGenerationStore
+        .getState()
+        .replaceJobs(currentJobs.filter((job) => !discarded.has(job.threadId)));
+      announceBackgroundGenerationRemoval(discardedThreadIds);
+    }
+
     setView("selection");
     setSelectedLibraryKeyword(undefined);
     if (backgroundThreadId && workspace?.slug) {
