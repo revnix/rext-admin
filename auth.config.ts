@@ -18,7 +18,9 @@ import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 const authSecret =
   process.env.AUTH_SECRET ??
   process.env.NEXTAUTH_SECRET ??
-  (process.env.NODE_ENV !== "production" ? "development_auth_secret" : undefined);
+  (process.env.NODE_ENV !== "production"
+    ? "development_auth_secret"
+    : undefined);
 
 const authApiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
@@ -111,16 +113,13 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       : undefined,
   });
 
-  const response = await fetch(
-    `${authApiBaseUrl}/api/v1/user/refresh`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(refreshPayload),
+  const response = await fetch(`${authApiBaseUrl}/api/v1/user/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(refreshPayload),
+  });
 
   log.debug("[Auth] Refresh response received", {
     refreshJti: outgoingJwt?.jti,
@@ -378,18 +377,15 @@ export default {
               .confirmReactivation === "true";
 
           // Call backend login endpoint
-          const response = await fetch(
-            `${authApiBaseUrl}/api/v1/user/login`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email,
-                password,
-                confirm_reactivation: confirmReactivation,
-              }),
-            },
-          );
+          const response = await fetch(`${authApiBaseUrl}/api/v1/user/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              password,
+              confirm_reactivation: confirmReactivation,
+            }),
+          });
 
           if (!response.ok) {
             // Extract detailed error message from backend using shared utility
