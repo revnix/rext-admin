@@ -26,6 +26,13 @@ export interface BackgroundGenerationJob {
   resultUrl: string;
   error?: string;
   completionNotified?: boolean;
+  /**
+   * True when the run finished by pausing on a LangGraph `interrupt()` (keyword
+   * selection, content type, topic, outline review) instead of producing the
+   * final article. The job is "done for now" but the workflow still needs the
+   * user, so the dock offers "Continue" rather than "Open article".
+   */
+  awaitingInput?: boolean;
 }
 
 interface BackgroundGenerationStore {

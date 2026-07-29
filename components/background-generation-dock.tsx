@@ -40,6 +40,7 @@ type GenerationStatusResponse = {
   progress?: number;
   stage?: string;
   error?: string;
+  awaitingInput?: boolean;
 };
 
 const isPending = (job: BackgroundGenerationJob) =>
@@ -182,11 +183,15 @@ export function BackgroundGenerationDock() {
             }
 
             if (payload.run.status === "success") {
+              // A run that paused on an interrupt also reports "success", so the
+              // derived stage/progress decide whether this is a finished article
+              // or an interactive step waiting on the user.
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "completed",
-                stage: "Article ready",
-                progress: 100,
+                stage: payload.stage ?? "Article ready",
+                progress: Math.max(latestJob.progress, payload.progress ?? 100),
+                awaitingInput: payload.awaitingInput === true,
                 updatedAt: payload.run.updatedAt,
               });
               return;
@@ -239,14 +244,23 @@ export function BackgroundGenerationDock() {
     for (const job of unnotified) {
       updateJob(job.threadId, { completionNotified: true });
       const completed = job.status === "completed";
+      const awaiting = completed && job.awaitingInput === true;
       useNotificationStore.getState().addNotification({
+        // A thread notifies once per milestone (keywords ready, topics ready,
+        // article ready), so the id is scoped by stage to avoid deduplication.
         id: completed
-          ? `content-generation-${job.threadId}`
+          ? `content-generation-${job.threadId}-${job.progress}`
           : `content-generation-failed-${job.threadId}`,
         operationId: job.threadId,
-        title: completed ? "Article ready" : "Article generation failed",
+        title: completed
+          ? awaiting
+            ? job.stage
+            : "Article ready"
+          : "Article generation failed",
         message: completed
-          ? `"${job.title}" has finished generating.`
+          ? awaiting
+            ? `"${job.title}" is ready for your next step.`
+            : `"${job.title}" has finished generating.`
           : `"${job.title}" could not be completed.`,
         type: completed ? "success" : "error",
         createdAt: new Date().toISOString(),
@@ -258,7 +272,15 @@ export function BackgroundGenerationDock() {
         },
       });
 
-      if (completed) {
+      if (awaiting) {
+        toast.info(job.stage, {
+          description: job.title,
+          action: {
+            label: "Continue",
+            onClick: () => router.push(job.resultUrl as Route),
+          },
+        });
+      } else if (completed) {
         toast.success("Your article is ready", {
           description: job.title,
           action: {
@@ -284,6 +306,7 @@ export function BackgroundGenerationDock() {
   const job = visibleJobs.find(isPending) ?? visibleJobs[0];
   const pending = isPending(job);
   const completed = job.status === "completed";
+  const awaitingInput = completed && job.awaitingInput === true;
 
   return (
     <section
@@ -360,11 +383,13 @@ export function BackgroundGenerationDock() {
             className="h-8 whitespace-nowrap"
             onClick={() => router.push(job.resultUrl as Route)}
           >
-            {completed
-              ? "Open article"
-              : pending
-                ? "View progress"
-                : "View details"}
+            {awaitingInput
+              ? "Continue"
+              : completed
+                ? "Open article"
+                : pending
+                  ? "View progress"
+                  : "View details"}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Button>
 
