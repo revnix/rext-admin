@@ -30,10 +30,10 @@ const FEATURE_LABELS: Record<string, string> = {
   support: "Support Type",
   api_access: "API Access Level",
   collaboration: "Collaboration Tools",
-  custom_branding: "Custom Branding Enabled",
   priority_support: "Priority Support",
-  advanced_analytics: "Advanced Analytics",
 };
+
+const HIDDEN_FEATURE_KEYS = new Set(["advanced_analytics"]);
 
 export interface PricingTableProps {
   /** Additional CSS classes */
@@ -144,6 +144,9 @@ export function PricingTable({
           const { savingsPercent } = getYearlySavings(plan);
           const isPopular = plan.id === popularPlanId;
           const isCurrent = isCurrentPlan(plan.id);
+          const isProPlan = [plan.name, plan.display_name].some(
+            (name) => name.toLowerCase() === "pro",
+          );
 
           return (
             <Card
@@ -206,7 +209,12 @@ export function PricingTable({
                 {/* Features List */}
                 <ul className="space-y-3">
                   {Object.entries(features ?? {})
-                    .filter(([_, value]) => value === true) // STRICT: only keep true
+                    .filter(
+                      ([key, value]) =>
+                        value === true &&
+                        !HIDDEN_FEATURE_KEYS.has(key) &&
+                        !(isProPlan && key === "custom_branding"),
+                    )
                     .map(([key]) => (
                       <li key={key} className="flex items-center gap-2">
                         <Check className="h-5 w-5 shrink-0 text-green-600 dark:text-green-500" />
@@ -248,24 +256,6 @@ export function PricingTable({
                         ? "Unlimited"
                         : plan.max_members_per_workspace}{" "}
                       members/ws
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_knowledge_items === -1
-                        ? "Unlimited"
-                        : plan.max_knowledge_items.toLocaleString()}{" "}
-                      Knowledge Items
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_api_calls_per_month === -1
-                        ? "Unlimited"
-                        : plan.max_api_calls_per_month.toLocaleString()}{" "}
-                      API calls/month
                     </span>
                   </li>
                 </ul>
