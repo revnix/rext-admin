@@ -1489,6 +1489,8 @@ export function FreshGenerationView({
         outline.resetStream();
         dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
+        // "reject" with no reason yet — review_outline() will interrupt again
+        // to collect feedback text before regenerating (see OUTLINE_REJECT_REASON).
         return resumeWorkflow({ payload: { action: "reject" } });
       case "OUTLINE_REJECT_REASON":
         setTokenTarget("outline");
@@ -1707,7 +1709,8 @@ export function FreshGenerationView({
               isLoading={isStreamingOutline}
               internalLinks={interruptInternalLinks}
               brandVoicePromotion={interruptBrandVoicePromotion}
-              onApprove={(selectedLinks, promoteBrand) => {
+              workspaceId={workspaceId}
+              onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
                 content.resetStream();
@@ -1741,6 +1744,9 @@ export function FreshGenerationView({
                       : {}),
                     ...(interruptBrandVoicePromotion
                       ? { promote_brand: promoteBrand }
+                      : {}),
+                    ...(selectedPersonaId
+                      ? { selected_persona_id: selectedPersonaId }
                       : {}),
                   },
                   status: "Approving and generating content...",

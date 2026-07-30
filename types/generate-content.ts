@@ -265,6 +265,7 @@ export type ContentOutline = {
   target_word_count?: number;
   status: "approved" | "rejected" | "reviewing";
   rejected_reason?: string;
+  selected_persona_id?: string | null;
 
   // ── Informational type-specific ───────────────────────────────────────────
   total_time?: string; // HowToGuide, Checklist
