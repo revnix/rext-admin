@@ -9,7 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -224,6 +226,9 @@ export function FreshGenerationView({
   );
   const updateBackgroundJob = useBackgroundGenerationStore(
     (store) => store.updateJob,
+  );
+  const removeBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.removeJob,
   );
   const { patchCredits } = useSubscriptionStore();
   const {
@@ -1758,6 +1763,55 @@ export function FreshGenerationView({
     [allContent],
   );
 
+  // Cancel an in-progress generation. Stops the server-owned run (credits
+  // already spent on finished steps are not refunded), clears the tracking
+  // record across tabs, and returns to a fresh generation screen.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream/dispatch are stable (refs/reducer), intentionally omitted
+  const handleCancelGeneration = useCallback(async () => {
+    if (!threadId) return;
+    const job = useBackgroundGenerationStore
+      .getState()
+      .jobs.find((j) => j.threadId === threadId);
+    cancelStream();
+    try {
+      await fetch(`/api/generate/${encodeURIComponent(threadId)}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId: job?.runId }),
+      });
+    } catch {
+      // Best-effort: the run may already be gone. The record cleanup below
+      // still stops the UI from tracking work that will never finish.
+    }
+    removeBackgroundJob(threadId);
+    announceBackgroundGenerationRemoval([threadId]);
+    dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+    dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+    dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+    toast.info("Generation cancelled", {
+      description: "Credits already used for this generation are not refunded.",
+    });
+    router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
+  }, [threadId, removeBackgroundJob, router, workspaceSlug]);
+
+  // Shown while a generation is actively running (not on the finished article).
+  const cancelGenerationControl =
+    isManualLoading && threadId && !isContentFinal ? (
+      <ConfirmationDialog
+        title="Cancel this generation?"
+        description="The article will stop where it is. Credits already used for this generation are not refunded."
+        confirmText="Cancel generation"
+        cancelText="Keep generating"
+        variant="destructive"
+        onConfirm={() => void handleCancelGeneration()}
+      >
+        <Button type="button" variant="outline" size="sm" className="gap-1.5">
+          <X className="h-4 w-4" />
+          Cancel generation
+        </Button>
+      </ConfirmationDialog>
+    ) : null;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1780,6 +1834,9 @@ export function FreshGenerationView({
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
         />
+        {cancelGenerationControl && (
+          <div className="mt-6">{cancelGenerationControl}</div>
+        )}
       </div>
     );
   }
@@ -2001,6 +2058,11 @@ export function FreshGenerationView({
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
+          {cancelGenerationControl && (
+            <div className="mx-auto mb-3 flex w-full max-w-5xl justify-end">
+              {cancelGenerationControl}
+            </div>
+          )}
           <ContentEditor
             threadId={threadId ?? undefined}
             allContent={

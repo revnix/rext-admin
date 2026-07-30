@@ -695,11 +695,8 @@ function ImageInsertPopover() {
       setError(null);
       setUploading(true);
       try {
-        const media = await apiClient.media.upload(workspaceId, {
-          file,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-        });
-        const src = toAbsoluteMediaUrl(media.public_url ?? media.cdn_url);
+        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const src = toAbsoluteMediaUrl(media.public_url);
         if (!src) {
           setError("Upload succeeded but no image URL was returned.");
           return;
