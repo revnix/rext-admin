@@ -1,9 +1,15 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+
+
 import { Brain, Edit2, Loader2, Plus, RefreshCw, Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+import { SiteComplianceSection } from "@/components/workspace/site-compliance-section";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DetailCard } from "@/components/ui/detail-card";
@@ -522,6 +528,9 @@ export function EditableBrandVoiceCard({
                       e.preventDefault();
                       handleArrayItemAdd("competitors");
                     }
+
+
+
                   }}
                 />
                 <Button
@@ -560,6 +569,8 @@ export function EditableBrandVoiceCard({
             </div>
           )}
         </div>
+         <SiteComplianceSection siteCompliance={brandVoice.site_compliance} />
+        
       </div>
     </DetailCard>
   );

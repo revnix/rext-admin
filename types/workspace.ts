@@ -112,6 +112,21 @@ export interface BrandVoice {
   competitors?: string[]; // Array of competitor names
   content_strategy?: string[]; // Content pillars/themes
   content_pillar?: string[]; // Alternative name for content strategy
+
+ 
+ site_compliance?: {        // for site_compliance data
+  security_headers?: {
+    checked: boolean;
+    headers_present: Record<string, string>;
+  };
+  cookie_consent?: {
+    has_consent_banner: boolean;
+    provider: string | null;
+    detection_method?: string;
+  };
+};
+
+
   personas?: Persona[]; // Target audience personas
   created_at?: string;
   updated_at?: string;
