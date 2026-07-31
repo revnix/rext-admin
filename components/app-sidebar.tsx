@@ -298,7 +298,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       >
                         <Link href={item.url as Route}>
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -402,7 +402,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         >
                           <div className="flex items-center gap-2">
                             {Icon && <Icon />}
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                           </div>
                           <ChevronDown
                             size={16}
@@ -449,7 +449,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           className="flex items-center gap-2"
                         >
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -487,7 +487,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       >
                         <Link href={item.url as Route}>
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
