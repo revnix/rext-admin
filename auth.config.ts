@@ -33,6 +33,12 @@ if (!authApiBaseUrl && process.env.NODE_ENV !== "production") {
   );
 }
 
+// Kept in lockstep with the backend's REFRESH_TOKEN_EXPIRE_DAYS. Override via
+// env when the backend's value is changed, so the two cannot silently drift
+// apart again (see the `session.maxAge` comment at the bottom of this file).
+const SESSION_MAX_AGE_SECONDS =
+  Number(process.env.AUTH_SESSION_MAX_AGE_DAYS ?? 7) * 24 * 60 * 60;
+
 // Substrings of backend rejection messages that mean the refresh token is
 // genuinely dead — retrying will never help, the user must log in again.
 // Anything else (network error, 5xx, a lost concurrent-refresh race, etc.)
@@ -816,7 +822,14 @@ export default {
   secret: authSecret,
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // Default 30 days max
+    // MUST NOT exceed the backend's REFRESH_TOKEN_EXPIRE_DAYS (default 7).
+    // Past that point the backend's refresh token is dead and its UserSession
+    // row has been cleaned up, so a longer-lived Auth.js cookie only produces a
+    // session that *looks* valid to proxy.ts while every API call 401s with
+    // "Authentication session has been revoked". This was previously 30 days,
+    // leaving a 23-day window in which a returning user appeared logged in but
+    // could not load anything.
+    maxAge: SESSION_MAX_AGE_SECONDS,
     // Note: Actual session duration is controlled by JWT expiry
     // which we set dynamically in the JWT callback based on rememberMe
   },
