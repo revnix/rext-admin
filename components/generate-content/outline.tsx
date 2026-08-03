@@ -7,6 +7,8 @@ import type {
   InternalLinkSuggestion,
   BrandVoicePromotion,
 } from "@/types/generate-content";
+import type { Persona } from "@/types/workspace";
+import { usePersonas } from "@/hooks/use-personas";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,8 @@ import {
   Layers,
   Link2,
   Megaphone,
+  RefreshCw,
+  UserCircle2,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -575,6 +579,7 @@ export function OutlineDisplay({
   isLoading,
   internalLinks,
   brandVoicePromotion,
+  workspaceId,
   onApprove,
   onReject,
   onUpdate,
@@ -586,9 +591,11 @@ export function OutlineDisplay({
   isLoading: boolean;
   internalLinks?: InternalLinkSuggestion[];
   brandVoicePromotion?: BrandVoicePromotion;
+  workspaceId?: string | null;
   onApprove: (
     selectedLinks: InternalLinkSuggestion[],
     promoteBrand: boolean,
+    selectedPersonaId: string | null,
   ) => void;
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
@@ -606,10 +613,25 @@ export function OutlineDisplay({
   const [promoteBrand, setPromoteBrand] = useState<boolean>(
     brandVoicePromotion?.recommended ?? false,
   );
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     setPromoteBrand(brandVoicePromotion?.recommended ?? false);
   }, [brandVoicePromotion]);
+
+  const { data: personasData } = usePersonas(workspaceId || null);
+  const personas: Persona[] = useMemo(
+    () => personasData?.personas ?? [],
+    [personasData],
+  );
+
+  // Sync the manually-selectable persona with the outline's auto-selected
+  // one whenever a fresh outline arrives (new generation / regeneration).
+  useEffect(() => {
+    setSelectedPersonaId(outline?.selected_persona_id ?? null);
+  }, [outline?.selected_persona_id]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -1212,6 +1234,74 @@ export function OutlineDisplay({
         </div>
       )}
 
+      {/* Author Persona Panel */}
+      {personas.length > 0 && (
+        <div className="mt-8 p-5 rounded-xl border border-border/50 bg-card">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
+              <UserCircle2 className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Author Persona
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Who this article is written as — auto-selected based on topic
+                fit, or pick one yourself
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {personas.map((persona) => {
+              const id = persona.id || persona.name;
+              const isChecked = selectedPersonaId === (persona.id || null);
+              const displayName = persona.full_name || persona.name;
+              return (
+                <label
+                  key={id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+                    isChecked
+                      ? "bg-primary/5 border-primary/30"
+                      : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="outline-author-persona"
+                    checked={isChecked}
+                    onChange={() => setSelectedPersonaId(persona.id || null)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={cn(
+                      "w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition-colors",
+                      isChecked
+                        ? "bg-primary border-primary"
+                        : "bg-background border-border",
+                    )}
+                  >
+                    {isChecked && (
+                      <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {displayName}
+                    </p>
+                    {persona.professional_title && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {persona.professional_title}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Brand Voice Promotion Panel */}
       {brandVoicePromotion && (
         <div className="mt-6 p-5 rounded-xl border border-border/50 bg-card">
@@ -1313,14 +1403,14 @@ export function OutlineDisplay({
           variant="outline"
           className="h-11 px-7 rounded-xl border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
         >
-          <X className="w-4 h-4 mr-2" /> Reject
+          <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
         </Button>
         <Button
           onClick={() => {
             const selected = sortedInternalLinks.filter((l) =>
               checkedUrls.has(l.url),
             );
-            onApprove(selected, promoteBrand);
+            onApprove(selected, promoteBrand, selectedPersonaId);
           }}
           disabled={isLoading || isDraft}
           className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"

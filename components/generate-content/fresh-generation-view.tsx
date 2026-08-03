@@ -2076,7 +2076,8 @@ export function FreshGenerationView({
               pendingTargetWordCount={pendingTargetWordCount}
               internalLinks={interruptInternalLinks}
               brandVoicePromotion={interruptBrandVoicePromotion}
-              onApprove={(selectedLinks, promoteBrand) => {
+              workspaceId={workspaceId}
+              onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
                 content.resetStream();
@@ -2110,6 +2111,9 @@ export function FreshGenerationView({
                       : {}),
                     ...(interruptBrandVoicePromotion
                       ? { promote_brand: promoteBrand }
+                      : {}),
+                    ...(selectedPersonaId
+                      ? { selected_persona_id: selectedPersonaId }
                       : {}),
                   },
                   status: "Approving and generating content...",
