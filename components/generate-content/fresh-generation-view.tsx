@@ -23,6 +23,7 @@ import type {
   ContentSection,
   FinalContent,
   InternalLinkSuggestion,
+  Interrupt,
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
@@ -75,6 +76,22 @@ import {
   deriveActiveGenerationViewState,
   type GenerationPipelineStep,
 } from "@/lib/generate-content/background-generation-view-state";
+import {
+  collectPendingInterrupts,
+  deriveAwaitingInputStage,
+} from "@/lib/generate-content/background-progress";
+import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import {
+  BACKGROUND_GENERATION_RESTORE_EVENT,
+  type BackgroundGenerationRestoreDetail,
+} from "@/lib/generate-content/background-generation-sync";
+
+// Derived progress at which the workflow has left the interactive research
+// steps and is writing the article — the only phase that gets the content
+// editor overlay and the live content token stream on restore.
+const ARTICLE_PHASE_PROGRESS = 42;
+const isArticlePhase = (progress?: number) =>
+  (progress ?? 0) >= ARTICLE_PHASE_PROGRESS;
 
 interface FreshGenerationViewProps {
   onBack: () => void;
@@ -191,7 +208,7 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 };
 
 export function FreshGenerationView({
-  onBack: _onBack,
+  onBack,
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
@@ -289,6 +306,7 @@ export function FreshGenerationView({
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -313,6 +331,29 @@ export function FreshGenerationView({
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
   };
+
+  useEffect(() => {
+    if (!backgroundThreadId) return;
+
+    const handleRestoreRequest = (event: Event) => {
+      const { threadId: requestedThreadId } = (
+        event as CustomEvent<BackgroundGenerationRestoreDetail>
+      ).detail;
+      if (requestedThreadId === backgroundThreadId) {
+        setBackgroundRestoreRevision((revision) => revision + 1);
+      }
+    };
+
+    window.addEventListener(
+      BACKGROUND_GENERATION_RESTORE_EVENT,
+      handleRestoreRequest,
+    );
+    return () =>
+      window.removeEventListener(
+        BACKGROUND_GENERATION_RESTORE_EVENT,
+        handleRestoreRequest,
+      );
+  }, [backgroundThreadId]);
 
   // Cancel on unmount (e.g. user navigates away)
   // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
@@ -385,6 +426,46 @@ export function FreshGenerationView({
     [backgroundThreadId],
   );
 
+  // Every interactive step (keyword selection, content type, topics, outline
+  // review) is rendered purely from its `interrupt()` payload, so replaying the
+  // thread's pending interrupt through the same reducer path the live stream
+  // uses restores whichever step the workflow is waiting on.
+  const hydrateFromPendingInterrupt = useCallback(
+    (interrupts: Interrupt[], values?: Partial<WREXT>) => {
+      dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId ?? null });
+
+      const query = values?.serp_payload?.query;
+      const selectedKeyword = values?.["Primary Keyword"] || query;
+      if (query) dispatch({ type: "SET_USER_KEYWORD", payload: query });
+      if (selectedKeyword)
+        dispatch({ type: "SET_PRIMARY_KEYWORD", payload: selectedKeyword });
+      if (values?.serp_payload?.country)
+        dispatch({
+          type: "SET_COUNTRY",
+          payload: values.serp_payload.country,
+        });
+
+      const value = interrupts[0]?.value;
+      if (typeof value?.recommended_content_type === "string")
+        dispatch({
+          type: "SET_RECOMMENDED_CONTENT_TYPE",
+          payload: value.recommended_content_type,
+        });
+      if (typeof value?.recommended_topic === "string")
+        dispatch({
+          type: "SET_RECOMMENDED_TOPIC",
+          payload: value.recommended_topic,
+        });
+
+      dispatch({ type: "SET_INTERRUPT", payload: interrupts });
+      dispatch({
+        type: "UPDATE_FROM_STREAM",
+        payload: { __interrupt__: interrupts } as StreamUpdates,
+      });
+    },
+    [backgroundThreadId],
+  );
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: processStream/cancelStream are declared later and are intentionally not deps (accessed via ref / at call time)
   useEffect(() => {
     if (!backgroundThreadId) return;
@@ -394,9 +475,7 @@ export function FreshGenerationView({
     let consecutiveFailures = 0;
 
     dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
-    dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
-    dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
     dispatch({
       type: "SET_LOADING_STATUS",
       payload: "Restoring background generation...",
@@ -404,7 +483,16 @@ export function FreshGenerationView({
     const trackedJob = useBackgroundGenerationStore
       .getState()
       .jobs.find((job) => job.threadId === backgroundThreadId);
-    restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
+
+    if (isArticlePhase(trackedJob?.progress)) {
+      dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+      dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+      restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
+    } else {
+      // Research phase — show the plain analysis loader, not the article editor.
+      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      setIsBackgroundGenerationActive(false);
+    }
     setRestoreError(null);
 
     const restore = async () => {
@@ -416,10 +504,14 @@ export function FreshGenerationView({
         );
         const payload = (await response.json()) as {
           run?: { id?: string; status?: string };
-          state?: { values?: Partial<WREXT> };
+          state?: {
+            values?: Partial<WREXT>;
+            tasks?: Array<{ interrupts?: Interrupt[] }>;
+          };
           progress?: number;
           stage?: string;
           error?: string;
+          awaitingInput?: boolean;
         };
 
         if (!response.ok && response.status !== 202) {
@@ -440,9 +532,39 @@ export function FreshGenerationView({
         }
         consecutiveFailures = 0;
 
-        const hasFinalContent = payload.state?.values
-          ? hydrateFromBackgroundState(payload.state.values)
-          : false;
+        const inArticlePhase = isArticlePhase(payload.progress);
+        // Interactive steps interrupt inside a subgraph, so the pending
+        // interrupt can sit one level down under `tasks[].state`.
+        const pendingInterrupts = collectPendingInterrupts(
+          payload.state,
+        ) as Interrupt[];
+
+        // The run paused for user input: restore that step's interactive view
+        // instead of the article editor. This is what makes leaving during
+        // keyword analysis (or any other step) safe to come back to.
+        if (payload.awaitingInput && pendingInterrupts.length > 0) {
+          hydrateFromPendingInterrupt(pendingInterrupts, payload.state?.values);
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+          dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "completed",
+            stage: payload.stage ?? "Waiting for your input",
+            progress: payload.progress ?? 24,
+            awaitingInput: true,
+            // The user is looking at the step — no need to also toast it.
+            completionNotified: true,
+          });
+          return;
+        }
+
+        const hasFinalContent =
+          payload.state?.values &&
+          (inArticlePhase || payload.run?.status === "success")
+            ? hydrateFromBackgroundState(payload.state.values)
+            : false;
 
         if (payload.run?.status === "success") {
           if (hasFinalContent) {
@@ -460,7 +582,9 @@ export function FreshGenerationView({
           }
           terminalFailure = true;
           throw new Error(
-            "Generation finished, but the article result was unavailable.",
+            payload.awaitingInput
+              ? "This generation is waiting on a step we could not restore."
+              : "Generation finished, but the article result was unavailable.",
           );
         }
 
@@ -468,22 +592,29 @@ export function FreshGenerationView({
           status: "running",
           stage: payload.stage ?? "Generating your article",
           progress: payload.progress ?? 24,
+          awaitingInput: false,
         });
 
         dispatch({ type: "SET_MANUAL_LOADING", payload: true });
         dispatch({
           type: "SET_LOADING_STEPS",
-          payload: FINAL_GENERATION_STEPS,
+          payload: inArticlePhase
+            ? FINAL_GENERATION_STEPS
+            : INITIAL_ANALYSIS_STEPS,
         });
-        restoreActiveGenerationView(payload.progress, payload.stage);
+        if (inArticlePhase) {
+          restoreActiveGenerationView(payload.progress, payload.stage);
+        }
 
         // Run still in progress: reconnect to its live token stream so the
         // article renders as it's written (same as staying on the page),
         // instead of showing a poll-only skeleton until completion.
         const runId = payload.run?.id;
         if (runId) {
-          setTokenTarget("content");
-          tokenTargetRef.current = "content";
+          if (inArticlePhase) {
+            setTokenTarget("content");
+            tokenTargetRef.current = "content";
+          }
           dispatch({
             type: "SET_LOADING_STATUS",
             payload: payload.stage ?? "Generating your article...",
@@ -552,7 +683,9 @@ export function FreshGenerationView({
     };
   }, [
     backgroundThreadId,
+    backgroundRestoreRevision,
     hydrateFromBackgroundState,
+    hydrateFromPendingInterrupt,
     restoreActiveGenerationView,
     updateBackgroundJob,
   ]);
@@ -900,6 +1033,11 @@ export function FreshGenerationView({
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
+    // `threadId` is still stale in this closure for the very first run (the
+    // reducer dispatch has not re-rendered yet), so track it locally and let
+    // `run/created` confirm it.
+    let activeThreadId = threadId ?? backgroundThreadId ?? null;
+
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
@@ -909,13 +1047,15 @@ export function FreshGenerationView({
             run_id?: string;
             thread_id?: string;
           };
-          const activeThreadId = runData.thread_id ?? threadId;
+          activeThreadId = runData.thread_id ?? activeThreadId;
           if (activeThreadId) {
+            // Stage/progress belong to whichever phase started this run; only
+            // the run identity and "this job is live again" are known here.
             updateBackgroundJob(activeThreadId, {
               runId: runData.run_id,
               status: "running",
-              stage: "Drafting your article",
-              progress: 12,
+              awaitingInput: false,
+              completionNotified: false,
             });
           }
           continue;
@@ -1049,19 +1189,19 @@ export function FreshGenerationView({
             "Creating the first draft based on the approved outline...",
           );
           advancePipeline("Generating Content");
-          if (threadId) {
-            updateBackgroundJob(threadId, {
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
               status: "running",
               stage: "Drafting your article",
-              progress: 28,
+              progress: ARTICLE_PHASE_PROGRESS,
             });
           }
         }
 
         if (updates?.generate_content) {
           advancePipeline("Humanizing");
-          if (threadId) {
-            updateBackgroundJob(threadId, {
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
               status: "running",
               stage: "Refining tone and structure",
               progress: 58,
@@ -1071,8 +1211,8 @@ export function FreshGenerationView({
 
         if (updates?.humanize_content) {
           advancePipeline("Reviewing Content");
-          if (threadId) {
-            updateBackgroundJob(threadId, {
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
               status: "running",
               stage: "Running quality checks",
               progress: 78,
@@ -1084,8 +1224,8 @@ export function FreshGenerationView({
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
-          if (threadId) {
-            updateBackgroundJob(threadId, {
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
               status: "running",
               stage: "Finalizing SEO and readability",
               progress: 90,
@@ -1099,8 +1239,8 @@ export function FreshGenerationView({
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
-          if (threadId) {
-            updateBackgroundJob(threadId, {
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
               status: "running",
               stage: "Preparing your article",
               progress: 96,
@@ -1168,6 +1308,12 @@ export function FreshGenerationView({
         }
 
         if (updates.__interrupt__) {
+          // The run just paused for the user, so no further tokens belong to
+          // the previous phase. Releasing the target matters most on restore:
+          // a stale "content" target keeps `showOutlineReview` false and the
+          // article overlay up, hiding the approve/reject step entirely.
+          setTokenTarget("none");
+          tokenTargetRef.current = "none";
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
           const recommendedContentType =
             updates.__interrupt__?.[0]?.value?.recommended_content_type;
@@ -1184,6 +1330,21 @@ export function FreshGenerationView({
             dispatch({
               type: "SET_RECOMMENDED_TOPIC",
               payload: recommendedTopic,
+            });
+          }
+
+          // The run is about to pause for this step. Record it now (and mark it
+          // notified — the user is looking at it) so the dock reflects reality
+          // before its next poll and doesn't toast a step already on screen.
+          if (activeThreadId) {
+            const awaiting = deriveAwaitingInputStage(
+              updates.__interrupt__?.[0]?.value?.type,
+            );
+            updateBackgroundJob(activeThreadId, {
+              status: "completed",
+              awaitingInput: true,
+              completionNotified: true,
+              ...awaiting,
             });
           }
         }
@@ -1208,8 +1369,8 @@ export function FreshGenerationView({
           error_message:
             _e instanceof Error ? _e.message : "Unknown stream error",
         });
-        if (threadId) {
-          updateBackgroundJob(threadId, {
+        if (activeThreadId) {
+          updateBackgroundJob(activeThreadId, {
             status: "failed",
             stage: "Generation failed",
             error:
@@ -1241,6 +1402,17 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
+    const activeGenerationJob = findActiveGenerationJob(
+      useBackgroundGenerationStore.getState().jobs,
+    );
+    if (activeGenerationJob) {
+      toast.info("An article is already in progress", {
+        description: `Returning to "${activeGenerationJob.title}".`,
+      });
+      router.push(activeGenerationJob.resultUrl as Route);
+      return;
+    }
+
     // Not enough for a whole article → stop before a thread or stream is ever created
     if (!ensureCredits()) return;
     if (streamBusyRef.current) return;
@@ -1270,6 +1442,34 @@ export function FreshGenerationView({
       dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
       const keyword = _initialKeyword || userKeyword;
+
+      // Register the tracking record before the stream opens so the dock can
+      // take over the moment the user navigates away. Like the content run, the
+      // keyword run is server-owned (onDisconnect: "continue"), so leaving the
+      // page only stops reading the stream — it never cancels the analysis.
+      const startedAt = new Date().toISOString();
+      upsertBackgroundJob({
+        threadId: newThreadId,
+        workspaceId: workspaceId ?? undefined,
+        workspaceSlug,
+        title: keyword || "Keyword research",
+        keyword,
+        status: "running",
+        stage: "Analyzing search results",
+        progress: 5,
+        createdAt: startedAt,
+        updatedAt: startedAt,
+        resultUrl: `${workspaceRoutes.generate_content(
+          workspaceSlug,
+        )}?thread=${encodeURIComponent(newThreadId)}`,
+        completionNotified: false,
+        awaitingInput: false,
+      });
+
+      toast.info("Analyzing your keyword", {
+        description:
+          "You can leave this page — we'll keep working and notify you when it's ready.",
+      });
 
       analytics.track("content_generation_started", {
         keyword,
@@ -1328,6 +1528,19 @@ export function FreshGenerationView({
       if (statusMsg)
         dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
 
+      // The workflow is moving again: reopen the tracking record so the dock
+      // resumes polling (and can notify again) if the user leaves mid-step.
+      // Drop the previous paused run ID so other tabs do not keep polling that
+      // completed run and restore this same interactive step over the new run.
+      // `run/created` supplies the replacement ID as soon as the resume starts.
+      updateBackgroundJob(threadId, {
+        runId: undefined,
+        status: "running",
+        awaitingInput: false,
+        completionNotified: false,
+        ...(statusMsg ? { stage: statusMsg.replace(/\.+$/, "") } : {}),
+      });
+
       const stream = streamFromSSE(
         `/api/generate/${threadId}/resume`,
         {
@@ -1368,11 +1581,14 @@ export function FreshGenerationView({
       keyword: primaryKeyword,
       status: "running",
       stage: "Drafting your article",
-      progress: 12,
+      // Matches the derived "Drafting your article" milestone so the shared
+      // record keeps climbing from the research steps instead of rewinding.
+      progress: ARTICLE_PHASE_PROGRESS,
       createdAt: now,
       updatedAt: now,
       resultUrl,
       completionNotified: false,
+      awaitingInput: false,
     });
 
     toast.info("Generating your article", {
@@ -1771,11 +1987,10 @@ export function FreshGenerationView({
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={() =>
-                router.push(
-                  workspaceRoutes.generate_content(workspaceSlug) as Route,
-                )
-              }
+              onClick={() => {
+                setRestoreError(null);
+                onBack();
+              }}
             >
               Start a new article
             </Button>

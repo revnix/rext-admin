@@ -428,6 +428,9 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [selectedPublishStatus, setSelectedPublishStatus] =
+    useState<WordPressPostStatus>("publish");
   const [pendingPublishStatus, setPendingPublishStatus] =
     useState<WordPressPostStatus>("publish");
 
@@ -849,6 +852,11 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
+  const openPublishConfirmation = (status: WordPressPostStatus) => {
+    setSelectedPublishStatus(status);
+    setPublishConfirmOpen(true);
+  };
+
   const analysisSidebarContent = (
     <div className="flex flex-col h-full bg-sidebar pb-20 sm:pb-0">
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
@@ -943,21 +951,21 @@ function ContentEditorInner(props: ContentEditorProps) {
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
                   disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => publishContent("publish")}
+                  onClick={() => openPublishConfirmation("publish")}
                 >
                   <Send size={13} className="mr-2" />
                   Publish
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => publishContent("draft")}
+                  onClick={() => openPublishConfirmation("draft")}
                 >
                   <Save size={13} className="mr-2" />
                   Save as Draft
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => publishContent("pending")}
+                  onClick={() => openPublishConfirmation("pending")}
                 >
                   <Eye size={13} className="mr-2" />
                   Submit for Review
@@ -1655,6 +1663,42 @@ function ContentEditorInner(props: ContentEditorProps) {
                 <Clock size={13} className="mr-1" />
               )}
               Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>
+            Confirm {WORDPRESS_STATUS_DETAILS[selectedPublishStatus].label}
+          </DialogTitle>
+
+          <DialogDescription>
+            Are you sure you want to{" "}
+            <strong>
+              {WORDPRESS_STATUS_DETAILS[
+                selectedPublishStatus
+              ].label.toLowerCase()}
+            </strong>{" "}
+            this content?
+          </DialogDescription>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPublishConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() => {
+                setPublishConfirmOpen(false);
+                publishContent(selectedPublishStatus);
+              }}
+            >
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>
