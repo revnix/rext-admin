@@ -510,6 +510,11 @@ export function FreshGenerationView({
   // biome-ignore lint/correctness/useExhaustiveDependencies: processStream/cancelStream are declared later and are intentionally not deps (accessed via ref / at call time)
   useEffect(() => {
     if (!backgroundThreadId) return;
+    // This mount started the run and is already reading its live stream (the
+    // redirect to `?thread=...` arrives mid-generation). Restoring would abort
+    // that stream to rejoin the same run, and the aborted `processStream`
+    // unwinds through its `finally` — clearing the loading UI underneath it.
+    if (streamBusyRef.current) return;
 
     let disposed = false;
     let retryId: number | undefined;
