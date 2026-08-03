@@ -412,6 +412,8 @@ export const ENDPOINTS = {
       `/api/v1/workspaces/${workspaceId}/media` as const,
     upload: (workspaceId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/upload` as const,
+    uploadBlogImage: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
     detail: (workspaceId: string, mediaId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/${mediaId}` as const,
     bulkDelete: (workspaceId: string) =>

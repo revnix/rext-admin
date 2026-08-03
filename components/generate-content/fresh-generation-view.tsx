@@ -9,7 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -85,6 +87,11 @@ import {
   BACKGROUND_GENERATION_RESTORE_EVENT,
   type BackgroundGenerationRestoreDetail,
 } from "@/lib/generate-content/background-generation-sync";
+import {
+  formatWordCountRange,
+  getContentTypeWordCountRange,
+  type WordCountRange,
+} from "@/lib/generate-content/content-type-word-count";
 
 // Derived progress at which the workflow has left the interactive research
 // steps and is writing the article — the only phase that gets the content
@@ -139,6 +146,30 @@ const normalizeEscapedJsonish = (raw: string) => {
   // {\"title\":\"...\",\"body_markdown\":\"...\"}
   // Normalize it so field extraction works.
   return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
+};
+
+const extractRequestedTargetWordCount = (feedback: string): number | null => {
+  const match = feedback.match(
+    /\b(?:target\s+)?word\s*(?:count|length)\s*(?:should\s*be|is|to|of|:|=)?\s*([\d,]{2,6})\b|\b([\d,]{2,6})\s*(?:-|\s)?words?\b/i,
+  );
+  const rawCount = match?.[1] ?? match?.[2];
+  if (!rawCount) return null;
+
+  const count = Number(rawCount.replaceAll(",", ""));
+  return Number.isInteger(count) && count >= 100 && count <= 10_000
+    ? count
+    : null;
+};
+
+const showWordCountRangeError = (
+  requestedCount: number,
+  contentType: string | undefined,
+  wordCountRange: WordCountRange,
+) => {
+  const typeLabel = contentType || "selected content type";
+  toast.error("Word count is outside the allowed range", {
+    description: `${typeLabel} supports ${formatWordCountRange(wordCountRange)}. ${requestedCount.toLocaleString()} words cannot be used.`,
+  });
 };
 
 const htmlToMarkdownLite = (html: string) => {
@@ -225,6 +256,9 @@ export function FreshGenerationView({
   const updateBackgroundJob = useBackgroundGenerationStore(
     (store) => store.updateJob,
   );
+  const removeBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.removeJob,
+  );
   const { patchCredits } = useSubscriptionStore();
   const {
     ensureCredits,
@@ -300,6 +334,10 @@ export function FreshGenerationView({
   // True while a stream is in flight — blocks repeated clicks from spawning duplicate runs
   const streamBusyRef = useRef(false);
 
+  // Set by `run/created`: proof the server actually started a run for the
+  // current attempt. A resume that ends without it left nothing behind.
+  const runCreatedRef = useRef(false);
+
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
@@ -315,6 +353,9 @@ export function FreshGenerationView({
   const [pipelineSteps, setPipelineSteps] = useState<GenerationPipelineStep[]>(
     [],
   );
+  const [pendingTargetWordCount, setPendingTargetWordCount] = useState<
+    number | null
+  >(null);
 
   const restoreActiveGenerationView = useCallback(
     (progress?: number, stage?: string) => {
@@ -728,6 +769,9 @@ export function FreshGenerationView({
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
+  const outlineWordCountRange = getContentTypeWordCountRange(
+    parsedOutline?.schema_type,
+  );
 
   // Track content_generation_completed once per thread when all scores are ready
   useEffect(() => {
@@ -1047,6 +1091,7 @@ export function FreshGenerationView({
             run_id?: string;
             thread_id?: string;
           };
+          runCreatedRef.current = true;
           activeThreadId = runData.thread_id ?? activeThreadId;
           if (activeThreadId) {
             // Stage/progress belong to whichever phase started this run; only
@@ -1167,6 +1212,7 @@ export function FreshGenerationView({
           }
         )?.generate_outline?.content?.outline;
         if (generateOutlineResult) {
+          setPendingTargetWordCount(null);
           dispatch({ type: "SET_OUTLINE", payload: generateOutlineResult });
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         }
@@ -1319,6 +1365,13 @@ export function FreshGenerationView({
             updates.__interrupt__?.[0]?.value?.recommended_content_type;
           const recommendedTopic =
             updates.__interrupt__?.[0]?.value?.recommended_topic;
+          const interruptType = updates.__interrupt__?.[0]?.value?.type;
+
+          // A new outline-review interrupt means regeneration is complete, so
+          // replace the optimistic target with the server-confirmed outline.
+          if (interruptType === "outline_review") {
+            setPendingTargetWordCount(null);
+          }
 
           if (typeof recommendedContentType === "string") {
             dispatch({
@@ -1507,22 +1560,19 @@ export function FreshGenerationView({
     }
   };
 
+  /** Resolves to whether the server actually started a run for this step. */
   const resumeWorkflow = async ({
     payload,
     status: statusMsg,
-  }: ResumeOptions) => {
-    if (!threadId) return;
+  }: ResumeOptions): Promise<boolean> => {
+    if (!threadId) return false;
     // Mid-article: the earlier stages are already paid for, so only a fully
     // exhausted balance stops the workflow advancing to the next step
-    if (!ensureCreditsToContinue()) return;
-    if (streamBusyRef.current) return;
+    if (!ensureCreditsToContinue()) return false;
+    if (streamBusyRef.current) return false;
     streamBusyRef.current = true;
 
     try {
-      cancelStream();
-      abortControllerRef.current = new AbortController();
-      const { signal } = abortControllerRef.current;
-
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       if (statusMsg)
@@ -1541,17 +1591,32 @@ export function FreshGenerationView({
         ...(statusMsg ? { stage: statusMsg.replace(/\.+$/, "") } : {}),
       });
 
-      const stream = streamFromSSE(
-        `/api/generate/${threadId}/resume`,
-        {
-          payload,
-          streamMode: ["updates", "messages", "custom"],
-          streamSubgraphs: true,
-          onDisconnect: "continue",
-        },
-        signal,
-      );
-      await processStream(stream);
+      // A resume that dies before `run/created` (aborted fetch, dev-server
+      // hiccup, rejected run) leaves no run on the thread and nothing on
+      // screen — the click simply vanishes. Retry once before reporting back.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        cancelStream();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        runCreatedRef.current = false;
+
+        const stream = streamFromSSE(
+          `/api/generate/${threadId}/resume`,
+          {
+            payload,
+            streamMode: ["updates", "messages", "custom"],
+            streamSubgraphs: true,
+            onDisconnect: "continue",
+          },
+          controller.signal,
+        );
+        await processStream(stream);
+
+        // An abort is deliberate (cancelled generation, unmount, a newer
+        // stream taking over) — never retry over it.
+        if (runCreatedRef.current || controller.signal.aborted) break;
+      }
+      return runCreatedRef.current;
     } finally {
       streamBusyRef.current = false;
     }
@@ -1700,21 +1765,54 @@ export function FreshGenerationView({
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
+        // Keep the graph paused at the outline-review interrupt while the user
+        // enters feedback. Sending `reject` here makes the graph issue a
+        // second interrupt for the same feedback, which leaves a short window
+        // where the first Submit Feedback click races the previous stream.
+        // The backend accepts `regenerate` with feedback inline, so we can
+        // collect it locally and resume exactly once on submit.
+        dispatch({ type: "SET_REJECTED_REASON", payload: "" });
+        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+        return;
+      case "OUTLINE_REJECT_REASON": {
+        const requestedTargetWordCount = extractRequestedTargetWordCount(value);
+        if (
+          requestedTargetWordCount !== null &&
+          outlineWordCountRange &&
+          (requestedTargetWordCount < outlineWordCountRange.min ||
+            requestedTargetWordCount > outlineWordCountRange.max)
+        ) {
+          showWordCountRangeError(
+            requestedTargetWordCount,
+            parsedOutline?.schema_type,
+            outlineWordCountRange,
+          );
+          return;
+        }
+        if (requestedTargetWordCount !== null) {
+          setPendingTargetWordCount(requestedTargetWordCount);
+        }
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
         outline.resetStream();
-        dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        return resumeWorkflow({ payload: { action: "reject" } });
-      case "OUTLINE_REJECT_REASON":
-        setTokenTarget("outline");
-        tokenTargetRef.current = "outline";
-        outline.resetStream();
-        dispatch({ type: "SET_OUTLINE", payload: null });
-        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        dispatch({ type: "SUBMIT_REJECT_REASON" });
+        dispatch({ type: "SET_REJECTED_REASON", payload: "" });
 
-        return resumeWorkflow({ payload: { reason: value } });
+        return resumeWorkflow({
+          payload: { action: "regenerate", feedback: value },
+          status: "Regenerating outline...",
+        }).then((started) => {
+          if (started) return;
+          // Nothing was sent: hand the user back their feedback instead of an
+          // empty outline screen that never regenerates.
+          setPendingTargetWordCount(null);
+          dispatch({ type: "SET_REJECTED_REASON", payload: value });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+          toast.error("We couldn't send your feedback", {
+            description: "Please submit it again.",
+          });
+        });
+      }
       default: {
         const _never: never = step;
         return _never;
@@ -1758,6 +1856,55 @@ export function FreshGenerationView({
     [allContent],
   );
 
+  // Cancel an in-progress generation. Stops the server-owned run (credits
+  // already spent on finished steps are not refunded), clears the tracking
+  // record across tabs, and returns to a fresh generation screen.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream/dispatch are stable (refs/reducer), intentionally omitted
+  const handleCancelGeneration = useCallback(async () => {
+    if (!threadId) return;
+    const job = useBackgroundGenerationStore
+      .getState()
+      .jobs.find((j) => j.threadId === threadId);
+    cancelStream();
+    try {
+      await fetch(`/api/generate/${encodeURIComponent(threadId)}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId: job?.runId }),
+      });
+    } catch {
+      // Best-effort: the run may already be gone. The record cleanup below
+      // still stops the UI from tracking work that will never finish.
+    }
+    removeBackgroundJob(threadId);
+    announceBackgroundGenerationRemoval([threadId]);
+    dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+    dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+    dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+    toast.info("Generation cancelled", {
+      description: "Credits already used for this generation are not refunded.",
+    });
+    router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
+  }, [threadId, removeBackgroundJob, router, workspaceSlug]);
+
+  // Shown while a generation is actively running (not on the finished article).
+  const cancelGenerationControl =
+    isManualLoading && threadId && !isContentFinal ? (
+      <ConfirmationDialog
+        title="Cancel this generation?"
+        description="The article will stop where it is. Credits already used for this generation are not refunded."
+        confirmText="Cancel generation"
+        cancelText="Keep generating"
+        variant="destructive"
+        onConfirm={() => void handleCancelGeneration()}
+      >
+        <Button type="button" variant="outline" size="sm" className="gap-1.5">
+          <X className="h-4 w-4" />
+          Cancel generation
+        </Button>
+      </ConfirmationDialog>
+    ) : null;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1780,6 +1927,9 @@ export function FreshGenerationView({
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
         />
+        {cancelGenerationControl && (
+          <div className="mt-6">{cancelGenerationControl}</div>
+        )}
       </div>
     );
   }
@@ -1828,6 +1978,8 @@ export function FreshGenerationView({
       <OutlineRejectSection
         instruction={displayedInstruction}
         rejectedReason={rejectedReason}
+        contentType={parsedOutline?.schema_type}
+        wordCountRange={outlineWordCountRange}
         onChange={(val) =>
           dispatch({ type: "SET_REJECTED_REASON", payload: val })
         }
@@ -1920,7 +2072,8 @@ export function FreshGenerationView({
             <OutlineDisplay
               outline={parsedOutline}
               rawTokens={outline.streamedText}
-              isLoading={isStreamingOutline}
+              isLoading={isManualLoading || isStreamingOutline}
+              pendingTargetWordCount={pendingTargetWordCount}
               internalLinks={interruptInternalLinks}
               brandVoicePromotion={interruptBrandVoicePromotion}
               onApprove={(selectedLinks, promoteBrand) => {
@@ -1963,9 +2116,24 @@ export function FreshGenerationView({
                 });
               }}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
-              onUpdate={(updatedOutline) =>
-                dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
-              }
+              onUpdate={(updatedOutline) => {
+                const requestedTargetWordCount =
+                  updatedOutline.target_word_count;
+                if (
+                  requestedTargetWordCount !== undefined &&
+                  outlineWordCountRange &&
+                  (requestedTargetWordCount < outlineWordCountRange.min ||
+                    requestedTargetWordCount > outlineWordCountRange.max)
+                ) {
+                  showWordCountRangeError(
+                    requestedTargetWordCount,
+                    parsedOutline?.schema_type,
+                    outlineWordCountRange,
+                  );
+                  return;
+                }
+                dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
+              }}
               keywordClusters={keywordClusters}
             />
           </div>
@@ -2001,6 +2169,11 @@ export function FreshGenerationView({
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
+          {cancelGenerationControl && (
+            <div className="mx-auto mb-3 flex w-full max-w-5xl justify-end">
+              {cancelGenerationControl}
+            </div>
+          )}
           <ContentEditor
             threadId={threadId ?? undefined}
             allContent={

@@ -26,14 +26,69 @@ import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, type SubscriptionPlan } from "@/types/subscription";
 
-const FEATURE_LABELS: Record<string, string> = {
-  support: "Support Type",
-  api_access: "API Access Level",
-  collaboration: "Collaboration Tools",
-  custom_branding: "Custom Branding Enabled",
-  priority_support: "Priority Support",
-  advanced_analytics: "Advanced Analytics",
+const PLAN_CARD_DETAILS: Record<string, string[]> = {
+  starter: [
+    "Estimated 27 articles/month",
+    "Keyword analysis",
+    "SERP analysis",
+    "400 credits/month",
+    "EEAT Injection and Analysis",
+    "On-page SEO",
+    "1 Workspace",
+    "5 Members",
+  ],
+  growth: [
+    "Estimated 67 articles/month",
+    "Keyword analysis",
+    "SERP analysis",
+    "1,000 credits/month",
+    "EEAT Injection and Analysis",
+    "On-page SEO",
+    "3 Workspaces",
+    "10 Members",
+  ],
+  pro: [
+    "Estimated 160 articles/month",
+    "Keyword analysis",
+    "SERP analysis",
+    "2,400 credits/month",
+    "EEAT Injection and Analysis",
+    "On-page SEO",
+    "5 Workspaces",
+    "15 Members",
+  ],
+  agency: [
+    "Estimated 367 articles/month",
+    "Keyword analysis",
+    "SERP analysis",
+    "5,500 credits/month",
+    "EEAT Injection and Analysis",
+    "On-page SEO",
+    "Unlimited Workspaces",
+    "Unlimited Members",
+  ],
 };
+
+function getPlanCardDetails(plan: SubscriptionPlan) {
+  const planDetails = [plan.name, plan.display_name]
+    .map((name) => PLAN_CARD_DETAILS[name.trim().toLowerCase()])
+    .find(Boolean);
+
+  if (planDetails) {
+    return planDetails;
+  }
+
+  return [
+    plan.credits_per_month
+      ? `${plan.credits_per_month.toLocaleString()} credits/month`
+      : "Unlimited credits",
+    plan.credits_per_month
+      ? `Estimated ${Math.ceil(plan.credits_per_month / 15)} articles/month`
+      : "Unlimited articles",
+    `${plan.max_workspaces === -1 ? "Unlimited" : plan.max_workspaces} Workspace${plan.max_workspaces === 1 ? "" : "s"}`,
+    `${plan.max_members_per_workspace === -1 ? "Unlimited" : plan.max_members_per_workspace} Member${plan.max_members_per_workspace === 1 ? "" : "s"}`,
+  ];
+}
 
 export interface PricingTableProps {
   /** Additional CSS classes */
@@ -139,11 +194,11 @@ export function PricingTable({
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {plans?.map((plan) => {
-          const features = plan.features;
           const price = getPrice(plan);
           const { savingsPercent } = getYearlySavings(plan);
           const isPopular = plan.id === popularPlanId;
           const isCurrent = isCurrentPlan(plan.id);
+          const cardDetails = getPlanCardDetails(plan);
 
           return (
             <Card
@@ -205,69 +260,12 @@ export function PricingTable({
               <CardContent className="grow">
                 {/* Features List */}
                 <ul className="space-y-3">
-                  {Object.entries(features ?? {})
-                    .filter(([_, value]) => value === true) // STRICT: only keep true
-                    .map(([key]) => (
-                      <li key={key} className="flex items-center gap-2">
-                        <Check className="h-5 w-5 shrink-0 text-green-600 dark:text-green-500" />
-                        <span className="text-sm font-medium">
-                          {FEATURE_LABELS[key] || key.replace(/_/g, " ")}
-                        </span>
-                      </li>
-                    ))}
-                  {/* Credits & Limits */}
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm font-semibold">
-                      {plan.credits_per_month
-                        ? `${plan.credits_per_month.toLocaleString()} Credits/mo`
-                        : "Unlimited Credits"}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.credits_per_month
-                        ? `~${Math.floor(plan.credits_per_month / 15)} Articles/mo`
-                        : "Unlimited Articles"}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_workspaces === -1
-                        ? "Unlimited"
-                        : plan.max_workspaces}{" "}
-                      workspace{plan.max_workspaces !== 1 ? "s" : ""}
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_members_per_workspace === -1
-                        ? "Unlimited"
-                        : plan.max_members_per_workspace}{" "}
-                      members/ws
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_knowledge_items === -1
-                        ? "Unlimited"
-                        : plan.max_knowledge_items.toLocaleString()}{" "}
-                      Knowledge Items
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm">
-                      {plan.max_api_calls_per_month === -1
-                        ? "Unlimited"
-                        : plan.max_api_calls_per_month.toLocaleString()}{" "}
-                      API calls/month
-                    </span>
-                  </li>
+                  {cardDetails.map((detail) => (
+                    <li key={detail} className="flex items-start gap-2">
+                      <Check className="h-5 w-5 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                      <span className="text-sm">{detail}</span>
+                    </li>
+                  ))}
                 </ul>
               </CardContent>
 

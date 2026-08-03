@@ -45,24 +45,32 @@ export async function* streamFromSSE(
       if (!line.startsWith("data: ")) continue;
       const payload = line.slice(6);
       if (payload === "[DONE]") return;
+      let parsed: unknown;
       try {
-        const parsed = JSON.parse(payload);
-
-        const result = RunStreamEventSchema.safeParse(parsed);
-
-        if (result.success) {
-          yield result.data as RunStreamEvent;
-        } else {
-          sseLogger.warn("Malformed SSE event: schema validation failed", {
-            errors: result.error.issues.map(
-              (i) => `${i.path.join(".")}: ${i.message}`,
-            ),
-            payloadPreview: payload.substring(0, 200),
-          });
-        }
+        parsed = JSON.parse(payload);
       } catch (error) {
         sseLogger.warn("Malformed SSE event: JSON parse failed", {
           error: error instanceof Error ? error.message : String(error),
+          payloadPreview: payload.substring(0, 200),
+        });
+        continue;
+      }
+
+      // The proxy route reports a failed run as `{ error }`, which is not a
+      // stream event: swallowing it as "malformed" is what makes a failed
+      // resume look like a click that did nothing.
+      const streamError = (parsed as { error?: unknown })?.error;
+      if (typeof streamError === "string") throw new Error(streamError);
+
+      const result = RunStreamEventSchema.safeParse(parsed);
+
+      if (result.success) {
+        yield result.data as RunStreamEvent;
+      } else {
+        sseLogger.warn("Malformed SSE event: schema validation failed", {
+          errors: result.error.issues.map(
+            (i) => `${i.path.join(".")}: ${i.message}`,
+          ),
           payloadPreview: payload.substring(0, 200),
         });
       }
