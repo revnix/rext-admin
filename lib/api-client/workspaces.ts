@@ -204,7 +204,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       );
 
       // Record audit log
-      if (result && result.workspace) {
+      if (result?.workspace) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",

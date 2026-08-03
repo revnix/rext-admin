@@ -31,6 +31,11 @@ const settingsNavItems: SettingsNavItem[] = [
     icon: Shield,
   },
   {
+    label: "Trash",
+    href: settingsRoutes.trash,
+    icon: Trash2,
+  },
+  {
     label: "Billing",
     href: settingsRoutes.subscription,
     icon: CreditCard,

@@ -14,9 +14,11 @@ import {
   ShieldAlert,
   Smartphone,
   Tablet,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { settingsRoutes } from "@/lib/routes";
 import { toast } from "sonner";
 import { SecurityOverview } from "@/components/security/security-overview";
 import { UnifiedActivity } from "@/components/security/unified-activity";
@@ -143,6 +145,15 @@ export default function SecuritySettingsPage() {
         <p className="text-muted-foreground">
           Manage your active sessions and monitor account activity
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" asChild>
+          <Link href={settingsRoutes.trash}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            View trash
+          </Link>
+        </Button>
       </div>
 
       {/* Admin Security Statistics */}
