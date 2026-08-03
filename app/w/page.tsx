@@ -334,6 +334,10 @@ export default function WorkspacePage() {
             // Also invalidate queries to ensure fresh data on next fetch
             queryClient.invalidateQueries({ queryKey: ["workspaces"] });
           }}
+          onRestored={() => {
+            // Refetch so the restored workspace reappears in the list
+            queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+          }}
           onError={(error) => {
             log.error("Failed to delete workspace:", error);
           }}

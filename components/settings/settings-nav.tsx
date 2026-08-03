@@ -1,6 +1,12 @@
 "use client";
 
-import { CreditCard, Shield, User, type LucideIcon } from "lucide-react";
+import {
+  CreditCard,
+  Shield,
+  Trash2,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -23,6 +29,11 @@ const settingsNavItems: SettingsNavItem[] = [
     label: "Security",
     href: settingsRoutes.security,
     icon: Shield,
+  },
+  {
+    label: "Trash",
+    href: settingsRoutes.trash,
+    icon: Trash2,
   },
   {
     label: "Billing",

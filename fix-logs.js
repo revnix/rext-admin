@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("node:fs");
 
 const files = [
   "lib/api-client/profile.ts",
@@ -16,7 +16,7 @@ for (const file of files) {
       'log.error("[AuditLog]',
     );
     if (!content.includes("import { log }")) {
-      content = 'import { log } from "@/lib/logger";\n' + content;
+      content = `import { log } from "@/lib/logger";\n${content}`;
     }
     fs.writeFileSync(file, content);
   }

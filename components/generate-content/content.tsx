@@ -38,6 +38,8 @@ import {
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { profileQueries } from "@/lib/query-keys";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
@@ -432,19 +434,98 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [pendingPublishStatus, setPendingPublishStatus] =
     useState<WordPressPostStatus>("publish");
 
-  const isDateDisabled = useCallback((d: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return d < today;
+  // Scheduling follows the account's timezone field (Profile settings) --
+  // the backend converts wall-clock input using this same field, so
+  // "today"/"now" here must be computed relative to it too, or the min-time
+  // guard and the backend's idea of "in the past" would disagree. It's kept
+  // in sync with the device's timezone automatically below.
+  const queryClient = useQueryClient();
+  const { data: accountProfile } = useQuery({ ...profileQueries.detail() });
+  const accountTimezone = accountProfile?.timezone || "UTC";
+
+  // The account timezone defaults to "UTC" for anyone who has never opened
+  // Profile settings, which silently makes scheduled times land hours away
+  // from what the user actually meant ("9:59 PM" typed on a laptop in
+  // Karachi, but stored/interpreted as 9:59 PM UTC). The user's device
+  // timezone is what they actually mean, so auto-sync the account field to
+  // it the moment a mismatch is seen, rather than requiring a manual step.
+  const browserTimezone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [],
+  );
+  const timezoneMismatch =
+    !!accountProfile &&
+    !!browserTimezone &&
+    accountTimezone !== browserTimezone;
+
+  const syncTimezoneMutation = useMutation({
+    mutationFn: () => apiClient.profile.update({ timezone: browserTimezone }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
+    },
+  });
+
+  // Auto-sync once per mismatch: fires when we first see accountTimezone !==
+  // browserTimezone, and stops (via hasAttemptedAutoSyncRef) so a failed
+  // update doesn't retry on every render — the banner below still offers a
+  // manual retry in that case.
+  const hasAttemptedAutoSyncRef = useRef(false);
+  useEffect(() => {
+    if (
+      timezoneMismatch &&
+      !hasAttemptedAutoSyncRef.current &&
+      !syncTimezoneMutation.isPending
+    ) {
+      hasAttemptedAutoSyncRef.current = true;
+      syncTimezoneMutation.mutate();
+    }
+    if (!timezoneMismatch) {
+      hasAttemptedAutoSyncRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timezoneMismatch]);
+
+  const getPartsInTimezone = useCallback((date: Date, tz: string) => {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    const parts = fmt.formatToParts(date);
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? "";
+    return {
+      dateStr: `${get("year")}-${get("month")}-${get("day")}`,
+      timeStr: `${get("hour")}:${get("minute")}`,
+    };
   }, []);
 
-  const isScheduleDateToday = scheduleDate
-    ? scheduleDate.toDateString() === new Date().toDateString()
-    : false;
+  const { dateStr: accountTodayStr, timeStr: accountNowTimeStr } = useMemo(
+    () => getPartsInTimezone(new Date(), accountTimezone),
+    [getPartsInTimezone, accountTimezone],
+  );
 
-  const minScheduleTime = isScheduleDateToday
-    ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`
+  const isDateDisabled = useCallback(
+    (d: Date) => {
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return dStr < accountTodayStr;
+    },
+    [accountTodayStr],
+  );
+
+  const scheduleDateStr = scheduleDate
+    ? `${scheduleDate.getFullYear()}-${String(scheduleDate.getMonth() + 1).padStart(2, "0")}-${String(scheduleDate.getDate()).padStart(2, "0")}`
     : undefined;
+
+  const isScheduleDateToday = scheduleDateStr === accountTodayStr;
+
+  const minScheduleTime = isScheduleDateToday ? accountNowTimeStr : undefined;
 
   const isScheduleTimeInPast =
     isScheduleDateToday && scheduleTime < (minScheduleTime ?? "");
@@ -684,10 +765,10 @@ function ContentEditorInner(props: ContentEditorProps) {
     try {
       setIsPublishing(true);
       setScheduleDialogOpen(false);
-      const [hours, minutes] = scheduleTime.split(":").map(Number);
-      const dt = new Date(scheduleDate);
-      dt.setHours(hours, minutes, 0, 0);
-      const scheduledAt = dt.toISOString();
+      // Naive local datetime (no offset) — the backend interprets this as
+      // wall-clock time in the user's account timezone (accountTimezone),
+      // not the browser's, so scheduling is consistent regardless of device.
+      const scheduledAt = `${scheduleDateStr}T${scheduleTime}:00`;
 
       if (contentSavedId) {
         await apiClient.content.schedule(
@@ -716,7 +797,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         isOpen: true,
         type: "success",
         action: "publish",
-        message: `Content scheduled for ${dt.toLocaleString()}.`,
+        message: `Content scheduled for ${scheduleTime} on ${scheduleDate.toLocaleDateString()} (${accountTimezone}).`,
       });
     } catch (error) {
       const err = error as Error;
@@ -1507,8 +1588,36 @@ function ContentEditorInner(props: ContentEditorProps) {
         <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
           <DialogTitle>Schedule Publication</DialogTitle>
           <DialogDescription>
-            Pick a date and time. Content publishes automatically via WordPress.
+            Pick a date and time in your account timezone ({accountTimezone}).
+            Content publishes automatically via WordPress.
           </DialogDescription>
+          {timezoneMismatch && syncTimezoneMutation.isError && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <div className="flex-1">
+                Couldn&apos;t update your account timezone to match your device
+                (<strong>{browserTimezone}</strong>). Scheduled times will use{" "}
+                <strong>{accountTimezone}</strong> until this succeeds.
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 ml-1 text-amber-900 underline dark:text-amber-200"
+                  disabled={syncTimezoneMutation.isPending}
+                  onClick={() => syncTimezoneMutation.mutate()}
+                >
+                  Retry
+                </Button>
+              </div>
+            </div>
+          )}
+          {timezoneMismatch && syncTimezoneMutation.isPending && (
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
+              <Loader2 size={14} className="animate-spin shrink-0" />
+              Updating your account timezone to match your device (
+              {browserTimezone})...
+            </div>
+          )}
           <div className="flex flex-col items-center gap-4 py-2">
             <Calendar
               mode="single"
@@ -1540,7 +1649,12 @@ function ContentEditorInner(props: ContentEditorProps) {
             </Button>
             <Button
               size="sm"
-              disabled={!scheduleDate || isPublishing || isScheduleTimeInPast}
+              disabled={
+                !scheduleDate ||
+                isPublishing ||
+                isScheduleTimeInPast ||
+                (timezoneMismatch && syncTimezoneMutation.isPending)
+              }
               onClick={scheduleContent}
             >
               {isPublishing ? (

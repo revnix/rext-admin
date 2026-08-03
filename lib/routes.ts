@@ -27,6 +27,7 @@ export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
 export const settingsRoutes = {
   root: "/settings",
   security: "/settings/security",
+  trash: "/settings/trash",
   billing: "/settings/billing",
   subscription: "/settings/subscription",
 } as const satisfies Record<string, Route>;
@@ -110,6 +111,7 @@ export const workspaceRoutes = {
     billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
     integrations: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/integrations`,
+    trash: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/trash`,
   },
 } as const;
 
