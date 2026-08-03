@@ -60,7 +60,9 @@ async function readSessionWithoutWritingCookie(
   const secret =
     process.env.AUTH_SECRET ??
     process.env.NEXTAUTH_SECRET ??
-    (process.env.NODE_ENV !== "production" ? "development_auth_secret" : undefined);
+    (process.env.NODE_ENV !== "production"
+      ? "development_auth_secret"
+      : undefined);
   if (!secret) return null;
 
   const configuredUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;

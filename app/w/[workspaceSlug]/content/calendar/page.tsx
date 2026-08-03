@@ -25,7 +25,6 @@ import type { CalendarEntry } from "@/types/content";
 import { cn } from "@/lib/utils";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const DAYS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTH_NAMES = [
   "January",
   "February",

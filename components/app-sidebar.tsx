@@ -37,8 +37,10 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
+import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
+import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
@@ -70,6 +72,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const activeGenerationJob = useBackgroundGenerationStore((state) =>
+    findActiveGenerationJob(state.jobs),
+  );
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
   const _storeRole = currentWorkspace
@@ -105,9 +110,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Generate Content",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.generate_content(currentWorkspace.slug)
-            : "/",
+          url:
+            activeGenerationJob?.resultUrl ??
+            (currentWorkspace?.slug
+              ? workspaceRoutes.generate_content(currentWorkspace.slug)
+              : "/"),
           icon: Sparkles,
           permission: "content.create",
         },
@@ -280,7 +287,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
-                  const isActive = pathname === item.url;
+                  const isActive = pathname === item.url.split("?")[0];
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -291,7 +298,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       >
                         <Link href={item.url as Route}>
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -395,7 +402,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         >
                           <div className="flex items-center gap-2">
                             {Icon && <Icon />}
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                           </div>
                           <ChevronDown
                             size={16}
@@ -442,7 +449,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           className="flex items-center gap-2"
                         >
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -480,7 +487,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       >
                         <Link href={item.url as Route}>
                           {Icon && <Icon />}
-                          <span>{item.title}</span>
+                          <span className="font-medium">{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

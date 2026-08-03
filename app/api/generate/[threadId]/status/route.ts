@@ -42,7 +42,11 @@ export async function GET(
                     new Date(left.created_at).getTime(),
                 )[0],
             ),
-      client.threads.getState(threadId),
+      // `subgraphs: true` is what makes the nested node names (and the
+      // interrupts raised inside `seo_engine` / `content_engine`) visible. The
+      // top level only reports the container node, which cannot tell an outline
+      // being written apart from the article being written.
+      client.threads.getState(threadId, undefined, { subgraphs: true }),
     ]);
 
     if (!run) {

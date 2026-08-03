@@ -34,6 +34,7 @@ import {
 import { useMemo, useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
+import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 function extractJsonStringField(raw: string, field: string) {
@@ -583,6 +584,7 @@ export function OutlineDisplay({
   onReject,
   onUpdate,
   keywordClusters = [],
+  pendingTargetWordCount,
 }: {
   outline: Outline | null; // null while still streaming
   rawTokens: string; // grows token by token from SSE
@@ -598,6 +600,7 @@ export function OutlineDisplay({
   onReject: () => void;
   onUpdate?: (outline: Outline) => void;
   keywordClusters?: KeywordCluster[];
+  pendingTargetWordCount?: number | null;
 }) {
   const [editingTone, setEditingTone] = useState(false);
   const [editingAudience, setEditingAudience] = useState(false);
@@ -636,6 +639,10 @@ export function OutlineDisplay({
   );
   const effectiveOutline = outline ?? derivedOutline;
   const canEdit = !!outline && !!onUpdate;
+  const displayedTargetWordCount =
+    pendingTargetWordCount ?? outline?.target_word_count;
+  const isTargetWordCountPending =
+    pendingTargetWordCount !== null && pendingTargetWordCount !== undefined;
 
   // Derive render blocks from cluster_heading_map + sections when _render is absent.
   const clusterBlocks = useMemo<OutlineRenderBlock[] | null>(() => {
@@ -902,7 +909,7 @@ export function OutlineDisplay({
           )}
 
           {/* Schema Type + Target Word Count */}
-          {(outline.schema_type || outline.target_word_count) && (
+          {(outline.schema_type || displayedTargetWordCount) && (
             <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
               <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
                 <FileText className="w-5 h-5 text-primary" />
@@ -918,7 +925,7 @@ export function OutlineDisplay({
                     </p>
                   </div>
                 )}
-                {outline.target_word_count && (
+                {displayedTargetWordCount && (
                   <div>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                       Target Words
@@ -960,10 +967,14 @@ export function OutlineDisplay({
                     ) : (
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-foreground">
-                          {outline.target_word_count.toLocaleString()}
+                          {displayedTargetWordCount.toLocaleString()}
                         </p>
 
-                        {canEdit && (
+                        {isTargetWordCountPending ? (
+                          <span className="text-[10px] font-semibold text-primary animate-pulse">
+                            Applying feedback…
+                          </span>
+                        ) : canEdit ? (
                           <Button
                             size="icon"
                             variant="ghost"
@@ -977,7 +988,7 @@ export function OutlineDisplay({
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -1235,8 +1246,8 @@ export function OutlineDisplay({
                 Author Persona
               </p>
               <p className="text-xs text-muted-foreground">
-                Who this article is written as — auto-selected based on
-                topic fit, or pick one yourself
+                Who this article is written as — auto-selected based on topic
+                fit, or pick one yourself
               </p>
             </div>
           </div>
@@ -1415,11 +1426,15 @@ export function OutlineDisplay({
 export function OutlineRejectSection({
   instruction,
   rejectedReason,
+  contentType,
+  wordCountRange,
   onChange,
   onSubmit,
 }: {
   instruction: string;
   rejectedReason: string;
+  contentType?: string;
+  wordCountRange?: WordCountRange | null;
   onChange: (val: string) => void;
   onSubmit: () => void;
 }) {
@@ -1445,6 +1460,13 @@ export function OutlineRejectSection({
           placeholder={instruction}
           className="w-full min-h-[140px] p-4 rounded-xl border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
         />
+        {wordCountRange && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            {contentType || "This content type"} supports between{" "}
+            {wordCountRange.min.toLocaleString()} and{" "}
+            {wordCountRange.max.toLocaleString()} words.
+          </p>
+        )}
         <div className="flex items-center justify-end mt-6">
           <Button
             onClick={onSubmit}

@@ -292,12 +292,23 @@ review results, and persisted errors.
 | ---: | --- | --- |
 | 8 | Queued for generation | run pending |
 | 24 | Preparing your article | run active, no specific node yet |
-| 42 | Drafting your article | `generate_content` / `content_engine` active |
+| 26 | Planning your article | inside `content_engine`, node unknown |
+| 28 | Preparing your topics | `content_type` / `topic_generation` active |
+| 34 | Building your outline | `generate_outline` / cluster mapping active |
+| 42 | Drafting your article | `generate_content` active |
 | 74 | Reviewing SEO and readability | final content exists or a review node active |
 | 84 | Running quality checks | 1 review result persisted |
 | 90 | Running quality checks | 2 review results persisted |
 | 96 | Running quality checks | all 3 review results persisted, run finishing |
 | 100 | Article ready | run status `success` |
+
+`content_engine` and `seo_engine` are **subgraph containers**: at the top level
+they stay "active" for their entire phase, so the status route reads thread
+state with `subgraphs: true` and the derivation walks `tasks[].state` for the
+real node names. Without that, the whole content phase — topic selection,
+outline generation, outline review — reported "Drafting your article" at 42%,
+which put the outline steps in the article band and made the restore path join
+the stream as *content*, skipping outline approve/reject.
 
 The three review results: readability metrics, on-page SEO metrics, trust score.
 Statuses `error` / `timeout` / `interrupted` (or a persisted `content.error`) map
@@ -467,8 +478,11 @@ the execution/run-management layer; Zustand is only the browser tracking layer.
 - **Notifications require Rext open:** toasts/notifications are produced by the
   frontend; there is no email / browser-push / Slack / mobile push.
 - **Milestone %:** represents completed pipeline stages, so it can jump.
-- **No user-facing cancel:** dismissing a record only hides the UI; cancelling
-  the run would need a route calling LangGraph's run-cancel API.
+- **Cancelling is not a refund:** the X on an active job calls
+  `POST /api/generate/{threadId}/cancel` → `runs.cancel(…, "interrupt")`, which
+  stops the run and drops the tracking record. Credits already deducted by the
+  nodes that finished are not returned. Dismissing a *finished* job still only
+  hides the UI.
 - **UI retention:** 8 recent jobs, finished expire after 24h (UI-only limits).
 
 ---
@@ -563,7 +577,8 @@ pnpm build
 | `app/api/generate/[threadId]/stream/route.ts` | Initial generation stream (`onDisconnect: continue`, `streamResumable`) |
 | `app/api/generate/[threadId]/resume/route.ts` | Resume/approve stream; emits `run/created` |
 | `app/api/generate/[threadId]/join/route.ts` | Re-joins a running run's live stream (`joinStream`, `cancelOnDisconnect: false`) |
-| `app/api/generate/[threadId]/status/route.ts` | Run status, derived progress, optional thread state |
+| `app/api/generate/[threadId]/status/route.ts` | Run status, derived progress, optional thread state (read with `subgraphs: true`) |
+| `app/api/generate/[threadId]/cancel/route.ts` | Stops a server-owned run (`runs.cancel`) — the only real cancel |
 | `lib/generate-content/background-progress.ts` | LangGraph state → user-facing milestones |
 
 ### Backend (`rext-backend`)

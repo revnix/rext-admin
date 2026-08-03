@@ -76,6 +76,19 @@ export interface MediaUploadParams {
   is_public?: boolean;
 }
 
+export interface BlogImageUpload {
+  filename: string;
+  original_filename: string;
+  file_type: string;
+  file_size: number;
+  storage_backend: "minio";
+  storage_path: string;
+  storage_bucket: string;
+  public_url: string;
+  width: number | null;
+  height: number | null;
+}
+
 export interface MediaUpdateParams {
   title?: string;
   description?: string;
@@ -133,6 +146,28 @@ export function createMediaNamespace(client: ApiClient) {
         method: "POST",
         body: formData,
       });
+    },
+
+    /**
+     * Upload an image inserted directly into a blog post.
+     *
+     * These images are stored in MinIO. The backend copies only the images
+     * still embedded in the final post into WordPress media at publish time.
+     */
+    async uploadBlogImage(
+      workspaceId: string,
+      file: File,
+    ): Promise<BlogImageUpload> {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      return client.request<BlogImageUpload>(
+        ENDPOINTS.MEDIA.uploadBlogImage(workspaceId),
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
     },
 
     /**

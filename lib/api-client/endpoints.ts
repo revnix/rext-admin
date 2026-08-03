@@ -38,6 +38,8 @@ export const ENDPOINTS = {
     BASE_ALL: "/api/v1/workspaces/all",
     byId: (id: string) => `/api/v1/workspaces/${id}` as const,
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
+    deleted: () => "/api/v1/workspaces/deleted" as const,
+    restore: (id: string) => `/api/v1/workspaces/${id}/restore` as const,
 
     // Brand Voice
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
@@ -412,6 +414,8 @@ export const ENDPOINTS = {
       `/api/v1/workspaces/${workspaceId}/media` as const,
     upload: (workspaceId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/upload` as const,
+    uploadBlogImage: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
     detail: (workspaceId: string, mediaId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/${mediaId}` as const,
     bulkDelete: (workspaceId: string) =>

@@ -26,6 +26,13 @@ export interface BackgroundGenerationJob {
   resultUrl: string;
   error?: string;
   completionNotified?: boolean;
+  /**
+   * True when the run finished by pausing on a LangGraph `interrupt()` (keyword
+   * selection, content type, topic, outline review) instead of producing the
+   * final article. The job is "done for now" but the workflow still needs the
+   * user, so the dock offers "Continue" rather than "Open article".
+   */
+  awaitingInput?: boolean;
 }
 
 interface BackgroundGenerationStore {
@@ -57,7 +64,7 @@ const normalizeJobs = (jobs: BackgroundGenerationJob[]) =>
 export const useBackgroundGenerationStore = create<BackgroundGenerationStore>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
         jobs: [],
         hasHydrated: false,
         setHasHydrated: (hasHydrated) => set({ hasHydrated }),
@@ -94,23 +101,26 @@ export const useBackgroundGenerationStore = create<BackgroundGenerationStore>()(
             }
             return { jobs: next };
           }),
-        mergeJobs: (jobs) =>
-          set((state) => {
-            const merged = new Map(
-              state.jobs.map((job) => [job.threadId, job]),
-            );
-            for (const incoming of jobs) {
-              const current = merged.get(incoming.threadId);
-              if (
-                !current ||
-                new Date(incoming.updatedAt).getTime() >=
-                  new Date(current.updatedAt).getTime()
-              ) {
-                merged.set(incoming.threadId, incoming);
-              }
+        mergeJobs: (jobs) => {
+          const currentJobs = get().jobs;
+          const merged = new Map(currentJobs.map((job) => [job.threadId, job]));
+          for (const incoming of jobs) {
+            const current = merged.get(incoming.threadId);
+            if (
+              !current ||
+              new Date(incoming.updatedAt).getTime() >=
+                new Date(current.updatedAt).getTime()
+            ) {
+              merged.set(incoming.threadId, incoming);
             }
-            return { jobs: normalizeJobs([...merged.values()]) };
-          }),
+          }
+
+          const nextJobs = normalizeJobs([...merged.values()]);
+          if (JSON.stringify(nextJobs) === JSON.stringify(currentJobs)) {
+            return;
+          }
+          set({ jobs: nextJobs });
+        },
         pruneFinishedJobs: () =>
           set((state) => {
             const cutoff = Date.now() - FINISHED_JOB_TTL_MS;
@@ -129,8 +139,8 @@ export const useBackgroundGenerationStore = create<BackgroundGenerationStore>()(
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({ jobs: state.jobs }),
         merge: (persisted, current) => {
-          const persistedState =
-            persisted as Partial<BackgroundGenerationStore>;
+          const persistedState = (persisted ??
+            {}) as Partial<BackgroundGenerationStore>;
           return {
             ...current,
             ...persistedState,

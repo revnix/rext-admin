@@ -57,7 +57,7 @@ export function ActivityLog() {
       if (stored) {
         setDeletedWorkspaces(JSON.parse(stored));
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore
     }
   }, []);
@@ -273,7 +273,7 @@ export function ActivityLog() {
           });
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore localStorage errors
     }
 
