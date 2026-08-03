@@ -124,9 +124,16 @@ export default function Page() {
     }
   };
 
+  // The loader only exists to avoid flashing the selection view before the
+  // redirect to `?thread=...` lands. It must never swallow a *mounted* fresh
+  // view: registering the job unmounted it mid-submit, and the unmount cleanup
+  // aborted the very request that creates the run — leaving a runless thread
+  // that polls "Queued for generation" forever and cannot be cancelled.
   const isResolvingActiveGeneration =
     !backgroundJobsHydrated ||
-    (!backgroundThreadId && activeGenerationJob !== undefined);
+    (view === "selection" &&
+      !backgroundThreadId &&
+      activeGenerationJob !== undefined);
 
   if (!workspace?.id || isPermLoading || isResolvingActiveGeneration) {
     return (

@@ -46,12 +46,13 @@ export async function POST(
         )
         .catch(() => undefined));
 
+    // The thread exists but no run does: the stream POST that creates one is
+    // either still in flight or never landed. There is nothing to interrupt, so
+    // drop the thread — that also takes out a run created a moment later, which
+    // is what makes cancelling in the first seconds actually stop the work
+    // instead of orphaning it. Reporting this as an error instead used to
+    // strand the job in the dock, where it then blocked every new generation.
     if (!runId) {
-      // The thread exists but no run does: the stream POST that creates it is
-      // either still in flight or never landed. There is nothing to interrupt,
-      // so drop the thread — that also takes out a run created a moment later,
-      // which is what makes cancelling in the first seconds actually stop the
-      // work instead of orphaning it.
       await client.threads.delete(threadId).catch(() => {});
 
       return Response.json({ threadId, runId: null, cancelled: true });
