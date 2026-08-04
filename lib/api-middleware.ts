@@ -11,6 +11,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { logger } from "@/lib/logger";
 import { generateRequestId } from "@/lib/response-utils";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
@@ -25,6 +26,8 @@ export interface ApiContext {
   method: string;
   path: string;
   startTime: number;
+  /** Session user id. `null` only on routes that opt out with `requireAuth: false`. */
+  userId: string | null;
 }
 
 export interface ApiErrorResponse {
@@ -50,6 +53,14 @@ export type RouteHandler<T = unknown> = (
 ) => Promise<NextResponse<ApiResponse<T>>>;
 
 export interface MiddlewareOptions {
+  /**
+   * Require a signed-in session (default `true`).
+   *
+   * `proxy.ts` excludes `/api` from its matcher, so nothing else authenticates
+   * routes built on this wrapper. Opting out must therefore be a deliberate,
+   * per-route decision — a genuinely public endpoint sets `requireAuth: false`.
+   */
+  requireAuth?: boolean;
   /** Whether to log requests */
   enableLogging?: boolean;
   /** Custom request ID prefix */
@@ -94,7 +105,12 @@ export function withApiMiddleware<T = unknown>(
   handler: RouteHandler<T>,
   options: MiddlewareOptions = {},
 ): (request: NextRequest) => Promise<NextResponse<ApiResponse<T>>> {
-  const { enableLogging = true, requestIdPrefix = "api", cors } = options;
+  const {
+    enableLogging = true,
+    requestIdPrefix = "api",
+    cors,
+    requireAuth = true,
+  } = options;
 
   return async (
     request: NextRequest,
@@ -109,6 +125,7 @@ export function withApiMiddleware<T = unknown>(
       method,
       path,
       startTime,
+      userId: null,
     };
 
     const apiLogger = logger.forComponent("api-middleware");
@@ -124,6 +141,14 @@ export function withApiMiddleware<T = unknown>(
       // Handle CORS if configured
       if (cors && method === "OPTIONS") {
         return handleCorsPreFlight<T>(cors, requestId);
+      }
+
+      // Authenticate before the handler runs, after the preflight — a browser
+      // preflight carries no cookies and must not be answered with a 401.
+      if (requireAuth) {
+        const session = await auth();
+        if (!session?.user?.id) throw new AuthenticationError();
+        context.userId = session.user.id;
       }
 
       // Execute the route handler

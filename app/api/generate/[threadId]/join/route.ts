@@ -1,14 +1,9 @@
 import type { NextRequest } from "next/server";
-import { Client } from "@langchain/langgraph-sdk";
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
-
-const getClient = () =>
-  new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
-    }),
-  });
+import {
+  getGenerationClient,
+  requireThreadOwner,
+} from "@/lib/generate-content/thread-access";
 
 // Reconnect to the live SSE stream of an already-running server-owned run so a
 // user returning to an in-progress generation sees tokens render live instead
@@ -20,6 +15,9 @@ export async function POST(
   { params }: { params: Promise<{ threadId: string }> },
 ) {
   const { threadId } = await params;
+
+  const access = await requireThreadOwner(threadId);
+  if (!access.ok) return access.response;
 
   let body: { runId?: string };
   try {
@@ -38,7 +36,7 @@ export async function POST(
     });
   }
 
-  const client = getClient();
+  const client = getGenerationClient();
   const { signal } = request;
 
   const stream = client.runs.joinStream(threadId, body.runId, {

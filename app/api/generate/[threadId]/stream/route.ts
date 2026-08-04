@@ -1,22 +1,20 @@
 import type { NextRequest } from "next/server";
-import { Client } from "@langchain/langgraph-sdk";
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import {
+  getGenerationClient,
+  requireThreadOwner,
+} from "@/lib/generate-content/thread-access";
 
 const ASSISTANT_ID = "agent";
-
-const getClient = () =>
-  new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
-    }),
-  });
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ threadId: string }> },
 ) {
   const { threadId } = await params;
+
+  const access = await requireThreadOwner(threadId);
+  if (!access.ok) return access.response;
 
   let body: { input: Record<string, unknown> };
   try {
@@ -28,7 +26,7 @@ export async function POST(
     });
   }
 
-  const client = getClient();
+  const client = getGenerationClient();
   let createdRunId: string | undefined;
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
