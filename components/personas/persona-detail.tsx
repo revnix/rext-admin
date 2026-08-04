@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   User,
   Target,
-  AlertCircle,
   TrendingUp,
   Activity,
   Edit2,
@@ -111,12 +110,21 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const handleSave = () => {
     if (!workspace?.id || !persona.id) return;
 
+    // demographics/pain_points/goals/behaviors moved to the Audience resource
+    // and are always empty on Persona now — don't send them back.
+    const {
+      demographics: _demographics,
+      pain_points: _pain_points,
+      goals: _goals,
+      behaviors: _behaviors,
+      tone_of_voice: _tone_of_voice,
+      ...rest
+    } = formData;
+
     const payload = {
-      ...formData,
+      ...rest,
       areas_of_expertise: toArray(formData.areas_of_expertise),
-      goals: toArray(formData.goals),
-      pain_points: toArray(formData.pain_points),
-      behaviors: toArray(formData.behaviors),
+      writing_voice: formData.writing_voice || formData.tone_of_voice || "",
     };
 
     updatePersona.mutate(
@@ -417,32 +425,18 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Demographics */}
-          <Card>
-            <CardHeader className="pb-3 border-b">
-              <h3 className="font-semibold flex items-center gap-2">
-                <User size={18} className="text-primary" />
-                Demographics
-              </h3>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {isEditing ? (
-                <Textarea
-                  id="demographics"
-                  value={formData.demographics || ""}
-                  onChange={handleChange}
-                  placeholder="Age, location, education, etc."
-                  className="min-h-[100px]"
-                />
-              ) : (
-                persona.demographics && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {persona.demographics}
-                  </p>
-                )
-              )}
-            </CardContent>
-          </Card>
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+            Looking for demographics, pain points, goals, or behaviors? Those
+            now live on{" "}
+            <a
+              href={`/w/${workspaceSlug}/audiences`}
+              className="text-primary hover:underline font-medium"
+            >
+              Audiences
+            </a>{" "}
+            — a persona is who wrote this content, an audience is who it's
+            for.
+          </div>
         </div>
 
         {/* Right Column */}
@@ -489,7 +483,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
               <div className="space-y-3">
                 <Label
-                  htmlFor="tone_of_voice"
+                  htmlFor="writing_voice"
                   className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
                 >
                   <Activity size={14} />
@@ -497,16 +491,16 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 </Label>
                 {isEditing ? (
                   <Input
-                    id="tone_of_voice"
-                    value={formData.tone_of_voice || ""}
+                    id="writing_voice"
+                    value={formData.writing_voice ?? formData.tone_of_voice ?? ""}
                     onChange={handleChange}
                     placeholder="e.g. Professional, friendly, expert"
                   />
                 ) : (
-                  persona.tone_of_voice && (
+                  (persona.writing_voice || persona.tone_of_voice) && (
                     <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
                       <p className="text-sm italic text-muted-foreground">
-                        "{persona.tone_of_voice}"
+                        "{persona.writing_voice || persona.tone_of_voice}"
                       </p>
                     </div>
                   )
@@ -515,96 +509,132 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Goals & Pain Points */}
+          {/* Experience & Credentials */}
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
                 <Target size={18} className="text-primary" />
-                Objectives & Challenges
+                Experience &amp; Credentials
               </h3>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="years_of_experience"
+                    className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  >
+                    Years of Experience
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="years_of_experience"
+                      type="number"
+                      min={0}
+                      value={formData.years_of_experience ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          years_of_experience: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        }))
+                      }
+                      placeholder="e.g. 12"
+                    />
+                  ) : (
+                    persona.years_of_experience != null && (
+                      <p className="text-sm">{persona.years_of_experience}</p>
+                    )
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="employer"
+                    className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  >
+                    Employer
+                  </Label>
+                  {isEditing ? (
+                    <Input
+                      id="employer"
+                      value={formData.employer || ""}
+                      onChange={handleChange}
+                      placeholder="e.g. Acme Corp"
+                    />
+                  ) : (
+                    persona.employer && (
+                      <p className="text-sm">{persona.employer}</p>
+                    )
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label
-                  htmlFor="goals"
+                  htmlFor="experience_type"
                   className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                 >
-                  Goals
+                  Experience Basis
                 </Label>
                 {isEditing ? (
-                  <Textarea
-                    id="goals"
-                    value={toStringValue(formData.goals)}
+                  <Input
+                    id="experience_type"
+                    value={formData.experience_type || ""}
                     onChange={handleChange}
-                    placeholder="Primary objectives and goals"
-                    className="min-h-[80px]"
+                    placeholder="everyday_experience, formal_expertise, or both"
                   />
                 ) : (
-                  toArray(persona.goals).length > 0 && (
-                    <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
-                      {toArray(persona.goals).map((goal) => (
-                        <li key={goal}>{goal}</li>
-                      ))}
-                    </ul>
+                  persona.experience_type && (
+                    <p className="text-sm text-muted-foreground">
+                      {persona.experience_type.replace(/_/g, " ")}
+                    </p>
                   )
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label
-                  htmlFor="pain_points"
-                  className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
+                  htmlFor="credentials"
+                  className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                 >
-                  <AlertCircle size={14} className="text-destructive" />
-                  Pain Points
+                  Credentials
                 </Label>
                 {isEditing ? (
                   <Textarea
-                    id="pain_points"
-                    value={toStringValue(formData.pain_points)}
-                    onChange={handleChange}
-                    placeholder="Main challenges and pain points"
+                    id="credentials"
+                    value={(formData.credentials || [])
+                      .map((c) => c.credential)
+                      .join(", ")}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        credentials: e.target.value
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                          .map((credential) => ({ credential })),
+                      }))
+                    }
+                    placeholder="Comma separated, e.g. CISSP, CPA"
                     className="min-h-[80px]"
                   />
                 ) : (
-                  toArray(persona.pain_points).length > 0 && (
-                    <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
-                      {toArray(persona.pain_points).map((point) => (
-                        <li key={point}>{point}</li>
+                  (persona.credentials?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {persona.credentials?.map((c) => (
+                        <Badge
+                          key={c.credential}
+                          variant="secondary"
+                          className="text-sm"
+                        >
+                          {c.credential}
+                        </Badge>
                       ))}
-                    </ul>
+                    </div>
                   )
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Behaviors */}
-          <Card>
-            <CardHeader className="pb-3 border-b">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Activity size={18} className="text-primary" />
-                Behaviors
-              </h3>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {isEditing ? (
-                <Textarea
-                  id="behaviors"
-                  value={toStringValue(formData.behaviors)}
-                  onChange={handleChange}
-                  placeholder="Key behaviors and habits"
-                  className="min-h-[100px]"
-                />
-              ) : (
-                toArray(persona.behaviors).length > 0 && (
-                  <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
-                    {toArray(persona.behaviors).map((behavior) => (
-                      <li key={behavior}>{behavior}</li>
-                    ))}
-                  </ul>
-                )
-              )}
             </CardContent>
           </Card>
         </div>

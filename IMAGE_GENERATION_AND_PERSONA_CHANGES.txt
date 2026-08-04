@@ -1,0 +1,314 @@
+===================================================================
+IMAGE GENERATION & PERSONA / BRAND VOICE - WHAT CHANGED
+Simple notes for team demo
+===================================================================
+
+This file explains two systems:
+1. Image Generation (how blog/page images are created)
+2. Persona and Brand Voice (how articles are written in a brand's voice)
+
+For each system, we explain:
+- How it worked BEFORE
+- What we changed
+- How it works NOW
+
+Written in simple language for a quick team demo.
+
+
+===================================================================
+PART 1: IMAGE GENERATION
+===================================================================
+
+WHAT IT DOES
+------------
+When the AI writes an article, it also creates a hero image for it.
+This image is not just a random picture. A pipeline builds a smart
+text prompt, then sends that prompt to an image AI model (GPT Image).
+
+The pipeline has 3 simple steps:
+  Step 1 - Planner: reads the article info (title, topic, audience)
+           and decides what the image should be about.
+  Step 2 - Art Director: picks style, colors, lighting, camera angle.
+  Step 3 - Prompt Composer: turns all that into one final text prompt.
+
+Then this prompt is sent to the image model to generate the picture.
+
+
+HOW IT WORKED BEFORE (Problems)
+--------------------------------
+We reviewed a real generated prompt and found several problems:
+
+1. LOW QUALITY BY DEFAULT
+   The image quality setting was always "low", for every image,
+   no matter how important the page was (blog, landing page, etc).
+   This capped image quality no matter how good the prompt was.
+
+2. SAME SUBJECT WRITTEN TWICE
+   The main subject of the image (example: "AI neural core") was
+   repeated word-for-word twice in the same prompt. This wasted
+   space and looked repetitive/robotic.
+
+3. SEO KEYWORDS USED AS IF THEY WERE PICTURES
+   The system took SEO keywords (words used for search ranking,
+   like "agentic ai examples") and tried to turn them into visual
+   scene details. But SEO keywords are not visual ideas. This made
+   nonsense image instructions.
+
+4. SAME ENVIRONMENT FOR EVERY BLOG
+   Every blog post got the exact same background scene text
+   ("modern professional editorial environment"), no matter what
+   the article was about or what industry it was for. All blog
+   images started to look the same.
+
+5. ONLY 9 TOPICS HAD A REAL VISUAL IDEA
+   The system could only turn a few keywords (like "AI", "cloud",
+   "API") into a real visual concept. Anything else got a weak,
+   generic fallback like "a visual metaphor representing X" -
+   which is not something an image AI can actually draw.
+
+6. A REAL BUG: "blockchain" TRIGGERED THE "AI" PICTURE
+   Because of how keyword matching worked, the word "blockchain"
+   accidentally matched "ai" (hidden inside the letters), so
+   blockchain articles could get an AI-brain image by mistake.
+
+7. NO MATERIALS OR TEXTURES
+   The prompt never described what things were made of (metal,
+   glass, fabric, etc). This is a big miss - material details are
+   what make AI images look real and expensive, not cheap/plastic.
+
+8. NO VARIETY
+   Everything was decided by fixed rules. Same brand style always
+   produced the exact same wording, every single time. Over
+   hundreds of articles, all images start to feel repetitive.
+
+
+WHAT WE CHANGED
+----------------
+We fixed the bugs above and improved the logic:
+
+1. Quality now depends on content type.
+   Important pages (blog, landing page, sales page, etc.) now get
+   "medium" quality. Less important content stays "low" to save cost.
+
+2. Fixed the duplicate subject text.
+   If the main subject is mentioned once already, the second
+   mention now uses a short phrase ("this same central subject")
+   instead of repeating the whole sentence.
+
+3. Stopped using SEO keywords as visual ideas.
+   The system now checks if a keyword actually has a real visual
+   meaning. If not, it is simply left out, instead of creating a
+   nonsense visual instruction.
+
+4. Environment now changes by industry.
+   A healthcare blog and a tech blog now get different backgrounds,
+   instead of the same one for everyone.
+
+5. Grew the visual idea list from 9 topics to about 30+.
+   More topics (blockchain, automation, cybersecurity, no-code,
+   etc.) now get a real, concrete visual idea instead of a weak
+   generic fallback.
+
+6. Fixed the "blockchain matches AI" bug.
+   Keyword matching is now done properly, so unrelated words don't
+   accidentally trigger the wrong picture idea.
+
+7. Added a materials/textures library.
+   The prompt now mentions real materials (brushed metal, frosted
+   glass, ceramic, etc), matched to the industry, to make images
+   look more premium and realistic.
+
+8. Added light variety.
+   The same brand style now picks slightly different wording each
+   time (but the same article always looks the same if regenerated,
+   so it's still predictable per-article, just not identical across
+   hundreds of different articles).
+
+9. Added a camera lens detail for realistic photos.
+   For photo-realistic images, we now add a simple camera detail
+   (35mm lens, shallow depth of field) which makes images feel more
+   like real photography.
+
+10. Cleaned up small bugs and dead code in the pipeline.
+
+
+HOW IT WORKS NOW (Summary)
+----------------------------
+Same 3-step pipeline as before (Plan -> Art Direction -> Compose
+Prompt -> Generate Image), but now:
+  - The image quality matches how important the page is.
+  - The subject is described once, clearly, not repeated.
+  - Only real visual ideas are used - no more nonsense keyword art.
+  - Environments, materials, and wording vary by industry and topic.
+  - More topics get a proper custom visual concept.
+  - Images should look more realistic, more varied, and higher
+    quality overall, especially for important pages.
+
+
+===================================================================
+PART 2: PERSONA AND BRAND VOICE
+===================================================================
+
+WHAT IT DOES
+------------
+When the AI writes an article, it should sound like:
+  - A real person (the "author persona") wrote it.
+  - In the brand's tone of voice (the "brand voice").
+  - For the right kind of reader (the "audience").
+
+The system scans a customer's website, guesses the brand info and
+any real people on it, and saves this info. Later, when generating
+an article, this saved info is used to build the writing instructions.
+
+
+HOW IT WORKED BEFORE (Problems)
+--------------------------------
+1. ONE "PERSONA" TABLE HAD TWO DIFFERENT JOBS MIXED TOGETHER
+   A single "Persona" contained BOTH:
+     - Author info (name, job title, expertise, writing tone)
+     - Reader/buyer info (demographics, pain points, goals)
+   These are two very different things. Mixing them made the data
+   confusing and hard to use correctly.
+
+2. BIGGEST PROBLEM: BRAND VOICE WAS NEVER ACTUALLY USED
+   We traced the code and found that when the AI wrote an article,
+   it read the Persona data, but it NEVER read the Brand Voice data
+   (the brand's tone, style words, etc). All that Brand Voice
+   information was collected but simply never reached the writer AI.
+
+3. SAME PERSONA INFO DUMPED INTO EVERY ARTICLE, NO MATTER THE TYPE
+   Whether writing a blog post or a checkout page, the exact same
+   full persona details (bio, demographics, pain points, everything)
+   were dumped into the prompt. A checkout page does not need a full
+   author biography - but it was getting one anyway.
+
+4. DATA WAS STORED IN A MESSY WAY
+   Fields like "pain points" or "demographics" were stored as plain
+   comma-separated text instead of a real list. This made the data
+   fragile and easy to break.
+
+5. NO TRACKING OF WHERE INFO CAME FROM
+   When the AI extracted info from a website (example: "this person
+   is the founder"), that "where did we learn this" info was
+   calculated but then thrown away before saving. So we had no way
+   to know how confident or trustworthy an extracted fact was.
+
+6. NO WEBSITE TYPE CHECK
+   The system never checked what kind of website it was scanning
+   (SaaS company? Blog? Hospital? Law firm?). This matters, because
+   a hospital website needs different trust info than a blog.
+
+
+WHAT WE CHANGED
+----------------
+We split the old mixed-up data into clear, separate parts:
+
+1. "Persona" is now called "AuthorPersona" - ONLY about the writer.
+   Name, job title, expertise, years of experience, credentials,
+   writing tone, social links. This is about WHO WROTE the content.
+
+2. NEW: "Audience" - ONLY about the reader/buyer.
+   Demographics, pain points, goals, fears, what makes them decide
+   to buy. This is about WHO THE CONTENT IS FOR.
+   (A workspace can have more than one Audience, example: "Small
+   Business Owners" and "Enterprise Buyers" as two separate groups.)
+
+3. "BrandVoice" split into two parts:
+     - "Brand" = company identity (name, about us, competitors,
+       main topics, who we sell to).
+     - "BrandVoice" = HOW the brand talks (tone words, formal or
+       casual, preferred words, banned words, how to write a
+       call-to-action).
+
+4. NEW: "ExtractionEvidence" table.
+   Now we save WHERE each piece of info came from (which text on
+   the website) and HOW CONFIDENT the AI was. This makes the data
+   more trustworthy and reviewable.
+
+5. NEW: Website type detection.
+   The AI now guesses what kind of website it is (SaaS, blog,
+   healthcare, e-commerce, etc), which helps judge how trustworthy
+   the extracted info is.
+
+6. NEW: "Smart field picking" per content type.
+   Instead of dumping every single field into every article, the
+   system now picks only the fields that matter for that content
+   type. Example:
+     - Blog post -> full author bio and expertise matter a lot.
+     - Checkout page -> author bio barely matters, but brand tone
+       (short, trustworthy wording) matters a lot.
+     - Comparison article -> competitor info and buyer objections
+       matter a lot.
+   This is a new rulebook (like a lookup table) that scores how
+   important each field is, for each content type.
+
+7. FIXED THE BIG GAP: Brand Voice is now actually used.
+   The article-writing step now reads Brand Voice (tone, formal or
+   casual, preferred words, banned words) and includes it in the
+   writing instructions. Before, this data existed but was ignored.
+
+8. Fixed the messy data storage.
+   Pain points, goals, etc. are now stored as real lists, not
+   comma-separated text.
+
+9. A migration script was written to safely move old data into the
+   new, cleaner tables.
+
+10. Frontend (admin site) updated to match:
+    - Persona pages no longer show fields that don't apply anymore
+      (pain points/goals moved to the new Audience page).
+    - New "Audience" pages added (list, create, view/edit).
+    - Brand Voice settings page now lets you edit tone, formal/
+      casual style, preferred words, and banned words.
+    - Fixed a bug where "Tone of Voice" on a persona was silently
+      not saving, due to a renamed field.
+
+
+HOW IT WORKS NOW (Summary)
+----------------------------
+STEP A - Learning about the brand (happens when a website is scanned):
+  1. Website is scraped (text is read from the page).
+  2. AI guesses what type of website it is.
+  3. AI extracts: brand identity, brand voice, any real people found,
+     and (if there is enough info) audience segments.
+  4. AI also notes down proof/evidence and a confidence score for
+     each fact.
+  5. Everything is saved into the new, separate tables: Brand,
+     BrandVoice, AuthorPersona, Audience, ExtractionEvidence.
+
+STEP B - Writing an article (happens every time content is generated):
+  1. System picks the right Author Persona (who is "writing" this).
+  2. System now ALSO loads the Brand Voice (this is new - it was
+     missing before).
+  3. System also loads an Audience, if one is set.
+  4. The new "smart field picking" step decides which of these
+     fields actually matter for this content type, and only sends
+     those into the writing prompt.
+  5. AI writes the article using: the right author voice + the
+     brand's house tone + a prompt shaped for the right audience.
+
+
+===================================================================
+QUICK SUMMARY FOR THE DEMO
+===================================================================
+
+IMAGES:
+  Before -> low quality always, repeated text, fake "visual" ideas
+  from SEO keywords, same background for every blog, few real
+  visual ideas, one real matching bug.
+  Now -> quality matches page importance, cleaner prompts, real
+  visual ideas for many more topics, backgrounds and materials vary
+  by industry, bug fixed.
+
+PERSONA / BRAND VOICE:
+  Before -> author info and reader info mixed together, Brand
+  Voice collected but NEVER used when writing, same full data
+  dumped into every content type, no source tracking.
+  Now -> author info (Persona) and reader info (Audience) are
+  separate, Brand Voice is finally used when writing, only the
+  right fields are used per content type, and we track where each
+  fact came from.
+
+===================================================================
+END OF FILE
+===================================================================

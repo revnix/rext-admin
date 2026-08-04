@@ -78,7 +78,30 @@ export interface Workspace {
 }
 
 /**
- * Persona data for target audience
+ * A single credential/certification entry on an author persona.
+ */
+export interface PersonaCredential {
+  credential: string;
+  issuer?: string | null;
+  year?: number | null;
+}
+
+/**
+ * A single social profile entry (generalizes the old single linkedin_url field).
+ */
+export interface PersonaSocialProfile {
+  platform: string; // e.g. "linkedin"
+  url: string;
+}
+
+/**
+ * Author persona data — WHO wrote the content (E-E-A-T identity).
+ *
+ * @note demographics/pain_points/goals/behaviors moved to the separate
+ * `Audience` resource (buyer/reader segments) as part of the Persona/Brand
+ * Voice redesign — the backend now always returns them empty on this type.
+ * They're kept here only so existing reads don't break; new code should use
+ * the `Audience` type and `/audiences` endpoints instead.
  */
 export interface Persona {
   id?: string; // UUID, optional for creation
@@ -87,14 +110,67 @@ export interface Persona {
   full_name?: string | null;
   professional_title?: string | null;
   areas_of_expertise?: string | string[];
+  experience_type?: "everyday_experience" | "formal_expertise" | "both" | null;
+  years_of_experience?: number | null;
+  credentials?: PersonaCredential[];
+  employer?: string | null;
+  /** Write with this field — the backend only accepts `writing_voice` on create/update. */
+  writing_voice?: string;
+  /** @deprecated Read-only alias of `writing_voice`, kept for display of older data. */
   tone_of_voice?: string;
   bio?: string;
   avatar_url?: string | null;
+  social_profiles?: PersonaSocialProfile[];
   linkedin_url?: string | null;
-  demographics?: string;
+  /** @deprecated Always empty — moved to Audience.demographics */
+  demographics?: string | Record<string, unknown>;
+  /** @deprecated Always empty — moved to Audience.pain_points */
   pain_points?: string | string[];
+  /** @deprecated Always empty — moved to Audience.goals */
   goals?: string | string[];
+  /** @deprecated Always empty — moved to Audience.behaviors */
   behaviors?: string | string[];
+}
+
+/**
+ * Audience data — WHO content is written FOR (buyer/reader segments).
+ *
+ * Split out of the old flat Persona shape; a workspace can have multiple
+ * named audience segments.
+ */
+export interface Audience {
+  id?: string; // UUID, optional for creation
+  workspace_id?: string;
+  name: string;
+  description?: string | null;
+  demographics?: {
+    age_range?: string | null;
+    job_titles?: string[];
+    seniority?: string | null;
+    company_size?: string | null;
+    location?: string | null;
+  } | null;
+  psychographics?: {
+    fears?: string[];
+    decision_levers?: string[];
+    values?: string[];
+  } | null;
+  pain_points?: string[];
+  goals?: string[];
+  behaviors?: string[];
+  objections?: string[];
+  preferred_channels?: string[];
+  buying_stage?: "awareness" | "consideration" | "decision" | "retention" | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * A preferred-term substitution pair for brand voice (e.g. say "track" not "monitor").
+ */
+export interface BrandVoiceTermSubstitution {
+  term: string;
+  use_instead_of: string;
 }
 
 /**
@@ -105,10 +181,20 @@ export interface BrandVoice {
   workspace_id: string;
   brand_name?: string; // The actual brand/product name — distinct from the workspace name
   about?: string; // Brand description
+  website_type?: string | null; // Business-model classification (saas, ecommerce, agency, ...)
+  website_type_confidence?: number | null;
   customer_profile?: string; // Target customer details
   selling_position?: string; // Unique selling proposition
   target_audience?: string[]; // Array of audience segments
   brand_voice?: string[]; // Communication tone/style characteristics
+  // Not a strict literal union: the Zod schema (schemas/workspace-schemas.ts)
+  // types this as plain `string` since it flows through generic API
+  // validation — keep this loose so the two stay structurally compatible.
+  formality_level?: string | null; // very_casual | casual | neutral | formal | very_formal
+  point_of_view?: string | null; // first_singular | first_plural | second | third
+  preferred_terms?: BrandVoiceTermSubstitution[];
+  banned_terms?: string[];
+  cta_style?: string | null;
   competitors?: string[]; // Array of competitor names
   content_strategy?: string[]; // Content pillars/themes
   content_pillar?: string[]; // Alternative name for content strategy

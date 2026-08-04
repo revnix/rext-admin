@@ -97,6 +97,23 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Audiences Endpoints
+   * @note Workspace-scoped audience (buyer/reader segment) management
+   */
+  AUDIENCES: {
+    list: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/audiences` as const,
+    create: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/audiences` as const,
+    get: (workspaceId: string, audienceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/audiences/${audienceId}` as const,
+    update: (workspaceId: string, audienceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/audiences/${audienceId}` as const,
+    delete: (workspaceId: string, audienceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/audiences/${audienceId}` as const,
+  },
+
+  /**
    * Invitations Endpoints
    * @note Mixed scoping: workspace-scoped and user-scoped endpoints
    * @note Uses inconsistent naming: /workspace/invitations (singular) vs /workspaces/{id}/invitations

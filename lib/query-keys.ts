@@ -328,3 +328,30 @@ export const personaQueries = {
       staleTime: 5 * 60 * 1000,
     }),
 };
+
+// ============================================================================
+// AUDIENCE QUERIES
+// ============================================================================
+
+export const audienceQueries = {
+  all: (workspaceId: string) =>
+    [...workspaceQueries.all(), workspaceId, "audiences"] as const,
+  lists: (workspaceId: string) =>
+    [...audienceQueries.all(workspaceId), "list"] as const,
+  list: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...audienceQueries.lists(workspaceId)],
+      queryFn: () => apiClient.audiences.list(workspaceId),
+      enabled: !!workspaceId,
+      staleTime: 5 * 60 * 1000,
+    }),
+  details: (workspaceId: string) =>
+    [...audienceQueries.all(workspaceId), "detail"] as const,
+  detail: (workspaceId: string, audienceId: string) =>
+    queryOptions({
+      queryKey: [...audienceQueries.details(workspaceId), audienceId] as const,
+      queryFn: () => apiClient.audiences.get(workspaceId, audienceId),
+      enabled: !!workspaceId && !!audienceId,
+      staleTime: 5 * 60 * 1000,
+    }),
+};

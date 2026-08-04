@@ -19,6 +19,8 @@ export const WORKSPACE_PAGES = [
   "integrations",
   "personas",
   "persona_create",
+  "audiences",
+  "audience_create",
   "brand_voice",
 ] as const;
 
@@ -97,6 +99,13 @@ export const workspaceRoutes = {
   personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,
   persona_create: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/personas/create`,
+
+  /**
+   * Audiences route
+   */
+  audiences: (workspaceSlug: string) => `/w/${workspaceSlug}/audiences`,
+  audience_create: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/audiences/create`,
 
   /**
    * Brand Voice route
@@ -191,6 +200,8 @@ export function buildWorkspacePath(
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
+    audiences: workspaceRoutes.audiences,
+    audience_create: workspaceRoutes.audience_create,
     brand_voice: workspaceRoutes.brand_voice,
   };
 

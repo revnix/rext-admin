@@ -93,12 +93,33 @@ export function PersonaCard({ persona }: PersonaCardProps) {
         )}
 
         {/* Tone of Voice */}
-        {persona.tone_of_voice && (
+        {(persona.writing_voice || persona.tone_of_voice) && (
           <div>
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
               Tone of Voice
             </h4>
-            <p className="text-sm">{persona.tone_of_voice}</p>
+            <p className="text-sm">
+              {persona.writing_voice || persona.tone_of_voice}
+            </p>
+          </div>
+        )}
+
+        {/* Experience / Credentials */}
+        {(persona.years_of_experience || persona.credentials?.length) && (
+          <div>
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+              Experience
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              {[
+                persona.years_of_experience
+                  ? `${persona.years_of_experience} years`
+                  : null,
+                persona.credentials?.map((c) => c.credential).join(", "),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
           </div>
         )}
 
@@ -109,50 +130,6 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               Bio
             </h4>
             <p className="text-sm text-muted-foreground">{persona.bio}</p>
-          </div>
-        )}
-
-        {/* Demographics */}
-        {persona.demographics && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-              Demographics
-            </h4>
-            <p className="text-sm text-muted-foreground">
-              {persona.demographics}
-            </p>
-          </div>
-        )}
-
-        {/* Pain Points */}
-        {persona.pain_points && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-              Pain Points
-            </h4>
-            <p className="text-sm text-muted-foreground">
-              {persona.pain_points}
-            </p>
-          </div>
-        )}
-
-        {/* Goals */}
-        {persona.goals && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-              Goals
-            </h4>
-            <p className="text-sm text-muted-foreground">{persona.goals}</p>
-          </div>
-        )}
-
-        {/* Behaviors */}
-        {persona.behaviors && (
-          <div>
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-              Behaviors
-            </h4>
-            <p className="text-sm text-muted-foreground">{persona.behaviors}</p>
           </div>
         )}
       </CardContent>

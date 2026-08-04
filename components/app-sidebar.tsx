@@ -18,6 +18,7 @@ import {
   Library,
   Palette,
   CalendarDays,
+  Target,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -140,6 +141,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
           icon: User,
+          permission: "content.read",
+        },
+        {
+          title: "Audiences",
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.audiences(currentWorkspace.slug)
+            : "/",
+          icon: Target,
           permission: "content.read",
         },
         {

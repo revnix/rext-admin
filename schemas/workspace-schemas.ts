@@ -163,10 +163,19 @@ export const brandVoiceSchema = z.object({
   workspace_id: z.string(),
   brand_name: z.string().optional(),
   about: z.string().optional(),
+  website_type: z.string().nullable().optional(),
+  website_type_confidence: z.number().nullable().optional(),
   customer_profile: z.string().optional(),
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
   brand_voice: z.array(z.string()).optional(),
+  formality_level: z.string().nullable().optional(),
+  point_of_view: z.string().nullable().optional(),
+  preferred_terms: z
+    .array(z.object({ term: z.string(), use_instead_of: z.string() }))
+    .optional(),
+  banned_terms: z.array(z.string()).optional(),
+  cta_style: z.string().nullable().optional(),
   competitors: z.array(z.string()).optional(),
   content_pillar: z.array(z.string()).optional(),
   personas: z
@@ -177,14 +186,22 @@ export const brandVoiceSchema = z.object({
         description: z.string(),
         full_name: z.string().nullable().optional(),
         professional_title: z.string().nullable().optional(),
-        areas_of_expertise: z.string().optional(),
+        areas_of_expertise: z.union([z.string(), z.array(z.string())]).optional(),
+        writing_voice: z.string().optional(),
+        // Legacy field name, still emitted read-only for backward compat.
         tone_of_voice: z.string().optional(),
         bio: z.string().optional(),
         linkedin_url: z.string().nullable().optional(),
-        demographics: z.string().optional(),
-        pain_points: z.string().optional(),
-        goals: z.string().optional(),
-        behaviors: z.string().optional(),
+        social_profiles: z
+          .array(z.object({ platform: z.string(), url: z.string() }))
+          .optional(),
+        // Always empty now — buyer-persona fields moved to Audience.
+        demographics: z
+          .union([z.string(), z.record(z.string(), z.any())])
+          .optional(),
+        pain_points: z.union([z.string(), z.array(z.string())]).optional(),
+        goals: z.union([z.string(), z.array(z.string())]).optional(),
+        behaviors: z.union([z.string(), z.array(z.string())]).optional(),
       }),
     )
     .optional(),

@@ -21,6 +21,11 @@ interface EditableBrandVoiceCardProps {
   readOnly?: boolean;
 }
 
+interface PreferredTermRow {
+  term: string;
+  use_instead_of: string;
+}
+
 interface BrandVoiceFormData {
   brand_name: string;
   about: string;
@@ -30,6 +35,11 @@ interface BrandVoiceFormData {
   brand_voice: string[];
   competitors: string[];
   content_strategy: string[];
+  formality_level: string;
+  point_of_view: string;
+  cta_style: string;
+  banned_terms: string[];
+  preferred_terms: PreferredTermRow[];
 }
 
 const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
@@ -41,6 +51,11 @@ const toFormData = (voice?: Workspace["brand_voice"]): BrandVoiceFormData => ({
   brand_voice: voice?.brand_voice ?? [],
   competitors: voice?.competitors ?? [],
   content_strategy: voice?.content_strategy ?? voice?.content_pillar ?? [],
+  formality_level: voice?.formality_level ?? "",
+  point_of_view: voice?.point_of_view ?? "",
+  cta_style: voice?.cta_style ?? "",
+  banned_terms: voice?.banned_terms ?? [],
+  preferred_terms: voice?.preferred_terms ?? [],
 });
 
 export function EditableBrandVoiceCard({
@@ -70,6 +85,11 @@ export function EditableBrandVoiceCard({
         brand_voice: data.brand_voice,
         competitors: data.competitors,
         content_strategy: data.content_strategy,
+        formality_level: data.formality_level || null,
+        point_of_view: data.point_of_view || null,
+        cta_style: data.cta_style || null,
+        banned_terms: data.banned_terms,
+        preferred_terms: data.preferred_terms,
       });
     },
     onSuccess: (response) => {
@@ -128,6 +148,32 @@ export function EditableBrandVoiceCard({
       ...formData,
       [field]: (formData[field] as string[]).filter((_, i) => i !== index),
     });
+  };
+
+  const handlePreferredTermAdd = () => {
+    const termInput = document.getElementById(
+      "preferred_term-input",
+    ) as HTMLInputElement | null;
+    const substituteInput = document.getElementById(
+      "preferred_term_substitute-input",
+    ) as HTMLInputElement | null;
+    const term = termInput?.value.trim();
+    const use_instead_of = substituteInput?.value.trim();
+    if (term && use_instead_of) {
+      setFormData((prev) => ({
+        ...prev,
+        preferred_terms: [...prev.preferred_terms, { term, use_instead_of }],
+      }));
+      if (termInput) termInput.value = "";
+      if (substituteInput) substituteInput.value = "";
+    }
+  };
+
+  const handlePreferredTermRemove = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      preferred_terms: prev.preferred_terms.filter((_, i) => i !== index),
+    }));
   };
 
   // Empty state
@@ -560,6 +606,203 @@ export function EditableBrandVoiceCard({
             </div>
           )}
         </div>
+
+        {/* Formality Level & Point of View */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="formality_level" className="text-sm font-semibold">
+              Formality Level
+            </Label>
+            {isEditing ? (
+              <Input
+                id="formality_level"
+                value={formData.formality_level}
+                onChange={(e) =>
+                  setFormData({ ...formData, formality_level: e.target.value })
+                }
+                placeholder="very_casual, casual, neutral, formal, very_formal"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {brandVoice.formality_level?.replace(/_/g, " ") || (
+                  <span className="italic">Not set</span>
+                )}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="point_of_view" className="text-sm font-semibold">
+              Point of View
+            </Label>
+            {isEditing ? (
+              <Input
+                id="point_of_view"
+                value={formData.point_of_view}
+                onChange={(e) =>
+                  setFormData({ ...formData, point_of_view: e.target.value })
+                }
+                placeholder="first_singular, first_plural, second, third"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {brandVoice.point_of_view?.replace(/_/g, " ") || (
+                  <span className="italic">Not set</span>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* CTA Style */}
+        <div className="space-y-2">
+          <Label htmlFor="cta_style" className="text-sm font-semibold">
+            Call-to-Action Style
+          </Label>
+          {isEditing ? (
+            <Textarea
+              id="cta_style"
+              value={formData.cta_style}
+              onChange={(e) =>
+                setFormData({ ...formData, cta_style: e.target.value })
+              }
+              placeholder="How the brand phrases calls-to-action"
+              className="min-h-[60px]"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground break-words whitespace-pre-wrap word-break max-w-full">
+              {brandVoice.cta_style || <span className="italic">Not set</span>}
+            </p>
+          )}
+        </div>
+
+        {/* Banned Terms */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">
+            Banned Words &amp; Phrases
+          </Label>
+          {isEditing ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  id="banned_terms-input"
+                  placeholder="Add a word or phrase to avoid"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleArrayItemAdd("banned_terms");
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="!w-10 !h-11 p-0"
+                  onClick={() => handleArrayItemAdd("banned_terms")}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
+                {formData.banned_terms.map((item, index) => (
+                  <Badge
+                    key={item}
+                    variant="destructive"
+                    className="text-sm px-3 py-1 break-inside-avoid whitespace-nowrap overflow-hidden text-ellipsis flex-shrink-0"
+                  >
+                    {item}
+                    <button
+                      type="button"
+                      onClick={() => handleArrayItemRemove("banned_terms", index)}
+                      className="ml-2 hover:text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 overflow-x-hidden overflow-y-auto max-h-[300px] max-w-full pb-2">
+              {brandVoice.banned_terms?.map((item) => (
+                <Badge key={item} variant="destructive" className="text-sm">
+                  {item}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Preferred Terms */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">Preferred Vocabulary</Label>
+          {isEditing ? (
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input id="preferred_term-input" placeholder="Say this…" />
+                <Input
+                  id="preferred_term_substitute-input"
+                  placeholder="…not this"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="shrink-0 !h-11 px-4"
+                  onClick={handlePreferredTermAdd}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 max-w-full pb-2">
+                {formData.preferred_terms.map((item, index) => (
+                  <Badge
+                    key={`${item.term}-${item.use_instead_of}`}
+                    variant="secondary"
+                    className="text-sm px-3 py-1 flex-shrink-0"
+                  >
+                    "{item.term}" not "{item.use_instead_of}"
+                    <button
+                      type="button"
+                      onClick={() => handlePreferredTermRemove(index)}
+                      className="ml-2 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 max-w-full pb-2">
+              {brandVoice.preferred_terms?.map((item) => (
+                <Badge
+                  key={`${item.term}-${item.use_instead_of}`}
+                  variant="secondary"
+                  className="text-sm"
+                >
+                  "{item.term}" not "{item.use_instead_of}"
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Website Type (read-only classification) */}
+        {brandVoice.website_type && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Website Type</Label>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-sm capitalize">
+                {brandVoice.website_type.replace(/_/g, " ")}
+              </Badge>
+              {brandVoice.website_type_confidence != null && (
+                <span className="text-xs text-muted-foreground">
+                  {Math.round(brandVoice.website_type_confidence * 100)}%
+                  confidence
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </DetailCard>
   );

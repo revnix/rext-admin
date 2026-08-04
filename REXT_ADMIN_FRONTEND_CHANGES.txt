@@ -1,0 +1,164 @@
+===================================================================
+REXT-ADMIN (FRONTEND) CHANGES - PERSONA & BRAND VOICE
+Simple notes for team demo
+===================================================================
+
+This file explains what changed on the frontend (rext-admin, the
+admin website). This is the follow-up to the backend changes
+explained in IMAGE_GENERATION_AND_PERSONA_CHANGES.txt.
+
+The backend split old "Persona" and "Brand Voice" data into new,
+cleaner tables. This file explains what changed on the website side
+to match that.
+
+Written in simple language for a quick team demo.
+
+
+===================================================================
+WHY THE FRONTEND NEEDED CHANGES
+===================================================================
+
+The backend changed how Persona and Brand Voice data is shaped.
+If we did not update the frontend, some pages would have started
+showing empty fields or silently failing to save. So the frontend
+had to be updated to match the new backend.
+
+
+===================================================================
+PART 1: PERSONA PAGES
+===================================================================
+
+HOW IT WORKED BEFORE
+----------------------
+The Persona page showed ONE type of "Persona" with everything mixed
+in one place:
+  - Author info: name, job title, expertise, tone of voice
+  - Reader/buyer info: demographics, pain points, goals, behaviors
+
+All of this lived on the same Persona card and edit page.
+
+
+WHAT WE CHANGED
+------------------
+1. Removed the fields that moved to the backend's new "Audience"
+   table (demographics, pain points, goals, behaviors). These
+   fields would now always come back empty from the backend, so we
+   removed them from the Persona page and added a small note
+   pointing users to the new Audience page instead.
+
+2. Added new fields that now belong to Persona (the author):
+     - Years of experience
+     - Employer
+     - Experience type (real-world experience vs formal expert)
+     - Credentials (example: certifications)
+
+3. FIXED A REAL BUG: "Tone of Voice" was not saving.
+   The website was sending the field as "tone_of_voice", but the
+   backend was renamed to expect "writing_voice". So every time
+   someone typed a tone of voice and saved it, it was silently
+   ignored. This is now fixed on both the Create Persona page and
+   the Edit Persona page.
+
+
+HOW IT WORKS NOW
+------------------
+The Persona page is now only about the AUTHOR (who wrote the
+content): name, title, expertise, experience, credentials, tone of
+voice, bio, links. Reader/buyer info now lives on the new Audience
+page (see Part 3 below).
+
+
+===================================================================
+PART 2: BRAND VOICE SETTINGS PAGE
+===================================================================
+
+HOW IT WORKED BEFORE
+----------------------
+The Brand Voice settings page let you edit:
+  - Brand name, about, customer profile, selling position
+  - Target audience (tags)
+  - Voice characteristics (tags)
+  - Content strategy (tags)
+  - Competitors (tags)
+
+That's it. No deeper "how do we sound" settings existed.
+
+
+WHAT WE CHANGED
+------------------
+Added new fields the backend now supports:
+  - Formality Level (example: casual vs formal)
+  - Point of View (example: "we" vs "I" vs "you")
+  - Call-to-Action Style (how the brand phrases buttons/CTAs)
+  - Banned Words (words the brand should never use)
+  - Preferred Vocabulary (example: always say "track", never say
+    "monitor") - shown as pairs: "say this, not that"
+  - Website Type (read-only tag showing what kind of website the
+    AI thinks this is, example: SaaS, blog, e-commerce)
+
+
+HOW IT WORKS NOW
+------------------
+The Brand Voice settings page now lets the team control HOW the
+brand sounds in much more detail, not just WHAT the brand is about.
+This directly feeds the backend fix where Brand Voice is now
+actually used when writing articles (see the backend notes file).
+
+
+===================================================================
+PART 3: NEW FEATURE - AUDIENCE PAGES
+===================================================================
+
+WHAT IS IT
+------------
+A brand new section, separate from Persona. Audience is about WHO
+the content is written FOR (the reader/buyer), not who wrote it.
+
+A workspace can have more than one Audience. Example: "Small
+Business Owners" and "Enterprise Buyers" as two separate groups.
+
+
+WHAT WE BUILT
+---------------
+1. A new "Audiences" page in the sidebar menu, next to Persona.
+2. A list page - shows all audience segments as cards.
+3. A create page - simple form to add a new audience segment
+   (name, description, goals, pain points).
+4. A detail/edit page - full editor with:
+     - Segment name, description, buying stage
+     - Demographics: age range, seniority, company size, location,
+       job titles
+     - Psychographics: fears, decision levers (what makes them buy)
+     - Goals, pain points, objections
+     - Behaviors and preferred channels (example: LinkedIn, email)
+
+
+HOW IT WORKS NOW
+------------------
+Anything that used to be "reader info" mixed into Persona now lives
+here instead, with its own proper page and its own edit screen.
+
+
+===================================================================
+QUICK SUMMARY FOR THE DEMO
+===================================================================
+
+PERSONA PAGE:
+  Before -> mixed author info and reader info together, tone of
+  voice was silently failing to save.
+  Now -> only author info, new experience/credentials fields, tone
+  of voice bug fixed.
+
+BRAND VOICE PAGE:
+  Before -> basic brand info and simple tag lists only.
+  Now -> full voice control: formality, point of view, CTA style,
+  banned words, preferred word pairs, website type.
+
+AUDIENCE (NEW):
+  Did not exist before.
+  Now -> its own full section: list, create, and detail pages, to
+  manage reader/buyer segments separately from author personas.
+
+===================================================================
+END OF FILE
+===================================================================

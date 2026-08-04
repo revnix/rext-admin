@@ -74,7 +74,7 @@ export default function CreatePersonaPage() {
         full_name: formData.fullName,
         professional_title: formData.title,
         areas_of_expertise: expertiseTags,
-        tone_of_voice: formData.tone,
+        writing_voice: formData.tone,
         bio: formData.bio,
         linkedin_url: formData.linkedin,
       });

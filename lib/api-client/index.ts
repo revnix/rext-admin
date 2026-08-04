@@ -43,6 +43,7 @@ import { createAdminWebhooksNamespace } from "./admin-webhooks";
 // Re-export types for convenience
 export type { EmailTemplate };
 
+import { createAudiencesNamespace } from "./audiences";
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createDashboardNamespace } from "./dashboard";
@@ -99,6 +100,7 @@ function createApiClient() {
     account: createAccountNamespace(client),
     onboarding: createOnboardingNamespace(client),
     personas: createPersonasNamespace(client),
+    audiences: createAudiencesNamespace(client),
 
     // Admin namespaces
     users: createUsersNamespace(client),

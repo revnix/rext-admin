@@ -7,6 +7,7 @@ import { log } from "@/lib/logger";
 
 import type {
   BrandVoice,
+  BrandVoiceTermSubstitution,
   CreateWorkspaceResponse,
   WorkspaceListResponse,
   WorkspaceResponse,
@@ -94,9 +95,14 @@ interface BrandVoicePayload {
   competitors: string[];
   content_pillar: string[];
   personas: Persona[];
+  formality_level?: string | null;
+  point_of_view?: string | null;
+  preferred_terms?: BrandVoiceTermSubstitution[];
+  banned_terms?: string[];
+  cta_style?: string | null;
 }
 
-function toBrandVoicePayload(data: {
+interface BrandVoiceUpdateInput {
   brand_name?: string;
   about?: string;
   customer_profile?: string;
@@ -106,7 +112,14 @@ function toBrandVoicePayload(data: {
   competitors?: string[];
   content_strategy?: string[];
   personas?: Persona[];
-}): BrandVoicePayload {
+  formality_level?: string | null;
+  point_of_view?: string | null;
+  preferred_terms?: BrandVoiceTermSubstitution[];
+  banned_terms?: string[];
+  cta_style?: string | null;
+}
+
+function toBrandVoicePayload(data: BrandVoiceUpdateInput): BrandVoicePayload {
   return {
     brand_name: data.brand_name ?? "",
     about: data.about ?? "",
@@ -117,6 +130,11 @@ function toBrandVoicePayload(data: {
     competitors: data.competitors ?? [],
     content_pillar: data.content_strategy ?? [],
     personas: data.personas ?? [],
+    formality_level: data.formality_level,
+    point_of_view: data.point_of_view,
+    preferred_terms: data.preferred_terms,
+    banned_terms: data.banned_terms,
+    cta_style: data.cta_style,
   };
 }
 import { InputSanitizer } from "@/lib/sanitization";
@@ -405,29 +423,9 @@ export function createWorkspacesNamespace(client: ApiClient) {
      */
     updateBrandVoice: async (
       workspaceId: string,
-      data: {
-        brand_name?: string;
-        about?: string;
-        customer_profile?: string;
-        selling_position?: string;
-        target_audience?: string[];
-        brand_voice?: string[];
-        competitors?: string[];
-        content_strategy?: string[];
-        personas?: Persona[];
-      },
+      data: BrandVoiceUpdateInput,
     ) => {
-      const payload = {
-        brand_name: data.brand_name ?? "",
-        about: data.about ?? "",
-        customer_profile: data.customer_profile ?? "",
-        selling_position: data.selling_position ?? "",
-        target_audience: data.target_audience ?? [],
-        brand_voice: data.brand_voice ?? [],
-        competitors: data.competitors ?? [],
-        content_pillar: data.content_strategy ?? [],
-        personas: data.personas ?? [],
-      };
+      const payload = toBrandVoicePayload(data);
 
       const response = await client.request<{
         brand_voice: BrandVoice;

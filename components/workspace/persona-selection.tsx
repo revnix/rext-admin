@@ -165,9 +165,9 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
         )}
 
         {/* Tone of Voice */}
-        {persona.tone_of_voice && (
+        {(persona.writing_voice || persona.tone_of_voice) && (
           <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {persona.tone_of_voice}
+            {persona.writing_voice || persona.tone_of_voice}
           </p>
         )}
       </CardContent>
