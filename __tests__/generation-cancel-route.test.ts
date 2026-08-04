@@ -2,6 +2,7 @@ const runsList = jest.fn();
 const runsCancel = jest.fn();
 const runsGet = jest.fn();
 const threadsDelete = jest.fn();
+const threadsGet = jest.fn();
 
 jest.mock("@langchain/langgraph-sdk", () => ({
   Client: jest.fn().mockImplementation(() => ({
@@ -10,11 +11,14 @@ jest.mock("@langchain/langgraph-sdk", () => ({
       cancel: (...args: unknown[]) => runsCancel(...args),
       get: (...args: unknown[]) => runsGet(...args),
     },
-    threads: { delete: (...args: unknown[]) => threadsDelete(...args) },
+    threads: {
+      delete: (...args: unknown[]) => threadsDelete(...args),
+      get: (...args: unknown[]) => threadsGet(...args),
+    },
   })),
 }));
 jest.mock("@/auth", () => ({
-  auth: jest.fn().mockResolvedValue({ user: {} }),
+  auth: jest.fn().mockResolvedValue({ user: { id: "user-1" } }),
 }));
 jest.mock("@/lib/api-base-url", () => ({
   resolveApiBaseUrl: () => "http://localhost:2024",
@@ -33,6 +37,10 @@ describe("cancelling a generation", () => {
     runsCancel.mockReset().mockResolvedValue(undefined);
     runsGet.mockReset();
     threadsDelete.mockReset().mockResolvedValue(undefined);
+    threadsGet.mockReset().mockResolvedValue({
+      thread_id: "thread-1",
+      metadata: { owner: "user-1" },
+    });
   });
 
   // The run only exists once the stream POST reaches LangGraph, so cancelling
@@ -62,6 +70,34 @@ describe("cancelling a generation", () => {
     const response = await cancel({ runId: "run-1" });
 
     expect(response.status).toBe(500);
+  });
+
+  // Cancel deletes the thread when it finds no run, so an unowned caller
+  // reaching it would destroy another tenant's checkpoints outright.
+  it("refuses a thread owned by someone else", async () => {
+    threadsGet.mockResolvedValue({
+      thread_id: "thread-1",
+      metadata: { owner: "user-2" },
+    });
+
+    const response = await cancel({});
+
+    expect(response.status).toBe(403);
+    expect(threadsDelete).not.toHaveBeenCalled();
+    expect(runsCancel).not.toHaveBeenCalled();
+  });
+
+  // The thread expires with the checkpointer TTL; a cancel arriving after that
+  // must still clear the job instead of stranding it in the dock.
+  it("still succeeds when the thread is already gone", async () => {
+    threadsGet.mockRejectedValue(
+      Object.assign(new Error("HTTP 404"), { status: 404 }),
+    );
+
+    const response = await cancel({});
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ cancelled: true });
   });
 
   it("cancels the newest run when the caller has no run id", async () => {

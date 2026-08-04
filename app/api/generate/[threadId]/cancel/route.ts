@@ -1,15 +1,9 @@
-import { Client } from "@langchain/langgraph-sdk";
 import type { NextRequest } from "next/server";
 
-import { auth } from "@/auth";
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
-
-const getClient = () =>
-  new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
-    }),
-  });
+import {
+  getGenerationClient,
+  requireThreadOwner,
+} from "@/lib/generate-content/thread-access";
 
 // Stop a server-owned run. Runs are started with `onDisconnect: "continue"`, so
 // closing the tab or aborting the SSE reader never stops the work — this route
@@ -18,13 +12,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ threadId: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { threadId } = await params;
-  const client = getClient();
+
+  // A thread that no longer exists passes the gate (`thread: null`) — the run
+  // is already stopped, and the code below treats that as a successful cancel
+  // rather than stranding the job in the dock.
+  const access = await requireThreadOwner(threadId);
+  if (!access.ok) return access.response;
+
+  const client = getGenerationClient();
 
   try {
     const body = (await request.json().catch(() => ({}))) as { runId?: string };
