@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
+import { useWorkspaceContextStore } from "@/stores/workspace";
 import type { Route } from "next";
 
 interface OnboardingWorkspaceProps {
@@ -31,6 +32,9 @@ export function OnboardingWorkspace({
   isLoading,
 }: OnboardingWorkspaceProps) {
   const router = useRouter();
+  const setCurrentWorkspace = useWorkspaceContextStore(
+    (s) => s.setCurrentWorkspace,
+  );
   const [workspaceTitle, setWorkspaceTitle] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [timezone, setTimezone] = useState("");
@@ -80,6 +84,11 @@ export function OnboardingWorkspace({
         workspace_id: response.workspace.id,
         workspace_slug: response.workspace.slug,
       });
+
+      // Sync the workspace store so WorkspacePermissionProvider resolves the
+      // workspace we just created instead of a stale currentWorkspace left
+      // over from a previous session/workspace (which 404s permissions/me).
+      setCurrentWorkspace(response.workspace);
 
       // Navigate to the new workspace
       router.push(`/w/${response.workspace.slug}/overview` as Route);
