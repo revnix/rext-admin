@@ -9,8 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle, X } from "lucide-react";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { AlertCircle} from "lucide-react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -1892,24 +1891,6 @@ export function FreshGenerationView({
     router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
   }, [threadId, removeBackgroundJob, router, workspaceSlug]);
 
-  // Shown while a generation is actively running (not on the finished article).
-  const cancelGenerationControl =
-    isManualLoading && threadId && !isContentFinal ? (
-      <ConfirmationDialog
-        title="Cancel this generation?"
-        description="The article will stop where it is. Credits already used for this generation are not refunded."
-        confirmText="Cancel generation"
-        cancelText="Keep generating"
-        variant="destructive"
-        onConfirm={() => void handleCancelGeneration()}
-      >
-        <Button type="button" variant="outline" size="sm" className="gap-1.5">
-          <X className="h-4 w-4" />
-          Cancel generation
-        </Button>
-      </ConfirmationDialog>
-    ) : null;
-
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1932,9 +1913,6 @@ export function FreshGenerationView({
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
         />
-        {cancelGenerationControl && (
-          <div className="mt-6">{cancelGenerationControl}</div>
-        )}
       </div>
     );
   }
@@ -2178,11 +2156,6 @@ export function FreshGenerationView({
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
-          {cancelGenerationControl && (
-            <div className="mx-auto mb-3 flex w-full max-w-5xl justify-end">
-              {cancelGenerationControl}
-            </div>
-          )}
           <ContentEditor
             threadId={threadId ?? undefined}
             allContent={
