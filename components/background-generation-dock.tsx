@@ -503,7 +503,7 @@ export function BackgroundGenerationDock() {
           </div>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
             variant={completed ? "default" : "outline"}
@@ -532,11 +532,12 @@ export function BackgroundGenerationDock() {
             >
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground"
+                variant="outline"
+                size="sm"
+                className="h-8"
                 aria-label={`Cancel ${job.title}`}
               >
+                <span>Cancel</span>
                 <X className="h-4 w-4" />
               </Button>
             </ConfirmationDialog>
