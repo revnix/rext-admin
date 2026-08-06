@@ -60,7 +60,7 @@ export function UnifiedActivity() {
       if (stored) {
         setDeletedWorkspaces(JSON.parse(stored));
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore
     }
   }, []);
@@ -276,13 +276,12 @@ export function UnifiedActivity() {
           });
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore localStorage errors
     }
 
     if (
-      profileData &&
-      profileData.updated_at &&
+      profileData?.updated_at &&
       profileData.updated_at !== profileData.created_at
     ) {
       if (!existingIds.has(`${AuditActions.USER_UPDATE}-${profileData.id}`)) {

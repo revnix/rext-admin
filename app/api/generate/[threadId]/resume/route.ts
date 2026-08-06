@@ -1,16 +1,11 @@
 import type { NextRequest } from "next/server";
-import { Client } from "@langchain/langgraph-sdk";
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import {
+  getGenerationClient,
+  requireThreadOwner,
+} from "@/lib/generate-content/thread-access";
 
 const ASSISTANT_ID = "agent";
-
-const getClient = () =>
-  new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
-    }),
-  });
 
 export async function POST(
   request: NextRequest,
@@ -18,7 +13,13 @@ export async function POST(
 ) {
   const { threadId } = await params;
 
-  let body: { payload: Record<string, unknown> };
+  const access = await requireThreadOwner(threadId);
+  if (!access.ok) return access.response;
+
+  let body: {
+    payload: Record<string, unknown>;
+    background?: boolean;
+  };
   try {
     body = await request.json();
   } catch {
@@ -28,32 +29,78 @@ export async function POST(
     });
   }
 
-  const client = getClient();
+  const client = getGenerationClient();
+
+  if (body.background) {
+    try {
+      const run = await client.runs.create(threadId, ASSISTANT_ID, {
+        command: { resume: body.payload },
+        streamMode: ["updates", "messages", "custom"],
+        streamSubgraphs: true,
+        streamResumable: true,
+      });
+
+      return Response.json(
+        {
+          threadId,
+          run: {
+            id: run.run_id,
+            status: run.status,
+            createdAt: run.created_at,
+            updatedAt: run.updated_at,
+          },
+        },
+        { status: 202 },
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to start background generation";
+      return Response.json({ error: message }, { status: 500 });
+    }
+  }
+
+  let createdRunId: string | undefined;
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     command: { resume: body.payload },
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
-    onDisconnect: "cancel",
+    streamResumable: true,
+    onDisconnect: "continue",
+    onRunCreated: ({ run_id }) => {
+      createdRunId = run_id;
+    },
   });
 
   const { signal } = request;
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
+      let runAnnounced = false;
       try {
         for await (const chunk of stream) {
           if (signal.aborted) break;
+          if (createdRunId && !runAnnounced) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  event: "run/created",
+                  data: { run_id: createdRunId, thread_id: threadId },
+                })}\n\n`,
+              ),
+            );
+            runAnnounced = true;
+          }
           const data = `data: ${JSON.stringify(chunk)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
+        if (signal.aborted) return;
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (error) {
-        if (signal.aborted) {
-          controller.close();
-          return;
-        }
+        if (signal.aborted) return;
         const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),

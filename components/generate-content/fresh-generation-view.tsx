@@ -9,6 +9,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { AlertCircle, X } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
@@ -21,10 +25,13 @@ import type {
   ContentSection,
   FinalContent,
   InternalLinkSuggestion,
+  Interrupt,
   NodeOutput,
   ResumeOptions,
   RunStreamEvent,
+  SEORESULT,
   StreamUpdates,
+  WREXT,
   WorkflowStep,
 } from "@/types/generate-content";
 import {
@@ -61,13 +68,44 @@ import {
 import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
+import { useWorkspace } from "@/providers/workspace-provider";
+import { Button } from "@/components/ui/button";
+import { workspaceRoutes } from "@/lib/routes";
 import { toast } from "sonner";
+import type { Route } from "next";
+import {
+  deriveActiveGenerationViewState,
+  type GenerationPipelineStep,
+} from "@/lib/generate-content/background-generation-view-state";
+import {
+  collectPendingInterrupts,
+  deriveAwaitingInputStage,
+} from "@/lib/generate-content/background-progress";
+import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import {
+  BACKGROUND_GENERATION_RESTORE_EVENT,
+  type BackgroundGenerationRestoreDetail,
+} from "@/lib/generate-content/background-generation-sync";
+import {
+  formatWordCountRange,
+  getContentTypeWordCountRange,
+  type WordCountRange,
+} from "@/lib/generate-content/content-type-word-count";
+
+// Derived progress at which the workflow has left the interactive research
+// steps and is writing the article — the only phase that gets the content
+// editor overlay and the live content token stream on restore.
+const ARTICLE_PHASE_PROGRESS = 42;
+const isArticlePhase = (progress?: number) =>
+  (progress ?? 0) >= ARTICLE_PHASE_PROGRESS;
 
 interface FreshGenerationViewProps {
   onBack: () => void;
   initialKeyword?: string;
   initialIntent?: string;
   isLibrary?: boolean;
+  backgroundThreadId?: string;
 }
 
 const extractJsonStringFieldPartial = (raw: string, field: string) => {
@@ -108,6 +146,30 @@ const normalizeEscapedJsonish = (raw: string) => {
   // {\"title\":\"...\",\"body_markdown\":\"...\"}
   // Normalize it so field extraction works.
   return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
+};
+
+const extractRequestedTargetWordCount = (feedback: string): number | null => {
+  const match = feedback.match(
+    /\b(?:target\s+)?word\s*(?:count|length)\s*(?:should\s*be|is|to|of|:|=)?\s*([\d,]{2,6})\b|\b([\d,]{2,6})\s*(?:-|\s)?words?\b/i,
+  );
+  const rawCount = match?.[1] ?? match?.[2];
+  if (!rawCount) return null;
+
+  const count = Number(rawCount.replaceAll(",", ""));
+  return Number.isInteger(count) && count >= 100 && count <= 10_000
+    ? count
+    : null;
+};
+
+const showWordCountRangeError = (
+  requestedCount: number,
+  contentType: string | undefined,
+  wordCountRange: WordCountRange,
+) => {
+  const typeLabel = contentType || "selected content type";
+  toast.error("Word count is outside the allowed range", {
+    description: `${typeLabel} supports ${formatWordCountRange(wordCountRange)}. ${requestedCount.toLocaleString()} words cannot be used.`,
+  });
 };
 
 const htmlToMarkdownLite = (html: string) => {
@@ -177,14 +239,26 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
 };
 
 export function FreshGenerationView({
-  onBack: _onBack,
+  onBack,
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
+  backgroundThreadId,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
+  const router = useRouter();
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
+  const { workspaceSlug } = useWorkspace();
+  const upsertBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.upsertJob,
+  );
+  const updateBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.updateJob,
+  );
+  const removeBackgroundJob = useBackgroundGenerationStore(
+    (store) => store.removeJob,
+  );
   const { patchCredits } = useSubscriptionStore();
   const {
     ensureCredits,
@@ -229,6 +303,8 @@ export function FreshGenerationView({
     allContent,
     currentLoadingSteps,
     keywordClusters,
+    recommendedContentType,
+    recommendedTopic,
   } = state;
 
   const interruptInternalLinks = useMemo(
@@ -258,22 +334,407 @@ export function FreshGenerationView({
   // True while a stream is in flight — blocks repeated clicks from spawning duplicate runs
   const streamBusyRef = useRef(false);
 
+  // Set by `run/created`: proof the server actually started a run for the
+  // current attempt. A resume that ends without it left nothing behind.
+  const runCreatedRef = useRef(false);
+
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
+  const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
+    useState(Boolean(backgroundThreadId));
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  const [enhancingDescription, setEnhancingDescription] = useState("");
+  const [pipelineSteps, setPipelineSteps] = useState<GenerationPipelineStep[]>(
+    [],
+  );
+  const [pendingTargetWordCount, setPendingTargetWordCount] = useState<
+    number | null
+  >(null);
+
+  const restoreActiveGenerationView = useCallback(
+    (progress?: number, stage?: string) => {
+      const activeView = deriveActiveGenerationViewState(progress, stage);
+      setIsBackgroundGenerationActive(true);
+      setEnhancingMsg(activeView.message);
+      setEnhancingDescription(activeView.description);
+      setPipelineSteps(activeView.pipelineSteps);
+    },
+    [],
+  );
 
   const cancelStream = () => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
   };
 
+  useEffect(() => {
+    if (!backgroundThreadId) return;
+
+    const handleRestoreRequest = (event: Event) => {
+      const { threadId: requestedThreadId } = (
+        event as CustomEvent<BackgroundGenerationRestoreDetail>
+      ).detail;
+      if (requestedThreadId === backgroundThreadId) {
+        setBackgroundRestoreRevision((revision) => revision + 1);
+      }
+    };
+
+    window.addEventListener(
+      BACKGROUND_GENERATION_RESTORE_EVENT,
+      handleRestoreRequest,
+    );
+    return () =>
+      window.removeEventListener(
+        BACKGROUND_GENERATION_RESTORE_EVENT,
+        handleRestoreRequest,
+      );
+  }, [backgroundThreadId]);
+
   // Cancel on unmount (e.g. user navigates away)
   // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
   useEffect(() => {
     return () => cancelStream();
   }, []);
+
+  const hydrateFromBackgroundState = useCallback(
+    (values: Partial<WREXT>) => {
+      const restoredContent = values.content;
+      const finalContent = restoredContent?.final_content;
+
+      const review = restoredContent?.review as
+        | (NonNullable<typeof restoredContent>["review"] & {
+            on_page_metrics?: SEORESULT;
+          })
+        | undefined;
+
+      dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId ?? null });
+      dispatch({
+        type: "SET_USER_KEYWORD",
+        payload:
+          values.serp_payload?.query ??
+          finalContent?.focus_keyphrase ??
+          finalContent?.primary_keyword ??
+          "",
+      });
+      dispatch({
+        type: "SET_PRIMARY_KEYWORD",
+        payload:
+          finalContent?.focus_keyphrase ??
+          finalContent?.primary_keyword ??
+          values.serp_payload?.query ??
+          "",
+      });
+      dispatch({
+        type: "SET_OUTLINE",
+        payload: restoredContent?.outline ?? null,
+      });
+      if (finalContent) {
+        dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
+        dispatch({
+          type: "SET_GENERATED_CONTENT",
+          payload:
+            finalContent.body_markdown ||
+            htmlToMarkdownLite(finalContent.html_content ?? ""),
+        });
+      }
+      if (review?.readability_metrics) {
+        dispatch({
+          type: "SET_READABILITY_SCORE",
+          payload: review.readability_metrics,
+        });
+      }
+      if (review?.trust_score) {
+        dispatch({
+          type: "SET_TRUST_SCORE",
+          payload: review.trust_score,
+        });
+      }
+      if (review?.on_page_metrics) {
+        dispatch({
+          type: "SET_SEO_SCORE",
+          payload: review.on_page_metrics,
+        });
+      }
+      dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+      return Boolean(finalContent);
+    },
+    [backgroundThreadId],
+  );
+
+  // Every interactive step (keyword selection, content type, topics, outline
+  // review) is rendered purely from its `interrupt()` payload, so replaying the
+  // thread's pending interrupt through the same reducer path the live stream
+  // uses restores whichever step the workflow is waiting on.
+  const hydrateFromPendingInterrupt = useCallback(
+    (interrupts: Interrupt[], values?: Partial<WREXT>) => {
+      dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId ?? null });
+
+      const query = values?.serp_payload?.query;
+      const selectedKeyword = values?.["Primary Keyword"] || query;
+      if (query) dispatch({ type: "SET_USER_KEYWORD", payload: query });
+      if (selectedKeyword)
+        dispatch({ type: "SET_PRIMARY_KEYWORD", payload: selectedKeyword });
+      if (values?.serp_payload?.country)
+        dispatch({
+          type: "SET_COUNTRY",
+          payload: values.serp_payload.country,
+        });
+
+      const value = interrupts[0]?.value;
+      if (typeof value?.recommended_content_type === "string")
+        dispatch({
+          type: "SET_RECOMMENDED_CONTENT_TYPE",
+          payload: value.recommended_content_type,
+        });
+      if (typeof value?.recommended_topic === "string")
+        dispatch({
+          type: "SET_RECOMMENDED_TOPIC",
+          payload: value.recommended_topic,
+        });
+
+      dispatch({ type: "SET_INTERRUPT", payload: interrupts });
+      dispatch({
+        type: "UPDATE_FROM_STREAM",
+        payload: { __interrupt__: interrupts } as StreamUpdates,
+      });
+    },
+    [backgroundThreadId],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: processStream/cancelStream are declared later and are intentionally not deps (accessed via ref / at call time)
+  useEffect(() => {
+    if (!backgroundThreadId) return;
+    // This mount started the run and is already reading its live stream (the
+    // redirect to `?thread=...` arrives mid-generation). Restoring would abort
+    // that stream to rejoin the same run, and the aborted `processStream`
+    // unwinds through its `finally` — clearing the loading UI underneath it.
+    if (streamBusyRef.current) return;
+
+    let disposed = false;
+    let retryId: number | undefined;
+    let consecutiveFailures = 0;
+
+    dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
+    dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+    dispatch({
+      type: "SET_LOADING_STATUS",
+      payload: "Restoring background generation...",
+    });
+    const trackedJob = useBackgroundGenerationStore
+      .getState()
+      .jobs.find((job) => job.threadId === backgroundThreadId);
+
+    if (isArticlePhase(trackedJob?.progress)) {
+      dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
+      dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+      restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
+    } else {
+      // Research phase — show the plain analysis loader, not the article editor.
+      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      setIsBackgroundGenerationActive(false);
+    }
+    setRestoreError(null);
+
+    const restore = async () => {
+      let terminalFailure = false;
+      try {
+        const response = await fetch(
+          `/api/generate/${encodeURIComponent(backgroundThreadId)}/status?includeState=true`,
+          { cache: "no-store" },
+        );
+        const payload = (await response.json()) as {
+          run?: { id?: string; status?: string };
+          state?: {
+            values?: Partial<WREXT>;
+            tasks?: Array<{ interrupts?: Interrupt[] }>;
+          };
+          progress?: number;
+          stage?: string;
+          error?: string;
+          awaitingInput?: boolean;
+        };
+
+        if (!response.ok && response.status !== 202) {
+          throw new Error(payload.error || "Unable to restore this article");
+        }
+        if (disposed) return;
+
+        if (
+          payload.run?.status === "error" ||
+          payload.run?.status === "timeout" ||
+          payload.run?.status === "interrupted" ||
+          payload.error
+        ) {
+          terminalFailure = true;
+          throw new Error(
+            payload.error || "This article could not be generated.",
+          );
+        }
+        consecutiveFailures = 0;
+
+        const inArticlePhase = isArticlePhase(payload.progress);
+        // Interactive steps interrupt inside a subgraph, so the pending
+        // interrupt can sit one level down under `tasks[].state`.
+        const pendingInterrupts = collectPendingInterrupts(
+          payload.state,
+        ) as Interrupt[];
+
+        // The run paused for user input: restore that step's interactive view
+        // instead of the article editor. This is what makes leaving during
+        // keyword analysis (or any other step) safe to come back to.
+        if (payload.awaitingInput && pendingInterrupts.length > 0) {
+          hydrateFromPendingInterrupt(pendingInterrupts, payload.state?.values);
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+          dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "completed",
+            stage: payload.stage ?? "Waiting for your input",
+            progress: payload.progress ?? 24,
+            awaitingInput: true,
+            // The user is looking at the step — no need to also toast it.
+            completionNotified: true,
+          });
+          return;
+        }
+
+        const hasFinalContent =
+          payload.state?.values &&
+          (inArticlePhase || payload.run?.status === "success")
+            ? hydrateFromBackgroundState(payload.state.values)
+            : false;
+
+        if (payload.run?.status === "success") {
+          if (hasFinalContent) {
+            setIsBackgroundGenerationActive(false);
+            setIsEnhancing(false);
+            dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+            dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+            dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+            updateBackgroundJob(backgroundThreadId, {
+              status: "completed",
+              stage: "Article ready",
+              progress: 100,
+            });
+            return;
+          }
+          terminalFailure = true;
+          throw new Error(
+            payload.awaitingInput
+              ? "This generation is waiting on a step we could not restore."
+              : "Generation finished, but the article result was unavailable.",
+          );
+        }
+
+        updateBackgroundJob(backgroundThreadId, {
+          status: "running",
+          stage: payload.stage ?? "Generating your article",
+          progress: payload.progress ?? 24,
+          awaitingInput: false,
+        });
+
+        dispatch({ type: "SET_MANUAL_LOADING", payload: true });
+        dispatch({
+          type: "SET_LOADING_STEPS",
+          payload: inArticlePhase
+            ? FINAL_GENERATION_STEPS
+            : INITIAL_ANALYSIS_STEPS,
+        });
+        if (inArticlePhase) {
+          restoreActiveGenerationView(payload.progress, payload.stage);
+        }
+
+        // Run still in progress: reconnect to its live token stream so the
+        // article renders as it's written (same as staying on the page),
+        // instead of showing a poll-only skeleton until completion.
+        const runId = payload.run?.id;
+        if (runId) {
+          if (inArticlePhase) {
+            setTokenTarget("content");
+            tokenTargetRef.current = "content";
+          }
+          dispatch({
+            type: "SET_LOADING_STATUS",
+            payload: payload.stage ?? "Generating your article...",
+          });
+          cancelStream();
+          abortControllerRef.current = new AbortController();
+          const { signal } = abortControllerRef.current;
+          try {
+            const stream = streamFromSSE(
+              `/api/generate/${encodeURIComponent(backgroundThreadId)}/join`,
+              { runId },
+              signal,
+            );
+            await processStreamRef.current(stream);
+          } catch {
+            // Join dropped or the run just ended — the re-check below reconciles.
+          }
+          if (disposed) return;
+          // Re-check status to hydrate the final article (or catch a terminal
+          // state) once the joined stream ends.
+          retryId = window.setTimeout(restore, 800);
+          return;
+        }
+
+        dispatch({
+          type: "SET_LOADING_STATUS",
+          payload:
+            payload.stage ?? "Generating your article in the background...",
+        });
+        retryId = window.setTimeout(restore, 3000);
+      } catch (error) {
+        if (disposed) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to restore this article";
+        consecutiveFailures += 1;
+        if (!terminalFailure && consecutiveFailures < 3) {
+          dispatch({
+            type: "SET_LOADING_STATUS",
+            payload: "Reconnecting to background generation...",
+          });
+          retryId = window.setTimeout(restore, 3000);
+          return;
+        }
+        setRestoreError(message);
+        setIsBackgroundGenerationActive(false);
+        setIsEnhancing(false);
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        updateBackgroundJob(backgroundThreadId, {
+          status: "failed",
+          stage: "Generation failed",
+          error: message,
+        });
+      }
+    };
+
+    void restore();
+
+    return () => {
+      disposed = true;
+      if (retryId) window.clearTimeout(retryId);
+      // Abort any in-flight join stream; the server run continues
+      // (cancelOnDisconnect is false on the join route).
+      cancelStream();
+    };
+  }, [
+    backgroundThreadId,
+    backgroundRestoreRevision,
+    hydrateFromBackgroundState,
+    hydrateFromPendingInterrupt,
+    restoreActiveGenerationView,
+    updateBackgroundJob,
+  ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
   useEffect(() => {
@@ -313,6 +774,9 @@ export function FreshGenerationView({
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
+  const outlineWordCountRange = getContentTypeWordCountRange(
+    parsedOutline?.schema_type,
+  );
 
   // Track content_generation_completed once per thread when all scores are ready
   useEffect(() => {
@@ -326,12 +790,19 @@ export function FreshGenerationView({
       thread_id: threadId,
       word_count: allContent?.word_count,
     });
+    updateBackgroundJob(threadId, {
+      status: "completed",
+      stage: "Article ready",
+      progress: 100,
+      error: undefined,
+    });
   }, [
     isContentFinal,
     threadId,
     userKeyword,
     workspaceId,
     allContent?.word_count,
+    updateBackgroundJob,
   ]);
 
   // Track keyword_search_completed once per thread when SEO/keyword data arrives
@@ -443,15 +914,8 @@ export function FreshGenerationView({
     }
   }, [seoResult?.intent, selectedIntent]);
 
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
-  const [enhancingDescription, setEnhancingDescription] = useState("");
-
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
-  const [pipelineSteps, setPipelineSteps] = useState<
-    Array<{ label: string; status: "pending" | "active" | "done" }>
-  >([]);
 
   const CONTENT_PIPELINE = [
     "Generating Content",
@@ -618,10 +1082,35 @@ export function FreshGenerationView({
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
   ): Promise<void> => {
+    // `threadId` is still stale in this closure for the very first run (the
+    // reducer dispatch has not re-rendered yet), so track it locally and let
+    // `run/created` confirm it.
+    let activeThreadId = threadId ?? backgroundThreadId ?? null;
+
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
       for await (const chunk of stream) {
+        if (chunk.event === "run/created") {
+          const runData = chunk.data as {
+            run_id?: string;
+            thread_id?: string;
+          };
+          runCreatedRef.current = true;
+          activeThreadId = runData.thread_id ?? activeThreadId;
+          if (activeThreadId) {
+            // Stage/progress belong to whichever phase started this run; only
+            // the run identity and "this job is live again" are known here.
+            updateBackgroundJob(activeThreadId, {
+              runId: runData.run_id,
+              status: "running",
+              awaitingInput: false,
+              completionNotified: false,
+            });
+          }
+          continue;
+        }
+
         // ── messages/partial — raw LLM tokens ─────────────────────────────────
         // Your SSE sends these token-by-token as the LLM writes text/JSON.
         if (
@@ -728,6 +1217,7 @@ export function FreshGenerationView({
           }
         )?.generate_outline?.content?.outline;
         if (generateOutlineResult) {
+          setPendingTargetWordCount(null);
           dispatch({ type: "SET_OUTLINE", payload: generateOutlineResult });
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
         }
@@ -750,20 +1240,48 @@ export function FreshGenerationView({
             "Creating the first draft based on the approved outline...",
           );
           advancePipeline("Generating Content");
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "running",
+              stage: "Drafting your article",
+              progress: ARTICLE_PHASE_PROGRESS,
+            });
+          }
         }
 
         if (updates?.generate_content) {
           advancePipeline("Humanizing");
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "running",
+              stage: "Refining tone and structure",
+              progress: 58,
+            });
+          }
         }
 
         if (updates?.humanize_content) {
           advancePipeline("Reviewing Content");
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "running",
+              stage: "Running quality checks",
+              progress: 78,
+            });
+          }
         }
 
         if (updates?.review_content) {
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "running",
+              stage: "Finalizing SEO and readability",
+              progress: 90,
+            });
+          }
         }
 
         if (updates?.content_engine) {
@@ -772,6 +1290,13 @@ export function FreshGenerationView({
           setPipelineSteps((prev) =>
             prev.map((s) => ({ ...s, status: "done" as const })),
           );
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "running",
+              stage: "Preparing your article",
+              progress: 96,
+            });
+          }
         }
 
         // Centralized handling for nodes that emit content updates
@@ -834,7 +1359,52 @@ export function FreshGenerationView({
         }
 
         if (updates.__interrupt__) {
+          // The run just paused for the user, so no further tokens belong to
+          // the previous phase. Releasing the target matters most on restore:
+          // a stale "content" target keeps `showOutlineReview` false and the
+          // article overlay up, hiding the approve/reject step entirely.
+          setTokenTarget("none");
+          tokenTargetRef.current = "none";
           dispatch({ type: "SET_INTERRUPT", payload: updates.__interrupt__ });
+          const recommendedContentType =
+            updates.__interrupt__?.[0]?.value?.recommended_content_type;
+          const recommendedTopic =
+            updates.__interrupt__?.[0]?.value?.recommended_topic;
+          const interruptType = updates.__interrupt__?.[0]?.value?.type;
+
+          // A new outline-review interrupt means regeneration is complete, so
+          // replace the optimistic target with the server-confirmed outline.
+          if (interruptType === "outline_review") {
+            setPendingTargetWordCount(null);
+          }
+
+          if (typeof recommendedContentType === "string") {
+            dispatch({
+              type: "SET_RECOMMENDED_CONTENT_TYPE",
+              payload: recommendedContentType,
+            });
+          }
+          if (typeof recommendedTopic === "string") {
+            dispatch({
+              type: "SET_RECOMMENDED_TOPIC",
+              payload: recommendedTopic,
+            });
+          }
+
+          // The run is about to pause for this step. Record it now (and mark it
+          // notified — the user is looking at it) so the dock reflects reality
+          // before its next poll and doesn't toast a step already on screen.
+          if (activeThreadId) {
+            const awaiting = deriveAwaitingInputStage(
+              updates.__interrupt__?.[0]?.value?.type,
+            );
+            updateBackgroundJob(activeThreadId, {
+              status: "completed",
+              awaitingInput: true,
+              completionNotified: true,
+              ...awaiting,
+            });
+          }
         }
 
         dispatch({ type: "UPDATE_FROM_STREAM", payload: updates });
@@ -857,6 +1427,16 @@ export function FreshGenerationView({
           error_message:
             _e instanceof Error ? _e.message : "Unknown stream error",
         });
+        if (activeThreadId) {
+          updateBackgroundJob(activeThreadId, {
+            status: "failed",
+            stage: "Generation failed",
+            error:
+              _e instanceof Error
+                ? _e.message
+                : "We could not finish this article.",
+          });
+        }
       }
     } finally {
       if (loadingStatus?.endsWith("..."))
@@ -871,10 +1451,26 @@ export function FreshGenerationView({
     }
   };
 
+  // Keep a live handle so the background-restore effect (declared earlier) always
+  // invokes the latest processStream closure instead of a stale one.
+  const processStreamRef = useRef(processStream);
+  processStreamRef.current = processStream;
+
   // ─────────────────────────────────────────────────────────────────────────
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
+    const activeGenerationJob = findActiveGenerationJob(
+      useBackgroundGenerationStore.getState().jobs,
+    );
+    if (activeGenerationJob) {
+      toast.info("An article is already in progress", {
+        description: `Returning to "${activeGenerationJob.title}".`,
+      });
+      router.push(activeGenerationJob.resultUrl as Route);
+      return;
+    }
+
     // Not enough for a whole article → stop before a thread or stream is ever created
     if (!ensureCredits()) return;
     if (streamBusyRef.current) return;
@@ -905,6 +1501,34 @@ export function FreshGenerationView({
 
       const keyword = _initialKeyword || userKeyword;
 
+      // Register the tracking record before the stream opens so the dock can
+      // take over the moment the user navigates away. Like the content run, the
+      // keyword run is server-owned (onDisconnect: "continue"), so leaving the
+      // page only stops reading the stream — it never cancels the analysis.
+      const startedAt = new Date().toISOString();
+      upsertBackgroundJob({
+        threadId: newThreadId,
+        workspaceId: workspaceId ?? undefined,
+        workspaceSlug,
+        title: keyword || "Keyword research",
+        keyword,
+        status: "running",
+        stage: "Analyzing search results",
+        progress: 5,
+        createdAt: startedAt,
+        updatedAt: startedAt,
+        resultUrl: `${workspaceRoutes.generate_content(
+          workspaceSlug,
+        )}?thread=${encodeURIComponent(newThreadId)}`,
+        completionNotified: false,
+        awaitingInput: false,
+      });
+
+      toast.info("Analyzing your keyword", {
+        description:
+          "You can leave this page — we'll keep working and notify you when it's ready.",
+      });
+
       analytics.track("content_generation_started", {
         keyword,
         country,
@@ -930,7 +1554,7 @@ export function FreshGenerationView({
           },
           streamMode: ["updates", "messages", "custom"],
           streamSubgraphs: true,
-          onDisconnect: "cancel",
+          onDisconnect: "continue",
         },
         signal,
       );
@@ -941,41 +1565,110 @@ export function FreshGenerationView({
     }
   };
 
+  /** Resolves to whether the server actually started a run for this step. */
   const resumeWorkflow = async ({
     payload,
     status: statusMsg,
-  }: ResumeOptions) => {
-    if (!threadId) return;
+  }: ResumeOptions): Promise<boolean> => {
+    if (!threadId) return false;
     // Mid-article: the earlier stages are already paid for, so only a fully
     // exhausted balance stops the workflow advancing to the next step
-    if (!ensureCreditsToContinue()) return;
-    if (streamBusyRef.current) return;
+    if (!ensureCreditsToContinue()) return false;
+    if (streamBusyRef.current) return false;
     streamBusyRef.current = true;
 
     try {
-      cancelStream();
-      abortControllerRef.current = new AbortController();
-      const { signal } = abortControllerRef.current;
-
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       if (statusMsg)
         dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
 
-      const stream = streamFromSSE(
-        `/api/generate/${threadId}/resume`,
-        {
-          payload,
-          streamMode: ["updates", "messages", "custom"],
-          streamSubgraphs: true,
-          onDisconnect: "cancel",
-        },
-        signal,
-      );
-      await processStream(stream);
+      // The workflow is moving again: reopen the tracking record so the dock
+      // resumes polling (and can notify again) if the user leaves mid-step.
+      // Drop the previous paused run ID so other tabs do not keep polling that
+      // completed run and restore this same interactive step over the new run.
+      // `run/created` supplies the replacement ID as soon as the resume starts.
+      updateBackgroundJob(threadId, {
+        runId: undefined,
+        status: "running",
+        awaitingInput: false,
+        completionNotified: false,
+        ...(statusMsg ? { stage: statusMsg.replace(/\.+$/, "") } : {}),
+      });
+
+      // A resume that dies before `run/created` (aborted fetch, dev-server
+      // hiccup, rejected run) leaves no run on the thread and nothing on
+      // screen — the click simply vanishes. Retry once before reporting back.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        cancelStream();
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        runCreatedRef.current = false;
+
+        const stream = streamFromSSE(
+          `/api/generate/${threadId}/resume`,
+          {
+            payload,
+            streamMode: ["updates", "messages", "custom"],
+            streamSubgraphs: true,
+            onDisconnect: "continue",
+          },
+          controller.signal,
+        );
+        await processStream(stream);
+
+        // An abort is deliberate (cancelled generation, unmount, a newer
+        // stream taking over) — never retry over it.
+        if (runCreatedRef.current || controller.signal.aborted) break;
+      }
+      return runCreatedRef.current;
     } finally {
       streamBusyRef.current = false;
     }
+  };
+
+  const startBackgroundWorkflow = async ({
+    payload,
+    status: statusMsg,
+  }: ResumeOptions) => {
+    if (!threadId || !ensureCreditsToContinue()) return;
+
+    const now = new Date().toISOString();
+    const resultUrl = `${workspaceRoutes.generate_content(
+      workspaceSlug,
+    )}?thread=${encodeURIComponent(threadId)}`;
+
+    // Register the job so the background dock keeps tracking it (and can notify
+    // on completion) if the user navigates away. We do NOT fire a detached
+    // run or navigate: the stream below renders the draft on-page as before.
+    // The run is server-owned (onDisconnect: "continue"), so it survives
+    // navigation and the dock polls /status to completion from anywhere.
+    upsertBackgroundJob({
+      threadId,
+      workspaceId: workspaceId ?? undefined,
+      workspaceSlug,
+      title: parsedOutline?.title || primaryKeyword || "Untitled article",
+      keyword: primaryKeyword,
+      status: "running",
+      stage: "Drafting your article",
+      // Matches the derived "Drafting your article" milestone so the shared
+      // record keeps climbing from the research steps instead of rewinding.
+      progress: ARTICLE_PHASE_PROGRESS,
+      createdAt: now,
+      updatedAt: now,
+      resultUrl,
+      completionNotified: false,
+      awaitingInput: false,
+    });
+
+    toast.info("Generating your article", {
+      description:
+        "You can leave this page — we'll keep working and notify you when it's ready.",
+    });
+
+    // Live-stream on the current page so the article appears as it is written
+    // (run/created + progress events keep the background job updated).
+    await resumeWorkflow({ payload, status: statusMsg });
   };
 
   const handleWorkflow = (step: WorkflowStep, value: string) => {
@@ -1063,32 +1756,68 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
-        return resumeWorkflow({
+        return startBackgroundWorkflow({
           payload: {
             action: "approve",
             ...(parsedOutline?.tone ? { tone: parsedOutline.tone } : {}),
             ...(parsedOutline?.target_audience?.length
               ? { target_audience: parsedOutline.target_audience }
               : {}),
+            ...(parsedOutline?.target_word_count && {
+              target_word_count: parsedOutline.target_word_count,
+            }),
           },
           status: "Approving and generating content...",
         });
       case "OUTLINE_REJECT":
+        // Keep the graph paused at the outline-review interrupt while the user
+        // enters feedback. Sending `reject` here makes the graph issue a
+        // second interrupt for the same feedback, which leaves a short window
+        // where the first Submit Feedback click races the previous stream.
+        // The backend accepts `regenerate` with feedback inline, so we can
+        // collect it locally and resume exactly once on submit.
+        dispatch({ type: "SET_REJECTED_REASON", payload: "" });
+        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+        return;
+      case "OUTLINE_REJECT_REASON": {
+        const requestedTargetWordCount = extractRequestedTargetWordCount(value);
+        if (
+          requestedTargetWordCount !== null &&
+          outlineWordCountRange &&
+          (requestedTargetWordCount < outlineWordCountRange.min ||
+            requestedTargetWordCount > outlineWordCountRange.max)
+        ) {
+          showWordCountRangeError(
+            requestedTargetWordCount,
+            parsedOutline?.schema_type,
+            outlineWordCountRange,
+          );
+          return;
+        }
+        if (requestedTargetWordCount !== null) {
+          setPendingTargetWordCount(requestedTargetWordCount);
+        }
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
         outline.resetStream();
-        dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        return resumeWorkflow({ payload: { action: "reject" } });
-      case "OUTLINE_REJECT_REASON":
-        setTokenTarget("outline");
-        tokenTargetRef.current = "outline";
-        outline.resetStream();
-        dispatch({ type: "SET_OUTLINE", payload: null });
-        dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
-        dispatch({ type: "SUBMIT_REJECT_REASON" });
+        dispatch({ type: "SET_REJECTED_REASON", payload: "" });
 
-        return resumeWorkflow({ payload: { reason: value } });
+        return resumeWorkflow({
+          payload: { action: "regenerate", feedback: value },
+          status: "Regenerating outline...",
+        }).then((started) => {
+          if (started) return;
+          // Nothing was sent: hand the user back their feedback instead of an
+          // empty outline screen that never regenerates.
+          setPendingTargetWordCount(null);
+          dispatch({ type: "SET_REJECTED_REASON", payload: value });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+          toast.error("We couldn't send your feedback", {
+            description: "Please submit it again.",
+          });
+        });
+      }
       default: {
         const _never: never = step;
         return _never;
@@ -1132,6 +1861,55 @@ export function FreshGenerationView({
     [allContent],
   );
 
+  // Cancel an in-progress generation. Stops the server-owned run (credits
+  // already spent on finished steps are not refunded), clears the tracking
+  // record across tabs, and returns to a fresh generation screen.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream/dispatch are stable (refs/reducer), intentionally omitted
+  const handleCancelGeneration = useCallback(async () => {
+    if (!threadId) return;
+    const job = useBackgroundGenerationStore
+      .getState()
+      .jobs.find((j) => j.threadId === threadId);
+    cancelStream();
+    try {
+      await fetch(`/api/generate/${encodeURIComponent(threadId)}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId: job?.runId }),
+      });
+    } catch {
+      // Best-effort: the run may already be gone. The record cleanup below
+      // still stops the UI from tracking work that will never finish.
+    }
+    removeBackgroundJob(threadId);
+    announceBackgroundGenerationRemoval([threadId]);
+    dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+    dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+    dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+    toast.info("Generation cancelled", {
+      description: "Credits already used for this generation are not refunded.",
+    });
+    router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
+  }, [threadId, removeBackgroundJob, router, workspaceSlug]);
+
+  // Shown while a generation is actively running (not on the finished article).
+  const cancelGenerationControl =
+    isManualLoading && threadId && !isContentFinal ? (
+      <ConfirmationDialog
+        title="Cancel this generation?"
+        description="The article will stop where it is. Credits already used for this generation are not refunded."
+        confirmText="Cancel generation"
+        cancelText="Keep generating"
+        variant="destructive"
+        onConfirm={() => void handleCancelGeneration()}
+      >
+        <Button type="button" variant="outline" size="sm" className="gap-1.5">
+          <X className="h-4 w-4" />
+          Cancel generation
+        </Button>
+      </ConfirmationDialog>
+    ) : null;
+
   if (
     (isLoading || isManualLoading) &&
     !showOutlineReview &&
@@ -1154,6 +1932,9 @@ export function FreshGenerationView({
           completedSteps={completedNodes}
           steps={currentLoadingSteps}
         />
+        {cancelGenerationControl && (
+          <div className="mt-6">{cancelGenerationControl}</div>
+        )}
       </div>
     );
   }
@@ -1176,6 +1957,7 @@ export function FreshGenerationView({
     ),
     topic: (
       <TopicsSection
+        recommendedTopic={recommendedTopic}
         instruction={displayedInstruction}
         topics={topics}
         onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
@@ -1188,6 +1970,7 @@ export function FreshGenerationView({
     ),
     content_type: (
       <ContentType
+        recommendedContentType={recommendedContentType}
         instruction={displayedInstruction}
         contentTypes={contentTypes}
         handleContentTypeSelect={(selected) =>
@@ -1200,6 +1983,8 @@ export function FreshGenerationView({
       <OutlineRejectSection
         instruction={displayedInstruction}
         rejectedReason={rejectedReason}
+        contentType={parsedOutline?.schema_type}
+        wordCountRange={outlineWordCountRange}
         onChange={(val) =>
           dispatch({ type: "SET_REJECTED_REASON", payload: val })
         }
@@ -1292,10 +2077,12 @@ export function FreshGenerationView({
             <OutlineDisplay
               outline={parsedOutline}
               rawTokens={outline.streamedText}
-              isLoading={isStreamingOutline}
+              isLoading={isManualLoading || isStreamingOutline}
+              pendingTargetWordCount={pendingTargetWordCount}
               internalLinks={interruptInternalLinks}
               brandVoicePromotion={interruptBrandVoicePromotion}
-              onApprove={(selectedLinks, promoteBrand) => {
+              workspaceId={workspaceId}
+              onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
                 content.resetStream();
@@ -1312,7 +2099,7 @@ export function FreshGenerationView({
                   workspace_id: workspaceId ?? undefined,
                   thread_id: threadId ?? undefined,
                 });
-                void resumeWorkflow({
+                void startBackgroundWorkflow({
                   payload: {
                     action: "approve",
                     ...(parsedOutline?.tone
@@ -1321,20 +2108,41 @@ export function FreshGenerationView({
                     ...(parsedOutline?.target_audience?.length
                       ? { target_audience: parsedOutline.target_audience }
                       : {}),
+                    ...(parsedOutline?.target_word_count && {
+                      target_word_count: parsedOutline.target_word_count,
+                    }),
                     ...(interruptInternalLinks?.length
                       ? { selected_internal_links: selectedLinks }
                       : {}),
                     ...(interruptBrandVoicePromotion
                       ? { promote_brand: promoteBrand }
                       : {}),
+                    ...(selectedPersonaId
+                      ? { selected_persona_id: selectedPersonaId }
+                      : {}),
                   },
                   status: "Approving and generating content...",
                 });
               }}
               onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
-              onUpdate={(updatedOutline) =>
-                dispatch({ type: "SET_OUTLINE", payload: updatedOutline })
-              }
+              onUpdate={(updatedOutline) => {
+                const requestedTargetWordCount =
+                  updatedOutline.target_word_count;
+                if (
+                  requestedTargetWordCount !== undefined &&
+                  outlineWordCountRange &&
+                  (requestedTargetWordCount < outlineWordCountRange.min ||
+                    requestedTargetWordCount > outlineWordCountRange.max)
+                ) {
+                  showWordCountRangeError(
+                    requestedTargetWordCount,
+                    parsedOutline?.schema_type,
+                    outlineWordCountRange,
+                  );
+                  return;
+                }
+                dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
+              }}
               keywordClusters={keywordClusters}
             />
           </div>
@@ -1343,14 +2151,44 @@ export function FreshGenerationView({
         )}
       </div>
 
+      {restoreError && (
+        <div className="mx-auto my-8 flex w-full max-w-2xl items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              We could not restore this article
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{restoreError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setRestoreError(null);
+                onBack();
+              }}
+            >
+              Start a new article
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
-      {showContentStream && (
+      {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
+          {cancelGenerationControl && (
+            <div className="mx-auto mb-3 flex w-full max-w-5xl justify-end">
+              {cancelGenerationControl}
+            </div>
+          )}
           <ContentEditor
+            threadId={threadId ?? undefined}
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
             }
-            isEnhancing={isEnhancing}
+            isEnhancing={isEnhancing || isBackgroundGenerationActive}
             enhancingMsg={enhancingMsg}
             enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}

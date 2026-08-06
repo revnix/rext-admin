@@ -359,9 +359,37 @@ export async function getAuthHeaders(
   return headers;
 }
 
-async function isExpiredAccessTokenResponse(
+// Backend 401s that mean the *session itself* is gone rather than the access
+// token merely having aged out. Refreshing cannot recover any of these: the
+// refresh token belongs to the same session the backend has already discarded
+// (deleted/deactivated UserSession row, blacklisted jti, deleted user), so the
+// only correct response is a clean sign-out.
+//
+// These must be matched on the message, not the code: the backend raises them
+// as a plain RextAuthenticationException, which carries the same generic
+// `unauthorized` error_code as an ordinary permission failure — and a
+// permission failure must NOT sign anyone out. See the backend's
+// _ensure_active_user_session() and get_current_active_user() for the sources.
+const REVOKED_SESSION_MESSAGES = [
+  "authentication session has been revoked",
+  "authentication session is invalid",
+  "token has been revoked",
+  "user not found or has been deleted",
+];
+
+type UnauthorizedKind = "expired" | "revoked" | "other";
+
+/**
+ * Classify a 401 once, from a single body read.
+ *
+ * - "expired": the access token aged out — recoverable by refreshing.
+ * - "revoked": the backend session is gone — only a sign-out recovers.
+ * - "other":   permission denied, endpoint-specific auth, etc. — pass through
+ *              untouched so callers can handle it without disturbing the session.
+ */
+async function classifyUnauthorized(
   response: Response,
-): Promise<boolean> {
+): Promise<UnauthorizedKind> {
   try {
     const body = await response.clone().json();
     const error = body?.error ?? body;
@@ -370,13 +398,21 @@ async function isExpiredAccessTokenResponse(
       error?.message ?? body?.message ?? body?.detail ?? "",
     ).toLowerCase();
 
-    return (
+    if (
       code === "token_expired" ||
       message.includes("authentication token has expired") ||
       message === "token has expired"
-    );
+    ) {
+      return "expired";
+    }
+
+    if (REVOKED_SESSION_MESSAGES.some((pattern) => message.includes(pattern))) {
+      return "revoked";
+    }
+
+    return "other";
   } catch {
-    return false;
+    return "other";
   }
 }
 
@@ -419,7 +455,32 @@ export async function authenticatedFetch(
   // revoked impersonation sessions, and endpoint-specific authentication
   // rules must not rotate credentials or sign every tab out. Only the
   // backend's typed expiry response enters refresh recovery.
-  if (!(await isExpiredAccessTokenResponse(response))) {
+  const unauthorizedKind = await classifyUnauthorized(response);
+
+  // The backend has discarded this session entirely — most commonly because the
+  // daily cleanup job deleted the UserSession row (it drops rows whose
+  // last_activity_at is older than USER_SESSION_INACTIVE_DAYS, or whose
+  // expires_at has passed), but also on an admin revoke or a deleted user.
+  //
+  // Refreshing is pointless here: the refresh token belongs to the same dead
+  // session. Without this branch the request just returns 401 to the caller
+  // while the Auth.js cookie stays valid and error-free — so proxy.ts still
+  // sees `isLoggedIn` and never redirects. The user is left on a dashboard
+  // where every call 401s, with no path back to /login short of manually
+  // clearing cookies. Sign out cleanly instead.
+  //
+  // redirectToLogin() is debounced, so a burst of parallel 401s (the dashboard
+  // fires several at once) still produces exactly one logout.
+  if (unauthorizedKind === "revoked") {
+    log.warn(
+      "[AuthJS] Backend reports the session is no longer valid — signing out",
+      { url },
+    );
+    redirectToLogin();
+    throw new Error("Session expired");
+  }
+
+  if (unauthorizedKind !== "expired") {
     return response;
   }
 

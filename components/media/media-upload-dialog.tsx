@@ -60,8 +60,8 @@ export function MediaUploadDialog({
     mutationFn: async (params: MediaUploadParams) => {
       return apiClient.media.upload(workspaceId, params);
     },
-    onSuccess: (data) => {
-      toast.success(data.message || "File uploaded successfully");
+    onSuccess: () => {
+      toast.success("File uploaded successfully");
       queryClient.invalidateQueries({
         queryKey: mediaQueries.all(workspaceId),
       });

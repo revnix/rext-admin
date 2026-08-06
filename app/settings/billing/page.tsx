@@ -591,10 +591,6 @@ function BillingDashboardContent() {
                       <Zap className="h-4 w-4" />
                       10 Topics
                     </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      100 Knowledge Items
-                    </li>
                   </ul>
                 </CardContent>
                 <CardFooter>
@@ -639,10 +635,6 @@ function BillingDashboardContent() {
                     </li>
                     <li className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-primary" />
-                      1,000 Knowledge Items
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />
                       Priority Support
                     </li>
                   </ul>
@@ -680,10 +672,6 @@ function BillingDashboardContent() {
                     <li className="flex items-center gap-2">
                       <Zap className="h-4 w-4" />
                       Unlimited Topics
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      Unlimited Knowledge
                     </li>
                     <li className="flex items-center gap-2">
                       <Zap className="h-4 w-4" />

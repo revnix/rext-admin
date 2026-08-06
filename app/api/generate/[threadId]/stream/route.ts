@@ -1,22 +1,20 @@
 import type { NextRequest } from "next/server";
-import { Client } from "@langchain/langgraph-sdk";
 
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import {
+  getGenerationClient,
+  requireThreadOwner,
+} from "@/lib/generate-content/thread-access";
 
 const ASSISTANT_ID = "agent";
-
-const getClient = () =>
-  new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.LANGGRAPH_API_URL,
-    }),
-  });
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ threadId: string }> },
 ) {
   const { threadId } = await params;
+
+  const access = await requireThreadOwner(threadId);
+  if (!access.ok) return access.response;
 
   let body: { input: Record<string, unknown> };
   try {
@@ -28,32 +26,47 @@ export async function POST(
     });
   }
 
-  const client = getClient();
+  const client = getGenerationClient();
+  let createdRunId: string | undefined;
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     input: body.input,
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
-    onDisconnect: "cancel",
+    streamResumable: true,
+    onDisconnect: "continue",
+    onRunCreated: ({ run_id }) => {
+      createdRunId = run_id;
+    },
   });
 
   const { signal } = request;
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
+      let runAnnounced = false;
       try {
         for await (const chunk of stream) {
           if (signal.aborted) break;
+          if (createdRunId && !runAnnounced) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  event: "run/created",
+                  data: { run_id: createdRunId, thread_id: threadId },
+                })}\n\n`,
+              ),
+            );
+            runAnnounced = true;
+          }
           const data = `data: ${JSON.stringify(chunk)}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
+        if (signal.aborted) return;
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (error) {
-        if (signal.aborted) {
-          controller.close();
-          return;
-        }
+        if (signal.aborted) return;
         const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),

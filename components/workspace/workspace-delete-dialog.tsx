@@ -38,6 +38,10 @@ interface WorkspaceDeleteDialogProps {
    */
   onDeleted?: (workspaceId: string) => void;
   /**
+   * Callback fired when a just-deleted workspace is restored via the "Undo" toast action
+   */
+  onRestored?: (workspaceId: string) => void;
+  /**
    * Callback fired when an error occurs during deletion
    */
   onError?: (error: Error) => void;
@@ -66,6 +70,7 @@ export function WorkspaceDeleteDialog({
   workspace,
   trigger,
   onDeleted,
+  onRestored,
   onError,
   defaultOpen = false,
   open,
@@ -115,13 +120,30 @@ export function WorkspaceDeleteDialog({
 
       await deleteWorkspace(workspace.id);
 
-      // Success feedback
-      toast.success(
-        `Workspace "${workspaceName}" has been deleted successfully`,
-        {
-          description: "All associated knowledge and data have been removed",
+      // Success feedback - the workspace is soft-deleted and can be restored
+      // within 30 days via apiClient.workspaces.restore(workspace.id).
+      toast.success(`Workspace "${workspaceName}" has been deleted`, {
+        description:
+          "It's been moved to trash. You have 30 days to restore it before it's permanently removed.",
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await apiClient.workspaces.restore(workspace.id);
+              toast.success(`Workspace "${workspaceName}" restored`);
+              onRestored?.(workspace.id);
+            } catch (restoreError) {
+              log.error("Failed to restore workspace:", restoreError);
+              toast.error("Failed to restore workspace", {
+                description:
+                  restoreError instanceof Error
+                    ? restoreError.message
+                    : "An unexpected error occurred",
+              });
+            }
+          },
         },
-      );
+      });
 
       // Close dialog and reset state
       setDialogOpen(false);
@@ -192,7 +214,7 @@ export function WorkspaceDeleteDialog({
             Delete Workspace
           </AlertDialogTitle>
           <AlertDialogDescription>
-            You are about to permanently delete the workspace{" "}
+            You are about to delete the workspace{" "}
             <span className="font-semibold text-foreground">
               "{workspaceName}"
             </span>
@@ -201,7 +223,7 @@ export function WorkspaceDeleteDialog({
               <>
                 {" "}
                 <span className="text-orange-600 dark:text-orange-400 font-medium">
-                  ⚠️ This will also delete {knowledgeCount} knowledge item
+                  ⚠️ This includes {knowledgeCount} knowledge item
                   {knowledgeCount === 1 ? "" : "s"}
                   (websites, files, and text notes) associated with this
                   workspace.
@@ -209,8 +231,9 @@ export function WorkspaceDeleteDialog({
               </>
             )}{" "}
             <span className="font-medium">
-              This action cannot be undone. All data will be permanently removed
-              from the vector store.
+              The workspace will be moved to trash and become inaccessible
+              immediately. You'll have 30 days to restore it before it's
+              permanently and irreversibly deleted.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -290,7 +313,7 @@ export function WorkspaceDeleteDialog({
             ) : (
               <>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Permanently
+                Delete Workspace
               </>
             )}
           </AlertDialogAction>

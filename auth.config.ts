@@ -15,6 +15,30 @@ import {
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
 
+const authSecret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  (process.env.NODE_ENV !== "production"
+    ? "development_auth_secret"
+    : undefined);
+
+const authApiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ??
+  (process.env.NODE_ENV !== "production" ? "http://127.0.0.1:2024" : undefined);
+
+if (!authApiBaseUrl && process.env.NODE_ENV !== "production") {
+  log.warn(
+    "No NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_BACKEND_API_URL set; falling back to http://127.0.0.1:2024",
+  );
+}
+
+// Kept in lockstep with the backend's REFRESH_TOKEN_EXPIRE_DAYS. Override via
+// env when the backend's value is changed, so the two cannot silently drift
+// apart again (see the `session.maxAge` comment at the bottom of this file).
+const SESSION_MAX_AGE_SECONDS =
+  Number(process.env.AUTH_SESSION_MAX_AGE_DAYS ?? 7) * 24 * 60 * 60;
+
 // Substrings of backend rejection messages that mean the refresh token is
 // genuinely dead — retrying will never help, the user must log in again.
 // Anything else (network error, 5xx, a lost concurrent-refresh race, etc.)
@@ -95,16 +119,13 @@ async function attemptRefresh(token: JWT): Promise<JWT> {
       : undefined,
   });
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/refresh`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(refreshPayload),
+  const response = await fetch(`${authApiBaseUrl}/api/v1/user/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(refreshPayload),
+  });
 
   log.debug("[Auth] Refresh response received", {
     refreshJti: outgoingJwt?.jti,
@@ -362,18 +383,15 @@ export default {
               .confirmReactivation === "true";
 
           // Call backend login endpoint
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/login`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email,
-                password,
-                confirm_reactivation: confirmReactivation,
-              }),
-            },
-          );
+          const response = await fetch(`${authApiBaseUrl}/api/v1/user/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              password,
+              confirm_reactivation: confirmReactivation,
+            }),
+          });
 
           if (!response.ok) {
             // Extract detailed error message from backend using shared utility
@@ -506,7 +524,7 @@ export default {
             // Call dedicated OAuth login endpoint
             // This handles: login existing user, link to existing email, or create new user
             const oauthResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/oauth/login`,
+              `${authApiBaseUrl}/api/v1/user/oauth/login`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -801,9 +819,17 @@ export default {
       }
     },
   },
+  secret: authSecret,
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // Default 30 days max
+    // MUST NOT exceed the backend's REFRESH_TOKEN_EXPIRE_DAYS (default 7).
+    // Past that point the backend's refresh token is dead and its UserSession
+    // row has been cleaned up, so a longer-lived Auth.js cookie only produces a
+    // session that *looks* valid to proxy.ts while every API call 401s with
+    // "Authentication session has been revoked". This was previously 30 days,
+    // leaving a 23-day window in which a returning user appeared logged in but
+    // could not load anything.
+    maxAge: SESSION_MAX_AGE_SECONDS,
     // Note: Actual session duration is controlled by JWT expiry
     // which we set dynamically in the JWT callback based on rememberMe
   },

@@ -12,6 +12,24 @@ import type {
   WorkspaceResponse,
   Persona,
 } from "@/types/workspace";
+
+interface DeletedWorkspaceResponse {
+  total_count: number;
+  workspaces: Array<{
+    id: string;
+    user_id: string;
+    name: string;
+    slug: string;
+    timezone: string | null;
+    url: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string;
+    recovery_deadline: string;
+    days_remaining: number;
+  }>;
+}
 import type { WorkspaceStats } from "@/types/workspace-stats";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
@@ -133,6 +151,18 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * List the caller's own soft-deleted workspaces that are still recoverable.
+     */
+    getDeleted: async () => {
+      const data = await client.request<DeletedWorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.deleted(),
+        { method: "GET" },
+      );
+
+      return data;
+    },
+
+    /**
      * Get workspace by slug
      */
     getBySlug: async (slug: string) => {
@@ -174,7 +204,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
       );
 
       // Record audit log
-      if (result && result.workspace) {
+      if (result?.workspace) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",
@@ -294,6 +324,43 @@ export function createWorkspacesNamespace(client: ApiClient) {
       } catch (e) {
         log.error("Failed to store deleted workspace in localStorage", e);
       }
+
+      return result;
+    },
+
+    /**
+     * Restore a soft-deleted workspace within its 30-day recovery window
+     */
+    restore: async (workspaceId: string) => {
+      const response = await client.request<WorkspaceResponse>(
+        ENDPOINTS.WORKSPACES.restore(workspaceId),
+        {
+          method: "POST",
+        },
+      );
+
+      const result = validateResponse(
+        workspaceResponseSchema,
+        response,
+        "workspaces.restore",
+      );
+
+      // Record audit log
+      client
+        .request("/api/v1/audit-logs/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "workspace.restore",
+            resource_type: "workspace",
+            resource_id: workspaceId,
+            workspace_id: workspaceId,
+            status: "success",
+          }),
+        })
+        .catch((e) =>
+          log.error("[AuditLog] Failed to log workspace.restore", e),
+        );
 
       return result;
     },

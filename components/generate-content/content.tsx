@@ -1,4 +1,4 @@
-import type { ContentStatus } from "@/types/content";
+import type { WordPressPostStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
@@ -38,6 +38,8 @@ import {
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { profileQueries } from "@/lib/query-keys";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
@@ -73,6 +75,27 @@ const CONTENT_SKELETON_KEYS = Array.from(
   { length: 3 },
   (_, i) => `content-skeleton-${i + 1}`,
 );
+
+const WORDPRESS_STATUS_DETAILS: Record<
+  WordPressPostStatus,
+  { label: string; successTitle: string; successMessage: string }
+> = {
+  publish: {
+    label: "Publish",
+    successTitle: "Content Published Successfully!",
+    successMessage: "Your content is live on WordPress.",
+  },
+  draft: {
+    label: "Draft",
+    successTitle: "WordPress Draft Created!",
+    successMessage: "Your content was saved as a draft in WordPress.",
+  },
+  pending: {
+    label: "Review",
+    successTitle: "Submitted for Review!",
+    successMessage: "Your content is pending review in WordPress.",
+  },
+};
 
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
@@ -306,6 +329,9 @@ type PipelineStep = { label: string; status: "pending" | "active" | "done" };
 
 type ContentEditorProps = {
   contentId?: string;
+  /** LangGraph thread id — lets a manual Save reconcile to the row the
+   *  generation graph already auto-saved (idempotent by thread on the backend). */
+  threadId?: string;
   isEnhancing?: boolean;
   enhancingMsg?: string;
   enhancingDescription?: string;
@@ -328,6 +354,7 @@ type ContentEditorProps = {
 function ContentEditorInner(props: ContentEditorProps) {
   const {
     contentId,
+    threadId,
     isEnhancing,
     enhancingMsg,
     enhancingDescription,
@@ -401,20 +428,104 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [selectedPublishStatus, setSelectedPublishStatus] =
+    useState<WordPressPostStatus>("publish");
+  const [pendingPublishStatus, setPendingPublishStatus] =
+    useState<WordPressPostStatus>("publish");
 
-  const isDateDisabled = useCallback((d: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return d < today;
+  // Scheduling follows the account's timezone field (Profile settings) --
+  // the backend converts wall-clock input using this same field, so
+  // "today"/"now" here must be computed relative to it too, or the min-time
+  // guard and the backend's idea of "in the past" would disagree. It's kept
+  // in sync with the device's timezone automatically below.
+  const queryClient = useQueryClient();
+  const { data: accountProfile } = useQuery({ ...profileQueries.detail() });
+  const accountTimezone = accountProfile?.timezone || "UTC";
+
+  // The account timezone defaults to "UTC" for anyone who has never opened
+  // Profile settings, which silently makes scheduled times land hours away
+  // from what the user actually meant ("9:59 PM" typed on a laptop in
+  // Karachi, but stored/interpreted as 9:59 PM UTC). The user's device
+  // timezone is what they actually mean, so auto-sync the account field to
+  // it the moment a mismatch is seen, rather than requiring a manual step.
+  const browserTimezone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [],
+  );
+  const timezoneMismatch =
+    !!accountProfile &&
+    !!browserTimezone &&
+    accountTimezone !== browserTimezone;
+
+  const syncTimezoneMutation = useMutation({
+    mutationFn: () => apiClient.profile.update({ timezone: browserTimezone }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: profileQueries.detail().queryKey,
+      });
+    },
+  });
+
+  // Auto-sync once per mismatch: fires when we first see accountTimezone !==
+  // browserTimezone, and stops (via hasAttemptedAutoSyncRef) so a failed
+  // update doesn't retry on every render — the banner below still offers a
+  // manual retry in that case.
+  const hasAttemptedAutoSyncRef = useRef(false);
+  useEffect(() => {
+    if (
+      timezoneMismatch &&
+      !hasAttemptedAutoSyncRef.current &&
+      !syncTimezoneMutation.isPending
+    ) {
+      hasAttemptedAutoSyncRef.current = true;
+      syncTimezoneMutation.mutate();
+    }
+    if (!timezoneMismatch) {
+      hasAttemptedAutoSyncRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timezoneMismatch]);
+
+  const getPartsInTimezone = useCallback((date: Date, tz: string) => {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    });
+    const parts = fmt.formatToParts(date);
+    const get = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? "";
+    return {
+      dateStr: `${get("year")}-${get("month")}-${get("day")}`,
+      timeStr: `${get("hour")}:${get("minute")}`,
+    };
   }, []);
 
-  const isScheduleDateToday = scheduleDate
-    ? scheduleDate.toDateString() === new Date().toDateString()
-    : false;
+  const { dateStr: accountTodayStr, timeStr: accountNowTimeStr } = useMemo(
+    () => getPartsInTimezone(new Date(), accountTimezone),
+    [getPartsInTimezone, accountTimezone],
+  );
 
-  const minScheduleTime = isScheduleDateToday
-    ? `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`
+  const isDateDisabled = useCallback(
+    (d: Date) => {
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return dStr < accountTodayStr;
+    },
+    [accountTodayStr],
+  );
+
+  const scheduleDateStr = scheduleDate
+    ? `${scheduleDate.getFullYear()}-${String(scheduleDate.getMonth() + 1).padStart(2, "0")}-${String(scheduleDate.getDate()).padStart(2, "0")}`
     : undefined;
+
+  const isScheduleDateToday = scheduleDateStr === accountTodayStr;
+
+  const minScheduleTime = isScheduleDateToday ? accountNowTimeStr : undefined;
 
   const isScheduleTimeInPast =
     isScheduleDateToday && scheduleTime < (minScheduleTime ?? "");
@@ -463,13 +574,13 @@ function ContentEditorInner(props: ContentEditorProps) {
     title: displayTitle,
     slug: allContent?.slug || slugify(displayTitle),
     content_language: "English",
-    status: "publish" as ContentStatus,
     workspace_id: workspaceId ?? undefined,
     introduction: allContent?.meta_description || "",
     body_markdown: body,
     body_html:
       previewHtml || allContent?.body_html || allContent?.html_content || "",
     tags: tags,
+    category: allContent?.category || undefined,
     seo_data: {
       meta_title: allContent?.meta_title || displayTitle,
       meta_description: allContent?.meta_description || "",
@@ -490,10 +601,20 @@ function ContentEditorInner(props: ContentEditorProps) {
     images_data: {},
     links_data: {},
     schema_markup: {},
+    langgraph_thread_id: threadId,
   });
 
-  const publishContent = async () => {
+  const publishContent = async (
+    selectedStatus: WordPressPostStatus = "publish",
+  ) => {
     if (!isFinal || !workspaceId) return;
+    setPendingPublishStatus(selectedStatus);
+    const statusDetails = WORDPRESS_STATUS_DETAILS[selectedStatus];
+    log.info("[WordPress Publish] Selected post status", {
+      selected_status: selectedStatus,
+      content_id: contentSavedId,
+      workspace_id: workspaceId,
+    });
     try {
       setIsPublishing(true);
       setStatusModal({
@@ -513,15 +634,16 @@ function ContentEditorInner(props: ContentEditorProps) {
         return;
       } else {
         setStatusModal({
-          title: "Publishing Content...",
+          title: `${statusDetails.label} Content...`,
           isOpen: true,
           type: "success",
           action: "publish",
-          message: "Publishing content to your connected site...",
+          message: `Sending content to WordPress with status "${selectedStatus}"...`,
         });
         const cmsType = integrationsData[0]?.integration_type;
         analytics.track("cms_publish_attempted", {
           cms_type: cmsType,
+          wordpress_status: selectedStatus,
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? undefined,
         });
@@ -531,8 +653,13 @@ function ContentEditorInner(props: ContentEditorProps) {
               workspaceId,
               payload,
               contentSavedId,
+              selectedStatus,
             )
-          : await apiClient.content.save_publish(workspaceId, payload);
+          : await apiClient.content.save_publish(
+              workspaceId,
+              payload,
+              selectedStatus,
+            );
 
         analytics.track("content_published", {
           title: displayTitle,
@@ -540,20 +667,20 @@ function ContentEditorInner(props: ContentEditorProps) {
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? response?.id ?? undefined,
           seo_score: seoScore?.seo_health_score,
+          wordpress_status: selectedStatus,
         });
         analytics.track("cms_publish_succeeded", {
           cms_type: cmsType,
+          wordpress_status: selectedStatus,
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? response?.id ?? undefined,
         });
         setStatusModal({
-          title: "Content Published Successfully!",
+          title: statusDetails.successTitle,
           isOpen: true,
           type: "success",
           action: "publish",
-          message:
-            response?.message ||
-            "Your content has been published as a draft and is ready for review.",
+          message: statusDetails.successMessage,
         });
       }
     } catch (error) {
@@ -561,6 +688,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
+        wordpress_status: selectedStatus,
         error_message: err.message,
       });
       setStatusModal({
@@ -628,7 +756,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const handleIntegrationAdded = async () => {
     await fetchIntegrations();
-    publishContent();
+    publishContent(pendingPublishStatus);
     setIntegrationModalOpen(false);
   };
 
@@ -637,10 +765,10 @@ function ContentEditorInner(props: ContentEditorProps) {
     try {
       setIsPublishing(true);
       setScheduleDialogOpen(false);
-      const [hours, minutes] = scheduleTime.split(":").map(Number);
-      const dt = new Date(scheduleDate);
-      dt.setHours(hours, minutes, 0, 0);
-      const scheduledAt = dt.toISOString();
+      // Naive local datetime (no offset) — the backend interprets this as
+      // wall-clock time in the user's account timezone (accountTimezone),
+      // not the browser's, so scheduling is consistent regardless of device.
+      const scheduledAt = `${scheduleDateStr}T${scheduleTime}:00`;
 
       if (contentSavedId) {
         await apiClient.content.schedule(
@@ -669,7 +797,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         isOpen: true,
         type: "success",
         action: "publish",
-        message: `Content scheduled for ${dt.toLocaleString()}.`,
+        message: `Content scheduled for ${scheduleTime} on ${scheduleDate.toLocaleDateString()} (${accountTimezone}).`,
       });
     } catch (error) {
       const err = error as Error;
@@ -722,6 +850,11 @@ function ContentEditorInner(props: ContentEditorProps) {
         message: "Failed to copy content to clipboard",
       });
     }
+  };
+
+  const openPublishConfirmation = (status: WordPressPostStatus) => {
+    setSelectedPublishStatus(status);
+    setPublishConfirmOpen(true);
   };
 
   const analysisSidebarContent = (
@@ -818,10 +951,24 @@ function ContentEditorInner(props: ContentEditorProps) {
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
                   disabled={!isFinal || isPublishing || isSaving}
-                  onClick={publishContent}
+                  onClick={() => openPublishConfirmation("publish")}
                 >
                   <Send size={13} className="mr-2" />
-                  Publish Now
+                  Publish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={() => openPublishConfirmation("draft")}
+                >
+                  <Save size={13} className="mr-2" />
+                  Save as Draft
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!isFinal || isPublishing || isSaving}
+                  onClick={() => openPublishConfirmation("pending")}
+                >
+                  <Eye size={13} className="mr-2" />
+                  Submit for Review
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -1441,8 +1588,36 @@ function ContentEditorInner(props: ContentEditorProps) {
         <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
           <DialogTitle>Schedule Publication</DialogTitle>
           <DialogDescription>
-            Pick a date and time. Content publishes automatically via WordPress.
+            Pick a date and time in your account timezone ({accountTimezone}).
+            Content publishes automatically via WordPress.
           </DialogDescription>
+          {timezoneMismatch && syncTimezoneMutation.isError && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <div className="flex-1">
+                Couldn&apos;t update your account timezone to match your device
+                (<strong>{browserTimezone}</strong>). Scheduled times will use{" "}
+                <strong>{accountTimezone}</strong> until this succeeds.
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 ml-1 text-amber-900 underline dark:text-amber-200"
+                  disabled={syncTimezoneMutation.isPending}
+                  onClick={() => syncTimezoneMutation.mutate()}
+                >
+                  Retry
+                </Button>
+              </div>
+            </div>
+          )}
+          {timezoneMismatch && syncTimezoneMutation.isPending && (
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
+              <Loader2 size={14} className="animate-spin shrink-0" />
+              Updating your account timezone to match your device (
+              {browserTimezone})...
+            </div>
+          )}
           <div className="flex flex-col items-center gap-4 py-2">
             <Calendar
               mode="single"
@@ -1474,7 +1649,12 @@ function ContentEditorInner(props: ContentEditorProps) {
             </Button>
             <Button
               size="sm"
-              disabled={!scheduleDate || isPublishing || isScheduleTimeInPast}
+              disabled={
+                !scheduleDate ||
+                isPublishing ||
+                isScheduleTimeInPast ||
+                (timezoneMismatch && syncTimezoneMutation.isPending)
+              }
               onClick={scheduleContent}
             >
               {isPublishing ? (
@@ -1483,6 +1663,42 @@ function ContentEditorInner(props: ContentEditorProps) {
                 <Clock size={13} className="mr-1" />
               )}
               Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>
+            Confirm {WORDPRESS_STATUS_DETAILS[selectedPublishStatus].label}
+          </DialogTitle>
+
+          <DialogDescription>
+            Are you sure you want to{" "}
+            <strong>
+              {WORDPRESS_STATUS_DETAILS[
+                selectedPublishStatus
+              ].label.toLowerCase()}
+            </strong>{" "}
+            this content?
+          </DialogDescription>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPublishConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() => {
+                setPublishConfirmOpen(false);
+                publishContent(selectedPublishStatus);
+              }}
+            >
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -116,6 +116,8 @@ import {
   X,
   ImageIcon,
   Table2 as TableIcon,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -129,6 +131,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
+import { toAbsoluteMediaUrl } from "@/lib/media-url";
+import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 
 // ---------------------------------------------------------------------------
 // Utility
@@ -608,20 +614,41 @@ const ToolbarButton = ({
 );
 
 // ---------------------------------------------------------------------------
-// ImageInsertPopover — URL only
+// ImageInsertPopover — device upload or URL, inserted at the cursor
 // ---------------------------------------------------------------------------
+// Max upload size for editor image uploads (matches the media library dialog).
+const IMAGE_UPLOAD_MAX_BYTES = 20 * 1024 * 1024;
+
 function ImageInsertPopover() {
   const [editor] = useLexicalComposerContext();
+  const workspaceId = useCurrentWorkspaceId();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [altText, setAltText] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Snapshot the editor selection the moment the popover opens so we can
   // restore it before inserting — the editor loses focus once popover inputs
   // are interacted with, causing $insertNodes to mis-fire otherwise.
   const savedSelectionRef = useRef<RangeSelection | null>(null);
+
+  // Insert an image at the snapshot selection so it lands at the original
+  // cursor regardless of where focus went (URL field or file picker).
+  const insertAtSavedSelection = useCallback(
+    (src: string, alt: string) => {
+      editor.update(() => {
+        if (savedSelectionRef.current) {
+          $setSelection(savedSelectionRef.current);
+        }
+        const imageNode = $createImageNode({ src, altText: alt || "image" });
+        $insertNodes([imageNode]);
+      });
+    },
+    [editor],
+  );
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
@@ -635,17 +662,7 @@ function ImageInsertPopover() {
       setError("Please enter an image URL.");
       return;
     }
-    // Restore the saved selection so the image lands at the original cursor.
-    editor.update(() => {
-      if (savedSelectionRef.current) {
-        $setSelection(savedSelectionRef.current);
-      }
-      const imageNode = $createImageNode({
-        src,
-        altText: altText.trim() || "image",
-      });
-      $insertNodes([imageNode]);
-    });
+    insertAtSavedSelection(src, altText.trim());
     // reset
     setUrl("");
     setAltText("");
@@ -653,7 +670,51 @@ function ImageInsertPopover() {
     setError(null);
     savedSelectionRef.current = null;
     setOpen(false);
-  }, [editor, url, altText]);
+  }, [url, altText, insertAtSavedSelection]);
+
+  const handleFileSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // Reset the input so re-picking the same file fires change again.
+      e.target.value = "";
+      if (!file) return;
+
+      if (!workspaceId) {
+        setError("No workspace selected — cannot upload.");
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        setError("Please choose an image file.");
+        return;
+      }
+      if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        setError("Image exceeds 20MB. Please choose a smaller file.");
+        return;
+      }
+
+      setError(null);
+      setUploading(true);
+      try {
+        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const src = toAbsoluteMediaUrl(media.public_url);
+        if (!src) {
+          setError("Upload succeeded but no image URL was returned.");
+          return;
+        }
+        // Fill the URL + preview and leave the Alt text field for the user to
+        // enter their own. Insertion happens on the Insert button, so uploaded
+        // images get a custom alt text just like pasted URLs (no filename default).
+        setUrl(src);
+        setPreview(src);
+        toast.success("Image uploaded — add alt text (optional), then Insert");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [workspaceId],
+  );
 
   const handleOpenChange = (o: boolean) => {
     if (o) {
@@ -693,8 +754,40 @@ function ImageInsertPopover() {
         <div className="space-y-1">
           <h4 className="font-semibold text-sm leading-none">Insert Image</h4>
           <p className="text-xs text-muted-foreground">
-            Paste an image URL below.
+            Upload from your device or paste an image URL.
           </p>
+        </div>
+
+        {/* Upload from device */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelected}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 w-full"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+          disabled={uploading || !workspaceId}
+        >
+          {uploading ? (
+            <Loader2 size={14} className="mr-1.5 animate-spin" />
+          ) : (
+            <Upload size={14} className="mr-1.5" />
+          )}
+          {uploading ? "Uploading…" : "Upload from device"}
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            or
+          </span>
+          <span className="h-px flex-1 bg-border" />
         </div>
 
         <div className="space-y-2">
@@ -707,7 +800,7 @@ function ImageInsertPopover() {
             value={url}
             onChange={handleUrlChange}
             className="h-8 text-sm"
-            autoFocus
+            disabled={uploading}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -767,7 +860,7 @@ function ImageInsertPopover() {
             className="h-8"
             onClick={handleInsert}
             type="button"
-            disabled={!url.trim()}
+            disabled={!url.trim() || uploading}
           >
             <Check size={13} className="mr-1" /> Insert
           </Button>

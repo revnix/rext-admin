@@ -141,7 +141,7 @@ export function createMembersNamespace(client: ApiClient) {
       });
 
       // Record audit log
-      if (response && response.member) {
+      if (response?.member) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",
@@ -216,7 +216,7 @@ export function createInvitationsNamespace(client: ApiClient) {
       });
 
       // Record audit log
-      if (response && response.workspace_id) {
+      if (response?.workspace_id) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",
@@ -399,7 +399,7 @@ export function createInvitationsNamespace(client: ApiClient) {
       });
 
       // Record audit log
-      if (response && response.invitation_id) {
+      if (response?.invitation_id) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",

@@ -169,6 +169,49 @@ describe("authenticatedFetch 401 recovery", () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
+  // Regression: the backend raises "Authentication session has been revoked"
+  // with the same generic `unauthorized` code as a permission failure. It used
+  // to fall through the expiry check and be handed straight back to the caller,
+  // leaving the Auth.js cookie valid and error-free — so nothing refreshed,
+  // nothing redirected, and the user was stranded on a dashboard where every
+  // request 401'd forever.
+  it("signs out when the backend reports the session was revoked", async () => {
+    getSessionMock.mockResolvedValue(newSession);
+    (global.fetch as jest.Mock).mockResolvedValue(
+      response(401, {
+        error: {
+          code: "unauthorized",
+          message: "Authentication session has been revoked",
+        },
+      }),
+    );
+
+    await expect(authenticatedFetch("/protected")).rejects.toThrow(
+      "Session expired",
+    );
+    // Terminal: no refresh is attempted, because the refresh token belongs to
+    // the same session the backend already discarded.
+    expect(getCsrfTokenMock).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("signs out when the backend reports the user was deleted", async () => {
+    getSessionMock.mockResolvedValue(newSession);
+    (global.fetch as jest.Mock).mockResolvedValue(
+      response(401, {
+        error: {
+          code: "unauthorized",
+          message: "User not found or has been deleted",
+        },
+      }),
+    );
+
+    await expect(authenticatedFetch("/protected")).rejects.toThrow(
+      "Session expired",
+    );
+    expect(getCsrfTokenMock).not.toHaveBeenCalled();
+  });
+
   it("falls back to the original session when impersonation access expires", async () => {
     mockAuthStoreState.accessToken = "impersonation-access";
     mockAuthStoreState.refreshToken = "impersonation-refresh";

@@ -265,6 +265,7 @@ export type ContentOutline = {
   target_word_count?: number;
   status: "approved" | "rejected" | "reviewing";
   rejected_reason?: string;
+  selected_persona_id?: string | null;
 
   // ── Informational type-specific ───────────────────────────────────────────
   total_time?: string; // HowToGuide, Checklist
@@ -475,6 +476,7 @@ export type FinalContent = {
   meta_title: string;
   meta_description: string;
   tags: string[];
+  category?: string;
   primary_keyword?: string;
   focus_keyphrase?: string;
   keyphrase_density?: number;
@@ -835,6 +837,8 @@ export interface PageState {
   currentLoadingSteps: LoadingStep[];
   keywordDifficulty: number | null;
   keywordClusters: KeywordCluster[];
+  recommendedContentType: string | null;
+  recommendedTopic: string | null;
 }
 
 export type PageAction =
@@ -855,6 +859,8 @@ export type PageAction =
   | { type: "UPDATE_FROM_STREAM"; payload: StreamUpdates }
   | { type: "RESET_FOR_REJECT" }
   | { type: "SUBMIT_REJECT_REASON" }
+  | { type: "SET_RECOMMENDED_CONTENT_TYPE"; payload: string | null }
+  | { type: "SET_RECOMMENDED_TOPIC"; payload: string | null }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
   | { type: "SET_LOADING_STEPS"; payload: LoadingStep[] }
