@@ -21,12 +21,12 @@ const createJob = (
 });
 
 describe("active content generation", () => {
-  it.each([
-    "queued",
-    "running",
-  ] as const)("treats a %s job as active", (status) => {
-    expect(isActiveGenerationJob(createJob({ status }))).toBe(true);
-  });
+  it.each(["queued", "running"] as const)(
+    "treats a %s job as active",
+    (status) => {
+      expect(isActiveGenerationJob(createJob({ status }))).toBe(true);
+    },
+  );
 
   it("keeps a workflow active while it waits for user input", () => {
     expect(
@@ -40,14 +40,14 @@ describe("active content generation", () => {
     ).toBe(true);
   });
 
-  it.each([
-    "completed",
-    "failed",
-  ] as const)("does not block a new article for a finished %s job", (status) => {
-    expect(
-      isActiveGenerationJob(createJob({ status, awaitingInput: false })),
-    ).toBe(false);
-  });
+  it.each(["completed", "failed"] as const)(
+    "does not block a new article for a finished %s job",
+    (status) => {
+      expect(
+        isActiveGenerationJob(createJob({ status, awaitingInput: false })),
+      ).toBe(false);
+    },
+  );
 
   it("returns the newest active workflow across browser tabs", () => {
     const activeJob = findActiveGenerationJob([

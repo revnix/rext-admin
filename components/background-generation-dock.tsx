@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Progress } from "@/components/ui/progress";
+import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
   announceBackgroundGenerationRemoval,
   BACKGROUND_GENERATION_REMOVAL_STORAGE_KEY,
@@ -435,6 +436,11 @@ export function BackgroundGenerationDock() {
   const pending = isPending(job);
   const completed = job.status === "completed";
   const awaitingInput = completed && job.awaitingInput === true;
+  // A run paused on an interrupt reads as `completed`, but the article is not
+  // finished — the thread is still live and still blocks new generations. The
+  // X must end it server-side, not just hide the dock. Only a genuinely
+  // finished (or failed) job is safe to merely dismiss.
+  const canCancel = isActiveGenerationJob(job);
 
   return (
     <section
@@ -521,7 +527,7 @@ export function BackgroundGenerationDock() {
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Button>
 
-          {pending ? (
+          {canCancel ? (
             <ConfirmationDialog
               title="Cancel this generation?"
               description={`"${job.title}" will stop where it is. Credits already spent on the finished steps are not refunded.`}

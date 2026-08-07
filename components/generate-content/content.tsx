@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import {
   Activity,
   AlertCircle,
+  ExternalLink,
   Clock,
   Copy,
   Eye,
@@ -38,11 +39,15 @@ import {
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { profileQueries } from "@/lib/query-keys";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
-import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
+import {
+  useCurrentWorkspaceId,
+  useCurrentWorkspaceSlug,
+} from "@/stores/workspace/use-workspace-context-store";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
@@ -394,6 +399,8 @@ function ContentEditorInner(props: ContentEditorProps) {
   // const { label, color, barColor } = getReadabilityMeta(score);
   // const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
   const workspaceId = useCurrentWorkspaceId();
+  const workspaceSlug = useCurrentWorkspaceSlug();
+  const router = useRouter();
   const { hasPermission: canUpdate } = useWorkspacePermission(
     CONTENT_PERMISSIONS.UPDATE,
     workspaceId ?? undefined,
@@ -413,12 +420,14 @@ function ContentEditorInner(props: ContentEditorProps) {
     type: "success" | "error";
     action: "publish" | "save" | "copy";
     message: string;
+    showIntegrationLink?: boolean;
   }>({
     title: "",
     isOpen: false,
     type: "success",
     action: "publish",
     message: "",
+    showIntegrationLink: false,
   });
   const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
   const [contentSavedId, setContentSavedId] = useState<string | undefined>(
@@ -685,6 +694,9 @@ function ContentEditorInner(props: ContentEditorProps) {
       }
     } catch (error) {
       const err = error as Error;
+      const isNoSiteError = err.message
+        ?.toLowerCase()
+        .includes("no active sites");
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
@@ -692,11 +704,16 @@ function ContentEditorInner(props: ContentEditorProps) {
         error_message: err.message,
       });
       setStatusModal({
-        title: "Failed to Publish Content",
+        title: isNoSiteError
+          ? "WordPress Integration Not Connected"
+          : "Failed to Publish Content",
         isOpen: true,
         type: "error",
         action: "publish",
-        message: err.message || "Failed to publish content. Please try again.",
+        message: isNoSiteError
+          ? "Your WordPress integration is disabled or not connected. Please go to Integrations to enable it."
+          : err.message || "Failed to publish content. Please try again.",
+        showIntegrationLink: isNoSiteError,
       });
     } finally {
       setIsPublishing(false);
@@ -1579,6 +1596,18 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {statusModal.message}
               </DialogDescription>
             </div>
+            {statusModal.showIntegrationLink && workspaceSlug && (
+              <Button
+                className="mt-2 gap-2"
+                onClick={() => {
+                  setStatusModal((prev) => ({ ...prev, isOpen: false }));
+                  router.push(`/w/${workspaceSlug}/integrations`);
+                }}
+              >
+                <ExternalLink className="w-4 h-4" />
+                Go to Integrations
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
