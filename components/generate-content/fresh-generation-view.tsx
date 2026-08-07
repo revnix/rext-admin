@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
