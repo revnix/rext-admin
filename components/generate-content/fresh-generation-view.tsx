@@ -1880,7 +1880,7 @@ export function FreshGenerationView({
   // already spent on finished steps are not refunded), clears the tracking
   // record across tabs, and returns to a fresh generation screen.
   // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream/dispatch are stable (refs/reducer), intentionally omitted
-  const handleCancelGeneration = useCallback(async () => {
+  const _handleCancelGeneration = useCallback(async () => {
     if (!threadId) return;
     const job = useBackgroundGenerationStore
       .getState()

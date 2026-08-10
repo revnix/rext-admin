@@ -493,8 +493,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!timezoneMismatch) {
       hasAttemptedAutoSyncRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timezoneMismatch]);
+  }, [timezoneMismatch, syncTimezoneMutation.isPending, syncTimezoneMutation.mutate]);
 
   const getPartsInTimezone = useCallback((date: Date, tz: string) => {
     const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -694,9 +693,15 @@ function ContentEditorInner(props: ContentEditorProps) {
       }
     } catch (error) {
       const err = error as Error;
-      const isNoSiteError = err.message
-        ?.toLowerCase()
-        .includes("no active sites");
+      const errorMessage = err.message?.toLowerCase() ?? "";
+      const isIntegrationIssue =
+        errorMessage.includes("no active sites") ||
+        errorMessage.includes("no active sites found") ||
+        errorMessage.includes("please connect a site") ||
+        errorMessage.includes("integration disabled") ||
+        errorMessage.includes("disabled integration") ||
+        errorMessage.includes("site is disabled") ||
+        errorMessage.includes("inactive site");
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
@@ -704,16 +709,16 @@ function ContentEditorInner(props: ContentEditorProps) {
         error_message: err.message,
       });
       setStatusModal({
-        title: isNoSiteError
-          ? "WordPress Integration Not Connected"
+        title: isIntegrationIssue
+          ? "Site Integration Not Connected"
           : "Failed to Publish Content",
         isOpen: true,
         type: "error",
         action: "publish",
-        message: isNoSiteError
-          ? "Your WordPress integration is disabled or not connected. Please go to Integrations to enable it."
+        message: isIntegrationIssue
+          ? "Your site integration is disabled or not connected. Please go to Integrations to enable it."
           : err.message || "Failed to publish content. Please try again.",
-        showIntegrationLink: isNoSiteError,
+        showIntegrationLink: isIntegrationIssue,
       });
     } finally {
       setIsPublishing(false);
