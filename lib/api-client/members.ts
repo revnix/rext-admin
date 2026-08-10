@@ -72,7 +72,7 @@ export function createMembersNamespace(client: ApiClient) {
       });
 
       // Record audit log
-      if (response && response.member) {
+      if (response?.member) {
         client
           .request("/api/v1/audit-logs/", {
             method: "POST",

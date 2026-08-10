@@ -174,19 +174,35 @@ function handleStreamUpdate(
         | string
         | undefined;
       if (keywords && keywords.length > 0) {
+        // Re-analysing a related keyword ("x" → "x plugin") often returns the
+        // same related-topics list, so the recommendations are not a proxy for
+        // "nothing changed" — the keyword and its metrics refresh on their own.
         if (
           JSON.stringify(state.suggestedKeywords) !== JSON.stringify(keywords)
         ) {
-          newState.primaryKeyword = primaryKeyword || "";
           newState.suggestedKeywords = keywords;
-          if (interruptValue.seo_state) {
-            newState.seoResult = interruptValue.seo_state;
-          }
-          const clusters = interruptValue["Keyword Clusters"];
-          if (Array.isArray(clusters) && clusters.length > 0) {
-            newState.keywordClusters =
-              clusters as import("@/types/generate-content").KeywordCluster[];
-          }
+          changed = true;
+        }
+        if (primaryKeyword && state.primaryKeyword !== primaryKeyword) {
+          newState.primaryKeyword = primaryKeyword;
+          changed = true;
+        }
+        if (
+          interruptValue.seo_state &&
+          JSON.stringify(state.seoResult) !==
+            JSON.stringify(interruptValue.seo_state)
+        ) {
+          newState.seoResult = interruptValue.seo_state;
+          changed = true;
+        }
+        const clusters = interruptValue["Keyword Clusters"];
+        if (
+          Array.isArray(clusters) &&
+          clusters.length > 0 &&
+          JSON.stringify(state.keywordClusters) !== JSON.stringify(clusters)
+        ) {
+          newState.keywordClusters =
+            clusters as import("@/types/generate-content").KeywordCluster[];
           changed = true;
         }
         if (state.step === "keyword") {

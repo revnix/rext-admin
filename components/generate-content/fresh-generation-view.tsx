@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -1672,15 +1672,28 @@ export function FreshGenerationView({
 
   const handleWorkflow = (step: WorkflowStep, value: string) => {
     switch (step) {
-      case "KEYWORD_SELECT":
+      case "KEYWORD_SELECT": {
+        // A different keyword sends the SEO subgraph back through `seo_entry`
+        // (keyword_router) and pauses on this same step again with fresh
+        // metrics — so show the analysis steps, not the next step's.
+        const isReanalysis =
+          value.trim().toLowerCase() !== primaryKeyword.trim().toLowerCase();
         setTokenTarget("none");
         tokenTargetRef.current = "none";
         dispatch({
           type: "SET_LOADING_STEPS",
-          payload: KEYWORD_SELECTION_STEPS,
+          payload: isReanalysis
+            ? INITIAL_ANALYSIS_STEPS
+            : KEYWORD_SELECTION_STEPS,
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
+        // The dock still carries the keyword this thread was created with.
+        // Re-point it at the selected one so the banner, its toasts and the
+        // sidebar entry don't keep naming a keyword the run has moved off.
+        if (threadId) {
+          updateBackgroundJob(threadId, { title: value, keyword: value });
+        }
         analytics.track("keyword_selected", {
           keyword: value,
           workspace_id: workspaceId ?? undefined,
@@ -1691,8 +1704,11 @@ export function FreshGenerationView({
             "Primary Keyword": value,
             ...(selectedIntent ? { intent: selectedIntent } : {}),
           },
-          status: "Content Type Selection...",
+          status: isReanalysis
+            ? "Analyzing keyword..."
+            : "Content Type Selection...",
         });
+      }
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
         tokenTargetRef.current = "outline";
@@ -1864,7 +1880,7 @@ export function FreshGenerationView({
   // already spent on finished steps are not refunded), clears the tracking
   // record across tabs, and returns to a fresh generation screen.
   // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream/dispatch are stable (refs/reducer), intentionally omitted
-  const handleCancelGeneration = useCallback(async () => {
+  const _handleCancelGeneration = useCallback(async () => {
     if (!threadId) return;
     const job = useBackgroundGenerationStore
       .getState()
@@ -2039,7 +2055,14 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               disabled={isManualLoading}
-              onSubmit={handleKeywordSubmit}
+              // Step 2 already owns a thread paused on the keyword interrupt.
+              // Re-analysing there must resume that thread — starting a new one
+              // trips the "article already in progress" guard on its own job.
+              onSubmit={
+                instructionType === "keyword Selection"
+                  ? () => handleWorkflow("KEYWORD_SELECT", userKeyword)
+                  : handleKeywordSubmit
+              }
               onKeywordChange={(val) =>
                 dispatch({ type: "SET_USER_KEYWORD", payload: val })
               }
