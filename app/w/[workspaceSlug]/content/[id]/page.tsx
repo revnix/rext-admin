@@ -197,6 +197,39 @@ export default function WorkspaceContentDetailPage({
   }
 
   if (fetchError) {
+    // Detect 404 / not-found errors from the backend
+    const errorMessage = (fetchError as Error)?.message?.toLowerCase() ?? "";
+    const isNotFound =
+      errorMessage.includes("not found") ||
+      errorMessage.includes("404") ||
+      (fetchError as { status?: number })?.status === 404;
+
+    if (isNotFound) {
+      return (
+        <PageLayout
+          title="Content Not Found"
+          description="The requested content could not be found"
+        >
+          <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <p className="text-muted-foreground">
+              The content you are looking for does not exist or you do not have
+              permission to view it.
+            </p>
+            <Button
+              variant="outline"
+              className="h-10 px-4 rounded-xl border-slate-200"
+              onClick={() =>
+                router.push(workspaceRoutes.content(workspaceSlug) as Route)
+              }
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Content
+            </Button>
+          </div>
+        </PageLayout>
+      );
+    }
+
     return (
       <PageLayout
         title="Error Loading Content"
