@@ -11,6 +11,15 @@ import type { Persona } from "@/types/workspace";
 import { usePersonas } from "@/hooks/use-personas";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import {
   Check,
@@ -18,6 +27,7 @@ import {
   Target,
   Mic2,
   Clock,
+  ChevronDown,
   ChevronRight,
   MessageSquare,
   Pencil,
@@ -616,6 +626,7 @@ export function OutlineDisplay({
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
     null,
   );
+  const [isPersonaSearchOpen, setIsPersonaSearchOpen] = useState(false);
 
   useEffect(() => {
     setPromoteBrand(brandVoicePromotion?.recommended ?? false);
@@ -630,8 +641,21 @@ export function OutlineDisplay({
   // Sync the manually-selectable persona with the outline's auto-selected
   // one whenever a fresh outline arrives (new generation / regeneration).
   useEffect(() => {
-    setSelectedPersonaId(outline?.selected_persona_id ?? null);
-  }, [outline?.selected_persona_id]);
+    if (!personas.length) return;
+
+    const fallbackPersonaId = personas[0]
+      ? personas[0].id || personas[0].name
+      : null;
+
+    if (outline?.selected_persona_id) {
+      setSelectedPersonaId(outline.selected_persona_id);
+      return;
+    }
+
+    if (!selectedPersonaId && fallbackPersonaId) {
+      setSelectedPersonaId(fallbackPersonaId);
+    }
+  }, [outline, personas]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -1252,52 +1276,90 @@ export function OutlineDisplay({
             </div>
           </div>
           <div className="space-y-2">
-            {personas.map((persona) => {
-              const id = persona.id || persona.name;
-              const isChecked = selectedPersonaId === (persona.id || null);
-              const displayName = persona.full_name || persona.name;
-              return (
-                <label
-                  key={id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
-                    isChecked
-                      ? "bg-primary/5 border-primary/30"
-                      : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
-                  )}
+            <Popover
+              open={isPersonaSearchOpen}
+              onOpenChange={setIsPersonaSearchOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isPersonaSearchOpen}
+                  className="w-full justify-between h-11 rounded-xl border-border/60 bg-muted/30 text-left px-3 hover:bg-muted/40"
                 >
-                  <input
-                    type="radio"
-                    name="outline-author-persona"
-                    checked={isChecked}
-                    onChange={() => setSelectedPersonaId(persona.id || null)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={cn(
-                      "w-4 h-4 rounded-full flex items-center justify-center shrink-0 border transition-colors",
-                      isChecked
-                        ? "bg-primary border-primary"
-                        : "bg-background border-border",
-                    )}
-                  >
-                    {isChecked && (
-                      <Check className="w-2.5 h-2.5 text-primary-foreground" />
-                    )}
+                  <div className="flex min-w-0 flex-col items-start overflow-hidden">
+                    {(() => {
+                      const selectedPersona =
+                        personas.find(
+                          (persona) =>
+                            (persona.id || persona.name) === selectedPersonaId,
+                        ) ?? personas[0];
+
+                      return (
+                        <>
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {selectedPersona?.full_name ||
+                              selectedPersona?.name ||
+                              "Select persona"}
+                          </span>
+                          {selectedPersona?.professional_title && (
+                            <span className="truncate text-xs text-muted-foreground">
+                              {selectedPersona.professional_title}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {displayName}
-                    </p>
-                    {persona.professional_title && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {persona.professional_title}
-                      </p>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="p-0 border-border/60"
+                align="start"
+                style={{ width: "var(--radix-popover-trigger-width)" }}
+              >
+                <Command>
+                  <CommandInput placeholder="Search personas..." />
+                  <CommandList>
+                    <CommandEmpty>No persona found.</CommandEmpty>
+                    <CommandGroup>
+                      {personas.map((persona) => {
+                        const id = persona.id || persona.name;
+                        const displayName = persona.full_name || persona.name;
+                        const isSelected = selectedPersonaId === id;
+
+                        return (
+                          <CommandItem
+                            key={id}
+                            value={`${displayName} ${persona.professional_title ?? ""} ${persona.name}`}
+                            onSelect={() => {
+                              setSelectedPersonaId(id);
+                              setIsPersonaSearchOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                isSelected ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{displayName}</span>
+                              {persona.professional_title && (
+                                <span className="text-xs text-muted-foreground">
+                                  {persona.professional_title}
+                                </span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       )}
