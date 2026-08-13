@@ -493,7 +493,11 @@ function ContentEditorInner(props: ContentEditorProps) {
     if (!timezoneMismatch) {
       hasAttemptedAutoSyncRef.current = false;
     }
-  }, [timezoneMismatch, syncTimezoneMutation.isPending, syncTimezoneMutation.mutate]);
+  }, [
+    timezoneMismatch,
+    syncTimezoneMutation.isPending,
+    syncTimezoneMutation.mutate,
+  ]);
 
   const getPartsInTimezone = useCallback((date: Date, tz: string) => {
     const fmt = new Intl.DateTimeFormat("en-CA", {
