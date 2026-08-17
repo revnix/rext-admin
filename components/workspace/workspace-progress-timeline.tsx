@@ -30,12 +30,50 @@ const WORKSPACE_STEPS: ProgressStep[] = [
     description: "Extracting brand characteristics with AI",
   },
   {
+    id: "competitor_analysis",
+    label: "Competitor Analysis",
+    description: "Researching market competitors and positioning",
+  },
+  {
+    id: "persona_extraction",
+    label: "Persona Extraction",
+    description: "Identifying target audience and buyer personas",
+  },
+  {
     id: "pipeline",
-    label: "Finalization",
+    label: "Finalize",
     description: "Completing workspace setup",
   },
 ];
 
+const STEP_ID_ALIASES: Record<string, string[]> = {
+  scrape: ["scrape", "website_scraping", "website-scraping"],
+  brand_voice: ["brand_voice", "brand-voice", "brandvoice"],
+  competitor_analysis: [
+    "competitor_analysis",
+    "competitor-analysis",
+    "competitor",
+    "find",
+    "competitor_find",
+    "competitor-find",
+  ],
+  persona_extraction: [
+    "persona_extraction",
+    "persona-extraction",
+    "persona",
+    "persona_find",
+    "persona-find",
+  ],
+  pipeline: ["pipeline", "finalize", "finalization"],
+};
+
+const STEP_PROGRESS_THRESHOLDS: Record<string, number> = {
+  scrape: 15,
+  brand_voice: 35,
+  competitor_analysis: 55,
+  persona_extraction: 75,
+  pipeline: 90,
+};
 type StepStatus = "pending" | "in-progress" | "completed" | "failed";
 
 interface WorkspaceProgressTimelineProps {
@@ -47,7 +85,7 @@ interface WorkspaceProgressTimelineProps {
  * WorkspaceProgressTimeline Component
  *
  * Displays real-time progress updates for workspace creation pipeline.
- * Shows 3 main steps: Scraping → Brand Voice → Finalization.
+ * Shows the full setup flow: Website Scraping → Brand Voice → Competitor Analysis → Persona Extraction → Finalize.
  *
  * @example
  * ```tsx
@@ -65,29 +103,61 @@ export function WorkspaceProgressTimeline({
   /**
    * Determine step status from events
    */
-  const getStepStatus = (stepId: string): StepStatus => {
-    const stepEvents = events.filter((e) => e.step.startsWith(stepId));
+  const getFallbackStatus = (stepId: string): StepStatus => {
+    const threshold = STEP_PROGRESS_THRESHOLDS[stepId] ?? 0;
 
-    // Special handling for finalization step based on overall progress
     if (stepId === "pipeline") {
-      if (progress === 100) return "completed";
-      if (progress >= 90) return "in-progress";
+      if (progress >= 100) return "completed";
+      if (progress >= threshold) return "in-progress";
       return "pending";
     }
 
-    if (stepEvents.length === 0) return "pending";
+    if (progress >= 100) return "completed";
+    if (progress >= threshold) return "completed";
+    if (progress >= threshold - 15) return "in-progress";
+    return "pending";
+  };
+
+  const getStepStatus = (stepId: string): StepStatus => {
+    const aliases = STEP_ID_ALIASES[stepId] ?? [stepId];
+    const stepEvents = events.filter((event) => {
+      const stepName = event.step.toLowerCase();
+      return aliases.some(
+        (alias) =>
+          stepName === alias ||
+          stepName.startsWith(`${alias}.`) ||
+          stepName.startsWith(`${alias}_`) ||
+          stepName.startsWith(`${alias}-`) ||
+          stepName.includes(alias),
+      );
+    });
+
+    if (stepEvents.length === 0) {
+      return getFallbackStatus(stepId);
+    }
 
     const latestEvent = stepEvents[stepEvents.length - 1];
 
-    if (latestEvent.step.includes("completed")) return "completed";
-    if (latestEvent.step.includes("failed")) return "failed";
     if (
-      latestEvent.step.includes("started") ||
-      latestEvent.status === "progress"
+      latestEvent.status === "completed" ||
+      latestEvent.step.toLowerCase().includes("completed") ||
+      latestEvent.message.toLowerCase().includes("successfully")
+    )
+      return "completed";
+    if (
+      latestEvent.status === "failed" ||
+      latestEvent.step.toLowerCase().includes("failed")
+    )
+      return "failed";
+    if (
+      latestEvent.step.toLowerCase().includes("started") ||
+      latestEvent.status === "progress" ||
+      latestEvent.message.toLowerCase().includes("processing") ||
+      latestEvent.message.toLowerCase().includes("analyzing")
     )
       return "in-progress";
 
-    return "pending";
+    return getFallbackStatus(stepId);
   };
 
   /**
@@ -110,7 +180,17 @@ export function WorkspaceProgressTimeline({
    * Get latest event message for a step
    */
   const getLatestMessage = (stepId: string): string | null => {
-    const stepEvents = events.filter((e) => e.step.startsWith(stepId));
+    const aliases = STEP_ID_ALIASES[stepId] ?? [stepId];
+    const stepEvents = events.filter((event) => {
+      const stepName = event.step.toLowerCase();
+      return aliases.some(
+        (alias) =>
+          stepName === alias ||
+          stepName.startsWith(`${alias}.`) ||
+          stepName.startsWith(`${alias}_`) ||
+          stepName.startsWith(`${alias}-`),
+      );
+    });
     if (stepEvents.length === 0) return null;
     return stepEvents[stepEvents.length - 1].message;
   };
