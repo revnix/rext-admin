@@ -213,12 +213,12 @@ function WordPressForm({
               <FormLabel>API Key *</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter API key from Rext plugin"
+                  placeholder="Enter API key from Rext AI plugin"
                   {...field}
                 />
               </FormControl>
               <p className="text-[0.8rem] text-muted-foreground">
-                Get this from the Rext WordPress plugin settings
+                Get this from the Rext AI WordPress plugin settings
               </p>
               <FormMessage />
             </FormItem>

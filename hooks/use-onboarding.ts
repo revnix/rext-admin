@@ -69,7 +69,7 @@ export function useOnboarding(options?: { enabled?: boolean }) {
       queryClient.invalidateQueries({
         queryKey: ["onboarding", "should-show"],
       });
-      toast.success("Welcome to REXT! 🎉");
+      toast.success("Welcome to REXT AI! 🎉");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to complete onboarding");

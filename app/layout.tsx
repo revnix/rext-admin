@@ -34,8 +34,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Rext Admin",
-    default: "Rext Admin - AI-Powered Content Management Platform",
+    template: "%s | Rext AI Admin",
+    default: "Rext AI Admin - AI-Powered Content Management Platform",
   },
   description:
     "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows. Create, organize, and optimize your content strategy with intelligent insights.",
@@ -47,25 +47,25 @@ export const metadata: Metadata = {
     "automation",
     "admin dashboard",
   ],
-  authors: [{ name: "Rext Team" }],
-  creator: "Rext",
-  publisher: "Rext",
+  authors: [{ name: "Rext AI Team" }],
+  creator: "Rext AI",
+  publisher: "Rext AI",
   metadataBase: new URL("https://admin.wrext.com"),
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://admin.wrext.com",
-    title: "Rext Admin - AI-Powered Content Management Platform",
+    title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
-    siteName: "Rext Admin",
+    siteName: "Rext AI Admin",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rext Admin - AI-Powered Content Management Platform",
+    title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
-    creator: "@Rext",
+    creator: "@RextAI",
   },
   icons: {
     icon: [

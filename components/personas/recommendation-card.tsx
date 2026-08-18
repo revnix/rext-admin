@@ -26,7 +26,7 @@ export function RecommendationCard({ onImport }: RecommendationCardProps) {
           </div>
           <div>
             <h3 className="font-bold text-xl text-foreground mb-1">
-              Dr. Rext Expert
+              Dr. Rext AI Expert
             </h3>
             <p className="text-sky-700 dark:text-sky-400 font-medium">
               Lead Content Strategist

@@ -36,6 +36,10 @@ const CONTENT_TYPE_WORD_COUNT_RANGES: Record<string, WordCountRange> = {
   "signup-page": { min: 200, max: 1500 },
   "landing-page": { min: 400, max: 1200 },
   "service-page": { min: 500, max: 3000 },
+  "pricing-page": { min: 150, max: 800 },
+  "checkout-page": { min: 300, max: 1500 },
+  "coupon-page": { min: 250, max: 1200 },
+  "demo-page": { min: 600, max: 3000 },
 };
 
 const normalizeContentType = (contentType: string) =>

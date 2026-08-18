@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "Subscription Terms of Service",
   description:
-    "Terms and conditions governing REXT subscription services and billing",
+    "Terms and conditions governing REXT AI subscription services and billing",
 };
 
 export default function SubscriptionTermsPage() {
@@ -39,12 +39,12 @@ export default function SubscriptionTermsPage() {
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
           <p className="lead">
             These Subscription Terms of Service govern your access to and use of
-            WREXT's paid subscription services.
+            REXT AI's paid subscription services.
           </p>
 
           <h2>1. Introduction</h2>
           <p>
-            Welcome to WREXT! By subscribing to any WREXT paid plan, you agree
+            Welcome to REXT AI! By subscribing to any REXT AI paid plan, you agree
             to these Terms in addition to our main Terms of Service and Privacy
             Policy.
           </p>
@@ -58,7 +58,7 @@ export default function SubscriptionTermsPage() {
 
           <h2>2. Subscription Plans</h2>
           <p>
-            WREXT offers multiple subscription tiers with varying features and
+            REXT AI offers multiple subscription tiers with varying features and
             usage limits. All plans include:
           </p>
           <ul>

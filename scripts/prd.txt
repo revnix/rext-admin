@@ -1,6 +1,6 @@
 <context>
 # Overview  
-REXT Admin is a Next.js web application that enables users to generate AI-powered content topics through an intelligent wizard interface and manage them through a comprehensive results system. The application solves the critical problem of content ideation and topic discovery by providing contextually relevant, AI-generated content suggestions tailored to specific industries, audiences, and content goals.
+REXT AI Admin is a Next.js web application that enables users to generate AI-powered content topics through an intelligent wizard interface and manage them through a comprehensive results system. The application solves the critical problem of content ideation and topic discovery by providing contextually relevant, AI-generated content suggestions tailored to specific industries, audiences, and content goals.
 
 **Target Users:** Content creators, marketers, bloggers, social media managers, and businesses looking to systematically generate high-quality content topics that resonate with their target audience.
 

@@ -151,7 +151,7 @@ export default function SubscriptionDashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Choose a plan to get started with all the features of REXT.
+              Choose a plan to get started with all the features of REXT AI.
             </p>
             <Button onClick={() => router.push("/pricing" as Route)}>
               View Pricing Plans

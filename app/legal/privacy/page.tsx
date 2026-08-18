@@ -14,7 +14,7 @@ import {
 export const metadata: Metadata = {
   title: "Privacy Policy - Payments & Billing",
   description:
-    "How REXT handles your payment and billing data with security and privacy",
+    "How REXT AI handles your payment and billing data with security and privacy",
 };
 
 export default function PrivacyPolicyPage() {

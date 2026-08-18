@@ -167,7 +167,7 @@ export function Footer({ variant = "default", className = "" }: FooterProps) {
 
       {/* Copyright */}
       <div className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} REXT. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} REXT AI. All rights reserved.</p>
       </div>
     </footer>
   );
