@@ -41,9 +41,15 @@ function parseAreas(value: string | string[] | undefined): string[] {
 
 interface PersonaSelectionProps {
   personas: Persona[];
+  /** Single-selected persona id (when `multiSelect` is false) */
   selectedPersonaId?: string | null;
-  onSelect: (personaId: string) => void;
+  /** Multi-selected persona ids (when `multiSelect` is true) */
+  selectedPersonaIds?: string[];
+  /** Called when selection changes. When `multiSelect` is true, an array of ids is passed. Otherwise a single id string is passed. */
+  onSelect: (personaIdOrIds: string | string[]) => void;
   isLoading?: boolean;
+  /** Enable selecting multiple personas */
+  multiSelect?: boolean;
 }
 
 /**
@@ -54,8 +60,10 @@ interface PersonaSelectionProps {
 export function PersonaSelection({
   personas,
   selectedPersonaId,
+  selectedPersonaIds,
   onSelect,
   isLoading = false,
+  multiSelect = false,
 }: PersonaSelectionProps) {
   if (isLoading) {
     return (
@@ -86,14 +94,32 @@ export function PersonaSelection({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {personas.map((persona) => (
-        <PersonaCard
-          key={persona.id || persona.name}
-          persona={persona}
-          isSelected={selectedPersonaId === persona.id}
-          onSelect={() => onSelect(persona.id || "")}
-        />
-      ))}
+      {personas.map((persona) => {
+        const id = persona.id || persona.name || "";
+        const isSelected = multiSelect
+          ? (selectedPersonaIds || []).includes(id)
+          : selectedPersonaId === id;
+
+        const handleSelect = () => {
+          if (multiSelect) {
+            const current = new Set(selectedPersonaIds || []);
+            if (current.has(id)) current.delete(id);
+            else current.add(id);
+            onSelect(Array.from(current));
+          } else {
+            onSelect(id);
+          }
+        };
+
+        return (
+          <PersonaCard
+            key={id}
+            persona={persona}
+            isSelected={isSelected}
+            onSelect={handleSelect}
+          />
+        );
+      })}
     </div>
   );
 }

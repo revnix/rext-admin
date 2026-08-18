@@ -71,6 +71,8 @@ interface WorkspaceBrandVoiceFormProps {
     data: BrandVoiceFormData & {
       selectedPersonaId?: string;
       selectedPersona?: Persona; // Persona from workspace types
+      selectedPersonaIds?: string[];
+      selectedPersonas?: Persona[];
     },
   ) => Promise<void>;
   isLoading?: boolean;
@@ -142,14 +144,24 @@ export function WorkspaceBrandVoiceForm({
   const [brandVoiceInput, setBrandVoiceInput] = useState("");
   const [competitorsInput, setCompetitorsInput] = useState("");
   const [contentStrategyInput, setContentStrategyInput] = useState("");
+  // Multi-select state for personas (local only)
+  const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>(
+    selectedPersonaId ? [selectedPersonaId] : [],
+  );
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
     const selectedPersona = personas.find((p) => p.id === selectedPersonaId);
+    const selectedPersonasList = personas.filter((p) =>
+      (selectedPersonaIds || []).includes(p.id || ""),
+    );
+
     await onSave({
       ...formData,
       selectedPersonaId: selectedPersonaId || undefined,
       selectedPersona: selectedPersona || undefined,
+      selectedPersonaIds: selectedPersonaIds && selectedPersonaIds.length ? selectedPersonaIds : undefined,
+      selectedPersonas: selectedPersonasList.length ? selectedPersonasList : undefined,
     });
   };
 
@@ -728,8 +740,21 @@ export function WorkspaceBrandVoiceForm({
                   <PersonaSelection
                     personas={personas}
                     selectedPersonaId={selectedPersonaId}
-                    onSelect={onPersonaSelect}
+                    selectedPersonaIds={selectedPersonaIds}
+                    onSelect={(val) => {
+                      if (Array.isArray(val)) {
+                        setSelectedPersonaIds(val);
+                        // keep existing single-select callback compatible by
+                        // reporting the last selected id
+                        const last = val[val.length - 1] || "";
+                        onPersonaSelect?.(last);
+                      } else {
+                        setSelectedPersonaIds(val ? [val] : []);
+                        onPersonaSelect?.(val);
+                      }
+                    }}
                     isLoading={isLoadingPersonas}
+                    multiSelect
                   />
                 </div>
               )}
