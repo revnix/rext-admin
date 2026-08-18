@@ -78,7 +78,7 @@ export function UIPreferences() {
           <p>
             <strong>Tip:</strong> Feature hints provide contextual information
             about key features as you navigate the app. They're especially
-            useful when you're getting started with REXT.
+            useful when you're getting started with REXT AI.
           </p>
         </div>
       </div>

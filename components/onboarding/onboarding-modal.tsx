@@ -107,7 +107,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       >
         {/* Accessible title and description for screen readers */}
         <VisuallyHidden>
-          <DialogTitle>Get Started with REXT</DialogTitle>
+          <DialogTitle>Get Started with REXT AI</DialogTitle>
           <DialogDescription>
             Complete the onboarding steps to set up your account.
           </DialogDescription>

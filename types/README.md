@@ -1,6 +1,6 @@
 # Types Documentation
 
-This directory contains all TypeScript type definitions for the REXT Admin application.
+This directory contains all TypeScript type definitions for the REXT AI Admin application.
 
 ## File Structure
 

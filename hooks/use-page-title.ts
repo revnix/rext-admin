@@ -9,7 +9,7 @@ import { useEffect } from "react";
 export function usePageTitle(title: string, description?: string) {
   useEffect(() => {
     if (title) {
-      document.title = `${title} | Rext Admin`;
+      document.title = `${title} | Rext AI Admin`;
     }
 
     // Update meta description if provided

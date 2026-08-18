@@ -212,7 +212,7 @@ export default function RootError({
 
           {/* Footer */}
           <div className="absolute bottom-8 text-sm text-slate-400 font-medium">
-            &copy; 2026 - Rext Admin
+            &copy; 2026 - Rext AI Admin
           </div>
         </div>
       </body>

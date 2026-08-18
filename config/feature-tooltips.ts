@@ -40,7 +40,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     selector: "[data-tooltip='knowledge-base']",
     title: "Knowledge Base",
     content:
-      "Upload files, add URLs, or paste text to build your knowledge base. REXT will use this information to generate accurate, on-brand content.",
+      "Upload files, add URLs, or paste text to build your knowledge base. REXT AI will use this information to generate accurate, on-brand content.",
     placement: "top",
     page: "/overview",
   },
@@ -49,7 +49,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     selector: "[data-tooltip='topic-generation']",
     title: "Topic Generation",
     content:
-      "Generate content topics based on your knowledge base. REXT analyzes your content and suggests relevant topics for your audience.",
+      "Generate content topics based on your knowledge base. REXT AI analyzes your content and suggests relevant topics for your audience.",
     placement: "top",
     page: "/overview",
   },
@@ -138,7 +138,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     selector: "[data-tooltip='brand-voice']",
     title: "Brand Voice",
     content:
-      "Define your brand's unique voice and tone. REXT will use these guidelines to ensure all generated content matches your brand personality.",
+      "Define your brand's unique voice and tone. REXT AI will use these guidelines to ensure all generated content matches your brand personality.",
     placement: "right",
     page: "/settings",
   },
@@ -156,7 +156,7 @@ export const FEATURE_TOOLTIPS: FeatureTooltip[] = [
     selector: "[data-tooltip='integrations']",
     title: "Integrations",
     content:
-      "Connect REXT with your favorite tools: WordPress, Medium, Ghost, and more. Publish content directly to your platforms.",
+      "Connect REXT AI with your favorite tools: WordPress, Medium, Ghost, and more. Publish content directly to your platforms.",
     placement: "left",
     page: "/settings/integrations",
   },

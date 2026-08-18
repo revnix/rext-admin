@@ -100,7 +100,7 @@ export function WorkspaceSwitcher() {
               <div className="flex aspect-square size-8 items-center justify-center">
                 <Image
                   src="/logos/icon_dark.svg"
-                  alt="Rext"
+                  alt="Rext AI"
                   width={28}
                   height={28}
                   className="size-7"

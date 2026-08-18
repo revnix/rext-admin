@@ -1,5 +1,5 @@
 /**
- * Onboarding types for REXT platform
+ * Onboarding types for REXT AI platform
  */
 
 export interface OnboardingStatus {
@@ -56,7 +56,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 0,
     name: "content_strategy",
-    title: "Welcome to Rext",
+    title: "Welcome to Rext AI",
     description: "Choose your content strategy foundation",
     required: true,
   },
@@ -142,7 +142,7 @@ export const GOAL_OPTIONS = [
   {
     value: "explore",
     label: "Just exploring",
-    description: "Curious to see what REXT can do",
+    description: "Curious to see what REXT AI can do",
     icon: "🔍",
   },
 ] as const;
