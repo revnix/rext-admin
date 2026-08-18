@@ -213,6 +213,8 @@ export function WorkspaceCreateWizard() {
     editedData: Partial<BrandVoice> & {
       selectedPersonaId?: string;
       selectedPersona?: Persona;
+      selectedPersonaIds?: string[];
+      selectedPersonas?: Persona[];
     },
   ) => {
     if (!workspaceId) {
@@ -223,14 +225,16 @@ export function WorkspaceCreateWizard() {
     try {
       setIsSaving(true);
 
-      // Extract selectedPersonaId from editedData
+      // Extract selected persona(s) from editedData
       const {
         selectedPersonaId: personaId,
         selectedPersona,
+        selectedPersonaIds,
+        selectedPersonas,
         ...brandVoiceData
       } = editedData;
 
-      // Update brand voice via API
+      // Update brand voice via API (include selected personas if provided)
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         brand_name: brandVoiceData.brand_name,
         about: brandVoiceData.about,
@@ -241,7 +245,11 @@ export function WorkspaceCreateWizard() {
         competitors: brandVoiceData.competitors,
         content_strategy:
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
-        personas: selectedPersona ? [selectedPersona] : undefined,
+        personas: selectedPersonas && selectedPersonas.length
+          ? selectedPersonas
+          : selectedPersona
+          ? [selectedPersona]
+          : undefined,
       });
 
       // Manually save personas if they exist in the extracted data
@@ -282,10 +290,14 @@ export function WorkspaceCreateWizard() {
         );
       }
 
-      // Log selected persona for future API integration
-      if (personaId) {
+      // Log selected persona(s) for future API integration
+      const primaryPersonaId = (selectedPersonaIds && selectedPersonaIds.length)
+        ? selectedPersonaIds[selectedPersonaIds.length - 1]
+        : personaId;
+
+      if (primaryPersonaId) {
         // TODO(TASK-047): Add endpoint to associate selected persona with workspace.
-        // await apiClient.workspaces.setDefaultPersona(workspaceId, personaId);
+        // await apiClient.workspaces.setDefaultPersona(workspaceId, primaryPersonaId);
       }
 
       // Invalidate workspace queries to refresh data
