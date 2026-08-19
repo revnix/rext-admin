@@ -26,11 +26,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
-import { workspaceQueries } from "@/lib/query-keys";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspaceStore } from "@/stores/workspace";
 import * as React from "react";
+import type { Route } from "next";
 
 const generalInfoSchema = z.object({
   name: z.string().min(1, "Workspace name is required").max(200),
@@ -89,11 +89,26 @@ export function GeneralInfoSection() {
         updateWorkspaceInList(response.workspace);
       }
 
-      // Invalidate every workspace query (detail, list, switcher) - the narrower
-      // detail-only key left the /w list and the switcher serving the old name.
-      await queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      // Refresh the list and switcher caches so they stop serving the old name.
+      // The detail branch is deliberately excluded: its cache key IS the slug,
+      // and a rename kills the old slug - refetching it would 404 and bounce us
+      // out via WorkspaceProvider. Navigating below fetches under the new key.
+      await queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          queryKey[0] === "workspaces" &&
+          (queryKey.length === 1 ||
+            queryKey[1] === "list" ||
+            queryKey[1] === "switcher"),
+      });
 
-      router.refresh();
+      // A rename regenerates the slug, so the URL we are on no longer resolves.
+      const newSlug = response?.workspace?.slug;
+      if (newSlug && newSlug !== workspace.slug) {
+        router.replace(`/w/${newSlug}/settings` as Route);
+      } else {
+        router.refresh();
+      }
+
       toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
       const errorMessage =
