@@ -42,11 +42,14 @@ const generalInfoSchema = z.object({
 type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
 
 export function GeneralInfoSection() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace } = useWorkspace();
   const router = useRouter();
   const queryClient = useQueryClient();
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
+  );
+  const updateWorkspaceInList = useWorkspaceStore(
+    (state) => state.updateWorkspaceInList,
   );
 
   const form = useForm<GeneralInfoForm>({
@@ -83,14 +86,12 @@ export function GeneralInfoSection() {
       // Update local store immediately so UI reflects changes without waiting for refetch
       if (response?.workspace) {
         setCurrentWorkspace(response.workspace);
+        updateWorkspaceInList(response.workspace);
       }
 
-      // Ensure the workspace query is refreshed (avoid stale cache)
-      if (workspaceId) {
-        queryClient.invalidateQueries({
-          queryKey: workspaceQueries.detail(workspaceId).queryKey,
-        });
-      }
+      // Invalidate every workspace query (detail, list, switcher) - the narrower
+      // detail-only key left the /w list and the switcher serving the old name.
+      await queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
       router.refresh();
       toast.success("Workspace settings have been saved successfully.");
