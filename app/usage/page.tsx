@@ -182,7 +182,7 @@ export default function UsagePage() {
                         : subscription?.subscription?.plan_limits?.max_topics}
                     </p>
                   </div>
-                  <div>
+                  {/* <div>
                     <p className="text-sm text-muted-foreground">
                       Knowledge Items
                     </p>
@@ -193,7 +193,7 @@ export default function UsagePage() {
                         : subscription?.subscription?.plan_limits
                             ?.max_knowledge_items}
                     </p>
-                  </div>
+                  </div> */}
                   <div>
                     <p className="text-sm text-muted-foreground">
                       API Calls/Month
