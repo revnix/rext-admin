@@ -53,10 +53,28 @@ export function WorkspaceSwitcher() {
 
   // Update local store when API data changes
   React.useEffect(() => {
-    if (workspaces.length > 0) {
-      setWorkspaceList(workspaces);
+    if (workspaces.length === 0) return;
+
+    setWorkspaceList(workspaces);
+
+    // Re-sync the persisted current workspace with the server copy. It is matched
+    // by id, which survives a rename, so without this the store keeps a stale name
+    // and slug indefinitely. Every sidebar link is built from that slug, and a
+    // renamed workspace's old slug 404s straight back to /w. WorkspaceProvider
+    // already does this inside /w/[slug], but not on /w, / or account pages -
+    // which is exactly where the dead links were being rendered.
+    if (currentWorkspace) {
+      const serverCopy = workspaces.find((w) => w.id === currentWorkspace.id);
+
+      if (
+        serverCopy &&
+        (serverCopy.slug !== currentWorkspace.slug ||
+          serverCopy.name !== currentWorkspace.name)
+      ) {
+        setCurrentWorkspace(serverCopy);
+      }
     }
-  }, [workspaces, setWorkspaceList]);
+  }, [workspaces, setWorkspaceList, currentWorkspace, setCurrentWorkspace]);
 
   // Track current workspace path for preserving navigation
   React.useEffect(() => {
