@@ -408,7 +408,7 @@ export function NotificationPreferencesForm({
       <Separator />
 
       {/* Knowledge Base Notifications */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <BookOpen
             className="h-5 w-5 text-muted-foreground"
@@ -454,9 +454,9 @@ export function NotificationPreferencesForm({
             />
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <Separator />
+      {/* <Separator /> */}
 
       {/* Digest Settings */}
       <div className="space-y-4">
