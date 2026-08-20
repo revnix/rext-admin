@@ -101,13 +101,6 @@ export function OAuthAccounts() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Connected Accounts</h3>
-        <p className="text-sm text-muted-foreground">
-          Link your account with OAuth providers for easier sign-in
-        </p>
-      </div>
-
       {/* Connected Accounts */}
       {accounts && accounts.length > 0 && (
         <div className="space-y-3">

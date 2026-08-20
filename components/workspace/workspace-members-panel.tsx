@@ -25,7 +25,6 @@ import {
 } from "@/components/workspace";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
@@ -98,7 +97,6 @@ export function WorkspaceMembersPanel({
 
   const members = membersResponse?.members || [];
 
-  const baseUrl = resolveApiBaseUrl();
   // Get initials for avatar
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
@@ -161,20 +159,17 @@ export function WorkspaceMembersPanel({
               {row.initials}
             </AvatarFallback>
           </Avatar> */}
-          <Avatar className="h-8 w-8 rounded-lg overflow-hidden relative">
+          <Avatar className="h-8 w-8 rounded-full overflow-hidden relative">
             {row.avatar ? (
+              // The API resolves avatars to absolute URLs (or null) - see
+              // resolve_avatar_url on the backend.
               <img
-                src={
-                  row.avatar.startsWith("http://") ||
-                  row.avatar.startsWith("https://")
-                    ? row.avatar
-                    : `${baseUrl}${row.avatar}`
-                }
+                src={row.avatar}
                 alt="User avatar"
                 className="object-cover w-full h-full"
               />
             ) : (
-              <AvatarFallback className="rounded-lg">
+              <AvatarFallback className="rounded-full">
                 {row.initials}
               </AvatarFallback>
             )}
