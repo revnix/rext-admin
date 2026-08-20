@@ -152,13 +152,13 @@ export function UsageMetrics({
       percentage: usage.members.percentage ?? 0,
       description: "Total team members across all workspaces",
     },
-    {
-      label: "Knowledge Items",
-      current: usage.knowledge_items.used,
-      max: usage.knowledge_items.limit,
-      percentage: usage.knowledge_items.percentage,
-      description: "Knowledge base entries and documents",
-    },
+    // {
+    //   label: "Knowledge Items",
+    //   current: usage.knowledge_items.used,
+    //   max: usage.knowledge_items.limit,
+    //   percentage: usage.knowledge_items.percentage,
+    //   description: "Knowledge base entries and documents",
+    // },
     {
       label: "API Calls",
       current: usage.api_calls.used,
