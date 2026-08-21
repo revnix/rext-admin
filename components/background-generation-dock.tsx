@@ -8,13 +8,12 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { Progress } from "@/components/ui/progress";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
   announceBackgroundGenerationRemoval,
@@ -58,6 +57,7 @@ const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
   const router = useRouter();
+  const pathname = usePathname();
   const workspaceContext = useWorkspaceOptional();
   const storedWorkspaceSlug = useCurrentWorkspaceSlug();
   const workspaceSlug =
@@ -441,25 +441,25 @@ export function BackgroundGenerationDock() {
   // X must end it server-side, not just hide the dock. Only a genuinely
   // finished (or failed) job is safe to merely dismiss.
   const canCancel = isActiveGenerationJob(job);
+  // Don't show the navigation button when the user is already on the target page
+  // to avoid duplicating the page's own Continue/action button.
+  const isOnResultPage = job.resultUrl
+    ? pathname === job.resultUrl ||
+      pathname.startsWith(job.resultUrl.split("?")[0])
+    : false;
 
   return (
     <section
       aria-label="Background generation activity"
-      className={cn(
-        "relative border-b border-border bg-background",
-        pending && "bg-primary/[0.035]",
-        completed && "bg-emerald-500/[0.045]",
-        job.status === "failed" && "bg-destructive/[0.035]",
-      )}
+      className="sticky bottom-0 z-40 border-t border-border bg-background"
     >
       <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 lg:px-6">
         <div
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-            pending && "bg-primary/10 text-primary",
-            completed &&
-              "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-            job.status === "failed" && "bg-destructive/10 text-destructive",
+            pending && "text-primary",
+            completed && "text-emerald-500",
+            job.status === "failed" && "text-destructive",
           )}
         >
           {pending ? (
@@ -498,11 +498,23 @@ export function BackgroundGenerationDock() {
 
         {pending && (
           <div className="flex min-w-[170px] flex-1 basis-[220px] items-center gap-3 sm:max-w-sm">
-            <Progress
-              value={job.progress}
-              className="h-1.5 flex-1 bg-muted"
+            <div
+              role="progressbar"
+              aria-valuenow={job.progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
               aria-label={`${job.title} generation progress`}
-            />
+              className="relative h-2 flex-1 overflow-hidden rounded-full"
+              style={{ backgroundColor: "rgb(52, 64, 84)" }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${job.progress}%`,
+                  backgroundColor: "hsl(var(--primary))",
+                }}
+              />
+            </div>
             <span className="w-10 text-right text-sm font-semibold tabular-nums text-foreground">
               {job.progress}%
             </span>
@@ -510,23 +522,24 @@ export function BackgroundGenerationDock() {
         )}
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant={completed ? "default" : "outline"}
-            size="sm"
-            className="h-8 whitespace-nowrap"
-            onClick={() => openJob(job)}
-          >
-            {awaitingInput
-              ? "Continue"
-              : completed
-                ? "Open article"
-                : pending
-                  ? "View progress"
-                  : "View details"}
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Button>
-
+          {!isOnResultPage && (
+            <Button
+              type="button"
+              variant={completed ? "default" : "outline"}
+              size="sm"
+              className="h-8 whitespace-nowrap"
+              onClick={() => openJob(job)}
+            >
+              {awaitingInput
+                ? "Continue"
+                : completed
+                  ? "Open article"
+                  : pending
+                    ? "View progress"
+                    : "View details"}
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
           {canCancel ? (
             <ConfirmationDialog
               title="Cancel this generation?"
