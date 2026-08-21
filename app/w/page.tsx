@@ -171,21 +171,21 @@ export default function WorkspacePage() {
         </div>
       ),
     },
-    {
-      key: "knowledge_stats",
-      header: "Knowledge",
-      width: "100px",
-      cell: (_value: unknown, row: WorkspaceData) => {
-        const stats = row.knowledge_stats;
-        const total = stats?.total || 0;
-        return (
-          <div className="flex items-center gap-1 text-sm whitespace-nowrap">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            <span>{total} items</span>
-          </div>
-        );
-      },
-    },
+    // {
+    //   key: "knowledge_stats",
+    //   header: "Knowledge",
+    //   width: "100px",
+    //   cell: (_value: unknown, row: WorkspaceData) => {
+    //     const stats = row.knowledge_stats;
+    //     const total = stats?.total || 0;
+    //     return (
+    //       <div className="flex items-center gap-1 text-sm whitespace-nowrap">
+    //         <FileText className="h-4 w-4 text-muted-foreground" />
+    //         <span>{total} items</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       key: "status",
       header: "Status",
