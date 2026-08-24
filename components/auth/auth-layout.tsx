@@ -109,8 +109,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               Speedy, Easy and Fast Content Generation.
             </h2>
             <p className="text-primary-foreground/80 text-lg leading-relaxed font-inter">
-              Rext AI helps you set content goals, earn organic traffic, and scale
-              your publishing workflow up to 10x faster.
+              Rext AI helps you set content goals, earn organic traffic, and
+              scale your publishing workflow up to 10x faster.
             </p>
           </div>
         </div>

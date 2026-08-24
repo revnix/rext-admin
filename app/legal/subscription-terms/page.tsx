@@ -44,9 +44,9 @@ export default function SubscriptionTermsPage() {
 
           <h2>1. Introduction</h2>
           <p>
-            Welcome to REXT AI! By subscribing to any REXT AI paid plan, you agree
-            to these Terms in addition to our main Terms of Service and Privacy
-            Policy.
+            Welcome to REXT AI! By subscribing to any REXT AI paid plan, you
+            agree to these Terms in addition to our main Terms of Service and
+            Privacy Policy.
           </p>
 
           <h3>Who Can Subscribe</h3>
