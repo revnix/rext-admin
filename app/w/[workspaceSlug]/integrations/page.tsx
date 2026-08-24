@@ -188,7 +188,7 @@ export default function IntegrationsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : integrations.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
+          <div className="text-center py-12 text-muted-foreground bg-slate-100 dark:bg-accent rounded-lg border border-dashed">
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (

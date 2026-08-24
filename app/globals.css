@@ -298,8 +298,8 @@
     /* Gray.50 */
     --muted: #344054;
     /* Gray.700 */
-    --muted-foreground: #98a2b3;
-    /* Gray.400 */
+    --muted-foreground: #d0d5dd;
+    /* Gray.300 - readable supporting text on dark muted surfaces */
     --accent: #344054;
     /* Gray.700 */
     --accent-foreground: #f9fafb;
@@ -363,8 +363,8 @@
   /* Gray.50 */
   --muted: #344054;
   /* Gray.700 */
-  --muted-foreground: #98a2b3;
-  /* Gray.400 */
+  --muted-foreground: #d0d5dd;
+  /* Gray.300 - readable supporting text on dark muted surfaces */
   --accent: #344054;
   /* Gray.700 */
   --accent-foreground: #f9fafb;

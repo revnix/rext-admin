@@ -240,18 +240,15 @@ export function RolePermissionAuditLog({
                         >
                           <Icon className="h-4 w-4" />
                           <span className="capitalize">{log.action}</span>
-                          <Badge
-                            variant="outline"
-                            className="capitalize dark:text-gray-800"
-                          >
+                          <Badge variant="outline" className="capitalize">
                             {log.resource_type}
                           </Badge>
                         </CardTitle>
-                        <span className="text-xs text-muted-foreground dark:text-gray-800">
+                        <span className="text-xs text-muted-foreground">
                           {format(new Date(log.created_at), "PPp")}
                         </span>
                       </div>
-                      <CardDescription className="dark:text-gray-800">
+                      <CardDescription>
                         by <strong>{log.user_email || "System"}</strong>
                       </CardDescription>
                     </CardHeader>
