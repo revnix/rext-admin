@@ -1967,6 +1967,7 @@ export function FreshGenerationView({
         recommendedContentType={recommendedContentType}
         instruction={displayedInstruction}
         contentTypes={contentTypes}
+        keyword={primaryKeyword || userKeyword}
         handleContentTypeSelect={(selected) =>
           handleWorkflow("CONTENT_TYPE_SELECT", selected)
         }
