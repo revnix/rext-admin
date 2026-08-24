@@ -458,7 +458,6 @@ export function PageLayout({
               </DropdownMenu>
             </div>
           </header>
-          <BackgroundGenerationDock />
         </div>
         {/* Impersonation Banner */}
         <ImpersonationBanner />
@@ -480,6 +479,8 @@ export function PageLayout({
           {/* Main Content */}
           <div className="flex-1">{children}</div>
         </div>
+        {/* Bottom generation progress dock */}
+        <BackgroundGenerationDock />
       </SidebarInset>
 
       <NotificationsDrawer
