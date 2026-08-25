@@ -80,16 +80,14 @@ export function createRolesNamespace(client: ApiClient) {
      */
     create: async (data: CreateRoleRequest) => {
       return client.request<{
-        role: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          is_system_role: boolean;
-          hierarchy_level: number;
-          created_at: string;
-          updated_at: string;
-        };
+        id: string;
+        name: string;
+        display_name: string;
+        description?: string;
+        is_system_role: boolean;
+        hierarchy_level: number;
+        created_at: string;
+        updated_at: string;
       }>(ENDPOINTS.ROLES.create, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

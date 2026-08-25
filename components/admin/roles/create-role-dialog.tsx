@@ -58,7 +58,7 @@ export function CreateRoleDialog({
 
       // Assign permissions if any selected
       if (selectedPermissionIds.length > 0) {
-        await apiClient.roles.assignPermissions(roleResponse.role.id, {
+        await apiClient.roles.assignPermissions(roleResponse.id, {
           permission_ids: selectedPermissionIds,
         });
       }
