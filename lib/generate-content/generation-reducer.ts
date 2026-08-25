@@ -117,6 +117,17 @@ export function generationReducer(
         ...state,
         completedNodes: [...state.completedNodes, action.payload],
       };
+    case "RESET_FOR_THREAD_SWITCH":
+      // Clear all content-related state so a previously-viewed thread's final
+      // article / scores / outline don't bleed into the new thread's view.
+      return {
+        ...initialState,
+        // Preserve the threadId — SET_THREAD_ID is dispatched separately.
+        threadId: state.threadId,
+        // Preserve keyword/country so they can be restored from the new thread.
+        userKeyword: state.userKeyword,
+        country: state.country,
+      };
     case "UPDATE_FROM_STREAM":
       return handleStreamUpdate(state, action.payload);
     default:

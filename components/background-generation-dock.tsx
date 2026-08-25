@@ -8,7 +8,7 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -53,16 +53,68 @@ type GenerationStatusResponse = {
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
+/** Progress bar + percentage for one generation. Used by the primary row and
+ *  by every row in the expanded list, so they can never drift apart. */
+function GenerationProgress({
+  title,
+  progress,
+  compact = false,
+  className,
+}: {
+  title: string;
+  progress: number;
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <div
+        role="progressbar"
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${title} generation progress`}
+        className={cn(
+          "relative flex-1 overflow-hidden rounded-full",
+          compact ? "h-1.5" : "h-2",
+        )}
+        style={{ backgroundColor: "rgb(52, 64, 84)" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${progress}%`,
+            backgroundColor: "hsl(var(--primary))",
+          }}
+        />
+      </div>
+      <span
+        className={cn(
+          "text-right font-semibold tabular-nums text-foreground",
+          compact ? "w-8 text-xs" : "w-10 text-sm",
+        )}
+      >
+        {progress}%
+      </span>
+    </div>
+  );
+}
+
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
   const router = useRouter();
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // The thread actually open on screen, if any. `?thread=` is the only
+  // thing that identifies WHICH generation is being viewed — the pathname
+  // is the same for every one of them.
+  const openThreadId = searchParams.get("thread");
   const workspaceContext = useWorkspaceOptional();
   const storedWorkspaceSlug = useCurrentWorkspaceSlug();
   const workspaceSlug =
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
   const [isMounted, setIsMounted] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
   const updateJob = useBackgroundGenerationStore((state) => state.updateJob);
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
@@ -415,11 +467,20 @@ export function BackgroundGenerationDock() {
       const freshGenerationUrl = workspaceRoutes.generate_content(
         target.workspaceSlug,
       );
+      // Only navigate if the cancelled job is the one actually on screen.
+      // Cancelling a background job from the list must leave the current page
+      // alone — redirecting unconditionally was fine when only one generation
+      // could exist at a time, but now it yanks the user out of unrelated work.
+      const isViewingTarget = openThreadId === target.threadId;
+
       removeJob(target.threadId);
-      announceBackgroundGenerationRemoval([target.threadId], {
-        redirectUrl: freshGenerationUrl,
-      });
-      router.replace(freshGenerationUrl as Route);
+      announceBackgroundGenerationRemoval(
+        [target.threadId],
+        isViewingTarget ? { redirectUrl: freshGenerationUrl } : {},
+      );
+      if (isViewingTarget) {
+        router.replace(freshGenerationUrl as Route);
+      }
       toast.success("Generation cancelled", { description: target.title });
     } catch (error) {
       toast.error("Could not cancel this generation", {
@@ -431,8 +492,10 @@ export function BackgroundGenerationDock() {
 
   if (!isMounted || visibleJobs.length === 0) return null;
 
-  const activeCount = visibleJobs.filter(isPending).length;
   const job = visibleJobs.find(isPending) ?? visibleJobs[0];
+  const otherJobs = visibleJobs.filter(
+    (item) => item.threadId !== job.threadId,
+  );
   const pending = isPending(job);
   const completed = job.status === "completed";
   const awaitingInput = completed && job.awaitingInput === true;
@@ -441,12 +504,14 @@ export function BackgroundGenerationDock() {
   // X must end it server-side, not just hide the dock. Only a genuinely
   // finished (or failed) job is safe to merely dismiss.
   const canCancel = isActiveGenerationJob(job);
-  // Don't show the navigation button when the user is already on the target page
-  // to avoid duplicating the page's own Continue/action button.
-  const isOnResultPage = job.resultUrl
-    ? pathname === job.resultUrl ||
-      pathname.startsWith(job.resultUrl.split("?")[0])
-    : false;
+  // Don't show the navigation button when the user is already on THIS job's
+  // page, to avoid duplicating the page's own Continue/action button.
+  //
+  // This must compare the thread, not the path. Every generation lives at the
+  // same `/generate_content` route, so a path-prefix check also matched the
+  // blank selection page — which hid Continue for a job that was waiting on the
+  // user, leaving no way back into it.
+  const isOnResultPage = openThreadId === job.threadId;
 
   return (
     <section
@@ -478,10 +543,19 @@ export function BackgroundGenerationDock() {
             <p className="truncate text-sm font-semibold text-foreground">
               {job.title}
             </p>
-            {activeCount > 1 && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                +{activeCount - 1} more
-              </span>
+            {otherJobs.length > 0 && (
+              // Multiple generations can now run at once, so this has to be a
+              // real control: as static text there was no way to reach the
+              // other jobs at all.
+              <button
+                type="button"
+                onClick={() => setExpanded((open) => !open)}
+                aria-expanded={expanded}
+                aria-controls="background-generation-others"
+                className="shrink-0 rounded text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                +{otherJobs.length} more
+              </button>
             )}
           </div>
           <p
@@ -497,28 +571,11 @@ export function BackgroundGenerationDock() {
         </div>
 
         {pending && (
-          <div className="flex min-w-[170px] flex-1 basis-[220px] items-center gap-3 sm:max-w-sm">
-            <div
-              role="progressbar"
-              aria-valuenow={job.progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`${job.title} generation progress`}
-              className="relative h-2 flex-1 overflow-hidden rounded-full"
-              style={{ backgroundColor: "rgb(52, 64, 84)" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${job.progress}%`,
-                  backgroundColor: "hsl(var(--primary))",
-                }}
-              />
-            </div>
-            <span className="w-10 text-right text-sm font-semibold tabular-nums text-foreground">
-              {job.progress}%
-            </span>
-          </div>
+          <GenerationProgress
+            title={job.title}
+            progress={job.progress}
+            className="min-w-[170px] flex-1 basis-[220px] sm:max-w-sm"
+          />
         )}
 
         <div className="flex shrink-0 items-center gap-1">
@@ -574,6 +631,93 @@ export function BackgroundGenerationDock() {
           )}
         </div>
       </div>
+
+      {expanded && otherJobs.length > 0 && (
+        <ul
+          id="background-generation-others"
+          className="max-h-48 divide-y divide-border overflow-y-auto border-t border-border px-4 lg:px-6"
+        >
+          {otherJobs.map((other) => (
+            <li
+              key={other.threadId}
+              className="flex items-center gap-3 py-2 text-sm"
+            >
+              {isPending(other) ? (
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+              ) : other.status === "completed" ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              ) : (
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+              )}
+              <span className="min-w-0 flex-1 truncate">{other.title}</span>
+              <span className="hidden shrink-0 truncate text-xs text-muted-foreground sm:block">
+                {other.error ?? other.stage}
+              </span>
+
+              {/* Fixed-width slot so rows stay column-aligned whether or not
+                  this generation is still running. */}
+              <div className="w-28 shrink-0">
+                {isPending(other) && (
+                  <GenerationProgress
+                    title={other.title}
+                    progress={other.progress}
+                    compact
+                  />
+                )}
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 shrink-0"
+                onClick={() => openJob(other)}
+              >
+                {other.status === "completed" && other.awaitingInput
+                  ? "Continue"
+                  : "Open"}
+                <ArrowUpRight className="h-3 w-3" />
+              </Button>
+
+              {/* Close this one generation, not the whole dock. A still-live
+                  run has to be stopped server-side rather than merely hidden:
+                  hiding it would leave the thread running and still spending
+                  credits with nothing left tracking it. */}
+              {isActiveGenerationJob(other) ? (
+                <ConfirmationDialog
+                  title="Cancel this generation?"
+                  description={`"${other.title}" will stop where it is. Credits already spent on the finished steps are not refunded.`}
+                  confirmText="Cancel generation"
+                  cancelText="Keep generating"
+                  variant="destructive"
+                  onConfirm={() => void cancelJob(other)}
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground"
+                    aria-label={`Cancel ${other.title}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </ConfirmationDialog>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-muted-foreground"
+                  aria-label={`Dismiss ${other.title}`}
+                  onClick={() => dismissJob(other)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

@@ -871,7 +871,8 @@ export type PageAction =
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
   | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }
-  | { type: "SET_OUTLINE"; payload: ContentOutline | null };
+  | { type: "SET_OUTLINE"; payload: ContentOutline | null }
+  | { type: "RESET_FOR_THREAD_SWITCH" };
 
 export type StreamInput = {
   serp_payload?: {
