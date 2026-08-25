@@ -54,11 +54,12 @@ export function CreateRoleDialog({
         description: formData.description || undefined,
         hierarchy_level: formData.hierarchy_level,
         is_system_role: false,
+        is_workspace_role: true,
       });
 
       // Assign permissions if any selected
       if (selectedPermissionIds.length > 0) {
-        await apiClient.roles.assignPermissions(roleResponse.role.id, {
+        await apiClient.roles.assignPermissions(roleResponse.id, {
           permission_ids: selectedPermissionIds,
         });
       }
@@ -67,13 +68,21 @@ export function CreateRoleDialog({
     },
     onSuccess: async () => {
       toast.success("Role created successfully");
+      handleClose();
       invalidateWorkspacePermissions();
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["roles"] }),
-        queryClient.invalidateQueries({ queryKey: ["permissions"] }),
-        queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["roles"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["permissions"], refetchType: "all" }),
+        queryClient.invalidateQueries({
+          queryKey: ["workspace-permissions"],
+          refetchType: "all",
+        }),
+        // Invalidate workspace role selectors (invite / change-role dialogs)
+        queryClient.invalidateQueries({
+          queryKey: ["workspace-available-roles"],
+          refetchType: "all",
+        }),
       ]);
-      handleClose();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create role. Please try again.");
