@@ -63,6 +63,22 @@ export interface WebhookStats {
   }>;
 }
 
+interface WebhookStatsApiResponse {
+  overall: {
+    total_events: number;
+    processed: number;
+    failed: number;
+    pending: number;
+    success_rate: number;
+  };
+  by_event_type: Array<{
+    event_name: string;
+    total: number;
+    failed: number;
+    success_rate: number;
+  }>;
+}
+
 export interface WebhookEventsFilters {
   page?: number;
   per_page?: number;
@@ -150,9 +166,29 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
      * @requires Super admin role
      */
     getStats: async (): Promise<WebhookStats> => {
-      return client.request<WebhookStats>(ENDPOINTS.ADMIN_WEBHOOKS.stats, {
+      const response = await client.request<
+        WebhookStats | WebhookStatsApiResponse
+      >(ENDPOINTS.ADMIN_WEBHOOKS.stats, {
         method: "GET",
       });
+
+      if ("overall" in response) {
+        return {
+          total_events: response.overall.total_events,
+          processed_events: response.overall.processed,
+          failed_events: response.overall.failed,
+          pending_events: response.overall.pending,
+          success_rate: response.overall.success_rate,
+          event_type_breakdown: response.by_event_type.map((eventType) => ({
+            event_name: eventType.event_name,
+            count: eventType.total,
+            failed_count: eventType.failed,
+          })),
+          recent_errors: [],
+        };
+      }
+
+      return response;
     },
   };
 }
