@@ -31,21 +31,20 @@ const VALID_INTENTS = [
   "navigational",
 ];
 
-/** Resolve the intent list from backend, preserving SEO vs AI labels. */
+/** Resolve the intent list from backend as helpful recommendations. */
 function resolveIntentOptions(intent: SEORESULT["intent"]): IntentOptionItem[] {
   if (!intent) return [];
   const raw = Array.isArray(intent) ? intent : [String(intent)];
   const seen = new Set<string>();
   const result: IntentOptionItem[] = [];
 
-  raw.forEach((v, idx) => {
+  raw.forEach((v) => {
     const norm = v?.trim().toLowerCase();
     if (!VALID_INTENTS.includes(norm) || seen.has(norm)) return;
     seen.add(norm);
-    const source = idx === 0 ? "SEO Data" : "AI Suggested";
     result.push({
       value: norm as IntentOption,
-      label: `${norm.charAt(0).toUpperCase() + norm.slice(1)} — ${source}`,
+      label: norm.charAt(0).toUpperCase() + norm.slice(1),
     });
   });
 
@@ -80,6 +79,11 @@ export function SuggestionsSection({
   const intentOptions = useMemo<IntentOptionItem[]>(
     () => resolveIntentOptions(seoResult?.intent),
     [seoResult?.intent],
+  );
+
+  const otherIntents = useMemo(
+    () => intentOptions.filter((opt) => opt.value !== selectedIntent),
+    [intentOptions, selectedIntent],
   );
 
   const containerVariants: Variants = {
@@ -170,43 +174,34 @@ export function SuggestionsSection({
                   )}
 
                   {/* Radio buttons — intents returned by backend */}
-                  <div className="flex flex-col gap-2 mt-4">
-                    {intentOptions.map((opt) => (
-                      <label
-                        key={opt.value}
-                        className="flex items-center gap-2.5 cursor-pointer group"
-                      >
-                        <input
-                          type="radio"
-                          name="search-intent"
-                          value={opt.value}
-                          checked={selectedIntent === opt.value}
-                          onChange={() => onIntentChange(opt.value)}
-                          className="sr-only"
-                        />
-                        <span
-                          className={`w-3.5 h-3.5 rounded-full border flex-shrink-0 flex items-center justify-center transition-colors ${
-                            selectedIntent === opt.value
-                              ? "border-primary bg-primary"
-                              : "border-border bg-background group-hover:border-primary/50"
-                          }`}
-                        >
-                          {selectedIntent === opt.value && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-                          )}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                            selectedIntent === opt.value
-                              ? "text-foreground"
-                              : "text-muted-foreground group-hover:text-foreground"
-                          }`}
-                        >
-                          {opt.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  {otherIntents.length > 0 && (
+                    <div className="mt-4">
+                      <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
+                        Other suggestions
+                      </span>
+                      <div className="flex flex-col gap-2 mt-3">
+                        {otherIntents.map((opt) => (
+                          <label
+                            key={opt.value}
+                            className="flex items-center gap-2.5 cursor-pointer group"
+                          >
+                            <input
+                              type="radio"
+                              name="search-intent"
+                              value={opt.value}
+                              checked={false}
+                              onChange={() => onIntentChange(opt.value)}
+                              className="sr-only"
+                            />
+                            <span className="w-3.5 h-3.5 rounded-full border flex-shrink-0 flex items-center justify-center transition-colors border-border bg-background group-hover:border-primary/50" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest transition-colors text-muted-foreground group-hover:text-foreground">
+                              {opt.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div

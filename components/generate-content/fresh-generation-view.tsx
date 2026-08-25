@@ -1960,6 +1960,14 @@ export function FreshGenerationView({
           isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
         }
         keyword={primaryKeyword}
+        intent={
+          selectedIntent ||
+          (Array.isArray(seoResult?.intent)
+            ? seoResult.intent[0]
+            : (seoResult?.intent as string)) ||
+          ""
+        }
+        contentContext={recommendedContentType || ""}
       />
     ),
     content_type: (

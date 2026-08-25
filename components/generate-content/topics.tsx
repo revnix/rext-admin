@@ -17,6 +17,8 @@ interface TopicsSectionProps {
   onRegenerate: (feedback: string) => void;
   isRegenerating?: boolean;
   keyword?: string;
+  intent?: string;
+  contentContext?: string;
 }
 
 export function TopicsSection({
@@ -27,6 +29,9 @@ export function TopicsSection({
   onRegenerate,
   isRegenerating = false,
   recommendedTopic,
+  keyword,
+  intent,
+  contentContext,
 }: TopicsSectionProps) {
   const [feedback, setFeedback] = useState("");
 
@@ -100,22 +105,46 @@ export function TopicsSection({
               )}
             >
               <div className="flex items-start justify-between w-full">
-                <span
-                  className={cn(
-                    "text-sm font-semibold leading-snug pr-4 transition-colors",
-                    isSelected
-                      ? "text-primary"
-                      : "text-foreground group-hover:text-primary",
-                  )}
-                >
-                  {topic}
+                <div className="flex flex-col gap-1.5 items-start">
+                  <span
+                    className={cn(
+                      "text-sm font-semibold leading-snug pr-4 transition-colors",
+                      isSelected
+                        ? "text-primary"
+                        : "text-foreground group-hover:text-primary",
+                    )}
+                  >
+                    {topic}
 
-                  {isRecommended && (
-                    <span className="inline-block m-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                      Recommended
-                    </span>
+                    {isRecommended && (
+                      <span className="inline-block m-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                        Recommended
+                      </span>
+                    )}
+                  </span>
+
+                  {(keyword || intent || contentContext) && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                      {keyword && (
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                          <span className="text-foreground/70">{keyword}</span>
+                        </span>
+                      )}
+                      {intent && (
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
+                          <span className="text-foreground/70">{intent}</span>
+                        </span>
+                      )}
+                      {contentContext && (
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
+                          <span className="text-foreground/70">
+                            {contentContext}
+                          </span>
+                        </span>
+                      )}
+                    </div>
                   )}
-                </span>
+                </div>
 
                 <span
                   className={cn(
