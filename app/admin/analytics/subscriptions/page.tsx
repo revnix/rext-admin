@@ -9,7 +9,7 @@ import {
   UserMinus,
   Users,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   Bar,
   BarChart,
@@ -208,55 +208,69 @@ export default function SubscriptionAnalyticsPage() {
   );
   const [refreshing, setRefreshing] = useState(false);
 
+  const churnRequestRef = useRef<number>(0);
+
+  // Fetch churn data when period changes
+  const fetchChurnData = useCallback(async (periodDays: number) => {
+    const requestId = ++churnRequestRef.current;
+    try {
+      const churnData =
+        await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
+      if (requestId === churnRequestRef.current) {
+        setChurn(churnData);
+      }
+    } catch (_error) {
+      if (requestId === churnRequestRef.current) {
+        toast.error("Failed to load churn analysis. Please try again.");
+      }
+    }
+  }, []);
+
   // Fetch data
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (currentChurnPeriod: number) => {
     try {
       setLoading(true);
+      const requestId = ++churnRequestRef.current;
 
       const [overviewData, revenueData, churnData, trialData] =
         await Promise.all([
           apiClient.adminAnalytics.getOverview(),
           apiClient.adminAnalytics.getRevenueMetrics(),
-          apiClient.adminAnalytics.getChurnAnalysis(churnPeriod),
+          apiClient.adminAnalytics.getChurnAnalysis(currentChurnPeriod),
           apiClient.adminAnalytics.getTrialConversion(),
         ]);
 
       setOverview(overviewData);
       setRevenue(revenueData);
-      setChurn(churnData);
       setTrialConversion(trialData);
+      
+      if (requestId === churnRequestRef.current) {
+        setChurn(churnData);
+      }
     } catch (_error) {
       toast.error("Failed to load analytics data. Please try again.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [churnPeriod]);
-
-  // Fetch churn data when period changes
-  const fetchChurnData = useCallback(async (periodDays: number) => {
-    try {
-      const churnData =
-        await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
-      setChurn(churnData);
-    } catch (_error) {
-      toast.error("Failed to load churn analysis. Please try again.");
-    }
   }, []);
 
   useEffect(() => {
-    fetchAnalytics();
+    // Initial fetch
+    fetchAnalytics(30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAnalytics]);
 
   useEffect(() => {
     if (!loading) {
       fetchChurnData(churnPeriod);
     }
-  }, [churnPeriod, fetchChurnData, loading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [churnPeriod, fetchChurnData]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchAnalytics();
+    fetchAnalytics(churnPeriod);
   };
 
   if (loading) {

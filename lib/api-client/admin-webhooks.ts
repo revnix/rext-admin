@@ -163,12 +163,14 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
     /**
      * Get webhook processing statistics
      *
+     * @param days - Optional look back period in days. If undefined, fetches all-time stats.
      * @requires Super admin role
      */
-    getStats: async (): Promise<WebhookStats> => {
+    getStats: async (days?: number): Promise<WebhookStats> => {
+      const url = buildUrl(ENDPOINTS.ADMIN_WEBHOOKS.stats, { days });
       const response = await client.request<
         WebhookStats | WebhookStatsApiResponse
-      >(ENDPOINTS.ADMIN_WEBHOOKS.stats, {
+      >(url, {
         method: "GET",
       });
 
