@@ -281,6 +281,7 @@ export default function WebhookMonitoringPage() {
   // Filters
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [eventNameFilter, setEventNameFilter] = useState<string>("");
+  const [periodDays, setPeriodDays] = useState<number | undefined>(7);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -299,11 +300,19 @@ export default function WebhookMonitoringPage() {
       if (statusFilter === "pending" || statusFilter === "failed")
         processedFilter = false;
 
+      let start_date: string | undefined;
+      if (periodDays !== undefined) {
+        const d = new Date();
+        d.setDate(d.getDate() - periodDays);
+        start_date = d.toISOString();
+      }
+
       const response = await apiClient.adminWebhooks.getEvents({
         page: currentPage,
         per_page: 50,
         event_name: eventNameFilter || undefined,
         processed: processedFilter,
+        start_date,
       });
 
       setEvents(response.events);
@@ -314,12 +323,12 @@ export default function WebhookMonitoringPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, currentPage, eventNameFilter]);
+  }, [statusFilter, currentPage, eventNameFilter, periodDays]);
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
     try {
-      const statsData = await apiClient.adminWebhooks.getStats();
+      const statsData = await apiClient.adminWebhooks.getStats(periodDays);
       setStats(statsData);
     } catch (error) {
       log.error("Failed to load webhook stats", error, {
@@ -329,7 +338,7 @@ export default function WebhookMonitoringPage() {
 
       toast.error("Webhook summary is temporarily unavailable.");
     }
-  }, []);
+  }, [periodDays]);
 
   // Retry webhook
   const handleRetryWebhook = async (eventId: string) => {
@@ -457,6 +466,32 @@ export default function WebhookMonitoringPage() {
                     <SelectItem value="processed">Processed</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full sm:w-48">
+                <label
+                  htmlFor="period-filter"
+                  className="text-sm font-medium mb-2 block"
+                >
+                  Time Period
+                </label>
+                <Select
+                  value={periodDays?.toString() || "all"}
+                  onValueChange={(value) => {
+                    setPeriodDays(value === "all" ? undefined : Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Last 24 hours</SelectItem>
+                    <SelectItem value="7">Last 7 days</SelectItem>
+                    <SelectItem value="30">Last 30 days</SelectItem>
+                    <SelectItem value="90">Last 90 days</SelectItem>
+                    <SelectItem value="all">All time</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
