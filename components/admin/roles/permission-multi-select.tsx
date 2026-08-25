@@ -51,10 +51,6 @@ export function PermissionMultiSelect({
     if (isSelected) {
       onChange(selectedPermissionIds.filter((id) => id !== permissionId));
     } else {
-      if (selectedPermissionIds.length >= 50) {
-        toast.error("Maximum 50 permissions can be assigned to a role.");
-        return;
-      }
       onChange([...selectedPermissionIds, permissionId]);
     }
   };
@@ -74,25 +70,9 @@ export function PermissionMultiSelect({
         ),
       );
     } else {
-      // Select all (respecting 50 limit)
       const currentIds = new Set(selectedPermissionIds);
       const toAdd = resourcePermissionIds.filter((id) => !currentIds.has(id));
-
-      if (selectedPermissionIds.length + toAdd.length > 50) {
-        const canAddCount = 50 - selectedPermissionIds.length;
-        if (canAddCount <= 0) {
-          toast.error("Maximum 50 permissions can be assigned to a role.");
-          return;
-        }
-
-        const cappedAdd = toAdd.slice(0, canAddCount);
-        onChange([...selectedPermissionIds, ...cappedAdd]);
-        toast.warning(
-          `Only added ${canAddCount} permissions to stay within the 50 limit.`,
-        );
-      } else {
-        onChange([...selectedPermissionIds, ...toAdd]);
-      }
+      onChange([...selectedPermissionIds, ...toAdd]);
     }
   };
 
@@ -126,14 +106,7 @@ export function PermissionMultiSelect({
 
       {/* Selected count */}
       <div className="text-sm font-medium">
-        <span
-          className={
-            selectedPermissionIds.length > 50 ? "text-destructive" : ""
-          }
-        >
-          {Math.min(selectedPermissionIds.length, 50)}
-        </span>{" "}
-        of 50 permissions selected
+        {selectedPermissionIds.length} permissions selected
       </div>
 
       {/* Permissions list */}
