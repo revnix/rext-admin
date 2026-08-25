@@ -203,6 +203,9 @@ export default function SubscriptionAnalyticsPage() {
   const [trialConversion, setTrialConversion] =
     useState<TrialConversionMetrics | null>(null);
   const [churnPeriod, setChurnPeriod] = useState<number>(30);
+  const [revenueFilter, setRevenueFilter] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   // Fetch data
@@ -292,8 +295,13 @@ export default function SubscriptionAnalyticsPage() {
   // Prepare chart data
   const revenueByPlanData = revenue.by_plan.map((plan) => ({
     name: plan.plan_display_name || plan.plan_name,
-    revenue: plan.revenue_monthly + plan.revenue_yearly / 12,
+    revenue:
+      revenueFilter === "monthly"
+        ? plan.revenue_monthly
+        : plan.revenue_yearly,
     subscriptions: plan.subscription_count,
+    monthlyRevenue: plan.revenue_monthly,
+    yearlyRevenue: plan.revenue_yearly,
   }));
 
   const tierDistributionData = revenue.by_plan.map((plan) => ({
@@ -449,17 +457,41 @@ export default function SubscriptionAnalyticsPage() {
                   </p>
                 </div>
               </div>
-              <p className="text-sm font-medium mb-2">Revenue by Plan</p>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-sm font-medium">Revenue by Plan</p>
+                <Select
+                  value={revenueFilter}
+                  onValueChange={(value) =>
+                    setRevenueFilter(value as "monthly" | "yearly")
+                  }
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Revenue type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={revenueByPlanData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatCurrency(Number(value))}
                     labelStyle={{ color: "#000" }}
                   />
-                  <Bar dataKey="revenue" fill={COLORS.primary} name="Revenue" />
+                  <Bar
+                    dataKey="revenue"
+                    fill={COLORS.primary}
+                    name={
+                      revenueFilter === "monthly"
+                        ? "Monthly Revenue"
+                        : "Yearly Revenue"
+                    }
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
