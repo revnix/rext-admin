@@ -1976,6 +1976,13 @@ export function FreshGenerationView({
         instruction={displayedInstruction}
         contentTypes={contentTypes}
         keyword={primaryKeyword || userKeyword}
+        intent={
+          selectedIntent ||
+          (Array.isArray(seoResult?.intent)
+            ? seoResult.intent[0]
+            : (seoResult?.intent as string)) ||
+          ""
+        }
         handleContentTypeSelect={(selected) =>
           handleWorkflow("CONTENT_TYPE_SELECT", selected)
         }

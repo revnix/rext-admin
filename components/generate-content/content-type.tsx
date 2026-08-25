@@ -9,6 +9,7 @@ interface ContentTypeProps {
   recommendedContentType?: string | null;
   instruction: string;
   contentTypes: string[];
+  intent?: string;
   keyword?: string | null;
   handleContentTypeSelect: (type: string) => void;
 }
@@ -17,6 +18,7 @@ export default function ContentType({
   recommendedContentType,
   instruction,
   contentTypes,
+  intent,
   keyword,
   handleContentTypeSelect,
 }: ContentTypeProps) {
@@ -47,10 +49,9 @@ export default function ContentType({
         {contentTypes.map((type: string, index: number) => {
           const { icon: Icon, description } = getContentTypeConfig(type);
 
-          const keywordDescription = description.replace(
-            /\{keyword\}/g,
-            keyword?.trim() || "this topic",
-          );
+          const keywordDescription = description
+            .replace(/\{keyword\}/g, keyword?.trim() || "this topic")
+            .replace(/\{intent\}/g, intent?.trim() || "relevant");
 
           const isSelected = selectedType === type;
           const isRecommended = recommendedContentType === type;
