@@ -20,7 +20,7 @@ export function HeroSection() {
       >
         What are we{" "}
         <span className="relative inline-block">
-          <span className="text-primary">writing</span>
+          <span className="text-primary dark:text-blue-600">writing</span>
         </span>{" "}
         today?
       </motion.h1>
