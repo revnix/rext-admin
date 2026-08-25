@@ -81,7 +81,6 @@ import {
   collectPendingInterrupts,
   deriveAwaitingInputStage,
 } from "@/lib/generate-content/background-progress";
-import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
   BACKGROUND_GENERATION_RESTORE_EVENT,
   type BackgroundGenerationRestoreDetail,
@@ -333,6 +332,12 @@ export function FreshGenerationView({
   // True while a stream is in flight — blocks repeated clicks from spawning duplicate runs
   const streamBusyRef = useRef(false);
 
+  // Tracks which thread the current live stream belongs to. Allows the restore
+  // effect to distinguish "same thread" (skip) from "different thread" (abort
+  // and switch). Without this, switching between concurrent generations was
+  // silently blocked by streamBusyRef.
+  const streamingThreadRef = useRef<string | null>(null);
+
   // Set by `run/created`: proof the server actually started a run for the
   // current attempt. A resume that ends without it left nothing behind.
   const runCreatedRef = useRef(false);
@@ -509,17 +514,36 @@ export function FreshGenerationView({
   // biome-ignore lint/correctness/useExhaustiveDependencies: processStream/cancelStream are declared later and are intentionally not deps (accessed via ref / at call time)
   useEffect(() => {
     if (!backgroundThreadId) return;
-    // This mount started the run and is already reading its live stream (the
-    // redirect to `?thread=...` arrives mid-generation). Restoring would abort
-    // that stream to rejoin the same run, and the aborted `processStream`
-    // unwinds through its `finally` — clearing the loading UI underneath it.
-    if (streamBusyRef.current) return;
+    // A stream is live — but is it for THIS thread or a DIFFERENT one?
+    // Same thread: skip restore (the original guard's intent — don't abort a
+    //   stream to rejoin the same run it's already reading).
+    // Different thread: the user switched to another generation. Abort the
+    //   outgoing stream so we can restore the requested one.
+    if (streamBusyRef.current) {
+      if (streamingThreadRef.current === backgroundThreadId) return;
+      // Abort the outgoing stream; processStream's finally will see itself as
+      // superseded and skip UI teardown so it doesn't clobber the new restore.
+      cancelStream();
+      streamBusyRef.current = false;
+      streamingThreadRef.current = null;
+    }
 
     let disposed = false;
     let retryId: number | undefined;
     let consecutiveFailures = 0;
 
     dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
+    // Clear stale content / scores / outline from a previously-viewed thread
+    // so they don't bleed into this thread's view (e.g. showing a finished
+    // article underneath a different thread's outline step).
+    dispatch({ type: "RESET_FOR_THREAD_SWITCH" });
+    // Also reset local component state that lives outside the reducer.
+    setTokenTarget("none");
+    tokenTargetRef.current = "none";
+    outline.resetStream();
+    content.resetStream();
+    setToolCalls([]);
+    setPipelineSteps([]);
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({
       type: "SET_LOADING_STATUS",
@@ -667,6 +691,8 @@ export function FreshGenerationView({
           cancelStream();
           abortControllerRef.current = new AbortController();
           const { signal } = abortControllerRef.current;
+          streamBusyRef.current = true;
+          streamingThreadRef.current = backgroundThreadId;
           try {
             const stream = streamFromSSE(
               `/api/generate/${encodeURIComponent(backgroundThreadId)}/join`,
@@ -676,6 +702,9 @@ export function FreshGenerationView({
             await processStreamRef.current(stream);
           } catch {
             // Join dropped or the run just ended — the re-check below reconciles.
+          } finally {
+            streamBusyRef.current = false;
+            streamingThreadRef.current = null;
           }
           if (disposed) return;
           // Re-check status to hydrate the final article (or catch a terminal
@@ -1438,15 +1467,23 @@ export function FreshGenerationView({
         }
       }
     } finally {
-      if (loadingStatus?.endsWith("..."))
-        dispatch({
-          type: "ADD_COMPLETED_NODE",
-          payload: loadingStatus.slice(0, -3),
-        });
-      await new Promise((r) => setTimeout(r, 1500));
-      dispatch({ type: "SET_MANUAL_LOADING", payload: false });
-      dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+      // If a different stream has already taken over (thread switch), this
+      // stream was superseded. Skip UI teardown so we don't clobber the
+      // replacement stream's loading state.
+      const superseded =
+        streamingThreadRef.current !== null &&
+        streamingThreadRef.current !== activeThreadId;
+      if (!superseded) {
+        if (loadingStatus?.endsWith("..."))
+          dispatch({
+            type: "ADD_COMPLETED_NODE",
+            payload: loadingStatus.slice(0, -3),
+          });
+        await new Promise((r) => setTimeout(r, 1500));
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+        dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+      }
     }
   };
 
@@ -1459,21 +1496,22 @@ export function FreshGenerationView({
   // Workflow handlers — UNCHANGED
   // ─────────────────────────────────────────────────────────────────────────
   const handleKeywordSubmit = async () => {
-    const activeGenerationJob = findActiveGenerationJob(
-      useBackgroundGenerationStore.getState().jobs,
-    );
-    if (activeGenerationJob) {
-      toast.info("An article is already in progress", {
-        description: `Returning to "${activeGenerationJob.title}".`,
-      });
-      router.push(activeGenerationJob.resultUrl as Route);
-      return;
-    }
+    // No "one article at a time" guard here. Each submit creates its own
+    // LangGraph thread and its own dock entry, so generations run independently
+    // — this used to bounce the user back into whatever was already running.
 
     // Not enough for a whole article → stop before a thread or stream is ever created
     if (!ensureCredits()) return;
-    if (streamBusyRef.current) return;
+
+    // If a stream is already active (e.g. background join stream or old thread),
+    // abort it so the user can start a fresh keyword generation.
+    if (streamBusyRef.current) {
+      cancelStream();
+      streamBusyRef.current = false;
+      streamingThreadRef.current = null;
+    }
     streamBusyRef.current = true;
+    streamingThreadRef.current = null; // set to newThreadId once created below
 
     try {
       cancelStream();
@@ -1496,6 +1534,14 @@ export function FreshGenerationView({
       }
 
       dispatch({ type: "SET_THREAD_ID", payload: newThreadId });
+      streamingThreadRef.current = newThreadId;
+      if (workspaceSlug) {
+        window.history.replaceState(
+          null,
+          "",
+          `${workspaceRoutes.generate_content(workspaceSlug)}?thread=${encodeURIComponent(newThreadId)}`,
+        );
+      }
       dispatch({ type: "SET_LOADING_STATUS", payload: "Starting analysis..." });
 
       const keyword = _initialKeyword || userKeyword;
@@ -1561,6 +1607,7 @@ export function FreshGenerationView({
       await processStream(stream);
     } finally {
       streamBusyRef.current = false;
+      streamingThreadRef.current = null;
     }
   };
 
@@ -1573,8 +1620,21 @@ export function FreshGenerationView({
     // Mid-article: the earlier stages are already paid for, so only a fully
     // exhausted balance stops the workflow advancing to the next step
     if (!ensureCreditsToContinue()) return false;
-    if (streamBusyRef.current) return false;
+    if (streamBusyRef.current) {
+      if (
+        streamingThreadRef.current === threadId &&
+        abortControllerRef.current
+      ) {
+        // Already active on this exact thread resume — prevent double-click
+        return false;
+      }
+      // Supersede active join or other thread's stream
+      cancelStream();
+      streamBusyRef.current = false;
+      streamingThreadRef.current = null;
+    }
     streamBusyRef.current = true;
+    streamingThreadRef.current = threadId;
 
     try {
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
@@ -1623,6 +1683,7 @@ export function FreshGenerationView({
       return runCreatedRef.current;
     } finally {
       streamBusyRef.current = false;
+      streamingThreadRef.current = null;
     }
   };
 
