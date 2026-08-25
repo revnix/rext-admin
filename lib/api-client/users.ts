@@ -40,27 +40,64 @@ export interface User {
   updated_at?: string;
 }
 
+export interface UsersListPagination {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
 export interface UsersListResponse {
   users: User[];
   total_count: number;
   workspace_id?: string | null;
+  pagination?: UsersListPagination;
 }
 
 export function createUsersNamespace(client: ApiClient) {
   return {
     /**
-     * List all users (optionally filtered by workspace)
+     * List all users (optionally filtered by workspace).
+     *
+     * The backend paginates this endpoint (max 100 per page), so a single
+     * request only ever returns a partial list. Page through every result
+     * so consumers (e.g. the admin User Management table and its stat
+     * cards) see the complete, accurate user set rather than just page 1.
      */
     list: async (workspaceId?: string): Promise<UsersListResponse> => {
-      const params = workspaceId
-        ? `?workspace_id=${encodeURIComponent(workspaceId)}`
-        : "";
-      return client.request<UsersListResponse>(
-        `${ENDPOINTS.USERS.list}${params}`,
-        {
-          method: "GET",
-        },
-      );
+      const perPage = 100;
+      let page = 1;
+      let allUsers: User[] = [];
+      let totalCount = 0;
+
+      // Bounded by has_next from the server; the extra page-count guard
+      // just prevents a runaway loop if that flag were ever wrong.
+      for (let safety = 0; safety < 1000; safety++) {
+        const params = new URLSearchParams({
+          page: String(page),
+          per_page: String(perPage),
+        });
+        if (workspaceId) params.set("workspace_id", workspaceId);
+
+        const response = await client.request<UsersListResponse>(
+          `${ENDPOINTS.USERS.list}?${params.toString()}`,
+          { method: "GET" },
+        );
+
+        allUsers = allUsers.concat(response.users);
+        totalCount = response.total_count;
+
+        if (!response.pagination?.has_next) break;
+        page += 1;
+      }
+
+      return {
+        users: allUsers,
+        total_count: totalCount,
+        workspace_id: workspaceId ?? null,
+      };
     },
 
     /**
