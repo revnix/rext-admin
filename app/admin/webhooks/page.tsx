@@ -444,7 +444,7 @@ export default function WebhookMonitoringPage() {
                   }}
                 />
               </div>
-              <div className="w-full sm:w-48">
+              {/* <div className="w-full sm:w-48">
                 <label
                   htmlFor="status-filter"
                   className="text-sm font-medium mb-2 block"
@@ -468,7 +468,7 @@ export default function WebhookMonitoringPage() {
                     <SelectItem value="failed">Failed</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
               <div className="w-full sm:w-48">
                 <label
                   htmlFor="period-filter"
@@ -500,7 +500,7 @@ export default function WebhookMonitoringPage() {
         </Card>
 
         {/* Events Table with Tabs */}
-        <Card className="w-[68vw] ">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Webhook Events</CardTitle>
           </CardHeader>
