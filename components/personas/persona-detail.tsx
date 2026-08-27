@@ -16,6 +16,7 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Mail,
+  Star,
   Upload,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
@@ -451,7 +452,24 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Full Name
                   </Label>
-                  <p className="text-xl font-bold">{persona.name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xl font-bold">{persona.name}</p>
+                    {/*
+                      Shown here as well as on the cards. This is the page
+                      someone opens to decide whether to write as this person,
+                      and the recommendation was visible everywhere except the
+                      screen where the decision is made.
+                    */}
+                    {persona.is_recommended && (
+                      <Badge
+                        variant="default"
+                        className="gap-1 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
+                      >
+                        <Star className="h-3 w-3 fill-current" />
+                        Recommended
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 
