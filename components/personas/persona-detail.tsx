@@ -15,6 +15,7 @@ import {
   Loader2,
   Link as LinkIcon,
   Image as ImageIcon,
+  Mail,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
@@ -308,6 +309,30 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       onChange={handleChange}
                       placeholder="https://example.com/image.jpg"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      A link you set here is kept. Clear it to fall back to the
+                      photo on their site, then a Gravatar, then initials.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail size={14} />
+                      Email
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={handleChange}
+                      placeholder="writer@example.com"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Used only to look up a Gravatar.
+                    </p>
                   </div>
                 </>
               )}
@@ -328,6 +353,17 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
+                {/*
+                  Initials drawn from a name are not a picture of anyone, and
+                  rendered at the same size and confidence as a photograph they
+                  read as one. Saying which is on screen costs a line and stops
+                  the interface making a claim it cannot support.
+                */}
+                {persona.avatar_source === "generated" && (
+                  <span className="text-xs text-muted-foreground">
+                    No photo found - showing initials
+                  </span>
+                )}
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Full Name

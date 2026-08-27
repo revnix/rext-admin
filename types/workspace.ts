@@ -90,6 +90,21 @@ export interface Persona {
   tone_of_voice?: string;
   bio?: string;
   avatar_url?: string | null;
+  /**
+   * Where the picture came from. "custom" when someone chose it, "page" when
+   * the site published it, "gravatar" when it was derived from an address, and
+   * "generated" when nothing was found and initials were drawn. A photograph of
+   * someone and a coloured circle bearing their letters are not the same claim,
+   * and the URL alone does not say which is on screen.
+   */
+  avatar_source?: "custom" | "page" | "gravatar" | "generated" | null;
+  /** Used to derive a Gravatar when no photograph was found. */
+  email?: string | null;
+  /**
+   * The persona this brand should write as. At most one per workspace, and none
+   * when nothing scored well enough to defend the choice.
+   */
+  is_recommended?: boolean;
   linkedin_url?: string | null;
   demographics?: string;
   pain_points?: string | string[];
