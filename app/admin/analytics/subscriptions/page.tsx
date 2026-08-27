@@ -227,33 +227,36 @@ export default function SubscriptionAnalyticsPage() {
   }, []);
 
   // Fetch data
-  const fetchAnalytics = useCallback(async (currentChurnPeriod: number) => {
-    try {
-      setLoading(true);
-      const requestId = ++churnRequestRef.current;
+  const fetchAnalytics = useCallback(
+    async (currentChurnPeriod: number = churnPeriod) => {
+      try {
+        setLoading(true);
+        const requestId = ++churnRequestRef.current;
 
-      const [overviewData, revenueData, churnData, trialData] =
-        await Promise.all([
-          apiClient.adminAnalytics.getOverview(),
-          apiClient.adminAnalytics.getRevenueMetrics(),
-          apiClient.adminAnalytics.getChurnAnalysis(currentChurnPeriod),
-          apiClient.adminAnalytics.getTrialConversion(),
-        ]);
+        const [overviewData, revenueData, churnData, trialData] =
+          await Promise.all([
+            apiClient.adminAnalytics.getOverview(),
+            apiClient.adminAnalytics.getRevenueMetrics(),
+            apiClient.adminAnalytics.getChurnAnalysis(currentChurnPeriod),
+            apiClient.adminAnalytics.getTrialConversion(),
+          ]);
 
-      setOverview(overviewData);
-      setRevenue(revenueData);
-      setTrialConversion(trialData);
-      
-      if (requestId === churnRequestRef.current) {
-        setChurn(churnData);
+        setOverview(overviewData);
+        setRevenue(revenueData);
+        setTrialConversion(trialData);
+
+        if (requestId === churnRequestRef.current) {
+          setChurn(churnData);
+        }
+      } catch (_error) {
+        toast.error("Failed to load analytics data. Please try again.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (_error) {
-      toast.error("Failed to load analytics data. Please try again.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [churnPeriod],
+  );
 
   useEffect(() => {
     // Initial fetch
@@ -299,7 +302,9 @@ export default function SubscriptionAnalyticsPage() {
             <p className="text-muted-foreground mb-4">
               Unable to retrieve analytics data
             </p>
-            <Button onClick={fetchAnalytics}>Try Again</Button>
+            <Button onClick={() => fetchAnalytics(churnPeriod)}>
+              Try Again
+            </Button>
           </CardContent>
         </Card>
       </PageLayout>
