@@ -22,13 +22,6 @@ export function BrandVoiceSection() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-semibold">Brand Voice Profile</h3>
-        <p className="text-sm text-muted-foreground">
-          Define your brand's tone, style, and messaging guidelines
-        </p>
-      </div>
-
       {isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-[400px] w-full" />

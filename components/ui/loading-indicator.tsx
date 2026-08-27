@@ -90,6 +90,11 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     const showHeader = props.showHeader ?? true;
     const showFilters = props.showFilters ?? false;
     const showPagination = props.showPagination ?? false;
+    const columnKeys = Array.from(
+      { length: columns },
+      (_, index) => `column-${index}`,
+    );
+    const rowKeys = Array.from({ length: rows }, (_, index) => `row-${index}`);
 
     return (
       <div className={cn("space-y-4", props.className)}>
@@ -107,20 +112,20 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 className="grid gap-4 pb-2 border-b"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((_, index) => (
-                  <Skeleton key={`header-${index}`} className="h-4" />
+                {columnKeys.map((columnKey) => (
+                  <Skeleton key={`header-${columnKey}`} className="h-4" />
                 ))}
               </div>
             )}
 
-            {Array.from({ length: rows }).map((_, rowIndex) => (
+            {rowKeys.map((rowKey) => (
               <div
-                key={`row-${rowIndex}`}
+                key={rowKey}
                 className="grid gap-4 py-3"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((_, colIndex) => (
-                  <div key={`row-${rowIndex}-col-${colIndex}`}>
+                {columnKeys.map((columnKey, colIndex) => (
+                  <div key={`${rowKey}-${columnKey}`}>
                     {colIndex === 0 ? (
                       <div className="space-y-2">
                         <Skeleton className="h-4 w-full" />

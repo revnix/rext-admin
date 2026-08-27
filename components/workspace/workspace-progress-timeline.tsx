@@ -2,13 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Check, Clock, Loader2, X } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { SSEEvent } from "@/types/sse";
 
@@ -196,14 +190,8 @@ export function WorkspaceProgressTimeline({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Creating Your Workspace</CardTitle>
-        <CardDescription>
-          Please wait while we analyze your website and set up your workspace
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <Card className="border-none">
+      <CardContent className="space-y-6 pt-4">
         {/* Overall Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">

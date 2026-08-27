@@ -94,13 +94,6 @@ export function PrivacySettings() {
     <div className="space-y-6">
       {/* Data Export Section */}
       <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Export Your Data</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Request a copy of your data to be sent to your email address
-          </p>
-        </div>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {exportItems.map((item) => (

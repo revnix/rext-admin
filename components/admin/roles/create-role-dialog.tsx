@@ -71,8 +71,14 @@ export function CreateRoleDialog({
       handleClose();
       invalidateWorkspacePermissions();
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["roles"], refetchType: "all" }),
-        queryClient.invalidateQueries({ queryKey: ["permissions"], refetchType: "all" }),
+        queryClient.invalidateQueries({
+          queryKey: ["roles"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["permissions"],
+          refetchType: "all",
+        }),
         queryClient.invalidateQueries({
           queryKey: ["workspace-permissions"],
           refetchType: "all",

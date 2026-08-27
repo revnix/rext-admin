@@ -245,12 +245,11 @@ export function WorkspaceCreateWizard() {
         competitors: brandVoiceData.competitors,
         content_strategy:
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
-        personas:
-          selectedPersonas && selectedPersonas.length
-            ? selectedPersonas
-            : selectedPersona
-              ? [selectedPersona]
-              : undefined,
+        personas: selectedPersonas?.length
+          ? selectedPersonas
+          : selectedPersona
+            ? [selectedPersona]
+            : undefined,
       });
 
       // Manually save personas if they exist in the extracted data
@@ -292,10 +291,9 @@ export function WorkspaceCreateWizard() {
       }
 
       // Log selected persona(s) for future API integration
-      const primaryPersonaId =
-        selectedPersonaIds && selectedPersonaIds.length
-          ? selectedPersonaIds[selectedPersonaIds.length - 1]
-          : personaId;
+      const primaryPersonaId = selectedPersonaIds?.length
+        ? selectedPersonaIds[selectedPersonaIds.length - 1]
+        : personaId;
 
       if (primaryPersonaId) {
         // TODO(TASK-047): Add endpoint to associate selected persona with workspace.
@@ -436,18 +434,18 @@ export function WorkspaceCreateWizard() {
               />
 
               {/* Connection status indicator */}
-              {isConnected && (
+              {/* {isConnected && (
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                   <span>Connected to server</span>
                 </div>
-              )}
+              )} */}
 
               {/* Note: No back button - workspace is already created */}
-              <p className="text-xs text-center text-muted-foreground">
+              {/* <p className="text-xs text-center text-muted-foreground">
                 This may take 1-2 minutes. You can't go back, but you can close
                 this tab and return later.
-              </p>
+              </p> */}
             </div>
           </QuestionCard>
         );

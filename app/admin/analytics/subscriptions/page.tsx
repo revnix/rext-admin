@@ -269,7 +269,7 @@ export default function SubscriptionAnalyticsPage() {
       fetchChurnData(churnPeriod);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [churnPeriod, fetchChurnData]);
+  }, [churnPeriod, fetchChurnData, loading]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -315,9 +315,7 @@ export default function SubscriptionAnalyticsPage() {
   const revenueByPlanData = revenue.by_plan.map((plan) => ({
     name: plan.plan_display_name || plan.plan_name,
     revenue:
-      revenueFilter === "monthly"
-        ? plan.revenue_monthly
-        : plan.revenue_yearly,
+      revenueFilter === "monthly" ? plan.revenue_monthly : plan.revenue_yearly,
     subscriptions: plan.subscription_count,
     monthlyRevenue: plan.revenue_monthly,
     yearlyRevenue: plan.revenue_yearly,
