@@ -36,6 +36,11 @@ export function getCSPHeader(_nonce: string): string {
     lemonsqueezy: {
       app: "https://app.lemonsqueezy.com",
       assets: "https://assets.lemonsqueezy.com",
+      // Checkout URLs come back from the API on the per-store subdomain
+      // (https://<store>.lemonsqueezy.com/checkout/...), never on app., so
+      // frame-src needs the wildcard. Listing only app. blocks the overlay
+      // iframe outright — Chrome renders it as "This content is blocked".
+      checkout: "https://*.lemonsqueezy.com",
     },
     posthog: posthogHost,
   };
@@ -65,7 +70,7 @@ export function getCSPHeader(_nonce: string): string {
     `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
-    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.app}`,
+    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.checkout}`,
 
     // Objects: Block all plugins
     "object-src 'none'",
@@ -99,7 +104,8 @@ export function getCSPHeader(_nonce: string): string {
  * Third-Party Services:
  * - LemonSqueezy: Payment processing and checkout overlays
  *   - script-src: Loads lemon.js from assets.lemonsqueezy.com
- *   - frame-src: Allows checkout overlay iframes from app.lemonsqueezy.com
+ *   - frame-src: Allows checkout overlay iframes from *.lemonsqueezy.com
+ *     (checkout URLs are served from the store subdomain, not app.)
  *   - connect-src: Enables API connections to app.lemonsqueezy.com
  * - To add new services: Update thirdPartyDomains object and relevant directives
  *

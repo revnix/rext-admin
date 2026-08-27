@@ -1,6 +1,18 @@
 "use client";
 
 import { ArrowLeft, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -39,6 +51,11 @@ export default function TrashSettingsPage() {
   const [restoringWorkspaceId, setRestoringWorkspaceId] = useState<
     string | null
   >(null);
+  const [purgeTarget, setPurgeTarget] = useState<DeletedWorkspaceRow | null>(
+    null,
+  );
+  const [purgeConfirmation, setPurgeConfirmation] = useState("");
+  const [isPurging, setIsPurging] = useState(false);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["deleted-workspaces"],
@@ -65,6 +82,36 @@ export default function TrashSettingsPage() {
       toast.error(message);
     } finally {
       setRestoringWorkspaceId(null);
+    }
+  };
+
+  const closePurgeDialog = () => {
+    if (isPurging) return;
+    setPurgeTarget(null);
+    setPurgeConfirmation("");
+  };
+
+  const handlePurge = async () => {
+    if (!purgeTarget || purgeConfirmation.trim() !== purgeTarget.name.trim()) {
+      return;
+    }
+
+    setIsPurging(true);
+    try {
+      await apiClient.workspaces.deletePermanently(purgeTarget.id);
+      toast.success(`Workspace "${purgeTarget.name}" permanently deleted`);
+      setPurgeTarget(null);
+      setPurgeConfirmation("");
+      await queryClient.invalidateQueries({ queryKey: ["deleted-workspaces"] });
+      await refetch();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to permanently delete workspace";
+      toast.error(message);
+    } finally {
+      setIsPurging(false);
     }
   };
 
@@ -145,24 +192,38 @@ export default function TrashSettingsPage() {
                         restore
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void handleRestore(workspace)}
-                      disabled={restoringWorkspaceId === workspace.id}
-                    >
-                      {restoringWorkspaceId === workspace.id ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          Restoring…
-                        </>
-                      ) : (
-                        <>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Restore
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleRestore(workspace)}
+                        disabled={restoringWorkspaceId === workspace.id}
+                      >
+                        {restoringWorkspaceId === workspace.id ? (
+                          <>
+                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            Restoring…
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Restore
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setPurgeConfirmation("");
+                          setPurgeTarget(workspace);
+                        }}
+                        disabled={restoringWorkspaceId === workspace.id}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete permanently
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -170,6 +231,62 @@ export default function TrashSettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={purgeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) closePurgeDialog();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this workspace forever?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes &ldquo;{purgeTarget?.name}&rdquo; and everything in
+              it — content, knowledge, personas, brand voices and integrations.
+              It cannot be restored afterwards.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="purge-confirmation">
+              Type <span className="font-semibold">{purgeTarget?.name}</span> to
+              confirm
+            </Label>
+            <Input
+              id="purge-confirmation"
+              value={purgeConfirmation}
+              onChange={(event) => setPurgeConfirmation(event.target.value)}
+              autoComplete="off"
+              disabled={isPurging}
+            />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPurging}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                void handlePurge();
+              }}
+              disabled={
+                isPurging ||
+                purgeConfirmation.trim() !== (purgeTarget?.name.trim() ?? "")
+              }
+            >
+              {isPurging ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete permanently"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -40,6 +40,8 @@ export const ENDPOINTS = {
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
     deleted: () => "/api/v1/workspaces/deleted" as const,
     restore: (id: string) => `/api/v1/workspaces/${id}/restore` as const,
+    permanentDelete: (id: string) =>
+      `/api/v1/workspaces/${id}/permanent` as const,
 
     // Brand Voice
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
