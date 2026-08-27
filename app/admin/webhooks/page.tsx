@@ -175,13 +175,13 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
                 </div>
               )}
 
-              {/* Payload */}
+              {/* Payload
               <div>
                 <h4 className="font-semibold mb-2">Payload</h4>
                 <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
                   {JSON.stringify(event.payload, null, 2)}
                 </pre>
-              </div>
+              </div> */}
             </div>
           </TableCell>
         </TableRow>
