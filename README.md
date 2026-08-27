@@ -14,7 +14,7 @@ Key security features implemented:
 
 📖 **Review the [Security Implementation Guide](docs/security-implementation.md) before deployment.**
 
-## 🚀 Features
+## 🚀 Features  
 
 - **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
 - **AI-Powered Topic Generation**: Generate relevant, targeted topics
