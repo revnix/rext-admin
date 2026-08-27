@@ -294,6 +294,21 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Permanently delete a workspace that is already in trash.
+     *
+     * Irreversible — there is no restore after this. Only ever called from the
+     * trash page, on a workspace the caller has already soft-deleted.
+     */
+    deletePermanently: async (workspaceId: string) => {
+      await client.request<void>(
+        ENDPOINTS.WORKSPACES.permanentDelete(workspaceId),
+        {
+          method: "DELETE",
+        },
+      );
+    },
+
+    /**
      * Trigger background refresh of workspace brand voice.
      * Returns operation identifier for SSE tracking.
      */

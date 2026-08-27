@@ -522,16 +522,29 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       openCheckout: (checkoutUrl: string) => {
-        const client = getLemonSqueezyClient();
+        if (typeof window === "undefined") return;
 
+        // lemon.js only wires up its overlay on DOMContentLoaded. Loaded via
+        // <Script strategy="afterInteractive">, that event has usually already
+        // fired by the time the script lands, and a client-side navigation
+        // never fires it again — so window.LemonSqueezy exists but the overlay
+        // opens as a dead frame until a full page reload. This re-init is
+        // idempotent and is the documented SPA entry point.
+        window.createLemonSqueezy?.();
+
+        const client = getLemonSqueezyClient();
         if (client) {
-          client.Url.Open(checkoutUrl);
+          // LemonSqueezy only serves a frameable checkout when the URL carries
+          // embed=1. The API returns the plain hosted URL, which refuses to be
+          // framed — the overlay then renders as the browser's "This content is
+          // blocked" page instead of the checkout.
+          const overlayUrl = new URL(checkoutUrl);
+          overlayUrl.searchParams.set("embed", "1");
+          client.Url.Open(overlayUrl.toString());
           return;
         }
 
-        if (typeof window !== "undefined") {
-          window.open(checkoutUrl, "_blank");
-        }
+        window.open(checkoutUrl, "_blank");
       },
 
       // ========================================
