@@ -16,12 +16,14 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Mail,
+  Upload,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useUpdatePersona,
+  useUploadPersonaAvatar,
   usePersona,
   useDeletePersona,
 } from "@/hooks/use-personas";
@@ -99,6 +101,30 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadAvatar = useUploadPersonaAvatar(workspace?.id || "");
+  const isUploadingAvatar = uploadAvatar.isPending;
+
+  /** Uploads immediately rather than waiting for the form to be saved: the
+   *  server stores the file and answers with the persona, so the picture on
+   *  screen is the one that was kept. */
+  const handleAvatarFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    // Cleared here so choosing the same file twice still fires a change.
+    event.target.value = "";
+    if (!file || !persona.id) return;
+    const updated = await uploadAvatar.mutateAsync({
+      personaId: persona.id,
+      file,
+    });
+    setFormData((current) => ({
+      ...current,
+      avatar_url: updated?.avatar_url ?? current.avatar_url,
+      avatar_source: updated?.avatar_source ?? "custom",
+    }));
+  };
 
   const updatePersona = useUpdatePersona(workspace?.id || "");
   const deletePersona = useDeletePersona(workspace?.id || "");
@@ -313,6 +339,41 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       A link you set here is kept. Clear it to fall back to the
                       photo on their site, then a Gravatar, then initials.
                     </p>
+                    {/*
+                      A picture could be pasted as a URL or found by the
+                      crawler, but not supplied - so anyone whose photograph was
+                      not already on the web had no way to give a persona a
+                      face. The file never touches this form's state: it uploads
+                      on its own and the server answers with the stored persona,
+                      so a failed upload leaves the picture that was there.
+                    */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/gif,image/webp"
+                        className="hidden"
+                        onChange={handleAvatarFile}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingAvatar ? "Uploading..." : "Upload a photo"}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        JPEG, PNG, GIF or WebP, up to 5MB
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
