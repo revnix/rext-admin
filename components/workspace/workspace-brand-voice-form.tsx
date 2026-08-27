@@ -160,10 +160,9 @@ export function WorkspaceBrandVoiceForm({
       ...formData,
       selectedPersonaId: selectedPersonaId || undefined,
       selectedPersona: selectedPersona || undefined,
-      selectedPersonaIds:
-        selectedPersonaIds && selectedPersonaIds.length
-          ? selectedPersonaIds
-          : undefined,
+      selectedPersonaIds: selectedPersonaIds?.length
+        ? selectedPersonaIds
+        : undefined,
       selectedPersonas: selectedPersonasList.length
         ? selectedPersonasList
         : undefined,

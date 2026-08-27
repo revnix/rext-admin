@@ -245,12 +245,11 @@ export function WorkspaceCreateWizard() {
         competitors: brandVoiceData.competitors,
         content_strategy:
           brandVoiceData.content_strategy || brandVoiceData.content_pillar,
-        personas:
-          selectedPersonas && selectedPersonas.length
-            ? selectedPersonas
-            : selectedPersona
-              ? [selectedPersona]
-              : undefined,
+        personas: selectedPersonas?.length
+          ? selectedPersonas
+          : selectedPersona
+            ? [selectedPersona]
+            : undefined,
       });
 
       // Manually save personas if they exist in the extracted data
@@ -292,10 +291,9 @@ export function WorkspaceCreateWizard() {
       }
 
       // Log selected persona(s) for future API integration
-      const primaryPersonaId =
-        selectedPersonaIds && selectedPersonaIds.length
-          ? selectedPersonaIds[selectedPersonaIds.length - 1]
-          : personaId;
+      const primaryPersonaId = selectedPersonaIds?.length
+        ? selectedPersonaIds[selectedPersonaIds.length - 1]
+        : personaId;
 
       if (primaryPersonaId) {
         // TODO(TASK-047): Add endpoint to associate selected persona with workspace.

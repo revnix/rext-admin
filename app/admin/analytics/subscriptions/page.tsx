@@ -269,7 +269,7 @@ export default function SubscriptionAnalyticsPage() {
       fetchChurnData(churnPeriod);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [churnPeriod, fetchChurnData]);
+  }, [churnPeriod, fetchChurnData, loading]);
 
   const handleRefresh = () => {
     setRefreshing(true);

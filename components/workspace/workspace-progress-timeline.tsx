@@ -2,13 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Check, Clock, Loader2, X } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { SSEEvent } from "@/types/sse";
 
