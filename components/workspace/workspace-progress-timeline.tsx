@@ -196,14 +196,8 @@ export function WorkspaceProgressTimeline({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Creating Your Workspace</CardTitle>
-        <CardDescription>
-          Please wait while we analyze your website and set up your workspace
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <Card className="border-none">
+      <CardContent className="space-y-6 pt-4">
         {/* Overall Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">

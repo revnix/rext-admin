@@ -436,18 +436,18 @@ export function WorkspaceCreateWizard() {
               />
 
               {/* Connection status indicator */}
-              {isConnected && (
+              {/* {isConnected && (
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                   <span>Connected to server</span>
                 </div>
-              )}
+              )} */}
 
               {/* Note: No back button - workspace is already created */}
-              <p className="text-xs text-center text-muted-foreground">
+              {/* <p className="text-xs text-center text-muted-foreground">
                 This may take 1-2 minutes. You can't go back, but you can close
                 this tab and return later.
-              </p>
+              </p> */}
             </div>
           </QuestionCard>
         );
