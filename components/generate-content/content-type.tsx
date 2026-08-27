@@ -9,6 +9,8 @@ interface ContentTypeProps {
   recommendedContentType?: string | null;
   instruction: string;
   contentTypes: string[];
+  intent?: string;
+  keyword?: string | null;
   handleContentTypeSelect: (type: string) => void;
 }
 
@@ -16,6 +18,8 @@ export default function ContentType({
   recommendedContentType,
   instruction,
   contentTypes,
+  intent,
+  keyword,
   handleContentTypeSelect,
 }: ContentTypeProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -44,6 +48,10 @@ export default function ContentType({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contentTypes.map((type: string, index: number) => {
           const { icon: Icon, description } = getContentTypeConfig(type);
+
+          const keywordDescription = description
+            .replace(/\{keyword\}/g, keyword?.trim() || "this topic")
+            .replace(/\{intent\}/g, intent?.trim() || "relevant");
 
           const isSelected = selectedType === type;
           const isRecommended = recommendedContentType === type;
@@ -100,7 +108,7 @@ export default function ContentType({
                 </h3>
 
                 <p className="text-xs text-muted-foreground leading-[1.6]">
-                  {description}
+                  {keywordDescription}
                 </p>
               </div>
 

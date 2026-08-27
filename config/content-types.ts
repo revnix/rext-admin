@@ -1,14 +1,12 @@
 import {
   FileText,
   BookOpen,
-  Zap,
   Target,
   HelpCircle,
   MessageSquare,
   Search,
   Newspaper,
   Layout,
-  BarChart3,
   FileCheck2,
   Home,
   Package,
@@ -16,6 +14,17 @@ import {
   User,
   LogIn,
   UserPlus,
+  ListChecks,
+  GitCompare,
+  ShoppingBag,
+  Scale,
+  Tags,
+  List,
+  DollarSign,
+  Ticket,
+  CreditCard,
+  Presentation,
+  Wrench,
 } from "lucide-react";
 
 type ContentTypeRule = {
@@ -25,138 +34,263 @@ type ContentTypeRule = {
 };
 
 const DEFAULT_DESCRIPTION =
-  "High-quality content optimized for engagement and conversion.";
+  "Create high-quality content around {keyword} with a {intent} focus, optimized for search, engagement, and conversions.";
 
 const CONTENT_TYPE_RULES: ContentTypeRule[] = [
-  {
-    match: ["homepage"],
-    icon: Home,
-    description:
-      "A compelling landing page introducing your brand and guiding visitors toward key actions.",
-  },
-  {
-    match: ["brand page"],
-    icon: Sparkles,
-    description:
-      "Showcases your brand identity, positioning, and values to build recognition and trust.",
-  },
-  {
-    match: ["product page"],
-    icon: Package,
-    description:
-      "Highlights product features, benefits, and value to help users make purchasing decisions.",
-  },
-  {
-    match: ["feature page"],
-    icon: Layout,
-    description:
-      "Explains specific product capabilities and how they solve real customer problems.",
-  },
-  {
-    match: ["documentation page"],
-    icon: BookOpen,
-    description:
-      "Structured technical documentation that helps users understand and implement your product.",
-  },
-  {
-    match: ["support page"],
-    icon: HelpCircle,
-    description:
-      "Provides troubleshooting guidance and resources for users needing assistance.",
-  },
-  {
-    match: ["contact page"],
-    icon: MessageSquare,
-    description:
-      "Offers visitors clear ways to reach your team for inquiries or support.",
-  },
-  {
-    match: ["about page"],
-    icon: User,
-    description:
-      "Tells the story of your company, mission, and team to build trust with visitors.",
-  },
-  {
-    match: ["login page"],
-    icon: LogIn,
-    description:
-      "Secure entry point where existing users authenticate to access their accounts.",
-  },
-  {
-    match: ["signup page"],
-    icon: UserPlus,
-    description:
-      "Encourages new users to create accounts and begin using your platform.",
-  },
+  // ─────────────────────────────────────────────
+  // Informational
+  // ─────────────────────────────────────────────
 
   {
     match: ["blog"],
     icon: Newspaper,
     description:
-      "Insightful long-form content designed to educate and engage readers.",
+      "Explore {keyword} through engaging content that answers readers’ questions and delivers the information they’re looking for with {intent} intent.",
   },
+
   {
-    match: ["article"],
-    icon: FileText,
-    description:
-      "Professional editorial content focused on delivering informative insights.",
-  },
-  {
-    match: ["report"],
-    icon: BarChart3,
-    description:
-      "Research-driven content presenting data, analysis, and key findings.",
-  },
-  {
-    match: ["whitepaper"],
-    icon: FileCheck2,
-    description:
-      "In-depth authoritative documentation explaining complex topics or strategies.",
-  },
-  {
-    match: ["guide", "educational"],
+    match: ["how-to-guide"],
     icon: BookOpen,
     description:
-      "Step-by-step educational content designed to teach or explain a process.",
+      "Show readers how to accomplish a task or solve a problem involving {keyword} with clear, actionable steps suited to their {intent} intent.",
   },
+
   {
-    match: ["expert", "opinion"],
-    icon: Zap,
+    match: ["explainer"],
+    icon: FileText,
     description:
-      "Thought leadership and professional insights sharing expert perspectives.",
+      "Break down {keyword} into clear concepts, processes, and key details to help readers understand the topic and satisfy their {intent} intent.",
   },
+
   {
-    match: ["how-to", "tutorial"],
+    match: ["pillar-content"],
     icon: Layout,
     description:
-      "Practical instructions helping readers accomplish specific tasks.",
+      "Build a comprehensive resource covering {keyword} in depth, giving readers the information they need to satisfy their {intent} intent.",
   },
+
   {
-    match: ["case study"],
-    icon: Target,
+    match: ["checklist"],
+    icon: ListChecks,
     description:
-      "Real-world examples demonstrating strategies, results, and success stories.",
+      "Give readers a practical checklist for completing important tasks related to {keyword}, helping them accomplish what they need with {intent} intent.",
   },
+
   {
-    match: ["review"],
-    icon: Search,
+    match: ["tutorial"],
+    icon: BookOpen,
     description:
-      "Detailed evaluation of products or services with insights and recommendations.",
+      "Guide readers through {keyword} with practical, step-by-step instructions that help them achieve their goal with {intent} intent.",
   },
+
   {
     match: ["faq"],
     icon: HelpCircle,
     description:
-      "Quick answers to commonly asked questions to help users find solutions faster.",
+      "Answer common questions about {keyword} with quick, useful information that helps readers find what they need with {intent} intent.",
   },
+
   {
-    match: ["interview"],
+    match: ["white-paper"],
+    icon: FileCheck2,
+    description:
+      "Provide in-depth research, insights, and analysis on {keyword} for readers looking for detailed information with {intent} intent.",
+  },
+
+  {
+    match: ["case-study"],
+    icon: Target,
+    description:
+      "Show how real-world strategies and results can be applied to {keyword}, giving readers practical insights that support their {intent} intent.",
+  },
+
+  {
+    match: ["glossary"],
+    icon: Tags,
+    description:
+      "Explain important terms and definitions related to {keyword}, helping readers quickly understand the topic with {intent} intent.",
+  },
+
+  {
+    match: ["resource-list"],
+    icon: List,
+    description:
+      "Curate useful tools, resources, and references related to {keyword} so readers can quickly find what they need with {intent} intent.",
+  },
+
+  // ─────────────────────────────────────────────
+  // Commercial
+  // ─────────────────────────────────────────────
+
+  {
+    match: ["comparison"],
+    icon: GitCompare,
+    description:
+      "Compare products, services, or solutions related to {keyword} to help readers evaluate their options and make the right choice with {intent} intent.",
+  },
+
+  {
+    match: ["best-tools"],
+    icon: Search,
+    description:
+      "Discover the best tools and solutions for {keyword}, helping readers compare options and find the right fit for their {intent} intent.",
+  },
+
+  {
+    match: ["alternatives"],
+    icon: Scale,
+    description:
+      "Explore alternatives to {keyword} so readers can compare their options and find the solution that best matches their {intent} intent.",
+  },
+
+  {
+    match: ["in-depth-review"],
+    icon: Search,
+    description:
+      "Take a closer look at a product or service related to {keyword}, covering its features, benefits, performance, and limitations for {intent} intent.",
+  },
+
+  {
+    match: ["pros-cons"],
+    icon: Scale,
+    description:
+      "Weigh the key advantages and disadvantages of options related to {keyword} to help readers make a confident choice with {intent} intent.",
+  },
+
+  {
+    match: ["product-roundup"],
+    icon: Package,
+    description:
+      "Explore a curated selection of products related to {keyword}, helping readers compare options and choose the best one for their {intent} intent.",
+  },
+
+  {
+    match: ["buying-guide"],
+    icon: ShoppingBag,
+    description:
+      "Help readers evaluate products related to {keyword} with practical advice that guides them toward a confident decision with {intent} intent.",
+  },
+
+  // ─────────────────────────────────────────────
+  // Navigational
+  // ─────────────────────────────────────────────
+
+  {
+    match: ["brand-page"],
+    icon: Sparkles,
+    description:
+      "Introduce your brand, values, and positioning while helping visitors find the information they need about {keyword} with {intent} intent.",
+  },
+
+  {
+    match: ["product-homepage"],
+    icon: Home,
+    description:
+      "Introduce your product and show visitors how it can help them with {keyword} based on what they’re looking for with {intent} intent.",
+  },
+
+  {
+    match: ["feature-overview"],
+    icon: Layout,
+    description:
+      "Showcase your product’s key features and explain how they address needs related to {keyword} for visitors with {intent} intent.",
+  },
+
+  {
+    match: ["documentation"],
+    icon: BookOpen,
+    description:
+      "Help users understand, configure, and implement solutions related to {keyword} with clear documentation that supports their {intent} intent.",
+  },
+
+  {
+    match: ["login-guide"],
+    icon: LogIn,
+    description:
+      "Help users access their account and resolve common login issues related to {keyword} with clear guidance that meets their {intent} intent.",
+  },
+
+  {
+    match: ["contact-us"],
     icon: MessageSquare,
     description:
-      "Conversations with experts sharing insights, experiences, and industry knowledge.",
+      "Give visitors clear ways to contact your team with questions, support requests, or inquiries related to {keyword} based on their {intent} intent.",
+  },
+
+  {
+    match: ["about-us"],
+    icon: User,
+    description:
+      "Share your company’s story, mission, values, and team while helping visitors learn more about {keyword} based on their {intent} intent.",
+  },
+
+  {
+    match: ["help-center"],
+    icon: HelpCircle,
+    description:
+      "Help users find answers, guidance, and troubleshooting support for issues related to {keyword} based on their {intent} intent.",
+  },
+
+  // ─────────────────────────────────────────────
+  // Transactional
+  // ─────────────────────────────────────────────
+
+  {
+    match: ["sales-page"],
+    icon: DollarSign,
+    description:
+      "Showcase the value of your offering and encourage visitors interested in {keyword} to take the next step based on their {intent} intent.",
+  },
+
+  {
+    match: ["pricing-page"],
+    icon: CreditCard,
+    description:
+      "Present pricing plans, features, and value clearly for users evaluating solutions related to {keyword} with {intent} intent.",
+  },
+
+  {
+    match: ["signup-page"],
+    icon: UserPlus,
+    description:
+      "Encourage visitors interested in {keyword} to create an account and take the next step toward their {intent} goal.",
+  },
+
+  {
+    match: ["demo-page"],
+    icon: Presentation,
+    description:
+      "Show visitors how your product can help with {keyword} and encourage them to request a demo based on their {intent} intent.",
+  },
+
+  {
+    match: ["coupon-page"],
+    icon: Ticket,
+    description:
+      "Highlight discounts, special offers, and coupon codes for products or services related to {keyword}, helping users find relevant deals with {intent} intent.",
+  },
+
+  {
+    match: ["checkout-page"],
+    icon: CreditCard,
+    description:
+      "Help customers interested in {keyword} complete their purchase through a simple, secure experience that supports their {intent} goal.",
+  },
+
+  {
+    match: ["landing-page"],
+    icon: Target,
+    description:
+      "Create a focused landing page around {keyword} with a compelling offer and clear call to action designed for {intent} intent.",
+  },
+
+  {
+    match: ["service-page"],
+    icon: Wrench,
+    description:
+      "Showcase your service and explain how it helps customers solve problems related to {keyword} while supporting their {intent} intent.",
   },
 ];
-
 function normalizeType(type: string) {
   return type.toLowerCase().replace(/[-_]/g, " ").trim();
 }
@@ -164,8 +298,8 @@ function normalizeType(type: string) {
 export function getContentTypeConfig(type: string) {
   const normalized = normalizeType(type);
 
-  const rule = CONTENT_TYPE_RULES.find((r) =>
-    r.match.some((keyword) => normalized.includes(keyword)),
+  const rule = CONTENT_TYPE_RULES.find((rule) =>
+    rule.match.some((keyword) => normalizeType(keyword) === normalized),
   );
 
   return (

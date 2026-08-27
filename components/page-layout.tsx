@@ -416,8 +416,8 @@ export function PageLayout({
                       onClick={() => router.push(settingsRoutes.subscription)}
                       className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                     >
-                      <div className="flex items-center justify-center h-5 w-5 rounded-md bg-violet-50 mr-2">
-                        <Sparkles className="h-3.5 w-3.5 text-violet-600 fill-violet-200/50" />
+                      <div className="flex items-center justify-center h-5 w-5 rounded-md mr-2">
+                        <Sparkles className="h-3.5 w-3.5 text-gray-600 fill-gray-100/50 dark:fill-gray-600/50" />
                       </div>
                       <span className="font-medium">Upgrade to Pro</span>
                     </DropdownMenuItem>
@@ -458,7 +458,6 @@ export function PageLayout({
               </DropdownMenu>
             </div>
           </header>
-          <BackgroundGenerationDock />
         </div>
         {/* Impersonation Banner */}
         <ImpersonationBanner />
@@ -480,6 +479,8 @@ export function PageLayout({
           {/* Main Content */}
           <div className="flex-1">{children}</div>
         </div>
+        {/* Bottom generation progress dock */}
+        <BackgroundGenerationDock />
       </SidebarInset>
 
       <NotificationsDrawer

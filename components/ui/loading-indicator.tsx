@@ -107,20 +107,20 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 className="grid gap-4 pb-2 border-b"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((item) => (
-                  <Skeleton key={`header-${item}`} className="h-4" />
+                {Array.from({ length: columns }).map((_, index) => (
+                  <Skeleton key={`header-${index}`} className="h-4" />
                 ))}
               </div>
             )}
 
-            {Array.from({ length: rows }).map((item) => (
+            {Array.from({ length: rows }).map((_, rowIndex) => (
               <div
-                key={`row-${item}`}
+                key={`row-${rowIndex}`}
                 className="grid gap-4 py-3"
                 style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
               >
-                {Array.from({ length: columns }).map((item, colIndex) => (
-                  <div key={`row-${item}-col-${item}`}>
+                {Array.from({ length: columns }).map((_, colIndex) => (
+                  <div key={`row-${rowIndex}-col-${colIndex}`}>
                     {colIndex === 0 ? (
                       <div className="space-y-2">
                         <Skeleton className="h-4 w-full" />

@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 import { SelectionView } from "@/components/generate-content/selection-view";
@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -40,13 +40,8 @@ export default function Page() {
   const libraryIntent = urlParams.get("intent");
   const backgroundThreadId = urlParams.get("thread");
   const isLibrary = libraryKeyword !== null;
-  const backgroundJobs = useBackgroundGenerationStore((state) => state.jobs);
   const backgroundJobsHydrated = useBackgroundGenerationStore(
     (state) => state.hasHydrated,
-  );
-  const activeGenerationJob = useMemo(
-    () => findActiveGenerationJob(backgroundJobs),
-    [backgroundJobs],
   );
   const [view, setView] = useState<PageView>(() =>
     libraryKeyword || backgroundThreadId ? "fresh" : "selection",
@@ -80,13 +75,11 @@ export default function Page() {
     }
   }, [backgroundJobsHydrated]);
 
-  useEffect(() => {
-    if (!backgroundJobsHydrated || backgroundThreadId || !activeGenerationJob) {
-      return;
-    }
-
-    router.replace(activeGenerationJob.resultUrl as Route);
-  }, [activeGenerationJob, backgroundJobsHydrated, backgroundThreadId, router]);
+  // Landing here with a generation already running used to force-redirect into
+  // that job, which made the selection view unreachable and limited the user to
+  // one generation at a time. Generations are independent LangGraph threads, so
+  // there is no reason to block a second one: the dock keeps every running job
+  // visible and is the way back into any of them.
 
   const handleStartFresh = () => {
     setSelectedLibraryKeyword(undefined);
@@ -100,13 +93,14 @@ export default function Page() {
 
   const handleBackToSelection = () => {
     const currentJobs = useBackgroundGenerationStore.getState().jobs;
+    // Only drop jobs that are genuinely finished. The job being navigated away
+    // from keeps running in the background, and a job paused for review reports
+    // status "completed" while still needing the user — discarding either of
+    // those is what made leaving a generation abandon it.
     const discardedThreadIds = currentJobs
       .filter(
         (job) =>
-          job.threadId === backgroundThreadId ||
-          (job.workspaceSlug === workspace?.slug &&
-            job.status !== "queued" &&
-            job.status !== "running"),
+          job.workspaceSlug === workspace?.slug && !isActiveGenerationJob(job),
       )
       .map((job) => job.threadId);
     if (discardedThreadIds.length > 0) {
@@ -129,11 +123,10 @@ export default function Page() {
   // view: registering the job unmounted it mid-submit, and the unmount cleanup
   // aborted the very request that creates the run — leaving a runless thread
   // that polls "Queued for generation" forever and cannot be cancelled.
-  const isResolvingActiveGeneration =
-    !backgroundJobsHydrated ||
-    (view === "selection" &&
-      !backgroundThreadId &&
-      activeGenerationJob !== undefined);
+  // Only waits for persisted jobs to rehydrate. It must not also wait on an
+  // active job existing — that was what hid the selection view behind a
+  // permanent spinner while anything was still generating.
+  const isResolvingActiveGeneration = !backgroundJobsHydrated;
 
   if (!workspace?.id || isPermLoading || isResolvingActiveGeneration) {
     return (

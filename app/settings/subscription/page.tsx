@@ -290,7 +290,7 @@ export default function SubscriptionSettingsPage() {
                 Questions about billing or payments
               </p>
               <a
-                href="mailto:billing@wrext.com"
+                href="mailto:contact@rext.ai"
                 className="text-xs text-primary hover:underline"
               >
                 Contact billing support →

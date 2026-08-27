@@ -160,8 +160,13 @@ export function WorkspaceBrandVoiceForm({
       ...formData,
       selectedPersonaId: selectedPersonaId || undefined,
       selectedPersona: selectedPersona || undefined,
-      selectedPersonaIds: selectedPersonaIds && selectedPersonaIds.length ? selectedPersonaIds : undefined,
-      selectedPersonas: selectedPersonasList.length ? selectedPersonasList : undefined,
+      selectedPersonaIds:
+        selectedPersonaIds && selectedPersonaIds.length
+          ? selectedPersonaIds
+          : undefined,
+      selectedPersonas: selectedPersonasList.length
+        ? selectedPersonasList
+        : undefined,
     });
   };
 
@@ -761,9 +766,6 @@ export function WorkspaceBrandVoiceForm({
 
               {data.personas && data.personas.length > 0 && (
                 <div className="pt-4 border-t border-border/50">
-                  <h4 className="text-sm font-semibold text-foreground mb-4">
-                    Associated Personas
-                  </h4>
                   <PersonasGrid personas={data.personas} />
                 </div>
               )}

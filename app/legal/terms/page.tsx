@@ -69,8 +69,8 @@ export default function TermsOfServicePage() {
 
           <h2>1. Acceptance of Terms</h2>
           <p>
-            By accessing or using REXT AI, you agree to be bound by these Terms of
-            Service and all applicable laws and regulations.
+            By accessing or using REXT AI, you agree to be bound by these Terms
+            of Service and all applicable laws and regulations.
           </p>
 
           <h2>2. Use License</h2>
@@ -139,14 +139,14 @@ export default function TermsOfServicePage() {
 
           <h2>9. Limitation of Liability</h2>
           <p>
-            REXT AI is provided "as is" without warranties of any kind. We are not
-            liable for any indirect, incidental, or consequential damages.
+            REXT AI is provided "as is" without warranties of any kind. We are
+            not liable for any indirect, incidental, or consequential damages.
           </p>
 
           <h2>10. Changes to Terms</h2>
           <p>
-            We may update these Terms from time to time. Continued use of REXT AI
-            after changes constitutes acceptance of the new Terms.
+            We may update these Terms from time to time. Continued use of REXT
+            AI after changes constitutes acceptance of the new Terms.
           </p>
 
           <h2>11. Contact</h2>

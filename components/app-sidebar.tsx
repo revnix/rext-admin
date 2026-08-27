@@ -37,10 +37,8 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { findActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
-import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { NavGroup } from "@/types/navigation";
@@ -72,9 +70,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-  const activeGenerationJob = useBackgroundGenerationStore((state) =>
-    findActiveGenerationJob(state.jobs),
-  );
   const hasWorkspaces = workspaceList.length > 0;
   const { workspacePermissions } = usePermissionStore();
   const _storeRole = currentWorkspace
@@ -110,11 +105,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       items: [
         {
           title: "Generate Content",
-          url:
-            activeGenerationJob?.resultUrl ??
-            (currentWorkspace?.slug
-              ? workspaceRoutes.generate_content(currentWorkspace.slug)
-              : "/"),
+          // Always the blank generation page. It used to point at the running
+          // job instead, which meant the only nav entry for generating content
+          // took you back into work already in progress and gave no way to
+          // start another. Running jobs are reachable from the dock.
+          url: currentWorkspace?.slug
+            ? workspaceRoutes.generate_content(currentWorkspace.slug)
+            : "/",
           icon: Sparkles,
           permission: "content.create",
         },

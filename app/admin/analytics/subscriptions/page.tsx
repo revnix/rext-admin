@@ -9,7 +9,7 @@ import {
   UserMinus,
   Users,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   Bar,
   BarChart,
@@ -203,57 +203,74 @@ export default function SubscriptionAnalyticsPage() {
   const [trialConversion, setTrialConversion] =
     useState<TrialConversionMetrics | null>(null);
   const [churnPeriod, setChurnPeriod] = useState<number>(30);
+  const [revenueFilter, setRevenueFilter] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
   const [refreshing, setRefreshing] = useState(false);
 
+  const churnRequestRef = useRef<number>(0);
+
+  // Fetch churn data when period changes
+  const fetchChurnData = useCallback(async (periodDays: number) => {
+    const requestId = ++churnRequestRef.current;
+    try {
+      const churnData =
+        await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
+      if (requestId === churnRequestRef.current) {
+        setChurn(churnData);
+      }
+    } catch (_error) {
+      if (requestId === churnRequestRef.current) {
+        toast.error("Failed to load churn analysis. Please try again.");
+      }
+    }
+  }, []);
+
   // Fetch data
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (currentChurnPeriod: number) => {
     try {
       setLoading(true);
+      const requestId = ++churnRequestRef.current;
 
       const [overviewData, revenueData, churnData, trialData] =
         await Promise.all([
           apiClient.adminAnalytics.getOverview(),
           apiClient.adminAnalytics.getRevenueMetrics(),
-          apiClient.adminAnalytics.getChurnAnalysis(churnPeriod),
+          apiClient.adminAnalytics.getChurnAnalysis(currentChurnPeriod),
           apiClient.adminAnalytics.getTrialConversion(),
         ]);
 
       setOverview(overviewData);
       setRevenue(revenueData);
-      setChurn(churnData);
       setTrialConversion(trialData);
+      
+      if (requestId === churnRequestRef.current) {
+        setChurn(churnData);
+      }
     } catch (_error) {
       toast.error("Failed to load analytics data. Please try again.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [churnPeriod]);
-
-  // Fetch churn data when period changes
-  const fetchChurnData = useCallback(async (periodDays: number) => {
-    try {
-      const churnData =
-        await apiClient.adminAnalytics.getChurnAnalysis(periodDays);
-      setChurn(churnData);
-    } catch (_error) {
-      toast.error("Failed to load churn analysis. Please try again.");
-    }
   }, []);
 
   useEffect(() => {
-    fetchAnalytics();
+    // Initial fetch
+    fetchAnalytics(30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAnalytics]);
 
   useEffect(() => {
     if (!loading) {
       fetchChurnData(churnPeriod);
     }
-  }, [churnPeriod, fetchChurnData, loading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [churnPeriod, fetchChurnData]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchAnalytics();
+    fetchAnalytics(churnPeriod);
   };
 
   if (loading) {
@@ -292,8 +309,13 @@ export default function SubscriptionAnalyticsPage() {
   // Prepare chart data
   const revenueByPlanData = revenue.by_plan.map((plan) => ({
     name: plan.plan_display_name || plan.plan_name,
-    revenue: plan.revenue_monthly + plan.revenue_yearly / 12,
+    revenue:
+      revenueFilter === "monthly"
+        ? plan.revenue_monthly
+        : plan.revenue_yearly,
     subscriptions: plan.subscription_count,
+    monthlyRevenue: plan.revenue_monthly,
+    yearlyRevenue: plan.revenue_yearly,
   }));
 
   const tierDistributionData = revenue.by_plan.map((plan) => ({
@@ -449,17 +471,41 @@ export default function SubscriptionAnalyticsPage() {
                   </p>
                 </div>
               </div>
-              <p className="text-sm font-medium mb-2">Revenue by Plan</p>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <p className="text-sm font-medium">Revenue by Plan</p>
+                <Select
+                  value={revenueFilter}
+                  onValueChange={(value) =>
+                    setRevenueFilter(value as "monthly" | "yearly")
+                  }
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Revenue type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={revenueByPlanData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => formatCurrency(Number(value))}
                     labelStyle={{ color: "#000" }}
                   />
-                  <Bar dataKey="revenue" fill={COLORS.primary} name="Revenue" />
+                  <Bar
+                    dataKey="revenue"
+                    fill={COLORS.primary}
+                    name={
+                      revenueFilter === "monthly"
+                        ? "Monthly Revenue"
+                        : "Yearly Revenue"
+                    }
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

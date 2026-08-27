@@ -68,6 +68,7 @@ export interface CreateRoleRequest {
   description?: string;
   hierarchy_level?: number;
   is_system_role?: boolean;
+  is_workspace_role?: boolean;
 }
 
 export interface UpdateRoleRequest {

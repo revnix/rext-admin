@@ -77,6 +77,10 @@ export function createRolesNamespace(client: ApiClient) {
 
     /**
      * Create a new role
+     *
+     * Note: The backend returns the new role's fields directly in `data` (flat),
+     * not nested under a `role` key. core.ts unwraps `result.data`, so the
+     * resolved value is the role object itself.
      */
     create: async (data: CreateRoleRequest) => {
       return client.request<{

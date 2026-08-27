@@ -13,8 +13,8 @@ const INTENT_CONFIG = {
     label: "Informational",
     description: "Seeking knowledge or answers.",
     icon: Lightbulb,
-    color: "var(--color-purple-600)",
-    textColor: "text-purple-600",
+    color: "var(--color-blue-600)",
+    textColor: "text-blue-600",
   },
   transactional: {
     label: "Transactional",

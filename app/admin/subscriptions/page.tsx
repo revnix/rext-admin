@@ -271,7 +271,7 @@ export default function SubscriptionAnalyticsPage() {
   // if (overviewError) {
   //   return (
   //     <ErrorPage
-  //       title="Failed to load subscription analytics"
+  //       title="Failed to load subscription management"
   //       message="Overview data could not be loaded. Please try again."
   //       retry={() => void refetchOverview()}
   //     />
@@ -299,7 +299,7 @@ export default function SubscriptionAnalyticsPage() {
 
   return (
     <PageLayout
-      title="Subscription Analytics"
+      title="Subscription Management"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
         <Link href="/admin/subscriptions/plans" className="w-full sm:w-auto">
@@ -317,12 +317,11 @@ export default function SubscriptionAnalyticsPage() {
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to view subscription analytics.
+                You don't have permission to view subscription management.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
                   subscription.read
                 </code>

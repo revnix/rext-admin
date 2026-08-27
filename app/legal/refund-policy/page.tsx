@@ -13,7 +13,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Refund Policy",
-  description: "REXT AI refund and cancellation policy for subscription services",
+  description:
+    "REXT AI refund and cancellation policy for subscription services",
 };
 
 export default function RefundPolicyPage() {

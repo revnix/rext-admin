@@ -46,7 +46,7 @@ export function ManageRolePermissionsDialog({
       const filteredIds = role.permissions
         .filter((p) => validPermissionIds.has(p.id))
         .map((p) => p.id);
-      setSelectedPermissionIds(filteredIds.slice(0, 50));
+      setSelectedPermissionIds(filteredIds);
     } else {
       setSelectedPermissionIds([]);
     }

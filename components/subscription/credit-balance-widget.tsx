@@ -75,7 +75,7 @@ export function CreditBalanceWidget({
               className,
             )}
           >
-            <CircleDollarSign className="h-4 w-4 text-[#0061FF]" />
+            <CircleDollarSign className="h-4 w-4 text-[#0061FF] dark:text-brand-100" />
             <span className="text-sm font-medium">
               {credits.current_credits.toLocaleString()}
             </span>
@@ -93,11 +93,11 @@ export function CreditBalanceWidget({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 rounded-full py-0.5">
-                  <CircleDollarSign className="h-3.5 w-3.5 text-[#0061FF]" />
+                  <CircleDollarSign className="h-3.5 w-3.5 text-[#0061FF] dark:text-brand-300" />
                   <span className="text-xs font-medium">Credits</span>
                 </div>
                 {credits.plan_name && (
-                  <span className="text-xs font-medium text-[#0061FF]">
+                  <span className="text-xs font-medium text-[#0061FF] dark:text-brand-300">
                     {credits.plan_name}
                   </span>
                 )}

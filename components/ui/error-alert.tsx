@@ -237,11 +237,11 @@ export function ErrorAlert({
                 ? extractValidationErrors(error as BackendError)
                 : [];
             return validationErrors.length > 0 ? (
-              <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                <p className="text-sm font-medium text-gray-700 mb-2">
+              <div className="mt-3 rounded-md bg-muted p-3">
+                <p className="mb-2 text-sm font-medium text-foreground">
                   Detailed validation errors:
                 </p>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="space-y-1 text-sm text-muted-foreground">
                   {validationErrors.map((err) => (
                     <li key={err} className="font-mono">
                       • {err}
@@ -254,11 +254,11 @@ export function ErrorAlert({
 
         {/* Enhanced error information for BackendServiceError */}
         {process.env.NODE_ENV === "development" && "code" in error && (
-          <div className="mt-3 p-3 bg-blue-50 rounded-md">
-            <p className="text-sm font-medium text-blue-700 mb-2">
+          <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20">
+            <p className="mb-2 text-sm font-medium text-blue-700 dark:text-blue-200">
               Enhanced Error Details:
             </p>
-            <div className="text-sm text-blue-600 space-y-1">
+            <div className="space-y-1 text-sm text-blue-600 dark:text-blue-300">
               <div className="font-mono">Error Code: {errorCode}</div>
               {processingTime && (
                 <div className="font-mono">

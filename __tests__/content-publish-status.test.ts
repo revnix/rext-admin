@@ -13,44 +13,42 @@ function createMockContentApi() {
 }
 
 describe("content API WordPress post status", () => {
-  it.each(statuses)(
-    "passes %s as a query parameter when saving and publishing new content",
-    async (status) => {
-      const { api, request } = createMockContentApi();
+  it.each(
+    statuses,
+  )("passes %s as a query parameter when saving and publishing new content", async (status) => {
+    const { api, request } = createMockContentApi();
 
-      await api.save_publish("workspace-1", { title: "Test" }, status);
+    await api.save_publish("workspace-1", { title: "Test" }, status);
 
-      expect(request).toHaveBeenCalledWith(
-        `/api/v1/content/publish?workspace_id=workspace-1&publish_status=${status}`,
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ title: "Test" }),
-        }),
-      );
-    },
-  );
+    expect(request).toHaveBeenCalledWith(
+      `/api/v1/content/publish?workspace_id=workspace-1&publish_status=${status}`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ title: "Test" }),
+      }),
+    );
+  });
 
-  it.each(statuses)(
-    "passes %s in the request body when publishing existing content",
-    async (status) => {
-      const { api, request } = createMockContentApi();
+  it.each(
+    statuses,
+  )("passes %s in the request body when publishing existing content", async (status) => {
+    const { api, request } = createMockContentApi();
 
-      await api.publish(
-        "workspace-1",
-        { title: "Test", status: "ignored" },
-        "content-1",
-        status,
-      );
+    await api.publish(
+      "workspace-1",
+      { title: "Test", status: "ignored" },
+      "content-1",
+      status,
+    );
 
-      expect(request).toHaveBeenCalledWith(
-        "/api/v1/content/content-1/publish?workspace_id=workspace-1",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ title: "Test", status }),
-        }),
-      );
-    },
-  );
+    expect(request).toHaveBeenCalledWith(
+      "/api/v1/content/content-1/publish?workspace_id=workspace-1",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ title: "Test", status }),
+      }),
+    );
+  });
 
   it("preserves publish as the existing default", async () => {
     const { api, request } = createMockContentApi();

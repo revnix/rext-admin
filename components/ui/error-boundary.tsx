@@ -87,7 +87,7 @@ function APIErrorFallbackWithRouter({
         </Button>
       </div>
       {process.env.NODE_ENV === "development" && (
-        <div className="text-xs text-gray-400 space-y-1">
+        <div className="space-y-1 text-xs text-muted-foreground">
           <p>Error ID: {errorId}</p>
           {requestId && <p>Request ID: {requestId}</p>}
         </div>
@@ -120,7 +120,7 @@ export function DefaultErrorFallback({
         </p>
 
         {process.env.NODE_ENV === "development" && (
-          <details className="text-xs text-gray-600 bg-gray-100 p-3 rounded">
+          <details className="rounded bg-muted p-3 text-xs text-muted-foreground">
             <summary className="cursor-pointer font-medium mb-2">
               Technical Details (Development Only)
             </summary>

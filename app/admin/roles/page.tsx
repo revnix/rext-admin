@@ -138,7 +138,7 @@ export default function AdminRolesPage() {
         display_name: role.display_name,
         hierarchy_level: role.hierarchy_level,
         is_system_role: role.is_system_role,
-        permissions_count: Math.min(validPermissions.length, 50),
+        permissions_count: validPermissions.length,
         description: role.description,
       };
     },
