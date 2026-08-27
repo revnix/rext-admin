@@ -348,13 +348,6 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       so a failed upload leaves the picture that was there.
                     */}
                     <div className="flex items-center gap-2 pt-1">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/gif,image/webp"
-                        className="hidden"
-                        onChange={handleAvatarFile}
-                      />
                       <Button
                         type="button"
                         variant="outline"
@@ -398,31 +391,60 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 </>
               )}
 
+              {/* Outside the edit block: the avatar is clickable in both modes. */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                className="hidden"
+                onChange={handleAvatarFile}
+              />
               <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
-                  <AvatarImage
-                    src={persona.avatar_url || ""}
-                    alt={`${persona.name}'s avatar`}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
-                    {persona.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
                 {/*
+                  The picture is the control. Putting the upload behind an Edit
+                  button hid it from the one place a person looks when they want
+                  to change a photograph, and a face on screen with no way to
+                  replace it reads as a feature that does not exist.
+                */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  title="Upload a photo"
+                  className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                    <AvatarImage
+                      src={persona.avatar_url || ""}
+                      alt={`${persona.name}'s avatar`}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                      {persona.name
+                        .split(" ")
+                        .map((word) => word[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/*
                   Initials drawn from a name are not a picture of anyone, and
                   rendered at the same size and confidence as a photograph they
                   read as one. Saying which is on screen costs a line and stops
                   the interface making a claim it cannot support.
                 */}
+                  <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    ) : (
+                      <Upload className="h-5 w-5 text-white" />
+                    )}
+                  </span>
+                </button>
                 {persona.avatar_source === "generated" && (
                   <span className="text-xs text-muted-foreground">
-                    No photo found - showing initials
+                    No photo found - click the circle to upload one
                   </span>
                 )}
                 <div className="space-y-1">
