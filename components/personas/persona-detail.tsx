@@ -103,6 +103,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | null>(null);
   const uploadAvatar = useUploadPersonaAvatar(workspace?.id || "");
   const isUploadingAvatar = uploadAvatar.isPending;
 
@@ -120,6 +121,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
       personaId: persona.id,
       file,
     });
+    if (updated?.avatar_url) setUploadedAvatar(updated.avatar_url);
     setFormData((current) => ({
       ...current,
       avatar_url: updated?.avatar_url ?? current.avatar_url,
@@ -416,7 +418,12 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 >
                   <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
                     <AvatarImage
-                      src={persona.avatar_url || ""}
+                      // The picture just uploaded, if there is one. The prop
+                      // comes from a cached query and does not change the
+                      // moment a file is stored, so the toast said the upload
+                      // had worked while the initials stayed on screen - the
+                      // one outcome that reads as a broken feature.
+                      src={uploadedAvatar || persona.avatar_url || ""}
                       alt={`${persona.name}'s avatar`}
                       className="object-cover"
                     />
@@ -443,7 +450,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                     )}
                   </span>
                 </button>
-                {persona.avatar_source === "generated" && (
+                {!uploadedAvatar && persona.avatar_source === "generated" && (
                   <span className="text-xs text-muted-foreground">
                     No photo found - click the circle to upload one
                   </span>
