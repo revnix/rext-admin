@@ -64,12 +64,6 @@ export default function WorkspaceSettingsPage() {
       }
     >
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h2 className="text-lg font-medium">General Information</h2>
-          <p className="text-sm text-muted-foreground">
-            Update your workspace name, and other basic information
-          </p>
-        </div>
         <GeneralInfoSection />
 
         <Separator />

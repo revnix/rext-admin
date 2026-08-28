@@ -14,6 +14,7 @@ interface SubscriptionKPIsProps {
     total_subscriptions: number;
     active_subscriptions: number;
     trial_subscriptions: number;
+    avg_customer_ltv?: number | null;
     mrr: number;
     arr: number;
     churn_rate_monthly: number;
@@ -79,6 +80,16 @@ export function SubscriptionKPIs({
       color: "text-purple-600",
     },
     {
+      title: "Avg Customer LTV",
+      value:
+        stats.avg_customer_ltv != null && !Number.isNaN(stats.avg_customer_ltv)
+          ? formatCurrency(stats.avg_customer_ltv)
+          : "N/A",
+      icon: DollarSign,
+      description: "Average customer lifetime value",
+      color: "text-cyan-600",
+    },
+    {
       title: "Churn Rate",
       value: formatPercent(stats.churn_rate_monthly),
       icon: Percent,
@@ -93,10 +104,17 @@ export function SubscriptionKPIs({
       description: "Trial to paid",
       color: "text-indigo-600",
     },
+    {
+      title: "Trial Subscriptions",
+      value: stats.trial_subscriptions.toLocaleString(),
+      icon: Users,
+      description: "Currently trialing",
+      color: "text-amber-600",
+    },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
         const TrendIcon =
