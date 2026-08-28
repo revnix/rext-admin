@@ -360,7 +360,7 @@ export default function SubscriptionAnalyticsPage() {
 
   return (
     <PageLayout
-      title="Subscription Management"
+      title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
         <Link href="/admin/subscriptions/plans" className="w-full sm:w-auto">
@@ -378,7 +378,7 @@ export default function SubscriptionAnalyticsPage() {
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to view subscription management.
+                You don't have permission to view subscription analytics.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -496,7 +496,7 @@ export default function SubscriptionAnalyticsPage() {
               <Card >
                 <CardHeader>
                   <CardTitle>Trial Conversion Funnel</CardTitle>
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                  <div className="mt-3 grid grid-cols-2 items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                     <span>
                       Total Trials:{" "}
                       <Badge variant="secondary">
@@ -557,44 +557,48 @@ export default function SubscriptionAnalyticsPage() {
                 </CardContent>
               </Card>
               <Card className="">
-                <CardHeader className="flex flex-row items-start justify-between gap-4">
-                  <div>
-                    <CardTitle>Churn Analysis</CardTitle>
-                    <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                      <span>
-                        Cancellations:{" "}
-                        <Badge variant="destructive">
-                          {churnAnalysis?.cancellations ?? 0}
-                        </Badge>
-                      </span>
-                      <span>
-                        Retention Rate:{" "}
-                        <Badge variant="secondary">
-                          {formatPercentage(churnAnalysis?.retention_rate)}
-                        </Badge>
-                      </span>
-                      <span>
-                        Churn Rate:{" "}
-                        <Badge variant="destructive">
-                          {formatPercentage(churnAnalysis?.churn_rate)}
-                        </Badge>
-                      </span>
+                <CardHeader className="flex flex-col gap-2">
+                  <div className="flex justify-between gap-2 w-full">
+                    <div>
+                      <CardTitle>Churn Analysis</CardTitle>
+
                     </div>
+                    <Select
+                      value={String(churnPeriod)}
+                      onValueChange={(value) => setChurnPeriod(Number(value))}
+                    >
+                      <SelectTrigger className="h-11 w-56">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">Last 7 days</SelectItem>
+                        <SelectItem value="30">Last 30 days</SelectItem>
+                        <SelectItem value="60">Last 60 days</SelectItem>
+                        <SelectItem value="90">Last 90 days</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select
-                    value={String(churnPeriod)}
-                    onValueChange={(value) => setChurnPeriod(Number(value))}
-                  >
-                    <SelectTrigger className="h-11 w-56">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">Last 7 days</SelectItem>
-                      <SelectItem value="30">Last 30 days</SelectItem>
-                      <SelectItem value="60">Last 60 days</SelectItem>
-                      <SelectItem value="90">Last 90 days</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    <span>
+                      Cancellations:{" "}
+                      <Badge variant="destructive">
+                        {churnAnalysis?.cancellations ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
+                      Retention Rate:{" "}
+                      <Badge variant="secondary">
+                        {formatPercentage(churnAnalysis?.retention_rate)}
+                      </Badge>
+                    </span>
+                    <span>
+                      Churn Rate:{" "}
+                      <Badge variant="destructive">
+                        {formatPercentage(churnAnalysis?.churn_rate)}
+                      </Badge>
+                    </span>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {churnLoading ? (

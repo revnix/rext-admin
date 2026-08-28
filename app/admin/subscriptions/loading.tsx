@@ -9,7 +9,7 @@ export default function SubscriptionsLoading() {
       variant="table"
       rows={12}
       columns={8}
-      title="Subscription Management"
+      title="Subscription Analytics"
     />
   );
 }

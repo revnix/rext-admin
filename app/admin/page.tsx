@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
     {
       title: "Subscription Analytics",
       description: "Monitor MRR, churn, trial conversion, and revenue metrics",
-      href: "/admin/analytics/subscriptions",
+      href: "/admin/subscriptions",
       icon: TrendingUp,
       permission: null, // Requires super admin (checked in page)
     },
