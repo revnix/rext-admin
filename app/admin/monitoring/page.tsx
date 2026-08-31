@@ -151,6 +151,8 @@ export default function MonitoringPage() {
   const {
     data: errorLogsData,
     isLoading: errorLogsLoading,
+    isError: errorLogsIsError,
+    error: errorLogsError,
     refetch: refetchErrorLogs,
   } = useQuery({
     queryKey: [
@@ -167,6 +169,7 @@ export default function MonitoringPage() {
         severity: errorLogFilters.severity || undefined,
         start_date: errorLogFilters.start_date || undefined,
         end_date: errorLogFilters.end_date || undefined,
+        include_stack_trace: "true",
       });
       return apiClient.request<ErrorLogData>(url);
     },
@@ -427,6 +430,8 @@ export default function MonitoringPage() {
                     logs={errorLogs}
                     pagination={errorLogsPagination}
                     isLoading={errorLogsLoading}
+                    isError={errorLogsIsError}
+                    error={errorLogsError}
                     filters={errorLogFilters}
                     onPageChange={setErrorLogPage}
                     onFiltersChange={setErrorLogFilters}
