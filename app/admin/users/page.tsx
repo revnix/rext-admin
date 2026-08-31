@@ -2,17 +2,27 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  Ban,
+  CheckCircle2,
   Mail,
+  PauseCircle,
+  Pencil,
+  Shield,
   ShieldCheck,
+  Trash2,
   User as UserIcon,
   Users as UsersIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
+import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
+import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
+import { UserStatusDialog } from "@/components/admin/users/user-status-dialog";
 import { DataTable } from "@/components/data-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
 import { PageLayout } from "@/components/page-layout";
 import { PermissionGuard } from "@/components/permission/permission-guard";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -22,8 +32,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ErrorPage } from "@/components/ui/error-states";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { User } from "@/lib/api-client/users";
+import type { User, UserStatusAction } from "@/lib/api-client/users";
 import { USER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 
@@ -36,11 +47,33 @@ interface UserData extends Record<string, unknown> {
   display_name: string | null | undefined;
   full_name: string | null | undefined;
   initials: string;
+  avatar_url: string | null | undefined;
+  display_role: string;
+  last_login_at: string | null | undefined;
+  login_count: number;
+  created_at: string | null | undefined;
 }
 
+type UsersDialogState =
+  | { type: "closed" }
+  | { type: "impersonate"; user: User }
+  | { type: "status"; user: User; action: UserStatusAction }
+  | { type: "manageRoles"; user: User }
+  | { type: "edit"; user: User }
+  | { type: "delete"; user: User };
+
 export default function AdminUsersPage() {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+  const [dialogState, setDialogState] = useState<UsersDialogState>({
+    type: "closed",
+  });
+
+  const closeDialog = () => setDialogState({ type: "closed" });
+
+  // Row actions are built from permissions rather than wrapped in a
+  // PermissionGuard, because RowAction has no way to hide an entry.
+  const canUpdateUsers = usePermission(USER_PERMISSIONS.UPDATE);
+  const canDeleteUsers = usePermission(USER_PERMISSIONS.DELETE);
+  const canManageRoles = usePermission(USER_PERMISSIONS.MANAGE_ROLES);
 
   // Fetch all users
   const { data, isLoading, error, refetch } = useQuery({
@@ -48,13 +81,8 @@ export default function AdminUsersPage() {
     queryFn: () => apiClient.users.list(),
   });
 
-  const handleImpersonate = (userId: string) => {
-    const user = data?.users.find((u) => u.id === userId);
-    if (user) {
-      setSelectedUser(user);
-      setShowImpersonateDialog(true);
-    }
-  };
+  const findUser = (userId: string) =>
+    data?.users.find((u) => u.id === userId) ?? null;
 
   const getStatusBadge = (status: string) => {
     const variants: Record<
@@ -67,10 +95,13 @@ export default function AdminUsersPage() {
       active: { variant: "default", text: "Active" },
       inactive: { variant: "secondary", text: "Inactive" },
       suspended: { variant: "destructive", text: "Suspended" },
+      banned: { variant: "destructive", text: "Banned" },
       pending: { variant: "outline", text: "Pending" },
     };
 
-    const config = variants[status] || variants.active;
+    // Never fall back to "Active" — an unrecognised status must not read as
+    // a healthy account.
+    const config = variants[status] || { variant: "outline", text: status };
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
   const getUserInitials = (user: User) => {
@@ -91,6 +122,20 @@ export default function AdminUsersPage() {
     return user.email.slice(0, 2).toUpperCase();
   };
 
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return "Never";
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   // Transform users data for DataTable
   const tableData: UserData[] = (data?.users || []).map((user) => ({
     id: user.id,
@@ -100,7 +145,12 @@ export default function AdminUsersPage() {
     email_verified: user.email_verified,
     display_name: user.display_name,
     full_name: user.full_name,
-    initials: getUserInitials(user),
+    initials: user.initials || getUserInitials(user),
+    avatar_url: user.avatar_url,
+    display_role: user.display_role || "User",
+    last_login_at: user.last_login_at,
+    login_count: user.login_count ?? 0,
+    created_at: user.created_at,
   }));
 
   // Define columns
@@ -108,11 +158,14 @@ export default function AdminUsersPage() {
     {
       key: "name",
       header: "User",
-      width: "200px",
+      width: "140px",
       cell: (value, row) => (
-        <div className="flex items-center gap-2 min-w-[150px]">
-          <Avatar className="h-8 w-8 flex-shrink-0">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar className="h-7 w-7 flex-shrink-0">
+            {row.avatar_url && (
+              <AvatarImage src={row.avatar_url} alt={row.name} />
+            )}
+            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-semibold">
               {row.initials}
             </AvatarFallback>
           </Avatar>
@@ -133,29 +186,29 @@ export default function AdminUsersPage() {
     {
       key: "email",
       header: "Email",
-      width: "180px",
+      width: "140px",
       cell: (value) => (
-        <span className="text-xs text-muted-foreground truncate block min-w-[120px]">
+        <span className="text-xs text-muted-foreground truncate block min-w-0">
           {value as string}
         </span>
       ),
       searchable: true,
     },
     {
-      key: "full_name",
-      header: "Full Name",
-      width: "120px",
+      key: "display_role",
+      header: "Role",
+      width: "90px",
       cell: (value) => (
-        <span className="text-xs text-muted-foreground truncate block min-w-[100px]">
-          {value as string}
-        </span>
+        <Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
+          {(value as string) || "User"}
+        </Badge>
       ),
       searchable: true,
     },
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "85px",
       cell: (value) => (
         <div className="scale-90 origin-left">
           {getStatusBadge(value as string)}
@@ -165,7 +218,7 @@ export default function AdminUsersPage() {
     {
       key: "email_verified",
       header: "Verified",
-      width: "100px",
+      width: "75px",
       cell: (value) => {
         const verified = value as boolean;
         return verified ? (
@@ -186,16 +239,105 @@ export default function AdminUsersPage() {
         );
       },
     },
+    {
+      key: "last_login_at",
+      header: "Last Login",
+      width: "105px",
+      cell: (value, row) => (
+        <div className="min-w-0">
+          <span className="text-xs text-muted-foreground block truncate">
+            {formatDate(value as string | null)}
+          </span>
+          {row.login_count > 0 && (
+            <span className="text-[10px] text-muted-foreground/70 block truncate">
+              {row.login_count} {row.login_count === 1 ? "login" : "logins"}
+            </span>
+          )}
+        </div>
+      ),
+    },
   ];
 
-  // Define row actions
+  // Define row actions.
+  // Gated on the same permissions the backend enforces, so nothing renders
+  // that would only come back as a 403.
   const rowActions: RowAction<UserData>[] = [
     {
       label: "Impersonate",
       icon: <UserIcon className="h-4 w-4" />,
-      onClick: (row) => handleImpersonate(row.id),
+      onClick: (row) => {
+        const user = findUser(row.id);
+        if (user) setDialogState({ type: "impersonate", user });
+      },
       primary: true,
     },
+    ...(canManageRoles
+      ? [
+          {
+            label: "Manage roles",
+            icon: <Shield className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user) setDialogState({ type: "manageRoles", user });
+            },
+          },
+        ]
+      : []),
+    ...(canUpdateUsers
+      ? [
+          {
+            label: "Edit details",
+            icon: <Pencil className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user) setDialogState({ type: "edit", user });
+            },
+          },
+          {
+            label: "Activate",
+            icon: <CheckCircle2 className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user)
+                setDialogState({ type: "status", user, action: "activate" });
+            },
+            disabled: (row: UserData) => row.status === "active",
+          },
+          {
+            label: "Suspend",
+            icon: <PauseCircle className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user)
+                setDialogState({ type: "status", user, action: "suspend" });
+            },
+            disabled: (row: UserData) => row.status === "suspended",
+          },
+          {
+            label: "Ban",
+            icon: <Ban className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user) setDialogState({ type: "status", user, action: "ban" });
+            },
+            variant: "destructive" as const,
+            disabled: (row: UserData) => row.status === "banned",
+          },
+        ]
+      : []),
+    ...(canDeleteUsers
+      ? [
+          {
+            label: "Delete user",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user) setDialogState({ type: "delete", user });
+            },
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
   ];
 
   if (error) {
@@ -346,15 +488,33 @@ export default function AdminUsersPage() {
             </CardContent>
           </Card>
 
-          {/* Impersonation Dialog */}
+          {/* Dialogs */}
           <ImpersonationStartDialog
-            user={selectedUser}
-            open={showImpersonateDialog}
-            onOpenChange={setShowImpersonateDialog}
-            onStarted={() => {
-              // Dialog handles everything, just reset state
-              setSelectedUser(null);
-            }}
+            user={dialogState.type === "impersonate" ? dialogState.user : null}
+            open={dialogState.type === "impersonate"}
+            onOpenChange={closeDialog}
+            onStarted={closeDialog}
+          />
+          <UserStatusDialog
+            open={dialogState.type === "status"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "status" ? dialogState.user : null}
+            action={dialogState.type === "status" ? dialogState.action : null}
+          />
+          <ManageUserRolesDialog
+            open={dialogState.type === "manageRoles"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "manageRoles" ? dialogState.user : null}
+          />
+          <EditUserDialog
+            open={dialogState.type === "edit"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "edit" ? dialogState.user : null}
+          />
+          <DeleteUserDialog
+            open={dialogState.type === "delete"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "delete" ? dialogState.user : null}
           />
         </div>
       </PermissionGuard>

@@ -483,7 +483,11 @@ export function DataTable<
                           </div>
                         </TableHead>
                       ))}
-                      <TableHead className="w-[50px]"></TableHead>
+                      {displayRowActions.length > 0 && (
+                        <TableHead className="w-[200px] text-right font-medium">
+                          Actions
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -507,13 +511,15 @@ export function DataTable<
                                 ] as string) || "--"}
                           </TableCell>
                         ))}
-                        <TableCell className="w-[200px]">
-                          <ActionsCell
-                            actions={displayRowActions}
-                            row={row as T}
-                            showOnHover={shouldShowActionsOnHover()}
-                          />
-                        </TableCell>
+                        {displayRowActions.length > 0 && (
+                          <TableCell className="w-[200px]">
+                            <ActionsCell
+                              actions={displayRowActions}
+                              row={row as T}
+                              showOnHover={shouldShowActionsOnHover()}
+                            />
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

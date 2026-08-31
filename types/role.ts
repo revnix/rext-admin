@@ -42,6 +42,8 @@ export interface Role {
   description?: string;
   hierarchy_level: number;
   is_system_role: boolean;
+  /** True when the role may be scoped to a workspace rather than the platform. */
+  is_workspace_role?: boolean;
   created_at: string;
   updated_at: string;
 }

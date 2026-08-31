@@ -28,6 +28,7 @@ export function createRolesNamespace(client: ApiClient) {
           display_name: string;
           description?: string;
           is_system_role: boolean;
+          is_workspace_role?: boolean;
           hierarchy_level: number;
           created_at: string;
           updated_at: string;
@@ -199,9 +200,17 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
         }>;
         count: number;
-        page: number;
-        per_page: number;
-        total_pages: number;
+        page?: number;
+        per_page?: number;
+        total_pages?: number;
+        pagination?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+          has_next: boolean;
+          has_prev: boolean;
+        };
       }>(url, {
         method: "GET",
       });
@@ -212,7 +221,7 @@ export function createRolesNamespace(client: ApiClient) {
      */
     listPermissions: async (resource?: string, includeRoles = false) => {
       const PER_PAGE = 100;
-      const firstPage = await client.request<{
+      type PermissionListResponse = {
         permissions: Array<{
           id: string;
           name: string;
@@ -229,10 +238,20 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
         }>;
         count: number;
-        page: number;
-        per_page: number;
-        total_pages: number;
-      }>(
+        page?: number;
+        per_page?: number;
+        total_pages?: number;
+        pagination?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+          has_next: boolean;
+          has_prev: boolean;
+        };
+      };
+
+      const firstPage = await client.request<PermissionListResponse>(
         buildUrl(ENDPOINTS.PERMISSIONS.list, {
           resource,
           include_roles: includeRoles ? "true" : undefined,
@@ -242,34 +261,18 @@ export function createRolesNamespace(client: ApiClient) {
         { method: "GET" },
       );
 
-      const totalPages = firstPage.total_pages ?? 1;
+      const totalPages =
+        firstPage.pagination?.total_pages ?? firstPage.total_pages ?? 1;
       if (totalPages <= 1) {
-        return { permissions: firstPage.permissions, count: firstPage.count };
+        return {
+          permissions: firstPage.permissions,
+          count: firstPage.pagination?.total ?? firstPage.count,
+        };
       }
 
       const remainingPages = await Promise.all(
         Array.from({ length: totalPages - 1 }, (_, i) =>
-          client.request<{
-            permissions: Array<{
-              id: string;
-              name: string;
-              display_name: string;
-              description?: string;
-              resource: string;
-              action: string;
-              created_at: string;
-              roles?: Array<{
-                id: string;
-                name: string;
-                display_name: string;
-                hierarchy_level: number;
-              }>;
-            }>;
-            count: number;
-            page: number;
-            per_page: number;
-            total_pages: number;
-          }>(
+          client.request<PermissionListResponse>(
             buildUrl(ENDPOINTS.PERMISSIONS.list, {
               resource,
               include_roles: includeRoles ? "true" : undefined,
@@ -286,7 +289,10 @@ export function createRolesNamespace(client: ApiClient) {
         ...remainingPages.flatMap((p) => p.permissions),
       ];
 
-      return { permissions: allPermissions, count: firstPage.count };
+      return {
+        permissions: allPermissions,
+        count: firstPage.pagination?.total ?? allPermissions.length,
+      };
     },
 
     /**

@@ -36,8 +36,22 @@ export interface User {
   avatar_url?: string | null;
   language?: string;
   timezone?: string;
+  display_role?: string;
+  last_login_at?: string | null;
+  login_count?: number;
+  initials?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  full_name?: string;
+  display_name?: string;
+  password?: string;
+  avatar_url?: string | null;
+  language?: string;
+  timezone?: string;
 }
 
 export interface UsersListPagination {
@@ -54,6 +68,53 @@ export interface UsersListResponse {
   total_count: number;
   workspace_id?: string | null;
   pagination?: UsersListPagination;
+}
+
+/** Admin-initiated status transitions. Mirrors the backend's valid status set. */
+export type UserStatusAction = "suspend" | "activate" | "ban";
+
+export interface UserStatusChangeResponse {
+  user_id: string;
+  full_name?: string | null;
+  email: string;
+  old_status: string;
+  new_status: string;
+  changed_by?: string | null;
+  reason?: string | null;
+  changed_at: string;
+}
+
+/**
+ * A single role assignment for a user.
+ *
+ * Shape comes from RoleService.get_user_roles(), which is richer than the
+ * route's declared UserRolesListResponse schema. The declared schema is not
+ * enforced (routes return a JSONResponse via success(), which bypasses
+ * FastAPI response_model validation), so this matches the real payload.
+ */
+export interface UserRoleAssignment {
+  id: string;
+  role_id: string;
+  role_name: string;
+  role_display_name: string;
+  hierarchy_level: number;
+  is_workspace_role: boolean;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  is_primary: boolean;
+  assigned_at: string | null;
+}
+
+export interface UserRolesListResponse {
+  roles: UserRoleAssignment[];
+  count: number;
+}
+
+export interface AssignUserRoleRequest {
+  role_id: string;
+  /** null = platform-wide (global) role */
+  workspace_id?: string | null;
+  is_primary?: boolean;
 }
 
 export function createUsersNamespace(client: ApiClient) {
@@ -106,6 +167,118 @@ export function createUsersNamespace(client: ApiClient) {
     get: async (userId: string): Promise<User> => {
       return client.request<User>(ENDPOINTS.USERS.byId(userId), {
         method: "GET",
+      });
+    },
+
+    /**
+     * Change a user's account status (admin).
+     *
+     * Requires `user.update`. The backend records an audit log entry with the
+     * old status, new status and reason, so always pass a reason where the
+     * action is punitive.
+     */
+    setStatus: async (
+      userId: string,
+      action: UserStatusAction,
+      reason?: string,
+    ): Promise<UserStatusChangeResponse> => {
+      return client.request<UserStatusChangeResponse>(
+        ENDPOINTS.USERS[action](userId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // The body is required even though `reason` itself is optional.
+          body: JSON.stringify({ reason: reason?.trim() || null }),
+        },
+      );
+    },
+
+    /**
+     * Update user details (admin).
+     * Requires `user.update`.
+     */
+    updateUser: async (
+      userId: string,
+      data: UpdateUserRequest,
+    ): Promise<User> => {
+      return client.request<User>(ENDPOINTS.USERS.update(userId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Soft delete a user (admin).
+     * Requires `user.delete`.
+     */
+    deleteUser: async (userId: string): Promise<{ id: string }> => {
+      return client.request<{ id: string }>(ENDPOINTS.USERS.delete(userId), {
+        method: "DELETE",
+      });
+    },
+
+    /**
+     * List every role assigned to a user, global and workspace-scoped.
+     */
+    listRoles: async (
+      userId: string,
+      workspaceId?: string,
+    ): Promise<UserRolesListResponse> => {
+      const query = workspaceId
+        ? `?${new URLSearchParams({ workspace_id: workspaceId })}`
+        : "";
+      return client.request<UserRolesListResponse>(
+        `${ENDPOINTS.USERS.roles.list(userId)}${query}`,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Assign a role to a user. Requires `user.manage_roles`.
+     *
+     * Omit `workspace_id` (or pass null) for a platform-wide role. A
+     * workspace-scoped assignment is rejected unless the user is already a
+     * member of that workspace.
+     */
+    assignRole: async (userId: string, data: AssignUserRoleRequest) => {
+      return client.request<{
+        assignment: Record<string, unknown>;
+        role_name: string;
+        role_display_name: string;
+        workspace_name: string | null;
+      }>(ENDPOINTS.USERS.roles.assign(userId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role_id: data.role_id,
+          workspace_id: data.workspace_id ?? null,
+          is_primary: data.is_primary ?? false,
+        }),
+      });
+    },
+
+    /**
+     * Revoke a role from a user. Requires `user.manage_roles`.
+     *
+     * `workspaceId` must match the scope the role was assigned under,
+     * otherwise the assignment will not be found.
+     */
+    revokeRole: async (
+      userId: string,
+      roleId: string,
+      workspaceId?: string | null,
+    ) => {
+      const query = workspaceId
+        ? `?${new URLSearchParams({ workspace_id: workspaceId })}`
+        : "";
+      return client.request<{
+        user_id: string;
+        role_id: string;
+        workspace_id: string | null;
+        role_name: string;
+      }>(`${ENDPOINTS.USERS.roles.revoke(userId, roleId)}${query}`, {
+        method: "DELETE",
       });
     },
 

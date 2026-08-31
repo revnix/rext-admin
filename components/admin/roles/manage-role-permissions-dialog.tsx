@@ -56,11 +56,17 @@ export function ManageRolePermissionsDialog({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
 
-      const currentPermissionIds = role.permissions?.map((p) => p.id) || [];
-      const toAdd = selectedPermissionIds.filter(
-        (id) => !currentPermissionIds.includes(id),
+      const managedPermissionIds = new Set(
+        (allPermissions || []).map((p) => p.id),
       );
-      const toRemove = currentPermissionIds.filter(
+      const currentManagedPermissionIds = (role.permissions || [])
+        .map((p) => p.id)
+        .filter((id) => managedPermissionIds.has(id));
+
+      const toAdd = selectedPermissionIds.filter(
+        (id) => !currentManagedPermissionIds.includes(id),
+      );
+      const toRemove = currentManagedPermissionIds.filter(
         (id) => !selectedPermissionIds.includes(id),
       );
 
