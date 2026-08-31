@@ -735,10 +735,11 @@ export function WorkspaceBrandVoiceForm({
                 <div className="space-y-4">
                   <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Select Persona (Optional)
+                      Select Personas (Optional)
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      Choose a persona to represent your brand voice
+                      Choose one or more personas to represent your brand voice.
+                      Multiple selections are supported.
                     </p>
                   </div>
                   <PersonaSelection

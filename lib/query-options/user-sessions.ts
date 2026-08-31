@@ -12,7 +12,10 @@ export const userSessionsQueryOptions = (refetchInterval?: number) =>
     // with increasing delays gives the refresh time to complete.
     retry: (failureCount, error) => {
       // Don't retry definitive errors that won't recover
-      if (ApiError.is(error) && (error.statusCode === 403 || error.statusCode === 404)) {
+      if (
+        ApiError.is(error) &&
+        (error.statusCode === 403 || error.statusCode === 404)
+      ) {
         return false;
       }
       return failureCount < 3;
