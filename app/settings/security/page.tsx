@@ -9,6 +9,7 @@ import {
   LogOut,
   MapPin,
   Monitor,
+  RefreshCw,
   Shield,
   ShieldAlert,
   Smartphone,
@@ -48,6 +49,7 @@ export default function SecuritySettingsPage() {
     data: sessionData,
     isLoading: sessionsLoading,
     error: sessionsError,
+    refetch: refetchSessions,
   } = useQuery(userSessionsQueryOptions(30000));
 
   // Fetch security stats (admin only)
@@ -122,9 +124,21 @@ export default function SecuritySettingsPage() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">
-            Failed to load sessions: {sessionsError.message}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-3 py-4">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
+            <p className="text-destructive text-center">
+              Failed to load sessions: {sessionsError.message}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchSessions()}
+              className="mt-2"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Retry
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
