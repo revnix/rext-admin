@@ -108,6 +108,20 @@ interface AnalyticsOverview {
   }>;
 }
 
+interface SubscriptionStats {
+  total_subscriptions: number;
+  active_subscriptions: number;
+  trial_subscriptions: number;
+  cancelled_subscriptions: number;
+  expired_subscriptions: number;
+  suspended_subscriptions: number;
+  mrr: number;
+  arr: number;
+  churn_rate_monthly: number;
+  trial_conversion_rate: number;
+  average_ltv: number | null;
+}
+
 type RevenueHistory = Array<{
   month: string;
   mrr: number;
@@ -251,12 +265,22 @@ export default function SubscriptionAnalyticsPage() {
     "monthly" | "yearly"
   >("monthly");
 
-  // Fetch analytics overview
   const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
       return apiClient.request<AnalyticsOverview>(
         "/api/v1/admin/subscriptions/analytics/overview",
+      );
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch analytics overview
+  const { data: stats } = useQuery({
+    queryKey: ["admin", "subscriptions", "stats", "overview"],
+    queryFn: async () => {
+      return apiClient.request<SubscriptionStats>(
+        "/api/v1/admin/subscriptions/stats/overview",
       );
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -335,7 +359,6 @@ export default function SubscriptionAnalyticsPage() {
     );
   }
 
-  const stats = overview?.stats;
   const revenueByPlan = overview?.revenue_by_plan;
   const growthMetrics = overview?.growth_metrics;
   const recentSubscriptions = overview?.recent_subscriptions;
@@ -493,7 +516,7 @@ export default function SubscriptionAnalyticsPage() {
               </CardContent>
             </Card>
             <div className="flex flex-col gap-6">
-              <Card >
+              <Card>
                 <CardHeader>
                   <CardTitle>Trial Conversion Funnel</CardTitle>
                   <div className="mt-3 grid grid-cols-2 items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
@@ -561,7 +584,6 @@ export default function SubscriptionAnalyticsPage() {
                   <div className="flex justify-between gap-2 w-full">
                     <div>
                       <CardTitle>Churn Analysis</CardTitle>
-
                     </div>
                     <Select
                       value={String(churnPeriod)}
@@ -611,16 +633,16 @@ export default function SubscriptionAnalyticsPage() {
                         <p className="mb-5 font-medium">Cancellation Reasons</p>
                         {Object.keys(churnAnalysis?.cancellation_reasons ?? {})
                           .length > 0 && (
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                              {Object.entries(
-                                churnAnalysis?.cancellation_reasons ?? {},
-                              ).map(([reason, count]) => (
-                                <span key={reason}>
-                                  {reason}: {count}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                            {Object.entries(
+                              churnAnalysis?.cancellation_reasons ?? {},
+                            ).map(([reason, count]) => (
+                              <span key={reason}>
+                                {reason}: {count}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   )}
