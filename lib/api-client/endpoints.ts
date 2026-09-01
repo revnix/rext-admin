@@ -200,6 +200,9 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
+    delete: "/api/v1/user/delete",
+    recoveryRequest: "/api/v1/auth/account-recovery/request",
+    recoveryVerify: "/api/v1/auth/account-recovery/verify",
   },
 
   /**
