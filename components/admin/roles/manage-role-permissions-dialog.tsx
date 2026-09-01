@@ -56,38 +56,13 @@ export function ManageRolePermissionsDialog({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
 
-      const managedPermissionIds = new Set(
-        (allPermissions || []).map((p) => p.id),
-      );
-      const currentManagedPermissionIds = (role.permissions || [])
-        .map((p) => p.id)
-        .filter((id) => managedPermissionIds.has(id));
-
-      const toAdd = selectedPermissionIds.filter(
-        (id) => !currentManagedPermissionIds.includes(id),
-      );
-      const toRemove = currentManagedPermissionIds.filter(
-        (id) => !selectedPermissionIds.includes(id),
-      );
-
-      // Add new permissions
-      if (toAdd.length > 0) {
-        await apiClient.roles.assignPermissions(role.id, {
-          permission_ids: toAdd,
-        });
-      }
-
-      // Remove permissions
-      for (const permissionId of toRemove) {
-        await apiClient.roles.revokePermission(role.id, permissionId);
-      }
-
-      return { added: toAdd.length, removed: toRemove.length };
+      // Use atomic single-transaction update endpoint
+      return await apiClient.roles.updatePermissions(role.id, {
+        permission_ids: selectedPermissionIds,
+      });
     },
-    onSuccess: async (data) => {
-      toast.success(
-        `Permissions updated: ${data.added} added, ${data.removed} removed`,
-      );
+    onSuccess: async () => {
+      toast.success("Role permissions updated successfully");
 
       invalidateWorkspacePermissions();
 

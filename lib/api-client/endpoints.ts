@@ -460,6 +460,8 @@ export const ENDPOINTS = {
     permissions: {
       assign: (roleId: string) =>
         `/api/v1/roles/${roleId}/permissions` as const,
+      update: (roleId: string) =>
+        `/api/v1/roles/${roleId}/permissions` as const,
       revoke: (roleId: string, permissionId: string) =>
         `/api/v1/roles/${roleId}/permissions/${permissionId}` as const,
     },
