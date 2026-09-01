@@ -101,7 +101,6 @@ export default function AdminUsersPage() {
     full_name: user.full_name,
     initials: getUserInitials(user),
   }));
-  console.log("tableData", tableData);
 
   // Define columns
   const columns: Column<UserData>[] = [
