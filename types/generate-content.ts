@@ -434,6 +434,12 @@ export type ContentImage = {
   alt_text: string;
   context: string;
   placement: string;
+  /** "pending_manual_upload" when image generation is disabled and this entry
+   *  is a manual-upload placeholder awaiting a real image from the user. */
+  status?: string;
+  /** Matches the id encoded in the body_markdown placeholder marker
+   *  (rext-placeholder:<id>) when status is "pending_manual_upload". */
+  placeholder_id?: string;
 };
 
 export type ContentLink = {
