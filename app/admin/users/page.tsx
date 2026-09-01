@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
     id: user.id,
     name: user.display_name || user.full_name || user.email,
     email: user.email,
-    status: user.status,
+    status: !user.email_verified ? "pending" : user.status || "active",
     email_verified: user.email_verified,
     display_name: user.display_name,
     full_name: user.full_name,
@@ -403,7 +403,9 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.users.filter((u) => u.status === "active").length || 0}
+                  {data?.users.filter(
+                    (u) => u.status === "active" && u.email_verified,
+                  ).length || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Currently active
@@ -431,8 +433,7 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.users.filter((u) => u.status === "pending").length ||
-                    0}
+                  {data?.users.filter((u) => !u.email_verified).length || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Awaiting verification

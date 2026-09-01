@@ -95,8 +95,12 @@ export default function AdminRolesPage() {
   const canManageRolePermissions = usePermission(
     ADMIN_PERMISSIONS.ROLE_MANAGE_PERMISSIONS,
   );
-  const canUpdatePermission = usePermission(ADMIN_PERMISSIONS.PERMISSION_UPDATE);
-  const canDeletePermission = usePermission(ADMIN_PERMISSIONS.PERMISSION_DELETE);
+  const canUpdatePermission = usePermission(
+    ADMIN_PERMISSIONS.PERMISSION_UPDATE,
+  );
+  const canDeletePermission = usePermission(
+    ADMIN_PERMISSIONS.PERMISSION_DELETE,
+  );
 
   // Fetch roles with permissions
   const {

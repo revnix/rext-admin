@@ -72,8 +72,8 @@ export function DeleteUserDialog({
             <AlertTitle>Warning</AlertTitle>
             <AlertDescription className="text-xs">
               This action soft-deletes the user account, revokes all workspace
-              memberships, and invalidates active sessions. There is no automated
-              restore option from the UI.
+              memberships, and invalidates active sessions. There is no
+              automated restore option from the UI.
             </AlertDescription>
           </Alert>
 
