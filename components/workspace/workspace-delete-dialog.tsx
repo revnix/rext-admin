@@ -23,7 +23,6 @@ import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { WorkspaceData } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
-import { useSubscriptionStore } from "@/stores/subscription-store";
 
 interface WorkspaceDeleteDialogProps {
   /**

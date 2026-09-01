@@ -85,8 +85,7 @@ export function WorkspaceCreateWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // Check workspace limit
-  const { checkLimit, warnIfApproaching, canCreate, isLimitReached } =
-    useCheckLimit("workspaces");
+  const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
   // SSE-related state
   const [operationId, setOperationId] = useState<string | null>(null);

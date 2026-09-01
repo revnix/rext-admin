@@ -1,9 +1,9 @@
 import { sortAuditLogs } from "@/lib/audit-log-order";
-import { AuditActions } from "@/types/audit-log";
+import { AuditActions, type AuditLog } from "@/types/audit-log";
 
 describe("sortAuditLogs", () => {
   it("keeps workspace create before workspace update for the same resource", () => {
-    const logs = [
+    const logs: AuditLog[] = [
       {
         id: "update",
         action: AuditActions.WORKSPACE_UPDATE,

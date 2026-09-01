@@ -3,8 +3,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CreateWorkspacePage from "@/app/w/create/page";
 import { ThemeProvider } from "@/providers/theme-provider";
 
+interface PageLayoutProps {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}
+
 jest.mock("@/components/page-layout", () => ({
-  PageLayout: ({ title, description, children }: any) => (
+  PageLayout: ({ title, description, children }: PageLayoutProps) => (
     <div>
       <h1>{title}</h1>
       <p>{description}</p>

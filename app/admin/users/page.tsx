@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Ban,
   CheckCircle2,
-  Filter,
   Mail,
   PauseCircle,
   Pencil,
@@ -126,7 +125,7 @@ export default function AdminUsersPage() {
       }
       return name.slice(0, 2).toUpperCase();
     }
-    if (user.email && user.email.trim()) {
+    if (user.email?.trim()) {
       return user.email.trim().slice(0, 2).toUpperCase();
     }
     return "U";

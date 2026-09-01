@@ -15,7 +15,11 @@ export function sortAuditLogs(logs: AuditLog[]): AuditLog[] {
     const leftResourceId = left.resource_id ?? left.workspace_id ?? left.id;
     const rightResourceId = right.resource_id ?? right.workspace_id ?? right.id;
 
-    if (leftResourceId && rightResourceId && leftResourceId === rightResourceId) {
+    if (
+      leftResourceId &&
+      rightResourceId &&
+      leftResourceId === rightResourceId
+    ) {
       const leftActionPriority = actionPriority[left.action] ?? 10;
       const rightActionPriority = actionPriority[right.action] ?? 10;
 
@@ -24,6 +28,8 @@ export function sortAuditLogs(logs: AuditLog[]): AuditLog[] {
       }
     }
 
-    return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+    return (
+      new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+    );
   });
 }
