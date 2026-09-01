@@ -59,8 +59,6 @@ export function EditPermissionDialog({
       return await apiClient.roles.updatePermission(permission.id, {
         display_name: formData.display_name,
         description: formData.description || undefined,
-        resource: formData.resource.toLowerCase(),
-        action: formData.action.toLowerCase(),
       });
     },
     onSuccess: async () => {
@@ -84,21 +82,8 @@ export function EditPermissionDialog({
     e.preventDefault();
 
     // Validation
-    if (!formData.display_name || !formData.resource || !formData.action) {
-      toast.error("Display name, resource, and action are required");
-      return;
-    }
-
-    // Validate format
-    if (!/^[a-z_]+$/.test(formData.resource.toLowerCase())) {
-      toast.error(
-        "Resource must contain only lowercase letters and underscores",
-      );
-      return;
-    }
-
-    if (!/^[a-z_]+$/.test(formData.action.toLowerCase())) {
-      toast.error("Action must contain only lowercase letters and underscores");
+    if (!formData.display_name.trim()) {
+      toast.error("Display name is required");
       return;
     }
 
@@ -107,8 +92,6 @@ export function EditPermissionDialog({
 
   if (!permission) return null;
 
-  const generatedName = `${formData.resource.toLowerCase()}.${formData.action.toLowerCase()}`;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -116,57 +99,48 @@ export function EditPermissionDialog({
           <DialogHeader>
             <DialogTitle>Edit Permission</DialogTitle>
             <DialogDescription>
-              Update permission details. Changing resource or action will update
-              the permission name.
+              Update permission display name and description. Resource and action cannot be modified.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Current Name */}
             <div className="rounded-lg border p-3 bg-muted/50">
-              <span className="text-sm font-medium">Current Name: </span>
+              <span className="text-sm font-medium">Permission Identifier: </span>
               <code className="text-sm font-mono">{permission.name}</code>
             </div>
 
-            {/* Resource */}
+            {/* Resource (Read-only) */}
             <div className="space-y-2">
               <Label htmlFor="resource">
-                Resource <span className="text-destructive">*</span>
+                Resource
               </Label>
               <Input
                 id="resource"
-                placeholder="e.g., content"
                 value={formData.resource}
-                onChange={(e) =>
-                  setFormData({ ...formData, resource: e.target.value })
-                }
-                required
+                disabled
+                className="bg-muted opacity-80 cursor-not-allowed"
               />
+              <p className="text-[11px] text-muted-foreground">
+                Resource identifier is immutable after creation.
+              </p>
             </div>
 
-            {/* Action */}
+            {/* Action (Read-only) */}
             <div className="space-y-2">
               <Label htmlFor="action">
-                Action <span className="text-destructive">*</span>
+                Action
               </Label>
               <Input
                 id="action"
-                placeholder="e.g., create, read, update, delete"
                 value={formData.action}
-                onChange={(e) =>
-                  setFormData({ ...formData, action: e.target.value })
-                }
-                required
+                disabled
+                className="bg-muted opacity-80 cursor-not-allowed"
               />
+              <p className="text-[11px] text-muted-foreground">
+                Action identifier is immutable after creation.
+              </p>
             </div>
-
-            {/* New Name Preview */}
-            {generatedName !== permission.name && (
-              <div className="rounded-lg border p-3 bg-blue-50 dark:bg-blue-950/20 border-blue-200">
-                <span className="text-sm font-medium">New Name: </span>
-                <code className="text-sm font-mono">{generatedName}</code>
-              </div>
-            )}
 
             {/* Display Name */}
             <div className="space-y-2">

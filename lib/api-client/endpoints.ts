@@ -217,6 +217,9 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
+    delete: "/api/v1/user/delete",
+    recoveryRequest: "/api/v1/auth/account-recovery/request",
+    recoveryVerify: "/api/v1/auth/account-recovery/verify",
   },
 
   /**
@@ -459,6 +462,8 @@ export const ENDPOINTS = {
     delete: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     permissions: {
       assign: (roleId: string) =>
+        `/api/v1/roles/${roleId}/permissions` as const,
+      update: (roleId: string) =>
         `/api/v1/roles/${roleId}/permissions` as const,
       revoke: (roleId: string, permissionId: string) =>
         `/api/v1/roles/${roleId}/permissions/${permissionId}` as const,

@@ -199,7 +199,7 @@ export default function PrivacyPolicyPage() {
           <h3>After Cancellation</h3>
           <ul>
             <li>
-              <strong>Subscription Data:</strong> 30 days (for reactivation)
+              <strong>Subscription Data:</strong> 14 days (for reactivation)
             </li>
             <li>
               <strong>Transaction Records:</strong> 7 years (tax compliance)
@@ -274,7 +274,7 @@ export default function PrivacyPolicyPage() {
             <li>Service improvements</li>
           </ul>
           <p>
-            Material changes will be announced via email 30 days before taking
+            Material changes will be announced via email 14 days before taking
             effect.
           </p>
 

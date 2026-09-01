@@ -206,6 +206,26 @@ export function createRolesNamespace(client: ApiClient) {
     },
 
     /**
+     * Atomically update/replace permissions assigned to a role
+     */
+    updatePermissions: async (
+      roleId: string,
+      data: AssignPermissionsRequest,
+    ) => {
+      return client.request<{
+        role_id: string;
+        role_name: string;
+        added_count: number;
+        skipped_count: number;
+        invalid_count: number;
+      }>(ENDPOINTS.ROLES.permissions.update(roleId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
      * Revoke a permission from a role
      */
     revokePermission: async (roleId: string, permissionId: string) => {

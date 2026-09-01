@@ -179,7 +179,7 @@ export function CancelSubscriptionModal({
                       ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
                       : "Your access will end immediately"}
                   </li>
-                  <li>All your data will be preserved for 30 days</li>
+                  <li>All your data will be preserved for 14 days</li>
                   <li>You can reactivate your subscription anytime</li>
                   <li>No refunds for the current billing period</li>
                 </ul>
