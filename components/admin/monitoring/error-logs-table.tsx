@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
+  RefreshCw,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
@@ -63,6 +64,8 @@ interface ErrorLogsTableProps {
   logs: ErrorLog[];
   pagination?: Pagination;
   isLoading: boolean;
+  isError?: boolean;
+  error?: unknown;
   filters: {
     severity?: string;
     start_date?: string;
@@ -81,6 +84,8 @@ export function ErrorLogsTable({
   logs,
   pagination,
   isLoading,
+  isError = false,
+  error,
   filters,
   onPageChange,
   onFiltersChange,
@@ -151,6 +156,27 @@ export function ErrorLogsTable({
             <Skeleton key={key} className="h-12 w-full" />
           ),
         )}
+      </div>
+    );
+  }
+
+  if (isError) {
+    const message =
+      (error instanceof Error && error.message) ||
+      "Unable to load error logs from the server.";
+    return (
+      <div className="rounded-md border">
+        <div className="text-center py-12 text-muted-foreground">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-destructive opacity-70" />
+          <p className="font-medium text-foreground">
+            Failed to load error logs
+          </p>
+          <p className="text-sm mb-4">{message}</p>
+          <Button variant="outline" size="sm" onClick={() => onRefresh()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -307,6 +333,49 @@ export function ErrorLogsTable({
                 <p className="mt-1 text-sm text-muted-foreground">
                   {selectedLog.message}
                 </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="font-medium">Timestamp</div>
+                  <p className="mt-1 text-muted-foreground">
+                    {new Date(selectedLog.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Status</div>
+                  <p className="mt-1 text-muted-foreground">
+                    {selectedLog.resolved
+                      ? `Resolved${
+                          selectedLog.resolved_at
+                            ? ` · ${new Date(
+                                selectedLog.resolved_at,
+                              ).toLocaleString()}`
+                            : ""
+                        }`
+                      : "Open"}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Source</div>
+                  <p className="mt-1 text-muted-foreground font-mono break-all">
+                    {selectedLog.source || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Request ID</div>
+                  <p className="mt-1 text-muted-foreground font-mono break-all">
+                    {selectedLog.request_id || "N/A"}
+                  </p>
+                </div>
+                {selectedLog.user_id && (
+                  <div>
+                    <div className="font-medium">User ID</div>
+                    <p className="mt-1 text-muted-foreground font-mono break-all">
+                      {selectedLog.user_id}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {selectedLog.stack_trace && (

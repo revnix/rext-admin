@@ -463,7 +463,7 @@ export function PageLayout({
         <ImpersonationBanner />
 
         <div
-          className={`flex flex-1 flex-col gap-4 px-8 py-6 ${
+          className={`flex flex-1 flex-col gap-4 px-4 sm:px-8 py-6 min-w-0 ${
             fullWidth ? "w-full" : "max-w-[1600px] mx-auto w-full"
           } ${className}`}
         >
@@ -477,7 +477,7 @@ export function PageLayout({
           )}
 
           {/* Main Content */}
-          <div className="flex-1">{children}</div>
+          <div className="flex-1 min-w-0">{children}</div>
         </div>
         {/* Bottom generation progress dock */}
         <BackgroundGenerationDock />

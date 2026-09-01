@@ -154,22 +154,28 @@ export function createSecurityNamespace(client: ApiClient) {
         full_name?: string;
         email?: string;
         login_history?: Array<{
-          id: string;
-          ip_address: string;
-          location: string;
-          device: string;
-          browser: string;
-          success: boolean;
-          created_at: string;
+          id?: string;
+          timestamp?: string;
+          created_at?: string;
+          ip_address?: string | null;
+          location?: string;
+          device?: string;
+          browser?: string | null;
+          user_agent?: string | null;
+          success?: boolean;
+          status?: "success" | "failed";
         }>;
         history?: Array<{
-          id: string;
-          ip_address: string;
-          location: string;
-          device: string;
-          browser: string;
-          success: boolean;
-          created_at: string;
+          id?: string;
+          timestamp?: string;
+          created_at?: string;
+          ip_address?: string | null;
+          location?: string;
+          device?: string;
+          browser?: string | null;
+          user_agent?: string | null;
+          success?: boolean;
+          status?: "success" | "failed";
         }>;
         total_count?: number;
         total?: number;
@@ -178,10 +184,31 @@ export function createSecurityNamespace(client: ApiClient) {
         method: "GET",
       });
 
-      // Normalize: API returns `login_history`, component expects `history`
+      const normalizedHistory = (
+        response.history ??
+        response.login_history ??
+        []
+      ).map((event) => {
+        const status = event.status ?? (event.success ? "success" : "failed");
+        const createdAt =
+          event.created_at ?? event.timestamp ?? new Date(0).toISOString();
+
+        return {
+          ...event,
+          id: event.id ?? `${createdAt}-${event.ip_address ?? "unknown"}`,
+          created_at: createdAt,
+          success: event.success ?? status === "success",
+          browser: event.browser ?? event.user_agent ?? "Unknown",
+          ip_address: event.ip_address ?? null,
+        };
+      });
+
+      // Normalize backend payloads that use either `login_history` or `history`,
+      // and older fields like `timestamp` / `status` instead of `created_at` / `success`.
       return {
-        history: response.history ?? response.login_history ?? [],
-        total_count: response.total_count ?? response.total ?? 0,
+        history: normalizedHistory,
+        total_count:
+          response.total_count ?? response.total ?? normalizedHistory.length,
       };
     },
 

@@ -37,7 +37,7 @@ export function usePermissionDecision({
   );
 
   return useMemo(() => {
-    const isSessionLoading = status === "loading";
+    const isSessionLoading = status === "loading" && !session;
 
     if (!workspaceId) {
       if (mode === "single") {
@@ -98,6 +98,7 @@ export function usePermissionDecision({
     permissions,
     workspaceId,
     status,
+    session,
     user,
     workspacePermissions,
     isWorkspaceLoading,
@@ -281,7 +282,7 @@ export function useWorkspacePermission(
   );
 
   // Session still loading
-  const isSessionLoading = status === "loading";
+  const isSessionLoading = status === "loading" && !session;
 
   // If no workspace ID, fall back to global permission check
   if (!workspaceId) {
@@ -341,7 +342,7 @@ export function useAnyWorkspacePermission(
     (state) => state.isWorkspaceLoading,
   );
 
-  const isSessionLoading = status === "loading";
+  const isSessionLoading = status === "loading" && !session;
 
   if (!workspaceId) {
     return {
@@ -399,7 +400,7 @@ export function useAllWorkspacePermissions(
     (state) => state.isWorkspaceLoading,
   );
 
-  const isSessionLoading = status === "loading";
+  const isSessionLoading = status === "loading" && !session;
 
   if (!workspaceId) {
     return {

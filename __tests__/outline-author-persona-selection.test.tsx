@@ -18,12 +18,14 @@ describe("OutlineDisplay author persona selection", () => {
             name: "alpha",
             full_name: "Alpha Persona",
             professional_title: "SEO Strategist",
+            description: "An SEO specialist.",
           },
           {
             id: "persona-2",
             name: "bravo",
             full_name: "Bravo Persona",
             professional_title: "Content Lead",
+            description: "A content specialist.",
           },
         ],
       },
@@ -43,6 +45,9 @@ describe("OutlineDisplay author persona selection", () => {
           draft_retries: 0,
           review_retries: 0,
           max_retries: 0,
+          keywords_to_include: [],
+          target_audience: ["General"],
+          tone: "Professional",
         }}
         rawTokens='{"title":"Test Outline"}'
         isLoading={false}
