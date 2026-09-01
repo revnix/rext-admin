@@ -113,7 +113,7 @@ export function useAuthSession() {
   return {
     user,
     isAuthenticated,
-    isLoading: status === "loading",
+    isLoading: status === "loading" && !session,
     logout,
     session,
     activity: {

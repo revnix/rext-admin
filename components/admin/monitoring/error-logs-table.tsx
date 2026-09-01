@@ -168,7 +168,9 @@ export function ErrorLogsTable({
       <div className="rounded-md border">
         <div className="text-center py-12 text-muted-foreground">
           <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-destructive opacity-70" />
-          <p className="font-medium text-foreground">Failed to load error logs</p>
+          <p className="font-medium text-foreground">
+            Failed to load error logs
+          </p>
           <p className="text-sm mb-4">{message}</p>
           <Button variant="outline" size="sm" onClick={() => onRefresh()}>
             <RefreshCw className="h-4 w-4 mr-2" />

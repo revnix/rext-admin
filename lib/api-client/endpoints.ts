@@ -176,6 +176,23 @@ export const ENDPOINTS = {
       detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
       revokeAll: "/api/v1/user/sessions",
     },
+
+    // Admin status actions (require user.update)
+    suspend: (id: string) => `/api/v1/user/${id}/suspend` as const,
+    activate: (id: string) => `/api/v1/user/${id}/activate` as const,
+    ban: (id: string) => `/api/v1/user/${id}/ban` as const,
+
+    // Admin user operations
+    delete: (id: string) => `/api/v1/user/delete/${id}` as const,
+    update: (id: string) => `/api/v1/user/update/${id}` as const,
+
+    // Admin role assignment (require user.manage_roles)
+    roles: {
+      list: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      assign: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      revoke: (userId: string, roleId: string) =>
+        `/api/v1/user/${userId}/roles/${roleId}` as const,
+    },
   },
 
   /**

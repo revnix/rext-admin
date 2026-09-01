@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { isProtectedRole } from "@/lib/permissions";
 import type { RoleWithPermissions } from "@/types/role";
 import { usePermissionStore } from "@/stores/permission-store";
 
@@ -95,6 +96,8 @@ export function EditRoleDialog({
 
   if (!role) return null;
 
+  const isProtected = isProtectedRole(role);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
@@ -107,12 +110,13 @@ export function EditRoleDialog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {role.is_system_role && (
+            {isProtected && (
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
-                  This is a system role. Some restrictions apply to maintain
-                  system integrity.
+                  {role.is_system_role
+                    ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
+                    : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
                 </AlertDescription>
               </Alert>
             )}
@@ -144,7 +148,7 @@ export function EditRoleDialog({
                   setFormData({ ...formData, display_name: e.target.value })
                 }
                 required
-                disabled={role.is_system_role}
+                disabled={isProtected}
               />
             </div>
 
@@ -177,7 +181,7 @@ export function EditRoleDialog({
                     hierarchy_level: parseInt(e.target.value, 10) || 0,
                   })
                 }
-                disabled={role.is_system_role}
+                disabled={isProtected}
               />
               <p className="text-xs text-muted-foreground">
                 Higher numbers indicate higher authority
@@ -196,7 +200,7 @@ export function EditRoleDialog({
             </Button>
             <Button
               type="submit"
-              disabled={updateMutation.isPending || role.is_system_role}
+              disabled={updateMutation.isPending || isProtected}
             >
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
