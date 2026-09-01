@@ -92,35 +92,6 @@ export function createRolesNamespace(client: ApiClient) {
       };
     },
 
-    /**
-     * Get role by ID with optional permissions
-     */
-    get: async (roleId: string, includePermissions = false) => {
-      return client.request<{
-        role: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          is_system_role: boolean;
-          hierarchy_level: number;
-          created_at: string;
-          updated_at: string;
-          permissions?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            resource: string;
-            action: string;
-          }>;
-        };
-      }>(
-        `${ENDPOINTS.ROLES.get(roleId)}?include_permissions=${includePermissions}`,
-        {
-          method: "GET",
-        },
-      );
-    },
 
     /**
      * Create a new role
@@ -239,54 +210,6 @@ export function createRolesNamespace(client: ApiClient) {
       });
     },
 
-    /**
-     * List permissions for a single page
-     */
-    listPermissionsPage: async (
-      resource?: string,
-      includeRoles = false,
-      page = 1,
-      perPage = 100,
-    ) => {
-      const url = buildUrl(ENDPOINTS.PERMISSIONS.list, {
-        resource,
-        include_roles: includeRoles ? "true" : undefined,
-        page,
-        per_page: perPage,
-      });
-
-      return client.request<{
-        permissions: Array<{
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        }>;
-        count: number;
-        page?: number;
-        per_page?: number;
-        total_pages?: number;
-        pagination?: {
-          page: number;
-          per_page: number;
-          total: number;
-          total_pages: number;
-          has_next: boolean;
-          has_prev: boolean;
-        };
-      }>(url, {
-        method: "GET",
-      });
-    },
 
     /**
      * List all permissions with optional roles — fetches all pages automatically
@@ -367,33 +290,6 @@ export function createRolesNamespace(client: ApiClient) {
       };
     },
 
-    /**
-     * Get permission by ID
-     */
-    getPermission: async (permissionId: string, includeRoles = false) => {
-      return client.request<{
-        permission: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        };
-      }>(
-        `${ENDPOINTS.PERMISSIONS.get(permissionId)}?include_roles=${includeRoles}`,
-        {
-          method: "GET",
-        },
-      );
-    },
 
     /**
      * Create a new permission
