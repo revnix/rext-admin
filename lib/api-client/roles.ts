@@ -18,10 +18,15 @@ import { ENDPOINTS } from "./endpoints";
 export function createRolesNamespace(client: ApiClient) {
   return {
     /**
-     * List all roles with optional permissions
+     * List all roles with optional permissions — fetches all pages automatically
+     *
+     * The backend paginates this endpoint (default 50, max 100 per page), so a
+     * single unparameterised request silently truncates once the system has
+     * more than 50 roles. Same page-walking approach as listPermissions below.
      */
     list: async (includePermissions = false) => {
-      return client.request<{
+      const PER_PAGE = 100;
+      type RoleListResponse = {
         roles: Array<{
           id: string;
           name: string;
@@ -41,9 +46,50 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
         }>;
         count: number;
-      }>(`${ENDPOINTS.ROLES.list}?include_permissions=${includePermissions}`, {
+        pagination?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+          has_next: boolean;
+          has_prev: boolean;
+        };
+      };
+
+      const pageUrl = (page: number) =>
+        buildUrl(ENDPOINTS.ROLES.list, {
+          include_permissions: includePermissions ? "true" : "false",
+          page,
+          per_page: PER_PAGE,
+        });
+
+      const firstPage = await client.request<RoleListResponse>(pageUrl(1), {
         method: "GET",
       });
+
+      const totalPages = firstPage.pagination?.total_pages ?? 1;
+      if (totalPages <= 1) {
+        return {
+          roles: firstPage.roles,
+          count: firstPage.pagination?.total ?? firstPage.count,
+        };
+      }
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          client.request<RoleListResponse>(pageUrl(i + 2), { method: "GET" }),
+        ),
+      );
+
+      const allRoles = [
+        ...firstPage.roles,
+        ...remainingPages.flatMap((p) => p.roles),
+      ];
+
+      return {
+        roles: allRoles,
+        count: firstPage.pagination?.total ?? allRoles.length,
+      };
     },
 
     /**
@@ -124,13 +170,19 @@ export function createRolesNamespace(client: ApiClient) {
 
     /**
      * Delete a role
+     *
+     * The backend refuses to delete a role that is still assigned to users
+     * unless `reassignTo` names another role to move those users to first.
      */
-    delete: async (roleId: string) => {
+    delete: async (roleId: string, reassignTo?: string) => {
       return client.request<{
         role_id: string;
-      }>(ENDPOINTS.ROLES.delete(roleId), {
-        method: "DELETE",
-      });
+      }>(
+        buildUrl(ENDPOINTS.ROLES.delete(roleId), { reassign_to: reassignTo }),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
