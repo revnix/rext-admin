@@ -79,7 +79,17 @@ export default function AdminUsersPage() {
     type: "closed",
   });
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window === "undefined") return 10;
+    try {
+      const stored = localStorage.getItem("data-table-page-size-admin-users");
+      if (stored) {
+        const parsed = Number(stored);
+        if ([5, 10, 20, 25, 50, 100].includes(parsed)) return parsed;
+      }
+    } catch {}
+    return 10;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -321,16 +331,6 @@ export default function AdminUsersPage() {
         </div>
       ),
     },
-    {
-      key: "created_at",
-      header: "Joined",
-      width: "105px",
-      cell: (value) => (
-        <span className="text-xs text-muted-foreground block truncate min-w-0">
-          {formatDate(value as string | null)}
-        </span>
-      ),
-    },
   ];
 
   // Define row actions.
@@ -390,7 +390,8 @@ export default function AdminUsersPage() {
               if (user)
                 setDialogState({ type: "status", user, action: "suspend" });
             },
-            disabled: (row: UserData) => row.status === "suspended",
+            disabled: (row: UserData) =>
+              row.status === "suspended" || row.status === "banned",
           },
           {
             label: "Ban",
