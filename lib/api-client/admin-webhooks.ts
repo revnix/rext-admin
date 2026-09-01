@@ -172,10 +172,16 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
         events,
         pagination: raw.pagination,
         summary: {
-          total: raw.statistics?.total_failed ?? raw.pagination?.total ?? events.length,
+          total:
+            raw.statistics?.total_failed ??
+            raw.pagination?.total ??
+            events.length,
           processed: 0,
           pending: 0,
-          failed: raw.statistics?.total_failed ?? raw.pagination?.total ?? events.length,
+          failed:
+            raw.statistics?.total_failed ??
+            raw.pagination?.total ??
+            events.length,
         },
       };
     },

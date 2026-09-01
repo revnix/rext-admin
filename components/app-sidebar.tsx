@@ -296,7 +296,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       {isCreateWorkspaceLocked ? (
                         <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
                           <SidebarMenuButton
-                            tooltip={"Upgrade your plan to create more workspaces."}
+                            tooltip={
+                              "Upgrade your plan to create more workspaces."
+                            }
                             isActive={false}
                             className="cursor-not-allowed opacity-60 hover:bg-transparent data-[active=true]:bg-transparent"
                             onClick={(event) => event.preventDefault()}

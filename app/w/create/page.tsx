@@ -42,9 +42,8 @@ export default function CreateWorkspacePage() {
       mode: "single",
       permissions: ["workspace.create"],
     });
-  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
-    "workspaces",
-  );
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   if (isCheckingPermission || isLimitLoading) {
     return <PageLoader message="Checking workspace permissions..." />;

@@ -84,9 +84,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
         setPayloadLoading(true);
         setPayloadError(null);
         const detail = await apiClient.adminWebhooks.getEventDetail(event.id);
-        setPayload(
-          (detail.payload as Record<string, unknown> | null) ?? null,
-        );
+        setPayload((detail.payload as Record<string, unknown> | null) ?? null);
       } catch (_err) {
         setPayloadError("Unable to load webhook payload.");
       } finally {
@@ -142,11 +140,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleExpanded}
-            >
+            <Button variant="ghost" size="sm" onClick={toggleExpanded}>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (

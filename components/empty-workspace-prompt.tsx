@@ -24,9 +24,8 @@ import { useResourceLimit } from "@/components/subscription/usage-limit-warning"
  */
 export function EmptyWorkspacePrompt() {
   const { user } = useAuthSession();
-  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
-    "workspaces",
-  );
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   // Track sidebar empty state view on mount
   useEffect(() => {
@@ -66,7 +65,9 @@ export function EmptyWorkspacePrompt() {
             className="w-full h-8"
             size="sm"
             disabled={isLimitReached || isLimitLoading}
-            onClick={isLimitReached || isLimitLoading ? undefined : handleCTAClick}
+            onClick={
+              isLimitReached || isLimitLoading ? undefined : handleCTAClick
+            }
           >
             <Link
               href={isLimitReached || isLimitLoading ? "#" : "/w/create"}
