@@ -10,6 +10,7 @@ describe("PersonaSelection", () => {
       professional_title: "Marketing Lead",
       areas_of_expertise: ["SEO", "Brand Strategy"],
       tone_of_voice: "Warm and confident",
+      description: "Marketing lead persona",
     };
 
     render(
