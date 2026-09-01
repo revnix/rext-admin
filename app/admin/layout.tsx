@@ -16,13 +16,15 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const isAdmin = useIsAdmin();
   const router = useRouter();
 
   useEffect(() => {
-    // Wait for session to load
-    if (status === "loading") return;
+    // Wait for the initial session load. A mid-flight refresh also reports
+    // "loading" but keeps the existing session — don't treat that as a
+    // reason to re-run the redirect checks.
+    if (status === "loading" && !session) return;
 
     // Redirect if not authenticated
     if (status === "unauthenticated") {
@@ -34,10 +36,13 @@ export default function AdminLayout({
     if (status === "authenticated" && !isAdmin) {
       router.push("/" as Route);
     }
-  }, [status, isAdmin, router]);
+  }, [status, session, isAdmin, router]);
 
-  // Show loading state while checking permissions
-  if (status === "loading") {
+  // Only block on the *initial* session load. next-auth's update() flips
+  // status to "loading" on every token refresh (~every access-token
+  // lifetime); returning the spinner there unmounts the whole admin subtree
+  // and looks like a spontaneous page reload.
+  if (status === "loading" && !session) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
