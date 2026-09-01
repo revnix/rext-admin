@@ -245,5 +245,83 @@ export function createAccountNamespace(client: ApiClient) {
 
       return response;
     },
+    /**
+     * Delete user account (soft delete)
+     */
+    delete: async (data: {
+      reason?: string;
+      confirm: boolean;
+      password: string;
+      cancel_subscriptions?: boolean;
+    }) => {
+      // Fetch user ID for resource_id before tokens are potentially invalidated
+      let userId: string | undefined;
+      try {
+        const profileRes = await client.request<{
+          profile?: { id?: string };
+          id?: string;
+        }>(ENDPOINTS.PROFILE.get, { method: "GET" });
+        userId = profileRes?.profile?.id ?? profileRes?.id;
+      } catch {
+        // Proceed even if we can't get the ID
+      }
+
+      const response = await client.request<{
+        success?: boolean;
+        message?: string;
+      }>(ENDPOINTS.ACCOUNT.delete, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      // Record audit log
+      if (response.success !== false) {
+        try {
+          await client.request("/api/v1/audit-logs/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "user.delete",
+              resource_type: "user",
+              resource_id: userId,
+              status: "success",
+            }),
+          });
+        } catch (e) {
+          log.error("[AuditLog] Failed to log user.delete", e);
+        }
+      }
+
+      return response;
+    },
+
+    /**
+     * Request Account Recovery
+     */
+    requestRecovery: async (data: { email: string }) => {
+      return client.request<{
+        success: boolean;
+        message: string;
+      }>(ENDPOINTS.ACCOUNT.recoveryRequest, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Verify Account Recovery
+     */
+    verifyRecovery: async (data: { token: string }) => {
+      return client.request<{
+        success: boolean;
+        message: string;
+      }>(ENDPOINTS.ACCOUNT.recoveryVerify, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
   };
 }
