@@ -1,4 +1,5 @@
 import { createSecurityNamespace } from "@/lib/api-client/settings";
+import type { ApiClient } from "@/lib/api-client/core";
 
 describe("createSecurityNamespace login history normalization", () => {
   it("normalizes backend timestamps and status fields for the frontend", async () => {
@@ -26,7 +27,7 @@ describe("createSecurityNamespace login history normalization", () => {
           },
         ],
       }),
-    } as any;
+    } as unknown as ApiClient;
 
     const result = await createSecurityNamespace(client).getLoginHistory();
 

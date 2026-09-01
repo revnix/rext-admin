@@ -26,16 +26,26 @@ export default function DashboardPage() {
   } = useWorkspaceAutoSelect();
 
   const router = useRouter();
-  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
-    "workspaces",
-  );
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   // Redirect to workspace creation if no workspaces exist
   useEffect(() => {
-    if (!isLoadingWorkspaces && !hasWorkspaces && !isLimitReached && !isLimitLoading) {
+    if (
+      !isLoadingWorkspaces &&
+      !hasWorkspaces &&
+      !isLimitReached &&
+      !isLimitLoading
+    ) {
       router.push("/w/create" as Route);
     }
-  }, [isLoadingWorkspaces, hasWorkspaces, isLimitReached, isLimitLoading, router]);
+  }, [
+    isLoadingWorkspaces,
+    hasWorkspaces,
+    isLimitReached,
+    isLimitLoading,
+    router,
+  ]);
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);

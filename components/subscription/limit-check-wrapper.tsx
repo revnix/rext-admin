@@ -71,7 +71,8 @@ export function LimitCheckWrapper({
   className = "",
 }: LimitCheckWrapperProps) {
   const router = useRouter();
-  const { isLimitReached, usagePercentage, isLoading } = useResourceLimit(resource);
+  const { isLimitReached, usagePercentage, isLoading } =
+    useResourceLimit(resource);
 
   const handleUpgrade = () => {
     router.push("/pricing" as Route);

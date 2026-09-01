@@ -151,23 +151,33 @@ export function createUsersNamespace(client: ApiClient) {
     /**
      * List users with server-side pagination, search, role & status filtering, and sorting.
      */
-    list: async (params?: UserListParams | string): Promise<UsersListResponse> => {
+    list: async (
+      params?: UserListParams | string,
+    ): Promise<UsersListResponse> => {
       const searchParams = new URLSearchParams();
       if (typeof params === "string") {
         if (params) searchParams.set("workspace_id", params);
       } else if (params) {
-        if (params.workspace_id) searchParams.set("workspace_id", params.workspace_id);
+        if (params.workspace_id)
+          searchParams.set("workspace_id", params.workspace_id);
         if (params.page) searchParams.set("page", String(params.page));
-        if (params.per_page) searchParams.set("per_page", String(params.per_page));
-        if (params.search?.trim()) searchParams.set("search", params.search.trim());
-        if (params.status && params.status !== "all") searchParams.set("status", params.status);
-        if (params.role && params.role !== "all") searchParams.set("role", params.role);
+        if (params.per_page)
+          searchParams.set("per_page", String(params.per_page));
+        if (params.search?.trim())
+          searchParams.set("search", params.search.trim());
+        if (params.status && params.status !== "all")
+          searchParams.set("status", params.status);
+        if (params.role && params.role !== "all")
+          searchParams.set("role", params.role);
         if (params.sort_by) searchParams.set("sort_by", params.sort_by);
-        if (params.sort_order) searchParams.set("sort_order", params.sort_order);
+        if (params.sort_order)
+          searchParams.set("sort_order", params.sort_order);
       }
 
       const queryString = searchParams.toString();
-      const url = queryString ? `${ENDPOINTS.USERS.list}?${queryString}` : ENDPOINTS.USERS.list;
+      const url = queryString
+        ? `${ENDPOINTS.USERS.list}?${queryString}`
+        : ENDPOINTS.USERS.list;
 
       return client.request<UsersListResponse>(url, { method: "GET" });
     },
@@ -176,7 +186,9 @@ export function createUsersNamespace(client: ApiClient) {
      * Get aggregate statistics for users (backing the stat cards).
      */
     stats: async (): Promise<UserStats> => {
-      return client.request<UserStats>(ENDPOINTS.USERS.stats, { method: "GET" });
+      return client.request<UserStats>(ENDPOINTS.USERS.stats, {
+        method: "GET",
+      });
     },
 
     /**

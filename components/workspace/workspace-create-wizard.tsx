@@ -85,8 +85,7 @@ export function WorkspaceCreateWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // Check workspace limit
-  const { checkLimit, warnIfApproaching, canCreate, isLimitReached } =
-    useCheckLimit("workspaces");
+  const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
   // SSE-related state
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -113,7 +112,6 @@ export function WorkspaceCreateWizard() {
     mode: "onChange",
   });
 
-    
   const {
     register,
     handleSubmit,
@@ -545,7 +543,12 @@ export function WorkspaceCreateWizard() {
             <Button
               size="lg"
               onClick={handleSubmit(handleDetailsSubmit)}
-              disabled={!isValid || form.formState.isSubmitting || !canCreate || isLimitReached}
+              disabled={
+                !isValid ||
+                form.formState.isSubmitting ||
+                !canCreate ||
+                isLimitReached
+              }
               className="gap-2 text-white"
             >
               {form.formState.isSubmitting ? (

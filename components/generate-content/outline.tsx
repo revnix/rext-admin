@@ -655,7 +655,7 @@ export function OutlineDisplay({
     if (!selectedPersonaId && fallbackPersonaId) {
       setSelectedPersonaId(fallbackPersonaId);
     }
-  }, [outline, personas]);
+  }, [outline, personas, selectedPersonaId]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),

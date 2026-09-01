@@ -91,7 +91,6 @@ export function createRolesNamespace(client: ApiClient) {
       };
     },
 
-
     /**
      * Create a new role
      *
@@ -209,7 +208,6 @@ export function createRolesNamespace(client: ApiClient) {
       });
     },
 
-
     /**
      * List all permissions with optional roles — fetches all pages automatically
      */
@@ -288,9 +286,6 @@ export function createRolesNamespace(client: ApiClient) {
         count: firstPage.pagination?.total ?? allPermissions.length,
       };
     },
-
-
-
 
     /**
      * Update a permission

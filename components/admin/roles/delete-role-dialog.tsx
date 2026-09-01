@@ -54,7 +54,7 @@ export function DeleteRoleDialog({
   // picked for one role can't leak into the next deletion.
   useEffect(() => {
     setReassignTo(NO_REASSIGNMENT);
-  }, [role?.id]);
+  }, []);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {

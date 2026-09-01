@@ -68,7 +68,8 @@ const COPY: Record<
     icon: Ban,
     destructive: true,
     reasonRequired: true,
-    reasonPlaceholder: "e.g. Confirmed fraud — payment disputes on three orders",
+    reasonPlaceholder:
+      "e.g. Confirmed fraud — payment disputes on three orders",
     reasonHint: "Recorded in the audit log against your account.",
     warning:
       "Banning does not delete the account, its workspaces, or its subscriptions.",

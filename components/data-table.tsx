@@ -311,7 +311,9 @@ export function DataTable<
   ]);
 
   const activePage = manualPagination ? (propPage ?? currentPage) : currentPage;
-  const displayTotalCount = manualPagination ? (propTotalCount ?? data.length) : filteredData.length;
+  const displayTotalCount = manualPagination
+    ? (propTotalCount ?? data.length)
+    : filteredData.length;
 
   // Paginate filtered data
   const paginatedData = useMemo(() => {
@@ -321,8 +323,12 @@ export function DataTable<
   }, [data, filteredData, currentPage, currentPageSize, manualPagination]);
 
   const totalPages = Math.ceil(displayTotalCount / currentPageSize);
-  const hasData = manualPagination ? (propTotalCount ?? data.length) > 0 || searchQuery !== "" : data.length > 0;
-  const hasFilteredData = manualPagination ? data.length > 0 : filteredData.length > 0;
+  const hasData = manualPagination
+    ? (propTotalCount ?? data.length) > 0 || searchQuery !== ""
+    : data.length > 0;
+  const hasFilteredData = manualPagination
+    ? data.length > 0
+    : filteredData.length > 0;
 
   // Default empty actions if none provided
   const defaultEmptyActions: EmptyStateAction[] = [];
