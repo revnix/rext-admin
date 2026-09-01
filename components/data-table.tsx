@@ -59,6 +59,12 @@ interface DataTableProps<
   isLoading?: boolean;
   tableId?: string; // For localStorage persistence
   searchWidth?: string;
+  manualPagination?: boolean;
+  page?: number;
+  totalCount?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  onSearchChange?: (search: string) => void;
 }
 
 export function DataTable<
@@ -81,6 +87,12 @@ export function DataTable<
   isLoading = false,
   tableId,
   searchWidth = "md:w-80",
+  manualPagination = false,
+  page: propPage,
+  totalCount: propTotalCount,
+  onPageChange,
+  onPageSizeChange,
+  onSearchChange,
 }: DataTableProps<T>) {
   // Helper function to get localStorage key for page size
   const getPageSizeKey = () => `data-table-page-size-${tableId || "default"}`;
@@ -298,15 +310,19 @@ export function DataTable<
     applyColumnFilter,
   ]);
 
+  const activePage = manualPagination ? (propPage ?? currentPage) : currentPage;
+  const displayTotalCount = manualPagination ? (propTotalCount ?? data.length) : filteredData.length;
+
   // Paginate filtered data
   const paginatedData = useMemo(() => {
+    if (manualPagination) return data;
     const startIndex = (currentPage - 1) * currentPageSize;
     return filteredData.slice(startIndex, startIndex + currentPageSize);
-  }, [filteredData, currentPage, currentPageSize]);
+  }, [data, filteredData, currentPage, currentPageSize, manualPagination]);
 
-  const totalPages = Math.ceil(filteredData.length / currentPageSize);
-  const hasData = data.length > 0;
-  const hasFilteredData = filteredData.length > 0;
+  const totalPages = Math.ceil(displayTotalCount / currentPageSize);
+  const hasData = manualPagination ? (propTotalCount ?? data.length) > 0 || searchQuery !== "" : data.length > 0;
+  const hasFilteredData = manualPagination ? data.length > 0 : filteredData.length > 0;
 
   // Default empty actions if none provided
   const defaultEmptyActions: EmptyStateAction[] = [];
@@ -315,10 +331,16 @@ export function DataTable<
 
   const displayRowActions = rowActions.length > 0 ? rowActions : [];
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    onPageChange?.(newPage);
+  };
+
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
+    onSearchChange?.(value);
   };
 
   // Handle page size change
@@ -326,6 +348,8 @@ export function DataTable<
     const size = Number(newPageSize);
     setCurrentPageSize(size);
     setCurrentPage(1); // Reset to first page
+    onPageSizeChange?.(size);
+    onPageChange?.(1);
 
     // Save to localStorage
     if (typeof window !== "undefined") {
@@ -341,6 +365,7 @@ export function DataTable<
   const handleClearSearch = () => {
     setSearchQuery("");
     setCurrentPage(1);
+    onSearchChange?.("");
   };
 
   // Filter management functions
@@ -555,15 +580,15 @@ export function DataTable<
                     )}
                     <div>
                       {Math.min(
-                        (currentPage - 1) * currentPageSize + 1,
-                        filteredData.length,
+                        (activePage - 1) * currentPageSize + 1,
+                        displayTotalCount,
                       )}
                       -
                       {Math.min(
-                        currentPage * currentPageSize,
-                        filteredData.length,
+                        activePage * currentPageSize,
+                        displayTotalCount,
                       )}{" "}
-                      of {filteredData.length}
+                      of {displayTotalCount}
                     </div>
                   </div>
                   {totalPages > 1 && (
@@ -572,9 +597,9 @@ export function DataTable<
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setCurrentPage(Math.max(1, currentPage - 1))
+                          handlePageChange(Math.max(1, activePage - 1))
                         }
-                        disabled={currentPage === 1}
+                        disabled={activePage === 1}
                         className="h-8 w-8 p-0"
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -587,23 +612,23 @@ export function DataTable<
                             let pageNum: number;
                             if (totalPages <= 5) {
                               pageNum = i + 1;
-                            } else if (currentPage <= 3) {
+                            } else if (activePage <= 3) {
                               pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
+                            } else if (activePage >= totalPages - 2) {
                               pageNum = totalPages - 4 + i;
                             } else {
-                              pageNum = currentPage - 2 + i;
+                              pageNum = activePage - 2 + i;
                             }
 
                             return (
                               <Button
                                 key={pageNum}
                                 variant={
-                                  currentPage === pageNum ? "default" : "ghost"
+                                  activePage === pageNum ? "default" : "ghost"
                                 }
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => setCurrentPage(pageNum)}
+                                onClick={() => handlePageChange(pageNum)}
                               >
                                 {pageNum}
                               </Button>
@@ -616,9 +641,9 @@ export function DataTable<
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setCurrentPage(Math.min(totalPages, currentPage + 1))
+                          handlePageChange(Math.min(totalPages, activePage + 1))
                         }
-                        disabled={currentPage === totalPages}
+                        disabled={activePage === totalPages}
                         className="h-8 w-8 p-0"
                       >
                         <ChevronRight className="h-4 w-4" />

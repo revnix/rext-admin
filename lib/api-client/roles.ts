@@ -6,7 +6,6 @@
 
 import type {
   AssignPermissionsRequest,
-  CreatePermissionRequest,
   CreateRoleRequest,
   UpdatePermissionRequest,
   UpdateRoleRequest,
@@ -291,26 +290,7 @@ export function createRolesNamespace(client: ApiClient) {
     },
 
 
-    /**
-     * Create a new permission
-     */
-    createPermission: async (data: CreatePermissionRequest) => {
-      return client.request<{
-        permission: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-        };
-      }>(ENDPOINTS.PERMISSIONS.create, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-    },
+
 
     /**
      * Update a permission

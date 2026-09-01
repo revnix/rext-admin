@@ -78,6 +78,9 @@ export default function AdminUsersPage() {
   const [dialogState, setDialogState] = useState<UsersDialogState>({
     type: "closed",
   });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
@@ -85,14 +88,35 @@ export default function AdminUsersPage() {
 
   // Row actions are built from permissions rather than wrapped in a
   // PermissionGuard, because RowAction has no way to hide an entry.
+  const canImpersonate = usePermission(USER_PERMISSIONS.IMPERSONATE);
   const canUpdateUsers = usePermission(USER_PERMISSIONS.UPDATE);
   const canDeleteUsers = usePermission(USER_PERMISSIONS.DELETE);
   const canManageRoles = usePermission(USER_PERMISSIONS.MANAGE_ROLES);
 
-  // Fetch all users
+  // Fetch aggregate user statistics for stat cards
+  const { data: statsData } = useQuery({
+    queryKey: ["admin-users-stats"],
+    queryFn: () => apiClient.users.stats(),
+  });
+
+  // Fetch users with server-side pagination, search, and filters
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => apiClient.users.list(),
+    queryKey: [
+      "admin-users",
+      page,
+      pageSize,
+      searchQuery,
+      statusFilter,
+      roleFilter,
+    ],
+    queryFn: () =>
+      apiClient.users.list({
+        page,
+        per_page: pageSize,
+        search: searchQuery || undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        role: roleFilter !== "all" ? roleFilter : undefined,
+      }),
   });
 
   const findUser = (userId: string) =>
@@ -113,9 +137,8 @@ export default function AdminUsersPage() {
       pending: { variant: "outline", text: "Pending" },
     };
 
-    // Never fall back to "Active" — an unrecognised status must not read as
-    // a healthy account.
-    const config = variants[status] || { variant: "outline", text: status };
+    // Never fall back to "Active" — an unrecognised status must read as "Unknown".
+    const config = variants[status] || { variant: "outline", text: "Unknown" };
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
@@ -193,20 +216,7 @@ export default function AdminUsersPage() {
     return combined.sort();
   }, [systemRolesData, tableData]);
 
-  const filteredTableData = useMemo(() => {
-    return tableData.filter((user) => {
-      if (statusFilter !== "all" && user.status !== statusFilter) {
-        return false;
-      }
-      if (
-        roleFilter !== "all" &&
-        user.display_role?.toLowerCase() !== roleFilter.toLowerCase()
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [tableData, statusFilter, roleFilter]);
+
 
   // Define columns
   const columns: Column<UserData>[] = [
@@ -311,21 +321,35 @@ export default function AdminUsersPage() {
         </div>
       ),
     },
+    {
+      key: "created_at",
+      header: "Joined",
+      width: "105px",
+      cell: (value) => (
+        <span className="text-xs text-muted-foreground block truncate min-w-0">
+          {formatDate(value as string | null)}
+        </span>
+      ),
+    },
   ];
 
   // Define row actions.
   // Gated on the same permissions the backend enforces, so nothing renders
   // that would only come back as a 403.
   const rowActions: RowAction<UserData>[] = [
-    {
-      label: "Impersonate",
-      icon: <UserIcon className="h-4 w-4" />,
-      onClick: (row) => {
-        const user = findUser(row.id);
-        if (user) setDialogState({ type: "impersonate", user });
-      },
-      primary: true,
-    },
+    ...(canImpersonate
+      ? [
+          {
+            label: "Impersonate",
+            icon: <UserIcon className="h-4 w-4" />,
+            onClick: (row: UserData) => {
+              const user = findUser(row.id);
+              if (user) setDialogState({ type: "impersonate", user });
+            },
+            primary: true,
+          },
+        ]
+      : []),
     ...(canManageRoles
       ? [
           {
@@ -441,7 +465,7 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.total_count || 0}
+                  {statsData?.total ?? data?.total_count ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Registered accounts
@@ -458,9 +482,7 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.users.filter(
-                    (u) => u.status === "active" && u.email_verified,
-                  ).length || 0}
+                  {statsData?.active ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Currently active
@@ -475,7 +497,7 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.users.filter((u) => u.email_verified).length || 0}
+                  {statsData?.verified ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Email verified</p>
               </CardContent>
@@ -488,7 +510,7 @@ export default function AdminUsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.users.filter((u) => !u.email_verified).length || 0}
+                  {statsData?.unverified ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Awaiting verification
@@ -509,16 +531,31 @@ export default function AdminUsersPage() {
             <CardContent>
               <DataTable
                 columns={columns}
-                data={filteredTableData}
+                data={tableData}
                 isLoading={isLoading}
                 rowActions={rowActions}
+                manualPagination
+                page={page}
+                totalCount={data?.total_count ?? 0}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+                onSearchChange={(search) => {
+                  setSearchQuery(search);
+                  setPage(1);
+                }}
                 actions={
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Status Filter */}
                     <div className="w-[140px]">
                       <Select
                         value={statusFilter}
-                        onValueChange={setStatusFilter}
+                        onValueChange={(val) => {
+                          setStatusFilter(val);
+                          setPage(1);
+                        }}
                       >
                         <SelectTrigger className="h-9 text-xs bg-background">
                           <SelectValue placeholder="All Statuses" />
@@ -537,7 +574,10 @@ export default function AdminUsersPage() {
                     <div className="w-[140px]">
                       <Select
                         value={roleFilter}
-                        onValueChange={setRoleFilter}
+                        onValueChange={(val) => {
+                          setRoleFilter(val);
+                          setPage(1);
+                        }}
                       >
                         <SelectTrigger className="h-9 text-xs bg-background">
                           <SelectValue placeholder="All Roles" />
@@ -561,6 +601,7 @@ export default function AdminUsersPage() {
                         onClick={() => {
                           setStatusFilter("all");
                           setRoleFilter("all");
+                          setPage(1);
                         }}
                         className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -573,8 +614,7 @@ export default function AdminUsersPage() {
                 emptyTitle="No users found"
                 emptyDescription="No registered users match the selected search or filters."
                 searchPlaceholder="Search by name or email..."
-                searchFields={["name", "email", "full_name"]}
-                pageSize={10}
+                pageSize={pageSize}
                 pageSizeOptions={[10, 25, 50, 100]}
                 tableId="admin-users"
               />

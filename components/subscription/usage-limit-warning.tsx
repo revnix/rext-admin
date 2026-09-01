@@ -390,8 +390,8 @@ export function useResourceLimit(
     setIsLoadingLimit(false);
 
     const subscriptionDetail = subscription.subscription ?? subscription;
-    const planLimits = subscriptionDetail?.plan_limits;
-    const usageData = usage as Record<string, unknown>;
+    const planLimits = (subscriptionDetail as { plan_limits?: Record<string, unknown> })?.plan_limits;
+    const usageData = (usage as unknown) as Record<string, unknown>;
 
     const getNumber = (value: unknown): number => {
       const number = Number(value);

@@ -165,6 +165,7 @@ export const ENDPOINTS = {
    */
   USERS: {
     list: "/api/v1/user/users", // Inconsistent: /user/users
+    stats: "/api/v1/user/users/stats",
     byId: (id: string) => `/api/v1/user/${id}` as const,
     register: "/api/v1/user/register",
     registerWithInvitation: "/api/v1/user/register-with-invitation",
@@ -482,7 +483,6 @@ export const ENDPOINTS = {
     list: "/api/v1/permissions/",
     get: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    create: "/api/v1/permissions/",
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
     delete: (permissionId: string) =>

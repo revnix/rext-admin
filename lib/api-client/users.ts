@@ -70,6 +70,27 @@ export interface UsersListResponse {
   pagination?: UsersListPagination;
 }
 
+export interface UserListParams {
+  workspace_id?: string;
+  page?: number;
+  per_page?: number;
+  search?: string;
+  status?: string;
+  role?: string;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+}
+
+export interface UserStats {
+  total: number;
+  active: number;
+  inactive: number;
+  suspended: number;
+  banned: number;
+  verified: number;
+  unverified: number;
+}
+
 /** Admin-initiated status transitions. Mirrors the backend's valid status set. */
 export type UserStatusAction = "suspend" | "activate" | "ban";
 
@@ -127,38 +148,35 @@ export function createUsersNamespace(client: ApiClient) {
      * so consumers (e.g. the admin User Management table and its stat
      * cards) see the complete, accurate user set rather than just page 1.
      */
-    list: async (workspaceId?: string): Promise<UsersListResponse> => {
-      const perPage = 100;
-      let page = 1;
-      let allUsers: User[] = [];
-      let totalCount = 0;
-
-      // Bounded by has_next from the server; the extra page-count guard
-      // just prevents a runaway loop if that flag were ever wrong.
-      for (let safety = 0; safety < 1000; safety++) {
-        const params = new URLSearchParams({
-          page: String(page),
-          per_page: String(perPage),
-        });
-        if (workspaceId) params.set("workspace_id", workspaceId);
-
-        const response = await client.request<UsersListResponse>(
-          `${ENDPOINTS.USERS.list}?${params.toString()}`,
-          { method: "GET" },
-        );
-
-        allUsers = allUsers.concat(response.users);
-        totalCount = response.total_count;
-
-        if (!response.pagination?.has_next) break;
-        page += 1;
+    /**
+     * List users with server-side pagination, search, role & status filtering, and sorting.
+     */
+    list: async (params?: UserListParams | string): Promise<UsersListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (typeof params === "string") {
+        if (params) searchParams.set("workspace_id", params);
+      } else if (params) {
+        if (params.workspace_id) searchParams.set("workspace_id", params.workspace_id);
+        if (params.page) searchParams.set("page", String(params.page));
+        if (params.per_page) searchParams.set("per_page", String(params.per_page));
+        if (params.search?.trim()) searchParams.set("search", params.search.trim());
+        if (params.status && params.status !== "all") searchParams.set("status", params.status);
+        if (params.role && params.role !== "all") searchParams.set("role", params.role);
+        if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+        if (params.sort_order) searchParams.set("sort_order", params.sort_order);
       }
 
-      return {
-        users: allUsers,
-        total_count: totalCount,
-        workspace_id: workspaceId ?? null,
-      };
+      const queryString = searchParams.toString();
+      const url = queryString ? `${ENDPOINTS.USERS.list}?${queryString}` : ENDPOINTS.USERS.list;
+
+      return client.request<UsersListResponse>(url, { method: "GET" });
+    },
+
+    /**
+     * Get aggregate statistics for users (backing the stat cards).
+     */
+    stats: async (): Promise<UserStats> => {
+      return client.request<UserStats>(ENDPOINTS.USERS.stats, { method: "GET" });
     },
 
     /**
