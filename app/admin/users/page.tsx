@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Ban,
   CheckCircle2,
+  Filter,
   Mail,
   PauseCircle,
   Pencil,
@@ -12,8 +13,9 @@ import {
   Trash2,
   User as UserIcon,
   Users as UsersIcon,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
@@ -25,12 +27,22 @@ import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
+  Button,
+} from "@/components/ui/button";
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ErrorPage } from "@/components/ui/error-states";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
@@ -66,6 +78,8 @@ export default function AdminUsersPage() {
   const [dialogState, setDialogState] = useState<UsersDialogState>({
     type: "closed",
   });
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   const closeDialog = () => setDialogState({ type: "closed" });
 
@@ -104,22 +118,20 @@ export default function AdminUsersPage() {
     const config = variants[status] || { variant: "outline", text: status };
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
+
   const getUserInitials = (user: User) => {
-    if (user.display_name) {
-      const parts = user.display_name.split(" ");
-      if (parts.length >= 2 && parts[0]?.[0] && parts[1]?.[0]) {
-        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    const name = (user.display_name || user.full_name || "").trim();
+    if (name) {
+      const parts = name.split(/\s+/);
+      if (parts.length >= 2 && parts[0]?.[0] && parts[parts.length - 1]?.[0]) {
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
       }
-      return user.display_name.slice(0, 2).toUpperCase();
+      return name.slice(0, 2).toUpperCase();
     }
-    if (user.full_name) {
-      const parts = user.full_name.split(" ");
-      if (parts.length >= 2) {
-        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-      }
-      return user.full_name.slice(0, 2).toUpperCase();
+    if (user.email && user.email.trim()) {
+      return user.email.trim().slice(0, 2).toUpperCase();
     }
-    return user.email.slice(0, 2).toUpperCase();
+    return "U";
   };
 
   const formatDate = (dateStr?: string | null) => {
@@ -137,21 +149,64 @@ export default function AdminUsersPage() {
   };
 
   // Transform users data for DataTable
-  const tableData: UserData[] = (data?.users || []).map((user) => ({
-    id: user.id,
-    name: user.display_name || user.full_name || user.email,
-    email: user.email,
-    status: !user.email_verified ? "pending" : user.status || "active",
-    email_verified: user.email_verified,
-    display_name: user.display_name,
-    full_name: user.full_name,
-    initials: user.initials || getUserInitials(user),
-    avatar_url: user.avatar_url,
-    display_role: user.display_role || "User",
-    last_login_at: user.last_login_at,
-    login_count: user.login_count ?? 0,
-    created_at: user.created_at,
-  }));
+  const tableData: UserData[] = (data?.users || []).map((user) => {
+    const calculatedInitials = getUserInitials(user);
+    const validInitials =
+      user.initials && user.initials !== "?"
+        ? user.initials
+        : calculatedInitials;
+
+    // Use explicit backend status directly (e.g., active, suspended, banned, pending)
+    const effectiveStatus = user.status || "active";
+
+    return {
+      id: user.id,
+      name: user.display_name || user.full_name || user.email,
+      email: user.email,
+      status: effectiveStatus,
+      email_verified: user.email_verified,
+      display_name: user.display_name,
+      full_name: user.full_name,
+      initials: validInitials,
+      avatar_url: user.avatar_url,
+      display_role: user.display_role || "User",
+      last_login_at: user.last_login_at,
+      login_count: user.login_count ?? 0,
+      created_at: user.created_at,
+    };
+  });
+
+  // Fetch all system roles to populate role filter dropdown
+  const { data: systemRolesData } = useQuery({
+    queryKey: ["all-system-roles"],
+    queryFn: () => apiClient.roles.list(true),
+  });
+
+  const availableRoles = useMemo(() => {
+    const rolesFromApi = (systemRolesData?.roles || []).map(
+      (r) => r.display_name || r.name,
+    );
+    const rolesFromUsers = tableData.map((u) => u.display_role);
+    const combined = Array.from(
+      new Set([...rolesFromApi, ...rolesFromUsers].filter((r): r is string => Boolean(r))),
+    );
+    return combined.sort();
+  }, [systemRolesData, tableData]);
+
+  const filteredTableData = useMemo(() => {
+    return tableData.filter((user) => {
+      if (statusFilter !== "all" && user.status !== statusFilter) {
+        return false;
+      }
+      if (
+        roleFilter !== "all" &&
+        user.display_role?.toLowerCase() !== roleFilter.toLowerCase()
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [tableData, statusFilter, roleFilter]);
 
   // Define columns
   const columns: Column<UserData>[] = [
@@ -454,11 +509,69 @@ export default function AdminUsersPage() {
             <CardContent>
               <DataTable
                 columns={columns}
-                data={tableData}
+                data={filteredTableData}
                 isLoading={isLoading}
                 rowActions={rowActions}
+                actions={
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Status Filter */}
+                    <div className="w-[140px]">
+                      <Select
+                        value={statusFilter}
+                        onValueChange={setStatusFilter}
+                      >
+                        <SelectTrigger className="h-9 text-xs bg-background">
+                          <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="suspended">Suspended</SelectItem>
+                          <SelectItem value="banned">Banned</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Role Filter */}
+                    <div className="w-[140px]">
+                      <Select
+                        value={roleFilter}
+                        onValueChange={setRoleFilter}
+                      >
+                        <SelectTrigger className="h-9 text-xs bg-background">
+                          <SelectValue placeholder="All Roles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Roles</SelectItem>
+                          {availableRoles.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Clear Filters */}
+                    {(statusFilter !== "all" || roleFilter !== "all") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setStatusFilter("all");
+                          setRoleFilter("all");
+                        }}
+                        className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                }
                 emptyTitle="No users found"
-                emptyDescription="There are no registered users in the system."
+                emptyDescription="No registered users match the selected search or filters."
                 searchPlaceholder="Search by name or email..."
                 searchFields={["name", "email", "full_name"]}
                 pageSize={10}
