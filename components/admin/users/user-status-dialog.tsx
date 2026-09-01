@@ -44,6 +44,7 @@ const COPY: Record<
     icon: typeof Ban;
     destructive: boolean;
     reasonRequired: boolean;
+    reasonPlaceholder: string;
     reasonHint: string;
     warning?: string;
   }
@@ -51,21 +52,24 @@ const COPY: Record<
   suspend: {
     title: "Suspend user",
     description:
-      "The user keeps their account but cannot sign in until an admin reactivates them.",
+      "Temporary. Signs the user out of every device immediately and blocks sign-in until an admin reactivates them. The account and its data are kept.",
     submit: "Suspend user",
     icon: PauseCircle,
     destructive: true,
     reasonRequired: true,
+    reasonPlaceholder: "e.g. Repeated abuse reports from workspace owners",
     reasonHint: "Recorded in the audit log against your account.",
   },
   ban: {
     title: "Ban user",
     description:
-      "The user is permanently blocked from signing in. Reactivating later is possible but should be deliberate.",
+      "Permanent. Signs the user out of every device immediately and blocks sign-in for good. Only use it where a suspension would not be enough.",
     submit: "Ban user",
     icon: Ban,
     destructive: true,
     reasonRequired: true,
+    reasonPlaceholder:
+      "e.g. Confirmed fraud — payment disputes on three orders",
     reasonHint: "Recorded in the audit log against your account.",
     warning:
       "Banning does not delete the account, its workspaces, or its subscriptions.",
@@ -78,6 +82,7 @@ const COPY: Record<
     icon: CheckCircle2,
     destructive: false,
     reasonRequired: false,
+    reasonPlaceholder: "e.g. Suspension lifted — abuse reports were unfounded",
     reasonHint: "Optional. Recorded in the audit log if provided.",
   },
 };
@@ -186,7 +191,7 @@ export function UserStatusDialog({
               </Label>
               <Textarea
                 id="reason"
-                placeholder="e.g. Repeated abuse reports from workspace owners"
+                placeholder={copy.reasonPlaceholder}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}

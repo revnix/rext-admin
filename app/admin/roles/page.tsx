@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { BulkAssignPermissionsDialog } from "@/components/admin/roles/bulk-assign-permissions-dialog";
-import { CreatePermissionDialog } from "@/components/admin/roles/create-permission-dialog";
+
 import { CreateRoleDialog } from "@/components/admin/roles/create-role-dialog";
 import { DeletePermissionDialog } from "@/components/admin/roles/delete-permission-dialog";
 import { DeleteRoleDialog } from "@/components/admin/roles/delete-role-dialog";
@@ -72,7 +72,6 @@ type RolesDialogState =
   | { type: "editRole"; role: RoleWithPermissions }
   | { type: "deleteRole"; role: RoleWithPermissions }
   | { type: "manageRolePermissions"; role: RoleWithPermissions }
-  | { type: "createPermission" }
   | { type: "editPermission"; permission: PermissionWithRoles }
   | { type: "deletePermission"; permission: PermissionWithRoles }
   | { type: "bulkAssign" }
@@ -576,19 +575,6 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
-                    <PermissionGuard
-                      permission={ADMIN_PERMISSIONS.PERMISSION_CREATE}
-                    >
-                      <Button
-                        className="w-full sm:w-auto"
-                        onClick={() =>
-                          setDialogState({ type: "createPermission" })
-                        }
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Permission
-                      </Button>
-                    </PermissionGuard>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -638,10 +624,7 @@ export default function AdminRolesPage() {
           }
           allPermissions={permissionsData?.permissions || []}
         />
-        <CreatePermissionDialog
-          open={dialogState.type === "createPermission"}
-          onOpenChange={closeDialog}
-        />
+
         <EditPermissionDialog
           open={dialogState.type === "editPermission"}
           onOpenChange={closeDialog}

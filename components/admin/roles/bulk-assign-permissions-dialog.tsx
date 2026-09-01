@@ -73,8 +73,23 @@ export function BulkAssignPermissionsDialog({
 
       return { successful, failed, total: results.length };
     },
-    onSuccess: async () => {
-      toast.success("Role updated successfully");
+    onSuccess: async (data) => {
+      const { successful, failed, total } = data;
+
+      if (failed === 0) {
+        toast.success(
+          `All ${total} role(s) updated successfully — ${operation === "add" ? "permissions assigned" : "permissions removed"}.`,
+        );
+      } else if (successful === 0) {
+        toast.error(
+          `All ${total} role operations failed. No changes were applied.`,
+        );
+      } else {
+        toast.warning(
+          `Partial success: ${successful} of ${total} role(s) updated, ${failed} failed.`,
+        );
+      }
+
       invalidateWorkspacePermissions();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["roles"] }),

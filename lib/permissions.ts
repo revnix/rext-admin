@@ -114,6 +114,7 @@ export const USER_PERMISSIONS = {
   UPDATE: "user.update",
   DELETE: "user.delete",
   MANAGE_ROLES: "user.manage_roles",
+  IMPERSONATE: "user.impersonate",
 } as const;
 
 // Workspace Management

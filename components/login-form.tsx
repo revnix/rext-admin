@@ -57,6 +57,10 @@ export function LoginForm({
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
+        AccountSuspended:
+          "Your account has been suspended. Contact support to have it reviewed.",
+        AccountBanned:
+          "Your account has been permanently banned and cannot be used.",
         OAuthSignin: "Error occurred during OAuth sign in.",
         OAuthCallback: "Error occurred during OAuth callback.",
         OAuthCreateAccount: "Could not create OAuth account.",
