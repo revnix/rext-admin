@@ -7,6 +7,7 @@ import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
 import { PageLayout } from "@/components/page-layout";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
@@ -25,13 +26,16 @@ export default function DashboardPage() {
   } = useWorkspaceAutoSelect();
 
   const router = useRouter();
+  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
+    "workspaces",
+  );
 
   // Redirect to workspace creation if no workspaces exist
   useEffect(() => {
-    if (!isLoadingWorkspaces && !hasWorkspaces) {
+    if (!isLoadingWorkspaces && !hasWorkspaces && !isLimitReached && !isLimitLoading) {
       router.push("/w/create" as Route);
     }
-  }, [isLoadingWorkspaces, hasWorkspaces, router]);
+  }, [isLoadingWorkspaces, hasWorkspaces, isLimitReached, isLimitLoading, router]);
 
   // Check if onboarding is complete for current workspace
   const { isLoading } = useOnboardingProgress(currentWorkspace?.id);

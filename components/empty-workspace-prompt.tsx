@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { analytics } from "@/lib/analytics";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 
 /**
  * Empty Workspace Prompt Component
@@ -23,6 +24,9 @@ import { analytics } from "@/lib/analytics";
  */
 export function EmptyWorkspacePrompt() {
   const { user } = useAuthSession();
+  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
+    "workspaces",
+  );
 
   // Track sidebar empty state view on mount
   useEffect(() => {
@@ -61,11 +65,25 @@ export function EmptyWorkspacePrompt() {
             asChild
             className="w-full h-8"
             size="sm"
-            onClick={handleCTAClick}
+            disabled={isLimitReached || isLimitLoading}
+            onClick={isLimitReached || isLimitLoading ? undefined : handleCTAClick}
           >
-            <Link href="/w/create">
+            <Link
+              href={isLimitReached || isLimitLoading ? "#" : "/w/create"}
+              onClick={(event) => {
+                if (isLimitReached || isLimitLoading) {
+                  event.preventDefault();
+                }
+              }}
+            >
               <Plus className="h-3 w-3 mr-1.5" />
-              <span className="text-xs">Create Workspace</span>
+              <span className="text-xs">
+                {isLimitReached
+                  ? "Workspace limit reached"
+                  : isLimitLoading
+                    ? "Checking plan..."
+                    : "Create Workspace"}
+              </span>
             </Link>
           </Button>
         </CardContent>

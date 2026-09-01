@@ -78,15 +78,17 @@ export function CreatePermissionDialog({
     }
 
     // Validate format
-    if (!/^[a-z_]+$/.test(formData.resource.toLowerCase())) {
+    if (!/^[a-z0-9_]+$/.test(formData.resource.toLowerCase())) {
       toast.error(
-        "Resource must contain only lowercase letters and underscores",
+        "Resource must contain only lowercase letters, numbers, and underscores",
       );
       return;
     }
 
-    if (!/^[a-z_]+$/.test(formData.action.toLowerCase())) {
-      toast.error("Action must contain only lowercase letters and underscores");
+    if (!/^[a-z0-9_]+$/.test(formData.action.toLowerCase())) {
+      toast.error(
+        "Action must contain only lowercase letters, numbers, and underscores",
+      );
       return;
     }
 

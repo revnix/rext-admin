@@ -65,7 +65,7 @@ export function DangerZoneSection() {
 
       // Show success message with recovery info
       toast.success(
-        "The workspace has been deleted. You have 30 days to recover it.",
+        "The workspace has been deleted. You have 14 days to recover it.",
       );
 
       setDeleteDialogOpen(false);
@@ -146,7 +146,7 @@ export function DangerZoneSection() {
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       This will soft-delete the workspace. You'll have{" "}
-                      <strong>30 days</strong> to recover it before permanent
+                      <strong>14 days</strong> to recover it before permanent
                       deletion.
                       <br />
                       <br />

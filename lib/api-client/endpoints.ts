@@ -176,6 +176,23 @@ export const ENDPOINTS = {
       detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
       revokeAll: "/api/v1/user/sessions",
     },
+
+    // Admin status actions (require user.update)
+    suspend: (id: string) => `/api/v1/user/${id}/suspend` as const,
+    activate: (id: string) => `/api/v1/user/${id}/activate` as const,
+    ban: (id: string) => `/api/v1/user/${id}/ban` as const,
+
+    // Admin user operations
+    delete: (id: string) => `/api/v1/user/delete/${id}` as const,
+    update: (id: string) => `/api/v1/user/update/${id}` as const,
+
+    // Admin role assignment (require user.manage_roles)
+    roles: {
+      list: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      assign: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      revoke: (userId: string, roleId: string) =>
+        `/api/v1/user/${userId}/roles/${roleId}` as const,
+    },
   },
 
   /**
@@ -200,6 +217,9 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
+    delete: "/api/v1/user/delete",
+    recoveryRequest: "/api/v1/auth/account-recovery/request",
+    recoveryVerify: "/api/v1/auth/account-recovery/verify",
   },
 
   /**
@@ -359,8 +379,12 @@ export const ENDPOINTS = {
   ADMIN_WEBHOOKS: {
     events: "/api/v1/admin/subscriptions/webhooks/events",
     failed: "/api/v1/admin/subscriptions/webhooks/failed",
-    retry: (eventId: string) =>
-      `/api/v1/admin/subscriptions/webhooks/${eventId}/retry` as const,
+    // `webhookId` is the database id (webhook_events.id, a UUID) - the same
+    // `id` returned by the list endpoints, NOT the LemonSqueezy event_id.
+    detail: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/detail/${webhookId}` as const,
+    retry: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/${webhookId}/retry` as const,
     stats: "/api/v1/admin/subscriptions/webhooks/stats",
   },
 
@@ -442,6 +466,8 @@ export const ENDPOINTS = {
     delete: (roleId: string) => `/api/v1/roles/${roleId}` as const,
     permissions: {
       assign: (roleId: string) =>
+        `/api/v1/roles/${roleId}/permissions` as const,
+      update: (roleId: string) =>
         `/api/v1/roles/${roleId}/permissions` as const,
       revoke: (roleId: string, permissionId: string) =>
         `/api/v1/roles/${roleId}/permissions/${permissionId}` as const,

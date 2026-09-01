@@ -41,7 +41,8 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { usePermission } from "@/hooks/use-permission";
+import { ADMIN_PERMISSIONS, isProtectedRole } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
 
@@ -85,6 +86,21 @@ export default function AdminRolesPage() {
   });
 
   const closeDialog = () => setDialogState({ type: "closed" });
+
+  // Row actions are gated on the same permissions the backend enforces on the
+  // corresponding routes, so the UI never offers an action that would 403.
+  // Declared before the early error return below to keep hook order stable.
+  const canUpdateRole = usePermission(ADMIN_PERMISSIONS.ROLE_UPDATE);
+  const canDeleteRole = usePermission(ADMIN_PERMISSIONS.ROLE_DELETE);
+  const canManageRolePermissions = usePermission(
+    ADMIN_PERMISSIONS.ROLE_MANAGE_PERMISSIONS,
+  );
+  const canUpdatePermission = usePermission(
+    ADMIN_PERMISSIONS.PERMISSION_UPDATE,
+  );
+  const canDeletePermission = usePermission(
+    ADMIN_PERMISSIONS.PERMISSION_DELETE,
+  );
 
   // Fetch roles with permissions
   const {
@@ -214,40 +230,57 @@ export default function AdminRolesPage() {
   ];
 
   // Role actions
+  //
+  // Hidden entirely when the user lacks the backend permission for them, and
+  // disabled on protected roles — the backend rejects update/delete for system
+  // roles AND standard workspace roles, which carry is_system_role = false.
   const roleActions: RowAction<RoleTableData>[] = [
-    {
-      label: "Manage Permissions",
-      icon: <Settings className="h-4 w-4" />,
-      onClick: (row) => {
-        const role = rolesData?.roles.find((r) => r.id === row.id);
-        if (role) {
-          setDialogState({ type: "manageRolePermissions", role });
-        }
-      },
-      primary: true,
-    },
-    {
-      label: "Edit",
-      icon: <Edit className="h-4 w-4" />,
-      onClick: (row) => {
-        const role = rolesData?.roles.find((r) => r.id === row.id);
-        if (role) {
-          setDialogState({ type: "editRole", role });
-        }
-      },
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => {
-        const role = rolesData?.roles.find((r) => r.id === row.id);
-        if (role && !role.is_system_role) {
-          setDialogState({ type: "deleteRole", role });
-        }
-      },
-      variant: "destructive",
-      disabled: (row) => row.is_system_role,
-    },
+    ...(canManageRolePermissions
+      ? [
+          {
+            label: "Manage Permissions",
+            icon: <Settings className="h-4 w-4" />,
+            onClick: (row: RoleTableData) => {
+              const role = rolesData?.roles.find((r) => r.id === row.id);
+              if (role) {
+                setDialogState({ type: "manageRolePermissions", role });
+              }
+            },
+            primary: true,
+          },
+        ]
+      : []),
+    ...(canUpdateRole
+      ? [
+          {
+            label: "Edit",
+            icon: <Edit className="h-4 w-4" />,
+            onClick: (row: RoleTableData) => {
+              const role = rolesData?.roles.find((r) => r.id === row.id);
+              if (role && !isProtectedRole(role)) {
+                setDialogState({ type: "editRole", role });
+              }
+            },
+            disabled: (row: RoleTableData) => isProtectedRole(row),
+          },
+        ]
+      : []),
+    ...(canDeleteRole
+      ? [
+          {
+            label: "Delete",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: RoleTableData) => {
+              const role = rolesData?.roles.find((r) => r.id === row.id);
+              if (role && !isProtectedRole(role)) {
+                setDialogState({ type: "deleteRole", role });
+              }
+            },
+            variant: "destructive" as const,
+            disabled: (row: RoleTableData) => isProtectedRole(row),
+          },
+        ]
+      : []),
   ];
 
   // Permission columns
@@ -300,7 +333,9 @@ export default function AdminRolesPage() {
     },
   ];
 
-  // Permission actions
+  // Permission actions — Edit/Delete hidden without the matching backend
+  // permission. View Dependencies is derived from already-loaded data and
+  // needs nothing beyond the permission.read this page already requires.
   const permissionActions: RowAction<PermissionTableData>[] = [
     {
       label: "View Dependencies",
@@ -315,31 +350,39 @@ export default function AdminRolesPage() {
       },
       primary: true,
     },
-    {
-      label: "Edit",
-      icon: <Edit className="h-4 w-4" />,
-      onClick: (row) => {
-        const permission = permissionsData?.permissions.find(
-          (p) => p.id === row.id,
-        );
-        if (permission) {
-          setDialogState({ type: "editPermission", permission });
-        }
-      },
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => {
-        const permission = permissionsData?.permissions.find(
-          (p) => p.id === row.id,
-        );
-        if (permission) {
-          setDialogState({ type: "deletePermission", permission });
-        }
-      },
-      variant: "destructive",
-    },
+    ...(canUpdatePermission
+      ? [
+          {
+            label: "Edit",
+            icon: <Edit className="h-4 w-4" />,
+            onClick: (row: PermissionTableData) => {
+              const permission = permissionsData?.permissions.find(
+                (p) => p.id === row.id,
+              );
+              if (permission) {
+                setDialogState({ type: "editPermission", permission });
+              }
+            },
+          },
+        ]
+      : []),
+    ...(canDeletePermission
+      ? [
+          {
+            label: "Delete",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: PermissionTableData) => {
+              const permission = permissionsData?.permissions.find(
+                (p) => p.id === row.id,
+              );
+              if (permission) {
+                setDialogState({ type: "deletePermission", permission });
+              }
+            },
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
   ];
 
   const systemRolesCount =
@@ -423,7 +466,7 @@ export default function AdminRolesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{systemRolesCount}</div>
-                <p className="text-xs text-muted-foreground">Protected roles</p>
+                <p className="text-xs text-muted-foreground">Platform roles</p>
               </CardContent>
             </Card>
 
@@ -583,6 +626,7 @@ export default function AdminRolesPage() {
           open={dialogState.type === "deleteRole"}
           onOpenChange={closeDialog}
           role={dialogState.type === "deleteRole" ? dialogState.role : null}
+          roles={rolesData?.roles || []}
         />
         <ManageRolePermissionsDialog
           open={dialogState.type === "manageRolePermissions"}

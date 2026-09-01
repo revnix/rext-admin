@@ -361,15 +361,6 @@ export function UnifiedActivity() {
 
         <div className="flex flex-wrap items-center gap-2">
           <DownloadAuditLog filters={filters} />
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            {showFilters ? "Hide" : "Show"} Filters
-          </Button>
         </div>
       </div>
 
@@ -377,13 +368,28 @@ export function UnifiedActivity() {
       <TabsContent value="all" className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Activity Log
-            </CardTitle>
-            <CardDescription>
-              Complete history of account activity and security events
-            </CardDescription>
+            <div className="flex justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Activity Log
+                </CardTitle>
+                <CardDescription>
+                  Complete history of account activity and security events
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  variant={showFilters ? "default" : "outline"}
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  {showFilters ? "Hide" : "Show"} Filters
+                </Button>
+              </div>
+            </div>
           </CardHeader>
 
           <CardContent className="space-y-4">

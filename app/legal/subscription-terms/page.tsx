@@ -141,7 +141,7 @@ export default function SubscriptionTermsPage() {
               No refund for the current billing period (see Refund Policy)
             </li>
             <li>Automatic renewal stops</li>
-            <li>Your data is retained for 30 days after cancellation</li>
+            <li>Your data is retained for 14 days after cancellation</li>
           </ul>
 
           <h3>Our Right to Terminate</h3>
@@ -203,7 +203,7 @@ export default function SubscriptionTermsPage() {
           </p>
           <ul>
             <li>Notify you via email of material changes</li>
-            <li>Give you 30 days notice before changes take effect</li>
+            <li>Give you 14 days notice before changes take effect</li>
             <li>Allow you to cancel if you disagree with changes</li>
           </ul>
 

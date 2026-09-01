@@ -106,7 +106,7 @@ export default function RefundPolicyPage() {
               period (unless within 14-day guarantee)
             </li>
             <li>
-              <strong>Data:</strong> Your data is retained for 30 days after
+              <strong>Data:</strong> Your data is retained for 14 days after
               cancellation
             </li>
           </ul>
@@ -117,9 +117,9 @@ export default function RefundPolicyPage() {
             subscription:
           </p>
           <ul>
-            <li>Within 30 days: Reactivate with your existing data intact</li>
+            <li>Within 14 days: Reactivate with your existing data intact</li>
             <li>
-              After 30 days: Start a new subscription (data may be deleted)
+              After 14 days: Start a new subscription (data may be deleted)
             </li>
           </ul>
 
