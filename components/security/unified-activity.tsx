@@ -32,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { sortAuditLogs } from "@/lib/audit-log-order";
 import type { AuditLogFilters, AuditLog } from "@/types/audit-log";
 import {
   AuditActions,
@@ -234,25 +235,10 @@ export function UnifiedActivity() {
         });
       }
 
-      if (ws.updated_at && ws.updated_at !== ws.created_at) {
-        if (!existingIds.has(`${AuditActions.WORKSPACE_UPDATE}-${ws.id}`)) {
-          synthesizedLogs.push({
-            id: `synth-ws-update-${ws.id}`,
-            action: AuditActions.WORKSPACE_UPDATE,
-            resource_type: AuditResourceTypes.WORKSPACE,
-            resource_id: ws.id,
-            workspace_id: ws.id,
-            status: "success",
-            created_at: ws.updated_at,
-            ip_address: null,
-            user_agent: null,
-            user_id: profileData?.id ?? null,
-            full_name: profileData?.full_name ?? null,
-            user_email: profileData?.email ?? null,
-            request_id: null,
-          });
-        }
-      }
+      // Intentionally do not synthesize workspace.update from workspace.updated_at.
+      // The backend audit API does not emit a real workspace.update event, and
+      // creating one from a workspace metadata timestamp would misrepresent actual
+      // account activity.
     }
 
     // Synthesize workspace.delete from localStorage
@@ -332,11 +318,7 @@ export function UnifiedActivity() {
       );
     }
 
-    logs = [...logs, ...validSynthesized];
-    logs.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
+    logs = sortAuditLogs([...logs, ...validSynthesized]);
   }
 
   const finalTotal =
