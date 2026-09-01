@@ -99,22 +99,23 @@ export function EditPermissionDialog({
           <DialogHeader>
             <DialogTitle>Edit Permission</DialogTitle>
             <DialogDescription>
-              Update permission display name and description. Resource and action cannot be modified.
+              Update permission display name and description. Resource and
+              action cannot be modified.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Current Name */}
             <div className="rounded-lg border p-3 bg-muted/50">
-              <span className="text-sm font-medium">Permission Identifier: </span>
+              <span className="text-sm font-medium">
+                Permission Identifier:{" "}
+              </span>
               <code className="text-sm font-mono">{permission.name}</code>
             </div>
 
             {/* Resource (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="resource">
-                Resource
-              </Label>
+              <Label htmlFor="resource">Resource</Label>
               <Input
                 id="resource"
                 value={formData.resource}
@@ -128,9 +129,7 @@ export function EditPermissionDialog({
 
             {/* Action (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="action">
-                Action
-              </Label>
+              <Label htmlFor="action">Action</Label>
               <Input
                 id="action"
                 value={formData.action}

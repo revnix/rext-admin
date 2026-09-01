@@ -56,9 +56,8 @@ export function WorkspaceSwitcher() {
   );
 
   const workspaces = workspaceListResponse?.workspaces || [];
-  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
-    "workspaces",
-  );
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   // Update local store when API data changes
   React.useEffect(() => {

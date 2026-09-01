@@ -55,7 +55,9 @@ describe("CreateWorkspacePage", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getAllByText(/workspace limit reached/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/workspace limit reached/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText(/workspace details/i)).not.toBeInTheDocument();
   });
 
@@ -77,8 +79,12 @@ describe("CreateWorkspacePage", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByText(/checking workspace permissions/i)).toBeInTheDocument();
-    expect(screen.queryByText(/workspace limit reached/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/checking workspace permissions/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/workspace limit reached/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/workspace details/i)).not.toBeInTheDocument();
   });
 });

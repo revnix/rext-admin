@@ -34,9 +34,8 @@ import type { Route } from "next";
 export default function WorkspacePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isLimitReached, isLoading: isLimitLoading } = useResourceLimit(
-    "workspaces",
-  );
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
   const [deleteDialogWorkspace, setDeleteDialogWorkspace] =
     useState<WorkspaceData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);

@@ -113,7 +113,6 @@ export function WorkspaceDeleteDialog({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: passwordConfirmation }),
         });
-
       } catch {
         toast.error("The password you entered is incorrect.");
         setIsDeleting(false);

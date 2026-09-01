@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import type { UserSubscriptionDetail } from "@/types/subscription";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
@@ -389,9 +390,11 @@ export function useResourceLimit(
 
     setIsLoadingLimit(false);
 
-    const subscriptionDetail = subscription.subscription ?? subscription;
+    const subscriptionDetail =
+      subscription.subscription ??
+      (subscription as unknown as UserSubscriptionDetail);
     const planLimits = subscriptionDetail?.plan_limits;
-    const usageData = usage as Record<string, unknown>;
+    const usageData = usage as unknown as Record<string, unknown>;
 
     const getNumber = (value: unknown): number => {
       const number = Number(value);
@@ -419,12 +422,14 @@ export function useResourceLimit(
       case "topics": {
         current = getNumber(
           (usageData.topics as { used?: number } | undefined)?.used ??
-            (usageData as { current_topics?: number }).current_topics ?? 0,
+            (usageData as { current_topics?: number }).current_topics ??
+            0,
         );
         max = getNumber(
           planLimits?.max_topics ??
             (usageData.topics as { limit?: number } | undefined)?.limit ??
-            (usageData as { max_topics?: number }).max_topics ?? -1,
+            (usageData as { max_topics?: number }).max_topics ??
+            -1,
         );
         break;
       }
@@ -432,7 +437,8 @@ export function useResourceLimit(
         current = getNumber(
           (usageData.knowledge_items as { used?: number } | undefined)?.used ??
             (usageData as { current_knowledge_items?: number })
-              .current_knowledge_items ?? 0,
+              .current_knowledge_items ??
+            0,
         );
         max = getNumber(
           planLimits?.max_knowledge_items ??

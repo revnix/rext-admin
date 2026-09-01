@@ -26,9 +26,7 @@ import { PageLayout } from "@/components/page-layout";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -188,7 +186,11 @@ export default function AdminUsersPage() {
     );
     const rolesFromUsers = tableData.map((u) => u.display_role);
     const combined = Array.from(
-      new Set([...rolesFromApi, ...rolesFromUsers].filter((r): r is string => Boolean(r))),
+      new Set(
+        [...rolesFromApi, ...rolesFromUsers].filter((r): r is string =>
+          Boolean(r),
+        ),
+      ),
     );
     return combined.sort();
   }, [systemRolesData, tableData]);
@@ -535,10 +537,7 @@ export default function AdminUsersPage() {
 
                     {/* Role Filter */}
                     <div className="w-[140px]">
-                      <Select
-                        value={roleFilter}
-                        onValueChange={setRoleFilter}
-                      >
+                      <Select value={roleFilter} onValueChange={setRoleFilter}>
                         <SelectTrigger className="h-9 text-xs bg-background">
                           <SelectValue placeholder="All Roles" />
                         </SelectTrigger>

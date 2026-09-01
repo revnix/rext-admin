@@ -113,7 +113,6 @@ export function WorkspaceCreateWizard() {
     mode: "onChange",
   });
 
-    
   const {
     register,
     handleSubmit,
@@ -545,7 +544,12 @@ export function WorkspaceCreateWizard() {
             <Button
               size="lg"
               onClick={handleSubmit(handleDetailsSubmit)}
-              disabled={!isValid || form.formState.isSubmitting || !canCreate || isLimitReached}
+              disabled={
+                !isValid ||
+                form.formState.isSubmitting ||
+                !canCreate ||
+                isLimitReached
+              }
               className="gap-2 text-white"
             >
               {form.formState.isSubmitting ? (
