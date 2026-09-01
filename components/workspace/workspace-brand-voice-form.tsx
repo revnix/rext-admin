@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PersonasGrid, PersonaSelection } from "@/components/workspace";
 import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice, Persona } from "@/types/workspace";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 /**
  * Validation schema for brand voice form
@@ -167,6 +168,8 @@ export function WorkspaceBrandVoiceForm({
         ? selectedPersonasList
         : undefined,
     });
+
+    await useSubscriptionStore.getState().fetchSubscription();
   };
 
   // Array field helpers

@@ -23,6 +23,7 @@ import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { WorkspaceData } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 interface WorkspaceDeleteDialogProps {
   /**
@@ -112,6 +113,7 @@ export function WorkspaceDeleteDialog({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: passwordConfirmation }),
         });
+
       } catch {
         toast.error("The password you entered is incorrect.");
         setIsDeleting(false);
