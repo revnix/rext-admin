@@ -379,8 +379,12 @@ export const ENDPOINTS = {
   ADMIN_WEBHOOKS: {
     events: "/api/v1/admin/subscriptions/webhooks/events",
     failed: "/api/v1/admin/subscriptions/webhooks/failed",
-    retry: (eventId: string) =>
-      `/api/v1/admin/subscriptions/webhooks/${eventId}/retry` as const,
+    // `webhookId` is the database id (webhook_events.id, a UUID) - the same
+    // `id` returned by the list endpoints, NOT the LemonSqueezy event_id.
+    detail: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/detail/${webhookId}` as const,
+    retry: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/${webhookId}/retry` as const,
     stats: "/api/v1/admin/subscriptions/webhooks/stats",
   },
 
