@@ -366,46 +366,105 @@ export function useResourceLimit(
     | "ai_requests"
     | "storage",
 ) {
-  const { usage, subscription } = useSubscriptionStore();
+  const { usage, subscription, fetchUsage, fetchSubscription } =
+    useSubscriptionStore();
   const [isLimitReached, setIsLimitReached] = useState(false);
+  const [isLoadingLimit, setIsLoadingLimit] = useState(true);
   const [usagePercentage, setUsagePercentage] = useState(0);
 
   useEffect(() => {
+    if (!usage) {
+      void fetchUsage();
+    }
+
+    if (!subscription) {
+      void fetchSubscription();
+    }
+
     if (!usage || !subscription) {
+      setIsLoadingLimit(true);
       setIsLimitReached(false);
       return;
     }
 
+    setIsLoadingLimit(false);
+
+    const subscriptionDetail = subscription.subscription ?? subscription;
+    const planLimits = subscriptionDetail?.plan_limits;
+    const usageData = usage as Record<string, unknown>;
+
+    const getNumber = (value: unknown): number => {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    };
+
     let current = 0;
-    let max = 0;
+    let max = -1;
 
     switch (resource) {
-      case "workspaces":
-        current = usage.current_workspaces;
-        max = subscription?.subscription?.plan_limits?.max_workspaces ?? -1;
+      case "workspaces": {
+        current = getNumber(
+          (usageData.workspaces as { used?: number } | undefined)?.used ??
+            (usageData as { current_workspaces?: number }).current_workspaces ??
+            0,
+        );
+        max = getNumber(
+          planLimits?.max_workspaces ??
+            (usageData.workspaces as { limit?: number } | undefined)?.limit ??
+            (usageData as { max_workspaces?: number }).max_workspaces ??
+            -1,
+        );
         break;
-      case "topics":
-        current = usage.current_topics;
-        max = subscription?.subscription?.plan_limits?.max_topics ?? -1;
+      }
+      case "topics": {
+        current = getNumber(
+          (usageData.topics as { used?: number } | undefined)?.used ??
+            (usageData as { current_topics?: number }).current_topics ?? 0,
+        );
+        max = getNumber(
+          planLimits?.max_topics ??
+            (usageData.topics as { limit?: number } | undefined)?.limit ??
+            (usageData as { max_topics?: number }).max_topics ?? -1,
+        );
         break;
-      case "knowledge_items":
-        current = usage.current_knowledge_items;
-        max =
-          subscription?.subscription?.plan_limits?.max_knowledge_items ?? -1;
+      }
+      case "knowledge_items": {
+        current = getNumber(
+          (usageData.knowledge_items as { used?: number } | undefined)?.used ??
+            (usageData as { current_knowledge_items?: number })
+              .current_knowledge_items ?? 0,
+        );
+        max = getNumber(
+          planLimits?.max_knowledge_items ??
+            (usageData.knowledge_items as { limit?: number } | undefined)
+              ?.limit ??
+            (usageData as { max_knowledge_items?: number })
+              .max_knowledge_items ??
+            -1,
+        );
         break;
-      case "ai_requests":
-        current = usage.current_api_calls;
-        max =
-          subscription?.subscription?.plan_limits?.max_api_calls_per_month ??
-          -1;
+      }
+      case "ai_requests": {
+        current = getNumber(
+          (usageData.api_calls as { used?: number } | undefined)?.used ??
+            (usageData as { current_api_calls?: number }).current_api_calls ??
+            0,
+        );
+        max = getNumber(
+          planLimits?.max_api_calls_per_month ??
+            (usageData.api_calls as { limit?: number } | undefined)?.limit ??
+            (usageData as { max_api_calls_per_month?: number })
+              .max_api_calls_per_month ??
+            -1,
+        );
         break;
+      }
       case "storage":
-        current = 0; // Storage tracking not yet implemented
-        max = -1; // Storage tracking not yet implemented
+        current = 0;
+        max = -1;
         break;
     }
 
-    // -1 means unlimited
     if (max === -1) {
       setIsLimitReached(false);
       setUsagePercentage(0);
@@ -414,11 +473,12 @@ export function useResourceLimit(
       setUsagePercentage(percentage);
       setIsLimitReached(current >= max);
     }
-  }, [usage, subscription, resource]);
+  }, [usage, subscription, resource, fetchUsage, fetchSubscription]);
 
   return {
     isLimitReached,
+    isLoading: isLoadingLimit,
     usagePercentage,
-    canCreate: !isLimitReached,
+    canCreate: !isLimitReached && !isLoadingLimit,
   };
 }
