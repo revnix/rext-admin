@@ -139,6 +139,10 @@ export function createAccountNamespace(client: ApiClient) {
         success: boolean;
         message: string;
         export_id: string;
+        status?: string;
+        format?: string;
+        filename?: string;
+        export_payload?: Record<string, unknown>;
       }>(ENDPOINTS.ACCOUNT.exportData, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
