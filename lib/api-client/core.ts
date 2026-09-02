@@ -109,6 +109,43 @@ export class ApiClient {
           `Request failed: ${response.statusText}`,
         );
 
+        // Auto-logout when user account is suspended, banned, or session revoked.
+        //
+        // A 401 on its own is NOT proof the session died: endpoints that verify
+        // a password inline (account deactivation, change password) answer 401
+        // for a wrong password. Signing out on those threw the user to the
+        // login page with "session expired" while their session was perfectly
+        // valid. Only act when the body actually says the account or session is
+        // gone — a genuinely expired or revoked session is already handled by
+        // classifyUnauthorized() in authenticatedFetch() before this runs.
+        const lowerMsg = errorMessage.toLowerCase();
+        const indicatesAccountBlocked = [
+          "suspended",
+          "banned",
+          "revoked",
+          "blacklisted",
+          "disabled",
+        ].some((marker) => lowerMsg.includes(marker));
+
+        if (
+          typeof window !== "undefined" &&
+          !endpoint.includes("/logout") &&
+          !endpoint.includes("/login") &&
+          !endpoint.includes("/register") &&
+          (response.status === 401 || response.status === 403) &&
+          indicatesAccountBlocked
+        ) {
+          const errorParam = lowerMsg.includes("suspended")
+            ? "AccountSuspended"
+            : lowerMsg.includes("banned")
+              ? "AccountBanned"
+              : "SessionExpired";
+
+          import("@/lib/logout-utils").then(({ performLogout }) => {
+            performLogout(`/login?error=${errorParam}`);
+          });
+        }
+
         throw new ApiError(
           response.status,
           errorMessage,
