@@ -58,7 +58,18 @@ interface DataTableProps<
   searchFields?: (keyof T)[];
   isLoading?: boolean;
   tableId?: string; // For localStorage persistence
+  // Render each row as a stacked card below `md`. The table's min-content
+  // width (cell padding + the actions column) is far wider than a phone
+  // viewport, so on mobile the table would only ever show its first column
+  // or two with the rest behind a horizontal scroll.
+  mobileCards?: boolean;
   searchWidth?: string;
+  manualPagination?: boolean;
+  page?: number;
+  totalCount?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  onSearchChange?: (search: string) => void;
 }
 
 export function DataTable<
@@ -80,7 +91,14 @@ export function DataTable<
   searchFields = [],
   isLoading = false,
   tableId,
+  mobileCards = false,
   searchWidth = "md:w-80",
+  manualPagination = false,
+  page: propPage,
+  totalCount: propTotalCount,
+  onPageChange,
+  onPageSizeChange,
+  onSearchChange,
 }: DataTableProps<T>) {
   // Helper function to get localStorage key for page size
   const getPageSizeKey = () => `data-table-page-size-${tableId || "default"}`;
@@ -298,15 +316,25 @@ export function DataTable<
     applyColumnFilter,
   ]);
 
+  const activePage = manualPagination ? (propPage ?? currentPage) : currentPage;
+  const displayTotalCount = manualPagination
+    ? (propTotalCount ?? data.length)
+    : filteredData.length;
+
   // Paginate filtered data
   const paginatedData = useMemo(() => {
+    if (manualPagination) return data;
     const startIndex = (currentPage - 1) * currentPageSize;
     return filteredData.slice(startIndex, startIndex + currentPageSize);
-  }, [filteredData, currentPage, currentPageSize]);
+  }, [data, filteredData, currentPage, currentPageSize, manualPagination]);
 
-  const totalPages = Math.ceil(filteredData.length / currentPageSize);
-  const hasData = data.length > 0;
-  const hasFilteredData = filteredData.length > 0;
+  const totalPages = Math.ceil(displayTotalCount / currentPageSize);
+  const hasData = manualPagination
+    ? (propTotalCount ?? data.length) > 0 || searchQuery !== ""
+    : data.length > 0;
+  const hasFilteredData = manualPagination
+    ? data.length > 0
+    : filteredData.length > 0;
 
   // Default empty actions if none provided
   const defaultEmptyActions: EmptyStateAction[] = [];
@@ -315,10 +343,16 @@ export function DataTable<
 
   const displayRowActions = rowActions.length > 0 ? rowActions : [];
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    onPageChange?.(newPage);
+  };
+
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
+    onSearchChange?.(value);
   };
 
   // Handle page size change
@@ -326,6 +360,8 @@ export function DataTable<
     const size = Number(newPageSize);
     setCurrentPageSize(size);
     setCurrentPage(1); // Reset to first page
+    onPageSizeChange?.(size);
+    onPageChange?.(1);
 
     // Save to localStorage
     if (typeof window !== "undefined") {
@@ -341,6 +377,7 @@ export function DataTable<
   const handleClearSearch = () => {
     setSearchQuery("");
     setCurrentPage(1);
+    onSearchChange?.("");
   };
 
   // Filter management functions
@@ -374,6 +411,27 @@ export function DataTable<
   const getColumnFilter = (columnKey: string) => {
     return columnFilters.find((f) => f.columnKey === columnKey);
   };
+
+  // Cell rendering shared by the table body and the mobile cards, so both
+  // views always show the same value for a column.
+  const renderCell = (column: Column<T>, row: T): ReactNode => {
+    const value = (row as Record<string, unknown>)[column.key];
+    if (column.cell) return column.cell(value, row);
+    return (value as string) || "--";
+  };
+
+  const getRowKey = (row: T, index: number) =>
+    "id" in row ? (row.id as string) : `row-${index}`;
+
+  // The first column identifies the row (name/title), so it becomes the card
+  // headline and the rest become label/value pairs.
+  const [primaryColumn, ...detailColumns] = columns;
+
+  // Icon-only buttons rely on hover tooltips, which touch devices don't have.
+  const mobileRowActions = displayRowActions.map((action) => ({
+    ...action,
+    showLabel: true,
+  }));
 
   return (
     <Card className="border-none shadow-none bg-transparent">
@@ -451,7 +509,11 @@ export function DataTable<
         ) : hasData ? (
           hasFilteredData ? (
             <>
-              <div className="relative w-full overflow-x-auto rounded-md border">
+              <div
+                className={`relative w-full overflow-x-auto rounded-md border ${
+                  mobileCards ? "hidden md:block" : ""
+                }`}
+              >
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -493,7 +555,7 @@ export function DataTable<
                   <TableBody>
                     {paginatedData.map((row, index) => (
                       <TableRow
-                        key={"id" in row ? (row.id as string) : `row-${index}`}
+                        key={getRowKey(row as T, index)}
                         className={`group ${
                           onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
                         }`}
@@ -501,14 +563,7 @@ export function DataTable<
                       >
                         {columns.map((column) => (
                           <TableCell key={column.key}>
-                            {column.cell
-                              ? column.cell(
-                                  (row as Record<string, unknown>)[column.key],
-                                  row as T,
-                                )
-                              : ((row as Record<string, unknown>)[
-                                  column.key
-                                ] as string) || "--"}
+                            {renderCell(column, row as T)}
                           </TableCell>
                         ))}
                         {displayRowActions.length > 0 && (
@@ -525,6 +580,65 @@ export function DataTable<
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Mobile card list — same rows, stacked so nothing sits off-screen */}
+              {mobileCards && (
+                <ul className="flex flex-col gap-3 md:hidden">
+                  {paginatedData.map((row, index) => (
+                    <li
+                      key={getRowKey(row as T, index)}
+                      data-testid="data-table-card"
+                      className={`rounded-md border p-4 ${
+                        onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
+                      }`}
+                      onClick={() => onRowClick?.(row)}
+                      onKeyDown={(e) => {
+                        if (
+                          onRowClick &&
+                          (e.key === "Enter" || e.key === " ")
+                        ) {
+                          e.preventDefault();
+                          onRowClick(row);
+                        }
+                      }}
+                    >
+                      {primaryColumn && (
+                        <div className="min-w-0">
+                          {renderCell(primaryColumn, row as T)}
+                        </div>
+                      )}
+                      {detailColumns.length > 0 && (
+                        <dl className="mt-3 flex flex-col gap-2">
+                          {detailColumns.map((column) => (
+                            <div
+                              key={column.key}
+                              className="flex items-start justify-between gap-3"
+                            >
+                              <dt className="shrink-0 text-xs text-muted-foreground">
+                                {column.header}
+                              </dt>
+                              {/* Cells truncate to fit narrow table columns; a
+                                  card has the room to wrap them in full. */}
+                              <dd className="min-w-0 wrap-break-word text-right text-sm **:whitespace-normal">
+                                {renderCell(column, row as T)}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {displayRowActions.length > 0 && (
+                        <div className="mt-3 border-t pt-3">
+                          <ActionsCell
+                            actions={mobileRowActions}
+                            row={row as T}
+                            className="flex-wrap justify-start"
+                          />
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {/* Pagination */}
               {(totalPages > 1 || pageSizeOptions.length > 1) && (
@@ -555,15 +669,15 @@ export function DataTable<
                     )}
                     <div>
                       {Math.min(
-                        (currentPage - 1) * currentPageSize + 1,
-                        filteredData.length,
+                        (activePage - 1) * currentPageSize + 1,
+                        displayTotalCount,
                       )}
                       -
                       {Math.min(
-                        currentPage * currentPageSize,
-                        filteredData.length,
+                        activePage * currentPageSize,
+                        displayTotalCount,
                       )}{" "}
-                      of {filteredData.length}
+                      of {displayTotalCount}
                     </div>
                   </div>
                   {totalPages > 1 && (
@@ -572,9 +686,9 @@ export function DataTable<
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setCurrentPage(Math.max(1, currentPage - 1))
+                          handlePageChange(Math.max(1, activePage - 1))
                         }
-                        disabled={currentPage === 1}
+                        disabled={activePage === 1}
                         className="h-8 w-8 p-0"
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -587,23 +701,23 @@ export function DataTable<
                             let pageNum: number;
                             if (totalPages <= 5) {
                               pageNum = i + 1;
-                            } else if (currentPage <= 3) {
+                            } else if (activePage <= 3) {
                               pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
+                            } else if (activePage >= totalPages - 2) {
                               pageNum = totalPages - 4 + i;
                             } else {
-                              pageNum = currentPage - 2 + i;
+                              pageNum = activePage - 2 + i;
                             }
 
                             return (
                               <Button
                                 key={pageNum}
                                 variant={
-                                  currentPage === pageNum ? "default" : "ghost"
+                                  activePage === pageNum ? "default" : "ghost"
                                 }
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => setCurrentPage(pageNum)}
+                                onClick={() => handlePageChange(pageNum)}
                               >
                                 {pageNum}
                               </Button>
@@ -616,9 +730,9 @@ export function DataTable<
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setCurrentPage(Math.min(totalPages, currentPage + 1))
+                          handlePageChange(Math.min(totalPages, activePage + 1))
                         }
-                        disabled={currentPage === totalPages}
+                        disabled={activePage === totalPages}
                         className="h-8 w-8 p-0"
                       >
                         <ChevronRight className="h-4 w-4" />

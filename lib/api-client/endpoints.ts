@@ -165,6 +165,7 @@ export const ENDPOINTS = {
    */
   USERS: {
     list: "/api/v1/user/users", // Inconsistent: /user/users
+    stats: "/api/v1/user/users/stats",
     byId: (id: string) => `/api/v1/user/${id}` as const,
     register: "/api/v1/user/register",
     registerWithInvitation: "/api/v1/user/register-with-invitation",
@@ -218,8 +219,8 @@ export const ENDPOINTS = {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
     delete: "/api/v1/user/delete",
-    recoveryRequest: "/api/v1/auth/account-recovery/request",
-    recoveryVerify: "/api/v1/auth/account-recovery/verify",
+    recoveryRequest: "/api/v1/user/account-recovery/request",
+    recoveryVerify: "/api/v1/user/account-recovery/verify",
   },
 
   /**
@@ -482,7 +483,6 @@ export const ENDPOINTS = {
     list: "/api/v1/permissions/",
     get: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    create: "/api/v1/permissions/",
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
     delete: (permissionId: string) =>

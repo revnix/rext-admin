@@ -178,6 +178,10 @@ export default async function proxy(request: NextRequest) {
   const publicRoutes = [
     ...AUTH_PAGE_PATHS,
     "/invitations/accept", // Allow unauthenticated users to view and accept invitations
+    // A deleted user has no session (delete revokes them all), so the recovery
+    // link must open without one. Kept out of AUTH_PAGE_PATHS so that someone
+    // signed in as another account isn't bounced away from the link.
+    "/account-recovery",
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>

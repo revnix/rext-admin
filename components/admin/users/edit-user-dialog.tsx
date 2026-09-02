@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Pencil } from "lucide-react";
+import { Eye, EyeOff, Loader2, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,9 +35,8 @@ export function EditUserDialog({
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [language, setLanguage] = useState("en");
-  const [timezone, setTimezone] = useState("UTC");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user && open) {
@@ -45,9 +44,8 @@ export function EditUserDialog({
       setDisplayName(user.display_name || "");
       setEmail(user.email || "");
       setAvatarUrl(user.avatar_url || "");
-      setLanguage(user.language || "en");
-      setTimezone(user.timezone || "UTC");
       setPassword("");
+      setShowPassword(false);
     }
   }, [user, open]);
 
@@ -67,12 +65,6 @@ export function EditUserDialog({
       }
       if (avatarUrl.trim() !== (user.avatar_url || "")) {
         payload.avatar_url = avatarUrl.trim() || null;
-      }
-      if (language.trim() !== (user.language || "en")) {
-        payload.language = language.trim();
-      }
-      if (timezone.trim() !== (user.timezone || "UTC")) {
-        payload.timezone = timezone.trim();
       }
       if (password.trim().length > 0) {
         payload.password = password.trim();
@@ -105,7 +97,7 @@ export function EditUserDialog({
             Edit User Details
           </DialogTitle>
           <DialogDescription>
-            Update profile details, email, locale, or password for{" "}
+            Update profile details, email, or password for{" "}
             <span className="font-semibold text-foreground">
               {user?.display_name || user?.full_name || user?.email}
             </span>
@@ -158,27 +150,6 @@ export function EditUserDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-language">Language</Label>
-              <Input
-                id="edit-language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                placeholder="en"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-timezone">Timezone</Label>
-              <Input
-                id="edit-timezone"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                placeholder="UTC"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2 pt-2 border-t">
             <Label htmlFor="edit-password">
               New Password{" "}
@@ -186,14 +157,28 @@ export function EditUserDialog({
                 (leave blank to keep unchanged)
               </span>
             </Label>
-            <Input
-              id="edit-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              minLength={8}
-            />
+            <div className="relative">
+              <Input
+                id="edit-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={8}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <DialogFooter className="pt-4">

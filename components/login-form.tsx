@@ -57,6 +57,10 @@ export function LoginForm({
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
+        AccountSuspended:
+          "Your account has been suspended. Contact support to have it reviewed.",
+        AccountBanned:
+          "Your account has been permanently banned and cannot be used.",
         OAuthSignin: "Error occurred during OAuth sign in.",
         OAuthCallback: "Error occurred during OAuth callback.",
         OAuthCreateAccount: "Could not create OAuth account.",
@@ -82,28 +86,44 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const attemptSignIn = async (confirmReactivation: boolean) => {
-    // Backend validated successfully, now use NextAuth for session creation
+  const attemptSignIn = async () => {
+    // Backend validated successfully, now use NextAuth for session creation.
+    // There is deliberately no "confirm reactivation" flag here — a deactivated
+    // account is only reactivated by opening the emailed link.
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
       rememberMe: rememberMe.toString(),
-      confirmReactivation: confirmReactivation.toString(),
     });
 
     if (result?.error) {
       if (result.code === "ACCOUNT_DEACTIVATED") {
+        // Reactivation is deliberately NOT granted by signing in again: the
+        // password alone doesn't prove the mailbox owner wants the account
+        // back. We email a single-use link instead, and /account-recovery
+        // reactivates the account when it's opened.
         const shouldReactivate = await confirm({
           title: "Reactivate your account?",
           description:
-            "This account was deactivated. Log in again to reactivate it and continue.",
-          confirmText: "Reactivate & Log In",
+            "This account was deactivated. We'll email you a link to confirm it's you — your account is reactivated as soon as you open it, then you can log in.",
+          confirmText: "Email me the link",
           cancelText: "Cancel",
         });
 
         if (shouldReactivate) {
-          await attemptSignIn(true);
+          try {
+            // Always reports success, so it can't be used to probe which
+            // addresses have accounts.
+            await apiClient.account.requestRecovery({ email });
+            toast.success(
+              "Check your inbox for the reactivation link. It's valid for 30 minutes.",
+            );
+          } catch {
+            toast.error(
+              "Couldn't send the reactivation email. Please try again.",
+            );
+          }
         }
         return;
       }
@@ -182,7 +202,7 @@ export function LoginForm({
     }
 
     try {
-      await attemptSignIn(false);
+      await attemptSignIn();
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       toast.error("An error occurred. Please try again.");
