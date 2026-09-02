@@ -534,6 +534,7 @@ export default function AdminUsersPage() {
                 data={tableData}
                 isLoading={isLoading}
                 rowActions={rowActions}
+                mobileCards
                 manualPagination
                 page={page}
                 totalCount={data?.total_count ?? 0}
