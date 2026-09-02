@@ -38,8 +38,24 @@ export function PrivacySettings() {
       apiClient.account.requestDataExport(data),
     onSuccess: (data) => {
       toast.success(
-        data.message || "Your data export will be sent to your email shortly.",
+        data.message || "Data export completed and sent to your email.",
       );
+      if (data.export_payload && data.filename) {
+        try {
+          const jsonStr = JSON.stringify(data.export_payload, null, 2);
+          const blob = new Blob([jsonStr], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = data.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          log.error("Failed to generate client-side download", err);
+        }
+      }
     },
     onError: (error: unknown) => {
       log.error("Data export request failed", error);
@@ -154,8 +170,7 @@ export function PrivacySettings() {
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>
-              Export request submitted successfully. Check your email for the
-              download link.
+              Data export completed. Your file should start downloading automatically, and a copy has been sent to your email.
             </AlertDescription>
           </Alert>
         )}
