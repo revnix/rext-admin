@@ -164,19 +164,17 @@ export default function BillingHistoryPage() {
 
           {/* Invoices Tab */}
           <TabsContent value="invoices" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
+            {invoices.length > 0 ? (
+              <InvoiceList />
+            ) : (
+              <Card>
+                <CardHeader>
                   <CardTitle>Invoice History</CardTitle>
                   <CardDescription>
                     All your past invoices and receipts
                   </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {invoices.length > 0 ? (
-                  <InvoiceList />
-                ) : (
+                </CardHeader>
+                <CardContent>
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">
@@ -194,9 +192,9 @@ export default function BillingHistoryPage() {
                       View Pricing Plans
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Invoice Information */}
             <Alert>

@@ -200,9 +200,9 @@ export const CreditBalanceSchema = z.object({
  */
 export const InvoiceItemSchema = z.object({
   description: z.string(),
-  quantity: z.number().int().positive(),
-  unit_price: z.number().nonnegative(),
-  total: z.number().nonnegative(),
+  quantity: z.number().int(),
+  unit_price: z.number(),
+  total: z.number(),
 });
 
 /**
@@ -210,27 +210,27 @@ export const InvoiceItemSchema = z.object({
  */
 export const InvoiceSchema = z.object({
   invoice_id: z.string().min(1, "Invoice ID is required"),
-  invoice_number: z.string().nullable(),
+  invoice_number: z.string().nullable().optional(),
   status: InvoiceStatusSchema,
-  amount: z.number().nonnegative(),
-  currency: z.string().default("USD"),
-  tax: z.number().nullable(),
-  subtotal: z.number().nullable(),
-  invoice_url: z.string().url().nullable(),
+  amount: z.number(),
+  currency: z.string().default("USD").catch("USD"),
+  tax: z.number().nullable().optional(),
+  subtotal: z.number().nullable().optional(),
+  invoice_url: z.string().nullable().optional(),
   invoice_date: z.string(),
-  due_date: z.string().nullable(),
-  paid_at: z.string().nullable(),
-  customer_email: z.string().email().nullable(),
-  customer_name: z.string().nullable(),
-  items: z.array(InvoiceItemSchema).default([]),
+  due_date: z.string().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  customer_email: z.string().nullable().optional(),
+  customer_name: z.string().nullable().optional(),
+  items: z.array(InvoiceItemSchema).default([]).catch([]),
 });
 
 /**
  * Schema for invoice list response
  */
 export const InvoiceListResponseSchema = z.object({
-  invoices: z.array(InvoiceSchema),
-  count: z.number().int().nonnegative(),
+  invoices: z.array(InvoiceSchema).default([]),
+  count: z.number().int().optional().catch(0),
 });
 
 // ============================================================================
