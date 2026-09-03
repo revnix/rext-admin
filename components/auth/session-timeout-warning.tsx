@@ -10,6 +10,7 @@ import {
   fetchSessionSingleFlight,
   requestBackendTokenRefresh,
 } from "@/lib/auth-utils";
+import { apiClient } from "@/lib/api-client";
 
 /**
  * Session Manager Component
@@ -223,6 +224,40 @@ export function SessionTimeoutWarning() {
     );
     handleExtendSession();
   }, [sessionExpired, isExtending, session, handleExtendSession]);
+
+  // Active status heartbeat: periodically check user status with backend (detects remote suspension/ban/revocation)
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const checkActiveStatus = async () => {
+      try {
+        await apiClient.profile.get();
+      } catch (err) {
+        log.debug("[Auth] Background session check completed with error", err);
+      }
+    };
+
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void checkActiveStatus();
+      }
+    }, 10000);
+
+    const handleResume = () => {
+      if (document.visibilityState === "visible") {
+        void checkActiveStatus();
+      }
+    };
+
+    window.addEventListener("focus", handleResume);
+    document.addEventListener("visibilitychange", handleResume);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", handleResume);
+      document.removeEventListener("visibilitychange", handleResume);
+    };
+  }, [session?.user]);
 
   // Don't render if session doesn't exist or has error
   if (!session || session.error) {

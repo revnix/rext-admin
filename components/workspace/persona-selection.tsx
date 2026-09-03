@@ -9,8 +9,9 @@
 
 import { Check, Star, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { Persona } from "@/types/workspace";
 
@@ -118,6 +119,7 @@ export function PersonaSelection({
             persona={persona}
             isSelected={isSelected}
             onSelect={handleSelect}
+            multiSelect={multiSelect}
           />
         );
       })}
@@ -129,6 +131,7 @@ interface PersonaCardProps {
   persona: Persona;
   isSelected: boolean;
   onSelect: () => void;
+  multiSelect?: boolean;
 }
 
 /**
@@ -136,7 +139,14 @@ interface PersonaCardProps {
  *
  * Displays a single persona with selection state
  */
-function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
+function PersonaCard({
+  persona,
+  isSelected,
+  onSelect,
+  multiSelect = false,
+}: PersonaCardProps) {
+  const displayName = persona.full_name || persona.name;
+
   return (
     <Card
       className={cn(
@@ -145,13 +155,23 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
       )}
       onClick={onSelect}
     >
-      {isSelected && (
+      {multiSelect ? (
+        <div className="absolute right-3 top-3 z-10 flex items-center justify-center">
+          <Checkbox
+            checked={isSelected}
+            aria-label={`Select ${displayName}`}
+            onClick={(event) => event.stopPropagation()}
+            onCheckedChange={() => onSelect()}
+            className="h-5 w-5 rounded-md border shadow-none"
+          />
+        </div>
+      ) : isSelected ? (
         <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary flex items-center justify-center">
           <Check className="h-4 w-4 text-primary-foreground" />
         </div>
-      )}
+      ) : null}
 
-      <CardContent className="p-4">
+      <CardContent className={cn("p-4", multiSelect && "pt-10")}>
         <div className="flex items-start gap-3">
           {/*
             The person's picture, not a generic icon. This grid is where a
@@ -178,7 +198,7 @@ function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps) {
           {/* Name and Title */}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base leading-tight truncate">
-              {persona.full_name || persona.name}
+              {displayName}
             </h3>
             {persona.professional_title && (
               <p className="text-sm text-muted-foreground mt-0.5 truncate">

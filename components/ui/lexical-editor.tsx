@@ -180,6 +180,155 @@ const theme = {
 const lexicalLog = log.forComponent("LexicalEditor");
 
 // ---------------------------------------------------------------------------
+// Manual-upload image placeholder — a non-fetchable `src` scheme the backend
+// embeds (as ordinary markdown image syntax) at the spot its image-planning
+// pipeline suggested an image, whenever real image generation is disabled
+// (cost control). Recognizing the scheme here lets the same ImageNode /
+// markdown transformer round-trip it untouched, while rendering an
+// upload/dismiss slot instead of a broken <img>. Never sent to a publish
+// target unresolved — the backend strips any leftover marker at publish time.
+// ---------------------------------------------------------------------------
+const IMAGE_PLACEHOLDER_SCHEME = "rext-placeholder:";
+
+function isImagePlaceholderSrc(src: string): boolean {
+  return src.startsWith(IMAGE_PLACEHOLDER_SCHEME);
+}
+
+function ImagePlaceholderSlot({
+  editor,
+  nodeKey,
+  altText,
+}: {
+  editor: import("lexical").LexicalEditor;
+  nodeKey: string;
+  altText: string;
+}) {
+  const workspaceId = useCurrentWorkspaceId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const isEditable = editor.isEditable();
+
+  const requireEditMode = useCallback(() => {
+    toast.info("Switch to Edit mode to add an image here.");
+  }, []);
+
+  const applyImage = useCallback(
+    (url: string, alt: string) => {
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if ($isImageNode(node)) {
+          node.setSrc(url);
+          if (alt) node.setAltText(alt);
+        }
+      });
+    },
+    [editor, nodeKey],
+  );
+
+  const handleUploadClick = useCallback(() => {
+    if (!isEditable) {
+      requireEditMode();
+      return;
+    }
+    if (!workspaceId) {
+      toast.error("No workspace selected — cannot upload.");
+      return;
+    }
+    fileInputRef.current?.click();
+  }, [isEditable, requireEditMode, workspaceId]);
+
+  const handleFileSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // Reset so re-picking the same file fires change again.
+      e.target.value = "";
+      if (!file || !workspaceId) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please choose an image file.");
+        return;
+      }
+      if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        toast.error("Image exceeds 20MB. Please choose a smaller file.");
+        return;
+      }
+      setUploading(true);
+      try {
+        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
+        if (!uploadedSrc) {
+          toast.error("Upload succeeded but no image URL was returned.");
+          return;
+        }
+        applyImage(uploadedSrc, altText);
+        toast.success("Image added.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [workspaceId, altText, applyImage],
+  );
+
+  const handleDismiss = useCallback(() => {
+    if (!isEditable) {
+      requireEditMode();
+      return;
+    }
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  }, [editor, nodeKey, isEditable, requireEditMode]);
+
+  return (
+    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+      <span className="inline-flex items-start gap-2 text-muted-foreground">
+        <ImageIcon size={16} className="mt-0.5 shrink-0" />
+        <span>
+          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
+          here, or remove this slot and publish without it.
+        </span>
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={handleUploadClick}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <Loader2 size={14} className="mr-1.5 animate-spin" />
+          ) : (
+            <Upload size={14} className="mr-1.5" />
+          )}
+          Upload image
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-8 text-muted-foreground"
+          onClick={handleDismiss}
+        >
+          <X size={14} className="mr-1.5" />
+          Remove
+        </Button>
+      </span>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ImageNodeComponent — renders image with a remove button overlay
 // ---------------------------------------------------------------------------
 function ImageNodeComponent({
@@ -203,6 +352,16 @@ function ImageNodeComponent({
       if (node) node.remove();
     });
   }, [editor, nodeKey]);
+
+  if (isImagePlaceholderSrc(src)) {
+    return (
+      <ImagePlaceholderSlot
+        editor={editor}
+        nodeKey={nodeKey}
+        altText={altText}
+      />
+    );
+  }
 
   return (
     <span className="relative inline-block group my-2">
@@ -319,6 +478,19 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   isInline(): boolean {
     return false;
+  }
+
+  // Used to turn a manual-upload placeholder (see IMAGE_PLACEHOLDER_SCHEME)
+  // into a real image in place once the user uploads one, without needing to
+  // replace the node (which would lose its position/selection context).
+  setSrc(src: string): void {
+    const writable = this.getWritable();
+    writable.__src = src;
+  }
+
+  setAltText(altText: string): void {
+    const writable = this.getWritable();
+    writable.__altText = altText;
   }
 }
 

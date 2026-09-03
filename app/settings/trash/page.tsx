@@ -121,7 +121,7 @@ export default function TrashSettingsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Trash</h2>
           <p className="text-muted-foreground">
-            Restore workspaces that were deleted within the last 30 days.
+            Restore workspaces that were deleted within the last 14 days.
           </p>
         </div>
         <div className="flex items-center gap-2">

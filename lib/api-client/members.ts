@@ -172,9 +172,16 @@ export function createInvitationsNamespace(client: ApiClient) {
      */
     validate: async (token: string) => {
       return client.request<{
+        /**
+         * Whether an account already exists for the invited email. When true the
+         * accept UI should send the user to sign-in rather than sign-up. Optional
+         * because older backend builds don't return it.
+         */
+        user_exists?: boolean;
         invitation: {
           id: string;
           email: string;
+          user_exists?: boolean;
           workspace: {
             id: string;
             name: string;

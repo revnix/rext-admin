@@ -114,6 +114,7 @@ export const USER_PERMISSIONS = {
   UPDATE: "user.update",
   DELETE: "user.delete",
   MANAGE_ROLES: "user.manage_roles",
+  IMPERSONATE: "user.impersonate",
 } as const;
 
 // Workspace Management
@@ -256,4 +257,30 @@ export function isAdmin(user: UserWithPermissions | null): boolean {
  */
 export function isSuperAdmin(user: UserWithPermissions | null): boolean {
   return checkRole(user, ROLES.SUPER_ADMIN);
+}
+
+/**
+ * Standard workspace roles the backend refuses to update or delete.
+ *
+ * Mirrors `RoleService.PROTECTED_WORKSPACE_ROLES` in rext-backend
+ * (src/services/role_service.py). These roles carry `is_system_role = false`,
+ * so checking that flag alone lets the UI offer Edit/Delete on roles the API
+ * will always reject. Matched by name, not by `is_workspace_role` — that flag
+ * is also true for user-created workspace roles, which are not protected.
+ */
+export const PROTECTED_WORKSPACE_ROLES = new Set([
+  "workspace_owner",
+  "workspace_admin",
+  "editor",
+  "viewer",
+]);
+
+/**
+ * Whether a role is protected from modification or deletion by the backend.
+ */
+export function isProtectedRole(role: {
+  name: string;
+  is_system_role: boolean;
+}): boolean {
+  return role.is_system_role || PROTECTED_WORKSPACE_ROLES.has(role.name);
 }

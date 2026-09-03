@@ -85,7 +85,7 @@ export function WorkspaceCreateWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // Check workspace limit
-  const { checkLimit, warnIfApproaching } = useCheckLimit("workspaces");
+  const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
   // SSE-related state
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -100,11 +100,6 @@ export function WorkspaceCreateWizard() {
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-
-  // Warn if approaching limit when wizard opens
-  useEffect(() => {
-    warnIfApproaching(80);
-  }, [warnIfApproaching]);
 
   // Form for details step
   const form = useForm<WorkspaceFormData>({
@@ -165,7 +160,7 @@ export function WorkspaceCreateWizard() {
   // Step 1: Handle details form submission (creates workspace immediately)
   const handleDetailsSubmit = async (data: WorkspaceFormData) => {
     // Check workspace limit before creating
-    if (!checkLimit("create a workspace")) {
+    if (!canCreate || isLimitReached || !checkLimit("create a workspace")) {
       return;
     }
 
@@ -548,7 +543,12 @@ export function WorkspaceCreateWizard() {
             <Button
               size="lg"
               onClick={handleSubmit(handleDetailsSubmit)}
-              disabled={!isValid || form.formState.isSubmitting}
+              disabled={
+                !isValid ||
+                form.formState.isSubmitting ||
+                !canCreate ||
+                isLimitReached
+              }
               className="gap-2 text-white"
             >
               {form.formState.isSubmitting ? (

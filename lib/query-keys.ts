@@ -246,63 +246,6 @@ export const subscriptionQueries = {
 };
 
 // ============================================================================
-// ADMIN QUERIES
-// ============================================================================
-
-export const adminQueries = {
-  roles: {
-    all: () => ["roles"] as const,
-    list: () =>
-      queryOptions({
-        queryKey: adminQueries.roles.all(),
-        queryFn: () => apiClient.roles.list(true),
-      }),
-  },
-  permissions: {
-    all: () => ["permissions"] as const,
-    list: () =>
-      queryOptions({
-        queryKey: adminQueries.permissions.all(),
-        queryFn: () => apiClient.roles.listPermissions(),
-      }),
-  },
-  invitations: {
-    all: () => ["admin-invitations"] as const,
-    list: (status?: string) =>
-      queryOptions({
-        queryKey: [...adminQueries.invitations.all(), status] as const,
-        queryFn: () => apiClient.adminInvitations.list({ status }),
-      }),
-  },
-  customers: {
-    all: () => ["admin", "customers"] as const,
-    detail: (customerId: string) =>
-      queryOptions({
-        queryKey: [...adminQueries.customers.all(), customerId] as const,
-        queryFn: () => apiClient.users.get(customerId), // Adjust based on actual API
-      }),
-  },
-  auditLogs: {
-    all: () => ["audit-logs"] as const,
-    list: (action?: string, startDate?: string, endDate?: string) =>
-      queryOptions({
-        queryKey: [
-          ...adminQueries.auditLogs.all(),
-          action,
-          startDate,
-          endDate,
-        ] as const,
-        queryFn: () =>
-          apiClient.auditLogs.getMyLogs({
-            action,
-            date_from: startDate,
-            date_to: endDate,
-          }),
-      }),
-  },
-};
-
-// ============================================================================
 // PERSONA QUERIES
 // ============================================================================
 

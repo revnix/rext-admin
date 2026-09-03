@@ -165,7 +165,7 @@ const nextConfig: NextConfig = {
   // ============================================================================
   // 4. DEPLOYMENT CONFIGURATION
   // ============================================================================
-  output: "standalone", // For Docker/container deployments
+  output: process.env.VERCEL ? undefined : "standalone", // Disable standalone on Vercel to fix .nft.json errors
 
   // Turbopack root directory to avoid workspace-root inference warnings
   turbopack: {

@@ -12,7 +12,7 @@ import {
   Webhook,
   XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
@@ -58,8 +58,6 @@ import { log } from "@/lib/logger";
 // TYPES
 // ============================================================================
 
-type StatusFilter = "all" | "processed" | "pending" | "failed";
-
 // ============================================================================
 // WEBHOOK EVENT ROW COMPONENT
 // ============================================================================
@@ -72,6 +70,28 @@ interface WebhookEventRowProps {
 
 function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [payload, setPayload] = useState<Record<string, unknown> | null>(
+    (event.payload as Record<string, unknown> | null) ?? null,
+  );
+  const [payloadLoading, setPayloadLoading] = useState(false);
+  const [payloadError, setPayloadError] = useState<string | null>(null);
+
+  const toggleExpanded = async () => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    if (next && payload === null && !payloadLoading) {
+      try {
+        setPayloadLoading(true);
+        setPayloadError(null);
+        const detail = await apiClient.adminWebhooks.getEventDetail(event.id);
+        setPayload((detail.payload as Record<string, unknown> | null) ?? null);
+      } catch (_err) {
+        setPayloadError("Unable to load webhook payload.");
+      } finally {
+        setPayloadLoading(false);
+      }
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -120,11 +140,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
+            <Button variant="ghost" size="sm" onClick={toggleExpanded}>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
@@ -175,13 +191,23 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
                 </div>
               )}
 
-              {/* Payload
+              {/* Payload viewer (redacted by the backend) */}
               <div>
                 <h4 className="font-semibold mb-2">Payload</h4>
-                <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
-                  {JSON.stringify(event.payload, null, 2)}
-                </pre>
-              </div> */}
+                {payloadLoading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : payloadError ? (
+                  <p className="text-sm text-red-600">{payloadError}</p>
+                ) : payload && Object.keys(payload).length > 0 ? (
+                  <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
+                    {JSON.stringify(payload, null, 2)}
+                  </pre>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No payload data available for this event.
+                  </p>
+                )}
+              </div>
             </div>
           </TableCell>
         </TableRow>
@@ -271,34 +297,48 @@ export default function WebhookMonitoringPage() {
     total: 0,
     total_pages: 0,
   });
-  const [summary, setSummary] = useState({
-    total: 0,
-    processed: 0,
-    pending: 0,
-    failed: 0,
-  });
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [eventNameFilter, setEventNameFilter] = useState<string>("");
   const [periodDays, setPeriodDays] = useState<number | undefined>(7);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "processed" | "pending" | "failed"
+  >("all");
+
+  // Monotonic request id — guards against out-of-order responses overwriting
+  // fresher state when filters change rapidly.
+  const fetchSeq = useRef(0);
+
+  // Tab counts come from ONE authoritative source (the stats endpoint), never
+  // from the per-page event list, so they stay stable across tab switches and
+  // satisfy processed + pending + failed === total.
+  const tabCounts = {
+    total: stats?.total_events ?? 0,
+    processed: stats?.processed_events ?? 0,
+    failed: stats?.failed_events ?? 0,
+    pending:
+      stats?.pending_events ??
+      Math.max(
+        (stats?.total_events ?? 0) -
+          (stats?.processed_events ?? 0) -
+          (stats?.failed_events ?? 0),
+        0,
+      ),
+  };
 
   // Retry state
   const [retryingEventId, setRetryingEventId] = useState<string | null>(null);
   const [showRetryDialog, setShowRetryDialog] = useState(false);
   const [eventToRetry, setEventToRetry] = useState<string | null>(null);
 
-  // Fetch events
+  // Fetch events — the active tab drives a server-side status filter, so the
+  // list and its pagination always reflect the full matching dataset (not a
+  // client-side slice of the first page).
   const fetchEvents = useCallback(async () => {
+    const seq = ++fetchSeq.current;
     try {
       setLoading(true);
-
-      let processedFilter: boolean | undefined;
-      if (statusFilter === "processed") processedFilter = true;
-      if (statusFilter === "pending" || statusFilter === "failed")
-        processedFilter = false;
 
       let start_date: string | undefined;
       if (periodDays !== undefined) {
@@ -311,19 +351,23 @@ export default function WebhookMonitoringPage() {
         page: currentPage,
         per_page: 50,
         event_name: eventNameFilter || undefined,
-        processed: processedFilter,
+        status: activeTab,
         start_date,
       });
 
+      // Ignore a response that a newer request has already superseded.
+      if (seq !== fetchSeq.current) return;
+
       setEvents(response.events);
       setPagination(response.pagination);
-      setSummary(response.summary);
     } catch (_error) {
-      toast.error("Failed to load webhook events. Please try again.");
+      if (seq === fetchSeq.current) {
+        toast.error("Failed to load webhook events. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (seq === fetchSeq.current) setLoading(false);
     }
-  }, [statusFilter, currentPage, eventNameFilter, periodDays]);
+  }, [activeTab, currentPage, eventNameFilter, periodDays]);
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
@@ -353,10 +397,13 @@ export default function WebhookMonitoringPage() {
       setRetryingEventId(eventToRetry);
       const result = await apiClient.adminWebhooks.retryWebhook(eventToRetry);
 
-      toast.success(result.message || "Webhook retry initiated successfully");
-
-      // Refresh events
-      await fetchEvents();
+      // The backend only resolves successfully when the event was actually
+      // reprocessed; still guard against an application-level failure flag.
+      if (result && result.success === false) {
+        toast.error(result.message || "Webhook reprocessing failed.");
+      } else {
+        toast.success(result?.message || "Webhook reprocessed successfully.");
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -364,36 +411,23 @@ export default function WebhookMonitoringPage() {
           : "Failed to retry webhook. Please try again.";
       toast.error(errorMessage);
     } finally {
+      // Always re-sync monitoring data so the displayed status matches the
+      // backend state, regardless of retry outcome.
+      await Promise.all([fetchEvents(), fetchStats()]);
       setRetryingEventId(null);
       setShowRetryDialog(false);
       setEventToRetry(null);
     }
   };
 
-  // Initial load
+  // Load events + stats together on any filter/tab/page change.
   useEffect(() => {
     fetchEvents();
     fetchStats();
   }, [fetchEvents, fetchStats]);
 
-  // Reload on filter changes
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
-
-  // Filter events based on tab
-  const getFilteredEvents = () => {
-    if (activeTab === "all") return events;
-    if (activeTab === "failed")
-      return events.filter((e) => e.status === "failed");
-    if (activeTab === "pending")
-      return events.filter((e) => e.status === "pending");
-    if (activeTab === "processed")
-      return events.filter((e) => e.status === "processed");
-    return events;
-  };
-
-  const filteredEvents = getFilteredEvents();
+  // The server already returns exactly the rows for the active tab.
+  const filteredEvents = events;
 
   return (
     <AdminGuard superAdminOnly={true}>
@@ -444,31 +478,6 @@ export default function WebhookMonitoringPage() {
                   }}
                 />
               </div>
-              {/* <div className="w-full sm:w-48">
-                <label
-                  htmlFor="status-filter"
-                  className="text-sm font-medium mb-2 block"
-                >
-                  Status
-                </label>
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value: StatusFilter) => {
-                    setStatusFilter(value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="processed">Processed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> */}
               <div className="w-full sm:w-48">
                 <label
                   htmlFor="period-filter"
@@ -505,20 +514,26 @@ export default function WebhookMonitoringPage() {
             <CardTitle>Webhook Events</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => {
+                setActiveTab(value as typeof activeTab);
+                setCurrentPage(1);
+              }}
+            >
               <TabsList>
                 <TabsTrigger value="all">
-                  All Events ({summary.total})
+                  All Events ({tabCounts.total})
                 </TabsTrigger>
                 <TabsTrigger value="failed">
                   <AlertTriangle className="h-4 w-4 mr-1" />
-                  Failed ({summary.failed})
+                  Failed ({tabCounts.failed})
                 </TabsTrigger>
                 <TabsTrigger value="pending">
-                  Pending ({summary.pending})
+                  Pending ({tabCounts.pending})
                 </TabsTrigger>
                 <TabsTrigger value="processed">
-                  Processed ({summary.processed})
+                  Processed ({tabCounts.processed})
                 </TabsTrigger>
               </TabsList>
 

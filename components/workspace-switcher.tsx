@@ -16,6 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -24,6 +29,7 @@ import {
 import { workspaceQueries } from "@/lib/query-keys";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
@@ -50,6 +56,8 @@ export function WorkspaceSwitcher() {
   );
 
   const workspaces = workspaceListResponse?.workspaces || [];
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   // Update local store when API data changes
   React.useEffect(() => {
@@ -218,16 +226,48 @@ export function WorkspaceSwitcher() {
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/w/create" className="gap-2 p-2">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  Create Workspace
-                </div>
-              </Link>
-            </DropdownMenuItem>
+            {isLimitReached || isLimitLoading ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="block">
+                    <DropdownMenuItem
+                      asChild
+                      disabled={true}
+                      className="pointer-events-none opacity-60"
+                    >
+                      <Link
+                        href="#"
+                        onClick={(event) => event.preventDefault()}
+                        className="gap-2 p-2"
+                      >
+                        <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                          <Plus className="size-4" />
+                        </div>
+                        <div className="text-muted-foreground font-medium">
+                          {isLimitReached
+                            ? "Workspace limit reached"
+                            : "Checking plan..."}
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  Upgrade your plan to create more workspaces.
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <DropdownMenuItem asChild>
+                <Link href="/w/create" className="gap-2 p-2">
+                  <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                    <Plus className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground font-medium">
+                    Create Workspace
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -71,11 +71,27 @@ export function LimitCheckWrapper({
   className = "",
 }: LimitCheckWrapperProps) {
   const router = useRouter();
-  const { isLimitReached, usagePercentage } = useResourceLimit(resource);
+  const { isLimitReached, usagePercentage, isLoading } =
+    useResourceLimit(resource);
 
   const handleUpgrade = () => {
     router.push("/pricing" as Route);
   };
+
+  if (isLoading) {
+    return (
+      <div className={className}>
+        <Alert>
+          <Lock className="h-4 w-4" />
+          <AlertTitle>Checking plan limits</AlertTitle>
+          <AlertDescription>
+            We’re confirming your current plan before enabling this action.
+          </AlertDescription>
+        </Alert>
+        <div className="opacity-60 pointer-events-none mt-4">{children}</div>
+      </div>
+    );
+  }
 
   // Block actions if limit is reached
   if (isLimitReached) {
@@ -156,10 +172,14 @@ export function useCheckLimit(
     | "storage",
 ) {
   const router = useRouter();
-  const { isLimitReached, usagePercentage, canCreate } =
+  const { isLimitReached, usagePercentage, canCreate, isLoading } =
     useResourceLimit(resource);
 
   const checkLimit = (actionName: string = "perform this action"): boolean => {
+    if (isLoading) {
+      return false;
+    }
+
     if (isLimitReached) {
       toast.error("Limit Reached", {
         description: `You've reached your plan's limit. Upgrade to ${actionName}.`,
@@ -174,6 +194,10 @@ export function useCheckLimit(
   };
 
   const warnIfApproaching = (threshold: number = 75): boolean => {
+    if (isLoading) {
+      return false;
+    }
+
     if (usagePercentage >= threshold && !isLimitReached) {
       toast.warning("Approaching Limit", {
         description: `You're using ${usagePercentage.toFixed(0)}% of your ${resource.replace(/_/g, " ")} limit.`,

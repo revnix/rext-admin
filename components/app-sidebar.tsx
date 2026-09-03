@@ -41,6 +41,8 @@ import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import type { NavGroup } from "@/types/navigation";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import {
@@ -78,6 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     : undefined;
   const { role: _fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const { state: sidebarState } = useSidebar();
+  const { isLimitReached } = useResourceLimit("workspaces");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
     null,
@@ -178,7 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   if (!hasWorkspaces) {
     mainNavigationGroups[0].items.push({
       title: "Create Workspace",
-      url: "/w/create",
+      url: isLimitReached ? "#" : "/w/create",
       icon: Plus,
     });
   }
@@ -285,19 +288,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
                   const isActive = pathname === item.url.split("?")[0];
+                  const isCreateWorkspaceLocked =
+                    item.title === "Create Workspace" && isLimitReached;
+
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={isActive}
-                        asChild
-                        className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                      >
-                        <Link href={item.url as Route}>
-                          {Icon && <Icon />}
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      {isCreateWorkspaceLocked ? (
+                        <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
+                          <SidebarMenuButton
+                            tooltip={
+                              "Upgrade your plan to create more workspaces."
+                            }
+                            isActive={false}
+                            className="cursor-not-allowed opacity-60 hover:bg-transparent data-[active=true]:bg-transparent"
+                            onClick={(event) => event.preventDefault()}
+                            aria-disabled="true"
+                          >
+                            {Icon && <Icon />}
+                            <span className="font-medium">{item.title}</span>
+                          </SidebarMenuButton>
+                        </LockedFeatureTooltip>
+                      ) : (
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          isActive={isActive}
+                          asChild
+                          className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
+                        >
+                          <Link href={item.url as Route}>
+                            {Icon && <Icon />}
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}

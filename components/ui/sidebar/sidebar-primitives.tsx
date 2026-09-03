@@ -180,7 +180,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col transition-[margin-left] duration-200 ease-linear",
+        "bg-background relative flex flex-1 min-w-0 max-w-full flex-col transition-[margin-left] duration-200 ease-linear",
         // Regular layout
         "lg:peer-data-[variant=inset]:m-2 lg:peer-data-[variant=inset]:ml-0 lg:peer-data-[variant=inset]:rounded-xl lg:peer-data-[variant=inset]:shadow-sm",
         // Add left spacing when sidebar is collapsed

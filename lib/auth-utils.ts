@@ -67,6 +67,9 @@ export const AUTH_SESSION_TOKEN_SWAP_ACTION = "replace-backend-tokens";
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
+// Set by classifyUnauthorized() when the 401 was a suspended/banned account, so
+// the forced sign-out can tell the login page why.
+let blockedAccountError: string | null = null;
 
 // Mutex: shared by EVERY trigger of an explicit backend refresh — the
 // reactive 401 handler below, and the proactive timer in
@@ -251,11 +254,11 @@ async function forceSessionRefresh(): Promise<Session | null> {
  * Ensures only one redirect occurs even when multiple parallel requests return 401.
  * Performs full cleanup of state and storage.
  */
-function redirectToLogin(): void {
+function redirectToLogin(errorCode: string = "SessionExpired"): void {
   if (isRedirectingToLogin) return;
   isRedirectingToLogin = true;
 
-  log.error("[AuthJS] Session expired, redirecting to login");
+  log.error(`[AuthJS] ${errorCode}, redirecting to login`);
 
   // Clear the auth headers cache immediately
   authHeadersCache = null;
@@ -270,8 +273,8 @@ function redirectToLogin(): void {
         const currentPath = window.location.pathname + window.location.search;
         const redirectParam =
           currentPath !== "/login" && currentPath !== "/"
-            ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
-            : "?error=SessionExpired";
+            ? `?redirect=${encodeURIComponent(currentPath)}&error=${errorCode}`
+            : `?error=${errorCode}`;
 
         await performLogout(`/login${redirectParam}`);
       } catch (error) {
@@ -282,7 +285,7 @@ function redirectToLogin(): void {
         // Fallback cleanup
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = "/login?error=SessionExpired";
+        window.location.href = `/login?error=${errorCode}`;
       }
     }
   }, 0);
@@ -350,11 +353,22 @@ export async function getAuthHeaders(
     });
   }
 
-  // Cache the headers on client-side
-  authHeadersCache = {
-    headers,
-    timestamp: Date.now(),
-  };
+  // Cache the headers on client-side - but never cache an empty/unauthenticated
+  // result. Any unauthenticated call (e.g. validating an invitation token on
+  // /invitations/accept before the user signs in) would otherwise poison the
+  // cache with `{}` for CACHE_TTL_MS. If sign-in completes inside that window,
+  // every request fired by the destination page (dashboard queries, invitation
+  // accept, subscription usage, etc.) reads the stale empty cache instead of
+  // the fresh session and gets a 422 "authorization: Field required" from the
+  // backend even though the user is, in fact, logged in.
+  if (headers.Authorization) {
+    authHeadersCache = {
+      headers,
+      timestamp: Date.now(),
+    };
+  } else {
+    authHeadersCache = null;
+  }
 
   return headers;
 }
@@ -377,6 +391,14 @@ const REVOKED_SESSION_MESSAGES = [
   "user not found or has been deleted",
 ];
 
+// Account statuses the backend reports via a typed error_code on every
+// authenticated request once an admin suspends or bans the user. Mapped to the
+// message the login page shows after the forced sign-out.
+const BLOCKED_ACCOUNT_ERRORS: Record<string, string> = {
+  account_suspended: "AccountSuspended",
+  account_banned: "AccountBanned",
+};
+
 type UnauthorizedKind = "expired" | "revoked" | "other";
 
 /**
@@ -390,6 +412,7 @@ type UnauthorizedKind = "expired" | "revoked" | "other";
 async function classifyUnauthorized(
   response: Response,
 ): Promise<UnauthorizedKind> {
+  blockedAccountError = null;
   try {
     const body = await response.clone().json();
     const error = body?.error ?? body;
@@ -404,6 +427,11 @@ async function classifyUnauthorized(
       message === "token has expired"
     ) {
       return "expired";
+    }
+
+    if (BLOCKED_ACCOUNT_ERRORS[code]) {
+      blockedAccountError = BLOCKED_ACCOUNT_ERRORS[code];
+      return "revoked";
     }
 
     if (REVOKED_SESSION_MESSAGES.some((pattern) => message.includes(pattern))) {
@@ -476,8 +504,8 @@ export async function authenticatedFetch(
       "[AuthJS] Backend reports the session is no longer valid — signing out",
       { url },
     );
-    redirectToLogin();
-    throw new Error("Session expired");
+    redirectToLogin(blockedAccountError ?? "SessionExpired");
+    throw new Error(blockedAccountError ?? "Session expired");
   }
 
   if (unauthorizedKind !== "expired") {

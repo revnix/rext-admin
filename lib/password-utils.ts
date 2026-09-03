@@ -57,9 +57,11 @@ export async function checkPasswordBreach(password: string): Promise<{
     }
 
     return { breached: false, count: 0 };
-  } catch {
+  } catch (error) {
     // Fail open if there's any error (network issue, crypto not available, etc.)
-    logger.warn("[Password Check] Error checking password breach database");
+    logger.warn("[Password Check] Error checking password breach database", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return { breached: false, count: 0 };
   }
 }
