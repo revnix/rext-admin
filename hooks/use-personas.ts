@@ -56,6 +56,34 @@ export function useCreatePersona(workspaceId: string) {
 }
 
 /**
+ * Hook to upload a persona's picture from the user's machine.
+ */
+export function useUploadPersonaAvatar(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      personaId,
+      file,
+    }: {
+      personaId: string;
+      file: File;
+    }) => {
+      return apiClient.personas.uploadAvatar(workspaceId, personaId, file);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.all(workspaceId),
+      });
+      toast.success("Photo uploaded");
+    },
+    onError: (error: Error) => {
+      toast.error(`Could not upload photo: ${error.message}`);
+    },
+  });
+}
+
+/**
  * Hook to update an existing persona
  */
 export function useUpdatePersona(workspaceId: string) {

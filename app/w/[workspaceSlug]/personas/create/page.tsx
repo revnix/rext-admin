@@ -22,6 +22,7 @@ import {
   X,
   Link as LinkIcon,
   Image as ImageIcon,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -77,7 +78,12 @@ interface ValidationErrors {
   bio?: string;
   linkedin_url?: string;
   avatar_url?: string;
+  email?: string;
 }
+
+/** Deliberately permissive: this only has to catch a typed mistake, and the
+ *  address is used to derive a Gravatar rather than to reach anyone. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CreatePersonaPage() {
   const { workspace, workspaceSlug, workspaceId } = useWorkspace();
@@ -95,6 +101,7 @@ export default function CreatePersonaPage() {
     description: "",
     professional_title: "",
     avatar_url: "",
+    email: "",
     bio: "",
     linkedin_url: "",
     demographics: "",
@@ -160,6 +167,10 @@ export default function CreatePersonaPage() {
         "Please enter a valid URL starting with http:// or https://";
     }
 
+    if (formData.email?.trim() && !EMAIL_RE.test(formData.email.trim())) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -192,6 +203,7 @@ export default function CreatePersonaPage() {
         description: description,
         professional_title: title,
         avatar_url: formData.avatar_url?.trim() || undefined,
+        email: formData.email?.trim() || undefined,
         bio: formData.bio?.trim() || undefined,
         linkedin_url: formData.linkedin_url?.trim() || undefined,
         demographics: formData.demographics?.trim() || undefined,
@@ -345,6 +357,36 @@ export default function CreatePersonaPage() {
                     {errors.avatar_url && (
                       <p className="text-sm text-destructive">
                         {errors.avatar_url}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Paste a link to a photo. Leave it empty and we will use a
+                      Gravatar if the email below has one.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail size={14} />
+                      Email
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={handleChange}
+                      placeholder="writer@example.com"
+                      className={errors.email ? "border-destructive" : ""}
+                    />
+                    {errors.email ? (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Used only to look up a Gravatar. Not shown publicly and
+                        never used to contact anyone.
                       </p>
                     )}
                   </div>

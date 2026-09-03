@@ -15,12 +15,16 @@ import {
   Loader2,
   Link as LinkIcon,
   Image as ImageIcon,
+  Mail,
+  Star,
+  Upload,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useUpdatePersona,
+  useUploadPersonaAvatar,
   usePersona,
   useDeletePersona,
 } from "@/hooks/use-personas";
@@ -33,6 +37,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -98,9 +110,76 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | null>(null);
+  const uploadAvatar = useUploadPersonaAvatar(workspace?.id || "");
+  const isUploadingAvatar = uploadAvatar.isPending;
+
+  /** One place to set the photo: a file upload or a pasted link, both behind
+   *  the avatar in either mode. `urlDraft` is the link being edited in the
+   *  dialog; it is only committed on Save. */
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [urlDraft, setUrlDraft] = useState("");
+
+  const openPhotoDialog = () => {
+    setUrlDraft(formData.avatar_url || "");
+    setPhotoDialogOpen(true);
+  };
+
+  const initials = persona.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
+  /** Uploads immediately rather than waiting for the form to be saved: the
+   *  server stores the file and answers with the persona, so the picture on
+   *  screen is the one that was kept. */
+  const handleAvatarFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    // Cleared here so choosing the same file twice still fires a change.
+    event.target.value = "";
+    if (!file || !persona.id) return;
+    const updated = await uploadAvatar.mutateAsync({
+      personaId: persona.id,
+      file,
+    });
+    if (updated?.avatar_url) {
+      setUploadedAvatar(updated.avatar_url);
+      setUrlDraft(updated.avatar_url);
+    }
+    setFormData((current) => ({
+      ...current,
+      avatar_url: updated?.avatar_url ?? current.avatar_url,
+      avatar_source: updated?.avatar_source ?? "custom",
+    }));
+    setPhotoDialogOpen(false);
+  };
 
   const updatePersona = useUpdatePersona(workspace?.id || "");
   const deletePersona = useDeletePersona(workspace?.id || "");
+
+  /** Commits the pasted link. While editing the form it only updates local
+   *  state and is saved with the rest; otherwise it is persisted on its own. */
+  const savePhotoUrl = () => {
+    const next = urlDraft.trim();
+    setUploadedAvatar(null);
+    setFormData((current) => ({
+      ...current,
+      avatar_url: next,
+      avatar_source: next ? "custom" : current.avatar_source,
+    }));
+    if (!isEditing && workspace?.id && persona.id) {
+      updatePersona.mutate({
+        personaId: persona.id,
+        data: { ...persona, avatar_url: next },
+      });
+    }
+    setPhotoDialogOpen(false);
+  };
 
   useEffect(() => {
     if (persona) {
@@ -295,44 +374,206 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="avatar_url"
-                      className="flex items-center gap-2"
-                    >
-                      <ImageIcon size={14} />
-                      Avatar URL
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail size={14} />
+                      Email
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
                     </Label>
                     <Input
-                      id="avatar_url"
-                      value={formData.avatar_url || ""}
+                      id="email"
+                      type="email"
+                      value={formData.email || ""}
                       onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
+                      placeholder="writer@example.com"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Used only to look up a Gravatar.
+                    </p>
                   </div>
                 </>
               )}
 
+              {/* Outside the edit block: the avatar is clickable in both modes. */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                className="hidden"
+                onChange={handleAvatarFile}
+              />
+
+              <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Persona photo</DialogTitle>
+                    <DialogDescription>
+                      Upload a file from your machine or paste a link to an
+                      image. A link you set is kept; clear it to fall back to
+                      the photo on their site, then a Gravatar, then initials.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={uploadedAvatar || urlDraft || ""}
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-2xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingAvatar ? "Uploading..." : "Upload a photo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        JPEG, PNG, GIF or WebP, up to 5MB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="avatar_url_dialog"
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon size={14} />
+                      Image link
+                    </Label>
+                    <Input
+                      id="avatar_url_dialog"
+                      value={urlDraft}
+                      onChange={(e) => setUrlDraft(e.target.value)}
+                      placeholder="https://example.com/photo.jpg"
+                    />
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    {urlDraft.trim() && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mr-auto text-destructive hover:text-destructive"
+                        onClick={() => setUrlDraft("")}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPhotoDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={savePhotoUrl}
+                      disabled={
+                        isUploadingAvatar ||
+                        urlDraft.trim() === (formData.avatar_url || "").trim()
+                      }
+                    >
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
-                  <AvatarImage
-                    src={persona.avatar_url || ""}
-                    alt={`${persona.name}'s avatar`}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
-                    {persona.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                {/*
+                  While editing, the avatar is the one control for the photo:
+                  clicking it opens a dialog that takes a file upload or a
+                  pasted link. Outside edit mode it is just the picture.
+                */}
+                {(() => {
+                  const avatar = (
+                    <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={
+                          uploadedAvatar ||
+                          formData.avatar_url ||
+                          persona.avatar_url ||
+                          ""
+                        }
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  );
+
+                  if (!isEditing) return avatar;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={openPhotoDialog}
+                      disabled={isUploadingAvatar}
+                      title="Change photo"
+                      className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {avatar}
+                      <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-white" />
+                        ) : (
+                          <Upload className="h-5 w-5 text-white" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })()}
+                {isEditing &&
+                  !uploadedAvatar &&
+                  persona.avatar_source === "generated" && (
+                    <span className="text-xs text-muted-foreground">
+                      No photo found - click the circle to add one
+                    </span>
+                  )}
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Full Name
                   </Label>
-                  <p className="text-xl font-bold">{persona.name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xl font-bold">{persona.name}</p>
+                    {/*
+                      Shown here as well as on the cards. This is the page
+                      someone opens to decide whether to write as this person,
+                      and the recommendation was visible everywhere except the
+                      screen where the decision is made.
+                    */}
+                    {persona.is_recommended && (
+                      <Badge
+                        variant="default"
+                        className="gap-1 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
+                      >
+                        <Star className="h-3 w-3 fill-current" />
+                        Recommended
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 

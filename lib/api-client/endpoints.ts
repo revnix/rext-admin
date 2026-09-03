@@ -96,6 +96,8 @@ export const ENDPOINTS = {
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
     delete: (workspaceId: string, personaId: string) =>
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+    uploadAvatar: (workspaceId: string, personaId: string) =>
+      `/api/v1/workspaces/${workspaceId}/personas/${personaId}/avatar` as const,
   },
 
   /**

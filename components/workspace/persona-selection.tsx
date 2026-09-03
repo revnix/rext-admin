@@ -7,7 +7,8 @@
 
 "use client";
 
-import { Check, User } from "lucide-react";
+import { Check, Star, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -172,10 +173,27 @@ function PersonaCard({
 
       <CardContent className={cn("p-4", multiSelect && "pt-10")}>
         <div className="flex items-start gap-3">
-          {/* Avatar */}
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <User className="w-5 h-5 text-primary" />
-          </div>
+          {/*
+            The person's picture, not a generic icon. This grid is where a
+            workspace is asked to choose whose voice to write in, and it was
+            drawing the same silhouette for everyone while the photograph the
+            crawler found sat unused on the record.
+          */}
+          <Avatar className="flex-shrink-0 w-10 h-10 rounded-lg">
+            <AvatarImage
+              src={persona.avatar_url || ""}
+              alt={`${persona.full_name || persona.name} avatar`}
+              className="object-cover"
+            />
+            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold text-xs">
+              {(persona.full_name || persona.name)
+                .split(" ")
+                .map((word) => word[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
 
           {/* Name and Title */}
           <div className="flex-1 min-w-0">
@@ -186,6 +204,20 @@ function PersonaCard({
               <p className="text-sm text-muted-foreground mt-0.5 truncate">
                 {persona.professional_title}
               </p>
+            )}
+            {/*
+              The one the extraction judged best able to speak for the brand,
+              on provenance and output rather than score alone. Shown here
+              because this is the screen where the choice is actually made.
+            */}
+            {persona.is_recommended && (
+              <Badge
+                variant="default"
+                className="mt-1.5 gap-1 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
+              >
+                <Star className="h-3 w-3 fill-current" />
+                Recommended
+              </Badge>
             )}
           </div>
         </div>

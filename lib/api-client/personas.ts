@@ -11,6 +11,26 @@ import { ENDPOINTS } from "./endpoints";
 export function createPersonasNamespace(client: ApiClient) {
   return {
     /**
+     * Upload a picture for a persona from the user's machine.
+     *
+     * The body is FormData, so no content-type is set here - the browser has to
+     * write it itself along with the multipart boundary, and setting it by hand
+     * produces a boundary the server cannot parse.
+     */
+    uploadAvatar: async (
+      workspaceId: string,
+      personaId: string,
+      file: File,
+    ): Promise<Persona> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return client.request<Persona>(
+        ENDPOINTS.PERSONAS.uploadAvatar(workspaceId, personaId),
+        { method: "POST", body: formData },
+      );
+    },
+
+    /**
      * List all personas for a workspace
      */
     list: async (workspaceId: string) => {
