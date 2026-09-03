@@ -271,10 +271,11 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${health?.database?.status === "healthy"
+                        className={`text-sm font-medium ${
+                          health?.database?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                          }`}
+                        }`}
                       >
                         {health?.database?.status || "Unknown"}
                       </span>
@@ -348,10 +349,11 @@ export default function MonitoringPage() {
                       </span>
 
                       <span
-                        className={`text-sm font-medium ${health?.database?.status === "healthy"
+                        className={`text-sm font-medium ${
+                          health?.database?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                          }`}
+                        }`}
                       >
                         {health?.cache?.status || "Unknown"}
                       </span>
@@ -422,7 +424,6 @@ export default function MonitoringPage() {
                   </CardContent>
                 </Card>
 
-
                 {/* API Health */}
                 <Card>
                   <CardHeader>
@@ -435,10 +436,11 @@ export default function MonitoringPage() {
                         Status
                       </span>
                       <span
-                        className={`text-sm font-medium ${health?.api?.status === "healthy"
+                        className={`text-sm font-medium ${
+                          health?.api?.status === "healthy"
                             ? "text-green-600"
                             : "text-red-600"
-                          }`}
+                        }`}
                       >
                         {health?.api?.status || "Unknown"}
                       </span>

@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
-import { apiClient } from "@/lib/api-client";
+import { ApiError, apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
@@ -127,10 +127,18 @@ export function SignupForm({
       }
 
       // Register user with backend via apiClient
-      if (isInvitationSignup) {
-        await apiClient.users.registerWithInvitation(payload);
-      } else {
-        await apiClient.users.register(payload);
+      const registerResult = isInvitationSignup
+        ? await apiClient.users.registerWithInvitation(payload)
+        : await apiClient.users.register(payload);
+
+      // Some backend builds answer a duplicate-email register with HTTP 200 and
+      // a bare `{ message }` body instead of an error status. Treat a response
+      // without a created user as a failure so we don't falsely claim success.
+      if (!registerResult?.user) {
+        const msg =
+          (registerResult as { message?: string })?.message ||
+          "Account creation failed. Please try signing in instead.";
+        throw new ApiError(400, msg);
       }
 
       analytics.track("user_signed_up", {
@@ -149,6 +157,33 @@ export function SignupForm({
       if (result?.ok) {
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
+
+        // Explicitly accept the invitation now that the user is authenticated.
+        // The register-with-invitation endpoint creates the account but does not
+        // reliably add the workspace membership, so drive the accept from here.
+        if (isInvitationSignup && invitationToken) {
+          try {
+            const accepted =
+              await apiClient.invitations.accept(invitationToken);
+            if (accepted?.workspace_slug) {
+              toast.success(`Welcome to ${accepted.workspace_name}!`);
+              router.push(
+                `/w/${accepted.workspace_slug}/generate_content` as Route,
+              );
+              return;
+            }
+          } catch (acceptError) {
+            // Already a member / already accepted is fine - fall through to the
+            // workspace lookup below. Surface anything else.
+            const msg = acceptError instanceof Error ? acceptError.message : "";
+            if (!/already|member|accepted/i.test(msg)) {
+              log.error("[Signup] Failed to accept invitation:", acceptError);
+              toast.error(
+                `Failed to join workspace: ${msg || "Unknown error"}`,
+              );
+            }
+          }
+        }
 
         // Record account creation audit log
         try {
@@ -202,6 +237,31 @@ export function SignupForm({
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
+
+      // Account already exists - the user is trying to "create" an account they
+      // already have. Point them at sign-in instead of showing a raw error, and
+      // carry the invitation through so they still land in the workspace.
+      const isDuplicateAccount =
+        (ApiError.is(err) && err.statusCode === 409) ||
+        /already (exists|registered|in use)|already have an account|email.*taken/i.test(
+          errorMessage,
+        );
+
+      if (isDuplicateAccount) {
+        const email = form.getValues("email");
+        toast.error(
+          "An account with this email already exists. Please sign in instead.",
+        );
+        const params = new URLSearchParams();
+        if (email) params.set("email", email);
+        if (hasValidInvitation && invitationToken) {
+          params.set("invitation_token", invitationToken);
+        }
+        const loginUrl = `/login?${params.toString()}`;
+        router.push(loginUrl as Route);
+        return;
+      }
+
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -213,14 +273,14 @@ export function SignupForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.name}
-          workspaceSlug={invitation.workspace.slug}
+          workspaceName={invitation.workspace?.name}
+          workspaceSlug={invitation.workspace?.slug}
           inviterName={
-            invitation.invited_by.display_name ||
-            invitation.invited_by.full_name ||
+            invitation.invited_by?.display_name ||
+            invitation.invited_by?.full_name ||
             "Workspace Admin"
           }
-          roleName={invitation.role.display_name}
+          roleName={invitation.role?.display_name || invitation.role?.name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
         />

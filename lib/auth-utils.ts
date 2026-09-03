@@ -353,11 +353,22 @@ export async function getAuthHeaders(
     });
   }
 
-  // Cache the headers on client-side
-  authHeadersCache = {
-    headers,
-    timestamp: Date.now(),
-  };
+  // Cache the headers on client-side - but never cache an empty/unauthenticated
+  // result. Any unauthenticated call (e.g. validating an invitation token on
+  // /invitations/accept before the user signs in) would otherwise poison the
+  // cache with `{}` for CACHE_TTL_MS. If sign-in completes inside that window,
+  // every request fired by the destination page (dashboard queries, invitation
+  // accept, subscription usage, etc.) reads the stale empty cache instead of
+  // the fresh session and gets a 422 "authorization: Field required" from the
+  // backend even though the user is, in fact, logged in.
+  if (headers.Authorization) {
+    authHeadersCache = {
+      headers,
+      timestamp: Date.now(),
+    };
+  } else {
+    authHeadersCache = null;
+  }
 
   return headers;
 }

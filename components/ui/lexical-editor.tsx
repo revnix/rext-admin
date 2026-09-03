@@ -293,8 +293,8 @@ function ImagePlaceholderSlot({
       <span className="inline-flex items-start gap-2 text-muted-foreground">
         <ImageIcon size={16} className="mt-0.5 shrink-0" />
         <span>
-          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload
-          one here, or remove this slot and publish without it.
+          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
+          here, or remove this slot and publish without it.
         </span>
       </span>
       <span className="inline-flex items-center gap-2">
@@ -355,7 +355,11 @@ function ImageNodeComponent({
 
   if (isImagePlaceholderSrc(src)) {
     return (
-      <ImagePlaceholderSlot editor={editor} nodeKey={nodeKey} altText={altText} />
+      <ImagePlaceholderSlot
+        editor={editor}
+        nodeKey={nodeKey}
+        altText={altText}
+      />
     );
   }
 

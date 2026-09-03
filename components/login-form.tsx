@@ -49,6 +49,13 @@ export function LoginForm({
     error: invitationError,
   } = useInvitationValidation();
 
+  // Prefill email from the URL (e.g. redirected here from an invitation signup
+  // because the account already exists).
+  useEffect(() => {
+    const prefill = searchParams.get("email");
+    if (prefill) setEmail(prefill);
+  }, [searchParams]);
+
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
     const urlError = searchParams.get("error");
@@ -153,6 +160,9 @@ export function LoginForm({
     resetAuthRedirectState();
 
     if (hasValidInvitation && invitationToken) {
+      // Force a fresh auth-headers read before navigating so the accept page's
+      // very first request doesn't race the session hydration.
+      await getAuthHeaders(true);
       router.push(`/invitations/accept?token=${invitationToken}` as Route);
     } else {
       await getAuthHeaders(true);
@@ -217,14 +227,14 @@ export function LoginForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.name}
-          workspaceSlug={invitation.workspace.slug}
+          workspaceName={invitation.workspace?.name}
+          workspaceSlug={invitation.workspace?.slug}
           inviterName={
-            invitation.invited_by.display_name ||
-            invitation.invited_by.full_name ||
+            invitation.invited_by?.display_name ||
+            invitation.invited_by?.full_name ||
             "Workspace Admin"
           }
-          roleName={invitation.role.display_name}
+          roleName={invitation.role?.display_name || invitation.role?.name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
         />

@@ -7,7 +7,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useSubscriptionStore } from "@/stores/subscription-store";
-import type { UserSubscriptionDetail } from "@/types/subscription";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
