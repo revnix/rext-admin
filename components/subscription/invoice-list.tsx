@@ -198,13 +198,13 @@ export function InvoiceList({
         invoice.items && invoice.items.length > 0
           ? invoice.items
           : [
-              {
-                description: "Subscription Plan Service",
-                quantity: 1,
-                unit_price: invoice.amount,
-                total: invoice.amount,
-              },
-            ];
+            {
+              description: "Subscription Plan Service",
+              quantity: 1,
+              unit_price: invoice.amount,
+              total: invoice.amount,
+            },
+          ];
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -370,16 +370,6 @@ export function InvoiceList({
                       <Eye className="h-4 w-4" />
                       View
                     </Button>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownloadInvoice(invoice)}
-                      className="gap-1.5"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">Download</span>
-                    </Button>
                   </div>
                 </div>
               );
@@ -466,7 +456,7 @@ export function InvoiceList({
                   </thead>
                   <tbody className="divide-y">
                     {selectedInvoice.items &&
-                    selectedInvoice.items.length > 0 ? (
+                      selectedInvoice.items.length > 0 ? (
                       selectedInvoice.items.map((item) => (
                         <tr
                           key={`${selectedInvoice.invoice_id}-modal-${item.description}-${item.unit_price}`}
