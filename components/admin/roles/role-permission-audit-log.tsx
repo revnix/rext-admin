@@ -30,7 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorAlert } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
-import type { AuditLog, AuditLogDetail } from "@/types/audit-log";
+import type { AuditLogDetail } from "@/types/audit-log";
 
 interface RolePermissionAuditLogProps {
   open: boolean;
@@ -103,13 +103,16 @@ export function RolePermissionAuditLog({
         searchParams.append("resource_id", resourceId);
       }
       searchParams.append("limit", "50"); // Fetch the last 50 entries
+      // Without this the list omits old_values/new_values/metadata entirely,
+      // so every entry rendered as "No detailed changes available".
+      searchParams.append("include_details", "true");
 
       const queryString = searchParams.toString()
         ? `?${searchParams.toString()}`
         : "";
 
       const response = await apiClient.request<{
-        items: AuditLog[];
+        items: AuditLogDetail[];
         total: number;
         has_more: boolean;
         limit: number;
@@ -145,8 +148,33 @@ export function RolePermissionAuditLog({
     );
   };
 
-  const renderChanges = (changes: Record<string, unknown>) => {
-    if (!changes || Object.keys(changes).length === 0) {
+  /**
+   * Keys hidden from the raw value dump.
+   *
+   * The UUID lists stay in the stored audit record — they are the stable
+   * reference if a permission is ever renamed — but they are unreadable on
+   * screen and drown the entry. The human-readable names they correspond to
+   * are already shown in the summary above.
+   */
+  const HIDDEN_CHANGE_KEYS = new Set([
+    "permission_ids",
+    "added_ids",
+    "removed_ids",
+    // Rendered as badges in the summary, so repeating them here is noise.
+    "added_permissions",
+    "removed_permissions",
+  ]);
+
+  /** Whether a value object has anything left to show once ids are hidden. */
+  const hasVisibleChanges = (changes?: Record<string, unknown> | null) =>
+    Object.keys(changes ?? {}).some((key) => !HIDDEN_CHANGE_KEYS.has(key));
+
+  const renderChanges = (changes?: Record<string, unknown> | null) => {
+    const visible = Object.entries(changes ?? {}).filter(
+      ([key]) => !HIDDEN_CHANGE_KEYS.has(key),
+    );
+
+    if (visible.length === 0) {
       return (
         <span className="text-sm text-muted-foreground">
           No details available
@@ -156,7 +184,7 @@ export function RolePermissionAuditLog({
 
     return (
       <div className="space-y-1">
-        {Object.entries(changes).map(([key, value]) => (
+        {visible.map(([key, value]) => (
           <div key={key} className="flex items-start gap-2 text-sm">
             <span className="font-medium capitalize min-w-[100px]">
               {key.replace(/_/g, " ")}:
@@ -224,6 +252,38 @@ export function RolePermissionAuditLog({
                 // We'll safely access it by typecasting to AuditLogDetail if we want to show changes.
                 const detailedLog = log as AuditLogDetail;
 
+                // Turn the raw audit values into something a reviewer can read
+                // at a glance. The backend records which permissions moved and
+                // for which role; without this the card only said
+                // "permission.update".
+                const values = (detailedLog.new_values ?? {}) as Record<
+                  string,
+                  unknown
+                >;
+                const meta = (detailedLog.metadata ?? {}) as Record<
+                  string,
+                  unknown
+                >;
+                const addedPermissions = Array.isArray(values.added_permissions)
+                  ? (values.added_permissions as string[])
+                  : [];
+                const removedPermissions = Array.isArray(
+                  values.removed_permissions,
+                )
+                  ? (values.removed_permissions as string[])
+                  : [];
+                const affectedRole =
+                  (meta.role_display_name as string) ||
+                  (meta.role_name as string) ||
+                  null;
+                const hasPermissionSummary =
+                  addedPermissions.length > 0 || removedPermissions.length > 0;
+
+                // Role create/update/delete carry no permission diff, but the
+                // role they acted on is still the useful fact to lead with.
+                const isRoleAction = log.action.startsWith("role.");
+                const roleActionVerb = log.action.split(".").pop();
+
                 const hasChanges =
                   detailedLog.new_values &&
                   Object.keys(detailedLog.new_values).length > 0;
@@ -253,26 +313,82 @@ export function RolePermissionAuditLog({
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4">
+                      {!hasPermissionSummary &&
+                        isRoleAction &&
+                        affectedRole && (
+                          <p className="mb-3 text-sm">
+                            Role <strong>{affectedRole}</strong> was{" "}
+                            {roleActionVerb === "create"
+                              ? "created"
+                              : roleActionVerb === "delete"
+                                ? "deleted"
+                                : "updated"}
+                          </p>
+                        )}
+
+                      {hasPermissionSummary && (
+                        <div className="mb-3 space-y-2">
+                          {affectedRole && (
+                            <p className="text-sm">
+                              Permissions updated for{" "}
+                              <strong>{affectedRole}</strong>
+                            </p>
+                          )}
+
+                          {addedPermissions.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium text-green-600 dark:text-green-500">
+                                Granted:
+                              </span>
+                              {addedPermissions.map((name) => (
+                                <Badge
+                                  key={`added-${name}`}
+                                  variant="outline"
+                                  className="font-mono text-[11px] border-green-600/40 text-green-700 dark:text-green-400"
+                                >
+                                  {name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {removedPermissions.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium text-destructive">
+                                Revoked:
+                              </span>
+                              {removedPermissions.map((name) => (
+                                <Badge
+                                  key={`removed-${name}`}
+                                  variant="outline"
+                                  className="font-mono text-[11px] border-destructive/40 text-destructive"
+                                >
+                                  {name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {hasChanges ? (
                         <div className="space-y-3">
-                          {detailedLog.old_values &&
-                            Object.keys(detailedLog.old_values).length > 0 && (
-                              <div>
-                                <p className="text-xs font-medium mb-1 text-muted-foreground">
-                                  Previous Values:
-                                </p>
-                                {renderChanges(detailedLog.old_values)}
-                              </div>
-                            )}
-                          {detailedLog.new_values &&
-                            Object.keys(detailedLog.new_values).length > 0 && (
-                              <div>
-                                <p className="text-xs font-medium mb-1 text-muted-foreground">
-                                  New Values:
-                                </p>
-                                {renderChanges(detailedLog.new_values)}
-                              </div>
-                            )}
+                          {hasVisibleChanges(detailedLog.old_values) && (
+                            <div>
+                              <p className="text-xs font-medium mb-1 text-muted-foreground">
+                                Previous Values:
+                              </p>
+                              {renderChanges(detailedLog.old_values)}
+                            </div>
+                          )}
+                          {hasVisibleChanges(detailedLog.new_values) && (
+                            <div>
+                              <p className="text-xs font-medium mb-1 text-muted-foreground">
+                                New Values:
+                              </p>
+                              {renderChanges(detailedLog.new_values)}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">
@@ -280,17 +396,10 @@ export function RolePermissionAuditLog({
                         </span>
                       )}
 
-                      {detailedLog.metadata &&
-                        Object.keys(detailedLog.metadata).length > 0 && (
-                          <div className="mt-3 pt-3 border-t">
-                            <p className="text-xs font-medium mb-1">
-                              Metadata:
-                            </p>
-                            <div className="text-xs text-muted-foreground">
-                              {renderChanges(detailedLog.metadata)}
-                            </div>
-                          </div>
-                        )}
+                      {/* Metadata is not rendered: everything in it (role name,
+                          operation, performing user) is already stated in the
+                          summary and card header. It stays in the stored audit
+                          record. */}
                     </CardContent>
                   </Card>
                 );
