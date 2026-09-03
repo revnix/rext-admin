@@ -261,6 +261,12 @@ export default function AdminRolesPage() {
               }
             },
             disabled: (row: RoleTableData) => isProtectedRole(row),
+            disabledReason: (row: RoleTableData) =>
+              isProtectedRole(row)
+                ? row.is_system_role
+                  ? "System roles cannot be edited"
+                  : "Standard workspace roles cannot be edited"
+                : null,
           },
         ]
       : []),
@@ -277,6 +283,12 @@ export default function AdminRolesPage() {
             },
             variant: "destructive" as const,
             disabled: (row: RoleTableData) => isProtectedRole(row),
+            disabledReason: (row: RoleTableData) =>
+              isProtectedRole(row)
+                ? row.is_system_role
+                  ? "System roles cannot be deleted"
+                  : "Standard workspace roles cannot be deleted"
+                : null,
           },
         ]
       : []),

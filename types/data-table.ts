@@ -232,6 +232,16 @@ export interface RowAction<T extends Record<string, unknown> = BaseTableRow> {
   confirmationDescription?: string | ((row: T) => string);
   tooltip?: string;
   disabled?: boolean | ((row: T) => boolean);
+  /**
+   * Why this action is unavailable for a given row.
+   *
+   * Disabled actions are hidden by default, which is right when the reason is
+   * "you lack permission" — there is no value in advertising it. Supply this
+   * when the user *should* see the action and understand why they cannot use
+   * it (e.g. a system-protected role): the action then renders greyed out with
+   * this text as its tooltip instead of disappearing.
+   */
+  disabledReason?: string | ((row: T) => string | null);
   showLabel?: boolean;
   primary?: boolean;
 }

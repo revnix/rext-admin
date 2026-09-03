@@ -36,16 +36,29 @@ export function ActionsCell<
   const [_isHovered, _setIsHovered] = useState(false);
   const { confirm, ConfirmationComponent } = useConfirmation();
 
-  // Filter out disabled actions (but keep loading buttons visible)
+  const resolveDisabled = (action: RowAction<T>) =>
+    typeof action.disabled === "function"
+      ? action.disabled(row)
+      : Boolean(action.disabled);
+
+  const resolveDisabledReason = (action: RowAction<T>) =>
+    typeof action.disabledReason === "function"
+      ? action.disabledReason(row)
+      : action.disabledReason;
+
+  // Disabled actions are hidden by default — usually the reason is a missing
+  // permission, which is not worth advertising. An action that supplies a
+  // disabledReason stays visible but greyed out, so the user can see it exists
+  // and read why it is unavailable.
   const availableActions = actions.filter((action) => {
     const label =
       typeof action.label === "function" ? action.label(row) : action.label;
     const isLoading = typeof label === "string" && label.endsWith("…");
 
-    if (typeof action.disabled === "function") {
-      return !action.disabled(row) || isLoading;
-    }
-    return !action.disabled || isLoading;
+    if (isLoading) return true;
+    if (!resolveDisabled(action)) return true;
+
+    return Boolean(resolveDisabledReason(action));
   });
 
   if (availableActions.length === 0) {
@@ -156,25 +169,37 @@ export function ActionsCell<
             size="sm"
             onClick={(e) => handleActionClick(action, e)}
             className={getButtonClassName()}
-            disabled={
-              typeof action.disabled === "function"
-                ? action.disabled(row)
-                : action.disabled
-            }
+            disabled={resolveDisabled(action)}
           >
             {buttonContent}
           </Button>
         );
+
+        const isDisabled = resolveDisabled(action);
+        const disabledReason = isDisabled
+          ? resolveDisabledReason(action)
+          : null;
 
         return (
           <TooltipProvider
             key={`action-${typeof action.label === "function" ? "fn" : action.label}`}
           >
             <Tooltip>
-              <TooltipTrigger asChild>{button}</TooltipTrigger>
+              {/* A disabled button emits no pointer events, so the tooltip
+                  would never open. The span gives it something to hang on. */}
+              <TooltipTrigger asChild>
+                {isDisabled ? (
+                  <span className="inline-flex cursor-not-allowed">
+                    {button}
+                  </span>
+                ) : (
+                  button
+                )}
+              </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {action.tooltip ||
+                  {disabledReason ||
+                    action.tooltip ||
                     (typeof action.label === "function"
                       ? action.label(row)
                       : action.label)}
