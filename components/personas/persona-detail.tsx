@@ -37,6 +37,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -107,6 +115,24 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const uploadAvatar = useUploadPersonaAvatar(workspace?.id || "");
   const isUploadingAvatar = uploadAvatar.isPending;
 
+  /** One place to set the photo: a file upload or a pasted link, both behind
+   *  the avatar in either mode. `urlDraft` is the link being edited in the
+   *  dialog; it is only committed on Save. */
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [urlDraft, setUrlDraft] = useState("");
+
+  const openPhotoDialog = () => {
+    setUrlDraft(formData.avatar_url || "");
+    setPhotoDialogOpen(true);
+  };
+
+  const initials = persona.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
   /** Uploads immediately rather than waiting for the form to be saved: the
    *  server stores the file and answers with the persona, so the picture on
    *  screen is the one that was kept. */
@@ -121,16 +147,39 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
       personaId: persona.id,
       file,
     });
-    if (updated?.avatar_url) setUploadedAvatar(updated.avatar_url);
+    if (updated?.avatar_url) {
+      setUploadedAvatar(updated.avatar_url);
+      setUrlDraft(updated.avatar_url);
+    }
     setFormData((current) => ({
       ...current,
       avatar_url: updated?.avatar_url ?? current.avatar_url,
       avatar_source: updated?.avatar_source ?? "custom",
     }));
+    setPhotoDialogOpen(false);
   };
 
   const updatePersona = useUpdatePersona(workspace?.id || "");
   const deletePersona = useDeletePersona(workspace?.id || "");
+
+  /** Commits the pasted link. While editing the form it only updates local
+   *  state and is saved with the rest; otherwise it is persisted on its own. */
+  const savePhotoUrl = () => {
+    const next = urlDraft.trim();
+    setUploadedAvatar(null);
+    setFormData((current) => ({
+      ...current,
+      avatar_url: next,
+      avatar_source: next ? "custom" : current.avatar_source,
+    }));
+    if (!isEditing && workspace?.id && persona.id) {
+      updatePersona.mutate({
+        personaId: persona.id,
+        data: { ...persona, avatar_url: next },
+      });
+    }
+    setPhotoDialogOpen(false);
+  };
 
   useEffect(() => {
     if (persona) {
@@ -325,54 +374,6 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="avatar_url"
-                      className="flex items-center gap-2"
-                    >
-                      <ImageIcon size={14} />
-                      Avatar URL
-                    </Label>
-                    <Input
-                      id="avatar_url"
-                      value={formData.avatar_url || ""}
-                      onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      A link you set here is kept. Clear it to fall back to the
-                      photo on their site, then a Gravatar, then initials.
-                    </p>
-                    {/*
-                      A picture could be pasted as a URL or found by the
-                      crawler, but not supplied - so anyone whose photograph was
-                      not already on the web had no way to give a persona a
-                      face. The file never touches this form's state: it uploads
-                      on its own and the server answers with the stored persona,
-                      so a failed upload leaves the picture that was there.
-                    */}
-                    <div className="flex items-center gap-2 pt-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isUploadingAvatar}
-                        onClick={() => fileInputRef.current?.click()}
-                        className="gap-2"
-                      >
-                        {isUploadingAvatar ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Upload className="h-3.5 w-3.5" />
-                        )}
-                        {isUploadingAvatar ? "Uploading..." : "Upload a photo"}
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        JPEG, PNG, GIF or WebP, up to 5MB
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="email" className="flex items-center gap-2">
                       <Mail size={14} />
                       Email
@@ -402,59 +403,155 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 className="hidden"
                 onChange={handleAvatarFile}
               />
+
+              <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Persona photo</DialogTitle>
+                    <DialogDescription>
+                      Upload a file from your machine or paste a link to an
+                      image. A link you set is kept; clear it to fall back to
+                      the photo on their site, then a Gravatar, then initials.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={uploadedAvatar || urlDraft || ""}
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-2xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingAvatar ? "Uploading..." : "Upload a photo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        JPEG, PNG, GIF or WebP, up to 5MB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="avatar_url_dialog"
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon size={14} />
+                      Image link
+                    </Label>
+                    <Input
+                      id="avatar_url_dialog"
+                      value={urlDraft}
+                      onChange={(e) => setUrlDraft(e.target.value)}
+                      placeholder="https://example.com/photo.jpg"
+                    />
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    {urlDraft.trim() && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mr-auto text-destructive hover:text-destructive"
+                        onClick={() => setUrlDraft("")}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPhotoDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={savePhotoUrl}
+                      disabled={
+                        isUploadingAvatar ||
+                        urlDraft.trim() === (formData.avatar_url || "").trim()
+                      }
+                    >
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <div className="flex items-center gap-4 mb-6">
                 {/*
-                  The picture is the control. Putting the upload behind an Edit
-                  button hid it from the one place a person looks when they want
-                  to change a photograph, and a face on screen with no way to
-                  replace it reads as a feature that does not exist.
+                  While editing, the avatar is the one control for the photo:
+                  clicking it opens a dialog that takes a file upload or a
+                  pasted link. Outside edit mode it is just the picture.
                 */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingAvatar}
-                  title="Upload a photo"
-                  className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
-                    <AvatarImage
-                      // The picture just uploaded, if there is one. The prop
-                      // comes from a cached query and does not change the
-                      // moment a file is stored, so the toast said the upload
-                      // had worked while the initials stayed on screen - the
-                      // one outcome that reads as a broken feature.
-                      src={uploadedAvatar || persona.avatar_url || ""}
-                      alt={`${persona.name}'s avatar`}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
-                      {persona.name
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")
-                        .substring(0, 2)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/*
-                  Initials drawn from a name are not a picture of anyone, and
-                  rendered at the same size and confidence as a photograph they
-                  read as one. Saying which is on screen costs a line and stops
-                  the interface making a claim it cannot support.
-                */}
-                  <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
-                    {isUploadingAvatar ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-white" />
-                    ) : (
-                      <Upload className="h-5 w-5 text-white" />
-                    )}
-                  </span>
-                </button>
-                {!uploadedAvatar && persona.avatar_source === "generated" && (
-                  <span className="text-xs text-muted-foreground">
-                    No photo found - click the circle to upload one
-                  </span>
-                )}
+                {(() => {
+                  const avatar = (
+                    <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={
+                          uploadedAvatar ||
+                          formData.avatar_url ||
+                          persona.avatar_url ||
+                          ""
+                        }
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  );
+
+                  if (!isEditing) return avatar;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={openPhotoDialog}
+                      disabled={isUploadingAvatar}
+                      title="Change photo"
+                      className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {avatar}
+                      <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-white" />
+                        ) : (
+                          <Upload className="h-5 w-5 text-white" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })()}
+                {isEditing &&
+                  !uploadedAvatar &&
+                  persona.avatar_source === "generated" && (
+                    <span className="text-xs text-muted-foreground">
+                      No photo found - click the circle to add one
+                    </span>
+                  )}
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Full Name
