@@ -65,6 +65,7 @@
     "country-data-list": "^1.6.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.29.2",
+    "jspdf": "^4.2.1",
     "lexical": "^0.39.0",
     "lucide-react": "^0.563.0",
     "marked": "^17.0.6",

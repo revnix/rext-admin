@@ -22,8 +22,11 @@ import type {
   UserSubscription,
   CreditBalance,
 } from "@/types/subscription";
-import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
-import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
+import {
+  InvoiceListResponseSchema,
+  InvoiceSchema,
+  SubscriptionListResponseSchema,
+} from "@/schemas/subscription-schemas";
 import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
 import { log } from "@/lib/logger";
 
@@ -556,10 +559,49 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getInvoices();
-          const parsed = InvoiceListResponseSchema.parse(response);
+
+          let invoicesData = response;
+          // In case the API response returned { invoices: [...] } or array or wrapped data
+          if (
+            response &&
+            typeof response === "object" &&
+            !("invoices" in response) &&
+            "data" in response
+          ) {
+            invoicesData = (response as { data: unknown })
+              .data as typeof response;
+          }
+
+          const parsed = InvoiceListResponseSchema.safeParse(invoicesData);
+
+          let invoicesList: Invoice[] = [];
+
+          if (parsed.success) {
+            invoicesList = parsed.data.invoices as Invoice[];
+          } else if (
+            invoicesData &&
+            typeof invoicesData === "object" &&
+            "invoices" in invoicesData &&
+            Array.isArray((invoicesData as { invoices: unknown[] }).invoices)
+          ) {
+            const rawList = (invoicesData as { invoices: unknown[] }).invoices;
+            invoicesList = rawList
+              .map((item) => {
+                const itemParse = InvoiceSchema.safeParse(item);
+                return itemParse.success ? (itemParse.data as Invoice) : null;
+              })
+              .filter((item): item is Invoice => item !== null);
+          } else if (Array.isArray(invoicesData)) {
+            invoicesList = invoicesData
+              .map((item) => {
+                const itemParse = InvoiceSchema.safeParse(item);
+                return itemParse.success ? (itemParse.data as Invoice) : null;
+              })
+              .filter((item): item is Invoice => item !== null);
+          }
 
           set({
-            invoices: parsed.invoices,
+            invoices: invoicesList,
             invoicesLoading: false,
             invoicesError: null,
           });
