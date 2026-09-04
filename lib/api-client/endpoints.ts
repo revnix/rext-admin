@@ -346,6 +346,18 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Account-Creation IP Allowlist
+   * @note Requires admin / super_admin role
+   */
+  ADMIN_ACCOUNT_ALLOWLIST: {
+    base: "/api/v1/admin/account-creation-allowlist",
+    list: "/api/v1/admin/account-creation-allowlist",
+    create: "/api/v1/admin/account-creation-allowlist",
+    detail: (id: string) =>
+      `/api/v1/admin/account-creation-allowlist/${id}` as const,
+  },
+
+  /**
    * Admin Analytics Endpoints
    * @note Platform-level analytics for subscriptions and invitations
    * @note Requires super admin role

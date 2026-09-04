@@ -35,6 +35,7 @@ import {
   createImpersonationNamespace,
   type EmailTemplate,
 } from "./admin";
+import { createAdminAccountAllowlistNamespace } from "./admin-account-allowlist";
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
 import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
@@ -109,6 +110,7 @@ function createApiClient() {
     adminWebhooks: createAdminWebhooksNamespace(client),
     adminRefunds: createAdminRefundsNamespace(client),
     adminInvitations: createAdminInvitationsNamespace(client),
+    accountAllowlist: createAdminAccountAllowlistNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),
