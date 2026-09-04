@@ -30,7 +30,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorAlert } from "@/components/ui/error-states";
 import { apiClient } from "@/lib/api-client";
-import type { AuditLogDetail } from "@/types/audit-log";
+import {
+  getActionDisplayName,
+  getActionVariant,
+  type AuditLogDetail,
+} from "@/types/audit-log";
 
 interface RolePermissionAuditLogProps {
   open: boolean;
@@ -46,37 +50,6 @@ const ACTION_ICONS: Record<string, typeof Plus> = {
   assign: UserPlus,
   revoke: UserMinus,
   manage: Shield,
-};
-
-const ACTION_COLORS: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  create: {
-    bg: "bg-green-100",
-    text: "text-green-800",
-    border: "border-green-200",
-  },
-  update: {
-    bg: "bg-blue-100",
-    text: "text-blue-800",
-    border: "border-blue-200",
-  },
-  delete: {
-    bg: "bg-red-100",
-    text: "text-red-800",
-    border: "border-red-200",
-  },
-  assign: {
-    bg: "bg-purple-100",
-    text: "text-purple-800",
-    border: "border-purple-200",
-  },
-  revoke: {
-    bg: "bg-orange-100",
-    text: "text-orange-800",
-    border: "border-orange-200",
-  },
 };
 
 export function RolePermissionAuditLog({
@@ -132,20 +105,6 @@ export function RolePermissionAuditLog({
       : action;
     const Icon = ACTION_ICONS[parsedAction.toLowerCase()] || History;
     return Icon;
-  };
-
-  const getActionColors = (action: string) => {
-    // Backend returns e.g. "role.create", we want "create"
-    const parsedAction = action.includes(".")
-      ? action.split(".").pop() || action
-      : action;
-    return (
-      ACTION_COLORS[parsedAction.toLowerCase()] || {
-        bg: "bg-gray-100",
-        text: "text-gray-800",
-        border: "border-gray-200",
-      }
-    );
   };
 
   /**
@@ -245,7 +204,6 @@ export function RolePermissionAuditLog({
             ) : auditData?.items && auditData.items.length > 0 ? (
               auditData.items.map((log) => {
                 const Icon = getActionIcon(log.action);
-                const colors = getActionColors(log.action);
 
                 // The basic AuditLog doesn't have changes. It may have details from the generic getMyLogs
                 // but the /api/v1/audit-logs/ endpoint doesn't strictly define it in basic list.
@@ -289,17 +247,14 @@ export function RolePermissionAuditLog({
                   Object.keys(detailedLog.new_values).length > 0;
 
                 return (
-                  <Card
-                    key={log.id}
-                    className={`${colors.border} border-2 !w-[95%]`}
-                  >
-                    <CardHeader className={`${colors.bg} rounded-t-lg !p-3`}>
+                  <Card key={log.id} className="!w-[95%]">
+                    <CardHeader className="!p-3">
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <CardTitle
-                          className={`text-base flex items-center flex-wrap gap-2 ${colors.text}`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span className="capitalize">{log.action}</span>
+                        <CardTitle className="text-base flex items-center flex-wrap gap-2">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          <Badge variant={getActionVariant(log.action)}>
+                            {getActionDisplayName(log.action)}
+                          </Badge>
                           <Badge variant="outline" className="capitalize">
                             {log.resource_type}
                           </Badge>

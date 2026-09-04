@@ -95,6 +95,7 @@ export function BulkAssignPermissionsDialog({
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-logs"] }),
       ]);
       handleClose();
     },

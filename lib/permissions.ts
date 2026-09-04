@@ -284,3 +284,16 @@ export function isProtectedRole(role: {
 }): boolean {
   return role.is_system_role || PROTECTED_WORKSPACE_ROLES.has(role.name);
 }
+
+/**
+ * Whether a permission is protected from deletion by the backend.
+ *
+ * Mirrors `PermissionService.delete_permission` in rext-backend
+ * (src/services/permission_service.py), which rejects deleting any
+ * `is_system` permission even once it has been unassigned from every role.
+ */
+export function isProtectedPermission(permission: {
+  is_system: boolean;
+}): boolean {
+  return permission.is_system;
+}

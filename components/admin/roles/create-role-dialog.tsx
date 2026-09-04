@@ -88,6 +88,10 @@ export function CreateRoleDialog({
           queryKey: ["workspace-available-roles"],
           refetchType: "all",
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["audit-logs"],
+          refetchType: "all",
+        }),
       ]);
     },
     onError: (error: Error) => {
