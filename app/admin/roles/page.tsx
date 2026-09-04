@@ -42,7 +42,11 @@ import { ErrorPage } from "@/components/ui/error-states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { usePermission } from "@/hooks/use-permission";
-import { ADMIN_PERMISSIONS, isProtectedRole } from "@/lib/permissions";
+import {
+  ADMIN_PERMISSIONS,
+  isProtectedPermission,
+  isProtectedRole,
+} from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
 
@@ -64,6 +68,7 @@ interface PermissionTableData extends Record<string, unknown> {
   action: string;
   roles_count: number;
   description?: string;
+  is_system: boolean;
 }
 
 type RolesDialogState =
@@ -170,6 +175,7 @@ export default function AdminRolesPage() {
     action: permission.action,
     roles_count: permission.roles?.length || 0,
     description: permission.description,
+    is_system: permission.is_system,
   }));
 
   // Role columns
@@ -386,11 +392,16 @@ export default function AdminRolesPage() {
               const permission = permissionsData?.permissions.find(
                 (p) => p.id === row.id,
               );
-              if (permission) {
+              if (permission && !isProtectedPermission(permission)) {
                 setDialogState({ type: "deletePermission", permission });
               }
             },
             variant: "destructive" as const,
+            disabled: (row: PermissionTableData) => isProtectedPermission(row),
+            disabledReason: (row: PermissionTableData) =>
+              isProtectedPermission(row)
+                ? "System permissions cannot be deleted"
+                : null,
           },
         ]
       : []),

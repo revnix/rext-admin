@@ -24,6 +24,7 @@ export interface Permission {
   resource: string;
   action: string;
   created_at: string;
+  is_system: boolean;
 }
 
 export interface PermissionWithRoles extends Permission {
