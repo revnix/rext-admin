@@ -250,10 +250,17 @@ export default function AdminRolesPage() {
             icon: <Settings className="h-4 w-4" />,
             onClick: (row: RoleTableData) => {
               const role = rolesData?.roles.find((r) => r.id === row.id);
-              if (role) {
+              if (role && !isProtectedRole(role)) {
                 setDialogState({ type: "manageRolePermissions", role });
               }
             },
+            disabled: (row: RoleTableData) => isProtectedRole(row),
+            disabledReason: (row: RoleTableData) =>
+              isProtectedRole(row)
+                ? row.is_system_role
+                  ? "System role permissions cannot be modified"
+                  : "Standard workspace role permissions cannot be modified"
+                : null,
             primary: true,
           },
         ]
