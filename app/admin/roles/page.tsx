@@ -187,7 +187,10 @@ export default function AdminRolesPage() {
       cell: (value, row) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{value as string}</span>
-          <RoleBadge isSystemRole={row.is_system_role} />
+          <RoleBadge
+            isSystemRole={row.is_system_role}
+            isBuiltIn={isProtectedRole(row)}
+          />
         </div>
       ),
       searchable: true,
@@ -407,9 +410,19 @@ export default function AdminRolesPage() {
       : []),
   ];
 
+  // Three buckets, not two. The seeded workspace roles (workspace_owner,
+  // workspace_admin, editor, viewer) carry is_system_role = false because that
+  // flag means "platform-scoped", not "built-in" — the backend still refuses to
+  // edit or delete them (RoleService._is_protected_role). Deriving custom as
+  // "everything that isn't a system role" therefore reported those four seeded
+  // roles as user-created ones that nobody ever created.
   const systemRolesCount =
     rolesData?.roles?.filter((r) => r.is_system_role).length || 0;
-  const customRolesCount = (rolesData?.count || 0) - systemRolesCount;
+  const builtInRolesCount =
+    rolesData?.roles?.filter((r) => isProtectedRole(r) && !r.is_system_role)
+      .length || 0;
+  const customRolesCount =
+    rolesData?.roles?.filter((r) => !isProtectedRole(r)).length || 0;
 
   return (
     <PageLayout
@@ -457,7 +470,8 @@ export default function AdminRolesPage() {
                   {rolesData?.count || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {systemRolesCount} system, {customRolesCount} custom
+                  {systemRolesCount} system, {builtInRolesCount} built-in,{" "}
+                  {customRolesCount} custom
                 </p>
               </CardContent>
             </Card>
