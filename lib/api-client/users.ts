@@ -265,6 +265,25 @@ export function createUsersNamespace(client: ApiClient) {
     },
 
     /**
+     * Workspaces the user belongs to, for scoping a role assignment.
+     * Requires `user.manage_roles`.
+     *
+     * Each entry carries the role the user currently holds there, so the
+     * caller can show what an assignment would replace.
+     */
+    listWorkspaces: async (userId: string) => {
+      return client.request<{
+        user_id: string;
+        workspaces: Array<{
+          workspace_id: string;
+          workspace_name: string;
+          current_role_display_name: string | null;
+        }>;
+        count: number;
+      }>(ENDPOINTS.USERS.roles.workspaces(userId), { method: "GET" });
+    },
+
+    /**
      * Assign a role to a user. Requires `user.manage_roles`.
      *
      * Omit `workspace_id` (or pass null) for a platform-wide role. A

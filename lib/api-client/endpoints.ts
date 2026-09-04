@@ -195,6 +195,9 @@ export const ENDPOINTS = {
       assign: (userId: string) => `/api/v1/user/${userId}/roles` as const,
       revoke: (userId: string, roleId: string) =>
         `/api/v1/user/${userId}/roles/${roleId}` as const,
+      // Workspaces this user belongs to, usable as an assignment scope.
+      workspaces: (userId: string) =>
+        `/api/v1/user/${userId}/workspaces` as const,
     },
   },
 

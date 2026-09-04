@@ -38,6 +38,16 @@ export function createMembersNamespace(client: ApiClient) {
           is_default: boolean;
           joined_at: string | null;
           last_activity_at: string | null;
+          role?: {
+            id: string;
+            name: string;
+            display_name: string;
+          } | null;
+          roles?: Array<{
+            id: string;
+            name: string;
+            display_name: string;
+          }>;
           user: {
             id: string;
             name: string;

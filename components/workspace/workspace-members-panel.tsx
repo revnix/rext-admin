@@ -43,8 +43,15 @@ interface WorkspaceMember {
   joined_at: string | null;
   last_activity_at: string | null;
   role?: {
+    id?: string;
+    name?: string;
     display_name: string;
-  };
+  } | null;
+  roles?: Array<{
+    id?: string;
+    name?: string;
+    display_name: string;
+  }>;
   user: {
     id: string;
     name: string;
@@ -61,6 +68,7 @@ interface MemberData extends Record<string, unknown> {
   display_name: string;
   email: string;
   roleName: string;
+  rolesList: Array<{ id?: string; name?: string; display_name: string }>;
   status: string;
   is_default: boolean;
   is_verified: boolean;
@@ -132,19 +140,33 @@ export function WorkspaceMembersPanel({
   };
 
   // Transform data for DataTable
-  const tableData: MemberData[] = members.map((member: WorkspaceMember) => ({
-    id: member.id,
-    user_id: member.user_id,
-    display_name: member.user.display_name || member.user.name,
-    email: member.user.email,
-    status: member.status,
-    roleName: member.role?.display_name ?? "",
-    is_default: member.is_default,
-    is_verified: member.user.is_verified,
-    joined_at: formatDate(member.joined_at),
-    initials: getInitials(member.user.display_name || member.user.name),
-    avatar: member.user?.avatar ?? null,
-  }));
+  const tableData: MemberData[] = members.map((member: WorkspaceMember) => {
+    const rolesList =
+      member.roles && member.roles.length > 0
+        ? member.roles
+        : member.role
+          ? [member.role]
+          : [];
+    const roleName =
+      rolesList.length > 0
+        ? rolesList.map((r) => r.display_name).join(", ")
+        : "No role assigned";
+
+    return {
+      id: member.id,
+      user_id: member.user_id,
+      display_name: member.user.display_name || member.user.name,
+      email: member.user.email,
+      status: member.status,
+      roleName,
+      rolesList,
+      is_default: member.is_default,
+      is_verified: member.user.is_verified,
+      joined_at: formatDate(member.joined_at),
+      initials: getInitials(member.user.display_name || member.user.name),
+      avatar: member.user?.avatar ?? null,
+    };
+  });
 
   // Define columns
   const columns: Column<MemberData>[] = [
@@ -208,6 +230,25 @@ export function WorkspaceMembersPanel({
       key: "roleName",
       header: "Role",
       width: "250px",
+      cell: (value, row) => {
+        const rolesList = row.rolesList;
+        if (!rolesList || rolesList.length === 0) {
+          return (
+            <span className="text-sm text-muted-foreground italic">
+              No role assigned
+            </span>
+          );
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            {rolesList.map((r, idx) => (
+              <Badge key={r.id || idx} variant="outline" className="text-xs">
+                {r.display_name}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: "status",

@@ -48,6 +48,11 @@ interface WorkspaceMember {
   is_default: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
+  role?: {
+    id?: string;
+    name?: string;
+    display_name: string;
+  } | null;
   user: {
     id: string;
     name: string;
