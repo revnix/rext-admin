@@ -7,6 +7,7 @@
 import type {
   AssignPermissionsRequest,
   CreateRoleRequest,
+  PermissionWithRoles,
   UpdatePermissionRequest,
   UpdateRoleRequest,
 } from "@/types/role";
@@ -214,21 +215,9 @@ export function createRolesNamespace(client: ApiClient) {
     listPermissions: async (resource?: string, includeRoles = false) => {
       const PER_PAGE = 100;
       type PermissionListResponse = {
-        permissions: Array<{
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        }>;
+        // Canonical shape — an inline duplicate here silently drifted from
+        // types/role.ts when is_system was added, breaking the roles page build.
+        permissions: PermissionWithRoles[];
         count: number;
         page?: number;
         per_page?: number;
