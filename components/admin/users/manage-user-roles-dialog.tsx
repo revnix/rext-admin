@@ -38,6 +38,7 @@ interface AssignableRole {
   name: string;
   display_name: string;
   hierarchy_level: number;
+  is_workspace_role?: boolean;
 }
 
 /** Sentinel for the platform-wide (workspace_id = null) scope in the picker. */
@@ -50,6 +51,22 @@ export const PLATFORM_SCOPE = "platform";
  * platform-wide and inside a workspace are separate assignment rows, so the
  * same role can still be needed in the other scope.
  */
+/**
+ * The platform-wide `user` role every account keeps.
+ *
+ * It carries AuthService.DEFAULT_PERMISSIONS — the permissions that mean
+ * something without a workspace (own profile, billing, workspace.create) — so
+ * revoking it leaves an account that cannot read itself. RoleService.revoke_role
+ * refuses it server-side; this only stops the UI offering a button that fails.
+ * Other platform roles (admin, support) stay revocable so admins can be demoted.
+ */
+export function isPlatformFloor(assignment: {
+  role_name: string;
+  workspace_id: string | null;
+}): boolean {
+  return assignment.workspace_id === null && assignment.role_name === "user";
+}
+
 export function assignableRoles<T extends AssignableRole>(
   allRoles: T[],
   assigned: UserRoleAssignment[],
@@ -66,7 +83,7 @@ export function assignableRoles<T extends AssignableRole>(
 }
 
 /**
- * Admin dialog for viewing and changing a user's platform roles.
+ * Admin dialog for viewing and changing a user's roles.
  *
  * Backs onto GET/POST /api/v1/user/{id}/roles and
  * DELETE /api/v1/user/{id}/roles/{roleId}, all of which require
@@ -137,11 +154,11 @@ export function ManageUserRolesDialog({
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["user-roles", user?.id] }),
-      // display_role in the users table is derived from role assignments.
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] }),
       queryClient.invalidateQueries({
         queryKey: ["user-workspaces", user?.id],
       }),
+      // display_role in the users table is derived from role assignments.
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] }),
       // A workspace-scoped assignment changes what the workspace's Members
       // screen shows. Prefix key — every cached workspace is refreshed, since
       // this dialog does not know which one is currently on screen.
@@ -262,7 +279,7 @@ export function ManageUserRolesDialog({
                         )}
                         <Badge variant="outline" className="text-[10px] h-5">
                           {assignment.workspace_id
-                            ? (assignment.workspace_name ?? "Workspace")
+                            ? `Workspace: ${assignment.workspace_name ?? "Unknown"}`
                             : "Platform-wide"}
                         </Badge>
                         <Badge
@@ -281,7 +298,12 @@ export function ManageUserRolesDialog({
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive flex-shrink-0"
-                      disabled={busy}
+                      disabled={busy || isPlatformFloor(assignment)}
+                      title={
+                        isPlatformFloor(assignment)
+                          ? "Every account keeps the platform-wide User role"
+                          : undefined
+                      }
                       onClick={() => revokeMutation.mutate(assignment)}
                     >
                       {revokeMutation.isPending &&
@@ -322,6 +344,11 @@ export function ManageUserRolesDialog({
                 {(userWorkspaces?.workspaces ?? []).map((ws) => (
                   <SelectItem key={ws.workspace_id} value={ws.workspace_id}>
                     <span className="flex items-center gap-2">
+                      {/* Labelled "Workspace:" because a workspace can be named
+                          after a person. Unlabelled, "Hasnat Hassan currently
+                          Workspace Owner" reads as a person holding the role
+                          rather than the workspace the role sits in. */}
+                      <span className="text-muted-foreground">Workspace:</span>
                       {ws.workspace_name}
                       <span className="text-xs text-muted-foreground">
                         {ws.current_role_display_name

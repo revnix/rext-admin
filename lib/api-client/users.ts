@@ -144,6 +144,18 @@ export interface UserRolesListResponse {
   count: number;
 }
 
+export interface UserWorkspaceScopeItem {
+  workspace_id: string;
+  workspace_name: string;
+  current_role_display_name: string | null;
+}
+
+export interface UserWorkspaceScopeListResponse {
+  user_id: string;
+  workspaces: UserWorkspaceScopeItem[];
+  count: number;
+}
+
 export interface AssignUserRoleRequest {
   role_id: string;
   /** null = platform-wide (global) role */
