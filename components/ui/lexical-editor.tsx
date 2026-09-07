@@ -346,6 +346,12 @@ function ImageNodeComponent({
   width?: number;
   height?: number;
 }) {
+  // In read-only mode OnChangePlugin is not mounted, so a removal here would
+  // never reach the parent's body — the image would vanish from view, come
+  // back on the next remount, and still be published. Removal belongs to Edit
+  // mode, matching ImagePlaceholderSlot.
+  const isEditable = editor.isEditable();
+
   const handleRemove = useCallback(() => {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
@@ -374,14 +380,16 @@ function ImageNodeComponent({
         style={{ maxHeight: 480 }}
         unoptimized
       />
-      <button
-        type="button"
-        title="Remove image"
-        onClick={handleRemove}
-        className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
-      >
-        <X size={13} />
-      </button>
+      {isEditable && (
+        <button
+          type="button"
+          title="Remove image"
+          onClick={handleRemove}
+          className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
+        >
+          <X size={13} />
+        </button>
+      )}
     </span>
   );
 }

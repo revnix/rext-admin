@@ -38,6 +38,7 @@ import {
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
+import { deriveImagesData } from "@/lib/content/image-data";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -581,6 +582,16 @@ function ContentEditorInner(props: ContentEditorProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // The editor writes through apiClient directly rather than the mutation
+  // hooks in use-content.ts, so nothing invalidates the content cache — and
+  // useContentDetail holds results for 5 minutes. Without this, navigating
+  // back after a publish re-renders the pre-publish body and an image the user
+  // removed reappears, ready to be published again.
+  const invalidateContentCache = useCallback(() => {
+    if (!workspaceId) return;
+    queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
+  }, [queryClient, workspaceId]);
+
   // Actions
   const getContentPayload = () => ({
     title: displayTitle,
@@ -609,10 +620,13 @@ function ContentEditorInner(props: ContentEditorProps) {
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,
     },
-    media_items: [],
-    images_data: {},
-    links_data: {},
-    schema_markup: {},
+    // Derived from the body, so removing an image in the editor removes it
+    // everywhere — including the WordPress featured image. Sending a hardcoded
+    // {} here used to wipe the column instead of describing the current state.
+    images_data: deriveImagesData(body),
+    // media_items / links_data / schema_markup are deliberately not sent: the
+    // editor is not their source of truth, and sending empty values deleted
+    // every ContentMedia link and the AI-generated JSON-LD on each save.
     langgraph_thread_id: threadId,
   });
 
@@ -660,6 +674,14 @@ function ContentEditorInner(props: ContentEditorProps) {
           content_id: contentSavedId ?? undefined,
         });
         const payload = getContentPayload();
+        if (contentSavedId) {
+          // POST /content/{id}/publish accepts only site_id/status/scheduled_at;
+          // the article in its request body is discarded and the backend
+          // publishes the stored row. Persist the current editor state first, or
+          // the publish ships whatever was saved last — including an image the
+          // user has since removed.
+          await apiClient.content.update(workspaceId, contentSavedId, payload);
+        }
         const response = contentSavedId
           ? await apiClient.content.publish(
               workspaceId,
@@ -687,6 +709,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           workspace_id: workspaceId ?? undefined,
           content_id: contentSavedId ?? response?.id ?? undefined,
         });
+        invalidateContentCache();
         setStatusModal({
           title: statusDetails.successTitle,
           isOpen: true,
@@ -748,6 +771,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       if (!contentSavedId && response.id) {
         setContentSavedId(response.id);
       }
+      invalidateContentCache();
       setStatusModal({
         title: "Content Saved Successfully!",
         isOpen: true,
@@ -797,6 +821,13 @@ function ContentEditorInner(props: ContentEditorProps) {
       const scheduledAt = `${scheduleDateStr}T${scheduleTime}:00`;
 
       if (contentSavedId) {
+        // Same as publish: the schedule endpoint publishes the stored row, so
+        // the current editor state has to be saved before it is queued.
+        await apiClient.content.update(
+          workspaceId,
+          contentSavedId,
+          getContentPayload(),
+        );
         await apiClient.content.schedule(
           workspaceId,
           contentSavedId,
@@ -818,6 +849,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         content_id: contentSavedId ?? undefined,
         scheduled_at: scheduledAt,
       });
+      invalidateContentCache();
       setStatusModal({
         title: "Content Scheduled!",
         isOpen: true,
