@@ -261,10 +261,10 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     /**
      * Get invoices for the current user
      *
-     * @param limit - Maximum number of invoices to return (default: 100)
+     * @param limit - Maximum number of invoices to return (default: 1000000)
      * @returns List of invoices
      */
-    getInvoices: async (limit = 100): Promise<InvoiceListResponse> => {
+    getInvoices: async (limit = 1000000): Promise<InvoiceListResponse> => {
       return client.request<InvoiceListResponse>(
         buildUrl(ENDPOINTS.SUBSCRIPTIONS.invoices, { limit }),
         {

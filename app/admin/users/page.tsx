@@ -135,18 +135,7 @@ export default function AdminUsersPage() {
   const findUser = (userId: string) =>
     data?.users.find((u) => u.id === userId) ?? null;
 
-  const getStatusBadge = (status: string, emailVerified?: boolean) => {
-    if (status === "active" && emailVerified === false) {
-      return (
-        <Badge
-          variant="outline"
-          className="text-xs font-medium px-2 py-0.5 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 whitespace-nowrap"
-        >
-          Pending Verification
-        </Badge>
-      );
-    }
-
+  const getStatusBadge = (status: string) => {
     const variants: Record<
       string,
       {
@@ -159,10 +148,6 @@ export default function AdminUsersPage() {
       suspended: { variant: "destructive", text: "Suspended" },
       banned: { variant: "destructive", text: "Banned" },
       pending: { variant: "outline", text: "Pending" },
-      pending_verification: {
-        variant: "outline",
-        text: "Pending Verification",
-      },
     };
 
     // Never fall back to "Active" — an unrecognised status must read as "Unknown".
@@ -348,7 +333,7 @@ export default function AdminUsersPage() {
       width: "130px",
       cell: (value, row) => (
         <div className="scale-90 origin-left">
-          {getStatusBadge(value as string, row.email_verified)}
+          {getStatusBadge(value as string)}
         </div>
       ),
     },
