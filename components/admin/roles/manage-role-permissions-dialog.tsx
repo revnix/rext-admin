@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { isProtectedRole } from "@/lib/permissions";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ export function ManageRolePermissionsDialog({
     [],
   );
 
+  const isProtected = role ? isProtectedRole(role) : false;
+
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
@@ -55,6 +58,9 @@ export function ManageRolePermissionsDialog({
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
+      if (isProtectedRole(role)) {
+        throw new Error("Protected role permissions cannot be modified");
+      }
 
       // Use atomic single-transaction update endpoint
       return await apiClient.roles.updatePermissions(role.id, {
@@ -84,6 +90,10 @@ export function ManageRolePermissionsDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProtected) {
+      toast.error("Protected role permissions cannot be modified");
+      return;
+    }
     updateMutation.mutate();
   };
 
@@ -100,6 +110,15 @@ export function ManageRolePermissionsDialog({
               <strong>{role.display_name}</strong>
             </DialogDescription>
           </DialogHeader>
+
+          {isProtected && (
+            <div className="my-3 p-3 text-sm rounded-md bg-destructive/15 text-destructive flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>
+                Protected roles (system roles and standard workspace roles) permissions cannot be modified.
+              </span>
+            </div>
+          )}
 
           <div className="py-4">
             <PermissionMultiSelect
@@ -118,7 +137,7 @@ export function ManageRolePermissionsDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
+            <Button type="submit" disabled={updateMutation.isPending || isProtected}>
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

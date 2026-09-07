@@ -242,9 +242,12 @@ export function RolePermissionAuditLog({
                 const isRoleAction = log.action.startsWith("role.");
                 const roleActionVerb = log.action.split(".").pop();
 
+                // Deletions (member.remove, workspace.delete) record only
+                // old_values, so gating on new_values alone hid them behind
+                // "No detailed changes available".
                 const hasChanges =
-                  detailedLog.new_values &&
-                  Object.keys(detailedLog.new_values).length > 0;
+                  hasVisibleChanges(detailedLog.old_values) ||
+                  hasVisibleChanges(detailedLog.new_values);
 
                 return (
                   <Card key={log.id} className="!w-[95%]">
@@ -265,6 +268,12 @@ export function RolePermissionAuditLog({
                       </div>
                       <CardDescription>
                         by <strong>{log.user_email || "System"}</strong>
+                        {detailedLog.workspace_name && (
+                          <>
+                            {" in "}
+                            <strong>{detailedLog.workspace_name}</strong>
+                          </>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-4">

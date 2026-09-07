@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
 import type { Permission, Role } from "@/types/role";
+import { isProtectedRole } from "@/lib/permissions";
 import { PermissionMultiSelect } from "./permission-multi-select";
 import { usePermissionStore } from "@/stores/permission-store";
 
@@ -49,10 +50,22 @@ export function BulkAssignPermissionsDialog({
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
+
+  const assignableRoles = roles.filter((r) => !isProtectedRole(r));
+
   const bulkMutation = useMutation({
     mutationFn: async () => {
+      const validRoleIds = selectedRoleIds.filter((id) => {
+        const role = roles.find((r) => r.id === id);
+        return role && !isProtectedRole(role);
+      });
+
+      if (validRoleIds.length === 0) {
+        throw new Error("No custom or editable roles selected");
+      }
+
       const results = await Promise.allSettled(
-        selectedRoleIds.map(async (roleId) => {
+        validRoleIds.map(async (roleId) => {
           if (operation === "add") {
             return await apiClient.roles.assignPermissions(roleId, {
               permission_ids: selectedPermissionIds,
@@ -129,19 +142,20 @@ export function BulkAssignPermissionsDialog({
     bulkMutation.mutate();
   };
 
-  const toggleRole = (roleId: string) => {
+  const toggleRole = (role: Role) => {
+    if (isProtectedRole(role)) return;
     setSelectedRoleIds((prev) =>
-      prev.includes(roleId)
-        ? prev.filter((id) => id !== roleId)
-        : [...prev, roleId],
+      prev.includes(role.id)
+        ? prev.filter((id) => id !== role.id)
+        : [...prev, role.id],
     );
   };
 
   const toggleAllRoles = () => {
-    if (selectedRoleIds.length === roles.length) {
+    if (selectedRoleIds.length === assignableRoles.length) {
       setSelectedRoleIds([]);
     } else {
-      setSelectedRoleIds(roles.map((r) => r.id));
+      setSelectedRoleIds(assignableRoles.map((r) => r.id));
     }
   };
 
@@ -155,7 +169,7 @@ export function BulkAssignPermissionsDialog({
               Bulk Permission Assignment
             </DialogTitle>
             <DialogDescription>
-              Assign or remove permissions to/from multiple roles at once
+              Assign or remove permissions to/from custom roles at once (protected roles cannot be modified)
             </DialogDescription>
           </DialogHeader>
 
@@ -188,42 +202,61 @@ export function BulkAssignPermissionsDialog({
                   variant="outline"
                   size="sm"
                   onClick={toggleAllRoles}
+                  disabled={assignableRoles.length === 0}
                 >
-                  {selectedRoleIds.length === roles.length
+                  {selectedRoleIds.length === assignableRoles.length && assignableRoles.length > 0
                     ? "Deselect All"
-                    : "Select All"}
+                    : "Select All Custom Roles"}
                 </Button>
               </div>
               <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                {roles.map((role) => (
-                  <label
-                    key={role.id}
-                    className="flex items-center gap-3 p-2 hover:bg-muted rounded-md cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedRoleIds.includes(role.id)}
-                      onChange={() => toggleRole(role.id)}
-                      className="h-4 w-4 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{role.display_name}</span>
-                        {role.is_system_role && (
-                          <Badge variant="secondary" className="text-xs">
-                            System
-                          </Badge>
-                        )}
+                {roles.map((role) => {
+                  const isProtected = isProtectedRole(role);
+                  return (
+                    <label
+                      key={role.id}
+                      className={`flex items-center gap-3 p-2 rounded-md ${
+                        isProtected
+                          ? "opacity-50 cursor-not-allowed bg-muted/40"
+                          : "hover:bg-muted cursor-pointer"
+                      }`}
+                      title={
+                        isProtected
+                          ? "Protected role permissions cannot be modified"
+                          : undefined
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedRoleIds.includes(role.id)}
+                        onChange={() => toggleRole(role)}
+                        disabled={isProtected}
+                        className="h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{role.display_name}</span>
+                          {role.is_system_role && (
+                            <Badge variant="secondary" className="text-xs">
+                              System
+                            </Badge>
+                          )}
+                          {isProtected && (
+                            <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/50">
+                              Protected
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {role.name}
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {role.name}
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      Level {role.hierarchy_level}
-                    </Badge>
-                  </label>
-                ))}
+                      <Badge variant="outline" className="text-xs">
+                        Level {role.hierarchy_level}
+                      </Badge>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
