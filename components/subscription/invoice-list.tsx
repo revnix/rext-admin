@@ -1,6 +1,16 @@
 "use client";
 import { jsPDF } from "jspdf";
-import { Calendar, Download, Eye, FileText, Loader2, User } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  FileText,
+  Loader2,
+  Printer,
+  User,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +30,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Invoice, InvoiceStatus } from "@/types/subscription";
@@ -44,6 +61,8 @@ export function InvoiceList({
   const { invoices, invoicesLoading, fetchInvoices } = useSubscriptionStore();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Fetch invoices on mount
   useEffect(() => {
@@ -190,13 +209,13 @@ export function InvoiceList({
         invoice.items && invoice.items.length > 0
           ? invoice.items
           : [
-              {
-                description: "Subscription Plan Service",
-                quantity: 1,
-                unit_price: invoice.amount,
-                total: invoice.amount,
-              },
-            ];
+            {
+              description: "Subscription Plan Service",
+              quantity: 1,
+              unit_price: invoice.amount,
+              total: invoice.amount,
+            },
+          ];
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -256,7 +275,16 @@ export function InvoiceList({
     }
   };
 
-  const displayedInvoices = limit ? invoices.slice(0, limit) : invoices;
+  const isPaginated = !limit;
+  const totalPages = isPaginated ? Math.ceil(invoices.length / itemsPerPage) : 1;
+
+  const displayedInvoices = limit
+    ? invoices.slice(0, limit)
+    : invoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (invoicesLoading && invoices.length === 0) {
     return (
@@ -376,6 +404,61 @@ export function InvoiceList({
               </Button>
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {isPaginated && invoices.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span>Rows per page:</span>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(val) => {
+                      setItemsPerPage(Number(val));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage.toString()} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="hidden sm:inline">
+                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, invoices.length)} of {invoices.length}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="sm:hidden">
+                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, invoices.length)} of {invoices.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -448,7 +531,7 @@ export function InvoiceList({
                   </thead>
                   <tbody className="divide-y">
                     {selectedInvoice.items &&
-                    selectedInvoice.items.length > 0 ? (
+                      selectedInvoice.items.length > 0 ? (
                       selectedInvoice.items.map((item) => (
                         <tr
                           key={`${selectedInvoice.invoice_id}-modal-${item.description}-${item.unit_price}`}
