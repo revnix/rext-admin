@@ -290,7 +290,27 @@ export default function AdminUsersPage() {
         }
 
         const platformRoles = roles.filter((r) => r.is_platform);
-        const workspaceRoles = roles.filter((r) => !r.is_platform);
+        // One badge per role, not per grant. A user owning five workspaces holds
+        // five workspace_owner rows and used to render five identical badges,
+        // blowing the column into a vertical wall. Collapse by role and put the
+        // workspace names in the tooltip.
+        const workspaceRoles = Array.from(
+          roles
+            .filter((r) => !r.is_platform)
+            .reduce((acc, r) => {
+              const entry = acc.get(r.role_id);
+              if (entry) {
+                entry.workspaces.push(r.workspace_name || "Unknown");
+              } else {
+                acc.set(r.role_id, {
+                  role: r,
+                  workspaces: [r.workspace_name || "Unknown"],
+                });
+              }
+              return acc;
+            }, new Map<string, { role: UserRoleSummary; workspaces: string[] }>())
+            .values(),
+        );
 
         return (
           <div className="flex flex-wrap items-center gap-1">
@@ -307,18 +327,23 @@ export default function AdminUsersPage() {
                 <TooltipContent>Platform-wide role</TooltipContent>
               </Tooltip>
             ))}
-            {workspaceRoles.map((r) => (
-              <Tooltip key={`ws-${r.role_id}-${r.workspace_id}`}>
+            {workspaceRoles.map(({ role: r, workspaces }) => (
+              <Tooltip key={`ws-${r.role_id}`}>
                 <TooltipTrigger asChild>
                   <Badge
                     variant="outline"
                     className="text-[11px] font-medium px-1.5 py-0.5 border-dashed cursor-default"
                   >
                     {r.display_name}
+                    {workspaces.length > 1
+                      ? ` in ${workspaces.length} workspaces`
+                      : ""}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
-                  Workspace: {r.workspace_name || "Unknown"}
+                <TooltipContent className="max-w-xs">
+                  {workspaces.length > 1
+                    ? `${r.display_name} in ${workspaces.length} workspaces: ${workspaces.join(", ")}`
+                    : `${r.display_name} in workspace: ${workspaces[0]}`}
                 </TooltipContent>
               </Tooltip>
             ))}
