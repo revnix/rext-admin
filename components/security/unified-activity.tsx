@@ -236,9 +236,8 @@ export function UnifiedActivity() {
       }
 
       // Intentionally do not synthesize workspace.update from workspace.updated_at.
-      // The backend audit API does not emit a real workspace.update event, and
-      // creating one from a workspace metadata timestamp would misrepresent actual
-      // account activity.
+      // PUT /workspaces/{id} already writes a real workspace.update audit row, so
+      // synthesizing one from the workspace metadata timestamp would duplicate it.
     }
 
     // Synthesize workspace.delete from localStorage
