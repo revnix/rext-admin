@@ -85,33 +85,46 @@ export function useInvitationValidation(): UseInvitationValidationReturn {
         email: asString(raw.email),
         token: asString(raw.token, invitationToken),
         expires_at: asString(raw.expires_at),
-        workspace: raw.workspace ? {
-          id: asString(workspace.id),
-          slug: asString(workspace.slug),
-          name: asString(workspace.name),
-        } : {
-          id: asString(raw.workspace_id),
-          slug: asString(raw.workspace_slug),
-          name: asString(raw.workspace_name),
-        },
-        role: raw.role ? {
-          id: asString(role.id),
-          name: asString(role.name),
-          display_name: asString(role.display_name),
-        } : {
-          id: asString(raw.role_id),
-          name: asString(raw.role_name),
-          display_name: asString(raw.role_display_name, asString(raw.role_name)),
-        },
-        invited_by: raw.invited_by && typeof raw.invited_by === "object" ? {
-          id: asString(invitedBy.id),
-          full_name: asString(invitedBy.full_name),
-          display_name: asString(invitedBy.display_name) || undefined,
-        } : {
-          id: asString(raw.invited_by_id),
-          full_name: asString(raw.invited_by, asString(raw.invited_by_name)),
-          display_name: asString(raw.invited_by_name) || undefined,
-        },
+        workspace: raw.workspace
+          ? {
+              id: asString(workspace.id),
+              slug: asString(workspace.slug),
+              name: asString(workspace.name),
+            }
+          : {
+              id: asString(raw.workspace_id),
+              slug: asString(raw.workspace_slug),
+              name: asString(raw.workspace_name),
+            },
+        role: raw.role
+          ? {
+              id: asString(role.id),
+              name: asString(role.name),
+              display_name: asString(role.display_name),
+            }
+          : {
+              id: asString(raw.role_id),
+              name: asString(raw.role_name),
+              display_name: asString(
+                raw.role_display_name,
+                asString(raw.role_name),
+              ),
+            },
+        invited_by:
+          raw.invited_by && typeof raw.invited_by === "object"
+            ? {
+                id: asString(invitedBy.id),
+                full_name: asString(invitedBy.full_name),
+                display_name: asString(invitedBy.display_name) || undefined,
+              }
+            : {
+                id: asString(raw.invited_by_id),
+                full_name: asString(
+                  raw.invited_by,
+                  asString(raw.invited_by_name),
+                ),
+                display_name: asString(raw.invited_by_name) || undefined,
+              },
       };
 
       return normalized;

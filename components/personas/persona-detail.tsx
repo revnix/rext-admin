@@ -295,7 +295,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20"
+                  className="sm:w-auto text-destructive border-destructive/20"
                 >
                   <Trash2 size={16} className="mr-2" />
                   Delete Persona

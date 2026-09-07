@@ -213,7 +213,7 @@ export function ErrorLogsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-x-auto">
         {logs.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-600 opacity-50" />
@@ -239,7 +239,7 @@ export function ErrorLogsTable({
                     {formatDate(log.timestamp)}
                   </TableCell>
                   <TableCell>{getSeverityBadge(log.severity)}</TableCell>
-                  <TableCell className="max-w-md">
+                  <TableCell className="max-w-sm">
                     <div className="truncate">{log.message}</div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground font-mono">

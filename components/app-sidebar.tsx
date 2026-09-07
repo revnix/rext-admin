@@ -18,6 +18,7 @@ import {
   Library,
   Palette,
   CalendarDays,
+  ShieldCheck,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -247,6 +248,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ADMIN_PERMISSIONS.ROLE_READ,
             ADMIN_PERMISSIONS.PERMISSION_READ,
           ],
+        },
+        {
+          title: "Security",
+          url: "/admin/security",
+          icon: ShieldCheck,
         },
       ],
     },
