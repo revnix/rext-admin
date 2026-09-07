@@ -26,6 +26,17 @@ import type {
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
+/** Compact role summary returned inline with User from the list endpoint. */
+export interface UserRoleSummary {
+  role_id: string;
+  name: string;
+  display_name: string;
+  hierarchy_level: number;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  is_platform: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -37,6 +48,8 @@ export interface User {
   language?: string;
   timezone?: string;
   display_role?: string;
+  /** All roles the user holds, sorted highest hierarchy first. */
+  roles?: UserRoleSummary[];
   last_login_at?: string | null;
   login_count?: number;
   initials?: string;

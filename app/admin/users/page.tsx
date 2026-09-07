@@ -43,7 +43,12 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { User, UserStatusAction } from "@/lib/api-client/users";
+import type { User, UserRoleSummary, UserStatusAction } from "@/lib/api-client/users";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { USER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 
@@ -58,6 +63,7 @@ interface UserData extends Record<string, unknown> {
   initials: string;
   avatar_url: string | null | undefined;
   display_role: string;
+  roles: UserRoleSummary[];
   last_login_at: string | null | undefined;
   login_count: number;
   created_at: string | null | undefined;
@@ -215,6 +221,7 @@ export default function AdminUsersPage() {
       initials: validInitials,
       avatar_url: user.avatar_url,
       display_role: user.display_role || "User",
+      roles: user.roles || [],
       last_login_at: user.last_login_at,
       login_count: user.login_count ?? 0,
       created_at: user.created_at,
@@ -286,12 +293,53 @@ export default function AdminUsersPage() {
     {
       key: "display_role",
       header: "Role",
-      width: "90px",
-      cell: (value) => (
-        <Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
-          {(value as string) || "User"}
-        </Badge>
-      ),
+      width: "180px",
+      cell: (_value, row) => {
+        const roles = (row.roles as UserRoleSummary[]) || [];
+        if (roles.length === 0) {
+          return (
+            <Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
+              User
+            </Badge>
+          );
+        }
+
+        const platformRoles = roles.filter((r) => r.is_platform);
+        const workspaceRoles = roles.filter((r) => !r.is_platform);
+
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            {platformRoles.map((r) => (
+              <Tooltip key={`platform-${r.role_id}`}>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="secondary"
+                    className="text-[11px] font-medium px-1.5 py-0.5 cursor-default"
+                  >
+                    {r.display_name}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>Platform-wide role</TooltipContent>
+              </Tooltip>
+            ))}
+            {workspaceRoles.map((r) => (
+              <Tooltip key={`ws-${r.role_id}-${r.workspace_id}`}>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] font-medium px-1.5 py-0.5 border-dashed cursor-default"
+                  >
+                    {r.display_name}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Workspace: {r.workspace_name || "Unknown"}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        );
+      },
       searchable: true,
     },
     {
