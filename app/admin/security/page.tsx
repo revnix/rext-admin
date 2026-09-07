@@ -116,13 +116,13 @@ export default function AccountAllowlistPage() {
           <CardHeader>
             <CardTitle>Add an IP</CardTitle>
             <CardDescription>
-              Enter your organization&apos;s public internet-facing (egress) IP -
-              the address this app sees when your staff connect, not an internal{" "}
-              <code className="font-mono">192.168.x</code> /{" "}
+              Enter your organization&apos;s public internet-facing (egress) IP
+              - the address this app sees when your staff connect, not an
+              internal <code className="font-mono">192.168.x</code> /{" "}
               <code className="font-mono">10.x</code> address. Ask your network
               team if unsure. CIDR ranges like{" "}
-              <code className="font-mono">198.51.100.0/28</code> are allowed, and
-              you can add more than one.
+              <code className="font-mono">198.51.100.0/28</code> are allowed,
+              and you can add more than one.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,7 +147,10 @@ export default function AccountAllowlistPage() {
                 />
               </div>
               <div className="grid gap-1">
-                <label htmlFor="allowlist-label" className="text-sm font-medium">
+                <label
+                  htmlFor="allowlist-label"
+                  className="text-sm font-medium"
+                >
                   Label (optional)
                 </label>
                 <Input
@@ -184,7 +187,10 @@ export default function AccountAllowlistPage() {
             {isLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={`sk-${i.toString()}`} className="h-12 w-full" />
+                  <Skeleton
+                    key={`sk-${i.toString()}`}
+                    className="h-12 w-full"
+                  />
                 ))}
               </div>
             ) : entries.length === 0 ? (

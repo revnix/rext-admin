@@ -123,7 +123,11 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
 
   return (
     <>
-      <TableRow className={event.status === "failed" ? "bg-red-50" : ""}>
+      <TableRow
+        className={
+          event.status === "failed" ? "bg-red-50 dark:bg-gray-600" : ""
+        }
+      >
         <TableCell className="font-medium">{event.event_name}</TableCell>
         <TableCell>{getStatusBadge(event.status)}</TableCell>
         <TableCell className="text-sm text-muted-foreground">
