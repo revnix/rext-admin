@@ -17,6 +17,7 @@ export interface AuditLog {
   resource_type: string;
   resource_id: string | null;
   workspace_id: string | null;
+  workspace_name?: string | null;
   ip_address: string | null;
   user_agent: string | null;
   request_id: string | null;
