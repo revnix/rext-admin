@@ -268,6 +268,11 @@ export const ENDPOINTS = {
     downgrade: "/api/v1/subscriptions/downgrade",
     cancel: "/api/v1/subscriptions/cancel",
     invoices: "/api/v1/subscriptions/invoices",
+    orders: "/api/v1/subscriptions/orders",
+    refundRequests: "/api/v1/subscriptions/refund-requests",
+    billingUrls: "/api/v1/subscriptions/billing-urls",
+    pause: "/api/v1/subscriptions/pause",
+    resume: "/api/v1/subscriptions/resume",
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
     credits: "/api/v1/subscriptions/credits",
@@ -387,6 +392,12 @@ export const ENDPOINTS = {
     get: (refundId: string) =>
       `/api/v1/admin/subscriptions/refunds/${refundId}` as const,
     create: "/api/v1/admin/subscriptions/refunds/create",
+    orders: "/api/v1/admin/subscriptions/refunds/orders",
+    requests: "/api/v1/admin/subscriptions/refunds/requests",
+    approveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/approve` as const,
+    rejectRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/reject` as const,
   },
 
   /**

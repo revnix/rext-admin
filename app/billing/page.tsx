@@ -1,6 +1,12 @@
 "use client";
 
-import { AlertCircle, CreditCard, FileText, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,21 +14,24 @@ import { Footer } from "@/components/layout/footer";
 import { PageLayout } from "@/components/page-layout";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { InvoiceList } from "@/components/subscription/invoice-list";
+import { PurchaseHistory } from "@/components/subscription/purchase-history";
+import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  LemonSqueezyBadge,
-  SecurityIndicators,
-} from "@/components/ui/security-badge";
+import { SecurityIndicators } from "@/components/ui/security-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 import type { Route } from "next";
 
 /**
@@ -42,14 +51,21 @@ import type { Route } from "next";
 
 export default function BillingHistoryPage() {
   const router = useRouter();
-  const { subscription, invoices, fetchInvoices } = useSubscriptionStore();
+  const { subscription, invoices, fetchInvoices, plans, fetchPlans } =
+    useSubscriptionStore();
+  const {
+    openTaxDetails,
+    isLoading: billingActionsLoading,
+    hasBillingAccount,
+  } = useBillingActions();
   const [loading, setLoading] = useState(true);
+  const [isPlanChangeOpen, setIsPlanChangeOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        await fetchInvoices();
+        await Promise.allSettled([fetchInvoices(), fetchPlans()]);
       } catch (_error) {
         toast.error("Failed to load billing information");
       } finally {
@@ -58,7 +74,29 @@ export default function BillingHistoryPage() {
     };
 
     loadData();
-  }, [fetchInvoices]);
+  }, [fetchInvoices, fetchPlans]);
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+      }
+    > = {
+      active: { variant: "default", label: "Active" },
+      trial: { variant: "secondary", label: "Trial" },
+      cancelled: { variant: "destructive", label: "Cancelled" },
+      expired: { variant: "destructive", label: "Expired" },
+      suspended: { variant: "destructive", label: "Suspended" },
+    };
+
+    const config = statusMap[status] || {
+      variant: "outline" as const,
+      label: status,
+    };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   // NOTE: This page is protected by middleware (see middleware.ts)
   // No need for PermissionGuard wrapper as middleware already validates billing.read permission
@@ -81,6 +119,13 @@ export default function BillingHistoryPage() {
     );
   }
 
+  const subDetail = subscription?.subscription;
+  const cardLastFour = subDetail?.card_last_four || subDetail?.card_last4;
+  const cardBrand = subDetail?.card_brand;
+  const cardBrandLabel = cardBrand
+    ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)
+    : "Card";
+
   return (
     <PageLayout
       title="Billing & Invoices"
@@ -92,62 +137,107 @@ export default function BillingHistoryPage() {
       }
     >
       <div className="space-y-8">
-        {/* Current Billing Cycle Info */}
-        {subscription?.subscription && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Billing Cycle</CardTitle>
-              <CardDescription>
-                Your current subscription details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Current Plan Card (Top Summary) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>
+                  {subDetail
+                    ? subDetail.status === SubscriptionStatus.CANCELLED
+                      ? "Cancelled Subscription"
+                      : subDetail.status === SubscriptionStatus.EXPIRED
+                      ? "Expired Subscription"
+                      : "Current Plan"
+                    : "No Active Subscription"}
+                </CardTitle>
+                <CardDescription>
+                  {subDetail
+                    ? subDetail.status === SubscriptionStatus.CANCELLED
+                      ? "Your subscription has been cancelled"
+                      : subDetail.status === SubscriptionStatus.EXPIRED
+                      ? "Your subscription has expired"
+                      : "Your active subscription plan details"
+                    : "You don't have an active subscription yet"}
+                </CardDescription>
+              </div>
+              {subDetail?.status && getStatusBadge(subDetail.status)}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {subDetail ? (
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm text-muted-foreground font-medium">
                     Plan
                   </p>
-                  <p className="text-lg font-semibold capitalize">
-                    {subscription?.subscription?.plan_name}
+                  <p className="text-2xl font-bold capitalize">
+                    {subDetail.plan_display_name ||
+                      subDetail.plan_name ||
+                      "Free Plan"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm text-muted-foreground font-medium">
                     Billing Period
                   </p>
-                  <p className="text-lg font-semibold capitalize">
-                    {subscription?.subscription?.billing_period}
+                  <p className="text-2xl font-bold capitalize">
+                    {subDetail.billing_period || "Monthly"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Status
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {subDetail.cancelled_at ||
+                    subDetail.status === SubscriptionStatus.CANCELLED
+                      ? "Access Ends On"
+                      : "Renews"}
                   </p>
-                  <p className="text-lg font-semibold capitalize">
-                    {subscription?.subscription?.status}
+                  <p className="text-base font-semibold">
+                    {subDetail.current_period_end || subDetail.end_date
+                      ? new Date(
+                          (subDetail.current_period_end ||
+                            subDetail.end_date)!,
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "N/A"}
                   </p>
                 </div>
               </div>
-
-              {subscription?.subscription?.current_period_end && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Next billing date:{" "}
-                    <span className="font-medium text-foreground">
-                      {new Date(
-                        subscription?.subscription?.current_period_end,
-                      ).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Subscribe to a plan to unlock all features of REXT AI.
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="border-t pt-4">
+            <Button
+              variant="default"
+              onClick={() => {
+                if (
+                  !subDetail ||
+                  subDetail.status === SubscriptionStatus.CANCELLED ||
+                  subDetail.status === SubscriptionStatus.EXPIRED
+                ) {
+                  router.push("/pricing" as Route);
+                } else {
+                  if (plans.length === 0) {
+                    fetchPlans();
+                  }
+                  setIsPlanChangeOpen(true);
+                }
+              }}
+            >
+              {!subDetail ||
+              subDetail.status === SubscriptionStatus.CANCELLED ||
+              subDetail.status === SubscriptionStatus.EXPIRED
+                ? "Subscribe to Plan"
+                : "Change Plan"}
+            </Button>
+          </CardFooter>
+        </Card>
 
         {/* Tabs */}
         <Tabs defaultValue="invoices" className="space-y-6">
@@ -164,6 +254,21 @@ export default function BillingHistoryPage() {
 
           {/* Invoices Tab */}
           <TabsContent value="invoices" className="space-y-6">
+            {/* Purchases come from our own orders table, so each row knows
+                whether it can still be refunded. */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Purchases</CardTitle>
+                <CardDescription>
+                  Download a receipt, or request a refund within 14 days of
+                  purchase
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PurchaseHistory />
+              </CardContent>
+            </Card>
+
             {invoices.length > 0 ? (
               <InvoiceList />
             ) : (
@@ -208,108 +313,81 @@ export default function BillingHistoryPage() {
           </TabsContent>
 
           {/* Payment Method Tab */}
-          <TabsContent value="payment" className="space-y-6">
+          <TabsContent value="payment" className="space-y-8">
+            {/* 1. Payment Method Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Payment Method</CardTitle>
-                <CardDescription>
-                  Manage your payment methods and billing address
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  To update your payment method, billing address, or other
-                  billing details, please use our secure billing portal.
-                </p>
-
-                <div className="bg-muted rounded-lg p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <CreditCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium mb-1">
-                        Customer Billing Portal
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Securely manage all your billing information including:
-                      </p>
-                      <ul className="text-sm text-muted-foreground mt-2 space-y-1 list-disc list-inside">
-                        <li>Update payment method</li>
-                        <li>Change billing address</li>
-                        <li>Download invoices</li>
-                        <li>View payment history</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <CustomerPortalButton className="w-full">
-                    Open Billing Portal
-                  </CustomerPortalButton>
-                </div>
-
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Security:</strong> The billing portal is hosted by
-                    LemonSqueezy, our secure payment processor. Your payment
-                    information is encrypted and never stored on our servers.
-                  </AlertDescription>
-                </Alert>
-
-                {/* Security Indicators */}
-                <div className="pt-4 mt-4 border-t">
-                  <SecurityIndicators />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Additional Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Accepted Payment Methods</CardTitle>
+                <CardDescription>Your payment method on file</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <CreditCard className="h-8 w-8 text-muted-foreground" />
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-muted rounded-full">
+                      <CreditCard className="h-6 w-6 text-foreground" />
+                    </div>
                     <div>
-                      <p className="font-medium">Credit & Debit Cards</p>
+                      <p className="font-semibold text-base flex items-center gap-2">
+                        {hasBillingAccount
+                          ? cardLastFour
+                            ? `${cardBrandLabel} •••• ${cardLastFour}`
+                            : "Card on file"
+                          : "No Saved Payment Method"}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Visa, Mastercard, Amex
+                        {hasBillingAccount
+                          ? "Card saved for future payments"
+                          : "No active billing account"}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <svg
-                      className="h-8 w-8"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-label="PayPal"
-                    >
-                      <title>PayPal</title>
-                      <path
-                        d="M20.067 8.478c.492.88.611 2.022.291 2.926-.267.71-.802 1.244-1.513 1.51-.345.13-.694.187-1.1.19l-1.507.007-1.503.003c-.85.003-1.7.007-2.55.013a.72.72 0 0 0-.736.777c.014.204.086.386.214.536.173.203.413.314.674.317l1.168.01 1.72.017c.526.004 1.051.01 1.577.01.345.004.681.077.998.216 1.546.68 2.133 2.734 1.168 4.117-.402.575-.964.963-1.64 1.164-.442.13-.896.173-1.35.173l-8.682-.01a.69.69 0 0 1-.644-.436.69.69 0 0 1 .15-.757.703.703 0 0 1 .494-.216l8.594.006c.628-.006 1.26-.05 1.869-.247.405-.13.743-.374.984-.733.495-.738.402-1.76-.19-2.379-.35-.366-.807-.553-1.293-.56l-1.87-.02-1.744-.014c-.417-.003-.834-.01-1.248-.023a2.326 2.326 0 0 1-1.804-.867 2.32 2.32 0 0 1-.474-1.947c.086-.422.284-.81.574-1.126.345-.378.78-.631 1.258-.757.228-.06.463-.09.697-.097l1.946-.02 1.102-.007a.69.69 0 0 1 .698.686.69.69 0 0 1-.698.699l-2.963.017c-.417.003-.83.15-1.151.417-.207.173-.366.386-.464.628-.16.395-.106.84.143 1.18.17.235.417.392.69.456.13.03.261.043.391.047l2.028.016 2.264.02c.627.007 1.248-.123 1.817-.374.543-.234.984-.63 1.258-1.15.38-.723.312-1.65-.166-2.305-.291-.398-.694-.681-1.154-.814a3.174 3.174 0 0 0-.971-.106l-3.986-.017-.77-.003a.69.69 0 0 1-.686-.7.69.69 0 0 1 .699-.698l4.649.02c.526.003 1.055.073 1.557.237.732.24 1.354.7 1.793 1.317Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <div>
-                      <p className="font-medium">PayPal</p>
-                      <p className="text-sm text-muted-foreground">
-                        Secure payments
-                      </p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Trust Badge */}
-                <div className="flex justify-center mt-6 pt-6 border-t">
-                  <LemonSqueezyBadge size="sm" />
+                  <CustomerPortalButton variant="outline">
+                    Update Payment Method
+                  </CustomerPortalButton>
                 </div>
               </CardContent>
             </Card>
+
+            {/* 4. Manage Billing Action */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border rounded-lg bg-muted/40">
+              <div className="space-y-1">
+                <h4 className="font-semibold">Customer Billing Portal</h4>
+                <p className="text-sm text-muted-foreground">
+                  Update billing addresses, tax numbers, and view complete
+                  billing statements.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={openTaxDetails}
+                disabled={billingActionsLoading || !hasBillingAccount}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Manage Billing
+              </Button>
+            </div>
+
+            {/* Security Indicators */}
+            <div className="pt-4 border-t">
+              <SecurityIndicators />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Plan Change Modal */}
+      {plans.length > 0 && (
+        <PlanChangeModal
+          open={isPlanChangeOpen}
+          onOpenChange={setIsPlanChangeOpen}
+          plans={plans}
+          currentPlanId={subDetail?.plan_id || plans[0]?.id || ""}
+          currentBillingPeriod={
+            subDetail?.billing_period || BillingPeriod.MONTHLY
+          }
+        />
+      )}
 
       {/* Footer with Policy Links */}
       <Footer variant="minimal" className="mt-12" />

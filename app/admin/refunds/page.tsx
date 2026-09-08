@@ -25,6 +25,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { OrderPicker } from "@/components/admin/refunds/order-picker";
+import { RefundRequestsTable } from "@/components/admin/refunds/refund-requests-table";
+import type { RefundableOrder } from "@/lib/api-client/admin-refunds";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -206,6 +209,12 @@ function CreateRefundDialog({
   onSuccess,
 }: CreateRefundDialogProps) {
   const [loading, setLoading] = useState(false);
+  // The picked order is the source of the order id, so the admin never has to
+  // know it up front. Manual entry stays available as a fallback.
+  const [selectedOrder, setSelectedOrder] = useState<RefundableOrder | null>(
+    null,
+  );
+  const [manualEntry, setManualEntry] = useState(false);
   const [formData, setFormData] = useState({
     order_id: "",
     subscription_id: "",
@@ -227,14 +236,38 @@ function CreateRefundDialog({
         reason: formData.reason || undefined,
       };
 
-      if (formData.order_id) {
-        payload.order_id = formData.order_id;
+      const orderId = selectedOrder?.lemonsqueezy_order_id || formData.order_id;
+
+      if (orderId) {
+        payload.order_id = orderId;
       } else if (formData.subscription_id) {
         payload.subscription_id = formData.subscription_id;
       } else {
-        toast.error("Please provide either Order ID or Subscription ID");
+        toast.error("Select an order, or enter an Order or Subscription ID");
         setLoading(false);
         return;
+      }
+
+      if (formData.amount) {
+        const amount = parseInt(formData.amount, 10);
+
+        if (Number.isNaN(amount) || amount <= 0) {
+          toast.error("Refund amount must be greater than zero");
+          setLoading(false);
+          return;
+        }
+
+        // Caught here so the admin sees it immediately rather than through a
+        // LemonSqueezy API error after the round trip.
+        if (selectedOrder && amount > selectedOrder.total) {
+          toast.error(
+            `Refund cannot exceed the order total of ${(
+              selectedOrder.total / 100
+            ).toFixed(2)} ${selectedOrder.currency}`,
+          );
+          setLoading(false);
+          return;
+        }
       }
 
       if (formData.amount) {
@@ -246,6 +279,8 @@ function CreateRefundDialog({
       toast.success("Refund created successfully");
 
       onOpenChange(false);
+      setSelectedOrder(null);
+      setManualEntry(false);
       setFormData({
         order_id: "",
         subscription_id: "",
@@ -275,30 +310,60 @@ function CreateRefundDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="order_id">LemonSqueezy Order ID</Label>
-              <Input
-                id="order_id"
-                value={formData.order_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, order_id: e.target.value })
-                }
-                placeholder="e.g., 123456"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subscription_id">Or Subscription ID</Label>
-              <Input
-                id="subscription_id"
-                value={formData.subscription_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, subscription_id: e.target.value })
-                }
-                placeholder="UUID"
-              />
+              <div className="flex items-center justify-between">
+                <Label>Order to refund</Label>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline"
+                  onClick={() => {
+                    setManualEntry((v) => !v);
+                    setSelectedOrder(null);
+                  }}
+                >
+                  {manualEntry ? "Search orders" : "Enter ID manually"}
+                </button>
+              </div>
+
+              {manualEntry ? (
+                <>
+                  <Input
+                    id="order_id"
+                    value={formData.order_id}
+                    onChange={(e) =>
+                      setFormData({ ...formData, order_id: e.target.value })
+                    }
+                    placeholder="LemonSqueezy Order ID, e.g. 9372759"
+                  />
+                  <Label htmlFor="subscription_id" className="mt-2">
+                    Or Subscription ID
+                  </Label>
+                  <Input
+                    id="subscription_id"
+                    value={formData.subscription_id}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        subscription_id: e.target.value,
+                      })
+                    }
+                    placeholder="UUID"
+                  />
+                </>
+              ) : (
+                <OrderPicker
+                  selected={selectedOrder}
+                  onSelect={(order) => {
+                    setSelectedOrder(order);
+                    // Default to a full refund of the selected order.
+                    setFormData((prev) => ({ ...prev, amount: "" }));
+                  }}
+                />
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="amount">
-                Amount (cents) - Optional for partial refund
+                Amount (cents) — leave empty to refund in full
+                {selectedOrder ? ` (order total: ${selectedOrder.total})` : ""}
               </Label>
               <Input
                 id="amount"
@@ -487,6 +552,20 @@ export default function RefundManagementPage() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Customer refund requests awaiting review */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Refund Requests</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Customer-initiated requests. Approving one issues the refund
+              immediately.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <RefundRequestsTable />
           </CardContent>
         </Card>
 

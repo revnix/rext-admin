@@ -9,13 +9,7 @@
  * @module components/subscription/subscription-status-card
  */
 
-import {
-  Calendar,
-  CreditCard,
-  ExternalLink,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
+import { Calendar, CreditCard, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { SubscriptionStatus } from "@/types/subscription";
 
@@ -46,18 +41,14 @@ export function SubscriptionStatusCard({
 }: SubscriptionStatusCardProps) {
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const { subscription, isLoading } = useSubscriptionStore();
+  const { updatePaymentMethod, hasBillingAccount } = useBillingActions();
 
   const handleManageBilling = async () => {
     try {
       setIsLoadingPortal(true);
 
-      const { getPortalUrl } = useSubscriptionStore.getState();
-      const response = await getPortalUrl();
-
-      // Open customer portal in new window
-      window.open(response.portal_url, "_blank");
-
-      toast.success("Opening billing portal...");
+      // Opens in the on-site overlay instead of navigating to LemonSqueezy.
+      await updatePaymentMethod();
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -283,13 +274,16 @@ export function SubscriptionStatusCard({
         {/* Cancelled Subscription Warning */}
         {subscription?.subscription?.status ===
           SubscriptionStatus.CANCELLED && (
-          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-3">
             <p className="text-sm text-orange-900 dark:text-orange-100">
               Your subscription has been cancelled and will remain active until{" "}
               {subscription?.subscription?.end_date &&
                 formatDate(subscription?.subscription?.end_date)}
               . After that, you'll lose access to premium features.
             </p>
+            <Button asChild variant="outline" size="sm">
+              <a href="/pricing">Re-subscribe to a Plan</a>
+            </Button>
           </div>
         )}
 
@@ -298,24 +292,26 @@ export function SubscriptionStatusCard({
           <div className="pt-4 border-t">
             <Button
               onClick={handleManageBilling}
-              disabled={isLoadingPortal}
+              disabled={isLoadingPortal || !hasBillingAccount}
               variant="outline"
               className="w-full"
             >
               {isLoadingPortal ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Opening Portal...
+                  Opening...
                 </>
               ) : (
                 <>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Manage Billing
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Update Payment Method
                 </>
               )}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              Update payment method, view invoices, and more
+              {hasBillingAccount
+                ? "Change the card we bill, without leaving this page"
+                : "Available once you're on a paid plan"}
             </p>
           </div>
         )}

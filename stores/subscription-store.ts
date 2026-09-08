@@ -27,7 +27,14 @@ import {
   InvoiceSchema,
   SubscriptionListResponseSchema,
 } from "@/schemas/subscription-schemas";
-import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
+import {
+  ensureLemonSqueezy,
+  getLemonSqueezyClient,
+} from "@/lib/lemonsqueezy/get-client";
+import {
+  getPurchaseState,
+  type PurchaseState,
+} from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
 
 let inFlightSubscriptionFetch: Promise<void> | null = null;
@@ -56,6 +63,9 @@ interface SubscriptionStore {
   selectedPlan: SubscriptionPlan | null;
   selectedPeriod: BillingPeriod | null;
   checkoutUrl: string | null;
+  /** Purchase state captured when checkout opened, so the post-payment
+   *  poll can tell a completed purchase from the pre-existing state. */
+  checkoutBaseline: PurchaseState | null;
 
   // ========================================
   // INVOICES STATE
@@ -189,6 +199,7 @@ const initialState = {
   selectedPlan: null,
   selectedPeriod: null,
   checkoutUrl: null,
+  checkoutBaseline: null,
 
   // Invoices state
   invoices: [],
@@ -527,15 +538,9 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       openCheckout: (checkoutUrl: string) => {
         if (typeof window === "undefined") return;
 
-        // lemon.js only wires up its overlay on DOMContentLoaded. Loaded via
-        // <Script strategy="afterInteractive">, that event has usually already
-        // fired by the time the script lands, and a client-side navigation
-        // never fires it again — so window.LemonSqueezy exists but the overlay
-        // opens as a dead frame until a full page reload. This re-init is
-        // idempotent and is the documented SPA entry point.
-        window.createLemonSqueezy?.();
-
-        const client = getLemonSqueezyClient();
+        // Re-initialises lemon.js (idempotent) and re-applies the checkout
+        // event handler, which createLemonSqueezy() would otherwise drop.
+        const client = ensureLemonSqueezy();
         if (client) {
           // LemonSqueezy only serves a frameable checkout when the URL carries
           // embed=1. The API returns the plain hosted URL, which refuses to be
@@ -543,6 +548,20 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           // blocked" page instead of the checkout.
           const overlayUrl = new URL(checkoutUrl);
           overlayUrl.searchParams.set("embed", "1");
+
+          // Snapshot the current subscription so the post-payment poll can
+          // detect an actual change. Without this a trial user, whose status
+          // is already "ready", would be told the purchase succeeded before
+          // the webhook had landed — or even if it never did.
+          set({ checkoutBaseline: getPurchaseState(get().subscription) });
+
+          // lemon.js only sets this class from its own click handler for
+          // <a class="lemonsqueezy-button"> links — Url.Open() does not set it.
+          // Opening the overlay programmatically therefore leaves the page
+          // behind it scrolling, with the page scrollbar sitting alongside the
+          // iframe's. We set it ourselves; lemon.js clears it on close.
+          document.body.classList.add("lemonsqueezy-open");
+
           client.Url.Open(overlayUrl.toString());
           return;
         }
@@ -657,9 +676,12 @@ declare global {
         Close: () => void;
       };
       /**
-       * Setup LemonSqueezy
+       * Setup LemonSqueezy. Pass an eventHandler to receive checkout
+       * lifecycle events such as Checkout.Success.
        */
-      Setup: () => void;
+      Setup: (options?: {
+        eventHandler?: (event: { event: string; data?: unknown }) => void;
+      }) => void;
     };
     createLemonSqueezy?: () => void;
   }

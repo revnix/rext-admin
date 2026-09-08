@@ -183,6 +183,18 @@ const nextConfig: NextConfig = {
         destination: "/settings/subscription",
         permanent: false,
       },
+      {
+        // Customer management was folded into User Management. Redirect rather
+        // than 404 so existing bookmarks and links keep working.
+        source: "/admin/customers",
+        destination: "/admin/users",
+        permanent: false,
+      },
+      {
+        source: "/admin/customers/:path*",
+        destination: "/admin/users",
+        permanent: false,
+      },
     ];
   },
 };

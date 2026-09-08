@@ -96,6 +96,9 @@ export const UserSubscriptionSchema = z.object({
     })
     .optional(),
   customer_portal_url: z.string().nullable().optional(),
+  card_brand: z.string().nullable().optional(),
+  card_last_four: z.string().nullable().optional(),
+  card_last4: z.string().nullable().optional(),
 });
 
 /**
@@ -103,41 +106,133 @@ export const UserSubscriptionSchema = z.object({
  */
 
 export const PlanFeaturesSchema = z
-  .union([
-    z.object({ items: FeatureItemsSchema }),
-    z.object({ list: FeatureItemsSchema }),
-    z.record(z.string(), z.string()),
-  ])
+  .unknown()
   .transform((raw): { items: string[] } => {
-    if ("items" in raw) return { items: raw.items as string[] };
-    if ("list" in raw) return { items: (raw as { list: string[] }).list };
-    return { items: Object.values(raw as Record<string, string>) };
+    if (!raw) {
+      return { items: [] };
+    }
+    if (Array.isArray(raw)) {
+      return { items: raw.map((item) => String(item)) };
+    }
+    if (typeof raw === "object") {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj.items)) {
+        return { items: obj.items.map((item) => String(item)) };
+      }
+      if (Array.isArray(obj.list)) {
+        return { items: obj.list.map((item) => String(item)) };
+      }
+      const items: string[] = [];
+      for (const [key, val] of Object.entries(obj)) {
+        if (typeof val === "boolean") {
+          if (val) {
+            const label = key
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            items.push(label);
+          }
+        } else if (val !== null && val !== undefined && val !== false) {
+          const label = key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+          items.push(`${label}: ${val}`);
+        }
+      }
+      return { items };
+    }
+    if (typeof raw === "string") {
+      return { items: [raw] };
+    }
+    return { items: [] };
   });
 
 export const SubscriptionPlanSchema = z.object({
-  id: z.string().uuid("Invalid plan ID"),
-  name: z.string().min(1, "Plan name is required"),
-  display_name: z.string().min(1, "Display name is required"),
-  description: z.string().nullable(),
-  price_monthly: z.number().nonnegative(),
-  price_yearly: z.number().nonnegative(),
-  features: PlanFeaturesSchema,
-  max_workspaces: z.number().int(),
-  max_members_per_workspace: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
-  max_api_calls_per_month: z.number().int(),
-  credits_per_month: z.number().nullable().catch(null),
-  is_active: z.boolean(),
-  is_public: z.boolean(),
-  created_at: z.string(),
+  id: z.string().optional().transform((val) => val ?? ""),
+  name: z.string().optional().transform((val) => val ?? ""),
+  display_name: z.string().optional().transform((val) => val ?? ""),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
+  price_monthly: z
+    .number()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  price_yearly: z
+    .number()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  features: PlanFeaturesSchema.optional()
+    .nullable()
+    .transform((val) => val ?? { items: [] }),
+  max_workspaces: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_members_per_workspace: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_topics: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_knowledge_items: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_api_calls_per_month: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  credits_per_month: z
+    .number()
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
+  is_active: z
+    .boolean()
+    .optional()
+    .transform((val) => val ?? true),
+  is_public: z
+    .boolean()
+    .optional()
+    .transform((val) => val ?? true),
+  created_at: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
 });
+
 /**
  * Schema for subscription list response
  */
-export const SubscriptionListResponseSchema = z.object({
-  plans: z.array(SubscriptionPlanSchema),
-});
+export const SubscriptionListResponseSchema = z.union([
+  z.object({
+    plans: z.array(SubscriptionPlanSchema),
+  }),
+  z
+    .object({
+      data: z.object({
+        plans: z.array(SubscriptionPlanSchema),
+      }),
+    })
+    .transform((val) => ({ plans: val.data.plans })),
+  z.array(SubscriptionPlanSchema).transform((plans) => ({ plans })),
+]);
 
 // ============================================================================
 // USAGE SCHEMAS

@@ -150,6 +150,9 @@ export interface UserSubscriptionDetail {
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
+  card_brand?: string | null;
+  card_last_four?: string | null;
+  card_last4?: string | null;
 }
 
 export interface UserSubscription {
@@ -383,4 +386,34 @@ export function getUsageStatusColor(
   if (usagePercent >= 90) return "destructive";
   if (usagePercent >= 75) return "warning";
   return "success";
+}
+
+/**
+ * A purchase from our own orders table.
+ *
+ * `can_request_refund` is computed server-side from the same rules the
+ * request endpoint enforces, so the UI never has to re-derive eligibility
+ * and drift from it.
+ */
+export interface OrderRow {
+  id: string;
+  lemonsqueezy_order_id: string;
+  product_name: string | null;
+  status: string;
+  /** Cents, as LemonSqueezy reports them. */
+  total: number;
+  subtotal: number | null;
+  tax: number | null;
+  currency: string;
+  receipt_url: string | null;
+  /** The purchaser's email, filled in by the API from the authenticated user. */
+  customer_email: string | null;
+  subscription_id: string | null;
+  ordered_at: string | null;
+  refunded_at: string | null;
+  created_at: string;
+  refund_request_status: "pending" | "approved" | "rejected" | null;
+  refund_requested_at: string | null;
+  refund_admin_note: string | null;
+  can_request_refund: boolean;
 }
