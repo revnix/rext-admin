@@ -15,8 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface TimelineData {
   date: string;
   sent: number;
+  delivered: number;
   opened: number;
   clicked: number;
+  failed: number;
 }
 
 interface EmailVolumeChartProps {
@@ -44,8 +46,10 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
       day: "numeric",
     }),
     Sent: item.sent,
+    Delivered: item.delivered,
     Opened: item.opened,
     Clicked: item.clicked,
+    Failed: item.failed,
   }));
 
   return (
@@ -77,6 +81,13 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
         />
         <Line
           type="monotone"
+          dataKey="Delivered"
+          stroke="#0ea5e9"
+          strokeWidth={2}
+          dot={false}
+        />
+        <Line
+          type="monotone"
           dataKey="Opened"
           stroke="#22c55e"
           strokeWidth={2}
@@ -86,6 +97,13 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
           type="monotone"
           dataKey="Clicked"
           stroke="#f59e0b"
+          strokeWidth={2}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="Failed"
+          stroke="#ef4444"
           strokeWidth={2}
           dot={false}
         />

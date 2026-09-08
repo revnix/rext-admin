@@ -91,9 +91,9 @@ export function EmailPerformanceTable({
                 <TableHead className="text-right">Sent</TableHead>
                 <TableHead className="text-right">Delivered</TableHead>
                 <TableHead className="text-right">Opened</TableHead>
-                <TableHead className="text-right">Open Rate</TableHead>
+                {/* <TableHead className="text-right">Open Rate</TableHead> */}
                 <TableHead className="text-right">Clicked</TableHead>
-                <TableHead className="text-right">Click Rate</TableHead>
+                {/* <TableHead className="text-right">Click Rate</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,21 +111,21 @@ export function EmailPerformanceTable({
                   <TableCell className="text-right">
                     {template.opened.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* <TableCell className="text-right">
                     <span className={getRateColor(template.open_rate, "open")}>
                       {template.open_rate}%
                     </span>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell className="text-right">
                     {template.clicked.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right">
+                  {/* <TableCell className="text-right">
                     <span
                       className={getRateColor(template.click_rate, "click")}
                     >
                       {template.click_rate}%
                     </span>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

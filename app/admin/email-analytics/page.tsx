@@ -76,8 +76,10 @@ interface TemplateStats {
 interface TimelineData {
   date: string;
   sent: number;
+  delivered: number;
   opened: number;
   clicked: number;
+  failed: number;
 }
 
 interface EmailFailure {
@@ -260,7 +262,7 @@ export default function EmailAnalyticsPage() {
               </Card>
 
               {/* Email Health Score */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Email Health Score</CardTitle>
                   <CardDescription>
@@ -298,7 +300,7 @@ export default function EmailAnalyticsPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
             </TabsContent>
 
             <TabsContent value="templates" className="space-y-4">
