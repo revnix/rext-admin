@@ -43,7 +43,11 @@ import {
 import { ErrorPage } from "@/components/ui/error-states";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { User, UserRoleSummary, UserStatusAction } from "@/lib/api-client/users";
+import type {
+  User,
+  UserRoleSummary,
+  UserStatusAction,
+} from "@/lib/api-client/users";
 import {
   Tooltip,
   TooltipContent,
@@ -283,7 +287,10 @@ export default function AdminUsersPage() {
         const roles = (row.roles as UserRoleSummary[]) || [];
         if (roles.length === 0) {
           return (
-            <Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
+            <Badge
+              variant="outline"
+              className="text-xs font-medium px-1.5 py-0.5"
+            >
               User
             </Badge>
           );
@@ -308,7 +315,10 @@ export default function AdminUsersPage() {
                 });
               }
               return acc;
-            }, new Map<string, { role: UserRoleSummary; workspaces: string[] }>())
+            }, new Map<
+              string,
+              { role: UserRoleSummary; workspaces: string[] }
+            >())
             .values(),
         );
 
@@ -356,7 +366,7 @@ export default function AdminUsersPage() {
       key: "status",
       header: "Status",
       width: "130px",
-      cell: (value, row) => (
+      cell: (value) => (
         <div className="scale-90 origin-left">
           {getStatusBadge(value as string)}
         </div>

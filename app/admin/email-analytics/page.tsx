@@ -322,16 +322,3 @@ export default function EmailAnalyticsPage() {
     </AdminGuard>
   );
 }
-
-function calculateHealthScore(data: EmailOverview): number {
-  // Health score based on:
-  // - Delivery rate (50% weight)
-  // - Low bounce rate (30% weight)
-  // - Low complaint rate (20% weight)
-
-  const deliveryScore = data.delivery_rate * 0.5;
-  const bounceScore = (100 - data.bounce_rate) * 0.3;
-  const complaintScore = (100 - data.complaint_rate * 10) * 0.2; // Scale complaint rate
-
-  return Math.round(deliveryScore + bounceScore + complaintScore);
-}

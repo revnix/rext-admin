@@ -62,18 +62,6 @@ export function EmailPerformanceTable({
       .join(" ");
   };
 
-  const getRateColor = (rate: number, type: "open" | "click") => {
-    if (type === "open") {
-      if (rate >= 30) return "text-green-600";
-      if (rate >= 20) return "text-yellow-600";
-      return "text-red-600";
-    } else {
-      if (rate >= 5) return "text-green-600";
-      if (rate >= 2) return "text-yellow-600";
-      return "text-red-600";
-    }
-  };
-
   return (
     <Card>
       <CardHeader>

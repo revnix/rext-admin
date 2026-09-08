@@ -8,7 +8,6 @@ import {
   Eye,
   FileText,
   Loader2,
-  Printer,
   User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -209,13 +208,13 @@ export function InvoiceList({
         invoice.items && invoice.items.length > 0
           ? invoice.items
           : [
-            {
-              description: "Subscription Plan Service",
-              quantity: 1,
-              unit_price: invoice.amount,
-              total: invoice.amount,
-            },
-          ];
+              {
+                description: "Subscription Plan Service",
+                quantity: 1,
+                unit_price: invoice.amount,
+                total: invoice.amount,
+              },
+            ];
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -276,11 +275,16 @@ export function InvoiceList({
   };
 
   const isPaginated = !limit;
-  const totalPages = isPaginated ? Math.ceil(invoices.length / itemsPerPage) : 1;
+  const totalPages = isPaginated
+    ? Math.ceil(invoices.length / itemsPerPage)
+    : 1;
 
   const displayedInvoices = limit
     ? invoices.slice(0, limit)
-    : invoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    : invoices.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+      );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -430,13 +434,17 @@ export function InvoiceList({
                   </Select>
                 </div>
                 <span className="hidden sm:inline">
-                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, invoices.length)} of {invoices.length}
+                  {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, invoices.length)} of{" "}
+                  {invoices.length}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="sm:hidden">
-                  {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, invoices.length)} of {invoices.length}
+                  {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, invoices.length)} of{" "}
+                  {invoices.length}
                 </span>
                 <Button
                   variant="ghost"
@@ -531,7 +539,7 @@ export function InvoiceList({
                   </thead>
                   <tbody className="divide-y">
                     {selectedInvoice.items &&
-                      selectedInvoice.items.length > 0 ? (
+                    selectedInvoice.items.length > 0 ? (
                       selectedInvoice.items.map((item) => (
                         <tr
                           key={`${selectedInvoice.invoice_id}-modal-${item.description}-${item.unit_price}`}
