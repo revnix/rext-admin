@@ -317,8 +317,16 @@ export function UnifiedActivity() {
       );
     }
 
-    logs = sortAuditLogs([...logs, ...validSynthesized]);
+    logs = [...logs, ...validSynthesized];
   }
+
+  // Ordering is applied unconditionally, outside the workspace block above.
+  // That block only ever ADDS synthesized rows; the feed still has to read
+  // causally ("Workspace Created" before "Workspace Updated") when the
+  // workspaces query is loading, has errored, or returns no workspaces at all.
+  // Leaving the sort inside it meant the raw newest-first API order reached the
+  // DOM on those paths, which is what kept the events looking reversed.
+  logs = sortAuditLogs(logs);
 
   const finalTotal =
     filters.action || filters.resource_type
