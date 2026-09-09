@@ -414,10 +414,19 @@ export interface OrderRow {
   ordered_at: string | null;
   refunded_at: string | null;
   created_at: string;
-  refund_request_status: "pending" | "approved" | "rejected" | null;
+  refund_request_status:
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "processing"
+    | "completed"
+    | "failed"
+    | null;
   refund_requested_at: string | null;
   refund_admin_note: string | null;
   can_request_refund: boolean;
+  /** Why a refund can't be requested, written for the customer, or null. */
+  refund_ineligible_reason: string | null;
   /** Cents refunded against this order so far. */
   refunded_amount: number;
   /** Cents still refundable. Computed server-side; never re-derive it here. */
