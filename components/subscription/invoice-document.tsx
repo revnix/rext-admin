@@ -39,7 +39,8 @@ export const formatCurrency = (amount: number, currency: string = "USD") => {
 };
 
 export const getStatusBadge = (status: InvoiceStatus | string) => {
-  switch (status) {
+  const normalized = (status || "").toLowerCase();
+  switch (normalized) {
     case "paid":
       return (
         <Badge variant="default" className="bg-green-500 text-white">
@@ -72,6 +73,7 @@ export function orderToInvoice(order: OrderRow): Invoice {
   return {
     invoice_id: order.lemonsqueezy_order_id,
     invoice_number: order.lemonsqueezy_order_id,
+    subscription_id: order.subscription_id,
     status: order.status as InvoiceStatus,
     amount: (order.total ?? 0) / 100,
     subtotal: (order.subtotal ?? order.total ?? 0) / 100,
@@ -143,6 +145,14 @@ export function InvoiceDocument({
               {invoice.invoice_id}
             </span>
           </p>
+          {invoice.subscription_id && (
+            <p className="text-muted-foreground">
+              Subscription ID:{" "}
+              <span className="font-mono text-foreground text-xs">
+                {invoice.subscription_id}
+              </span>
+            </p>
+          )}
           {invoice.paid_at && (
             <p className="text-muted-foreground">
               Paid Date:{" "}
@@ -289,6 +299,9 @@ export function downloadInvoicePdf(
     doc.text(`Status: ${invoice.status}`, 110, 59);
     doc.text(`Paid Date: ${formattedPaidDate}`, 110, 65);
     doc.text(`${label} ID: ${invoice.invoice_id}`, 110, 71);
+    if (invoice.subscription_id) {
+      doc.text(`Subscription ID: ${invoice.subscription_id}`, 110, 77);
+    }
 
     // Items Table Header
     let yPos = 82;

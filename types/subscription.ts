@@ -28,6 +28,7 @@ export const INVOICE_STATUSES = [
   "paid",
   "void",
   "refunded",
+  "partial_refund",
   "partial_refunded",
   "unknown",
 ] as const;
@@ -37,6 +38,7 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 export interface Invoice {
   invoice_id: string;
   invoice_number: string | null;
+  subscription_id?: string | null;
   status: InvoiceStatus;
   amount: number;
   currency: string;
@@ -416,4 +418,8 @@ export interface OrderRow {
   refund_requested_at: string | null;
   refund_admin_note: string | null;
   can_request_refund: boolean;
+  /** Cents refunded against this order so far. */
+  refunded_amount: number;
+  /** Cents still refundable. Computed server-side; never re-derive it here. */
+  refundable_amount: number;
 }

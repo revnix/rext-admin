@@ -11,9 +11,21 @@
 import { z } from "zod";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
-const InvoiceStatusSchema = z
-  .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
-  .catch("unknown");
+const InvoiceStatusSchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toLowerCase() : val),
+  z
+    .enum([
+      "pending",
+      "paid",
+      "failed",
+      "void",
+      "refunded",
+      "partial_refund",
+      "partial_refunded",
+      "unknown",
+    ])
+    .catch("unknown"),
+);
 const FeatureItemsSchema = z.array(z.string().trim().min(1));
 
 export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
@@ -306,6 +318,7 @@ export const InvoiceItemSchema = z.object({
 export const InvoiceSchema = z.object({
   invoice_id: z.string().min(1, "Invoice ID is required"),
   invoice_number: z.string().nullable().optional(),
+  subscription_id: z.string().nullable().optional(),
   status: InvoiceStatusSchema,
   amount: z.number(),
   currency: z.string().default("USD").catch("USD"),

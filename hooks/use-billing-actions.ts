@@ -26,7 +26,9 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 
 export function useBillingActions() {
   const [isLoading, setIsLoading] = useState(false);
-  const openCheckout = useSubscriptionStore((state) => state.openCheckout);
+  const openPaymentMethodDialog = useSubscriptionStore(
+    (state) => state.openPaymentMethodDialog,
+  );
   const fetchSubscription = useSubscriptionStore(
     (state) => state.fetchSubscription,
   );
@@ -45,7 +47,7 @@ export function useBillingActions() {
   );
 
   /**
-   * Open LemonSqueezy's payment-method form in the on-site overlay.
+   * Open LemonSqueezy's payment-method form in our dedicated Dialog.
    */
   const updatePaymentMethod = useCallback(async () => {
     setIsLoading(true);
@@ -59,7 +61,7 @@ export function useBillingActions() {
         );
       }
 
-      openCheckout(urls.update_payment_method);
+      openPaymentMethodDialog(urls.update_payment_method);
     } catch (error) {
       log.error("Failed to open payment method form", error);
       toast.error(
@@ -70,7 +72,7 @@ export function useBillingActions() {
     } finally {
       setIsLoading(false);
     }
-  }, [openCheckout]);
+  }, [openPaymentMethodDialog]);
 
   /**
    * Open the LemonSqueezy portal for tax ID and billing address only.

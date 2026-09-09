@@ -63,9 +63,16 @@ interface SubscriptionStore {
   selectedPlan: SubscriptionPlan | null;
   selectedPeriod: BillingPeriod | null;
   checkoutUrl: string | null;
+  checkoutDialogOpen: boolean;
   /** Purchase state captured when checkout opened, so the post-payment
    *  poll can tell a completed purchase from the pre-existing state. */
   checkoutBaseline: PurchaseState | null;
+
+  // ========================================
+  // PAYMENT METHOD DIALOG STATE
+  // ========================================
+  paymentMethodDialogOpen: boolean;
+  paymentMethodUrl: string | null;
 
   // ========================================
   // INVOICES STATE
@@ -151,9 +158,24 @@ interface SubscriptionStore {
   resetCheckout: () => void;
 
   /**
-   * Open LemonSqueezy checkout overlay
+   * Open LemonSqueezy checkout dialog
    */
   openCheckout: (checkoutUrl: string) => void;
+
+  /**
+   * Close dedicated purchase checkout dialog
+   */
+  closeCheckoutDialog: () => void;
+
+  /**
+   * Open dedicated payment method dialog
+   */
+  openPaymentMethodDialog: (url: string) => void;
+
+  /**
+   * Close dedicated payment method dialog and refresh subscription details
+   */
+  closePaymentMethodDialog: () => void;
 
   // ========================================
   // INVOICES ACTIONS
@@ -200,6 +222,11 @@ const initialState = {
   selectedPeriod: null,
   checkoutUrl: null,
   checkoutBaseline: null,
+  checkoutDialogOpen: false,
+
+  // Payment method dialog state
+  paymentMethodDialogOpen: false,
+  paymentMethodUrl: null,
 
   // Invoices state
   invoices: [],
@@ -538,35 +565,43 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       openCheckout: (checkoutUrl: string) => {
         if (typeof window === "undefined") return;
 
-        // Re-initialises lemon.js (idempotent) and re-applies the checkout
-        // event handler, which createLemonSqueezy() would otherwise drop.
-        const client = ensureLemonSqueezy();
-        if (client) {
-          // LemonSqueezy only serves a frameable checkout when the URL carries
-          // embed=1. The API returns the plain hosted URL, which refuses to be
-          // framed — the overlay then renders as the browser's "This content is
-          // blocked" page instead of the checkout.
-          const overlayUrl = new URL(checkoutUrl);
-          overlayUrl.searchParams.set("embed", "1");
+        // Ensure lemon.js script state setup
+        ensureLemonSqueezy();
 
-          // Snapshot the current subscription so the post-payment poll can
-          // detect an actual change. Without this a trial user, whose status
-          // is already "ready", would be told the purchase succeeded before
-          // the webhook had landed — or even if it never did.
-          set({ checkoutBaseline: getPurchaseState(get().subscription) });
+        // Snapshot current subscription so post-payment sync can verify purchase
+        set({
+          checkoutBaseline: getPurchaseState(get().subscription),
+          checkoutDialogOpen: true,
+          checkoutUrl: checkoutUrl,
+        });
+      },
 
-          // lemon.js only sets this class from its own click handler for
-          // <a class="lemonsqueezy-button"> links — Url.Open() does not set it.
-          // Opening the overlay programmatically therefore leaves the page
-          // behind it scrolling, with the page scrollbar sitting alongside the
-          // iframe's. We set it ourselves; lemon.js clears it on close.
-          document.body.classList.add("lemonsqueezy-open");
+      closeCheckoutDialog: () => {
+        set({
+          checkoutDialogOpen: false,
+          checkoutUrl: null,
+        });
+      },
 
-          client.Url.Open(overlayUrl.toString());
-          return;
-        }
+      openPaymentMethodDialog: (url: string) => {
+        set({
+          paymentMethodDialogOpen: true,
+          paymentMethodUrl: url,
+        });
+      },
 
-        window.open(checkoutUrl, "_blank");
+      closePaymentMethodDialog: () => {
+        set({
+          paymentMethodDialogOpen: false,
+          paymentMethodUrl: null,
+        });
+
+        // Immediately refetch subscription details to update UI if card changed
+        get()
+          .fetchSubscription({ force: true })
+          .catch((err) => {
+            log.error("Failed to refresh subscription on dialog close", err);
+          });
       },
 
       // ========================================

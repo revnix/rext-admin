@@ -18,6 +18,8 @@
 import Script from "next/script";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { CheckoutDialog } from "@/components/subscription/checkout-dialog";
+import { PaymentMethodDialog } from "@/components/subscription/payment-method-dialog";
 import {
   getPurchaseState,
   useSubscriptionSync,
@@ -37,9 +39,10 @@ export function LemonSqueezyProvider() {
     setCheckoutEventHandler((event) => {
       if (event.event !== "Checkout.Success") return;
 
-      // Close the overlay ourselves so the user is returned to the page they
-      // started from, rather than being left on the success page LemonSqueezy
-      // renders inside the iframe.
+      // Close our custom checkout dialog when checkout succeeds
+      useSubscriptionStore.getState().closeCheckoutDialog();
+
+      // Close the overlay if lemon.js opened one
       ensureLemonSqueezy()?.Url.Close();
 
       // Belt and braces: our scroll lock keys off these body classes, which
@@ -106,10 +109,14 @@ export function LemonSqueezyProvider() {
   }, [waitForPurchaseSettled]);
 
   return (
-    <Script
-      src="https://app.lemonsqueezy.com/js/lemon.js"
-      strategy="afterInteractive"
-      onLoad={() => ensureLemonSqueezy()}
-    />
+    <>
+      <Script
+        src="https://app.lemonsqueezy.com/js/lemon.js"
+        strategy="afterInteractive"
+        onLoad={() => ensureLemonSqueezy()}
+      />
+      <CheckoutDialog />
+      <PaymentMethodDialog />
+    </>
   );
 }

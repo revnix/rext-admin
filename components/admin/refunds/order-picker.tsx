@@ -7,9 +7,10 @@
  * LemonSqueezy order id. Search by customer email, name, product or order id,
  * then pick a row — the id is filled in from the selection.
  *
- * Only paid orders are returned, and rows already refunded are shown as such
- * rather than being selectable, so the admin sees the problem before
- * submitting rather than hitting the duplicate guard on the API.
+ * Paid and partially refunded orders are both returned: a partial refund
+ * leaves a balance that is still refundable. A row is only unselectable once
+ * nothing is left (`refundable_amount <= 0`), so the admin sees that before
+ * submitting rather than hitting the API's guard.
  *
  * @module components/admin/refunds/order-picker
  */
@@ -83,6 +84,14 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
             <p className="text-xs text-muted-foreground font-mono mt-1">
               Order {selected.lemonsqueezy_order_id}
             </p>
+            {selected.refunded_amount > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatAmount(selected.refunded_amount, selected.currency)}{" "}
+                already refunded ·{" "}
+                {formatAmount(selected.refundable_amount, selected.currency)}{" "}
+                still refundable
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -97,8 +106,8 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
+    <div className="flex min-h-0 flex-col gap-2">
+      <div className="relative shrink-0">
         <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
@@ -108,7 +117,7 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
         />
       </div>
 
-      <div className="max-h-56 overflow-y-auto rounded-md border divide-y">
+      <div className="flex-1 min-h-0 max-h-56 overflow-y-auto scrollbar-hide rounded-md border divide-y">
         {loading && (
           <div className="flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -126,7 +135,9 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
 
         {!loading &&
           orders.map((order) => {
-            const disabled = order.already_refunded;
+            // The server decides refundability; this only renders it.
+            const disabled = order.refundable_amount <= 0;
+            const partiallyRefunded = order.refunded_amount > 0 && !disabled;
             return (
               <button
                 key={order.id}
@@ -150,6 +161,12 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
                   {disabled && (
                     <Badge variant="secondary" className="shrink-0">
                       Refunded
+                    </Badge>
+                  )}
+                  {partiallyRefunded && (
+                    <Badge variant="outline" className="shrink-0">
+                      {formatAmount(order.refundable_amount, order.currency)}{" "}
+                      left
                     </Badge>
                   )}
                 </div>

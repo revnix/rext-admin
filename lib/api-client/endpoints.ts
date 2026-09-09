@@ -394,10 +394,18 @@ export const ENDPOINTS = {
     create: "/api/v1/admin/subscriptions/refunds/create",
     orders: "/api/v1/admin/subscriptions/refunds/orders",
     requests: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: log a refund a customer asked for by email. */
+    createRequest: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: take back an approval, returning the request to pending. */
+    unapproveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/unapprove` as const,
     approveRequest: (id: string) =>
       `/api/v1/admin/subscriptions/refunds/requests/${id}/approve` as const,
     rejectRequest: (id: string) =>
       `/api/v1/admin/subscriptions/refunds/requests/${id}/reject` as const,
+    /** Issues the money for an already-approved request. */
+    processRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/process` as const,
   },
 
   /**

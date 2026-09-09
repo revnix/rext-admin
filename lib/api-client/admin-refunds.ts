@@ -81,8 +81,12 @@ export interface RefundableOrder {
   receipt_url: string | null;
   ordered_at: string | null;
   created_at: string;
+  /** True only when nothing is left to refund. */
   already_refunded: boolean;
+  /** Cents refunded so far against this order. */
   refunded_amount: number;
+  /** Cents still refundable. The server decides this; never re-derive it. */
+  refundable_amount: number;
 }
 
 export interface RefundableOrderListResponse {
@@ -130,6 +134,12 @@ export interface RefundRequestRow {
   user_name: string | null;
   product_name: string | null;
   order_total: number | null;
+  /** Cents refunded so far against the order this request names. */
+  refunded_amount: number;
+  /** Cents still refundable on that order. */
+  refundable_amount: number;
+  /** Approved but not yet paid out — the "Process refund" action applies. */
+  awaiting_processing: boolean;
 }
 
 export interface RefundRequestListResponse {
@@ -231,19 +241,71 @@ export function createAdminRefundsNamespace(client: ApiClient) {
     },
 
     /**
-     * Approve a request and refund the order in one step.
+     * Log a refund a customer asked for by email. Creates the request only —
+     * it still has to be approved and then processed.
+     *
+     * @requires Super admin role
+     */
+    createRequest: async (data: {
+      lemonsqueezy_order_id: string;
+      reason: string;
+      /** Cents. Omit to request the whole remaining refundable balance. */
+      requested_amount?: number;
+    }): Promise<RefundRequestRow> => {
+      return client.request<RefundRequestRow>(
+        ENDPOINTS.ADMIN_REFUNDS.createRequest,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+    },
+
+    /**
+     * Approve a request. Records the decision only — no money moves until
+     * `processRequest` is called.
      *
      * @requires Super admin role
      */
     approveRequest: async (
       requestId: string,
       adminNote?: string,
-    ): Promise<unknown> => {
-      return client.request(ENDPOINTS.ADMIN_REFUNDS.approveRequest(requestId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ admin_note: adminNote ?? null }),
-      });
+    ): Promise<RefundRequestRow> => {
+      return client.request<RefundRequestRow>(
+        ENDPOINTS.ADMIN_REFUNDS.approveRequest(requestId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ admin_note: adminNote ?? null }),
+        },
+      );
+    },
+
+    /**
+     * Take back an approval, returning the request to pending. Unlike
+     * rejecting, this decides nothing and the customer is not told.
+     *
+     * @requires Super admin role
+     */
+    unapproveRequest: async (requestId: string): Promise<RefundRequestRow> => {
+      return client.request<RefundRequestRow>(
+        ENDPOINTS.ADMIN_REFUNDS.unapproveRequest(requestId),
+        { method: "POST" },
+      );
+    },
+
+    /**
+     * Issue the refund for an already-approved request. This is the step that
+     * moves money, and it is deliberately separate from approving.
+     *
+     * @requires Super admin role
+     */
+    processRequest: async (requestId: string): Promise<RefundRequestRow> => {
+      return client.request<RefundRequestRow>(
+        ENDPOINTS.ADMIN_REFUNDS.processRequest(requestId),
+        { method: "POST" },
+      );
     },
 
     /**
@@ -254,12 +316,15 @@ export function createAdminRefundsNamespace(client: ApiClient) {
     rejectRequest: async (
       requestId: string,
       adminNote?: string,
-    ): Promise<unknown> => {
-      return client.request(ENDPOINTS.ADMIN_REFUNDS.rejectRequest(requestId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ admin_note: adminNote ?? null }),
-      });
+    ): Promise<RefundRequestRow> => {
+      return client.request<RefundRequestRow>(
+        ENDPOINTS.ADMIN_REFUNDS.rejectRequest(requestId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ admin_note: adminNote ?? null }),
+        },
+      );
     },
 
     /**

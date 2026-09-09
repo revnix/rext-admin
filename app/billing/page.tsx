@@ -260,8 +260,7 @@ export default function BillingHistoryPage() {
               <CardHeader>
                 <CardTitle>Your Purchases</CardTitle>
                 <CardDescription>
-                  Download a receipt, or request a refund within 14 days of
-                  purchase
+                  Download a receipt for your past purchases
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -3,12 +3,12 @@
 /**
  * Purchase History
  *
- * The customer's own orders, read from our database rather than LemonSqueezy,
- * with the refund control for each one.
+ * The customer's own orders, read from our database rather than LemonSqueezy.
  *
- * Kept separate from `InvoiceList`, which renders the invoice shape and is
- * used elsewhere. Orders carry refund-request state that invoices do not, and
- * that state is what decides which control a row shows.
+ * A purchase row records the purchase and nothing else: what was bought, for
+ * how much, when, and a receipt. Refunds are separate events and live in the
+ * invoice history, which carries a credit line per refund — so a refund never
+ * rewrites the purchase it came from.
  *
  * @module components/subscription/purchase-history
  */
@@ -17,8 +17,6 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ReceiptDialog } from "@/components/subscription/receipt-dialog";
-import { RefundRequestButton } from "@/components/subscription/refund-request-button";
-import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import type { OrderRow } from "@/types/subscription";
@@ -76,14 +74,9 @@ export function PurchaseHistory() {
           className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-medium truncate">
-                {order.product_name ?? "Purchase"}
-              </span>
-              {order.status === "refunded" && (
-                <Badge variant="outline">Refunded</Badge>
-              )}
-            </div>
+            <span className="font-medium truncate">
+              {order.product_name ?? "Purchase"}
+            </span>
             <p className="text-sm text-muted-foreground">
               {formatAmount(order.total, order.currency)}
               {order.ordered_at
@@ -98,7 +91,6 @@ export function PurchaseHistory() {
 
           <div className="flex shrink-0 items-center gap-2">
             <ReceiptDialog order={order} />
-            <RefundRequestButton order={order} onSubmitted={load} />
           </div>
         </div>
       ))}
