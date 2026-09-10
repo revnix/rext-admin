@@ -159,9 +159,18 @@ export const PlanFeaturesSchema = z
   });
 
 export const SubscriptionPlanSchema = z.object({
-  id: z.string().optional().transform((val) => val ?? ""),
-  name: z.string().optional().transform((val) => val ?? ""),
-  display_name: z.string().optional().transform((val) => val ?? ""),
+  id: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
+  name: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
+  display_name: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
   description: z
     .string()
     .nullable()

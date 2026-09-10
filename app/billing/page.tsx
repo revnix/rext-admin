@@ -144,8 +144,8 @@ export default function BillingHistoryPage() {
                     ? subDetail.status === SubscriptionStatus.CANCELLED
                       ? "Cancelled Subscription"
                       : subDetail.status === SubscriptionStatus.EXPIRED
-                      ? "Expired Subscription"
-                      : "Current Plan"
+                        ? "Expired Subscription"
+                        : "Current Plan"
                     : "No Active Subscription"}
                 </CardTitle>
                 <CardDescription>
@@ -153,8 +153,8 @@ export default function BillingHistoryPage() {
                     ? subDetail.status === SubscriptionStatus.CANCELLED
                       ? "Your subscription has been cancelled"
                       : subDetail.status === SubscriptionStatus.EXPIRED
-                      ? "Your subscription has expired"
-                      : "Your active subscription plan details"
+                        ? "Your subscription has expired"
+                        : "Your active subscription plan details"
                     : "You don't have an active subscription yet"}
                 </CardDescription>
               </div>
@@ -192,8 +192,7 @@ export default function BillingHistoryPage() {
                   <p className="text-base font-semibold">
                     {subDetail.current_period_end || subDetail.end_date
                       ? new Date(
-                          (subDetail.current_period_end ||
-                            subDetail.end_date)!,
+                          (subDetail.current_period_end || subDetail.end_date)!,
                         ).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",

@@ -57,7 +57,9 @@ export function useBillingActions() {
    * cancelled customer still sees the card they paid with.
    */
   const cardBrand =
-    subscription?.subscription?.card_brand ?? billingAccount?.card_brand ?? null;
+    subscription?.subscription?.card_brand ??
+    billingAccount?.card_brand ??
+    null;
   const cardLastFour =
     subscription?.subscription?.card_last_four ??
     subscription?.subscription?.card_last4 ??
