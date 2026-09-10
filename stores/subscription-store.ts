@@ -27,7 +27,14 @@ import {
   InvoiceSchema,
   SubscriptionListResponseSchema,
 } from "@/schemas/subscription-schemas";
-import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
+import {
+  ensureLemonSqueezy,
+  getLemonSqueezyClient,
+} from "@/lib/lemonsqueezy/get-client";
+import {
+  getPurchaseState,
+  type PurchaseState,
+} from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
 
 let inFlightSubscriptionFetch: Promise<void> | null = null;
@@ -56,6 +63,16 @@ interface SubscriptionStore {
   selectedPlan: SubscriptionPlan | null;
   selectedPeriod: BillingPeriod | null;
   checkoutUrl: string | null;
+  checkoutDialogOpen: boolean;
+  /** Purchase state captured when checkout opened, so the post-payment
+   *  poll can tell a completed purchase from the pre-existing state. */
+  checkoutBaseline: PurchaseState | null;
+
+  // ========================================
+  // PAYMENT METHOD DIALOG STATE
+  // ========================================
+  paymentMethodDialogOpen: boolean;
+  paymentMethodUrl: string | null;
 
   // ========================================
   // INVOICES STATE
@@ -141,9 +158,24 @@ interface SubscriptionStore {
   resetCheckout: () => void;
 
   /**
-   * Open LemonSqueezy checkout overlay
+   * Open LemonSqueezy checkout dialog
    */
   openCheckout: (checkoutUrl: string) => void;
+
+  /**
+   * Close dedicated purchase checkout dialog
+   */
+  closeCheckoutDialog: () => void;
+
+  /**
+   * Open dedicated payment method dialog
+   */
+  openPaymentMethodDialog: (url: string) => void;
+
+  /**
+   * Close dedicated payment method dialog and refresh subscription details
+   */
+  closePaymentMethodDialog: () => void;
 
   // ========================================
   // INVOICES ACTIONS
@@ -189,6 +221,12 @@ const initialState = {
   selectedPlan: null,
   selectedPeriod: null,
   checkoutUrl: null,
+  checkoutBaseline: null,
+  checkoutDialogOpen: false,
+
+  // Payment method dialog state
+  paymentMethodDialogOpen: false,
+  paymentMethodUrl: null,
 
   // Invoices state
   invoices: [],
@@ -527,27 +565,43 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       openCheckout: (checkoutUrl: string) => {
         if (typeof window === "undefined") return;
 
-        // lemon.js only wires up its overlay on DOMContentLoaded. Loaded via
-        // <Script strategy="afterInteractive">, that event has usually already
-        // fired by the time the script lands, and a client-side navigation
-        // never fires it again — so window.LemonSqueezy exists but the overlay
-        // opens as a dead frame until a full page reload. This re-init is
-        // idempotent and is the documented SPA entry point.
-        window.createLemonSqueezy?.();
+        // Ensure lemon.js script state setup
+        ensureLemonSqueezy();
 
-        const client = getLemonSqueezyClient();
-        if (client) {
-          // LemonSqueezy only serves a frameable checkout when the URL carries
-          // embed=1. The API returns the plain hosted URL, which refuses to be
-          // framed — the overlay then renders as the browser's "This content is
-          // blocked" page instead of the checkout.
-          const overlayUrl = new URL(checkoutUrl);
-          overlayUrl.searchParams.set("embed", "1");
-          client.Url.Open(overlayUrl.toString());
-          return;
-        }
+        // Snapshot current subscription so post-payment sync can verify purchase
+        set({
+          checkoutBaseline: getPurchaseState(get().subscription),
+          checkoutDialogOpen: true,
+          checkoutUrl: checkoutUrl,
+        });
+      },
 
-        window.open(checkoutUrl, "_blank");
+      closeCheckoutDialog: () => {
+        set({
+          checkoutDialogOpen: false,
+          checkoutUrl: null,
+        });
+      },
+
+      openPaymentMethodDialog: (url: string) => {
+        set({
+          paymentMethodDialogOpen: true,
+          paymentMethodUrl: url,
+        });
+      },
+
+      closePaymentMethodDialog: () => {
+        set({
+          paymentMethodDialogOpen: false,
+          paymentMethodUrl: null,
+        });
+
+        // Immediately refetch subscription details to update UI if card changed
+        get()
+          .fetchSubscription({ force: true })
+          .catch((err) => {
+            log.error("Failed to refresh subscription on dialog close", err);
+          });
       },
 
       // ========================================
@@ -657,9 +711,12 @@ declare global {
         Close: () => void;
       };
       /**
-       * Setup LemonSqueezy
+       * Setup LemonSqueezy. Pass an eventHandler to receive checkout
+       * lifecycle events such as Checkout.Success.
        */
-      Setup: () => void;
+      Setup: (options?: {
+        eventHandler?: (event: { event: string; data?: unknown }) => void;
+      }) => void;
     };
     createLemonSqueezy?: () => void;
   }

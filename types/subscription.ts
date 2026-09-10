@@ -28,6 +28,7 @@ export const INVOICE_STATUSES = [
   "paid",
   "void",
   "refunded",
+  "partial_refund",
   "partial_refunded",
   "unknown",
 ] as const;
@@ -37,6 +38,7 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 export interface Invoice {
   invoice_id: string;
   invoice_number: string | null;
+  subscription_id?: string | null;
   status: InvoiceStatus;
   amount: number;
   currency: string;
@@ -150,10 +152,27 @@ export interface UserSubscriptionDetail {
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
+  card_brand?: string | null;
+  card_last_four?: string | null;
+  card_last4?: string | null;
+}
+
+/**
+ * The card LemonSqueezy has on file, reported alongside the subscription.
+ *
+ * Separate from `subscription` because it outlives it: a refund cancels the
+ * subscription and revokes access, but the saved card stays visible as
+ * billing history.
+ */
+export interface BillingAccount {
+  lemonsqueezy_subscription_id: string | null;
+  card_brand?: string | null;
+  card_last_four?: string | null;
 }
 
 export interface UserSubscription {
   subscription?: UserSubscriptionDetail;
+  billing_account?: BillingAccount | null;
 }
 
 export interface SubscriptionCreateRequest {
@@ -383,4 +402,47 @@ export function getUsageStatusColor(
   if (usagePercent >= 90) return "destructive";
   if (usagePercent >= 75) return "warning";
   return "success";
+}
+
+/**
+ * A purchase from our own orders table.
+ *
+ * `can_request_refund` is computed server-side from the same rules the
+ * request endpoint enforces, so the UI never has to re-derive eligibility
+ * and drift from it.
+ */
+export interface OrderRow {
+  id: string;
+  lemonsqueezy_order_id: string;
+  product_name: string | null;
+  status: string;
+  /** Cents, as LemonSqueezy reports them. */
+  total: number;
+  subtotal: number | null;
+  tax: number | null;
+  currency: string;
+  receipt_url: string | null;
+  /** The purchaser's email, filled in by the API from the authenticated user. */
+  customer_email: string | null;
+  subscription_id: string | null;
+  ordered_at: string | null;
+  refunded_at: string | null;
+  created_at: string;
+  refund_request_status:
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "processing"
+    | "completed"
+    | "failed"
+    | null;
+  refund_requested_at: string | null;
+  refund_admin_note: string | null;
+  can_request_refund: boolean;
+  /** Why a refund can't be requested, written for the customer, or null. */
+  refund_ineligible_reason: string | null;
+  /** Cents refunded against this order so far. */
+  refunded_amount: number;
+  /** Cents still refundable. Computed server-side; never re-derive it here. */
+  refundable_amount: number;
 }

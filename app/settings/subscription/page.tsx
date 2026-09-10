@@ -2,7 +2,6 @@
 
 import {
   CreditCard,
-  ExternalLink,
   FileText,
   Loader2,
   Settings,
@@ -23,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
 
@@ -42,8 +42,12 @@ import type { Route } from "next";
 
 export default function SubscriptionSettingsPage() {
   const router = useRouter();
-  const { usage, fetchSubscription, getPortalUrl } = useSubscriptionStore();
-  const [portalLoading, setPortalLoading] = useState(false);
+  const { usage, fetchSubscription } = useSubscriptionStore();
+  const {
+    isLoading: portalLoading,
+    updatePaymentMethod,
+    hasBillingAccount,
+  } = useBillingActions();
   const [dataLoading, _setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -59,19 +63,9 @@ export default function SubscriptionSettingsPage() {
     loadData();
   }, [fetchSubscription]);
 
-  const handleOpenPortal = async () => {
-    try {
-      setPortalLoading(true);
-      const response = await getPortalUrl();
-      window.open(response.portal_url, "_blank");
-    } catch (_error) {
-      toast.error("Failed to open billing portal", {
-        description: "Please try again or contact support.",
-      });
-    } finally {
-      setPortalLoading(false);
-    }
-  };
+  // Opens LemonSqueezy's payment-method form in the on-site overlay rather
+  // than navigating to their portal. The hook owns the error handling.
+  const handleOpenPortal = updatePaymentMethod;
 
   if (dataLoading) {
     return (
@@ -126,7 +120,7 @@ export default function SubscriptionSettingsPage() {
               onClick={handleOpenPortal}
               className="w-full justify-start"
               variant="outline"
-              disabled={portalLoading}
+              disabled={portalLoading || !hasBillingAccount}
             >
               {portalLoading ? (
                 <>
@@ -135,8 +129,8 @@ export default function SubscriptionSettingsPage() {
                 </>
               ) : (
                 <>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Open Billing Portal
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Update Payment Method
                 </>
               )}
             </Button>
@@ -231,7 +225,7 @@ export default function SubscriptionSettingsPage() {
           <Button
             onClick={handleOpenPortal}
             className="w-full sm:w-auto"
-            disabled={portalLoading}
+            disabled={portalLoading || !hasBillingAccount}
           >
             {portalLoading ? (
               <>
@@ -240,8 +234,8 @@ export default function SubscriptionSettingsPage() {
               </>
             ) : (
               <>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Open Billing Portal
+                <CreditCard className="mr-2 h-4 w-4" />
+                Update Payment Method
               </>
             )}
           </Button>

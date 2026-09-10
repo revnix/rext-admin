@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Outfit, Inter, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { LemonSqueezyProvider } from "@/components/subscription/lemonsqueezy-provider";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
 import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-provider";
@@ -104,11 +104,11 @@ export default async function RootLayout({
         className={`${outfit.variable} ${inter.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        {/* LemonSqueezy Checkout Overlay Script */}
-        <Script
-          src="https://app.lemonsqueezy.com/js/lemon.js"
-          strategy="afterInteractive"
-        />
+        {/*
+          Loads lemon.js and owns the checkout overlay lifecycle, so a purchase
+          completes in place instead of navigating the user to LemonSqueezy.
+        */}
+        <LemonSqueezyProvider />
 
         <ThemeProvider defaultTheme="system">
           <AuthProvider session={session}>

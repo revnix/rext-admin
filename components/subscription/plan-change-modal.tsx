@@ -84,8 +84,12 @@ export function PlanChangeModal({
   currentPlanId,
   currentBillingPeriod,
 }: PlanChangeModalProps) {
-  const { upgradeSubscription, downgradeSubscription, fetchSubscription } =
-    useSubscriptionStore();
+  const {
+    upgradeSubscription,
+    downgradeSubscription,
+    fetchSubscription,
+    openCheckout,
+  } = useSubscriptionStore();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +141,11 @@ export function PlanChangeModal({
       } else {
         const result = await upgradeSubscription(selectedPlanId);
         if (result.action === "checkout_required" && result.checkout_url) {
-          window.location.href = result.checkout_url;
+          // Open in the LemonSqueezy overlay rather than navigating away — the
+          // user keeps their place in the app and the Checkout.Success handler
+          // closes the overlay and refreshes the subscription in place.
+          openCheckout(result.checkout_url);
+          onOpenChange(false);
           return;
         }
         toast.success("Plan upgraded", {
