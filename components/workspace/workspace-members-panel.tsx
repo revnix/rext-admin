@@ -230,7 +230,7 @@ export function WorkspaceMembersPanel({
       key: "roleName",
       header: "Role",
       width: "250px",
-      cell: (value, row) => {
+      cell: (_value, row) => {
         const rolesList = row.rolesList;
         if (!rolesList || rolesList.length === 0) {
           return (

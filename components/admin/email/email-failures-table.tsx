@@ -120,7 +120,7 @@ export function EmailFailuresTable({
                     {formatTemplateName(failure.template_type)}
                   </TableCell>
                   <TableCell>{getStatusBadge(failure.status)}</TableCell>
-                  <TableCell className="max-w-[300px] truncate">
+                  <TableCell className="max-w-[300px]">
                     <span className="text-sm text-muted-foreground">
                       {failure.error_message}
                     </span>

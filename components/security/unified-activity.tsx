@@ -16,7 +16,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ActivityFilter } from "@/components/security/activity-filter";
 import { DownloadAuditLog } from "@/components/security/download-audit-log";
 import { Badge } from "@/components/ui/badge";
@@ -32,14 +32,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import { sortAuditLogs } from "@/lib/audit-log-order";
 import type { AuditLogFilters, AuditLog } from "@/types/audit-log";
-import {
-  AuditActions,
-  AuditResourceTypes,
-  getActionDisplayName,
-  getActionVariant,
-} from "@/types/audit-log";
+import { getActionDisplayName, getActionVariant } from "@/types/audit-log";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -50,21 +44,6 @@ export function UnifiedActivity() {
     limit: ITEMS_PER_PAGE,
     offset: 0,
   });
-
-  const [deletedWorkspaces, setDeletedWorkspaces] = useState<
-    { id: string; deleted_at: string }[]
-  >([]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("rext_deleted_workspaces");
-      if (stored) {
-        setDeletedWorkspaces(JSON.parse(stored));
-      }
-    } catch (_e) {
-      // ignore
-    }
-  }, []);
 
   // Fetch login history
   const {
@@ -107,21 +86,11 @@ export function UnifiedActivity() {
     refetchInterval: 60000,
   });
 
-  const { data: workspacesData } = useQuery({
-    queryKey: ["workspaces-for-logs"],
-    queryFn: () => apiClient.workspaces.list(),
-  });
-
-  const { data: profileData } = useQuery({
-    queryKey: ["profile-for-logs"],
-    queryFn: () => apiClient.profile.get(),
-  });
-
   const handleFilterChange = (key: keyof AuditLogFilters, value: string) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value || undefined,
-      offset: 0, // Reset to first page when filtering
+      offset: 0,
     }));
   };
 
@@ -181,150 +150,29 @@ export function UnifiedActivity() {
   );
 
   let logs = (auditData?.logs as unknown as AuditLog[]) || [];
-  // Filter out noisy notification preferences logs as requested
   logs = logs.filter((log) => log.resource_type !== "notification_preferences");
 
   if (filters.action && filters.action !== "all") {
     logs = logs.filter((log) => log.action === filters.action);
   }
-
   if (filters.resource_type && filters.resource_type !== "all") {
     logs = logs.filter((log) => log.resource_type === filters.resource_type);
   }
-
   if (filters.status && filters.status !== "all") {
     logs = logs.filter(
       (log) => log.status?.toLowerCase() === filters.status?.toLowerCase(),
     );
   }
-
   if (filters.date_from) {
     const fromDate = new Date(filters.date_from).getTime();
     logs = logs.filter((log) => new Date(log.created_at).getTime() >= fromDate);
   }
-
   if (filters.date_to) {
-    // Add 1 day to include the end date fully (up to 23:59:59)
     const toDate = new Date(filters.date_to).getTime() + 86400000;
     logs = logs.filter((log) => new Date(log.created_at).getTime() < toDate);
   }
 
-  // Synthesize logs from workspaces
-  if (workspacesData?.workspaces) {
-    const existingIds = new Set(
-      logs.map((l) => `${l.action}-${l.resource_id}`),
-    );
-    const synthesizedLogs: AuditLog[] = [];
-
-    for (const ws of workspacesData.workspaces) {
-      if (!existingIds.has(`${AuditActions.WORKSPACE_CREATE}-${ws.id}`)) {
-        synthesizedLogs.push({
-          id: `synth-ws-create-${ws.id}`,
-          action: AuditActions.WORKSPACE_CREATE,
-          resource_type: AuditResourceTypes.WORKSPACE,
-          resource_id: ws.id,
-          workspace_id: ws.id,
-          status: "success",
-          created_at: ws.created_at,
-          ip_address: null,
-          user_agent: null,
-          user_id: profileData?.id ?? null,
-          full_name: profileData?.full_name ?? null,
-          user_email: profileData?.email ?? null,
-          request_id: null,
-        });
-      }
-
-      // Intentionally do not synthesize workspace.update from workspace.updated_at.
-      // The backend audit API does not emit a real workspace.update event, and
-      // creating one from a workspace metadata timestamp would misrepresent actual
-      // account activity.
-    }
-
-    // Synthesize workspace.delete from localStorage
-    try {
-      for (const dw of deletedWorkspaces) {
-        if (!existingIds.has(`${AuditActions.WORKSPACE_DELETE}-${dw.id}`)) {
-          synthesizedLogs.push({
-            id: `synth-ws-delete-${dw.id}`,
-            action: AuditActions.WORKSPACE_DELETE,
-            resource_type: AuditResourceTypes.WORKSPACE,
-            resource_id: dw.id,
-            workspace_id: dw.id,
-            status: "success",
-            created_at: dw.deleted_at,
-            ip_address: null,
-            user_agent: null,
-            user_id: profileData?.id ?? null,
-            full_name: profileData?.full_name ?? null,
-            user_email: profileData?.email ?? null,
-            request_id: null,
-          });
-        }
-      }
-    } catch (_e) {
-      // ignore localStorage errors
-    }
-
-    if (
-      profileData?.updated_at &&
-      profileData.updated_at !== profileData.created_at
-    ) {
-      if (!existingIds.has(`${AuditActions.USER_UPDATE}-${profileData.id}`)) {
-        synthesizedLogs.push({
-          id: `synth-user-update-${profileData.id}`,
-          action: AuditActions.USER_UPDATE,
-          resource_type: AuditResourceTypes.USER,
-          resource_id: profileData.id,
-          status: "success",
-          created_at: profileData.updated_at,
-          ip_address: null,
-          user_agent: null,
-          workspace_id: null,
-          user_id: profileData.id,
-          full_name: profileData.full_name,
-          user_email: profileData.email,
-          request_id: null,
-        });
-      }
-    }
-
-    let validSynthesized = synthesizedLogs;
-    if (filters.action && filters.action !== "all") {
-      validSynthesized = validSynthesized.filter(
-        (l) => l.action === filters.action,
-      );
-    }
-    if (filters.resource_type && filters.resource_type !== "all") {
-      validSynthesized = validSynthesized.filter(
-        (l) => l.resource_type === filters.resource_type,
-      );
-    }
-    if (filters.status && filters.status !== "all") {
-      validSynthesized = validSynthesized.filter(
-        (l) => l.status === filters.status,
-      );
-    }
-    if (filters.date_from) {
-      const fromDate = new Date(filters.date_from).getTime();
-      validSynthesized = validSynthesized.filter(
-        (l) => new Date(l.created_at).getTime() >= fromDate,
-      );
-    }
-    if (filters.date_to) {
-      const toDate = new Date(filters.date_to).getTime() + 86400000;
-      validSynthesized = validSynthesized.filter(
-        (l) => new Date(l.created_at).getTime() < toDate,
-      );
-    }
-
-    logs = sortAuditLogs([...logs, ...validSynthesized]);
-  }
-
-  const finalTotal =
-    filters.action || filters.resource_type
-      ? logs.length
-      : (auditData?.total || 0) + (workspacesData?.workspaces?.length || 0);
+  const finalTotal = auditData?.total || 0;
 
   const currentPage = Math.floor((filters.offset || 0) / ITEMS_PER_PAGE) + 1;
   const totalPages = Math.ceil(finalTotal / ITEMS_PER_PAGE);

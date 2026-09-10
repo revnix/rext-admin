@@ -169,7 +169,8 @@ export function BulkAssignPermissionsDialog({
               Bulk Permission Assignment
             </DialogTitle>
             <DialogDescription>
-              Assign or remove permissions to/from custom roles at once (protected roles cannot be modified)
+              Assign or remove permissions to/from custom roles at once
+              (protected roles cannot be modified)
             </DialogDescription>
           </DialogHeader>
 
@@ -204,7 +205,8 @@ export function BulkAssignPermissionsDialog({
                   onClick={toggleAllRoles}
                   disabled={assignableRoles.length === 0}
                 >
-                  {selectedRoleIds.length === assignableRoles.length && assignableRoles.length > 0
+                  {selectedRoleIds.length === assignableRoles.length &&
+                  assignableRoles.length > 0
                     ? "Deselect All"
                     : "Select All Custom Roles"}
                 </Button>
@@ -235,14 +237,19 @@ export function BulkAssignPermissionsDialog({
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{role.display_name}</span>
+                          <span className="font-medium">
+                            {role.display_name}
+                          </span>
                           {role.is_system_role && (
                             <Badge variant="secondary" className="text-xs">
                               System
                             </Badge>
                           )}
                           {isProtected && (
-                            <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/50">
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-amber-500 border-amber-500/50"
+                            >
                               Protected
                             </Badge>
                           )}

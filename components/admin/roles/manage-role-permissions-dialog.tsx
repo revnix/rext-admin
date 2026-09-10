@@ -115,7 +115,8 @@ export function ManageRolePermissionsDialog({
             <div className="my-3 p-3 text-sm rounded-md bg-destructive/15 text-destructive flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>
-                Protected roles (system roles and standard workspace roles) permissions cannot be modified.
+                Protected roles (system roles and standard workspace roles)
+                permissions cannot be modified.
               </span>
             </div>
           )}
@@ -137,7 +138,10 @@ export function ManageRolePermissionsDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending || isProtected}>
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending || isProtected}
+            >
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
