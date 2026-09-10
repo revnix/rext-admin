@@ -189,6 +189,12 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/v1/user/delete/${id}` as const,
     update: (id: string) => `/api/v1/user/update/${id}` as const,
 
+    // Soft Deleted Users tab
+    deleted: "/api/v1/user/deleted",
+    restore: (id: string) => `/api/v1/user/restore/${id}` as const,
+    // Permanent deletion — Super Admin only
+    permanentDelete: (id: string) => `/api/v1/user/permanent/${id}` as const,
+
     // Admin role assignment (require user.manage_roles)
     roles: {
       list: (userId: string) => `/api/v1/user/${userId}/roles` as const,
@@ -199,6 +205,18 @@ export const ENDPOINTS = {
       workspaces: (userId: string) =>
         `/api/v1/user/${userId}/workspaces` as const,
     },
+  },
+
+  /**
+   * Admin Account Recovery Endpoints
+   * @note Admin-reviewed account recovery queue (Account Recovery tab)
+   */
+  ACCOUNT_RECOVERY: {
+    requests: "/api/v1/admin/account-recovery/requests",
+    approve: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/approve` as const,
+    reject: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/reject` as const,
   },
 
   /**
