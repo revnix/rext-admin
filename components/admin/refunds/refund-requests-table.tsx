@@ -1,21 +1,16 @@
 "use client";
 
 /**
- * Refund Requests Queue
+ * Refund Requests Queue Component
  *
- * Customers ask for refunds by email, so an admin logs the request here and it
- * enters this queue. From there: approve or reject it with a note the customer
- * sees, then process the approved one. Approving moves no money — issuing the
- * refund is a second, deliberate "Process refund" action, so a mis-click on
- * the queue cannot charge anything back.
- *
- * Pending requests sort first, server-side, so the queue stays actionable.
+ * Customers ask for refunds, which enter this queue.
+ * Approving moves no money — issuing the refund is a second, deliberate "Process refund" action.
  *
  * @module components/admin/refunds/refund-requests-table
  */
 
-import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Loader2, RotateCcw, CheckCircle2, XCircle, Play } from "lucide-react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,21 +22,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { OrderPicker } from "@/components/admin/refunds/order-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DataTable } from "@/components/data-table";
 import { apiClient } from "@/lib/api-client";
-import type {
-  RefundableOrder,
-  RefundRequestRow,
-} from "@/lib/api-client/admin-refunds";
+import type { RefundRequestRow } from "@/lib/api-client/admin-refunds";
 import { log } from "@/lib/logger";
+import type { Column } from "@/types/data-table";
 
 type Decision = "approve" | "reject" | "process";
-
-/** What the customer asked for; null until the admin picks one. */
-type RefundMode = "full" | "partial" | null;
 
 function formatAmount(cents: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -51,14 +47,15 @@ function formatAmount(cents: number, currency: string) {
 }
 
 function statusBadge(request: RefundRequestRow) {
-  // An approved request that has been paid out reads as "Refunded"; one still
-  // waiting for the admin to run it reads as "Awaiting payout", because the
-  // two are very different states for the customer.
   if (request.status === "approved") {
     return request.awaiting_processing ? (
-      <Badge variant="outline">Approved · awaiting payout</Badge>
+      <Badge variant="outline" className="text-amber-600 border-amber-600">
+        Approved · awaiting payout
+      </Badge>
     ) : (
-      <Badge variant="default">Refunded</Badge>
+      <Badge variant="default" className="bg-green-600">
+        Refunded
+      </Badge>
     );
   }
 
@@ -68,245 +65,6 @@ function statusBadge(request: RefundRequestRow) {
   } as const;
   const config = map[request.status as "pending" | "rejected"] ?? map.pending;
   return <Badge variant={config.variant}>{config.label}</Badge>;
-}
-
-/**
- * Files a refund a customer asked for by email.
- *
- * The order is picked from the same search the refund dialog uses, so the
- * request is always attached to a real order — and to the customer who placed
- * it, which the server takes from the order rather than from this form.
- */
-function LogRequestDialog({ onLogged }: { onLogged: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [order, setOrder] = useState<RefundableOrder | null>(null);
-  const [reason, setReason] = useState("");
-  const [mode, setMode] = useState<RefundMode>(null);
-  const [amount, setAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const close = () => {
-    setOpen(false);
-    setOrder(null);
-    setReason("");
-    setMode(null);
-    setAmount("");
-  };
-
-  const partialCents =
-    amount.trim() === "" ? null : Math.round(Number.parseFloat(amount) * 100);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!order) {
-      toast.error("Select the order the customer wants refunded");
-      return;
-    }
-    if (!mode) {
-      toast.error("Choose a full or partial refund");
-      return;
-    }
-    if (!reason.trim()) {
-      toast.error("Add the reason the customer gave");
-      return;
-    }
-
-    if (mode === "partial") {
-      if (
-        partialCents === null ||
-        Number.isNaN(partialCents) ||
-        partialCents <= 0
-      ) {
-        toast.error("Requested amount must be greater than $0");
-        return;
-      }
-      if (partialCents > order.refundable_amount) {
-        toast.error(
-          `Only ${formatAmount(order.refundable_amount, order.currency)} is still refundable`,
-        );
-        return;
-      }
-    }
-
-    setSubmitting(true);
-    try {
-      await apiClient.adminRefunds.createRequest({
-        lemonsqueezy_order_id: order.lemonsqueezy_order_id,
-        reason: reason.trim(),
-        // A full request omits the amount: the server resolves it to whatever
-        // is still refundable at the moment it is processed, which is the only
-        // number that can be right by then.
-        requested_amount:
-          mode === "partial" && partialCents ? partialCents : undefined,
-      });
-      toast.success("Refund request logged", {
-        description: "Approve it, then process the refund.",
-      });
-      close();
-      onLogged();
-    } catch (error) {
-      log.error("Failed to log refund request", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to log refund request",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        Log refund request
-      </Button>
-
-      <Dialog
-        open={open}
-        onOpenChange={(next) => (next ? setOpen(true) : close())}
-      >
-        <DialogContent className="sm:max-w-[540px]">
-          <DialogHeader>
-            <DialogTitle>Log a refund request</DialogTitle>
-            <DialogDescription>
-              Record a refund a customer asked for by email. This moves no money
-              — it puts the request in the queue for approval.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={submit} className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label>Order the customer wants refunded</Label>
-              <OrderPicker
-                selected={order}
-                onSelect={(next) => {
-                  setOrder(next);
-                  setMode(null);
-                  setAmount("");
-                }}
-              />
-            </div>
-
-            {order && (
-              <div className="rounded-lg border bg-muted/40 p-3 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Customer:</span>
-                  <span className="font-medium">
-                    {order.user_email ?? "unknown"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Paid amount:</span>
-                  <span className="font-medium">
-                    {formatAmount(order.total, order.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Refunded amount:
-                  </span>
-                  <span className="font-medium">
-                    {formatAmount(order.refunded_amount, order.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Remaining refundable:
-                  </span>
-                  <span className="font-semibold">
-                    {formatAmount(order.refundable_amount, order.currency)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-2">
-              <Label>What is being requested</Label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  type="button"
-                  className="flex-1"
-                  variant={mode === "full" ? "default" : "outline"}
-                  disabled={!order || order.refundable_amount <= 0}
-                  onClick={() => {
-                    setMode("full");
-                    setAmount("");
-                  }}
-                >
-                  Full Refund
-                </Button>
-                <Button
-                  type="button"
-                  className="flex-1"
-                  variant={mode === "partial" ? "default" : "outline"}
-                  disabled={!order || order.refundable_amount <= 0}
-                  onClick={() => setMode("partial")}
-                >
-                  Partial Refund
-                </Button>
-              </div>
-              {mode === "full" && order && (
-                <p className="text-xs text-muted-foreground">
-                  Requests the whole remaining balance —{" "}
-                  {formatAmount(order.refundable_amount, order.currency)} as
-                  things stand.
-                </p>
-              )}
-            </div>
-
-            {mode === "partial" && (
-              <div className="grid gap-2">
-                <Label htmlFor="requested-amount">
-                  Requested amount ($)
-                  {order
-                    ? ` — up to ${formatAmount(order.refundable_amount, order.currency)}`
-                    : ""}
-                </Label>
-                <Input
-                  id="requested-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="e.g. 25 or 10.50"
-                />
-              </div>
-            )}
-
-            <div className="grid gap-2">
-              <Label htmlFor="request-reason">Customer&apos;s reason</Label>
-              <Textarea
-                id="request-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-                maxLength={2000}
-                placeholder="What the customer said in their email"
-              />
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={close}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Log request
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
 }
 
 interface RefundRequestsTableProps {
@@ -322,12 +80,16 @@ export function RefundRequestsTable({
   const [decision, setDecision] = useState<Decision>("approve");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [undoing, setUndoing] = useState<string | null>(null);
+
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await apiClient.adminRefunds.listRequests({
-        per_page: 50,
+        per_page: 100,
       });
       setRequests(response.data ?? []);
     } catch (error) {
@@ -338,12 +100,9 @@ export function RefundRequestsTable({
     }
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger load on refreshKey prop changes
   useEffect(() => {
     load();
   }, [load, refreshKey]);
-
-  const [undoing, setUndoing] = useState<string | null>(null);
 
   const undoApproval = async (request: RefundRequestRow) => {
     setUndoing(request.id);
@@ -400,8 +159,6 @@ export function RefundRequestsTable({
       await load();
     } catch (error) {
       log.error(`Failed to ${decision} refund request`, error);
-      // A failed approval leaves the request pending and a failed payout
-      // leaves it approved, so either can simply be retried.
       toast.error(
         error instanceof Error
           ? error.message
@@ -412,137 +169,201 @@ export function RefundRequestsTable({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading requests…
-      </div>
-    );
-  }
+  const tableData = useMemo(() => {
+    return requests
+      .filter((req) => {
+        if (statusFilter === "pending") return req.status === "pending";
+        if (statusFilter === "approved")
+          return req.status === "approved" && req.awaiting_processing;
+        if (statusFilter === "refunded")
+          return req.status === "approved" && !req.awaiting_processing;
+        if (statusFilter === "rejected") return req.status === "rejected";
+        return true;
+      })
+      .map((req) => ({
+        ...req,
+      }));
+  }, [requests, statusFilter]);
 
-  // The log button lives outside the empty check on purpose: the queue starts
-  // empty, and logging the first emailed request is exactly what an admin
-  // needs to do from that state.
-  if (requests.length === 0) {
-    return (
-      <div className="space-y-3">
-        <div className="flex justify-end">
-          <LogRequestDialog onLogged={load} />
+  const columns: Column<RefundRequestRow & Record<string, unknown>>[] = [
+    {
+      key: "user_email",
+      header: "Customer",
+      width: "220px",
+      cell: (_val, row) => (
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">
+            {row.user_email || "Unknown Customer"}
+          </p>
+          <p className="text-xs text-muted-foreground truncate max-w-[220px]">
+            <span className="font-medium text-foreground">Reason:</span>{" "}
+            {row.reason}
+          </p>
         </div>
-        <p className="p-8 text-center text-sm text-muted-foreground">
-          No refund requests yet. Log one here when a customer emails support
-          asking for a refund.
-        </p>
-      </div>
-    );
-  }
+      ),
+      searchable: true,
+    },
+    {
+      key: "lemonsqueezy_order_id",
+      header: "Order / Product",
+      width: "200px",
+      cell: (_val, row) => (
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">
+            {row.product_name || "Order"}
+          </p>
+          <p className="text-xs text-muted-foreground font-mono truncate">
+            #{row.lemonsqueezy_order_id}
+          </p>
+        </div>
+      ),
+      searchable: true,
+    },
+    {
+      key: "requested_amount",
+      header: "Amount",
+      width: "150px",
+      cell: (_val, row) => (
+        <div>
+          <div className="font-semibold text-sm">
+            {formatAmount(row.requested_amount, row.currency)}
+          </div>
+          {row.refunded_amount > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              {formatAmount(row.refunded_amount, row.currency)} refunded
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "180px",
+      cell: (_val, row) => statusBadge(row),
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      width: "120px",
+      cell: (_val, row) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(row.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      width: "220px",
+      cell: (_val, row) => (
+        <div className="flex items-center gap-2">
+          {row.status === "pending" && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                onClick={() => openDecision(row, "reject")}
+              >
+                <XCircle className="h-3.5 w-3.5 mr-1" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => openDecision(row, "approve")}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                Approve
+              </Button>
+            </>
+          )}
+          {row.awaiting_processing && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs"
+                disabled={undoing === row.id}
+                onClick={() => undoApproval(row)}
+              >
+                {undoing === row.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                )}
+                Undo
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs text-destructive hover:bg-destructive/10"
+                onClick={() => openDecision(row, "reject")}
+              >
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => openDecision(row, "process")}
+              >
+                <Play className="h-3.5 w-3.5 mr-1 fill-current" />
+                Process
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
-        <LogRequestDialog onLogged={load} />
-      </div>
-
-      <div className="divide-y rounded-md border">
-        {requests.map((request) => (
-          <div
-            key={request.id}
-            className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between"
-          >
-            <div className="min-w-0 space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium truncate">
-                  {request.product_name ?? "Order"}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {formatAmount(request.requested_amount, request.currency)}
-                </span>
-                {statusBadge(request)}
-              </div>
-
-              <p className="text-sm text-muted-foreground truncate">
-                {request.user_email ?? "unknown customer"}
-              </p>
-
-              <p className="text-sm">
-                <span className="text-muted-foreground">Reason: </span>
-                {request.reason}
-              </p>
-
-              <p className="text-xs text-muted-foreground font-mono">
-                Order {request.lemonsqueezy_order_id} ·{" "}
-                {new Date(request.created_at).toLocaleDateString()}
-              </p>
-
-              {request.refunded_amount > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {formatAmount(request.refunded_amount, request.currency)}{" "}
-                  refunded ·{" "}
-                  {formatAmount(request.refundable_amount, request.currency)}{" "}
-                  still refundable
-                </p>
-              )}
-
-              {request.admin_note && (
-                <p className="text-xs text-muted-foreground">
-                  Note: {request.admin_note}
-                </p>
-              )}
+    <div className="space-y-4">
+      <DataTable
+        columns={columns}
+        data={tableData}
+        isLoading={loading}
+        mobileCards
+        searchPlaceholder="Search requests by email, order ID or reason..."
+        pageSize={10}
+        pageSizeOptions={[5, 10, 20, 50]}
+        tableId="admin-refund-requests"
+        emptyTitle="No refund requests found"
+        emptyDescription="No customer-initiated refund requests match your selected filters."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-[180px]">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 text-xs bg-background">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Awaiting Payout</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            {request.status === "pending" && (
-              <div className="flex shrink-0 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openDecision(request, "reject")}
-                >
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => openDecision(request, "approve")}
-                >
-                  Approve
-                </Button>
-              </div>
-            )}
-
-            {request.awaiting_processing && (
-              <div className="flex shrink-0 gap-2">
-                {/* An approval that has not been paid out is still
-                    reversible, so both ways back sit next to the way forward:
-                    undo it as a mistake, or decide against it outright. */}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={undoing === request.id}
-                  onClick={() => undoApproval(request)}
-                >
-                  {undoing === request.id && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Undo approval
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openDecision(request, "reject")}
-                >
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => openDecision(request, "process")}
-                >
-                  Process refund
-                </Button>
-              </div>
+            {statusFilter !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Reset
+              </Button>
             )}
           </div>
-        ))}
-      </div>
+        }
+      />
 
       <Dialog open={active !== null} onOpenChange={() => setActive(null)}>
         <DialogContent className="sm:max-w-[480px]">
@@ -560,11 +381,10 @@ export function RefundRequestsTable({
               {decision === "approve"
                 ? "This records your decision only. No money moves until you process the refund."
                 : decision === "process"
-                  ? `This refunds ${
-                      active
-                        ? formatAmount(active.requested_amount, active.currency)
-                        : ""
-                    } to ${active?.user_email ?? "the customer"} via LemonSqueezy. It cannot be undone.`
+                  ? `This refunds ${active
+                    ? formatAmount(active.requested_amount, active.currency)
+                    : ""
+                  } to ${active?.user_email ?? "the customer"} via LemonSqueezy. It cannot be undone.`
                   : active?.status === "approved"
                     ? "No money has moved yet, so this approval can still be taken back. The customer may already have been told it was approved — your note is shown to them, so explain what changed."
                     : "No money moves. Your note is shown to the customer, so explain the decision."}
