@@ -96,9 +96,9 @@ interface SubscriptionStore {
   fetchUsage: () => Promise<void>;
 
   /**
-   * Fetch credit balance
+   * Fetch credit balance (optionally for an active workspace's owner)
    */
-  fetchCredits: () => Promise<void>;
+  fetchCredits: (workspaceId?: string) => Promise<void>;
 
   /**
    * Patch current_credits in place (from live SSE update — no round-trip)
@@ -324,9 +324,9 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         }
       },
 
-      fetchCredits: async () => {
+      fetchCredits: async (workspaceId?: string) => {
         try {
-          const credits = await apiClient.subscriptions.getCredits();
+          const credits = await apiClient.subscriptions.getCredits(workspaceId);
           set({ credits });
         } catch (error) {
           const errorMessage =

@@ -36,6 +36,7 @@ export function createMembersNamespace(client: ApiClient) {
           role_id: string;
           status: string;
           is_default: boolean;
+          is_owner?: boolean;
           joined_at: string | null;
           last_activity_at: string | null;
           role?: {
