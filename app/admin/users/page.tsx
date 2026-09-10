@@ -492,14 +492,14 @@ export default function AdminUsersPage() {
     ...(canUpdateUsers
       ? [
           {
+            // Edit stays available on Super Admin rows — only the
+            // account-lifecycle actions below are locked for them.
             label: "Edit details",
             icon: <Pencil className="h-4 w-4" />,
             onClick: (row: UserData) => {
               const user = findUser(row.id);
               if (user) setDialogState({ type: "edit", user });
             },
-            disabled: isProtected,
-            disabledReason: protectedReason,
           },
           {
             label: "Activate",
