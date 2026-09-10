@@ -157,8 +157,22 @@ export interface UserSubscriptionDetail {
   card_last4?: string | null;
 }
 
+/**
+ * The card LemonSqueezy has on file, reported alongside the subscription.
+ *
+ * Separate from `subscription` because it outlives it: a refund cancels the
+ * subscription and revokes access, but the saved card stays visible as
+ * billing history.
+ */
+export interface BillingAccount {
+  lemonsqueezy_subscription_id: string | null;
+  card_brand?: string | null;
+  card_last_four?: string | null;
+}
+
 export interface UserSubscription {
   subscription?: UserSubscriptionDetail;
+  billing_account?: BillingAccount | null;
 }
 
 export interface SubscriptionCreateRequest {

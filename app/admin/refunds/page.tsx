@@ -729,11 +729,13 @@ export default function RefundManagementPage() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch refunds
   const fetchRefunds = useCallback(async () => {
     try {
       setLoading(true);
+      setRefreshKey((prev) => prev + 1);
 
       const response = await apiClient.adminRefunds.list({
         page: pagination.page,
@@ -878,7 +880,7 @@ export default function RefundManagementPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <RefundRequestsTable />
+            <RefundRequestsTable refreshKey={refreshKey} />
           </CardContent>
         </Card>
 

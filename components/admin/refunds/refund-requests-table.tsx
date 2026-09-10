@@ -309,7 +309,13 @@ function LogRequestDialog({ onLogged }: { onLogged: () => void }) {
   );
 }
 
-export function RefundRequestsTable() {
+interface RefundRequestsTableProps {
+  refreshKey?: number;
+}
+
+export function RefundRequestsTable({
+  refreshKey,
+}: RefundRequestsTableProps = {}) {
   const [requests, setRequests] = useState<RefundRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<RefundRequestRow | null>(null);
@@ -332,9 +338,10 @@ export function RefundRequestsTable() {
     }
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: trigger load on refreshKey prop changes
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, refreshKey]);
 
   const [undoing, setUndoing] = useState<string | null>(null);
 

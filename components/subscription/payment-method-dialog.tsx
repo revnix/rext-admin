@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
 export function PaymentMethodDialog() {
@@ -42,14 +43,7 @@ export function PaymentMethodDialog() {
     subscription?.subscription?.plan_name ||
     "Current Plan";
 
-  const cardBrand = subscription?.subscription?.card_brand;
-  const cardLastFour =
-    subscription?.subscription?.card_last_four ??
-    subscription?.subscription?.card_last4;
-
-  const cardBrandLabel = cardBrand
-    ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)
-    : null;
+  const { cardBrandLabel, cardLastFour } = useBillingActions();
 
   const currentPaymentMethod = useMemo(() => {
     if (cardBrandLabel && cardLastFour) {

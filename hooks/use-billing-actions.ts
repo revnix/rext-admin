@@ -42,9 +42,30 @@ export function useBillingActions() {
    * needs this, and callers should use it to hide the controls rather than
    * letting the user click into a guaranteed error.
    */
+  const billingAccount = subscription?.billing_account ?? null;
+
   const hasBillingAccount = Boolean(
-    subscription?.subscription?.lemonsqueezy_subscription_id,
+    subscription?.subscription?.lemonsqueezy_subscription_id ||
+      billingAccount?.lemonsqueezy_subscription_id,
   );
+
+  /**
+   * The saved card, for every screen that shows "Visa •••• 4242".
+   *
+   * Falls back to `billing_account`, which is reported independently of
+   * whether the subscription still grants access — so a refunded or
+   * cancelled customer still sees the card they paid with.
+   */
+  const cardBrand =
+    subscription?.subscription?.card_brand ?? billingAccount?.card_brand ?? null;
+  const cardLastFour =
+    subscription?.subscription?.card_last_four ??
+    subscription?.subscription?.card_last4 ??
+    billingAccount?.card_last_four ??
+    null;
+  const cardBrandLabel = cardBrand
+    ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)
+    : null;
 
   /**
    * Open LemonSqueezy's payment-method form in our dedicated Dialog.
@@ -150,6 +171,9 @@ export function useBillingActions() {
   return {
     isLoading,
     hasBillingAccount,
+    cardBrand,
+    cardBrandLabel,
+    cardLastFour,
     updatePaymentMethod,
     openTaxDetails,
     pauseSubscription,

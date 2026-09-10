@@ -57,6 +57,8 @@ export default function BillingHistoryPage() {
     openTaxDetails,
     isLoading: billingActionsLoading,
     hasBillingAccount,
+    cardBrandLabel,
+    cardLastFour,
   } = useBillingActions();
   const [loading, setLoading] = useState(true);
   const [isPlanChangeOpen, setIsPlanChangeOpen] = useState(false);
@@ -120,11 +122,6 @@ export default function BillingHistoryPage() {
   }
 
   const subDetail = subscription?.subscription;
-  const cardLastFour = subDetail?.card_last_four || subDetail?.card_last4;
-  const cardBrand = subDetail?.card_brand;
-  const cardBrandLabel = cardBrand
-    ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)
-    : "Card";
 
   return (
     <PageLayout
@@ -329,7 +326,7 @@ export default function BillingHistoryPage() {
                       <p className="font-semibold text-base flex items-center gap-2">
                         {hasBillingAccount
                           ? cardLastFour
-                            ? `${cardBrandLabel} •••• ${cardLastFour}`
+                            ? `${cardBrandLabel ?? "Card"} •••• ${cardLastFour}`
                             : "Card on file"
                           : "No Saved Payment Method"}
                       </p>
