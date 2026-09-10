@@ -1,19 +1,20 @@
 "use client";
 
 import { formatDistanceToNow, parseISO } from "date-fns";
-import {
-  AlertCircle,
-  ExternalLink,
-  RefreshCw,
-  X,
-} from "lucide-react";
+import { AlertCircle, ExternalLink, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -183,9 +184,13 @@ export default function RefundManagementPage() {
       width: "220px",
       cell: (_val, row) => (
         <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{row.user_email || "Unknown Customer"}</p>
+          <p className="font-medium text-sm truncate">
+            {row.user_email || "Unknown Customer"}
+          </p>
           {row.user_name && (
-            <p className="text-xs text-muted-foreground truncate">{row.user_name}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {row.user_name}
+            </p>
           )}
         </div>
       ),
@@ -197,9 +202,13 @@ export default function RefundManagementPage() {
       width: "200px",
       cell: (_val, row) => (
         <div className="min-w-0">
-          <p className="text-sm font-medium font-mono">#{row.lemonsqueezy_order_id}</p>
+          <p className="text-sm font-medium font-mono">
+            #{row.lemonsqueezy_order_id}
+          </p>
           {row.plan_name && (
-            <p className="text-xs text-muted-foreground truncate">{row.plan_name}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {row.plan_name}
+            </p>
           )}
         </div>
       ),
@@ -215,7 +224,10 @@ export default function RefundManagementPage() {
             {formatCurrency(row.refund_amount)}
           </span>
           {row.is_partial && (
-            <Badge variant="secondary" className="text-[10px] ml-1.5 font-normal">
+            <Badge
+              variant="secondary"
+              className="text-[10px] ml-1.5 font-normal"
+            >
               Partial
             </Badge>
           )}
@@ -335,7 +347,7 @@ export default function RefundManagementPage() {
               data={tableData}
               isLoading={loading}
               mobileCards
-              searchPlaceholder="Search history by customer email, order ID, plan, or reason..."
+              searchPlaceholder="Search history by customer email, order ID or reason..."
               pageSize={10}
               pageSizeOptions={[10, 25, 50, 100]}
               tableId="admin-refund-history"

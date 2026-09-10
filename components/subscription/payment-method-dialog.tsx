@@ -114,7 +114,12 @@ export function PaymentMethodDialog() {
 
         <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between items-center">
           {paymentMethodUrl && (
-            <Button variant="ghost" size="sm" asChild className="w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="w-full sm:w-auto"
+            >
               <a
                 href={paymentMethodUrl}
                 target="_blank"

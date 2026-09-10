@@ -381,10 +381,11 @@ export function RefundRequestsTable({
               {decision === "approve"
                 ? "This records your decision only. No money moves until you process the refund."
                 : decision === "process"
-                  ? `This refunds ${active
-                    ? formatAmount(active.requested_amount, active.currency)
-                    : ""
-                  } to ${active?.user_email ?? "the customer"} via LemonSqueezy. It cannot be undone.`
+                  ? `This refunds ${
+                      active
+                        ? formatAmount(active.requested_amount, active.currency)
+                        : ""
+                    } to ${active?.user_email ?? "the customer"} via LemonSqueezy. It cannot be undone.`
                   : active?.status === "approved"
                     ? "No money has moved yet, so this approval can still be taken back. The customer may already have been told it was approved — your note is shown to them, so explain what changed."
                     : "No money moves. Your note is shown to the customer, so explain the decision."}
