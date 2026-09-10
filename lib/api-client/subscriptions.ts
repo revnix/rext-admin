@@ -383,10 +383,14 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     /**
      * Get current credit balance
      *
+     * @param workspaceId - Optional active workspace UUID to query against owner's credits
      * @returns Current credit balance and limits
      */
-    getCredits: async (): Promise<CreditBalance> => {
-      return client.request<CreditBalance>(ENDPOINTS.SUBSCRIPTIONS.credits, {
+    getCredits: async (workspaceId?: string): Promise<CreditBalance> => {
+      const url = workspaceId
+        ? `${ENDPOINTS.SUBSCRIPTIONS.credits}?workspace_id=${encodeURIComponent(workspaceId)}`
+        : ENDPOINTS.SUBSCRIPTIONS.credits;
+      return client.request<CreditBalance>(url, {
         method: "GET",
       });
     },

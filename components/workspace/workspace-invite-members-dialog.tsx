@@ -114,7 +114,9 @@ export function WorkspaceInviteMembersDialog({
     staleTime: 2 * 60 * 1000,
   });
 
-  const roles = rolesResponse?.roles || [];
+  const roles = (rolesResponse?.roles || []).filter(
+    (r) => r.name.toLowerCase() !== "workspace_owner",
+  );
   const existingMembers = membersData?.members || [];
   const pendingInvitations = invitationsData?.invitations || [];
 
