@@ -159,13 +159,13 @@ export function UsageMetrics({
     //   percentage: usage.knowledge_items.percentage,
     //   description: "Knowledge base entries and documents",
     // },
-    {
-      label: "API Calls",
-      current: usage.api_calls.used,
-      max: usage.api_calls.limit,
-      percentage: usage.api_calls.percentage,
-      description: "API calls this billing period",
-    },
+    // {
+    //   label: "API Calls",
+    //   current: usage.api_calls.used,
+    //   max: usage.api_calls.limit,
+    //   percentage: usage.api_calls.percentage,
+    //   description: "API calls this billing period",
+    // },
   ];
 
   // Get overall status (highest usage percentage)
