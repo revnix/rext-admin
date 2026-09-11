@@ -53,6 +53,7 @@ export default function BillingHistoryPage() {
   const router = useRouter();
   const { subscription, invoices, fetchInvoices, plans, fetchPlans } =
     useSubscriptionStore();
+
   const {
     openTaxDetails,
     isLoading: billingActionsLoading,

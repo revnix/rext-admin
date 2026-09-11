@@ -96,6 +96,7 @@ export function PlanChangeModal({
   const [phase, setPhase] = useState<PlanChangePhase>("idle");
   const isBusy = phase !== "idle";
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
+    console.log("plans", plans);
 
   // Get current and selected plans
   const currentPlan = plans.find((p) => p.id === currentPlanId);
@@ -292,6 +293,10 @@ export function PlanChangeModal({
                         </li>
                         <li className="text-sm flex items-center gap-1">
                           <Check className="h-3 w-3 text-green-600" />
+                          {`${plan.credits_per_month} credits/month`}
+                        </li>
+                        {/* <li className="text-sm flex items-center gap-1">
+                          <Check className="h-3 w-3 text-green-600" />
                           {plan.max_topics === -1
                             ? "Unlimited topics"
                             : `${plan.max_topics} topics`}
@@ -301,7 +306,7 @@ export function PlanChangeModal({
                           {plan.max_api_calls_per_month === -1
                             ? "Unlimited API requests"
                             : `${plan.max_api_calls_per_month} API requests/month`}
-                        </li>
+                        </li> */}
                       </ul>
                     </div>
                   </div>
