@@ -411,7 +411,7 @@ export function ProfileEdit() {
               }}
             /> */}
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="timezone"
               render={({ field }) => {
@@ -440,7 +440,7 @@ export function ProfileEdit() {
                   </FormItem>
                 );
               }}
-            />
+            /> */}
           </div>
 
           <div className="flex justify-end">

@@ -158,7 +158,7 @@ export default function SubscriptionPlansPage() {
       description="Manage subscription plans and pricing"
       actions={
         <Button
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto hidden"
           onClick={() => setCreateDialogOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />

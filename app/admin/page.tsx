@@ -43,13 +43,13 @@ export default function AdminDashboardPage() {
       icon: Shield,
       permission: "role.read",
     },
-    {
-      title: "System Statistics",
-      description: "View system metrics and analytics",
-      href: "/admin/statistics",
-      icon: BarChart3,
-      permission: null, // Always visible to admins
-    },
+    // {
+    //   title: "System Statistics",
+    //   description: "View system metrics and analytics",
+    //   href: "/admin/statistics",
+    //   icon: BarChart3,
+    //   permission: null, // Always visible to admins
+    // },
     {
       title: "Subscription Analytics",
       description: "Monitor MRR, churn, trial conversion, and revenue metrics",

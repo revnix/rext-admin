@@ -564,18 +564,7 @@ export default function AdminRolesPage() {
                         <History className="h-4 w-4 mr-2" />
                         Audit Log
                       </Button>
-                      <PermissionGuard
-                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
-                      >
-                        <Button
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          onClick={() => setDialogState({ type: "bulkAssign" })}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Bulk Assign
-                        </Button>
-                      </PermissionGuard>
+                     
                       <PermissionGuard
                         permission={ADMIN_PERMISSIONS.ROLE_CREATE}
                       >
@@ -619,6 +608,18 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
+                     <PermissionGuard
+                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                          onClick={() => setDialogState({ type: "bulkAssign" })}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Bulk Assign
+                        </Button>
+                      </PermissionGuard>
                   </div>
                 </CardHeader>
                 <CardContent>
