@@ -53,7 +53,8 @@ export function RecoveryReviewDialog({
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-users-deleted"] });
       queryClient.invalidateQueries({ queryKey: ["admin-users-stats"] });
-      handleOpenChange(false);
+      setNote("");
+      onOpenChange(false);
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to update recovery request");

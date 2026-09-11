@@ -44,7 +44,8 @@ export function PermanentDeleteUserDialog({
       toast.success("User permanently deleted");
       queryClient.invalidateQueries({ queryKey: ["admin-users-deleted"] });
       queryClient.invalidateQueries({ queryKey: ["admin-users-stats"] });
-      handleOpenChange(false);
+      setConfirmation("");
+      onOpenChange(false);
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to permanently delete user");
