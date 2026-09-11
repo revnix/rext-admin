@@ -738,7 +738,7 @@ export function WorkspaceBrandVoiceForm({
                 <div className="space-y-4">
                   <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Select Personas (Optional)
+                      Select Personas
                     </h4>
                     <p className="text-sm text-muted-foreground">
                       Choose one or more personas to represent your brand voice.
@@ -767,11 +767,11 @@ export function WorkspaceBrandVoiceForm({
                 </div>
               )}
 
-              {data.personas && data.personas.length > 0 && (
+              {/* {data.personas && data.personas.length > 0 && (
                 <div className="pt-4 border-t border-border/50">
                   <PersonasGrid personas={data.personas} />
                 </div>
-              )}
+              )} */}
             </TabsContent>
           </Tabs>
 

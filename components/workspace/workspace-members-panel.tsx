@@ -40,6 +40,7 @@ interface WorkspaceMember {
   workspace_id: string;
   status: string;
   is_default: boolean;
+  is_owner?: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
   role?: {
@@ -58,7 +59,7 @@ interface WorkspaceMember {
     email: string;
     display_name: string | null;
     is_verified: boolean;
-    avatar: string | null;
+    avatar?: string | null;
   };
 }
 
@@ -71,6 +72,7 @@ interface MemberData extends Record<string, unknown> {
   rolesList: Array<{ id?: string; name?: string; display_name: string }>;
   status: string;
   is_default: boolean;
+  is_owner: boolean;
   is_verified: boolean;
   joined_at: string;
   initials: string;
@@ -152,6 +154,11 @@ export function WorkspaceMembersPanel({
         ? rolesList.map((r) => r.display_name).join(", ")
         : "No role assigned";
 
+    const isOwner = Boolean(
+      member.is_owner ||
+      (workspace && (workspace.user_id === member.user_id || (workspace as any).owner_id === member.user_id))
+    );
+
     return {
       id: member.id,
       user_id: member.user_id,
@@ -161,6 +168,7 @@ export function WorkspaceMembersPanel({
       roleName,
       rolesList,
       is_default: member.is_default,
+      is_owner: isOwner,
       is_verified: member.user.is_verified,
       joined_at: formatDate(member.joined_at),
       initials: getInitials(member.user.display_name || member.user.name),
@@ -199,7 +207,7 @@ export function WorkspaceMembersPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="font-medium truncate">{value as string}</p>
-              {row.is_default && (
+              {row.is_owner && (
                 <span title="Workspace Owner">
                   <Crown className="h-4 w-4 text-yellow-600" />
                 </span>
@@ -279,7 +287,7 @@ export function WorkspaceMembersPanel({
         const member = members.find((m: WorkspaceMember) => m.id === row.id);
         if (member) setMemberToChangeRole(member);
       },
-      disabled: (row: MemberData) => row.is_default as boolean,
+      disabled: (row: MemberData) => Boolean(row.is_owner),
     },
     {
       label: "Remove Member",
@@ -289,7 +297,7 @@ export function WorkspaceMembersPanel({
         if (member) setMemberToRemove(member);
       },
       variant: "destructive",
-      disabled: (row: MemberData) => row.is_default as boolean,
+      disabled: (row: MemberData) => Boolean(row.is_owner),
     },
   ];
 

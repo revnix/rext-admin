@@ -1,43 +1,33 @@
 "use client";
 
 import { formatDistanceToNow, parseISO } from "date-fns";
-import {
-  AlertCircle,
-  DollarSign,
-  ExternalLink,
-  Filter,
-  Plus,
-  RefreshCw,
-} from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { AlertCircle, ExternalLink, RefreshCw, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DataTable } from "@/components/data-table";
+import { RefundRequestsTable } from "@/components/admin/refunds/refund-requests-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import type { Refund, RefundSummary } from "@/lib/api-client/admin-refunds";
+import type { Column } from "@/types/data-table";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -51,76 +41,22 @@ const formatCurrency = (amount: number): string => {
   }).format(amount / 100); // amounts are in cents
 };
 
-// ============================================================================
-// REFUND ROW COMPONENT
-// ============================================================================
-
-interface RefundRowProps {
-  refund: Refund;
-}
-
-function RefundRow({ refund }: RefundRowProps) {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return (
-          <Badge variant="default" className="bg-green-500">
-            Completed
-          </Badge>
-        );
-      case "failed":
-        return <Badge variant="destructive">Failed</Badge>;
-      case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  return (
-    <TableRow>
-      <TableCell>
-        <div>
-          <div className="font-medium">{refund.user_email}</div>
-          <div className="text-sm text-muted-foreground">
-            {refund.user_name}
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="text-sm">
-          <div>Order: {refund.lemonsqueezy_order_id}</div>
-          {refund.plan_name && (
-            <div className="text-muted-foreground">{refund.plan_name}</div>
-          )}
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="font-medium">
-          {formatCurrency(refund.refund_amount)}
-        </div>
-        {refund.is_partial && (
-          <Badge variant="secondary" className="text-xs mt-1">
-            Partial (of {formatCurrency(refund.original_amount)})
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell>
-        {refund.reason ? (
-          <span className="text-sm">{refund.reason}</span>
-        ) : (
-          <span className="text-sm text-muted-foreground">
-            No reason provided
-          </span>
-        )}
-      </TableCell>
-      <TableCell>{getStatusBadge(refund.status)}</TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {formatDistanceToNow(parseISO(refund.created_at), { addSuffix: true })}
-      </TableCell>
-    </TableRow>
-  );
-}
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "completed":
+      return (
+        <Badge variant="default" className="bg-green-600">
+          Completed
+        </Badge>
+      );
+    case "failed":
+      return <Badge variant="destructive">Failed</Badge>;
+    case "pending":
+      return <Badge variant="secondary">Pending</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+};
 
 // ============================================================================
 // STATS CARDS
@@ -191,157 +127,6 @@ function StatsCards({ summary, loading }: StatsCardsProps) {
 }
 
 // ============================================================================
-// CREATE REFUND DIALOG
-// ============================================================================
-
-interface CreateRefundDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-}
-
-function CreateRefundDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: CreateRefundDialogProps) {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    order_id: "",
-    subscription_id: "",
-    amount: "",
-    reason: "",
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const payload: {
-        reason?: string;
-        order_id?: string;
-        subscription_id?: string;
-        amount?: number;
-      } = {
-        reason: formData.reason || undefined,
-      };
-
-      if (formData.order_id) {
-        payload.order_id = formData.order_id;
-      } else if (formData.subscription_id) {
-        payload.subscription_id = formData.subscription_id;
-      } else {
-        toast.error("Please provide either Order ID or Subscription ID");
-        setLoading(false);
-        return;
-      }
-
-      if (formData.amount) {
-        payload.amount = parseInt(formData.amount, 10);
-      }
-
-      await apiClient.adminRefunds.create(payload);
-
-      toast.success("Refund created successfully");
-
-      onOpenChange(false);
-      setFormData({
-        order_id: "",
-        subscription_id: "",
-        amount: "",
-        reason: "",
-      });
-      onSuccess();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create refund";
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create Refund</DialogTitle>
-          <DialogDescription>
-            Process a refund via LemonSqueezy API. Provide either an Order ID or
-            Subscription ID.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="order_id">LemonSqueezy Order ID</Label>
-              <Input
-                id="order_id"
-                value={formData.order_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, order_id: e.target.value })
-                }
-                placeholder="e.g., 123456"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subscription_id">Or Subscription ID</Label>
-              <Input
-                id="subscription_id"
-                value={formData.subscription_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, subscription_id: e.target.value })
-                }
-                placeholder="UUID"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="amount">
-                Amount (cents) - Optional for partial refund
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                value={formData.amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
-                }
-                placeholder="Leave empty for full refund"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="reason">Reason (Optional)</Label>
-              <Textarea
-                id="reason"
-                value={formData.reason}
-                onChange={(e) =>
-                  setFormData({ ...formData, reason: e.target.value })
-                }
-                placeholder="Customer requested refund"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Processing..." : "Create Refund"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -349,65 +134,140 @@ export default function RefundManagementPage() {
   // State
   const [loading, setLoading] = useState(true);
   const [refunds, setRefunds] = useState<Refund[]>([]);
-  const [filteredRefunds, setFilteredRefunds] = useState<Refund[]>([]);
   const [summary, setSummary] = useState<RefundSummary | null>(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    per_page: 50,
-    total: 0,
-    total_pages: 0,
-  });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Filters for Refund History
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   // Fetch refunds
   const fetchRefunds = useCallback(async () => {
     try {
       setLoading(true);
+      setRefreshKey((prev) => prev + 1);
 
       const response = await apiClient.adminRefunds.list({
-        page: pagination.page,
-        per_page: 50,
+        page: 1,
+        per_page: 200,
       });
 
       setRefunds(response.refunds);
-      setFilteredRefunds(response.refunds);
       setSummary(response.summary);
-      setPagination(response.pagination);
     } catch (_error) {
       toast.error("Failed to load refund data. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [pagination.page]);
-
-  // Filter refunds based on search query
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredRefunds(refunds);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = refunds.filter(
-      (refund) =>
-        refund.user_email?.toLowerCase().includes(query) ||
-        refund.lemonsqueezy_order_id.toLowerCase().includes(query) ||
-        refund.plan_name?.toLowerCase().includes(query) ||
-        refund.user_name?.toLowerCase().includes(query),
-    );
-    setFilteredRefunds(filtered);
-  }, [searchQuery, refunds]);
+  }, []);
 
   useEffect(() => {
     fetchRefunds();
   }, [fetchRefunds]);
 
+  // Filtered dataset for DataTable
+  const tableData = useMemo(() => {
+    return refunds
+      .filter((r) => {
+        if (statusFilter !== "all" && r.status !== statusFilter) return false;
+        if (typeFilter === "full" && r.is_partial) return false;
+        if (typeFilter === "partial" && !r.is_partial) return false;
+        return true;
+      })
+      .map((r) => ({ ...r }));
+  }, [refunds, statusFilter, typeFilter]);
+
+  const historyColumns: Column<Refund & Record<string, unknown>>[] = [
+    {
+      key: "user_email",
+      header: "Customer",
+      width: "220px",
+      cell: (_val, row) => (
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">
+            {row.user_email || "Unknown Customer"}
+          </p>
+          {row.user_name && (
+            <p className="text-xs text-muted-foreground truncate">
+              {row.user_name}
+            </p>
+          )}
+        </div>
+      ),
+      searchable: true,
+    },
+    {
+      key: "lemonsqueezy_order_id",
+      header: "Order / Plan",
+      width: "200px",
+      cell: (_val, row) => (
+        <div className="min-w-0">
+          <p className="text-sm font-medium font-mono">
+            #{row.lemonsqueezy_order_id}
+          </p>
+          {row.plan_name && (
+            <p className="text-xs text-muted-foreground truncate">
+              {row.plan_name}
+            </p>
+          )}
+        </div>
+      ),
+      searchable: true,
+    },
+    {
+      key: "refund_amount",
+      header: "Amount",
+      width: "160px",
+      cell: (_val, row) => (
+        <div>
+          <span className="font-semibold text-sm">
+            {formatCurrency(row.refund_amount)}
+          </span>
+          {row.is_partial && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] ml-1.5 font-normal"
+            >
+              Partial
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "reason",
+      header: "Reason",
+      width: "220px",
+      cell: (_val, row) => (
+        <span className="text-xs text-muted-foreground truncate block max-w-[200px]">
+          {row.reason || "No reason provided"}
+        </span>
+      ),
+      searchable: true,
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "130px",
+      cell: (_val, row) => getStatusBadge(row.status),
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      width: "140px",
+      cell: (_val, row) => (
+        <span className="text-xs text-muted-foreground">
+          {formatDistanceToNow(parseISO(row.created_at), { addSuffix: true })}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <AdminGuard superAdminOnly={true}>
       <PageLayout
         title="Refund Management"
-        description="View refund history and process new refunds"
+        description="View refund history and process customer refund requests"
         actions={
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
@@ -419,10 +279,6 @@ export default function RefundManagementPage() {
               <ExternalLink className="h-4 w-4 mr-2" />
               LemonSqueezy
             </Button>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Refund
-            </Button>
             <Button onClick={fetchRefunds} disabled={loading}>
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -433,16 +289,18 @@ export default function RefundManagementPage() {
         }
       >
         {/* Info Banner */}
-        <Card className="mb-6 border-blue-200 bg-blue-50">
+        <Card className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 mb-1">
-                  Refund Processing
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                  Refund Processing Workflow
                 </h3>
-                <p className="text-sm text-blue-800">
-                  You can process refunds directly from this page or via the{" "}
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  Refunds run through Refund Requests below. Approving a request
+                  records the decision; use Process refund to issue the payout.
+                  Refunds issued directly from the{" "}
                   <a
                     href="https://app.lemonsqueezy.com/"
                     target="_blank"
@@ -450,9 +308,8 @@ export default function RefundManagementPage() {
                     className="underline font-medium"
                   >
                     LemonSqueezy Dashboard
-                  </a>
-                  . Refunds processed via LemonSqueezy will automatically appear
-                  here via webhooks.
+                  </a>{" "}
+                  appear here automatically via webhooks.
                 </p>
               </div>
             </div>
@@ -462,134 +319,94 @@ export default function RefundManagementPage() {
         {/* Statistics */}
         <StatsCards summary={summary} loading={loading} />
 
-        {/* Filters */}
+        {/* Customer refund requests awaiting review */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
+            <CardTitle>Refund Requests</CardTitle>
+            <CardDescription>
+              Customer-initiated requests. Approving one records the decision;
+              use Process refund to issue the payout.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label
-                  htmlFor="search-refunds"
-                  className="text-sm font-medium mb-2 block"
-                >
-                  Search by Email, Order ID, Name, or Plan
-                </Label>
-                <Input
-                  id="search-refunds"
-                  placeholder="Search refunds..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+            <RefundRequestsTable refreshKey={refreshKey} />
           </CardContent>
         </Card>
 
-        {/* Refunds Table */}
+        {/* Refunds History Table */}
         <Card>
           <CardHeader>
             <CardTitle>Refund History</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredRefunds.length} of {pagination.total} refunds
-            </p>
+            <CardDescription>
+              Completed and processed refunds history across all workspaces.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {(
-                  [
-                    "refund-table-1",
-                    "refund-table-2",
-                    "refund-table-3",
-                    "refund-table-4",
-                    "refund-table-5",
-                  ] as const
-                ).map((id) => (
-                  <Skeleton key={id} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : filteredRefunds.length === 0 ? (
-              <div className="text-center py-12">
-                <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {searchQuery
-                    ? "No refunds found matching your search"
-                    : "No refunds found"}
-                </p>
-              </div>
-            ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Order/Plan</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRefunds.map((refund) => (
-                      <RefundRow key={refund.id} refund={refund} />
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {/* Pagination */}
-                {pagination.total_pages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Page {pagination.page} of {pagination.total_pages} (
-                      {pagination.total} total)
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setPagination({
-                            ...pagination,
-                            page: pagination.page - 1,
-                          })
-                        }
-                        disabled={pagination.page === 1}
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setPagination({
-                            ...pagination,
-                            page: pagination.page + 1,
-                          })
-                        }
-                        disabled={pagination.page === pagination.total_pages}
-                      >
-                        Next
-                      </Button>
-                    </div>
+            <DataTable
+              columns={historyColumns}
+              data={tableData}
+              isLoading={loading}
+              mobileCards
+              searchPlaceholder="Search history by customer email, order ID or reason..."
+              pageSize={10}
+              pageSizeOptions={[10, 25, 50, 100]}
+              tableId="admin-refund-history"
+              emptyTitle="No refunds found"
+              emptyDescription="No refund history matches your search or selected filters."
+              actions={
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Status Filter */}
+                  <div className="w-[150px]">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={setStatusFilter}
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Type Filter */}
+                  <div className="w-[150px]">
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="full">Full Refunds</SelectItem>
+                        <SelectItem value="partial">Partial Refunds</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Reset Filters */}
+                  {(statusFilter !== "all" || typeFilter !== "all") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setTypeFilter("all");
+                      }}
+                      className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              }
+            />
           </CardContent>
         </Card>
-
-        {/* Create Refund Dialog */}
-        <CreateRefundDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          onSuccess={fetchRefunds}
-        />
       </PageLayout>
     </AdminGuard>
   );

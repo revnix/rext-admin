@@ -19,6 +19,7 @@ import {
   Palette,
   CalendarDays,
   ShieldCheck,
+  DollarSign,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -226,6 +227,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Subscriptions",
           url: "/admin/subscriptions",
           icon: CreditCard,
+          anyPermission: ["subscription.analytics", "subscription.read"],
+        },
+        {
+          title: "Refund Management",
+          url: "/admin/refunds",
+          icon: DollarSign,
           anyPermission: ["subscription.analytics", "subscription.read"],
         },
         {

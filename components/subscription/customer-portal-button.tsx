@@ -1,27 +1,22 @@
 "use client";
 
-import { ExternalLink, Loader2, Settings } from "lucide-react";
-import { useState } from "react";
+import { CreditCard, Loader2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { apiClient } from "@/lib/api-client";
+import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
 /**
- * Customer Portal Button Component
+ * Manage Billing Button
  *
- * Provides access to the LemonSqueezy customer portal where users can:
- * - Update payment methods
- * - View billing history
- * - Update billing information
- * - Manage subscription (pause/resume/cancel)
+ * Opens LemonSqueezy's payment-method form inside the on-site checkout
+ * overlay, so updating a card never navigates the user off the site.
  *
- * Features:
- * - Generates portal URL via backend API
- * - Opens portal in new tab
- * - Loading states and error handling
- * - Multiple button variants (default, outline, ghost, link)
- * - Customizable text and icons
+ * Everything else the LemonSqueezy customer portal offers is handled natively
+ * elsewhere in the app — plan changes, cancel, pause/resume and invoices — so
+ * the portal itself is no longer the destination. The one thing that still
+ * requires it is tax IDs and billing addresses, which LemonSqueezy only serves
+ * from a page that refuses to be framed; `TaxDetailsLink` covers that case.
  */
 
 interface CustomerPortalButtonProps {
@@ -45,7 +40,7 @@ interface CustomerPortalButtonProps {
 
   /**
    * Custom button text
-   * @default "Manage Billing"
+   * @default "Update Payment Method"
    */
   children?: React.ReactNode;
 
@@ -74,58 +69,27 @@ interface CustomerPortalButtonProps {
 export function CustomerPortalButton({
   variant = "outline",
   size = "default",
-  children = "Manage Billing",
+  children = "Update Payment Method",
   showIcon = true,
   className = "",
   onOpen,
   onError,
 }: CustomerPortalButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { subscription } = useSubscriptionStore();
+  const { isLoading, updatePaymentMethod, hasBillingAccount } =
+    useBillingActions();
 
-  const handleOpenPortal = async () => {
+  const handleClick = async () => {
     if (!subscription) {
       toast.error("No active subscription found");
       return;
     }
 
-    setIsLoading(true);
     try {
-      // Get customer portal URL from backend
-      const response = await apiClient.subscriptions.getCustomerPortalUrl();
-
-      if (response.portal_url) {
-        // Open portal in new tab
-        window.open(response.portal_url, "_blank", "noopener,noreferrer");
-        onOpen?.();
-      } else {
-        throw new Error("No portal URL returned");
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to open customer portal";
-      toast.error(errorMessage);
-      onError?.(error instanceof Error ? error : new Error(errorMessage));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // If subscription has a direct customer_portal_url, use it
-  const hasDirectPortalUrl = subscription?.subscription?.customer_portal_url;
-
-  const handleClick = () => {
-    if (hasDirectPortalUrl && subscription?.subscription?.customer_portal_url) {
-      window.open(
-        subscription?.subscription?.customer_portal_url,
-        "_blank",
-        "noopener,noreferrer",
-      );
+      await updatePaymentMethod();
       onOpen?.();
-    } else {
-      handleOpenPortal();
+    } catch (error) {
+      onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -134,7 +98,7 @@ export function CustomerPortalButton({
       variant={variant}
       size={size}
       onClick={handleClick}
-      disabled={isLoading || !subscription}
+      disabled={isLoading || !subscription || !hasBillingAccount}
       className={className}
     >
       {isLoading ? (
@@ -144,7 +108,7 @@ export function CustomerPortalButton({
         </>
       ) : (
         <>
-          {showIcon && <ExternalLink className="h-4 w-4 mr-2" />}
+          {showIcon && <CreditCard className="h-4 w-4 mr-2" />}
           {children}
         </>
       )}
@@ -171,7 +135,7 @@ export function CustomerPortalIconButton({
       onError={onError}
     >
       <Settings className="h-4 w-4" />
-      <span className="sr-only">Manage Billing</span>
+      <span className="sr-only">Update payment method</span>
     </CustomerPortalButton>
   );
 }
