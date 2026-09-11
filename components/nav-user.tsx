@@ -33,9 +33,11 @@ import {
 
 import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 
+import { useEffect } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 import type { Route } from "next";
 
@@ -44,6 +46,29 @@ export function NavUser() {
   const { isMobile } = useSidebar();
 
   const { user, isAuthenticated, isLoading, logout } = useAuthSession();
+
+  const subscription = useSubscriptionStore((state) => state.subscription);
+  const usage = useSubscriptionStore((state) => state.usage);
+  const fetchSubscription = useSubscriptionStore(
+    (state) => state.fetchSubscription,
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSubscription();
+    }
+  }, [isAuthenticated, fetchSubscription]);
+
+  const planName =
+    subscription?.subscription?.plan_display_name ||
+    subscription?.subscription?.plan_name ||
+    usage?.plan_name;
+
+  const displayPlanLabel = planName
+    ? planName.toLowerCase() === "free"
+      ? "Upgrade to Pro"
+      : `${planName} Plan`
+    : "Upgrade to Pro";
 
   const { data: profileUser, isLoading: loadingProfile } = useQuery({
     ...profileQueries.detail(),
@@ -256,7 +281,7 @@ export function NavUser() {
                 onClick={() => router.push(settingsRoutes.subscription)}
               >
                 <Sparkles />
-                Upgrade to Pro
+                {displayPlanLabel}
               </DropdownMenuItem>
             </DropdownMenuGroup>
 

@@ -87,18 +87,32 @@ export function GeneralInfoSection() {
       if (response?.workspace) {
         setCurrentWorkspace(response.workspace);
         updateWorkspaceInList(response.workspace);
+
+        // Update TanStack Query cache for detail query so reopening Settings page shows updated URL & info
+        queryClient.setQueryData(
+          ["workspaces", "detail", response.workspace.slug],
+          response
+        );
+        queryClient.setQueryData(
+          ["workspaces", "detail", response.workspace.id],
+          response
+        );
+        if (workspace.slug && workspace.slug !== response.workspace.slug) {
+          queryClient.setQueryData(
+            ["workspaces", "detail", workspace.slug],
+            response
+          );
+        }
       }
 
       // Refresh the list and switcher caches so they stop serving the old name.
-      // The detail branch is deliberately excluded: its cache key IS the slug,
-      // and a rename kills the old slug - refetching it would 404 and bounce us
-      // out via WorkspaceProvider. Navigating below fetches under the new key.
       await queryClient.invalidateQueries({
         predicate: ({ queryKey }) =>
           queryKey[0] === "workspaces" &&
           (queryKey.length === 1 ||
             queryKey[1] === "list" ||
-            queryKey[1] === "switcher"),
+            queryKey[1] === "switcher" ||
+            queryKey[1] === "detail"),
       });
 
       // A rename regenerates the slug, so the URL we are on no longer resolves.
