@@ -878,7 +878,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         await navigator.clipboard.writeText(htmlContent);
       } else if (format === "markdown") {
         const mdIntro = allContent?.meta_description
-          ? `\n\n*${allContent.meta_description}*\n`
+          ? `\n\n*${allContent?.meta_description}*\n`
           : "";
         const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
         await navigator.clipboard.writeText(contentToCopy);
