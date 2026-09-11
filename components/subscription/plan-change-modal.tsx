@@ -96,7 +96,6 @@ export function PlanChangeModal({
   const [phase, setPhase] = useState<PlanChangePhase>("idle");
   const isBusy = phase !== "idle";
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
-    console.log("plans", plans);
 
   // Get current and selected plans
   const currentPlan = plans.find((p) => p.id === currentPlanId);
@@ -211,7 +210,9 @@ export function PlanChangeModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Plan</p>
-                  <p className="text-lg font-semibold">{currentPlan?.name}</p>
+                  <p className="text-lg font-semibold">
+                    {currentPlan?.display_name || currentPlan?.name}
+                  </p>
                 </div>
                 <Badge variant="outline">{formatPrice(currentPlan)}</Badge>
               </div>
@@ -258,9 +259,9 @@ export function PlanChangeModal({
                       <div className="flex items-center justify-between">
                         <Label
                           htmlFor={plan.id}
-                          className={`font-semibold capitalize ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`font-semibold ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
                         >
-                          {plan.name}
+                          {plan.display_name || plan.name}
                           {isCurrent && (
                             <Badge variant="secondary" className="ml-2">
                               Current

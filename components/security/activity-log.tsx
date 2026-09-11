@@ -382,6 +382,75 @@ export function ActivityLog() {
                       <SelectItem value={AuditActions.INVITATION_CREATE}>
                         Invitation Sent
                       </SelectItem>
+
+                      <Separator className="my-1" />
+
+                      {/* Subscription Events */}
+                      <SelectItem value={AuditActions.SUBSCRIPTION_CREATED}>
+                        Subscription Created
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_UPDATED}>
+                        Subscription Updated
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_UPGRADED}>
+                        Subscription Upgraded
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_DOWNGRADED}>
+                        Subscription Downgraded
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_CANCELLED}>
+                        Subscription Cancelled
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_RESUMED}>
+                        Subscription Resumed
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_PAUSED}>
+                        Subscription Paused
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_EXPIRED}>
+                        Subscription Expired
+                      </SelectItem>
+                      <SelectItem value={AuditActions.SUBSCRIPTION_RENEWED}>
+                        Subscription Renewed
+                      </SelectItem>
+
+                      <Separator className="my-1" />
+
+                      {/* Payment Events */}
+                      <SelectItem value={AuditActions.PAYMENT_SUCCEEDED}>
+                        Payment Succeeded
+                      </SelectItem>
+                      <SelectItem value={AuditActions.PAYMENT_FAILED}>
+                        Payment Failed
+                      </SelectItem>
+                      <SelectItem value={AuditActions.PAYMENT_RECOVERED}>
+                        Payment Recovered
+                      </SelectItem>
+                      <SelectItem value={AuditActions.PAYMENT_REFUNDED}>
+                        Payment Refunded
+                      </SelectItem>
+
+                      <Separator className="my-1" />
+
+                      {/* Refund Events */}
+                      <SelectItem value={AuditActions.REFUND_REQUESTED}>
+                        Refund Requested
+                      </SelectItem>
+                      <SelectItem value={AuditActions.REFUND_APPROVED}>
+                        Refund Approved
+                      </SelectItem>
+                      <SelectItem value={AuditActions.REFUND_REJECTED}>
+                        Refund Rejected
+                      </SelectItem>
+                      <SelectItem value={AuditActions.REFUND_PROCESSED}>
+                        Refund Processed
+                      </SelectItem>
+                      <SelectItem value={AuditActions.REFUND_FAILED}>
+                        Refund Failed
+                      </SelectItem>
+                      <SelectItem value={AuditActions.REFUND_CANCELLED}>
+                        Refund Cancelled
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -419,6 +488,12 @@ export function ActivityLog() {
                       </SelectItem>
                       <SelectItem value={AuditResourceTypes.SUBSCRIPTION}>
                         Subscription
+                      </SelectItem>
+                      <SelectItem value={AuditResourceTypes.PAYMENT}>
+                        Payment
+                      </SelectItem>
+                      <SelectItem value={AuditResourceTypes.REFUND}>
+                        Refund
                       </SelectItem>
                       <SelectItem value={AuditResourceTypes.SESSION}>
                         Session

@@ -92,10 +92,40 @@ export const AuditActions = {
   INVITATION_ACCEPT: "invitation.accept",
   INVITATION_REVOKE: "invitation.revoke",
 
-  // Subscription actions
+  // Subscription actions (canonical past-tense)
+  SUBSCRIPTION_CREATED: "subscription.created",
+  SUBSCRIPTION_UPDATED: "subscription.updated",
+  SUBSCRIPTION_UPGRADED: "subscription.upgraded",
+  SUBSCRIPTION_DOWNGRADED: "subscription.downgraded",
+  SUBSCRIPTION_CANCELLED: "subscription.cancelled",
+  SUBSCRIPTION_RESUMED: "subscription.resumed",
+  SUBSCRIPTION_PAUSED: "subscription.paused",
+  SUBSCRIPTION_EXPIRED: "subscription.expired",
+  SUBSCRIPTION_RENEWED: "subscription.renewed",
+
+  // Subscription legacy aliases
   SUBSCRIPTION_CREATE: "subscription.create",
   SUBSCRIPTION_UPGRADE: "subscription.upgrade",
   SUBSCRIPTION_CANCEL: "subscription.cancel",
+
+  // Payment actions
+  PAYMENT_SUCCEEDED: "payment.succeeded",
+  PAYMENT_FAILED: "payment.failed",
+  PAYMENT_RECOVERED: "payment.recovered",
+  PAYMENT_REFUNDED: "payment.refunded",
+
+  // Refund actions
+  REFUND_REQUESTED: "refund.requested",
+  REFUND_APPROVED: "refund.approved",
+  REFUND_REJECTED: "refund.rejected",
+  REFUND_PROCESSED: "refund.processed",
+  REFUND_FAILED: "refund.failed",
+  REFUND_CANCELLED: "refund.cancelled",
+
+  // Admin actions
+  ADMIN_REFUND_CREATED: "admin.refund_created",
+  ADMIN_SUBSCRIPTION_EXTENDED: "admin.subscription_extended",
+  ADMIN_SUBSCRIPTION_CANCELLED: "admin.subscription_cancelled",
 } as const;
 
 /**
@@ -108,6 +138,11 @@ export const AuditResourceTypes = {
   WORKSPACE: "workspace",
   INVITATION: "invitation",
   SUBSCRIPTION: "subscription",
+  PAYMENT: "payment",
+  REFUND: "refund",
+  CHECKOUT: "checkout",
+  LICENSE: "license",
+  WEBHOOK: "webhook",
   SESSION: "session",
 } as const;
 
@@ -135,9 +170,39 @@ export function getActionDisplayName(action: string): string {
     "invitation.create": "Invitation Sent",
     "invitation.accept": "Invitation Accepted",
     "invitation.revoke": "Invitation Revoked",
+    // Subscription
+    "subscription.created": "Subscription Created",
     "subscription.create": "Subscription Created",
+    "subscription.updated": "Subscription Updated",
+    "subscription.update": "Subscription Updated",
+    "subscription.upgraded": "Subscription Upgraded",
     "subscription.upgrade": "Subscription Upgraded",
+    "subscription.downgraded": "Subscription Downgraded",
+    "subscription.downgrade": "Subscription Downgraded",
+    "subscription.cancelled": "Subscription Cancelled",
     "subscription.cancel": "Subscription Cancelled",
+    "subscription.resumed": "Subscription Resumed",
+    "subscription.resume": "Subscription Resumed",
+    "subscription.paused": "Subscription Paused",
+    "subscription.pause": "Subscription Paused",
+    "subscription.expired": "Subscription Expired",
+    "subscription.renewed": "Subscription Renewed",
+    // Payment
+    "payment.succeeded": "Payment Succeeded",
+    "payment.failed": "Payment Failed",
+    "payment.recovered": "Payment Recovered",
+    "payment.refunded": "Payment Refunded",
+    // Refund
+    "refund.requested": "Refund Requested",
+    "refund.approved": "Refund Approved",
+    "refund.rejected": "Refund Rejected",
+    "refund.processed": "Refund Processed",
+    "refund.failed": "Refund Failed",
+    "refund.cancelled": "Refund Cancelled",
+    // Admin
+    "admin.refund_created": "Admin Refund Created",
+    "admin.subscription_extended": "Subscription Extended",
+    "admin.subscription_cancelled": "Subscription Cancelled (Admin)",
   };
 
   return actionMap[action] || action;
@@ -153,18 +218,31 @@ export function getActionVariant(
     action.includes("delete") ||
     action.includes("ban") ||
     action.includes("suspend") ||
-    action.includes("revoke")
+    action.includes("revoke") ||
+    action.includes("failed") ||
+    action.includes("reject")
   ) {
     return "destructive";
   }
   if (
     action.includes("create") ||
     action.includes("login") ||
-    action.includes("activate")
+    action.includes("activate") ||
+    action.includes("succeeded") ||
+    action.includes("approved") ||
+    action.includes("recovered") ||
+    action.includes("resumed")
   ) {
     return "default";
   }
-  if (action.includes("update") || action.includes("change")) {
+  if (
+    action.includes("update") ||
+    action.includes("change") ||
+    action.includes("upgraded") ||
+    action.includes("upgrade") ||
+    action.includes("renewed") ||
+    action.includes("processed")
+  ) {
     return "secondary";
   }
   return "outline";
