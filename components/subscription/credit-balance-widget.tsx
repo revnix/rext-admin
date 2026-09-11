@@ -5,6 +5,7 @@ import { CircleDollarSign } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { useWorkspaceStore } from "@/stores/workspace";
 import { Coins } from "lucide-react";
 
 interface CreditBalanceWidgetProps {
@@ -17,13 +18,12 @@ export function CreditBalanceWidget({
   className,
   variant = "pill",
 }: CreditBalanceWidgetProps) {
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const { credits, fetchCredits } = useSubscriptionStore();
 
   useEffect(() => {
-    if (!credits) {
-      fetchCredits().catch(() => {});
-    }
-  }, [credits, fetchCredits]);
+    fetchCredits(currentWorkspace?.id).catch(() => {});
+  }, [currentWorkspace?.id, fetchCredits]);
 
   if (!credits) return null;
 

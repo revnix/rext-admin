@@ -18,6 +18,8 @@
  */
 export interface Workspace {
   id: string; // UUID
+  user_id?: string; // Workspace owner user ID
+  owner_id?: string; // Optional owner identifier
   title?: string; // optional for backward compatibility - deprecated, use 'name' instead
   name: string; // unique, required — workspace display name
   slug: string; // URL-safe identifier for workspace

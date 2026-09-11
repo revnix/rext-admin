@@ -36,6 +36,7 @@ export function createMembersNamespace(client: ApiClient) {
           role_id: string;
           status: string;
           is_default: boolean;
+          is_owner?: boolean;
           joined_at: string | null;
           last_activity_at: string | null;
           role?: {
@@ -181,7 +182,14 @@ export function createInvitationsNamespace(client: ApiClient) {
      * Validate invitation token (public - no auth required)
      */
     validate: async (token: string) => {
-      return client.request<{
+      // The backend returns the invitation FLAT (workspace_name, role_name,
+      // inviter_display_name, ...). This method used to declare it as nested,
+      // so TypeScript never caught the mismatch and every consumer read
+      // undefined: the signup and login pages crashed on
+      // `invitation.workspace.name`, and the accept page silently fell back to
+      // "Workspace"/"Member"/"Workspace Admin". Map it here — the one place
+      // all three callers go through — and keep the nested shape they expect.
+      const response = await client.request<{
         /**
          * Whether an account already exists for the invited email. When true the
          * accept UI should send the user to sign-in rather than sign-up. Optional
@@ -192,28 +200,61 @@ export function createInvitationsNamespace(client: ApiClient) {
           id: string;
           email: string;
           user_exists?: boolean;
-          workspace: {
-            id: string;
-            name: string;
-            slug: string;
-          };
-          role: {
-            id: string;
-            name: string;
-            display_name: string;
-          };
-          invited_by: {
-            id: string;
-            full_name: string;
-            display_name?: string;
-          };
           expires_at: string;
           status: string;
-          token: string;
+          workspace_id: string;
+          workspace_name: string;
+          workspace_slug: string;
+          role_id: string;
+          role_name: string;
+          inviter_id: string;
+          inviter_display_name?: string;
+          inviter_username?: string;
+          inviter_first_name?: string;
+          inviter_last_name?: string;
         };
       }>(ENDPOINTS.INVITATIONS.validate(token), {
         method: "GET",
       });
+
+      const invitation = response.invitation;
+      const userExists = response.user_exists ?? invitation.user_exists;
+      const inviterFullName =
+        [invitation.inviter_first_name, invitation.inviter_last_name]
+          .filter(Boolean)
+          .join(" ")
+          .trim() ||
+        invitation.inviter_username ||
+        "";
+
+      return {
+        user_exists: userExists,
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          user_exists: userExists,
+          workspace: {
+            id: invitation.workspace_id,
+            name: invitation.workspace_name,
+            slug: invitation.workspace_slug,
+          },
+          role: {
+            id: invitation.role_id,
+            name: invitation.role_name,
+            // The API sends a single human-readable role name; use it for both
+            // so callers reading either field render the same thing.
+            display_name: invitation.role_name,
+          },
+          invited_by: {
+            id: invitation.inviter_id,
+            full_name: inviterFullName,
+            display_name: invitation.inviter_display_name,
+          },
+          expires_at: invitation.expires_at,
+          status: invitation.status,
+          token,
+        },
+      };
     },
 
     /**
