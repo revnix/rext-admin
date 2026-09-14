@@ -20,9 +20,12 @@ import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
 import { UserStatusDialog } from "@/components/admin/users/user-status-dialog";
 import { DataTable } from "@/components/data-table";
+import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-table";
+import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
 import { PageLayout } from "@/components/page-layout";
 import { PermissionGuard } from "@/components/permission/permission-guard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ErrorPage } from "@/components/ui/error-states";
-import { usePermission } from "@/hooks/use-permission";
+import { useIsSuperAdmin, usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type {
   User,
@@ -68,10 +71,14 @@ interface UserData extends Record<string, unknown> {
   avatar_url: string | null | undefined;
   display_role: string;
   roles: UserRoleSummary[];
+  is_super_admin: boolean;
   last_login_at: string | null | undefined;
   login_count: number;
   created_at: string | null | undefined;
 }
+
+type UsersTab = "all" | "deleted" | "recovery";
+const USERS_TAB_STORAGE_KEY = "admin-users-active-tab";
 
 type UsersDialogState =
   | { type: "closed" }
@@ -100,6 +107,28 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<UsersTab>(() => {
+    if (typeof window === "undefined") return "all";
+    try {
+      const stored = localStorage.getItem(USERS_TAB_STORAGE_KEY);
+      if (stored === "deleted" || stored === "recovery" || stored === "all") {
+        return stored;
+      }
+    } catch {}
+    return "all";
+  });
+
+  // Only Super Admins can permanently delete a soft-deleted user; the Soft
+  // Deleted tab greys that one action out for everyone else.
+  const viewerIsSuperAdmin = useIsSuperAdmin();
+
+  const handleTabChange = (value: string) => {
+    const next = value as UsersTab;
+    setActiveTab(next);
+    try {
+      localStorage.setItem(USERS_TAB_STORAGE_KEY, next);
+    } catch {}
+  };
 
   const closeDialog = () => setDialogState({ type: "closed" });
 
@@ -211,6 +240,11 @@ export default function AdminUsersPage() {
       avatar_url: user.avatar_url,
       display_role: user.display_role || "User",
       roles: user.roles || [],
+      is_super_admin:
+        user.is_super_admin ??
+        (user.roles || []).some(
+          (r) => r.is_platform && r.hierarchy_level >= 100,
+        ),
       last_login_at: user.last_login_at,
       login_count: user.login_count ?? 0,
       created_at: user.created_at,
@@ -415,6 +449,13 @@ export default function AdminUsersPage() {
     },
   ];
 
+  // Super Admin accounts stay in the list but are shielded from every
+  // management action, for everyone — the backend enforces the same rule, this
+  // just greys the buttons out with a reason rather than letting them 403.
+  const protectedReason = (row: UserData): string | null =>
+    row.is_super_admin ? "Super Admin accounts are protected" : null;
+  const isProtected = (row: UserData) => protectedReason(row) !== null;
+
   // Define row actions.
   // Gated on the same permissions the backend enforces, so nothing renders
   // that would only come back as a 403.
@@ -429,6 +470,8 @@ export default function AdminUsersPage() {
               if (user) setDialogState({ type: "impersonate", user });
             },
             primary: true,
+            disabled: isProtected,
+            disabledReason: protectedReason,
           },
         ]
       : []),
@@ -441,12 +484,16 @@ export default function AdminUsersPage() {
               const user = findUser(row.id);
               if (user) setDialogState({ type: "manageRoles", user });
             },
+            disabled: isProtected,
+            disabledReason: protectedReason,
           },
         ]
       : []),
     ...(canUpdateUsers
       ? [
           {
+            // Edit stays available on Super Admin rows — only the
+            // account-lifecycle actions below are locked for them.
             label: "Edit details",
             icon: <Pencil className="h-4 w-4" />,
             onClick: (row: UserData) => {
@@ -462,7 +509,9 @@ export default function AdminUsersPage() {
               if (user)
                 setDialogState({ type: "status", user, action: "activate" });
             },
-            disabled: (row: UserData) => row.status === "active",
+            disabled: (row: UserData) =>
+              row.status === "active" || isProtected(row),
+            disabledReason: protectedReason,
           },
           {
             label: "Suspend",
@@ -473,7 +522,10 @@ export default function AdminUsersPage() {
                 setDialogState({ type: "status", user, action: "suspend" });
             },
             disabled: (row: UserData) =>
-              row.status === "suspended" || row.status === "banned",
+              row.status === "suspended" ||
+              row.status === "banned" ||
+              isProtected(row),
+            disabledReason: protectedReason,
           },
           {
             label: "Ban",
@@ -483,7 +535,9 @@ export default function AdminUsersPage() {
               if (user) setDialogState({ type: "status", user, action: "ban" });
             },
             variant: "destructive" as const,
-            disabled: (row: UserData) => row.status === "banned",
+            disabled: (row: UserData) =>
+              row.status === "banned" || isProtected(row),
+            disabledReason: protectedReason,
           },
         ]
       : []),
@@ -497,6 +551,8 @@ export default function AdminUsersPage() {
               if (user) setDialogState({ type: "delete", user });
             },
             variant: "destructive" as const,
+            disabled: isProtected,
+            disabledReason: protectedReason,
           },
         ]
       : []),
@@ -602,129 +658,155 @@ export default function AdminUsersPage() {
             </Card>
           </div>
 
-          {/* Users Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>All Users</CardTitle>
-              <CardDescription>
-                View and manage user accounts. Click "Impersonate" to view the
-                system as that user.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={tableData}
-                isLoading={isLoading}
-                rowActions={rowActions}
-                mobileCards
-                manualPagination
-                page={page}
-                totalCount={data?.total_count ?? 0}
-                onPageChange={setPage}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setPage(1);
-                }}
-                onSearchChange={(search) => {
-                  setSearchQuery(search);
-                  setPage(1);
-                }}
-                actions={
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Status Filter */}
-                    <div className="w-[140px]">
-                      <Select
-                        value={statusFilter}
-                        onValueChange={(val) => {
-                          setStatusFilter(val);
-                          setPage(1);
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-xs bg-background">
-                          <SelectValue placeholder="All Statuses" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="suspended">Suspended</SelectItem>
-                          <SelectItem value="banned">Banned</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+          {/* Tabs: All Users / Soft Deleted Users / Account Recovery */}
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList>
+              <TabsTrigger value="all">All Users</TabsTrigger>
+              <TabsTrigger value="deleted">Soft Deleted Users</TabsTrigger>
+              <TabsTrigger value="recovery">Account Recovery</TabsTrigger>
+            </TabsList>
 
-                    {/* Role Filter */}
-                    <div className="w-[140px]">
-                      <Select
-                        value={roleFilter}
-                        onValueChange={(val) => {
-                          setRoleFilter(val);
-                          setPage(1);
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-xs bg-background">
-                          <SelectValue placeholder="All Roles" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Roles</SelectItem>
-                          {availableRoles.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <TabsContent value="all" className="space-y-6 mt-4">
+              {/* Users Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Users</CardTitle>
+                  <CardDescription>
+                    View and manage user accounts. Click "Impersonate" to view
+                    the system as that user.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DataTable
+                    columns={columns}
+                    data={tableData}
+                    isLoading={isLoading}
+                    rowActions={rowActions}
+                    mobileCards
+                    manualPagination
+                    page={page}
+                    totalCount={data?.total_count ?? 0}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => {
+                      setPageSize(size);
+                      setPage(1);
+                    }}
+                    onSearchChange={(search) => {
+                      setSearchQuery(search);
+                      setPage(1);
+                    }}
+                    actions={
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Status Filter */}
+                        <div className="w-[140px]">
+                          <Select
+                            value={statusFilter}
+                            onValueChange={(val) => {
+                              setStatusFilter(val);
+                              setPage(1);
+                            }}
+                          >
+                            <SelectTrigger className="h-9 text-xs bg-background">
+                              <SelectValue placeholder="All Statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="suspended">
+                                Suspended
+                              </SelectItem>
+                              <SelectItem value="banned">Banned</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                    {/* Clear Filters */}
-                    {(statusFilter !== "all" || roleFilter !== "all") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setStatusFilter("all");
-                          setRoleFilter("all");
-                          setPage(1);
-                        }}
-                        className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="h-3.5 w-3.5 mr-1" />
-                        Reset
-                      </Button>
-                    )}
-                  </div>
-                }
-                emptyTitle="No users found"
-                emptyDescription="No registered users match the selected search or filters."
-                searchPlaceholder="Search by name or email..."
-                pageSize={pageSize}
-                pageSizeOptions={[10, 25, 50, 100]}
-                tableId="admin-users"
+                        {/* Role Filter */}
+                        <div className="w-[140px]">
+                          <Select
+                            value={roleFilter}
+                            onValueChange={(val) => {
+                              setRoleFilter(val);
+                              setPage(1);
+                            }}
+                          >
+                            <SelectTrigger className="h-9 text-xs bg-background">
+                              <SelectValue placeholder="All Roles" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Roles</SelectItem>
+                              {availableRoles.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {role}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Clear Filters */}
+                        {(statusFilter !== "all" || roleFilter !== "all") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setStatusFilter("all");
+                              setRoleFilter("all");
+                              setPage(1);
+                            }}
+                            className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+                    }
+                    emptyTitle="No users found"
+                    emptyDescription="No registered users match the selected search or filters."
+                    searchPlaceholder="Search by name or email..."
+                    pageSize={pageSize}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    tableId="admin-users"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Info Card */}
+              <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+                <CardHeader>
+                  <CardTitle className="text-blue-900 dark:text-blue-100">
+                    About Impersonation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                  <p>
+                    <strong>Impersonation</strong> allows you to view the system
+                    as another user for troubleshooting and support purposes.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>All actions are performed as the impersonated user</li>
+                    <li>
+                      Your session is logged for audit and security purposes
+                    </li>
+                    <li>A yellow banner will display while impersonating</li>
+                    <li>You can stop impersonation at any time</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="deleted" className="mt-4">
+              <DeletedUsersTable
+                active={activeTab === "deleted"}
+                viewerIsSuperAdmin={viewerIsSuperAdmin}
               />
-            </CardContent>
-          </Card>
+            </TabsContent>
 
-          {/* Info Card */}
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-            <CardHeader>
-              <CardTitle className="text-blue-900 dark:text-blue-100">
-                About Impersonation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-              <p>
-                <strong>Impersonation</strong> allows you to view the system as
-                another user for troubleshooting and support purposes.
-              </p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>All actions are performed as the impersonated user</li>
-                <li>Your session is logged for audit and security purposes</li>
-                <li>A yellow banner will display while impersonating</li>
-                <li>You can stop impersonation at any time</li>
-              </ul>
-            </CardContent>
-          </Card>
+            <TabsContent value="recovery" className="mt-4">
+              <AccountRecoveryTable active={activeTab === "recovery"} />
+            </TabsContent>
+          </Tabs>
 
           {/* Dialogs */}
           <ImpersonationStartDialog

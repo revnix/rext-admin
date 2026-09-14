@@ -39,6 +39,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 import {
   DropdownMenu,
@@ -97,6 +98,29 @@ export function PageLayout({
   //   currentWorkspace?.id,
   // );
   const hasUnread = unreadNotifications > 0;
+
+  const subscription = useSubscriptionStore((state) => state.subscription);
+  const usage = useSubscriptionStore((state) => state.usage);
+  const fetchSubscription = useSubscriptionStore(
+    (state) => state.fetchSubscription,
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSubscription();
+    }
+  }, [isAuthenticated, fetchSubscription]);
+
+  const planName =
+    subscription?.subscription?.plan_display_name ||
+    subscription?.subscription?.plan_name ||
+    usage?.plan_name;
+
+  const displayPlanLabel = planName
+    ? planName.toLowerCase() === "free"
+      ? "Upgrade to Pro"
+      : `${planName} Plan`
+    : "Upgrade to Pro";
 
   const { data: profileUser } = useQuery({
     ...profileQueries.detail(),
@@ -419,7 +443,7 @@ export function PageLayout({
                       <div className="flex items-center justify-center h-5 w-5 rounded-md mr-2">
                         <Sparkles className="h-3.5 w-3.5 text-gray-600 fill-gray-100/50 dark:fill-gray-600/50" />
                       </div>
-                      <span className="font-medium">Upgrade to Pro</span>
+                      <span className="font-medium">{displayPlanLabel}</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator className="bg-border my-1" />

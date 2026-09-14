@@ -50,11 +50,20 @@ export interface User {
   display_role?: string;
   /** All roles the user holds, sorted highest hierarchy first. */
   roles?: UserRoleSummary[];
+  /**
+   * True when the user holds a platform-wide role at hierarchy >= 100.
+   * The admin UI greys out every management action on these rows unless the
+   * viewer is themselves a Super Admin (the backend enforces the same rule).
+   */
+  is_super_admin?: boolean;
   last_login_at?: string | null;
   login_count?: number;
   initials?: string;
   created_at?: string;
   updated_at?: string;
+  /** Soft-delete timestamp, present on rows from the Soft Deleted Users tab. */
+  deleted_at?: string | null;
+  deactivated_at?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -271,6 +280,48 @@ export function createUsersNamespace(client: ApiClient) {
       return client.request<{ id: string }>(ENDPOINTS.USERS.delete(userId), {
         method: "DELETE",
       });
+    },
+
+    /**
+     * List soft-deleted users (Soft Deleted Users tab).
+     * Requires `user.read`.
+     */
+    listDeleted: async (params?: {
+      page?: number;
+      per_page?: number;
+    }): Promise<UsersListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set("page", String(params.page));
+      if (params?.per_page)
+        searchParams.set("per_page", String(params.per_page));
+      const query = searchParams.toString();
+      return client.request<UsersListResponse>(
+        query ? `${ENDPOINTS.USERS.deleted}?${query}` : ENDPOINTS.USERS.deleted,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Restore a soft-deleted user (admin). Requires `user.update`.
+     */
+    restoreUser: async (userId: string): Promise<User> => {
+      return client.request<User>(ENDPOINTS.USERS.restore(userId), {
+        method: "POST",
+      });
+    },
+
+    /**
+     * Permanently delete a soft-deleted user. **Super Admin only.**
+     *
+     * Irreversible: hard-deletes owned workspaces and their data, prunes
+     * sessions/tokens/OAuth/media, cancels subscriptions, then scrubs the
+     * account's PII. The account can never be recovered afterwards.
+     */
+    permanentlyDeleteUser: async (userId: string): Promise<{ id: string }> => {
+      return client.request<{ id: string }>(
+        ENDPOINTS.USERS.permanentDelete(userId),
+        { method: "DELETE" },
+      );
     },
 
     /**

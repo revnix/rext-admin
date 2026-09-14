@@ -40,6 +40,7 @@ import { createAdminAnalyticsNamespace } from "./admin-analytics";
 import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
+import { createAccountRecoveryNamespace } from "./account-recovery";
 
 // Re-export types for convenience
 export type { EmailTemplate };
@@ -111,6 +112,7 @@ function createApiClient() {
     adminRefunds: createAdminRefundsNamespace(client),
     adminInvitations: createAdminInvitationsNamespace(client),
     accountAllowlist: createAdminAccountAllowlistNamespace(client),
+    accountRecovery: createAccountRecoveryNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),

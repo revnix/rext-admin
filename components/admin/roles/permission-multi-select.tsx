@@ -22,12 +22,16 @@ export function PermissionMultiSelect({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Group permissions by resource
+  // Hide "knowledge" (feature not in use) and "permission" (not user-manageable)
+  const HIDDEN_RESOURCES = new Set(["knowledge", "permission"]);
+
   const groupedPermissions = useMemo<GroupedPermissions>(() => {
     const filtered = permissions.filter(
       (p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.resource.toLowerCase().includes(searchQuery.toLowerCase()),
+        !HIDDEN_RESOURCES.has(p.resource.toLowerCase()) &&
+        (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.resource.toLowerCase().includes(searchQuery.toLowerCase())),
     );
 
     return filtered.reduce<GroupedPermissions>((acc, permission) => {
