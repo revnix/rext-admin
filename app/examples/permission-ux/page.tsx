@@ -25,8 +25,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   CONTENT_PERMISSIONS,
-  SUBSCRIPTION_PERMISSIONS,
+  BILLING_PERMISSIONS,
   WORKSPACE_PERMISSIONS,
+  MEMBER_PERMISSIONS,
 } from "@/lib/permissions";
 
 /**
@@ -70,7 +71,7 @@ export default function PermissionUXExamplesPage() {
                 </LockedFeatureTooltip>
 
                 <LockedFeatureTooltip
-                  permission={SUBSCRIPTION_PERMISSIONS.READ}
+                  permission={BILLING_PERMISSIONS.READ}
                   requiredRole="Workspace Owner"
                   showIcon
                 >
@@ -108,7 +109,7 @@ export default function PermissionUXExamplesPage() {
                 </PermissionGuard>
 
                 <PermissionGuard
-                  permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
+                  permission={MEMBER_PERMISSIONS.UPDATE_ROLE}
                   showTooltip
                 >
                   <Button variant="outline">
@@ -226,7 +227,7 @@ export default function PermissionUXExamplesPage() {
                 </PermissionGuard>
 
                 <PermissionGuard
-                  permission={WORKSPACE_PERMISSIONS.MANAGE_MEMBERS}
+                  permission={MEMBER_PERMISSIONS.UPDATE_ROLE}
                   showTooltip
                 >
                   <Button variant="outline" size="sm">
@@ -236,7 +237,7 @@ export default function PermissionUXExamplesPage() {
                 </PermissionGuard>
 
                 <PermissionGuard
-                  permission={SUBSCRIPTION_PERMISSIONS.READ}
+                  permission={BILLING_PERMISSIONS.READ}
                   showTooltip
                   tooltipMessage="Only workspace owners can view subscription"
                 >

@@ -37,7 +37,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { SECURITY_PERMISSIONS } from "@/lib/permissions";
 
 interface ErrorLog {
   id: string;
@@ -92,6 +94,8 @@ export function ErrorLogsTable({
   onRefresh,
 }: ErrorLogsTableProps) {
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
+  // Viewing needs security.read (page gate); resolving is a write.
+  const canResolve = usePermission(SECURITY_PERMISSIONS.MANAGE);
 
   const resolveMutation = useMutation({
     mutationFn: async (logId: string) => {
@@ -398,7 +402,7 @@ export function ErrorLogsTable({
                 )}
 
               <div className="flex items-center gap-4 pt-4">
-                {!selectedLog.resolved && (
+                {!selectedLog.resolved && canResolve && (
                   <Button
                     onClick={() => resolveMutation.mutate(selectedLog.id)}
                     disabled={resolveMutation.isPending}

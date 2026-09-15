@@ -53,7 +53,6 @@ export function CreateRoleDialog({
         display_name: formData.display_name,
         description: formData.description || undefined,
         hierarchy_level: formData.hierarchy_level,
-        is_system_role: false,
         is_workspace_role: true,
       });
 

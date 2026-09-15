@@ -17,7 +17,7 @@ import {
   WorkspaceInvitationsPanel,
   WorkspaceMembersPanel,
 } from "@/components/workspace";
-import { MEMBER_PERMISSIONS, WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 
@@ -30,8 +30,17 @@ export default function WorkspaceUsersPage() {
     MEMBER_PERMISSIONS.READ,
     workspaceId,
   );
-  const { hasPermission: canManage } = useWorkspacePermission(
-    WORKSPACE_PERMISSIONS.MANAGE_MEMBERS,
+  // Each action is gated on the granular permission its backend route enforces.
+  const { hasPermission: canInvite } = useWorkspacePermission(
+    MEMBER_PERMISSIONS.INVITE,
+    workspaceId,
+  );
+  const { hasPermission: canChangeRole } = useWorkspacePermission(
+    MEMBER_PERMISSIONS.UPDATE_ROLE,
+    workspaceId,
+  );
+  const { hasPermission: canRemove } = useWorkspacePermission(
+    MEMBER_PERMISSIONS.REMOVE,
     workspaceId,
   );
 
@@ -76,7 +85,7 @@ export default function WorkspaceUsersPage() {
         <Tabs defaultValue={currentTab} className="space-y-8">
           <TabsList>
             <TabsTrigger value="members">Members</TabsTrigger>
-            {canManage && (
+            {canInvite && (
               <TabsTrigger value="invitations">Invitations</TabsTrigger>
             )}
           </TabsList>
@@ -86,7 +95,9 @@ export default function WorkspaceUsersPage() {
             {workspace ? (
               <WorkspaceMembersPanel
                 workspace={workspace}
-                canManage={canManage}
+                canInvite={canInvite}
+                canChangeRole={canChangeRole}
+                canRemove={canRemove}
               />
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -95,13 +106,14 @@ export default function WorkspaceUsersPage() {
             )}
           </TabsContent>
 
-          {/* Invitations Tab */}
-          {canManage && (
+          {/* Invitations Tab (listing requires member.invite on the backend) */}
+          {canInvite && (
             <TabsContent value="invitations" className="space-y-6">
               {workspace ? (
                 <WorkspaceInvitationsPanel
                   workspaceId={workspace.id}
-                  canManage={canManage}
+                  canResend={canInvite}
+                  canRevoke={canInvite}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground">

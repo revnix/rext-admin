@@ -17,7 +17,7 @@
  * The backend uses two patterns for workspace-scoped endpoints:
  *
  * 1. Path parameter: /api/v1/workspaces/{workspaceId}/...
- *    Used by: workspaces, members, media, knowledge, personas
+ *    Used by: workspaces, members, knowledge, personas
  *
  * 2. Query parameter: ?workspace_id={workspaceId}
  *    Used by: content, topics, users (list), admin-analytics
@@ -51,7 +51,6 @@ import { createDashboardNamespace } from "./dashboard";
 import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createLicensesClient } from "./licenses";
-import { createMediaNamespace } from "./media";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createOnboardingNamespace } from "./onboarding";
 import { createPersonasNamespace } from "./personas";
@@ -91,7 +90,6 @@ function createApiClient() {
     workspaces: createWorkspacesNamespace(client),
     knowledge: createKnowledgeNamespace(client),
     keywordLibrary: createKeywordLibraryNamespace(client),
-    media: createMediaNamespace(client),
     members: createMembersNamespace(client),
     invitations: createInvitationsNamespace(client),
     roles: createRolesNamespace(client),

@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTopic } from "@/hooks/use-topics";
-import { TOPIC_PERMISSIONS } from "@/lib/permissions";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 
 type WorkspaceTopicDetailPageProps = {
   params: Promise<{
@@ -49,7 +49,7 @@ export default function WorkspaceTopicDetailPage({
   // Workspace context is available via useWorkspace hook in child components
   return (
     <PermissionGuard
-      permission={TOPIC_PERMISSIONS.READ}
+      permission={CONTENT_PERMISSIONS.READ}
       fallback={
         <Card className="border-destructive">
           <CardHeader>

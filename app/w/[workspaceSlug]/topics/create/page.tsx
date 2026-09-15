@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TOPIC_PERMISSIONS } from "@/lib/permissions";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 
@@ -32,7 +32,7 @@ export default function WorkspaceTopicCreatePage() {
       description="Create AI-generated topic clusters for your workspace"
     >
       <PermissionGuard
-        permission={TOPIC_PERMISSIONS.CREATE}
+        permission={CONTENT_PERMISSIONS.CREATE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

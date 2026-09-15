@@ -23,7 +23,7 @@ import {
   WorkspaceKnowledgeTable,
 } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
-import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
 
@@ -201,7 +201,7 @@ export default function KnowledgeBaseDetailPage() {
       }
     >
       <PermissionGuard
-        permission={KNOWLEDGE_PERMISSIONS.READ}
+        permission={WORKSPACE_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

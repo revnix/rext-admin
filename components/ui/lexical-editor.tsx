@@ -253,7 +253,7 @@ function ImagePlaceholderSlot({
       }
       setUploading(true);
       try {
-        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(workspaceId, file);
         const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
         if (!uploadedSrc) {
           toast.error("Upload succeeded but no image URL was returned.");
@@ -875,7 +875,7 @@ function ImageInsertPopover() {
       setError(null);
       setUploading(true);
       try {
-        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(workspaceId, file);
         const src = toAbsoluteMediaUrl(media.public_url);
         if (!src) {
           setError("Upload succeeded but no image URL was returned.");

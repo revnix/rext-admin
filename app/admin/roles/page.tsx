@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Edit,
+  Eye,
   History,
   Key,
   LockKeyhole,
@@ -43,7 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { usePermission } from "@/hooks/use-permission";
 import {
-  ADMIN_PERMISSIONS,
+  ROLE_PERMISSIONS,
   isProtectedPermission,
   isProtectedRole,
 } from "@/lib/permissions";
@@ -94,16 +95,18 @@ export default function AdminRolesPage() {
   // Row actions are gated on the same permissions the backend enforces on the
   // corresponding routes, so the UI never offers an action that would 403.
   // Declared before the early error return below to keep hook order stable.
-  const canUpdateRole = usePermission(ADMIN_PERMISSIONS.ROLE_UPDATE);
-  const canDeleteRole = usePermission(ADMIN_PERMISSIONS.ROLE_DELETE);
+  const canUpdateRole = usePermission(ROLE_PERMISSIONS.UPDATE);
+  const canDeleteRole = usePermission(ROLE_PERMISSIONS.DELETE);
   const canManageRolePermissions = usePermission(
-    ADMIN_PERMISSIONS.ROLE_MANAGE_PERMISSIONS,
+    ROLE_PERMISSIONS.MANAGE_PERMISSIONS,
   );
+  // Viewing a role's permissions is a read; editing them needs manage_permissions.
+  const canReadRole = usePermission(ROLE_PERMISSIONS.READ);
   const canUpdatePermission = usePermission(
-    ADMIN_PERMISSIONS.PERMISSION_UPDATE,
+    ROLE_PERMISSIONS.MANAGE_PERMISSIONS,
   );
   const canDeletePermission = usePermission(
-    ADMIN_PERMISSIONS.PERMISSION_DELETE,
+    ROLE_PERMISSIONS.MANAGE_PERMISSIONS,
   );
 
   // Fetch roles with permissions
@@ -243,24 +246,26 @@ export default function AdminRolesPage() {
   // disabled on protected roles — the backend rejects update/delete for system
   // roles AND standard workspace roles, which carry is_system_role = false.
   const roleActions: RowAction<RoleTableData>[] = [
-    ...(canManageRolePermissions
+    ...(canManageRolePermissions || canReadRole
       ? [
           {
-            label: "Manage Permissions",
-            icon: <Settings className="h-4 w-4" />,
+            label: (row: RoleTableData) =>
+              isProtectedRole(row) || !canManageRolePermissions
+                ? "View Permissions"
+                : "Manage Permissions",
+            icon: (row: RoleTableData) =>
+              isProtectedRole(row) || !canManageRolePermissions ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <Settings className="h-4 w-4" />
+              ),
             onClick: (row: RoleTableData) => {
               const role = rolesData?.roles.find((r) => r.id === row.id);
-              if (role && !isProtectedRole(role)) {
+              if (role) {
                 setDialogState({ type: "manageRolePermissions", role });
               }
             },
-            disabled: (row: RoleTableData) => isProtectedRole(row),
-            disabledReason: (row: RoleTableData) =>
-              isProtectedRole(row)
-                ? row.is_system_role
-                  ? "System role permissions cannot be modified"
-                  : "Standard workspace role permissions cannot be modified"
-                : null,
+            disabled: () => false,
             primary: true,
           },
         ]
@@ -437,10 +442,7 @@ export default function AdminRolesPage() {
       description="Configure system roles and assign permissions"
     >
       <PermissionGuard
-        anyPermission={[
-          ADMIN_PERMISSIONS.ROLE_READ,
-          ADMIN_PERMISSIONS.PERMISSION_READ,
-        ]}
+        permission={ROLE_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
@@ -566,7 +568,7 @@ export default function AdminRolesPage() {
                       </Button>
                      
                       <PermissionGuard
-                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                        permission={ROLE_PERMISSIONS.CREATE}
                       >
                         <Button
                           onClick={() => setDialogState({ type: "createRole" })}
@@ -609,7 +611,7 @@ export default function AdminRolesPage() {
                       </CardDescription>
                     </div>
                      <PermissionGuard
-                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
+                        permission={ROLE_PERMISSIONS.CREATE}
                       >
                         <Button
                           variant="outline"
@@ -668,6 +670,7 @@ export default function AdminRolesPage() {
               : null
           }
           allPermissions={permissionsData?.permissions || []}
+          canManage={canManageRolePermissions}
         />
 
         <EditPermissionDialog

@@ -18,7 +18,7 @@ import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useTopics } from "@/hooks/use-topics";
 import { log } from "@/lib/logger";
-import { TOPIC_PERMISSIONS } from "@/lib/permissions";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { transformTopicsForDisplay } from "@/lib/simple-topic-transformer";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -32,10 +32,10 @@ export default function WorkspaceTopicsPage() {
   const {
     hasPermission: canCreateTopic,
     isLoading: isCreatePermissionLoading,
-  } = useWorkspacePermission(TOPIC_PERMISSIONS.CREATE, workspaceId);
+  } = useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
 
   const { isLoading: isReadPermissionLoading } = useWorkspacePermission(
-    TOPIC_PERMISSIONS.READ,
+    CONTENT_PERMISSIONS.READ,
     workspaceId,
   );
 
@@ -106,7 +106,7 @@ export default function WorkspaceTopicsPage() {
       }. Generate new topics or explore your saved collection.`}
     >
       <PermissionGuard
-        permission={TOPIC_PERMISSIONS.READ}
+        permission={CONTENT_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

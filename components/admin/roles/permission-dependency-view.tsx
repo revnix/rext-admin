@@ -27,30 +27,7 @@ interface PermissionDependencyViewProps {
   allPermissions: PermissionWithRoles[];
 }
 
-// Define common permission dependencies
-const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
-  "content.delete": ["content.read"],
-  "content.update": ["content.read"],
-  "content.publish": ["content.update", "content.read"],
-  "content.approve": ["content.read"],
-  "role.update": ["role.read"],
-  "role.delete": ["role.read"],
-  "role.manage_permissions": ["role.read", "permission.read"],
-  "permission.update": ["permission.read"],
-  "permission.delete": ["permission.read"],
-  "workspace.delete": ["workspace.read"],
-  "workspace.update": ["workspace.read"],
-  "workspace.manage_members": ["workspace.read"],
-  "workspace.manage_billing": ["workspace.read"],
-  "user.delete": ["user.read"],
-  "user.update": ["user.read"],
-  "user.manage_roles": ["user.read", "role.read"],
-  "topic.delete": ["topic.read"],
-  "topic.update": ["topic.read"],
-  "topic.approve": ["topic.read"],
-  "knowledge.delete": ["knowledge.read"],
-  "knowledge.update": ["knowledge.read"],
-};
+import { PERMISSION_DEPENDENCIES } from "@/lib/permission-dependencies";
 
 export function PermissionDependencyView({
   open,

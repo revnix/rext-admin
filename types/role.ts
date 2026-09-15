@@ -70,7 +70,6 @@ export interface CreateRoleRequest {
   display_name: string;
   description?: string;
   hierarchy_level?: number;
-  is_system_role?: boolean;
   is_workspace_role?: boolean;
 }
 

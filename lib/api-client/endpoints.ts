@@ -159,6 +159,8 @@ export const ENDPOINTS = {
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
     cancel_schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
     calendar: "/api/v1/content/calendar",
+    uploadBlogImage: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
   },
 
   /**
@@ -484,29 +486,6 @@ export const ENDPOINTS = {
     deactivate: (licenseId: string) =>
       `/api/v1/licenses/${licenseId}/deactivate` as const,
     validate: "/api/v1/licenses/validate",
-  },
-  /**
-   * Media Endpoints
-   * @note Workspace-scoped media/file management
-   * @note Handles file uploads, storage, and usage tracking
-   */
-  MEDIA: {
-    base: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media` as const,
-    upload: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/upload` as const,
-    uploadBlogImage: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
-    detail: (workspaceId: string, mediaId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/${mediaId}` as const,
-    bulkDelete: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/bulk-delete` as const,
-    usage: {
-      stats: (workspaceId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/usage/stats` as const,
-      detail: (workspaceId: string, mediaId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/${mediaId}/usage` as const,
-    },
   },
 
   /**

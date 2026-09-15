@@ -13,12 +13,12 @@ import {
 } from "@/components/ui/card";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 
 export default function BrandVoicePage() {
   const { workspace, workspaceId } = useWorkspace();
   const { isLoading: isPermLoading } = useWorkspacePermission(
-    WORKSPACE_PERMISSIONS.READ,
+    BRAND_VOICE_PERMISSIONS.READ,
     workspaceId,
   );
 
@@ -40,7 +40,7 @@ export default function BrandVoicePage() {
       fullWidth
     >
       <PermissionGuard
-        permission={WORKSPACE_PERMISSIONS.READ}
+        permission={BRAND_VOICE_PERMISSIONS.READ}
         showLoading={false}
         fallback={
           <Card className="border-destructive">
@@ -54,7 +54,7 @@ export default function BrandVoicePage() {
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
-                  workspace:read
+                  brand_voice.read
                 </code>
               </p>
             </CardContent>

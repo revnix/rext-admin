@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
-import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
+import { BILLING_PERMISSIONS } from "@/lib/permissions";
 import type { SubscriptionPlan } from "@/types/subscription";
 
 interface PlansResponse {
@@ -167,7 +167,7 @@ export default function SubscriptionPlansPage() {
       }
     >
       <PermissionGuard
-        permission={SUBSCRIPTION_PERMISSIONS.MANAGE}
+        permission={BILLING_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

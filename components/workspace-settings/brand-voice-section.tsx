@@ -5,7 +5,7 @@ import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditableBrandVoiceCard } from "@/components/workspace";
 import { workspaceQueries } from "@/lib/query-keys";
-import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 export function BrandVoiceSection() {
@@ -28,7 +28,7 @@ export function BrandVoiceSection() {
         </div>
       ) : (
         <PermissionGuard
-          permission={WORKSPACE_PERMISSIONS.UPDATE}
+          permission={BRAND_VOICE_PERMISSIONS.UPDATE}
           fallback={
             <EditableBrandVoiceCard
               workspace={{

@@ -22,7 +22,8 @@ import type { Column, RowAction } from "@/types/data-table";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
-  canManage?: boolean;
+  canResend?: boolean;
+  canRevoke?: boolean;
 }
 
 interface Invitation {
@@ -52,7 +53,8 @@ interface InvitationData extends Record<string, unknown> {
 
 export function WorkspaceInvitationsPanel({
   workspaceId,
-  canManage = false,
+  canResend = false,
+  canRevoke = false,
 }: WorkspaceInvitationsPanelProps) {
   const queryClient = useQueryClient();
 
@@ -274,51 +276,55 @@ export function WorkspaceInvitationsPanel({
     },
   ];
 
-  // Define row actions
+  // Define row actions; resend/revoke are gated on member.invite, the
+  // permission their backend routes enforce.
+  const resendAction: RowAction<InvitationData> = {
+    label: "Resend",
+    icon: <Send className="h-4 w-4" />,
+    onClick: (row) => {
+      handleResendInvitation(row.id as string);
+    },
+    variant: "default",
+    disabled: (row) => {
+      const expired = row.expired as boolean;
+      const status = (row.status as string).toLowerCase();
+      return status !== "pending" || expired;
+    },
+  };
+  const copyEmailAction: RowAction<InvitationData> = {
+    label: "Copy Email",
+    icon: <Copy className="h-4 w-4" />,
+    onClick: (row) => {
+      const invitation = invitations.find(
+        (inv: Invitation) => inv.id === row.id,
+      );
+      if (invitation) {
+        handleCopyInvitationLink(invitation);
+      }
+    },
+    variant: "default",
+  };
+  const revokeAction: RowAction<InvitationData> = {
+    label: "Revoke",
+    icon: <XCircle className="h-4 w-4" />,
+    onClick: (row) => {
+      handleRevokeInvitation(row.id as string);
+    },
+    variant: "destructive",
+    requiresConfirmation: true,
+    confirmationTitle: "Revoke Invitation",
+    confirmationDescription:
+      "Are you sure you want to revoke this invitation? The recipient will no longer be able to use this link.",
+    disabled: (row) => {
+      const expired = row.expired as boolean;
+      const status = (row.status as string).toLowerCase();
+      return status !== "pending" || expired;
+    },
+  };
   const rowActions: RowAction<InvitationData>[] = [
-    {
-      label: "Resend",
-      icon: <Send className="h-4 w-4" />,
-      onClick: (row) => {
-        handleResendInvitation(row.id as string);
-      },
-      variant: "default",
-      disabled: (row) => {
-        const expired = row.expired as boolean;
-        const status = (row.status as string).toLowerCase();
-        return status !== "pending" || expired;
-      },
-    },
-    {
-      label: "Copy Email",
-      icon: <Copy className="h-4 w-4" />,
-      onClick: (row) => {
-        const invitation = invitations.find(
-          (inv: Invitation) => inv.id === row.id,
-        );
-        if (invitation) {
-          handleCopyInvitationLink(invitation);
-        }
-      },
-      variant: "default",
-    },
-    {
-      label: "Revoke",
-      icon: <XCircle className="h-4 w-4" />,
-      onClick: (row) => {
-        handleRevokeInvitation(row.id as string);
-      },
-      variant: "destructive",
-      requiresConfirmation: true,
-      confirmationTitle: "Revoke Invitation",
-      confirmationDescription:
-        "Are you sure you want to revoke this invitation? The recipient will no longer be able to use this link.",
-      disabled: (row) => {
-        const expired = row.expired as boolean;
-        const status = (row.status as string).toLowerCase();
-        return status !== "pending" || expired;
-      },
-    },
+    ...(canResend ? [resendAction] : []),
+    copyEmailAction,
+    ...(canRevoke ? [revokeAction] : []),
   ];
 
   const headerActions = (
@@ -348,7 +354,7 @@ export function WorkspaceInvitationsPanel({
           columns={columns}
           data={tableData}
           isLoading={isLoading}
-          rowActions={canManage ? rowActions : []}
+          rowActions={rowActions}
           emptyTitle="No invitations sent"
           emptyDescription="Invitations you send will appear here"
           emptyIcon={<Mail className="h-12 w-12" />}

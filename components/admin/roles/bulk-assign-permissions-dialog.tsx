@@ -25,6 +25,7 @@ import {
 import { apiClient } from "@/lib/api-client";
 import type { Permission, Role } from "@/types/role";
 import { isProtectedRole } from "@/lib/permissions";
+import { orderPermissionsForRevocation } from "@/lib/permission-dependencies";
 import { PermissionMultiSelect } from "./permission-multi-select";
 import { usePermissionStore } from "@/stores/permission-store";
 
@@ -64,20 +65,31 @@ export function BulkAssignPermissionsDialog({
         throw new Error("No custom or editable roles selected");
       }
 
+      // Revoke dependents before their prerequisites, one call at a time. The
+      // backend cascades each revoke to dependents (and never to shared
+      // prerequisites), so parallel or out-of-order calls would 404 on
+      // permissions an earlier revoke already cascaded away.
+      const idByName = new Map(allPermissions.map((p) => [p.name, p.id]));
+      const revokeOrder = orderPermissionsForRevocation(
+        selectedPermissionIds
+          .map((id) => allPermissions.find((p) => p.id === id)?.name)
+          .filter((name): name is string => Boolean(name)),
+      )
+        .map((name) => idByName.get(name))
+        .filter((id): id is string => Boolean(id));
+
       const results = await Promise.allSettled(
         validRoleIds.map(async (roleId) => {
           if (operation === "add") {
+            // Backend adds technical prerequisites server-side.
             return await apiClient.roles.assignPermissions(roleId, {
               permission_ids: selectedPermissionIds,
             });
-          } else {
-            // Remove permissions
-            return await Promise.all(
-              selectedPermissionIds.map((permId) =>
-                apiClient.roles.revokePermission(roleId, permId),
-              ),
-            );
           }
+          for (const permId of revokeOrder) {
+            await apiClient.roles.revokePermission(roleId, permId);
+          }
+          return { role_id: roleId, revoked: true };
         }),
       );
 
@@ -180,7 +192,12 @@ export function BulkAssignPermissionsDialog({
               <Label htmlFor="operation">Operation</Label>
               <Select
                 value={operation}
-                onValueChange={(value: "add" | "remove") => setOperation(value)}
+                onValueChange={(value: "add" | "remove") => {
+                  setOperation(value);
+                  // Add-mode selections include auto-selected prerequisites,
+                  // which must not carry over into a removal (and vice versa).
+                  setSelectedPermissionIds([]);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select operation" />
@@ -276,6 +293,7 @@ export function BulkAssignPermissionsDialog({
                 permissions={allPermissions}
                 selectedPermissionIds={selectedPermissionIds}
                 onChange={setSelectedPermissionIds}
+                applyDependencies={operation === "add"}
               />
             </div>
 

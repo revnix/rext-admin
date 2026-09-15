@@ -52,6 +52,7 @@ import {
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -624,7 +625,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     // everywhere — including the WordPress featured image. Sending a hardcoded
     // {} here used to wipe the column instead of describing the current state.
     images_data: deriveImagesData(body),
-    // media_items / links_data / schema_markup are deliberately not sent: the
+    // links_data / schema_markup are deliberately not sent: the
     // editor is not their source of truth, and sending empty values deleted
     // every ContentMedia link and the AI-generated JSON-LD on each save.
     langgraph_thread_id: threadId,
@@ -920,15 +921,22 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
         <div className="flex-1">
           {canUpdate ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
-              onClick={onEditToggle}
-              disabled={!isFinal}
-            >
-              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+                  onClick={onEditToggle}
+                  disabled={!isFinal}
+                >
+                  {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {isEditing ? "View preview mode" : "Edit content"}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <LockedFeatureTooltip message="Editing requires Editor role or above">
               <Button
@@ -944,15 +952,22 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div className="flex-1">
           {canUpdate ? (
-            <Button
-              onClick={saveContent}
-              disabled={!isFinal || isSaving || isPublishing}
-              variant="secondary"
-              size="sm"
-              className="h-8 px-2! text-xs font-bold transition-all !w-full"
-            >
-              <Save size={14} className={isSaving ? "animate-pulse" : ""} />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={saveContent}
+                  disabled={!isFinal || isSaving || isPublishing}
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                >
+                  <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Saves the content in the workspace
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <LockedFeatureTooltip message="Saving requires Editor role or above">
               <Button
@@ -968,16 +983,23 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div className="flex-1">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                disabled={!isFinal}
-                variant="secondary"
-                size="sm"
-                className="h-8 px-2! text-xs font-bold transition-all !w-full"
-              >
-                <Copy size={14} />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={!isFinal}
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                  >
+                    <Copy size={14} />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Copy content
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenuContent className="w-48" align="center">
               <DropdownMenuItem onClick={() => handleCopy("html")}>
                 Copy HTML

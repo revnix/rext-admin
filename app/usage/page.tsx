@@ -23,7 +23,9 @@ import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
  *
  * Displays detailed usage statistics and limits for the current subscription.
  *
- * **Permission Required:** `usage.read` (Admin+)
+ * **Permission Required:** none beyond sign-in; shows the caller's own
+ * subscription usage. Platform-wide usage stats live in System Monitoring
+ * behind `security.read`.
  *
  * Features:
  * - Real-time usage statistics

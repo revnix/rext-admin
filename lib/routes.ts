@@ -15,7 +15,6 @@ export const WORKSPACE_PAGES = [
   "content",
   "members",
   "knowledge",
-  "media",
   "integrations",
   "personas",
   "persona_create",
@@ -80,11 +79,6 @@ export const workspaceRoutes = {
   knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
   knowledgeDetail: (workspaceSlug: string, kbId: string) =>
     `/w/${workspaceSlug}/knowledge/${kbId}`,
-
-  /**
-   * Media route
-   */
-  media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
 
   /**
    * Integrations route
@@ -187,7 +181,6 @@ export function buildWorkspacePath(
     content: workspaceRoutes.content,
     members: workspaceRoutes.members,
     knowledge: workspaceRoutes.knowledge,
-    media: workspaceRoutes.media,
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,

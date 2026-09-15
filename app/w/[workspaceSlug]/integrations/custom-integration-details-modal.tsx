@@ -20,6 +20,8 @@ interface CustomIntegrationDetailsModalProps {
   integration: Integration | null;
   onUpdate: (updatedIntegration: Partial<Integration>) => void;
   onDelete?: () => void;
+  canUpdate: boolean;
+  canDelete: boolean;
 }
 
 export function CustomIntegrationDetailsModal({
@@ -28,6 +30,8 @@ export function CustomIntegrationDetailsModal({
   integration,
   onUpdate,
   onDelete,
+  canUpdate,
+  canDelete,
 }: CustomIntegrationDetailsModalProps) {
   const { workspace } = useWorkspace(); // Hook to get workspace ID
 
@@ -123,7 +127,8 @@ export function CustomIntegrationDetailsModal({
         <CustomIntegrationConfiguration
           integration={integration}
           onUpdate={handleConfigurationUpdate}
-          onDelete={handleConfigurationDelete}
+          onDelete={canDelete ? handleConfigurationDelete : undefined}
+          canUpdate={canUpdate}
         />
       </DialogContent>
     </Dialog>
