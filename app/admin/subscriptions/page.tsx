@@ -519,7 +519,7 @@ export default function SubscriptionAnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Trial Conversion Funnel</CardTitle>
-                  <div className="mt-3 grid grid-cols-2 items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                     <span>
                       Total Trials:{" "}
                       <Badge variant="secondary">
@@ -527,11 +527,31 @@ export default function SubscriptionAnalyticsPage() {
                       </Badge>
                     </span>
                     <span>
+                      Active:{" "}
+                      <Badge variant="outline">
+                        {trialConversion?.trials_active ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
                       Conversions:{" "}
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
                         {trialConversion?.trials_converted ?? 0}
                       </Badge>
                     </span>
+                    <span>
+                      Expired:{" "}
+                      <Badge variant="outline">
+                        {trialConversion?.trials_expired ?? 0}
+                      </Badge>
+                    </span>
+                    {trialConversion?.trials_cancelled !== undefined && (
+                      <span>
+                        Cancelled:{" "}
+                        <Badge variant="outline">
+                          {trialConversion?.trials_cancelled}
+                        </Badge>
+                      </span>
+                    )}
                     <span>
                       Conversion Rate:{" "}
                       <Badge variant="secondary">
