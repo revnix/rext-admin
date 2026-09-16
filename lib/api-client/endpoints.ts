@@ -518,8 +518,6 @@ export const ENDPOINTS = {
       `/api/v1/permissions/${permissionId}` as const,
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    delete: (permissionId: string) =>
-      `/api/v1/permissions/${permissionId}` as const,
   },
 
   /**

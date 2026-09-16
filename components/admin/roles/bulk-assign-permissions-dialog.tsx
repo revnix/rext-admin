@@ -275,9 +275,6 @@ export function BulkAssignPermissionsDialog({
                           {role.name}
                         </span>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        Level {role.hierarchy_level}
-                      </Badge>
                     </label>
                   );
                 })}

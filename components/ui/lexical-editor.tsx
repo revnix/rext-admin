@@ -60,6 +60,8 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import {
+  createContext,
+  useContext,
   useState,
   useEffect,
   useCallback,
@@ -190,6 +192,10 @@ const lexicalLog = log.forComponent("LexicalEditor");
 // ---------------------------------------------------------------------------
 const IMAGE_PLACEHOLDER_SCHEME = "rext-placeholder:";
 
+// Lets a read-only editor ask its host page to switch into Edit mode (set when
+// the viewer may edit). Absent when they may not.
+const RequestEditContext = createContext<(() => void) | undefined>(undefined);
+
 function isImagePlaceholderSrc(src: string): boolean {
   return src.startsWith(IMAGE_PLACEHOLDER_SCHEME);
 }
@@ -207,10 +213,16 @@ function ImagePlaceholderSlot({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const isEditable = editor.isEditable();
+  const onRequestEdit = useContext(RequestEditContext);
 
   const requireEditMode = useCallback(() => {
-    toast.info("Switch to Edit mode to add an image here.");
-  }, []);
+    if (onRequestEdit) {
+      onRequestEdit();
+      toast.info("Switched to Edit mode — choose your image.");
+      return;
+    }
+    toast.info("Editing requires Editor role or above.");
+  }, [onRequestEdit]);
 
   const applyImage = useCallback(
     (url: string, alt: string) => {
@@ -253,7 +265,10 @@ function ImagePlaceholderSlot({
       }
       setUploading(true);
       try {
-        const media = await apiClient.content.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
         const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
         if (!uploadedSrc) {
           toast.error("Upload succeeded but no image URL was returned.");
@@ -875,7 +890,10 @@ function ImageInsertPopover() {
       setError(null);
       setUploading(true);
       try {
-        const media = await apiClient.content.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
         const src = toAbsoluteMediaUrl(media.public_url);
         if (!src) {
           setError("Upload succeeded but no image URL was returned.");
@@ -1645,6 +1663,8 @@ interface LexicalEditorProps {
   readOnly?: boolean;
   showDebug?: boolean;
   toolbarClass?: string;
+  /** Called when a read-only editor needs Edit mode (e.g. image upload). */
+  onRequestEdit?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -1656,6 +1676,7 @@ export default function LexicalEditor({
   readOnly = false,
   showDebug = false,
   toolbarClass,
+  onRequestEdit,
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
@@ -1787,53 +1808,55 @@ export default function LexicalEditor({
 
   return (
     <div className="space-y-6">
-      <LexicalComposer initialConfig={initialConfig}>
-        <MarkdownUpdatePlugin
-          markdown={markdownOutput}
-          shouldUpdate={shouldUpdateEditor}
-          onUpdateComplete={() => setShouldUpdateEditor(false)}
-        />
-        <div
-          className={cn(
-            "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
-            readOnly
-              ? "border-none shadow-none bg-transparent"
-              : "border-border shadow-sm",
-          )}
-        >
-          {!readOnly && <ToolbarPlugin className={toolbarClass} />}
-          <div className="relative grow">
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable
-                  className={cn(
-                    "min-h-[150px] outline-none",
-                    readOnly ? "p-0 cursor-default" : "p-6",
-                  )}
-                />
-              }
-              placeholder={
-                !readOnly ? (
-                  <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
-                    Type here (Markdown supported)…
-                  </div>
-                ) : null
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <ListPlugin />
-            <LinkPlugin
-              attributes={{ target: "_blank", rel: "noopener noreferrer" }}
-            />
-            <TablePlugin hasHorizontalScroll />
-            <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-            {!readOnly && <NewTabLinkPlugin />}
-            {readOnly && <ReadOnlyLinkClickPlugin />}
-            {!readOnly && <OnChangePlugin onChange={handleChange} />}
+      <RequestEditContext.Provider value={onRequestEdit}>
+        <LexicalComposer initialConfig={initialConfig}>
+          <MarkdownUpdatePlugin
+            markdown={markdownOutput}
+            shouldUpdate={shouldUpdateEditor}
+            onUpdateComplete={() => setShouldUpdateEditor(false)}
+          />
+          <div
+            className={cn(
+              "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
+              readOnly
+                ? "border-none shadow-none bg-transparent"
+                : "border-border shadow-sm",
+            )}
+          >
+            {!readOnly && <ToolbarPlugin className={toolbarClass} />}
+            <div className="relative grow">
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable
+                    className={cn(
+                      "min-h-[150px] outline-none",
+                      readOnly ? "p-0 cursor-default" : "p-6",
+                    )}
+                  />
+                }
+                placeholder={
+                  !readOnly ? (
+                    <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
+                      Type here (Markdown supported)…
+                    </div>
+                  ) : null
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <HistoryPlugin />
+              <ListPlugin />
+              <LinkPlugin
+                attributes={{ target: "_blank", rel: "noopener noreferrer" }}
+              />
+              <TablePlugin hasHorizontalScroll />
+              <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
+              {!readOnly && <NewTabLinkPlugin />}
+              {readOnly && <ReadOnlyLinkClickPlugin />}
+              {!readOnly && <OnChangePlugin onChange={handleChange} />}
+            </div>
           </div>
-        </div>
-      </LexicalComposer>
+        </LexicalComposer>
+      </RequestEditContext.Provider>
 
       {showDebug && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

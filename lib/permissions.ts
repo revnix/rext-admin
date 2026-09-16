@@ -164,19 +164,28 @@ export const SECURITY_PERMISSIONS = {
 } as const;
 
 export const INTEGRATION_PERMISSIONS = {
-  READ: "integration.read", CREATE: "integration.create", UPDATE: "integration.update", DELETE: "integration.delete",
+  READ: "integration.read",
+  CREATE: "integration.create",
+  UPDATE: "integration.update",
+  DELETE: "integration.delete",
 } as const;
 
 export const BRAND_VOICE_PERMISSIONS = {
-  READ: "brand_voice.read", UPDATE: "brand_voice.update", DELETE: "brand_voice.delete",
+  READ: "brand_voice.read",
+  UPDATE: "brand_voice.update",
+  DELETE: "brand_voice.delete",
 } as const;
 
 export const PERSONA_PERMISSIONS = {
-  READ: "persona.read", CREATE: "persona.create", UPDATE: "persona.update", DELETE: "persona.delete",
+  READ: "persona.read",
+  CREATE: "persona.create",
+  UPDATE: "persona.update",
+  DELETE: "persona.delete",
 } as const;
 
 export const AUDIT_PERMISSIONS = {
-  READ: "audit.read", EXPORT: "audit.export",
+  READ: "audit.read",
+  EXPORT: "audit.export",
 } as const;
 
 /**
@@ -234,17 +243,4 @@ export function isProtectedRole(role: {
   is_system_role: boolean;
 }): boolean {
   return role.is_system_role || PROTECTED_WORKSPACE_ROLES.has(role.name);
-}
-
-/**
- * Whether a permission is protected from deletion by the backend.
- *
- * Mirrors `PermissionService.delete_permission` in rext-backend
- * (src/services/permission_service.py), which rejects deleting any
- * `is_system` permission even once it has been unassigned from every role.
- */
-export function isProtectedPermission(permission: {
-  is_system: boolean;
-}): boolean {
-  return permission.is_system;
 }

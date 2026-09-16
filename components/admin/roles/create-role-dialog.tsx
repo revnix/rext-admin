@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,21 @@ interface CreateRoleDialogProps {
   permissions: Permission[];
 }
 
+// Hierarchy level is no longer author-editable; new roles sit at the bottom of
+// the hierarchy, which the backend's escalation guard allows any role creator
+// to grant.
+const NEW_ROLE_HIERARCHY_LEVEL = 1;
+
+// Roles created here are always workspace roles, so platform-scoped
+// resources are not offerable.
+const PLATFORM_RESOURCES = new Set([
+  "user",
+  "role",
+  "permission",
+  "audit",
+  "support",
+]);
+
 export function CreateRoleDialog({
   open,
   onOpenChange,
@@ -37,13 +52,19 @@ export function CreateRoleDialog({
     name: "",
     display_name: "",
     description: "",
-    hierarchy_level: 1,
   });
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     [],
   );
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
+  );
+  const workspacePermissions = useMemo(
+    () =>
+      permissions.filter(
+        (p) => !PLATFORM_RESOURCES.has(p.resource.toLowerCase()),
+      ),
+    [permissions],
   );
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -52,7 +73,7 @@ export function CreateRoleDialog({
         name: formData.name.toLowerCase().replace(/\s+/g, "_"),
         display_name: formData.display_name,
         description: formData.description || undefined,
-        hierarchy_level: formData.hierarchy_level,
+        hierarchy_level: NEW_ROLE_HIERARCHY_LEVEL,
         is_workspace_role: true,
       });
 
@@ -103,7 +124,6 @@ export function CreateRoleDialog({
       name: "",
       display_name: "",
       description: "",
-      hierarchy_level: 1,
     });
     setSelectedPermissionIds([]);
     onOpenChange(false);
@@ -115,11 +135,6 @@ export function CreateRoleDialog({
     // Validation
     if (!formData.name || !formData.display_name) {
       toast.error("Name and display name are required");
-      return;
-    }
-
-    if (formData.hierarchy_level < 0 || formData.hierarchy_level > 100) {
-      toast.error("Hierarchy level must be between 0 and 100");
       return;
     }
 
@@ -189,32 +204,11 @@ export function CreateRoleDialog({
               />
             </div>
 
-            {/* Hierarchy Level */}
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level (0-100)</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.hierarchy_level}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hierarchy_level: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Higher numbers indicate higher authority. Super admin is 100.
-              </p>
-            </div>
-
             {/* Permissions */}
             <div className="space-y-2">
               <Label>Permissions</Label>
               <PermissionMultiSelect
-                permissions={permissions}
+                permissions={workspacePermissions}
                 selectedPermissionIds={selectedPermissionIds}
                 onChange={setSelectedPermissionIds}
               />

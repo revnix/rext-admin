@@ -6,9 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  updatePermissionSelection,
-} from "@/lib/permission-dependencies";
+import { updatePermissionSelection } from "@/lib/permission-dependencies";
 import type { GroupedPermissions, Permission } from "@/types/role";
 
 interface PermissionMultiSelectProps {
@@ -52,16 +50,12 @@ export function PermissionMultiSelect({
   }, [permissions]);
 
   // Group permissions by resource
-  // Hide "knowledge" (feature not in use) and "permission" (not user-manageable)
-  const HIDDEN_RESOURCES = new Set(["knowledge", "permission"]);
-
   const groupedPermissions = useMemo<GroupedPermissions>(() => {
     const filtered = permissions.filter(
       (p) =>
-        !HIDDEN_RESOURCES.has(p.resource.toLowerCase()) &&
-        (p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.resource.toLowerCase().includes(searchQuery.toLowerCase())),
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.resource.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     return filtered.reduce<GroupedPermissions>((acc, permission) => {
@@ -193,7 +187,8 @@ export function PermissionMultiSelect({
 
       {/* Selected count */}
       <div className="text-sm font-medium">
-        {selectedPermissionIds.length} permissions {disabled ? "assigned" : "selected"}
+        {selectedPermissionIds.length} permissions{" "}
+        {disabled ? "assigned" : "selected"}
       </div>
 
       {/* Permissions list */}
@@ -211,7 +206,9 @@ export function PermissionMultiSelect({
                   <Checkbox
                     id={`resource-${resource}`}
                     checked={isResourceFullySelected(resource)}
-                    onCheckedChange={() => !disabled && handleToggleResource(resource)}
+                    onCheckedChange={() =>
+                      !disabled && handleToggleResource(resource)
+                    }
                     disabled={disabled}
                     className={
                       isResourcePartiallySelected(resource)

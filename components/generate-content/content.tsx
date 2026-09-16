@@ -996,9 +996,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Copy content
-              </TooltipContent>
+              <TooltipContent side="bottom">Copy content</TooltipContent>
             </Tooltip>
             <DropdownMenuContent className="w-48" align="center">
               <DropdownMenuItem onClick={() => handleCopy("html")}>
@@ -1551,6 +1549,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                         initialValue={body}
                         onChange={onContentChange}
                         toolbarClass="top-0 z-50"
+                        onRequestEdit={
+                          canUpdate && isFinal ? onEditToggle : undefined
+                        }
                       />
                     </>
                   )}
