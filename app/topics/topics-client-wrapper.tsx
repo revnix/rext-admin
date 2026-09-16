@@ -61,7 +61,7 @@ export function TopicsClientWrapper({
 
   // Permission: can the current user delete topics in this workspace?
   const { hasPermission: canDelete } = useWorkspacePermission(
-    "topic.delete",
+    "content.delete",
     workspaceSlug,
   );
 

@@ -3,7 +3,11 @@
 import {
   BarChart3,
   DollarSign,
+  FileText,
+  Mail,
+  Monitor,
   Shield,
+  ShieldCheck,
   TrendingUp,
   UserCog,
   Users,
@@ -22,6 +26,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { usePermissionUser } from "@/hooks/use-permission";
+import {
+  AUDIT_PERMISSIONS,
+  ROLE_PERMISSIONS,
+  USER_PERMISSIONS,
+} from "@/lib/permissions";
 import type { Route } from "next";
 
 export default function AdminDashboardPage() {
@@ -43,39 +52,64 @@ export default function AdminDashboardPage() {
       icon: Shield,
       permission: "role.read",
     },
-    // {
-    //   title: "System Statistics",
-    //   description: "View system metrics and analytics",
-    //   href: "/admin/statistics",
-    //   icon: BarChart3,
-    //   permission: null, // Always visible to admins
-    // },
+    {
+      title: "Audit Logs",
+      description: "View system activity, administrative changes, and export audit trails",
+      href: "/admin/audit-logs",
+      icon: FileText,
+      permission: "audit.read",
+    },
+    {
+      title: "System Monitoring",
+      description: "Monitor system health, view error logs, and inspect performance trends",
+      href: "/admin/monitoring",
+      icon: Monitor,
+      permission: "security.read",
+    },
+    {
+      title: "Email Analytics",
+      description: "Track system email delivery events, delivery rates, and analytics",
+      href: "/admin/email-analytics",
+      icon: Mail,
+      permission: "security.read",
+    },
+    {
+      title: "Security",
+      description: "Manage account creation IP allowlists and security policies",
+      href: "/admin/security",
+      icon: ShieldCheck,
+      permission: "security.read",
+    },
     {
       title: "Subscription Analytics",
       description: "Monitor MRR, churn, trial conversion, and revenue metrics",
       href: "/admin/subscriptions",
       icon: TrendingUp,
-      permission: null, // Requires super admin (checked in page)
+      permission: "billing.read",
     },
     {
       title: "Webhook Monitoring",
       description: "Monitor webhook events and retry failed webhooks",
       href: "/admin/webhooks",
       icon: Webhook,
-      permission: null, // Requires super admin (checked in page)
+      permission: "billing.read",
     },
     {
       title: "Refund Management",
       description: "View refund history and manage refund requests",
       href: "/admin/refunds",
       icon: DollarSign,
-      permission: null, // Requires super admin (checked in page)
+      permission: "billing.read",
     },
   ];
 
   return (
     <PermissionGuard
-      permission={["audit.read", "user.read", "role.read", "system.manage"]}
+      permission={[
+        AUDIT_PERMISSIONS.READ,
+        USER_PERMISSIONS.READ,
+        ROLE_PERMISSIONS.READ,
+      ]}
       requireAll={false}
       fallback={
         <PageLayout title="Access Denied" description="Admin access required">

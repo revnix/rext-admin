@@ -92,7 +92,10 @@ async function readSessionWithoutWritingCookie(
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
   "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   "/admin/users": "user.read",
-  "/admin/monitoring": "audit.read",
+  "/admin/monitoring": "security.read",
+  "/admin/email-analytics": "security.read",
+  "/admin/security": "security.read",
+  "/admin/audit-logs": "audit.read",
   "/admin/reports": "audit.read",
 };
 

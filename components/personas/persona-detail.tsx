@@ -30,7 +30,7 @@ import {
 } from "@/hooks/use-personas";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,11 +100,11 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const persona = personaData?.persona || initialPersona;
 
   const { hasPermission: canEdit } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.UPDATE,
+    PERSONA_PERMISSIONS.UPDATE,
     workspace?.id,
   );
   const { hasPermission: canDelete } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.DELETE,
+    PERSONA_PERMISSIONS.DELETE,
     workspace?.id,
   );
 
@@ -289,13 +289,13 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
               </ConfirmationDialog>
             ) : (
               <LockedFeatureTooltip
-                permission={CONTENT_PERMISSIONS.DELETE}
+                permission={PERSONA_PERMISSIONS.DELETE}
                 message="Deleting personas requires Editor role or above"
               >
                 <Button
                   variant="outline"
                   size="sm"
-                  className="sm:w-auto text-destructive border-destructive/20"
+                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20"
                 >
                   <Trash2 size={16} className="mr-2" />
                   Delete Persona
@@ -315,7 +315,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
               </Button>
             ) : (
               <LockedFeatureTooltip
-                permission={CONTENT_PERMISSIONS.UPDATE}
+                permission={PERSONA_PERMISSIONS.UPDATE}
                 message="Editing personas requires Editor role or above"
               >
                 <Button

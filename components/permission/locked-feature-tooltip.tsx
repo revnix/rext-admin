@@ -145,7 +145,7 @@ export function LockedFeatureTooltip({
       return "Workspace Admin or Owner";
     if (perm.includes("subscription") || perm.includes("billing"))
       return "Workspace Owner";
-    if (perm.includes("content.publish") || perm.includes("content.approve"))
+    if (perm.includes("content.publish"))
       return "Editor or Admin";
     return null;
   };

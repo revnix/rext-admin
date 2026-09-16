@@ -18,7 +18,6 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
 import { PageLayout } from "@/components/page-layout";
-import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +32,7 @@ import type { License, LicenseActivation } from "@/types/license";
 import { LicenseStatus } from "@/types/license";
 import type { Route } from "next";
 
-const LICENSE_VIEW = "license.read";
+
 
 export default function LicensesPage() {
   const router = useRouter();
@@ -145,70 +144,30 @@ export default function LicensesPage() {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
-      day: "numeric",
     });
   };
 
-  const AccessDeniedFallback = (
-    <PageLayout
-      title="Access Denied"
-      description="You don't have permission to view licenses"
-    >
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            License Management Access Restricted
-          </CardTitle>
-          <CardDescription>
-            Only workspace admins and owners can view license information.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            License management contains device activation details.
-          </p>
-          <div className="bg-muted p-3 rounded-md">
-            <p className="text-xs font-mono">
-              Required permission:{" "}
-              <span className="font-semibold">license.read</span>
-            </p>
-          </div>
-          <Button onClick={() => router.push("/" as Route)} variant="outline">
-            Return to Dashboard
-          </Button>
-        </CardContent>
-      </Card>
-    </PageLayout>
-  );
-
   if (loading) {
     return (
-      <PermissionGuard
-        permission={LICENSE_VIEW}
-        fallback={AccessDeniedFallback}
-      >
-        <PageLayout
-          title="License Management"
-          description="Manage your license keys and device activations"
-        >
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading licenses...</p>
-            </div>
-          </div>
-        </PageLayout>
-      </PermissionGuard>
-    );
-  }
-
-  return (
-    <PermissionGuard permission={LICENSE_VIEW} fallback={AccessDeniedFallback}>
       <PageLayout
         title="License Management"
         description="Manage your license keys and device activations"
       >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading licenses...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout
+      title="License Management"
+      description="Manage your license keys and device activations"
+    >
         {/* Licenses List */}
         {licenses.length === 0 ? (
           <Card>
@@ -401,6 +360,5 @@ export default function LicensesPage() {
           />
         )}
       </PageLayout>
-    </PermissionGuard>
   );
 }

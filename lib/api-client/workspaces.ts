@@ -360,24 +360,14 @@ export function createWorkspacesNamespace(client: ApiClient) {
         personas?: Persona[];
       },
     ) => {
-      const payload = {
-        brand_name: data.brand_name ?? "",
-        about: data.about ?? "",
-        customer_profile: data.customer_profile ?? "",
-        selling_position: data.selling_position ?? "",
-        target_audience: data.target_audience ?? [],
-        brand_voice: data.brand_voice ?? [],
-        competitors: data.competitors ?? [],
-        content_pillar: data.content_strategy ?? [],
-        personas: data.personas ?? [],
-      };
-
+      // toBrandVoicePayload maps content_strategy -> content_pillar; pass the
+      // caller's data straight in so that mapping happens exactly once.
       const response = await client.request<{
         brand_voice: BrandVoice;
       }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toBrandVoicePayload(payload)),
+        body: JSON.stringify(toBrandVoicePayload(data)),
       });
       return validateResponse(
         updateBrandVoiceResponseSchema,

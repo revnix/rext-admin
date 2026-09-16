@@ -5,7 +5,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,7 @@ export default function CreatePersonaPage() {
   const router = useRouter();
   const createPersona = useCreatePersona(workspace?.id || "");
   const { isLoading: isPermLoading } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.CREATE,
+    PERSONA_PERMISSIONS.CREATE,
     workspaceId,
   );
 
@@ -269,7 +269,7 @@ export default function CreatePersonaPage() {
       fullWidth
     >
       <PermissionGuard
-        permission={CONTENT_PERMISSIONS.CREATE}
+        permission={PERSONA_PERMISSIONS.CREATE}
         showLoading={false}
         fallback={
           <Card className="border-destructive">
@@ -285,7 +285,7 @@ export default function CreatePersonaPage() {
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
-                  content:create
+                  persona.create
                 </code>
               </p>
             </CardContent>

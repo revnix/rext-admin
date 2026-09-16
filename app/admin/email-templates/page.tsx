@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { EmailTemplateEditor } from "@/components/workspace";
 import { apiClient, type EmailTemplate } from "@/lib/api-client";
-import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 
 const templateTypeLabels: Record<string, string> = {
   workspace_invitation: "Workspace Invitation",
@@ -168,7 +168,7 @@ export default function AdminEmailTemplatesPage() {
       title="System Email Templates"
       description="Manage system-wide email templates used across all workspaces"
       actions={
-        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={WORKSPACE_PERMISSIONS.UPDATE}>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Template

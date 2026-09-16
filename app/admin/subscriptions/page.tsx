@@ -81,7 +81,7 @@ const PlanDistributionChart = dynamic(
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
+import { BILLING_PERMISSIONS } from "@/lib/permissions";
 
 interface AnalyticsOverview {
   stats: {
@@ -395,7 +395,7 @@ export default function SubscriptionAnalyticsPage() {
       }
     >
       <PermissionGuard
-        permission={SUBSCRIPTION_PERMISSIONS.READ}
+        permission={BILLING_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

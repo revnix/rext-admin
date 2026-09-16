@@ -37,7 +37,6 @@ export function EditRoleDialog({
   const [formData, setFormData] = useState({
     display_name: "",
     description: "",
-    hierarchy_level: 1,
   });
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
@@ -47,7 +46,6 @@ export function EditRoleDialog({
       setFormData({
         display_name: role.display_name,
         description: role.description || "",
-        hierarchy_level: role.hierarchy_level,
       });
     }
   }, [role]);
@@ -59,7 +57,6 @@ export function EditRoleDialog({
       return await apiClient.roles.update(role.id, {
         display_name: formData.display_name,
         description: formData.description || undefined,
-        hierarchy_level: formData.hierarchy_level,
       });
     },
     onSuccess: async () => {
@@ -84,11 +81,6 @@ export function EditRoleDialog({
     // Validation
     if (!formData.display_name) {
       toast.error("Display name is required");
-      return;
-    }
-
-    if (formData.hierarchy_level < 0 || formData.hierarchy_level > 100) {
-      toast.error("Hierarchy level must be between 0 and 100");
       return;
     }
 
@@ -165,28 +157,6 @@ export function EditRoleDialog({
                 }
                 rows={3}
               />
-            </div>
-
-            {/* Hierarchy Level */}
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level (0-100)</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.hierarchy_level}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hierarchy_level: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                disabled={isProtected}
-              />
-              <p className="text-xs text-muted-foreground">
-                Higher numbers indicate higher authority
-              </p>
             </div>
           </div>
 

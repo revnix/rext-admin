@@ -122,38 +122,6 @@ export const invitationQueries = {
 };
 
 // ============================================================================
-// MEDIA QUERIES
-// ============================================================================
-
-export const mediaQueries = {
-  all: (workspaceId: string) => ["media", workspaceId] as const,
-  list: (workspaceId: string, params?: Record<string, unknown>) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "list", params] as const,
-      queryFn: () => apiClient.media.list(workspaceId, params),
-    }),
-  picker: (workspaceId: string, params?: Record<string, unknown>) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "picker", params] as const,
-      queryFn: () => apiClient.media.list(workspaceId, params),
-    }),
-  usage: (workspaceId: string) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "usage"] as const,
-      queryFn: () => apiClient.media.getUsage(workspaceId),
-    }),
-  mediaUsage: (workspaceId: string, mediaId: string) =>
-    queryOptions({
-      queryKey: [
-        ...mediaQueries.all(workspaceId),
-        "media-usage",
-        mediaId,
-      ] as const,
-      queryFn: () => apiClient.media.getMediaUsage(workspaceId, mediaId),
-    }),
-};
-
-// ============================================================================
 // PROFILE QUERIES
 // ============================================================================
 

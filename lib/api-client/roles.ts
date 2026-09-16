@@ -299,16 +299,5 @@ export function createRolesNamespace(client: ApiClient) {
         body: JSON.stringify(data),
       });
     },
-
-    /**
-     * Delete a permission
-     */
-    deletePermission: async (permissionId: string) => {
-      return client.request<{
-        permission_id: string;
-      }>(ENDPOINTS.PERMISSIONS.delete(permissionId), {
-        method: "DELETE",
-      });
-    },
   };
 }

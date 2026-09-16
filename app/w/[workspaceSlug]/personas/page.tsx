@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PersonaCard } from "@/components/personas/persona-card";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import type { Persona } from "@/types/workspace";
-import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import {
   Card,
@@ -27,11 +27,11 @@ export default function PersonaForgePage() {
   const personas = personasData?.personas || [];
 
   const { isLoading: isPermLoading } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.READ,
+    PERSONA_PERMISSIONS.READ,
     workspaceId,
   );
   const { hasPermission: canCreate } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.CREATE,
+    PERSONA_PERMISSIONS.CREATE,
     workspaceId,
   );
 
@@ -68,7 +68,7 @@ export default function PersonaForgePage() {
       }
     >
       <PermissionGuard
-        permission={CONTENT_PERMISSIONS.READ}
+        permission={PERSONA_PERMISSIONS.READ}
         showLoading={false}
         fallback={
           <Card className="border-destructive">
@@ -82,7 +82,7 @@ export default function PersonaForgePage() {
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
-                  content:create
+                  persona.read
                 </code>
               </p>
             </CardContent>

@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ShieldCheck,
   DollarSign,
+  FileText,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -39,7 +40,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
+import { AUDIT_PERMISSIONS, BILLING_PERMISSIONS, ROLE_PERMISSIONS, ROLES, SECURITY_PERMISSIONS, USER_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -142,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
           icon: User,
-          permission: "content.read",
+          permission: "persona.read",
         },
         {
           title: "Brand Voice",
@@ -150,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.brand_voice(currentWorkspace.slug)
             : "/",
           icon: Palette,
-          permission: "content.read",
+          permission: "brand_voice.read",
         },
         {
           title: "Members",
@@ -166,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.integrations(currentWorkspace.slug)
             : "/",
           icon: Plug,
-          permission: "workspace.read",
+          permission: "integration.read",
         },
         {
           title: "Settings",
@@ -227,39 +228,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Subscriptions",
           url: "/admin/subscriptions",
           icon: CreditCard,
-          anyPermission: ["subscription.analytics", "subscription.read"],
+          permission: BILLING_PERMISSIONS.READ,
         },
         {
           title: "Refund Management",
           url: "/admin/refunds",
           icon: DollarSign,
-          anyPermission: ["subscription.analytics", "subscription.read"],
+          permission: BILLING_PERMISSIONS.READ,
         },
         {
           title: "System Monitoring",
           url: "/admin/monitoring",
           icon: Monitor,
-          permission: "system.manage",
+          permission: SECURITY_PERMISSIONS.READ,
         },
         {
           title: "Email Analytics",
           url: "/admin/email-analytics",
           icon: Mail,
-          anyPermission: ["system.manage", "audit.read"],
+          permission: SECURITY_PERMISSIONS.READ,
         },
         {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
-          anyPermission: [
-            ADMIN_PERMISSIONS.ROLE_READ,
-            ADMIN_PERMISSIONS.PERMISSION_READ,
-          ],
+          permission: ROLE_PERMISSIONS.READ,
+        },
+        {
+          title: "Audit Logs",
+          url: "/admin/audit-logs",
+          icon: FileText,
+          permission: AUDIT_PERMISSIONS.READ,
         },
         {
           title: "Security",
           url: "/admin/security",
           icon: ShieldCheck,
+          permission: SECURITY_PERMISSIONS.READ,
         },
       ],
     },
