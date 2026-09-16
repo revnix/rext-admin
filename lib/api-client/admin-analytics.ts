@@ -67,6 +67,7 @@ export interface TrialConversionMetrics {
   trials_converted: number;
   trials_expired: number;
   trials_active: number;
+  trials_cancelled?: number;
   conversion_rate: number;
   average_trial_length_days: number;
   conversion_by_plan?: Array<{
@@ -74,6 +75,10 @@ export interface TrialConversionMetrics {
     trials: number;
     conversions: number;
     conversion_rate: number;
+  }>;
+  funnel?: Array<{
+    stage: string;
+    count: number;
   }>;
 }
 
