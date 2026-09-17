@@ -71,16 +71,34 @@ export function WorkspaceSwitcher() {
     // renamed workspace's old slug 404s straight back to /w. WorkspaceProvider
     // already does this inside /w/[slug], but not on /w, / or account pages -
     // which is exactly where the dead links were being rendered.
-    if (currentWorkspace) {
-      const serverCopy = workspaces.find((w) => w.id === currentWorkspace.id);
+    //
+    // The store can also hold nothing at all (fresh account whose create wizard
+    // was left before it navigated into the workspace) or a workspace this
+    // account can't see (deleted, or persisted from another session). The
+    // sidebar fetches permissions for currentWorkspace.id, so in both cases no
+    // workspace permissions ever load and every workspace nav item is hidden -
+    // the owner is left with Dashboard, All Workspaces and Personal. Fall back
+    // to the first accessible workspace, which is what this switcher already
+    // displays. Matching by slug keeps WorkspaceProvider's preliminary
+    // (id: "") entry on the workspace named in the URL.
+    const serverCopy = currentWorkspace
+      ? workspaces.find(
+          (w) =>
+            w.id === currentWorkspace.id || w.slug === currentWorkspace.slug,
+        )
+      : undefined;
 
-      if (
-        serverCopy &&
-        (serverCopy.slug !== currentWorkspace.slug ||
-          serverCopy.name !== currentWorkspace.name)
-      ) {
-        setCurrentWorkspace(serverCopy);
-      }
+    if (!serverCopy) {
+      setCurrentWorkspace(workspaces[0]);
+      return;
+    }
+
+    if (
+      serverCopy.slug !== currentWorkspace?.slug ||
+      serverCopy.name !== currentWorkspace?.name ||
+      serverCopy.id !== currentWorkspace?.id
+    ) {
+      setCurrentWorkspace(serverCopy);
     }
   }, [workspaces, setWorkspaceList, currentWorkspace, setCurrentWorkspace]);
 

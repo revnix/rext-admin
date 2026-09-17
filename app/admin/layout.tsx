@@ -3,7 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { useIsAdmin } from "@/hooks/use-permission";
+import { useAnyPermission, useIsAdmin } from "@/hooks/use-permission";
+import {
+  AUDIT_PERMISSIONS,
+  BILLING_PERMISSIONS,
+  ROLE_PERMISSIONS,
+  SECURITY_PERMISSIONS,
+  USER_PERMISSIONS,
+} from "@/lib/permissions";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import type { Route } from "next";
 
@@ -17,7 +24,18 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { data: session, status } = useSession();
-  const isAdmin = useIsAdmin();
+  // Admin role, or any permission that unlocks an /admin page (support holds
+  // audit.read for the Audit Logs page). proxy.ts and each page still enforce
+  // the specific permission; this only decides whether the area is entered.
+  const hasAdminRole = useIsAdmin();
+  const hasAdminPagePermission = useAnyPermission([
+    AUDIT_PERMISSIONS.READ,
+    BILLING_PERMISSIONS.READ,
+    ROLE_PERMISSIONS.READ,
+    SECURITY_PERMISSIONS.READ,
+    USER_PERMISSIONS.MANAGE,
+  ]);
+  const isAdmin = hasAdminRole || hasAdminPagePermission;
   const router = useRouter();
 
   useEffect(() => {

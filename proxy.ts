@@ -91,12 +91,15 @@ async function readSessionWithoutWritingCookie(
  */
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
   "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-  "/admin/users": "user.read",
+  "/admin/users": "user.manage",
   "/admin/monitoring": "security.read",
   "/admin/email-analytics": "security.read",
   "/admin/security": "security.read",
   "/admin/audit-logs": "audit.read",
-  "/admin/reports": "audit.read",
+  "/admin/reports": "billing.read",
+  "/admin/subscriptions": "billing.read",
+  "/admin/refunds": "billing.read",
+  "/admin/roles": "role.read",
 };
 
 const PROTECTED_ROUTE_ENTRIES = Object.entries(PROTECTED_ROUTES).sort(

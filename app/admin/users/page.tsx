@@ -135,7 +135,9 @@ export default function AdminUsersPage() {
   // Row actions are built from permissions rather than wrapped in a
   // PermissionGuard, because RowAction has no way to hide an entry.
   const canImpersonate = usePermission(USER_PERMISSIONS.IMPERSONATE);
-  const canUpdateUsers = usePermission(USER_PERMISSIONS.UPDATE);
+  // Cross-user admin actions (edit/suspend/ban) require user.manage, NOT the
+  // self-service user.update every account holds (SEC-RBAC-01/02).
+  const canManageUsers = usePermission(USER_PERMISSIONS.MANAGE);
   const canDeleteUsers = usePermission(USER_PERMISSIONS.DELETE);
   const canManageRoles = usePermission(USER_PERMISSIONS.MANAGE_ROLES);
 
@@ -489,17 +491,19 @@ export default function AdminUsersPage() {
           },
         ]
       : []),
-    ...(canUpdateUsers
+    ...(canManageUsers
       ? [
           {
-            // Edit stays available on Super Admin rows — only the
-            // account-lifecycle actions below are locked for them.
+            // SEC-RBAC-04: Super Admin rows are locked for edit too — the
+            // dialog can change email/password, and the backend refuses it.
             label: "Edit details",
             icon: <Pencil className="h-4 w-4" />,
             onClick: (row: UserData) => {
               const user = findUser(row.id);
               if (user) setDialogState({ type: "edit", user });
             },
+            disabled: isProtected,
+            disabledReason: protectedReason,
           },
           {
             label: "Activate",
@@ -574,7 +578,7 @@ export default function AdminUsersPage() {
       description="Manage system users and impersonation"
     >
       <PermissionGuard
-        permission={USER_PERMISSIONS.READ}
+        permission={USER_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
