@@ -64,10 +64,10 @@ interface PermissionTableData extends Record<string, unknown> {
   is_system: boolean;
 }
 
-// Not assignable to custom roles from this screen. workspace.create is granted
-// by the platform seed and gates workspace creation for every account; billing
-// security and permission management are platform-level, not workspace-level.
-// Built-in roles still show them.
+// workspace.create is granted by the platform seed and gates workspace creation
+// for every account, so it is never shown on this screen. billing, security and
+// permission management are platform-level, not workspace-level: not assignable
+// to custom roles, but built-in roles still show them.
 const HIDDEN_PERMISSIONS = new Set(["workspace.create"]);
 const HIDDEN_RESOURCES = new Set(["billing", "security", "permission"]);
 
@@ -124,9 +124,11 @@ export default function AdminRolesPage() {
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
   });
-  const allPermissions = permissionsData?.permissions || [];
+  const allPermissions = (permissionsData?.permissions || []).filter(
+    (p) => !HIDDEN_PERMISSIONS.has(p.name),
+  );
   const customRolePermissions = allPermissions.filter(
-    (p) => !HIDDEN_PERMISSIONS.has(p.name) && !HIDDEN_RESOURCES.has(p.resource),
+    (p) => !HIDDEN_RESOURCES.has(p.resource),
   );
 
   if (rolesError || permissionsError) {
