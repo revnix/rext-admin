@@ -54,28 +54,32 @@ export default function AdminDashboardPage() {
     },
     {
       title: "Audit Logs",
-      description: "View system activity, administrative changes, and export audit trails",
+      description:
+        "View system activity, administrative changes, and export audit trails",
       href: "/admin/audit-logs",
       icon: FileText,
       permission: "audit.read",
     },
     {
       title: "System Monitoring",
-      description: "Monitor system health, view error logs, and inspect performance trends",
+      description:
+        "Monitor system health, view error logs, and inspect performance trends",
       href: "/admin/monitoring",
       icon: Monitor,
       permission: "security.read",
     },
     {
       title: "Email Analytics",
-      description: "Track system email delivery events, delivery rates, and analytics",
+      description:
+        "Track system email delivery events, delivery rates, and analytics",
       href: "/admin/email-analytics",
       icon: Mail,
       permission: "security.read",
     },
     {
       title: "Security",
-      description: "Manage account creation IP allowlists and security policies",
+      description:
+        "Manage account creation IP allowlists and security policies",
       href: "/admin/security",
       icon: ShieldCheck,
       permission: "security.read",
@@ -107,7 +111,7 @@ export default function AdminDashboardPage() {
     <PermissionGuard
       permission={[
         AUDIT_PERMISSIONS.READ,
-        USER_PERMISSIONS.READ,
+        USER_PERMISSIONS.MANAGE,
         ROLE_PERMISSIONS.READ,
       ]}
       requireAll={false}

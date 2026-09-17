@@ -40,7 +40,14 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { AUDIT_PERMISSIONS, BILLING_PERMISSIONS, ROLE_PERMISSIONS, ROLES, SECURITY_PERMISSIONS, USER_PERMISSIONS } from "@/lib/permissions";
+import {
+  AUDIT_PERMISSIONS,
+  BILLING_PERMISSIONS,
+  ROLE_PERMISSIONS,
+  ROLES,
+  SECURITY_PERMISSIONS,
+  USER_PERMISSIONS,
+} from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -215,14 +222,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const administratorNavigationGroups: NavGroup[] = [
     {
       groupLabel: "Administration",
-      anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+      // Visibility is per-item: a role holding only audit.read (support) gets
+      // just the Audit Logs entry, not the whole admin area.
       items: [
-        { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+        {
+          title: "Dashboard",
+          url: "/admin",
+          icon: LayoutDashboard,
+          anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+        },
         {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
-          permission: USER_PERMISSIONS.READ,
+          permission: USER_PERMISSIONS.MANAGE,
         },
         {
           title: "Subscriptions",

@@ -110,6 +110,7 @@ export const ROLES = {
 // User Management
 export const USER_PERMISSIONS = {
   READ: "user.read",
+  MANAGE: "user.manage", // admin-only: list/edit/suspend/delete other accounts
   INVITE: "user.invite",
   UPDATE: "user.update",
   DELETE: "user.delete",

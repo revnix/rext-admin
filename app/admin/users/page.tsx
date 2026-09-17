@@ -574,7 +574,7 @@ export default function AdminUsersPage() {
       description="Manage system users and impersonation"
     >
       <PermissionGuard
-        permission={USER_PERMISSIONS.READ}
+        permission={USER_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
