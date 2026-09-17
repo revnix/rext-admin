@@ -81,14 +81,23 @@ describe("Permission Dependencies Logic", () => {
     });
 
     it("keeps workflow capabilities out of technical dependencies", () => {
-      expect(PERMISSION_DEPENDENCIES["content.publish"]).toEqual(["content.read"]);
-      expect(PERMISSION_DEPENDENCIES["content.create"]).toEqual(["content.read"]);
+      expect(PERMISSION_DEPENDENCIES["content.publish"]).toEqual([
+        "content.read",
+      ]);
+      expect(PERMISSION_DEPENDENCIES["content.create"]).toEqual([
+        "content.read",
+      ]);
       expect(PERMISSION_DEPENDENCIES["member.invite"]).toEqual(["member.read"]);
       expect(PERMISSION_DEPENDENCIES["role.create"]).toEqual(["role.read"]);
     });
 
     it("treats read permissions as having no prerequisites", () => {
-      for (const read of ["content.read", "member.read", "workspace.read", "role.read"]) {
+      for (const read of [
+        "content.read",
+        "member.read",
+        "workspace.read",
+        "role.read",
+      ]) {
         expect(PERMISSION_DEPENDENCIES[read]).toBeUndefined();
       }
     });
@@ -106,7 +115,12 @@ describe("Permission Dependencies Logic", () => {
 
   describe("resolvePermissionPrerequisites (Forward Auto-Selection)", () => {
     it("auto-selects content.read for every content action", () => {
-      for (const action of ["content.create", "content.update", "content.delete", "content.publish"]) {
+      for (const action of [
+        "content.create",
+        "content.update",
+        "content.delete",
+        "content.publish",
+      ]) {
         expect(sorted(resolvePermissionPrerequisites([action]))).toEqual(
           sorted([action, "content.read"]),
         );
@@ -114,59 +128,65 @@ describe("Permission Dependencies Logic", () => {
     });
 
     it("resolves member.update_role transitively", () => {
-      expect(sorted(resolvePermissionPrerequisites(["member.update_role"]))).toEqual([
-        "member.read",
-        "member.update_role",
-      ]);
+      expect(
+        sorted(resolvePermissionPrerequisites(["member.update_role"])),
+      ).toEqual(["member.read", "member.update_role"]);
     });
 
     it("resolves role.manage_permissions without role.update", () => {
-      expect(sorted(resolvePermissionPrerequisites(["role.manage_permissions"]))).toEqual([
-        "role.manage_permissions",
-        "role.read",
-      ]);
+      expect(
+        sorted(resolvePermissionPrerequisites(["role.manage_permissions"])),
+      ).toEqual(["role.manage_permissions", "role.read"]);
     });
 
     it("resolves workspace.update to workspace.read only", () => {
-      expect(sorted(resolvePermissionPrerequisites(["workspace.update"]))).toEqual([
-        "workspace.read",
-        "workspace.update",
-      ]);
+      expect(
+        sorted(resolvePermissionPrerequisites(["workspace.update"])),
+      ).toEqual(["workspace.read", "workspace.update"]);
     });
   });
 
   describe("updatePermissionSelection (Cascade Selection and Removal)", () => {
     it("auto-selects prerequisites when adding a permission", () => {
-      expect(sorted(updatePermissionSelection([], "content.publish", true))).toEqual([
-        "content.publish",
-        "content.read",
-      ]);
+      expect(
+        sorted(updatePermissionSelection([], "content.publish", true)),
+      ).toEqual(["content.publish", "content.read"]);
     });
 
     it("cascade removes dependents when removing a base prerequisite", () => {
-      const current = ["content.read", "content.create", "content.update", "content.publish"];
-      expect(updatePermissionSelection(current, "content.read", false)).toEqual([]);
+      const current = [
+        "content.read",
+        "content.create",
+        "content.update",
+        "content.publish",
+      ];
+      expect(updatePermissionSelection(current, "content.read", false)).toEqual(
+        [],
+      );
     });
 
     it("preserves shared prerequisites when removing a dependent permission", () => {
       const current = ["content.read", "content.create", "content.publish"];
-      expect(sorted(updatePermissionSelection(current, "content.publish", false))).toEqual([
-        "content.create",
-        "content.read",
-      ]);
+      expect(
+        sorted(updatePermissionSelection(current, "content.publish", false)),
+      ).toEqual(["content.create", "content.read"]);
     });
 
     it("removes dependents when removing base prerequisite", () => {
       const current = ["member.read", "member.update_role", "member.invite"];
-      expect(sorted(updatePermissionSelection(current, "member.read", false))).toEqual([]);
+      expect(
+        sorted(updatePermissionSelection(current, "member.read", false)),
+      ).toEqual([]);
     });
 
     it("cascades workspace.read removal to workspace.update only", () => {
-      const current = resolvePermissionPrerequisites(["workspace.update", "member.invite"]);
-      expect(sorted(updatePermissionSelection(current, "workspace.read", false))).toEqual([
+      const current = resolvePermissionPrerequisites([
+        "workspace.update",
         "member.invite",
-        "member.read",
       ]);
+      expect(
+        sorted(updatePermissionSelection(current, "workspace.read", false)),
+      ).toEqual(["member.invite", "member.read"]);
     });
   });
 
@@ -176,12 +196,16 @@ describe("Permission Dependencies Logic", () => {
         "member.read",
         "member.update_role",
       ]);
-      expect(order.indexOf("member.update_role")).toBeLessThan(order.indexOf("member.read"));
+      expect(order.indexOf("member.update_role")).toBeLessThan(
+        order.indexOf("member.read"),
+      );
     });
 
     it("keeps every requested permission", () => {
       const names = ["content.read", "content.publish", "content.create"];
-      expect(sorted(orderPermissionsForRevocation(names))).toEqual(sorted(names));
+      expect(sorted(orderPermissionsForRevocation(names))).toEqual(
+        sorted(names),
+      );
     });
   });
 });

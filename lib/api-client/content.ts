@@ -40,12 +40,19 @@ export interface BlogImageUpload {
 
 export function createContentNamespace(client: ApiClient) {
   return {
-    async uploadBlogImage(workspaceId: string, file: File): Promise<BlogImageUpload> {
+    async uploadBlogImage(
+      workspaceId: string,
+      file: File,
+    ): Promise<BlogImageUpload> {
       const formData = new FormData();
       formData.append("file", file);
-      return client.request<BlogImageUpload>(ENDPOINTS.CONTENT.uploadBlogImage(workspaceId), {
-        method: "POST", body: formData,
-      });
+      return client.request<BlogImageUpload>(
+        ENDPOINTS.CONTENT.uploadBlogImage(workspaceId),
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
     },
     /**
      * List content for workspace

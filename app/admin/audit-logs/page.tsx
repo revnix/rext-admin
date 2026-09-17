@@ -132,7 +132,9 @@ export default function AuditLogsPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">audit.read</code>
+                <code className="text-xs bg-muted px-1 rounded">
+                  audit.read
+                </code>
               </p>
             </CardContent>
           </Card>

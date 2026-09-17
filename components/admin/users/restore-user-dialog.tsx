@@ -48,11 +48,13 @@ export function RestoreUserDialog({
           const filtered = users.filter((u) => u.id !== restoredUser.id);
 
           // If this is page 1 (or no page present), put restored user at front
-          const page = Array.isArray(key) && key.length > 1 ? key[1] : undefined;
+          const page =
+            Array.isArray(key) && key.length > 1 ? key[1] : undefined;
           if (!page || page === 1) {
             filtered.unshift(restoredUser);
             // If paginated, ensure we don't exceed page size by trimming
-            const perPage = Array.isArray(key) && key.length > 2 ? key[2] : undefined;
+            const perPage =
+              Array.isArray(key) && key.length > 2 ? key[2] : undefined;
             if (perPage && filtered.length > Number(perPage)) {
               filtered.length = Number(perPage);
             }

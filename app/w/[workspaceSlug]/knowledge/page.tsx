@@ -62,9 +62,7 @@ export default function WorkspaceKnowledgePage() {
 
   const handleRowClick = (kb: KnowledgeBase) => {
     if (!workspace?.slug) return;
-    router.push(
-      `/w/${workspace.slug}/knowledge/${kb.id}` as Route,
-    );
+    router.push(`/w/${workspace.slug}/knowledge/${kb.id}` as Route);
   };
 
   // Calculate stats

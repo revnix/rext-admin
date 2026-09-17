@@ -30,10 +30,20 @@ import { INTEGRATION_PERMISSIONS } from "@/lib/permissions";
 
 export default function IntegrationsPage() {
   const { workspace } = useWorkspace();
-  const { hasPermission: canRead, isLoading: isPermLoading } = useWorkspacePermission(INTEGRATION_PERMISSIONS.READ, workspace?.id);
-  const { hasPermission: canCreate } = useWorkspacePermission(INTEGRATION_PERMISSIONS.CREATE, workspace?.id);
-  const { hasPermission: canUpdate } = useWorkspacePermission(INTEGRATION_PERMISSIONS.UPDATE, workspace?.id);
-  const { hasPermission: canDelete } = useWorkspacePermission(INTEGRATION_PERMISSIONS.DELETE, workspace?.id);
+  const { hasPermission: canRead, isLoading: isPermLoading } =
+    useWorkspacePermission(INTEGRATION_PERMISSIONS.READ, workspace?.id);
+  const { hasPermission: canCreate } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.CREATE,
+    workspace?.id,
+  );
+  const { hasPermission: canUpdate } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.UPDATE,
+    workspace?.id,
+  );
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.DELETE,
+    workspace?.id,
+  );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
