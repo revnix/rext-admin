@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,26 @@ export function BulkAssignPermissionsDialog({
   );
 
   const assignableRoles = roles.filter((r) => !isProtectedRole(r));
+
+  useEffect(() => {
+    if (selectedRoleIds.length === 0) {
+      setSelectedPermissionIds([]);
+      return;
+    }
+
+    const assignedPermissionIds = new Set<string>();
+    for (const roleId of selectedRoleIds) {
+      const selectedRole = roles.find((role) => role.id === roleId) as
+        | (Role & { permissions?: Array<{ id: string }> })
+        | undefined;
+
+      for (const permission of selectedRole?.permissions ?? []) {
+        assignedPermissionIds.add(permission.id);
+      }
+    }
+
+    setSelectedPermissionIds(Array.from(assignedPermissionIds));
+  }, [roles, selectedRoleIds]);
 
   const bulkMutation = useMutation({
     mutationFn: async () => {

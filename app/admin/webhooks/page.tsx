@@ -125,7 +125,9 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
     <>
       <TableRow
         className={
-          event.status === "failed" ? "bg-red-50 dark:bg-gray-600" : ""
+          event.status === "failed"
+            ? "bg-red-50/80 transition-colors hover:bg-red-100/90 dark:bg-red-950/20 dark:hover:bg-red-950/30"
+            : "hover:bg-muted/50"
         }
       >
         <TableCell className="font-medium">{event.event_name}</TableCell>

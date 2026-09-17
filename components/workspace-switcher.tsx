@@ -199,11 +199,10 @@ export function WorkspaceSwitcher() {
                   <p className="text-sm font-medium text-foreground mb-1">
                     No workspaces yet
                   </p>
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <p className="text-xs text-muted-foreground">
                     Create your first workspace to get started
                   </p>
                 </div>
-                <DropdownMenuSeparator />
               </>
             ) : (
               <>

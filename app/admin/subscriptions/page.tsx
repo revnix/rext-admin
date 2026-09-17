@@ -420,7 +420,7 @@ export default function SubscriptionAnalyticsPage() {
             <SubscriptionKPIs stats={stats} growthMetrics={growthMetrics} />
           )}
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Revenue Breakdown</CardTitle>
@@ -432,7 +432,7 @@ export default function SubscriptionAnalyticsPage() {
                     <Loader2 className="h-5 w-5 animate-spin" />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 grid-cols-2 gap-4">
                     {[
                       [
                         "New",
@@ -534,7 +534,10 @@ export default function SubscriptionAnalyticsPage() {
                     </span>
                     <span>
                       Conversions:{" "}
-                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                      <Badge
+                        variant="secondary"
+                        className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                      >
                         {trialConversion?.trials_converted ?? 0}
                       </Badge>
                     </span>

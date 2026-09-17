@@ -373,26 +373,29 @@ export default function AdminUsersPage() {
                 <TooltipContent>Platform-wide role</TooltipContent>
               </Tooltip>
             ))}
-            {workspaceRoles.map(({ role: r, workspaces }) => (
-              <Tooltip key={`ws-${r.role_id}`}>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="outline"
-                    className="text-[11px] font-medium px-1.5 py-0.5 border-dashed cursor-default"
-                  >
-                    {r.display_name}
+            {workspaceRoles.map(({ role: r, workspaces }) => {
+              const isWorkspaceOwner = r.display_name === "Workspace Owner";
+              return (
+                <Tooltip key={`ws-${r.role_id}`}>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant={isWorkspaceOwner ? "secondary" : "outline"}
+                      className={`text-[11px] font-medium px-1.5 py-0.5 ${isWorkspaceOwner ? "cursor-default" : "border-dashed cursor-default"}`}
+                    >
+                      {r.display_name}
+                      {workspaces.length > 1
+                        ? ` in ${workspaces.length} workspaces`
+                        : ""}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
                     {workspaces.length > 1
-                      ? ` in ${workspaces.length} workspaces`
-                      : ""}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  {workspaces.length > 1
-                    ? `${r.display_name} in ${workspaces.length} workspaces: ${workspaces.join(", ")}`
-                    : `${r.display_name} in workspace: ${workspaces[0]}`}
-                </TooltipContent>
-              </Tooltip>
-            ))}
+                      ? `${r.display_name} in ${workspaces.length} workspaces: ${workspaces.join(", ")}`
+                      : `${r.display_name} in workspace: ${workspaces[0]}`}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         );
       },

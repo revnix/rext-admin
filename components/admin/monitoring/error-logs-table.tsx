@@ -315,7 +315,7 @@ export function ErrorLogsTable({
       {/* Error Detail Dialog */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100%-1rem)] max-w-3xl max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40">
             <DialogHeader>
               <DialogTitle>Error Details</DialogTitle>
               <DialogDescription>

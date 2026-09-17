@@ -370,9 +370,11 @@ export function ManageUserRolesDialog({
               <Select
                 value={selectedRoleId}
                 onValueChange={setSelectedRoleId}
-                disabled={allRolesLoading || busy}
+                disabled={
+                  allRolesLoading || busy || availableRoles.length === 0
+                }
               >
-                <SelectTrigger id="role" className="flex-1">
+                <SelectTrigger id="role" className="flex-1 min-w-0">
                   <SelectValue
                     placeholder={
                       allRolesLoading
@@ -399,8 +401,10 @@ export function ManageUserRolesDialog({
               <Button
                 type="button"
                 onClick={() => assignMutation.mutate()}
-                disabled={!selectedRoleId || busy}
-                className="sm:w-auto"
+                disabled={
+                  !selectedRoleId || busy || availableRoles.length === 0
+                }
+                className="shrink-0 sm:w-auto h-9"
               >
                 {assignMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
