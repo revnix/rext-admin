@@ -224,6 +224,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       groupLabel: "Administration",
       // Visibility is per-item: a role holding only audit.read (support) gets
       // just the Audit Logs entry, not the whole admin area.
+      // Admin pages are global-scoped (proxy.ts); a workspace grant of the
+      // same permission must not surface them.
+      globalOnly: true,
       items: [
         {
           title: "Dashboard",

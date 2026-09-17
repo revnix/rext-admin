@@ -78,6 +78,14 @@ export interface NavGroup {
   items: NavItem[];
 
   /**
+   * Check item permissions against the user's global permissions only.
+   * By default an item is also shown when the permission is held in ANY
+   * workspace; admin pages are global-scoped (see proxy.ts), so a workspace
+   * grant must not surface them.
+   */
+  globalOnly?: boolean;
+
+  /**
    * Required permission to view entire group
    */
   permission?: string;
