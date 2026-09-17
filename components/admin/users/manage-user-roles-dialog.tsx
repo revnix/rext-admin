@@ -67,6 +67,21 @@ export function isPlatformFloor(assignment: {
   return assignment.workspace_id === null && assignment.role_name === "user";
 }
 
+/**
+ * Rows role management never touches: the platform floor and the workspace
+ * owner (ownership lives on the workspace and only moves via transfer).
+ */
+function immutableReason(assignment: {
+  role_name: string;
+  workspace_id: string | null;
+}): string | undefined {
+  if (isPlatformFloor(assignment))
+    return "Every account keeps the platform-wide User role";
+  if (assignment.role_name === "workspace_owner")
+    return "Transfer workspace ownership instead";
+  return undefined;
+}
+
 export function assignableRoles<T extends AssignableRole>(
   allRoles: T[],
   assigned: UserRoleAssignment[],
@@ -78,7 +93,9 @@ export function assignableRoles<T extends AssignableRole>(
       .map((r) => r.role_id),
   );
   return allRoles
-    .filter((role) => !takenInScope.has(role.id))
+    .filter(
+      (role) => !takenInScope.has(role.id) && role.name !== "workspace_owner",
+    )
     .sort((a, b) => b.hierarchy_level - a.hierarchy_level);
 }
 
@@ -151,6 +168,11 @@ export function ManageUserRolesDialog({
     [allRoles, assigned, scopeWorkspaceId],
   );
 
+  // One role per workspace: assigning here replaces whatever is held.
+  const heldInWorkspace = scopeWorkspaceId
+    ? assigned.find((r) => r.workspace_id === scopeWorkspaceId)
+    : undefined;
+
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["user-roles", user?.id] }),
@@ -184,7 +206,9 @@ export function ManageUserRolesDialog({
     onSuccess: async (data) => {
       toast.success(
         data.workspace_name
-          ? `${data.role_display_name} assigned in ${data.workspace_name}`
+          ? heldInWorkspace
+            ? `${heldInWorkspace.role_display_name} replaced with ${data.role_display_name} in ${data.workspace_name}`
+            : `${data.role_display_name} assigned in ${data.workspace_name}`
           : `${data.role_display_name} assigned platform-wide`,
       );
       setSelectedRoleId("");
@@ -298,12 +322,8 @@ export function ManageUserRolesDialog({
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive flex-shrink-0"
-                      disabled={busy || isPlatformFloor(assignment)}
-                      title={
-                        isPlatformFloor(assignment)
-                          ? "Every account keeps the platform-wide User role"
-                          : undefined
-                      }
+                      disabled={busy || Boolean(immutableReason(assignment))}
+                      title={immutableReason(assignment)}
                       onClick={() => revokeMutation.mutate(assignment)}
                     >
                       {revokeMutation.isPending &&
@@ -366,6 +386,15 @@ export function ManageUserRolesDialog({
                 ? "Assign a platform role"
                 : "Assign a role in this workspace"}
             </Label>
+            {heldInWorkspace && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  This user already has the {heldInWorkspace.role_display_name}{" "}
+                  role in this workspace. Assigning a new role will replace it.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col sm:flex-row gap-2">
               <Select
                 value={selectedRoleId}
@@ -411,7 +440,7 @@ export function ManageUserRolesDialog({
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
                 )}
-                Assign
+                {heldInWorkspace ? "Replace" : "Assign"}
               </Button>
             </div>
 
