@@ -91,16 +91,16 @@ export function GeneralInfoSection() {
         // Update TanStack Query cache for detail query so reopening Settings page shows updated URL & info
         queryClient.setQueryData(
           ["workspaces", "detail", response.workspace.slug],
-          response
+          response,
         );
         queryClient.setQueryData(
           ["workspaces", "detail", response.workspace.id],
-          response
+          response,
         );
         if (workspace.slug && workspace.slug !== response.workspace.slug) {
           queryClient.setQueryData(
             ["workspaces", "detail", workspace.slug],
-            response
+            response,
           );
         }
       }

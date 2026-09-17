@@ -566,13 +566,14 @@ export default function SubscriptionAnalyticsPage() {
               </span>
               <span>
                 Active:{" "}
-                <Badge variant="outline">
-                  {trialConversion.trials_active}
-                </Badge>
+                <Badge variant="outline">{trialConversion.trials_active}</Badge>
               </span>
               <span>
                 Conversions:{" "}
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                <Badge
+                  variant="secondary"
+                  className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                >
                   {trialConversion.trials_converted}
                 </Badge>
               </span>

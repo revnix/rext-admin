@@ -66,7 +66,9 @@ export function ManageRolePermissionsDialog({
         throw new Error("Protected role permissions cannot be modified");
       }
       if (!canManage) {
-        throw new Error("You do not have permission to modify role permissions");
+        throw new Error(
+          "You do not have permission to modify role permissions",
+        );
       }
 
       // Use atomic single-transaction update endpoint
@@ -126,8 +128,8 @@ export function ManageRolePermissionsDialog({
                 </>
               ) : isReadOnly ? (
                 <>
-                  Permissions assigned to{" "}
-                  <strong>{role.display_name}</strong> (Read-Only)
+                  Permissions assigned to <strong>{role.display_name}</strong>{" "}
+                  (Read-Only)
                 </>
               ) : (
                 <>
@@ -142,7 +144,8 @@ export function ManageRolePermissionsDialog({
             <div className="my-3 p-3 text-sm rounded-md bg-muted text-muted-foreground flex items-center gap-2 border">
               <AlertCircle className="h-4 w-4 shrink-0 text-primary" />
               <span>
-                This is a built-in system role. Assigned permissions are fixed and read-only.
+                This is a built-in system role. Assigned permissions are fixed
+                and read-only.
               </span>
             </div>
           )}
@@ -158,10 +161,7 @@ export function ManageRolePermissionsDialog({
 
           <DialogFooter>
             {isReadOnly ? (
-              <Button
-                type="button"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
             ) : (
@@ -174,10 +174,7 @@ export function ManageRolePermissionsDialog({
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={updateMutation.isPending}
-                >
+                <Button type="submit" disabled={updateMutation.isPending}>
                   {updateMutation.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}

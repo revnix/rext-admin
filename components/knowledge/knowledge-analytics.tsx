@@ -144,7 +144,7 @@ export function KnowledgeAnalytics({
 
   if (isLoading) {
     return (
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {Array.from({ length: 4 }, (_, _index) => (
           <Card key={`analytics-skeleton-${crypto.randomUUID()}`}>
             <CardHeader>
@@ -180,7 +180,7 @@ export function KnowledgeAnalytics({
   const recentItems = analytics.recentItems;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold">

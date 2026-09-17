@@ -97,6 +97,7 @@ export function WorkspaceMembersPanel({
   const {
     data: membersResponse,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -156,7 +157,9 @@ export function WorkspaceMembersPanel({
 
     const isOwner = Boolean(
       member.is_owner ||
-      (workspace && (workspace.user_id === member.user_id || (workspace as any).owner_id === member.user_id))
+        (workspace &&
+          (workspace.user_id === member.user_id ||
+            workspace.owner_id === member.user_id)),
     );
 
     return {
@@ -310,10 +313,13 @@ export function WorkspaceMembersPanel({
         variant="outline"
         size="sm"
         onClick={() => refetch()}
-        disabled={isLoading}
+        disabled={isLoading || isFetching}
         className="shrink-0 w-[29%] sm:w-auto"
+        aria-label="Refresh members"
       >
-        <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        <RefreshCw
+          className={`h-4 w-4 ${isLoading || isFetching ? "animate-spin" : ""}`}
+        />
       </Button>
       <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
