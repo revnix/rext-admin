@@ -100,6 +100,9 @@ export function WorkspaceCreateWizard() {
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
 
   // Form for details step
   const form = useForm<WorkspaceFormData>({
@@ -178,6 +181,13 @@ export function WorkspaceCreateWizard() {
       // Store workspace IDs
       setWorkspaceId(workspace.id);
       setWorkspaceSlug(workspace.slug);
+
+      // crudStore.createWorkspace doesn't touch the context store, and the
+      // switcher's list query stays stale for 2 minutes. Until now nothing set
+      // currentWorkspace unless the user sat through the pipeline to the final
+      // redirect, so leaving early left the sidebar with no workspace nav.
+      setCurrentWorkspace(workspace);
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
       analytics.track(
         isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
