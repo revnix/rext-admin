@@ -34,14 +34,18 @@ export function RestoreUserDialog({
       return apiClient.users.restoreUser(user.id);
     },
     onSuccess: (restoredUser) => {
+      if (!restoredUser) return;
+
       toast.success("User restored");
 
       // Update any cached "admin-users" queries: remove duplicates and
       // prepend the restored user to page 1 so it appears at the top.
-      const entries = queryClient.getQueriesData(["admin-users"]);
-      entries.forEach(([key, data]) => {
+      const entries = queryClient.getQueriesData({
+        queryKey: ["admin-users"],
+      });
+      entries.forEach(([key]) => {
         // key is the query key array, e.g. ["admin-users", page, pageSize, ...]
-        queryClient.setQueryData(key as unknown as string[], (old: any) => {
+        queryClient.setQueryData(key, (old: any) => {
           if (!old || !old.users) return old;
           const users: any[] = Array.isArray(old.users) ? [...old.users] : [];
           // Remove any existing instance of the restored user
