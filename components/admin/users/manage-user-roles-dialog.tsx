@@ -55,7 +55,7 @@ export const PLATFORM_SCOPE = "platform";
  * The platform-wide `user` role every account keeps.
  *
  * It carries AuthService.DEFAULT_PERMISSIONS — the permissions that mean
- * something without a workspace (own profile, billing, workspace.create) — so
+ * something without a workspace (own profile, billing, licenses) — so
  * revoking it leaves an account that cannot read itself. RoleService.revoke_role
  * refuses it server-side; this only stops the UI offering a button that fails.
  * Other platform roles (admin, support) stay revocable so admins can be demoted.
@@ -92,10 +92,15 @@ export function assignableRoles<T extends AssignableRole>(
       .filter((r) => (r.workspace_id ?? null) === workspaceId)
       .map((r) => r.role_id),
   );
+  const isWorkspaceScope = workspaceId !== null;
   return allRoles
-    .filter(
-      (role) => !takenInScope.has(role.id) && role.name !== "workspace_owner",
-    )
+    .filter((role) => {
+      if (takenInScope.has(role.id) || role.name === "workspace_owner") {
+        return false;
+      }
+      const isWorkspaceRole = Boolean(role.is_workspace_role);
+      return isWorkspaceScope ? isWorkspaceRole : !isWorkspaceRole;
+    })
     .sort((a, b) => b.hierarchy_level - a.hierarchy_level);
 }
 
@@ -172,6 +177,10 @@ export function ManageUserRolesDialog({
   const heldInWorkspace = scopeWorkspaceId
     ? assigned.find((r) => r.workspace_id === scopeWorkspaceId)
     : undefined;
+
+  const isWorkspaceOwner =
+    Boolean(scopeWorkspaceId) &&
+    heldInWorkspace?.role_name === "workspace_owner";
 
   const invalidate = async () => {
     await Promise.all([
@@ -381,77 +390,90 @@ export function ManageUserRolesDialog({
               </SelectContent>
             </Select>
 
-            <Label htmlFor="role">
-              {selectedScope === PLATFORM_SCOPE
-                ? "Assign a platform role"
-                : "Assign a role in this workspace"}
-            </Label>
-            {heldInWorkspace && (
+            {isWorkspaceOwner ? (
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  This user already has the {heldInWorkspace.role_display_name}{" "}
-                  role in this workspace. Assigning a new role will replace it.
+                  This user is the Workspace Owner of this workspace. Workspace
+                  owner role cannot be changed here. Transfer workspace
+                  ownership instead.
                 </AlertDescription>
               </Alert>
-            )}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Select
-                value={selectedRoleId}
-                onValueChange={setSelectedRoleId}
-                disabled={
-                  allRolesLoading || busy || availableRoles.length === 0
-                }
-              >
-                <SelectTrigger id="role" className="flex-1 min-w-0">
-                  <SelectValue
-                    placeholder={
-                      allRolesLoading
-                        ? "Loading roles..."
-                        : availableRoles.length === 0
-                          ? "Every role is already assigned"
-                          : "Select a role"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRoles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      <span className="flex items-center gap-2">
-                        {role.display_name}
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {role.name}
-                        </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                onClick={() => assignMutation.mutate()}
-                disabled={
-                  !selectedRoleId || busy || availableRoles.length === 0
-                }
-                className="shrink-0 sm:w-auto h-9"
-              >
-                {assignMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
+            ) : (
+              <>
+                <Label htmlFor="role">
+                  {selectedScope === PLATFORM_SCOPE
+                    ? "Assign a platform role"
+                    : "Assign a role in this workspace"}
+                </Label>
+                {heldInWorkspace && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      This user already has the {heldInWorkspace.role_display_name}{" "}
+                      role in this workspace. Assigning a new role will replace it.
+                    </AlertDescription>
+                  </Alert>
                 )}
-                {heldInWorkspace ? "Replace" : "Assign"}
-              </Button>
-            </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select
+                    value={selectedRoleId}
+                    onValueChange={setSelectedRoleId}
+                    disabled={
+                      allRolesLoading || busy || availableRoles.length === 0
+                    }
+                  >
+                    <SelectTrigger id="role" className="flex-1 min-w-0">
+                      <SelectValue
+                        placeholder={
+                          allRolesLoading
+                            ? "Loading roles..."
+                            : availableRoles.length === 0
+                              ? "Every role is already assigned"
+                              : "Select a role"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          <span className="flex items-center gap-2">
+                            {role.display_name}
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {role.name}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    onClick={() => assignMutation.mutate()}
+                    disabled={
+                      !selectedRoleId || busy || availableRoles.length === 0
+                    }
+                    className="shrink-0 sm:w-auto h-9"
+                  >
+                    {assignMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    {heldInWorkspace ? "Replace" : "Assign"}
+                  </Button>
+                </div>
 
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                {selectedScope === PLATFORM_SCOPE
-                  ? "A platform-wide role applies everywhere but does not appear on any workspace's Members screen, and grants no workspace-level permissions. Pick a workspace above to do that."
-                  : "This role applies only inside the selected workspace and will show on its Members screen. It does not grant platform-level permissions."}
-              </AlertDescription>
-            </Alert>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {selectedScope === PLATFORM_SCOPE
+                      ? "A platform-wide role applies everywhere but does not appear on any workspace's Members screen, and grants no workspace-level permissions. Pick a workspace above to do that."
+                      : "This role applies only inside the selected workspace and will show on its Members screen. It does not grant platform-level permissions."}
+                  </AlertDescription>
+                </Alert>
+              </>
+            )}
           </div>
         </div>
 

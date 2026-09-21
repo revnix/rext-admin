@@ -8,6 +8,7 @@ import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import {
+  AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
   AUTH_SESSION_TOKEN_SWAP_ACTION,
   AUTH_SESSION_UPDATE_ACTION,
   getPrimaryRole,
@@ -246,6 +247,52 @@ const REFRESH_RETRY_DELAYS_MS = [300, 800];
 // NOTE: process-local only — does not de-dupe across multiple server
 // instances, only concurrent calls within this one Node process.
 const inFlightRefreshes = new Map<string, Promise<JWT>>();
+
+/**
+ * Re-read platform-wide role and permissions from the backend.
+ *
+ * An admin can change a user's platform role at any time, but the session
+ * keeps what was captured at login until the next token rotation. This uses
+ * the current access token only — no refresh-token rotation, so it cannot race
+ * refreshAccessToken(). Any failure keeps the existing values; it never signs
+ * the user out.
+ */
+async function syncPlatformPermissions(token: JWT): Promise<JWT> {
+  if (!token.accessToken) return token;
+  try {
+    const response = await fetch(
+      `${authApiBaseUrl}/api/v1/user/me/permissions`,
+      {
+        headers: { Authorization: `Bearer ${token.accessToken}` },
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) return token;
+
+    const body = await response.json();
+    const data = body?.data ?? body;
+    if (!Array.isArray(data?.permissions) || !Array.isArray(data?.roles)) {
+      return token;
+    }
+    // Same scope as login: global roles only, not workspace-scoped ones.
+    const roles = (
+      data.roles as { name: string; workspace_id?: string | null }[]
+    )
+      .filter((role) => !role.workspace_id)
+      .map((role) => role.name);
+
+    return {
+      ...token,
+      role: getPrimaryRole({ roles }),
+      permissions: data.permissions,
+    };
+  } catch (error) {
+    log.warn("[Auth] Permission sync failed; keeping existing permissions", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return token;
+  }
+}
 
 /**
  * Refresh the access token using the refresh token.
@@ -601,6 +648,15 @@ export default {
             return { ...token, error: "OAuthBackendError" };
           }
         }
+
+        // A fresh, successful sign-in must not inherit a stale `error` left
+        // over from a still-present-but-dead cookie (e.g. the middleware's
+        // `authorized()` callback redirects to /login on a refresh failure
+        // without clearing the session cookie). Without this, a brand-new
+        // login keeps carrying the old RefreshAccessTokenError/OAuthBackendError
+        // flag, and the very next navigation bounces the user right back to
+        // /login even though they just authenticated successfully.
+        token.error = undefined;
       }
 
       const requestedBackendRefresh =
@@ -611,6 +667,14 @@ export default {
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
           AUTH_SESSION_TOKEN_SWAP_ACTION;
+
+      if (
+        trigger === "update" &&
+        (session as { authAction?: string } | undefined)?.authAction ===
+          AUTH_SESSION_SYNC_PERMISSIONS_ACTION
+      ) {
+        return await syncPlatformPermissions(token);
+      }
 
       // Token replacement is limited to the explicit impersonation action;
       // arbitrary session update payloads cannot overwrite credentials.

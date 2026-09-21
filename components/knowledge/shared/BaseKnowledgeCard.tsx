@@ -101,6 +101,7 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
               </CardDescription>
             </div>
           </div>
+          {(regularActions.length > 0 || deleteAction) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -162,6 +163,7 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
       </CardHeader>
 

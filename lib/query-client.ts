@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api-client/core";
+import { redirectToLogin } from "@/lib/auth-utils";
 
 /**
  * Create a new QueryClient instance with smart retry and caching defaults.
@@ -25,6 +26,17 @@ export function makeQueryClient() {
             return false;
           }
           return failureCount < 2;
+        },
+
+        // Global safety net for unhandled auth errors: bounce to login instead of throwing to ErrorBoundary
+        throwOnError: (error) => {
+          if (error instanceof ApiError && error.statusCode === 401) {
+            if (typeof window !== "undefined") {
+              redirectToLogin("SessionExpired");
+            }
+            return false;
+          }
+          return false;
         },
 
         // Exponential backoff: 1s, 2s (capped at 3s)

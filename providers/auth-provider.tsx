@@ -2,6 +2,7 @@
 
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
+import { PermissionSync } from "@/components/auth/permission-sync";
 import { SessionTimeoutWarning } from "@/components/auth/session-timeout-warning";
 import { useEffect } from "react";
 
@@ -36,6 +37,7 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
     >
       {children}
       <SessionTimeoutWarning />
+      <PermissionSync />
     </SessionProvider>
   );
 }
