@@ -52,31 +52,17 @@ export const PLATFORM_SCOPE = "platform";
  * same role can still be needed in the other scope.
  */
 /**
- * The platform-wide `user` role every account keeps.
+ * Rows role management never touches: the workspace owner (ownership lives
+ * on the workspace and only moves via transfer).
  *
- * It carries AuthService.DEFAULT_PERMISSIONS — the permissions that mean
- * something without a workspace (own profile, billing, licenses) — so
- * revoking it leaves an account that cannot read itself. RoleService.revoke_role
- * refuses it server-side; this only stops the UI offering a button that fails.
- * Other platform roles (admin, support) stay revocable so admins can be demoted.
- */
-export function isPlatformFloor(assignment: {
-  role_name: string;
-  workspace_id: string | null;
-}): boolean {
-  return assignment.workspace_id === null && assignment.role_name === "user";
-}
-
-/**
- * Rows role management never touches: the platform floor and the workspace
- * owner (ownership lives on the workspace and only moves via transfer).
+ * The former platform-wide `user` floor role has been removed from the
+ * backend, so platform roles (admin, support) are all revocable and admins
+ * can be demoted.
  */
 function immutableReason(assignment: {
   role_name: string;
   workspace_id: string | null;
 }): string | undefined {
-  if (isPlatformFloor(assignment))
-    return "Every account keeps the platform-wide User role";
   if (assignment.role_name === "workspace_owner")
     return "Transfer workspace ownership instead";
   return undefined;

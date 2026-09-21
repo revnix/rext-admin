@@ -44,7 +44,6 @@ export const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   "integration.update": ["integration.read"],
   "integration.delete": ["integration.read"],
   "brand_voice.update": ["brand_voice.read"],
-  "brand_voice.delete": ["brand_voice.read"],
   "persona.create": ["persona.read"],
   "persona.update": ["persona.read"],
   "persona.delete": ["persona.read"],
