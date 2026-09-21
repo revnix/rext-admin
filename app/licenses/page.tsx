@@ -13,7 +13,6 @@
  */
 
 import { Loader2, Plus, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
@@ -30,10 +29,8 @@ import {
 import { apiClient } from "@/lib/api-client";
 import type { License, LicenseActivation } from "@/types/license";
 import { LicenseStatus } from "@/types/license";
-import type { Route } from "next";
 
 export default function LicensesPage() {
-  const router = useRouter();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLicense, setExpandedLicense] = useState<string | null>(null);

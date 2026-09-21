@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { PersonasGrid, PersonaSelection } from "@/components/workspace";
+import { PersonaSelection } from "@/components/workspace";
 import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice, Persona } from "@/types/workspace";
 import { useSubscriptionStore } from "@/stores/subscription-store";

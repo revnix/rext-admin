@@ -71,6 +71,7 @@ import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
+import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
 import { Skeleton } from "../ui/skeleton";
 
 const TAG_SKELETON_KEYS = Array.from(
@@ -369,7 +370,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     readabilityScore,
     trustScore,
     generatedContent,
-    seoScore,
+    seoScore: rawSeoScore,
     isEditing,
     userKeyword,
     outline,
@@ -379,11 +380,23 @@ function ContentEditorInner(props: ContentEditorProps) {
     pipelineSteps = [],
   } = props;
 
+  // JSON-LD is not part of content-level on-page SEO: hide those findings and
+  // compensate the score. Idempotent — results the backend already filtered
+  // pass through unchanged.
+  const seoScore = useMemo(
+    () => excludeJsonLdFromSeoResult(rawSeoScore),
+    [rawSeoScore],
+  );
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
-  const displayTitle = allContent?.meta_title || "";
+  // The article title is `title` -- the exact title the user selected, locked by
+  // the backend. It used to read `meta_title`, a separately model-written SEO
+  // field, so the editor showed (and Save/Publish/Schedule wrote back as the
+  // article title) a different title from the one the user picked.
+  const displayTitle = allContent?.title || allContent?.meta_title || "";
   const body = generatedContent;
   const previewHtml = useMemo(() => {
     if (!body) return "";

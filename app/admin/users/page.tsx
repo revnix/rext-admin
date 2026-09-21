@@ -374,13 +374,12 @@ export default function AdminUsersPage() {
               </Tooltip>
             ))}
             {workspaceRoles.map(({ role: r, workspaces }) => {
-              const isWorkspaceOwner = r.display_name === "Workspace Owner";
               return (
                 <Tooltip key={`ws-${r.role_id}`}>
                   <TooltipTrigger asChild>
                     <Badge
-                      variant={isWorkspaceOwner ? "secondary" : "outline"}
-                      className={`text-[11px] font-medium px-1.5 py-0.5 ${isWorkspaceOwner ? "cursor-default" : "border-dashed cursor-default"}`}
+                      variant="secondary"
+                      className={`text-[11px] font-medium px-1.5 py-0.5`}
                     >
                       {r.display_name}
                       {workspaces.length > 1
@@ -729,7 +728,7 @@ export default function AdminUsersPage() {
                         </div>
 
                         {/* Role Filter */}
-                        <div className="w-[140px]">
+                        <div>
                           <Select
                             value={roleFilter}
                             onValueChange={(val) => {

@@ -215,7 +215,7 @@ export default function AuditLogsPage() {
             </div>
           </CardContent>
         </Card>
-
+        <br />
         {/* Audit Logs Table */}
         <Card>
           <CardHeader>
