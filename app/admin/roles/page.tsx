@@ -226,9 +226,7 @@ export default function AdminRolesPage() {
       key: "description",
       header: "Description",
       cell: (value) => (
-        <span className="text-sm text-muted-foreground line-clamp-1">
-          {value as string}
-        </span>
+        <span className="text-sm text-muted-foreground">{value as string}</span>
       ),
     },
   ];

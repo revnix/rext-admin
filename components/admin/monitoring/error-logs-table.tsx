@@ -315,7 +315,7 @@ export function ErrorLogsTable({
       {/* Error Detail Dialog */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="w-[calc(100%-1rem)] max-w-3xl max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40">
+          <DialogContent className="max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40">
             <DialogHeader>
               <DialogTitle>Error Details</DialogTitle>
               <DialogDescription>
@@ -339,7 +339,7 @@ export function ErrorLogsTable({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 <div>
                   <div className="font-medium">Timestamp</div>
                   <p className="mt-1 text-muted-foreground">
@@ -393,7 +393,7 @@ export function ErrorLogsTable({
 
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
-                  <div>
+                  <div className="w-78 sm:w-full">
                     <div className="text-sm font-medium">Metadata</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}

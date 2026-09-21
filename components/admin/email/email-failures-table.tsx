@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -18,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface EmailFailure {
   id: string;
@@ -33,10 +35,28 @@ interface EmailFailuresTableProps {
   isLoading: boolean;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function EmailFailuresTable({
   data,
   isLoading,
 }: EmailFailuresTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return data.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [data, currentPage]);
+
+  // Reset to the first page when the data changes
+  useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
   if (isLoading) {
     return (
       <Card>
@@ -58,6 +78,7 @@ export function EmailFailuresTable({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
@@ -77,6 +98,7 @@ export function EmailFailuresTable({
     if (status === "failed") {
       return <Badge variant="destructive">Failed</Badge>;
     }
+
     if (status === "bounced") {
       return (
         <Badge variant="outline" className="border-orange-500 text-orange-500">
@@ -84,6 +106,7 @@ export function EmailFailuresTable({
         </Badge>
       );
     }
+
     return <Badge variant="secondary">{status}</Badge>;
   };
 
@@ -94,47 +117,96 @@ export function EmailFailuresTable({
           <AlertTriangle className="h-5 w-5 text-red-500" />
           Recent Email Failures
         </CardTitle>
+
         <CardDescription>
           Emails that failed to send or bounced (last 100 failures)
         </CardDescription>
       </CardHeader>
+
       <CardContent className="overflow-auto">
-        {data && data.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Recipient</TableHead>
-                <TableHead>Template</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Error</TableHead>
-                <TableHead className="text-right">Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((failure) => (
-                <TableRow key={failure.id}>
-                  <TableCell className="font-medium max-w-[200px] truncate">
-                    {failure.to}
-                  </TableCell>
-                  <TableCell>
-                    {formatTemplateName(failure.template_type)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(failure.status)}</TableCell>
-                  <TableCell className="max-w-[300px]">
-                    <span className="text-sm text-muted-foreground">
-                      {failure.error_message}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground">
-                    {formatDate(failure.sent_at)}
-                  </TableCell>
+        {data.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Recipient</TableHead>
+                  <TableHead>Template</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Error</TableHead>
+                  <TableHead className="text-right">Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+
+              <TableBody>
+                {paginatedData.map((failure) => (
+                  <TableRow key={failure.id}>
+                    <TableCell className="max-w-[200px] truncate font-medium">
+                      {failure.to}
+                    </TableCell>
+
+                    <TableCell>
+                      {formatTemplateName(failure.template_type)}
+                    </TableCell>
+
+                    <TableCell>{getStatusBadge(failure.status)}</TableCell>
+
+                    <TableCell className="max-w-[300px]">
+                      <span className="text-sm text-muted-foreground">
+                        {failure.error_message}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="text-right text-sm text-muted-foreground">
+                      {formatDate(failure.sent_at)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                  {Math.min(currentPage * ITEMS_PER_PAGE, data.length)} of{" "}
+                  {data.length}
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(page - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(page + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-            <AlertTriangle className="h-8 w-8 mb-2 text-green-500" />
+          <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
+            <AlertTriangle className="mb-2 h-8 w-8 text-green-500" />
             <p>No failures found - all emails delivered successfully!</p>
           </div>
         )}

@@ -132,13 +132,26 @@ export function CreateRoleDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.name || !formData.display_name) {
+    if (!formData.name.trim() || !formData.display_name.trim()) {
       toast.error("Name and display name are required");
       return;
     }
 
+    if (
+      !isValidRoleName(formData.name) ||
+      !isValidRoleName(formData.display_name)
+    ) {
+      toast.error(
+        "Role name can only contain letters, spaces, and underscores.",
+      );
+      return;
+    }
+
     createMutation.mutate();
+  };
+
+  const isValidRoleName = (name: string) => {
+    return /^[a-zA-Z_ ]+$/.test(name);
   };
 
   return (
@@ -164,7 +177,10 @@ export function CreateRoleDialog({
                 placeholder="e.g., Content Editor"
                 value={formData.display_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, display_name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    display_name: e.target.value.replace(/[0-9]/g, ""),
+                  })
                 }
                 required
               />
@@ -180,7 +196,10 @@ export function CreateRoleDialog({
                 placeholder="e.g., content_editor"
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    name: e.target.value.replace(/[0-9]/g, ""),
+                  })
                 }
                 required
               />
