@@ -120,7 +120,6 @@ export const USER_PERMISSIONS = {
 
 // Workspace Management
 export const WORKSPACE_PERMISSIONS = {
-  CREATE: "workspace.create",
   READ: "workspace.read",
   UPDATE: "workspace.update",
   DELETE: "workspace.delete",
@@ -174,7 +173,6 @@ export const INTEGRATION_PERMISSIONS = {
 export const BRAND_VOICE_PERMISSIONS = {
   READ: "brand_voice.read",
   UPDATE: "brand_voice.update",
-  DELETE: "brand_voice.delete",
 } as const;
 
 export const PERSONA_PERMISSIONS = {

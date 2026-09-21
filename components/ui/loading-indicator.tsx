@@ -175,8 +175,8 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     const fields = props.fields ?? 3;
     return (
       <div className={cn("space-y-6", props.className)}>
-        {Array.from({ length: fields }).map((item) => (
-          <div key={`field-${item}`} className="space-y-2">
+        {Array.from({ length: fields }, (_, i) => i).map((index) => (
+          <div key={`field-${index}`} className="space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>

@@ -101,6 +101,10 @@ export function LoginForm({
       email,
       password,
       redirect: false,
+      // signIn() otherwise uses window.location.href, and reads `error` back
+      // from it — on /login?error=SessionExpired a successful login would
+      // report that stale error. Navigation is handled manually below.
+      redirectTo: "/",
       rememberMe: rememberMe.toString(),
     });
 

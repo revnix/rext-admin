@@ -27,11 +27,11 @@ jest.mock("@/hooks/use-page-title", () => ({
   usePageTitle: jest.fn(),
 }));
 
-jest.mock("@/hooks/use-permission", () => ({
-  usePermissionDecision: jest.fn(() => ({
-    hasAccess: true,
-    isLoading: false,
-  })),
+// Must be a real jest.mock registration: the page imports the module normally,
+// so a bare jest.requireMock (automock) would never reach the component and the
+// real React-Query hook would run instead.
+jest.mock("@/components/subscription/usage-limit-warning", () => ({
+  useResourceLimit: jest.fn(),
 }));
 
 const mockUseResourceLimit = jest.requireMock(
@@ -85,9 +85,7 @@ describe("CreateWorkspacePage", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      screen.getByText(/checking workspace permissions/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/checking workspace limits/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/workspace limit reached/i),
     ).not.toBeInTheDocument();

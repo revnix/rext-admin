@@ -9,7 +9,6 @@ import { PageLoader } from "@/components/ui/loading-states";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { usePermissionDecision } from "@/hooks/use-permission";
 
 /**
  * Create Workspace Page
@@ -26,9 +25,6 @@ import { usePermissionDecision } from "@/hooks/use-permission";
  * - Real-time URL analysis and brand voice extraction
  * - Professional typeform-style UI
  * - Proper error handling and validation
- *
- * **Phase 4, Task HIGH-10: Permission Guards**
- * Requires workspace.create permission to access this page.
  */
 export default function CreateWorkspacePage() {
   // Update page title
@@ -37,52 +33,11 @@ export default function CreateWorkspacePage() {
     "Create a new workspace with guided setup for optimal content generation",
   );
 
-  const { hasAccess: canCreateWorkspace, isLoading: isCheckingPermission } =
-    usePermissionDecision({
-      mode: "single",
-      permissions: ["workspace.create"],
-    });
   const { isLimitReached, isLoading: isLimitLoading } =
     useResourceLimit("workspaces");
 
-  if (isCheckingPermission || isLimitLoading) {
-    return <PageLoader message="Checking workspace permissions..." />;
-  }
-
-  // Show permission denied message if no access
-  if (!canCreateWorkspace) {
-    return (
-      <PageLayout
-        title="Permission Required"
-        description="You need permission to create workspaces"
-      >
-        <div className="max-w-2xl mx-auto py-12">
-          <Card className="p-8">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="rounded-full bg-muted p-4">
-                <ShieldX className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Permission Required</h2>
-                <p className="text-muted-foreground max-w-md">
-                  You don't have permission to create new workspaces. Please
-                  contact your administrator to request access or upgrade your
-                  plan.
-                </p>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button asChild>
-                  <Link href="/">Back to Dashboard</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/subscription">View Plans</Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </PageLayout>
-    );
+  if (isLimitLoading) {
+    return <PageLoader message="Checking workspace limits..." />;
   }
 
   if (isLimitReached) {

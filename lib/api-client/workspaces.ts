@@ -235,6 +235,21 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Hand the workspace to another active member. Owner only.
+     */
+    transferOwnership: async (workspaceId: string, newOwnerUserId: string) => {
+      return client.request<{
+        workspace_id: string;
+        new_owner_user_id: string;
+        previous_owner_user_id: string;
+      }>(ENDPOINTS.WORKSPACES.transferOwnership(workspaceId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_owner_user_id: newOwnerUserId }),
+      });
+    },
+
+    /**
      * Delete workspace
      */
     delete: async (workspaceId: string) => {

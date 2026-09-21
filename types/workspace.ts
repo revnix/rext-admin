@@ -39,13 +39,13 @@ export interface Workspace {
     total: number;
   };
   analytics?: {
-    knowledge_counts: {
+    knowledge_counts?: {
       web_knowledge: number;
       files: number;
       text_knowledge: number;
       total_knowledge_items: number;
     };
-    content_metrics: {
+    content_metrics?: {
       total_words: number;
       web_content_words: number;
       file_content_words: number;
@@ -53,7 +53,7 @@ export interface Workspace {
       avg_file_words: number;
       estimated_reading_time_minutes: number;
     };
-    team_metrics: {
+    team_metrics?: {
       total_members: number;
     };
   };
@@ -122,7 +122,7 @@ export interface BrandVoice {
   workspace_id: string;
   brand_name?: string; // The actual brand/product name — distinct from the workspace name
   about?: string; // Brand description
-  customer_profile?: string; // Target customer details
+  customer_profile?: string | null; // Target customer details
   selling_position?: string; // Unique selling proposition
   target_audience?: string[]; // Array of audience segments
   brand_voice?: string[]; // Communication tone/style characteristics

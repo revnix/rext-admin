@@ -31,7 +31,6 @@ import {
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { PERSONA_PERMISSIONS } from "@/lib/permissions";
-import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -287,21 +286,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Delete Persona
                 </Button>
               </ConfirmationDialog>
-            ) : (
-              <LockedFeatureTooltip
-                permission={PERSONA_PERMISSIONS.DELETE}
-                message="Deleting personas requires Editor role or above"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20"
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  Delete Persona
-                </Button>
-              </LockedFeatureTooltip>
-            )}
+            ) : null}
 
             {canEdit ? (
               <Button
@@ -313,21 +298,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Edit2 size={16} className="mr-2" />
                 Edit Persona
               </Button>
-            ) : (
-              <LockedFeatureTooltip
-                permission={PERSONA_PERMISSIONS.UPDATE}
-                message="Editing personas requires Editor role or above"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="!w-[49%] sm:w-auto border-primary/20 text-primary"
-                >
-                  <Edit2 size={16} className="mr-2" />
-                  Edit Persona
-                </Button>
-              </LockedFeatureTooltip>
-            )}
+            ) : null}
           </div>
         )}
       </div>

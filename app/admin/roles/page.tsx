@@ -64,12 +64,17 @@ interface PermissionTableData extends Record<string, unknown> {
   is_system: boolean;
 }
 
-// workspace.create is granted by the platform seed and gates workspace creation
-// for every account, so it is never shown on this screen. billing, security and
-// permission management are platform-level, not workspace-level: not assignable
-// to custom roles, but built-in roles still show them.
-const HIDDEN_PERMISSIONS = new Set(["workspace.create"]);
+// billing, security and permission management are platform-level, not
+// workspace-level: not assignable to custom roles, but built-in roles still
+// show them.
 const HIDDEN_RESOURCES = new Set(["billing", "security", "permission"]);
+
+// The platform-wide `user` floor role has been removed from the backend
+// (own-account routes are authentication-gated; signup no longer assigns a
+// global role). This filter stays as transition safety so the role never
+// reappears on this page if this frontend deploys before the cleanup
+// migration runs; it becomes a no-op once the role is gone.
+const PLATFORM_FLOOR_ROLE = "user";
 
 type RolesDialogState =
   | { type: "closed" }
@@ -124,11 +129,15 @@ export default function AdminRolesPage() {
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
   });
-  const allPermissions = (permissionsData?.permissions || []).filter(
-    (p) => !HIDDEN_PERMISSIONS.has(p.name),
-  );
+  const allPermissions = permissionsData?.permissions || [];
   const customRolePermissions = allPermissions.filter(
     (p) => !HIDDEN_RESOURCES.has(p.resource),
+  );
+
+  // Roles shown in the table and passed to this page's dialogs. Excludes the
+  // platform floor role (see PLATFORM_FLOOR_ROLE above).
+  const visibleRoles = (rolesData?.roles || []).filter(
+    (role) => role.name !== PLATFORM_FLOOR_ROLE,
   );
 
   if (rolesError || permissionsError) {
@@ -151,24 +160,22 @@ export default function AdminRolesPage() {
     customRolePermissions.map((p) => p.id),
   );
 
-  const rolesTableData: RoleTableData[] = (rolesData?.roles || []).map(
-    (role) => {
-      const visibleIds = isProtectedRole(role)
-        ? allPermissionIds
-        : customRolePermissionIds;
-      const validPermissions =
-        role.permissions?.filter((p) => visibleIds.has(p.id)) || [];
+  const rolesTableData: RoleTableData[] = visibleRoles.map((role) => {
+    const visibleIds = isProtectedRole(role)
+      ? allPermissionIds
+      : customRolePermissionIds;
+    const validPermissions =
+      role.permissions?.filter((p) => visibleIds.has(p.id)) || [];
 
-      return {
-        id: role.id,
-        name: role.name,
-        display_name: role.display_name,
-        is_system_role: role.is_system_role,
-        permissions_count: validPermissions.length,
-        description: role.description,
-      };
-    },
-  );
+    return {
+      id: role.id,
+      name: role.name,
+      display_name: role.display_name,
+      is_system_role: role.is_system_role,
+      permissions_count: validPermissions.length,
+      description: role.description,
+    };
+  });
 
   // Transform permissions data for DataTable
   const permissionsTableData: PermissionTableData[] = allPermissions.map(
@@ -251,7 +258,7 @@ export default function AdminRolesPage() {
                 <Settings className="h-4 w-4" />
               ),
             onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
+              const role = visibleRoles.find((r) => r.id === row.id);
               if (role) {
                 setDialogState({ type: "manageRolePermissions", role });
               }
@@ -267,7 +274,7 @@ export default function AdminRolesPage() {
             label: "Edit",
             icon: <Edit className="h-4 w-4" />,
             onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
+              const role = visibleRoles.find((r) => r.id === row.id);
               if (role && !isProtectedRole(role)) {
                 setDialogState({ type: "editRole", role });
               }
@@ -288,7 +295,7 @@ export default function AdminRolesPage() {
             label: "Delete",
             icon: <Trash2 className="h-4 w-4" />,
             onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
+              const role = visibleRoles.find((r) => r.id === row.id);
               if (role && !isProtectedRole(role)) {
                 setDialogState({ type: "deleteRole", role });
               }
@@ -397,13 +404,15 @@ export default function AdminRolesPage() {
   // edit or delete them (RoleService._is_protected_role). Deriving custom as
   // "everything that isn't a system role" therefore reported those four seeded
   // roles as user-created ones that nobody ever created.
+  // Counts come from visibleRoles so they match the table; the platform floor
+  // role is excluded from all of them.
   const systemRolesCount =
-    rolesData?.roles?.filter((r) => r.is_system_role).length || 0;
+    visibleRoles.filter((r) => r.is_system_role).length || 0;
   const builtInRolesCount =
-    rolesData?.roles?.filter((r) => isProtectedRole(r) && !r.is_system_role)
+    visibleRoles.filter((r) => isProtectedRole(r) && !r.is_system_role)
       .length || 0;
   const customRolesCount =
-    rolesData?.roles?.filter((r) => !isProtectedRole(r)).length || 0;
+    visibleRoles.filter((r) => !isProtectedRole(r)).length || 0;
 
   return (
     <PageLayout
@@ -444,9 +453,7 @@ export default function AdminRolesPage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {rolesData?.count || 0}
-                </div>
+                <div className="text-2xl font-bold">{visibleRoles.length}</div>
                 <p className="text-xs text-muted-foreground">
                   {systemRolesCount} system, {builtInRolesCount} built-in,{" "}
                   {customRolesCount} custom
@@ -615,7 +622,7 @@ export default function AdminRolesPage() {
           open={dialogState.type === "deleteRole"}
           onOpenChange={closeDialog}
           role={dialogState.type === "deleteRole" ? dialogState.role : null}
-          roles={rolesData?.roles || []}
+          roles={visibleRoles}
         />
         <ManageRolePermissionsDialog
           open={dialogState.type === "manageRolePermissions"}
@@ -646,7 +653,7 @@ export default function AdminRolesPage() {
         <BulkAssignPermissionsDialog
           open={dialogState.type === "bulkAssign"}
           onOpenChange={closeDialog}
-          roles={rolesData?.roles || []}
+          roles={visibleRoles}
           allPermissions={customRolePermissions}
         />
         <PermissionDependencyView
