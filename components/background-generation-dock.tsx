@@ -8,7 +8,7 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -59,6 +59,7 @@ const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // The thread actually open on screen, if any. `?thread=` is the only
   // thing that identifies WHICH generation is being viewed — the pathname
@@ -445,10 +446,18 @@ export function BackgroundGenerationDock() {
     }
   };
 
-  if (!isMounted || visibleJobs.length === 0) return null;
+  const isViewingGenerationThread =
+    (pathname?.endsWith("/generate_content") ?? false) &&
+    Boolean(openThreadId);
 
-  const job = visibleJobs.find(isPending) ?? visibleJobs[0];
-  const otherJobs = visibleJobs.filter(
+  const displayedJobs = isViewingGenerationThread
+    ? visibleJobs.filter((job) => job.threadId !== openThreadId)
+    : visibleJobs;
+
+  if (!isMounted || displayedJobs.length === 0) return null;
+
+  const job = displayedJobs.find(isPending) ?? displayedJobs[0];
+  const otherJobs = displayedJobs.filter(
     (item) => item.threadId !== job.threadId,
   );
   const pending = isPending(job);

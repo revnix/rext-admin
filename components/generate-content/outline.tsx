@@ -639,7 +639,8 @@ export function OutlineDisplay({
   );
 
   // Sync the manually-selectable persona with the outline's auto-selected
-  // one whenever a fresh outline arrives (new generation / regeneration).
+  // one whenever a fresh outline or persona list arrives. Do not depend on
+  // selectedPersonaId here: changing it manually must not restore the default.
   useEffect(() => {
     if (!personas.length) return;
 
@@ -652,10 +653,10 @@ export function OutlineDisplay({
       return;
     }
 
-    if (!selectedPersonaId && fallbackPersonaId) {
-      setSelectedPersonaId(fallbackPersonaId);
+    if (fallbackPersonaId) {
+      setSelectedPersonaId((current) => current ?? fallbackPersonaId);
     }
-  }, [outline, personas, selectedPersonaId]);
+  }, [outline, personas]);
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
