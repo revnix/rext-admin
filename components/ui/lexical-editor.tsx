@@ -157,8 +157,11 @@ const theme = {
   },
   list: {
     ul: "list-disc ml-4 mb-2",
-    ol: "list-decimal ml-4 mb-2",
-    listitem: "ml-1",
+    // Tag-like content should not auto-render numeric markers. Keep the list
+    // semantic but suppress browser-generated numbering so items appear as chips
+    // or plain labels instead of an ordered list.
+   ol: "list-none ml-0 mb-2 [&>li]:list-none [&>li]:pl-0",
+    listitem: "ml-0 pl-0",
   },
   quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
   code: "bg-muted p-1 rounded font-mono text-sm",

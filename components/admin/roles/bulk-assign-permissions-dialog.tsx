@@ -193,7 +193,7 @@ export function BulkAssignPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -201,129 +201,132 @@ export function BulkAssignPermissionsDialog({
               Bulk Permission Assignment
             </DialogTitle>
             <DialogDescription>
-              Assign or remove permissions to/from custom roles at once
-              (protected roles cannot be modified)
+              Update permissions across custom roles in one pass.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Operation Type */}
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="operation">Operation</Label>
               <Select
                 value={operation}
                 onValueChange={(value: "add" | "remove") => {
                   setOperation(value);
-                  // Add-mode selections include auto-selected prerequisites,
-                  // which must not carry over into a removal (and vice versa).
                   setSelectedPermissionIds([]);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="operation">
                   <SelectValue placeholder="Select operation" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="add">Add Permissions to Roles</SelectItem>
-                  <SelectItem value="remove">
-                    Remove Permissions from Roles
-                  </SelectItem>
+                  <SelectItem value="add">Add permissions</SelectItem>
+                  <SelectItem value="remove">Remove permissions</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Select Roles ({selectedRoleIds.length} selected)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleAllRoles}
-                  disabled={assignableRoles.length === 0}
-                >
-                  {selectedRoleIds.length === assignableRoles.length &&
-                  assignableRoles.length > 0
-                    ? "Deselect All"
-                    : "Select All Custom Roles"}
-                </Button>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)]">
+              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm font-medium">
+                    Roles ({selectedRoleIds.length})
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleAllRoles}
+                    disabled={assignableRoles.length === 0}
+                  >
+                    {selectedRoleIds.length === assignableRoles.length &&
+                    assignableRoles.length > 0
+                      ? "Clear"
+                      : "Select all"}
+                  </Button>
+                </div>
+                <div className="max-h-[260px] overflow-y-auto space-y-2 rounded-md border bg-background/50 p-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                  {roles.length === 0 ? (
+                    <p className="text-sm text-muted-foreground p-2">
+                      No roles available.
+                    </p>
+                  ) : (
+                    roles.map((role) => {
+                      const isProtected = isProtectedRole(role);
+                      return (
+                        <label
+                          key={role.id}
+                          className={`flex items-center gap-3 rounded-md p-2 text-sm ${
+                            isProtected
+                              ? "cursor-not-allowed opacity-50 bg-muted/40"
+                              : "cursor-pointer hover:bg-muted/80"
+                          }`}
+                          title={
+                            isProtected
+                              ? "Protected role permissions cannot be modified"
+                              : undefined
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedRoleIds.includes(role.id)}
+                            onChange={() => toggleRole(role)}
+                            disabled={isProtected}
+                            className="h-4 w-4 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="truncate font-medium">
+                                {role.display_name}
+                              </span>
+                              {role.is_system_role && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  System
+                                </Badge>
+                              )}
+                              {isProtected && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-amber-500/50 text-[10px] text-amber-500"
+                                >
+                                  Protected
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="truncate text-[11px] text-muted-foreground">
+                              {role.name}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-              <div className="border rounded-lg p-4 max-h-[200px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                {roles.map((role) => {
-                  const isProtected = isProtectedRole(role);
-                  return (
-                    <label
-                      key={role.id}
-                      className={`flex items-center gap-3 p-2 rounded-md ${
-                        isProtected
-                          ? "opacity-50 cursor-not-allowed bg-muted/40"
-                          : "hover:bg-muted cursor-pointer"
-                      }`}
-                      title={
-                        isProtected
-                          ? "Protected role permissions cannot be modified"
-                          : undefined
-                      }
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedRoleIds.includes(role.id)}
-                        onChange={() => toggleRole(role)}
-                        disabled={isProtected}
-                        className="h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {role.display_name}
-                          </span>
-                          {role.is_system_role && (
-                            <Badge variant="secondary" className="text-xs">
-                              System
-                            </Badge>
-                          )}
-                          {isProtected && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs text-amber-500 border-amber-500/50"
-                            >
-                              Protected
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {role.name}
-                        </span>
-                      </div>
-                    </label>
-                  );
-                })}
+
+              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                <Label className="text-sm font-medium">
+                  Permissions ({selectedPermissionIds.length})
+                </Label>
+                <PermissionMultiSelect
+                  permissions={allPermissions}
+                  selectedPermissionIds={selectedPermissionIds}
+                  onChange={setSelectedPermissionIds}
+                  applyDependencies={operation === "add"}
+                />
               </div>
             </div>
 
-            {/* Permission Selection */}
-            <div className="space-y-2">
-              <Label>
-                Select Permissions ({selectedPermissionIds.length} selected)
-              </Label>
-              <PermissionMultiSelect
-                permissions={allPermissions}
-                selectedPermissionIds={selectedPermissionIds}
-                onChange={setSelectedPermissionIds}
-                applyDependencies={operation === "add"}
-              />
-            </div>
-
-            {/* Summary */}
             {selectedRoleIds.length > 0 && selectedPermissionIds.length > 0 && (
-              <div className="rounded-lg border p-4 bg-muted/50">
-                <p className="text-sm font-medium mb-2">Summary:</p>
-                <p className="text-sm text-muted-foreground">
-                  {operation === "add" ? "Adding" : "Removing"}{" "}
-                  <strong>{selectedPermissionIds.length}</strong> permission(s){" "}
-                  {operation === "add" ? "to" : "from"}{" "}
-                  <strong>{selectedRoleIds.length}</strong> role(s)
-                </p>
+              <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+                {operation === "add" ? "Adding" : "Removing"}{" "}
+                <span className="font-semibold text-foreground">
+                  {selectedPermissionIds.length}
+                </span>{" "}
+                permission(s) {operation === "add" ? "to" : "from"}{" "}
+                <span className="font-semibold text-foreground">
+                  {selectedRoleIds.length}
+                </span>{" "}
+                role(s)
               </div>
             )}
           </div>
