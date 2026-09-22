@@ -331,6 +331,6 @@ export function useOnboardingProgress(
     dismissOnboarding,
     skipMilestone,
     resetOnboarding,
-    isLoading: isLoading || isFetching, // Return both if desired
+    isLoading,
   };
 }
