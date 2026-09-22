@@ -7,7 +7,7 @@
 
 "use client";
 
-import { Check, Star, User } from "lucide-react";
+import { Check, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -204,20 +204,6 @@ function PersonaCard({
               <p className="text-sm text-muted-foreground mt-0.5 truncate">
                 {persona.professional_title}
               </p>
-            )}
-            {/*
-              The one the extraction judged best able to speak for the brand,
-              on provenance and output rather than score alone. Shown here
-              because this is the screen where the choice is actually made.
-            */}
-            {persona.is_recommended && (
-              <Badge
-                variant="default"
-                className="mt-1.5 gap-1 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
-              >
-                <Star className="h-3 w-3 fill-current" />
-                Recommended
-              </Badge>
             )}
           </div>
         </div>
