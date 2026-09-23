@@ -21,7 +21,7 @@ import {
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
-import { workspaceQueries } from "@/lib/query-keys";
+import { personaQueries, workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
@@ -239,7 +239,10 @@ export function WorkspaceCreateWizard() {
         ...brandVoiceData
       } = editedData;
 
-      // Update brand voice via API (include selected personas if provided)
+      // Update brand voice via API. The personas sent here are the workspace's
+      // persona set from now on: extraction saved every author it found, and
+      // the ones the user did not pick in this step are dropped server-side.
+      // Sending none (nobody picked any) keeps them all.
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         brand_name: brandVoiceData.brand_name,
         about: brandVoiceData.about,
@@ -257,44 +260,6 @@ export function WorkspaceCreateWizard() {
             : undefined,
       });
 
-      // Manually save personas if they exist in the extracted data
-      // This is a workaround because the backend updateBrandVoice endpoint
-      // does not currently persist personas.
-      if (brandVoiceData.personas && brandVoiceData.personas.length > 0) {
-        log.info(
-          `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
-        );
-
-        const toArray = (value: string | string[] | undefined): string[] => {
-          if (!value) return [];
-          if (Array.isArray(value)) return value;
-          return value
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        };
-
-        await Promise.all(
-          brandVoiceData.personas.map((persona: Persona) =>
-            apiClient.personas.create(workspaceId, {
-              name: persona.name,
-              description:
-                persona.description || persona.professional_title || "",
-              full_name: persona.full_name || persona.name,
-              professional_title: persona.professional_title,
-              areas_of_expertise: toArray(persona.areas_of_expertise),
-              tone_of_voice: persona.tone_of_voice,
-              bio: persona.bio,
-              linkedin_url: persona.linkedin_url,
-              demographics: persona.demographics,
-              pain_points: toArray(persona.pain_points),
-              goals: toArray(persona.goals),
-              behaviors: toArray(persona.behaviors),
-            }),
-          ),
-        );
-      }
-
       // Log selected persona(s) for future API integration
       const primaryPersonaId = selectedPersonaIds?.length
         ? selectedPersonaIds[selectedPersonaIds.length - 1]
@@ -308,6 +273,12 @@ export function WorkspaceCreateWizard() {
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
       queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
+      // The save just changed which personas the workspace has; the personas
+      // list is cached under its own key and would otherwise still show the
+      // ones the user declined.
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.all(workspaceId),
+      });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {

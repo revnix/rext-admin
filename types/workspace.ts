@@ -102,11 +102,6 @@ export interface Persona {
   avatar_source?: "custom" | "page" | "gravatar" | "generated" | null;
   /** Used to derive a Gravatar when no photograph was found. */
   email?: string | null;
-  /**
-   * The persona this brand should write as. At most one per workspace, and none
-   * when nothing scored well enough to defend the choice.
-   */
-  is_recommended?: boolean;
   linkedin_url?: string | null;
   demographics?: string;
   pain_points?: string | string[];

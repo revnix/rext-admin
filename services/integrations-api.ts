@@ -149,9 +149,12 @@ export class IntegrationsApiService {
       return [];
     } catch (error) {
       if (error instanceof IntegrationsApiError) throw error;
+      // Preserve any HTTP status the underlying failure carries — the publish
+      // flow keys its "Permission Required" popup off statusCode (e.g. 403).
       throw new IntegrationsApiError(
         "FETCH_FAILED",
         error instanceof Error ? error.message : "Unknown error",
+        (error as { statusCode?: number } | null)?.statusCode,
       );
     }
   }
