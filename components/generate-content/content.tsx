@@ -673,14 +673,10 @@ function ContentEditorInner(props: ContentEditorProps) {
       );
 
       if (activeIntegrations.length === 0) {
-        setStatusModal({
-          title: "Permission Required",
-          isOpen: true,
-          type: "error",
-          action: "publish",
-          message: "You do not have permission to perform this action.",
-          showIntegrationLink: false,
-        });
+        // A workspace with no connected sites is not a permission problem —
+        // open the connect-a-site flow so the user can add an integration.
+        setStatusModal((prev) => ({ ...prev, isOpen: false }));
+        setIntegrationModalOpen(true);
         return;
       }
 
@@ -777,7 +773,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         message: isIntegrationIssue
           ? "You do not have permission to perform this action."
           : err.message || "Failed to publish content. Please try again.",
-        showIntegrationLink: false,
+        // Permission and integration failures get the existing escape hatch
+        // to the integrations page instead of a dead-end error dialog.
+        showIntegrationLink: isIntegrationIssue,
       });
     } finally {
       setIsPublishing(false);
