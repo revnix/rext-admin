@@ -86,7 +86,11 @@ export const signupFormSchema = z
 
 // Forgot password form schema
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address").trim().toLowerCase(),
+  email: z.string()
+    .trim()
+    .min(1, "Enter your email address")
+    .email("Invalid email address")
+    .toLowerCase(),
 });
 
 // Reset password form schema
