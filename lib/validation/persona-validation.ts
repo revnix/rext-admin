@@ -11,36 +11,59 @@
 /** Bounds every persona field is held to, in one place so a limit can be
  *  changed without hunting through JSX. Lengths are in characters. */
 export const PERSONA_LIMITS = {
-  name: { min: 2, max: 60 },
-  full_name: { min: 2, max: 100 },
-  /** Optional, per the meeting decision. The bounds have to clear a real
-   *  title at both ends: "CEO" and "VP" are shorter than a name would be
-   *  allowed to get away with, and "Board-Certified Dermatologist and Clinical
-   *  Researcher" is the kind of length an E-E-A-T byline actually runs to. */
-  professional_title: { min: 2, max: 80 },
+  name: { min: 4, max: 60 },
+  full_name: { min: 4, max: 100 },
+  /** Optional, per the meeting decision. Short enough to admit "CEO", long
+   *  enough for "Board Certified Dermatologist and Clinical Researcher". */
+  professional_title: { min: 3, max: 80 },
   description: { min: 0, max: 200 },
   bio: { min: 10, max: 1000 },
   demographics: { min: 0, max: 300 },
-  tone_of_voice: { min: 0, max: 100 },
-  areas_of_expertise: { max: 300, maxItems: 20, itemMin: 2, itemMax: 50 },
-  goals: { max: 500, maxItems: 20, itemMin: 2, itemMax: 120 },
-  pain_points: { max: 500, maxItems: 20, itemMin: 2, itemMax: 120 },
-  behaviors: { max: 500, maxItems: 20, itemMin: 2, itemMax: 120 },
+  tone_of_voice: { max: 100, maxItems: 6, itemMin: 3, itemMax: 30 },
+  areas_of_expertise: { max: 300, maxItems: 20, itemMin: 3, itemMax: 50 },
+  goals: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
+  pain_points: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
+  behaviors: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
   linkedin_url: { min: 0, max: 500 },
   avatar_url: { min: 0, max: 500 },
   email: { min: 0, max: 320 },
 } as const;
 
-/** Names and titles: letters, digits, spaces and the punctuation that really
- *  turns up in a person's name. Everything else is rejected by name so the
- *  message can say which character was the problem. */
-const NAME_ALLOWED = /^[\p{L}\p{N} .,'’&()-]+$/u;
-const TITLE_ALLOWED = /^[\p{L}\p{N} .,'’&()/-]+$/u;
+/**
+ * What each kind of field may be made of.
+ *
+ * These are allowlists, not blocklists. A blocklist only stops the characters
+ * someone thought to name, which is how "78e329hrdo3nekdndihidn" passed as a
+ * bio and "seo-nothing" as an area of expertise: neither contained markup, so
+ * neither was caught. A persona is written in words, so the rule is words.
+ *
+ * Digits are excluded from all three: no field here is a quantity, and a
+ * number in one is a sign of pasted noise rather than of a fact about a
+ * person.
+ */
+/** A person's name. Apostrophes and hyphens stay: "Mary-Jane O'Brien" is a
+ *  name, not a typo, and refusing it would reject real people. */
+const PERSON_NAME_ALLOWED = /^[\p{L} '’-]+$/u;
+/** Titles, and each entry in a comma-separated field. Words and the spaces
+ *  between them, nothing else — so "seo marketing" is an area of expertise
+ *  and "seo-marketing" is asked to be written out. */
+const WORDS_ONLY = /^[\p{L} ]+$/u;
+/** Prose. Sentence punctuation is part of writing a sentence, so it is
+ *  allowed here and nowhere else. */
+const PROSE_ALLOWED = /^[\p{L} .,;:!?'’-]+$/u;
 
-/** Long-form prose is allowed ordinary punctuation; what it may not contain is
- *  the markup/template/shell furniture that has no business in a bio and is
- *  what breaks a page when it is rendered back out. */
-const UNSAFE_TEXT_CHARS = /[<>{}[\]\\|`~^$*=+_#@]/g;
+const CONTAINS_DIGIT = /\p{N}/u;
+
+/** How to describe a charset in the error, so the message says what to do
+ *  rather than only that something is wrong. */
+const CHARSET_HELP = new Map<RegExp, string>([
+  [PERSON_NAME_ALLOWED, "letters, spaces, apostrophes and hyphens"],
+  [WORDS_ONLY, "letters and spaces"],
+  [
+    PROSE_ALLOWED,
+    "letters, spaces and ordinary punctuation ( . , ; : ! ? ' - )",
+  ],
+]);
 
 /** Tabs and newlines are fine in a textarea; the rest of C0 and DEL are not.
  *  Checked by code point rather than by regex — a literal control character in
@@ -126,10 +149,28 @@ export function isServerOwnedAvatar(value: string): boolean {
   );
 }
 
-/** The offending characters, de-duplicated, so the error can name them. */
-function unsafeCharsIn(value: string): string[] {
-  const found = value.match(UNSAFE_TEXT_CHARS) ?? [];
-  return Array.from(new Set(found));
+/** The characters in `value` that `charset` does not admit, de-duplicated, so
+ *  the error can point at them instead of only saying "invalid". */
+function charsOutside(value: string, charset: RegExp): string[] {
+  const bad = new Set<string>();
+  for (const char of value) {
+    if (char === "\n" || char === "\r" || char === "\t") continue;
+    if (!charset.test(char)) bad.add(char);
+  }
+  return Array.from(bad);
+}
+
+/** One message for a value that breaks a charset, naming what is wrong and
+ *  what the field takes. */
+function charsetError(label: string, value: string, charset: RegExp): string {
+  if (CONTAINS_DIGIT.test(value)) {
+    return `${label} cannot contain numbers — use ${CHARSET_HELP.get(charset)}`;
+  }
+  const bad = charsOutside(value, charset).filter(
+    (c) => !CONTAINS_DIGIT.test(c),
+  );
+  const named = bad.length ? ` (remove ${bad.join(" ")})` : "";
+  return `${label} may only contain ${CHARSET_HELP.get(charset)}${named}`;
 }
 
 type TextRuleOptions = {
@@ -138,9 +179,8 @@ type TextRuleOptions = {
   required?: boolean;
   min?: number;
   max?: number;
-  /** Names and titles get an allowlist; prose gets the blocklist above. */
-  charset?: RegExp;
-  requireLetter?: boolean;
+  /** Which allowlist the field is held to. */
+  charset: RegExp;
 };
 
 /** One field's error message, or undefined when it passes. */
@@ -151,7 +191,6 @@ export function validateText({
   min = 0,
   max,
   charset,
-  requireLetter = false,
 }: TextRuleOptions): string | undefined {
   const text = (value ?? "").trim();
 
@@ -160,24 +199,18 @@ export function validateText({
   if (hasControlChars(text)) {
     return `${label} contains characters that are not allowed`;
   }
+  // The charset is checked before the length, so "2ws" is told it cannot
+  // contain a number rather than that it is too short — the first thing to fix
+  // is the first thing reported.
+  if (!charset.test(text)) return charsetError(label, text, charset);
+  if (!CONTAINS_LETTER.test(text)) {
+    return `${label} must contain at least one letter`;
+  }
   if (min && text.length < min) {
     return `${label} must be at least ${min} characters`;
   }
   if (max && text.length > max) {
     return `${label} must be ${max} characters or fewer (currently ${text.length})`;
-  }
-  if (requireLetter && !CONTAINS_LETTER.test(text)) {
-    return `${label} must contain at least one letter`;
-  }
-  if (charset) {
-    if (!charset.test(text)) {
-      return `${label} may only contain letters, numbers, spaces and . , ' - & ( )`;
-    }
-    return undefined;
-  }
-  const bad = unsafeCharsIn(text);
-  if (bad.length) {
-    return `${label} cannot contain ${bad.join(" ")}`;
   }
   return undefined;
 }
@@ -215,27 +248,31 @@ export function validateList({
   if (hasControlChars(raw)) {
     return `${label} contains characters that are not allowed`;
   }
-  const bad = unsafeCharsIn(raw);
-  if (bad.length) return `${label} cannot contain ${bad.join(" ")}`;
   if (raw.length > max) {
     return `${label} must be ${max} characters or fewer (currently ${raw.length})`;
   }
 
   const items = splitList(raw);
   if (!items.length) {
-    return `${label} must be a comma separated list, e.g. "One, Two, Three"`;
+    return `${label} must be a comma separated list, e.g. "Seo Marketing, Analytics"`;
   }
   if (items.length > maxItems) {
     return `${label} may list at most ${maxItems} entries`;
   }
-  const short = items.find((item) => item.length < itemMin);
-  if (short)
-    return `Each entry in ${label} must be at least ${itemMin} characters`;
-  const long = items.find((item) => item.length > itemMax);
-  if (long)
-    return `Each entry in ${label} must be ${itemMax} characters or fewer`;
-  if (!items.every((item) => CONTAINS_LETTER.test(item))) {
-    return `Each entry in ${label} must contain at least one letter`;
+
+  // The comma is the only separator. Each entry is then words and the spaces
+  // between them, which is what makes "seo marketing" an entry and asks
+  // "seo-marketing" to be written out rather than joined up.
+  for (const item of items) {
+    if (!WORDS_ONLY.test(item)) {
+      return charsetError(`"${item}" in ${label}`, item, WORDS_ONLY);
+    }
+    if (item.length < itemMin) {
+      return `"${item}" is too short — each entry in ${label} needs at least ${itemMin} letters`;
+    }
+    if (item.length > itemMax) {
+      return `An entry in ${label} must be ${itemMax} characters or fewer`;
+    }
   }
   return undefined;
 }
@@ -283,8 +320,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       required: true,
       min: L.name.min,
       max: L.name.max,
-      charset: NAME_ALLOWED,
-      requireLetter: true,
+      charset: PERSON_NAME_ALLOWED,
     }),
   );
 
@@ -295,8 +331,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       value: values.full_name ?? undefined,
       min: L.full_name.min,
       max: L.full_name.max,
-      charset: NAME_ALLOWED,
-      requireLetter: true,
+      charset: PERSON_NAME_ALLOWED,
     }),
   );
 
@@ -307,8 +342,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       value: values.professional_title ?? undefined,
       min: L.professional_title.min,
       max: L.professional_title.max,
-      charset: TITLE_ALLOWED,
-      requireLetter: true,
+      charset: WORDS_ONLY,
     }),
   );
 
@@ -318,6 +352,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Short description",
       value: values.description,
       max: L.description.max,
+      charset: PROSE_ALLOWED,
     }),
   );
 
@@ -328,6 +363,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       value: values.bio,
       min: L.bio.min,
       max: L.bio.max,
+      charset: PROSE_ALLOWED,
     }),
   );
 
@@ -337,15 +373,18 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Demographics",
       value: values.demographics,
       max: L.demographics.max,
+      charset: PROSE_ALLOWED,
     }),
   );
 
+  // Comma separated like the others: "Professional, friendly, expert" is
+  // three adjectives, not one string with punctuation in it.
   set(
     "tone_of_voice",
-    validateText({
+    validateList({
       label: "Tone of voice",
       value: values.tone_of_voice,
-      max: L.tone_of_voice.max,
+      ...L.tone_of_voice,
     }),
   );
 

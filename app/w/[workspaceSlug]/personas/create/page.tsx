@@ -338,7 +338,9 @@ export default function CreatePersonaPage() {
                       <p className="text-sm text-destructive">{errors.name}</p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Required. Letters, numbers and . , ' - &amp; ( ) only.
+                        Required. Letters, spaces, apostrophes and hyphens — at
+                        least {PERSONA_LIMITS.name.min} characters, and no
+                        numbers.
                       </p>
                     )}
                   </div>
@@ -561,6 +563,7 @@ export default function CreatePersonaPage() {
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
+                        Letters and spaces only, no numbers —{" "}
                         {PERSONA_LIMITS.professional_title.min}–
                         {PERSONA_LIMITS.professional_title.max} characters if
                         provided.
@@ -700,7 +703,8 @@ export default function CreatePersonaPage() {
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Separate each area with a comma — up to{" "}
+                        One area per comma, each written out in words — "seo
+                        marketing, analytics", not "seo-marketing". Up to{" "}
                         {PERSONA_LIMITS.areas_of_expertise.maxItems} entries.
                       </p>
                     )}
@@ -726,7 +730,7 @@ export default function CreatePersonaPage() {
                       onChange={handleChange}
                       maxLength={PERSONA_LIMITS.tone_of_voice.max}
                       aria-invalid={!!errors.tone_of_voice}
-                      placeholder="e.g. Professional, friendly, expert"
+                      placeholder="Comma separated, e.g. Professional, friendly, expert"
                       className={
                         errors.tone_of_voice ? "border-destructive" : ""
                       }

@@ -27,7 +27,7 @@ describe("PER-006 — avatar URL validation", () => {
   ])("rejects %s", (url) => {
     expect(isValidHttpUrl(url)).toBe(false);
     expect(
-      validatePersona({ name: "Mary", avatar_url: url }).avatar_url,
+      validatePersona({ name: "Marketing Mary", avatar_url: url }).avatar_url,
     ).toBeTruthy();
   });
 
@@ -39,7 +39,7 @@ describe("PER-006 — avatar URL validation", () => {
   ])("accepts %s", (url) => {
     expect(isValidHttpUrl(url)).toBe(true);
     expect(
-      validatePersona({ name: "Mary", avatar_url: url }).avatar_url,
+      validatePersona({ name: "Marketing Mary", avatar_url: url }).avatar_url,
     ).toBeUndefined();
   });
 });
@@ -51,6 +51,10 @@ describe("PER-003 — display name is required and stands alone", () => {
     );
   });
 
+  it.each(["M", "te", "Mar"])("rejects the too-short name %s", (name) => {
+    expect(validatePersona({ name }).name).toContain("at least 4");
+  });
+
   it("does not accept full_name in its place", () => {
     expect(
       validatePersona({ name: "", full_name: "Mary Jane" }).name,
@@ -59,22 +63,22 @@ describe("PER-003 — display name is required and stands alone", () => {
 
   it("no longer requires a professional title", () => {
     expect(
-      validatePersona({ name: "Mary" }).professional_title,
+      validatePersona({ name: "Marketing Mary" }).professional_title,
     ).toBeUndefined();
     expect(
-      validatePersona({ name: "Mary", professional_title: "" })
+      validatePersona({ name: "Marketing Mary", professional_title: "" })
         .professional_title,
     ).toBeUndefined();
   });
 
   it("still bounds a title that is provided", () => {
     expect(
-      validatePersona({ name: "Mary", professional_title: "x" })
+      validatePersona({ name: "Marketing Mary", professional_title: "x" })
         .professional_title,
     ).toBeTruthy();
     expect(
       validatePersona({
-        name: "Mary",
+        name: "Marketing Mary",
         professional_title: "x".repeat(
           PERSONA_LIMITS.professional_title.max + 1,
         ),
@@ -83,58 +87,94 @@ describe("PER-003 — display name is required and stands alone", () => {
   });
 
   it.each([
-    "VP",
     "CEO",
     "SEO Lead",
     "Senior Marketing Manager",
-    "Board-Certified Dermatologist and Clinical Researcher",
-    "Professor of Computer Science (AI Lab)",
+    "Board Certified Dermatologist and Clinical Researcher",
+    "Professor of Computer Science",
   ])("accepts the real title %s", (title) => {
     expect(
-      validatePersona({ name: "Mary", professional_title: title })
+      validatePersona({ name: "Marketing Mary", professional_title: title })
         .professional_title,
     ).toBeUndefined();
   });
 });
 
-describe("PER-011 — special characters", () => {
-  it("rejects markup in a name", () => {
+describe("PER-011 — only words, no numbers, no symbols", () => {
+  it.each([
+    ["name", "<script>alert(1)</script>"],
+    ["description", "Hello <b>there</b>"],
+    ["bio", "A marketer who writes {{payload}} posts about search"],
+    ["demographics", "Urban, `whoami`"],
+    ["professional_title", "Head of Growth @ Rext"],
+  ] as const)("rejects symbols in %s", (field, value) => {
     expect(
-      validatePersona({ name: "<script>alert(1)</script>" }).name,
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
     ).toBeTruthy();
   });
 
-  it("rejects markup and template syntax in prose fields", () => {
+  it.each([
+    ["name", "Mary2"],
+    ["bio", "78e329hrdo3nekdndihidn is what she writes about all day long"],
+    ["description", "Marketer with 10 years of experience"],
+    ["demographics", "oiwjioj2iohd"],
+  ] as const)("rejects numbers in %s", (field, value) => {
     expect(
-      validatePersona({ name: "Mary", description: "Hello <b>there</b>" })
-        .description,
-    ).toBeTruthy();
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toContain("cannot contain numbers");
+  });
+
+  it.each(["areas_of_expertise", "goals", "pain_points", "behaviors"] as const)(
+    "rejects numbers in each entry of %s",
+    (field) => {
+      expect(
+        validatePersona({ name: "Marketing Mary", [field]: "2ws2nkdnkn" })[
+          field
+        ],
+      ).toContain("cannot contain numbers");
+    },
+  );
+
+  it("asks a joined-up expertise to be written out", () => {
     expect(
       validatePersona({
-        name: "Mary",
-        bio: "A marketer who writes {{payload}} posts",
-      }).bio,
-    ).toBeTruthy();
-    expect(
-      validatePersona({ name: "Mary", goals: "Grow traffic, `rm -rf /`" })
-        .goals,
-    ).toBeTruthy();
-  });
-
-  it("names the offending characters", () => {
-    expect(
-      validatePersona({ name: "Mary", description: "a<b>c" }).description,
-    ).toContain("cannot contain");
-  });
-
-  it("keeps the punctuation people really use", () => {
-    expect(validatePersona({ name: "Mary-Jane O'Brien" }).name).toBeUndefined();
+        name: "Marketing Mary",
+        areas_of_expertise: "seo-nothing",
+      }).areas_of_expertise,
+    ).toContain("may only contain letters and spaces");
     expect(
       validatePersona({
-        name: "Mary",
-        bio: "She writes about SEO, analytics & content — clearly, and often.",
-      }).bio,
+        name: "Marketing Mary",
+        areas_of_expertise: "seo marketing, analytics",
+      }).areas_of_expertise,
     ).toBeUndefined();
+  });
+
+  it("keeps the punctuation prose actually needs", () => {
+    expect(validatePersona({ name: "Mary-Jane O’Brien" }).name).toBeUndefined();
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        bio: "She writes about search, analytics and content; clearly, and often!",
+        description: "A marketer focused on organic growth.",
+        demographics: "Urban professionals, mid to high income.",
+      }),
+    ).toEqual({});
+  });
+
+  it("takes tone of voice as a comma separated list", () => {
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        tone_of_voice: "Professional, friendly, expert",
+      }).tone_of_voice,
+    ).toBeUndefined();
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        tone_of_voice: "friendly |& direct",
+      }).tone_of_voice,
+    ).toBeTruthy();
   });
 });
 
@@ -147,7 +187,7 @@ describe("PER-012 — maximum length", () => {
     ["tone_of_voice", PERSONA_LIMITS.tone_of_voice.max],
   ] as const)("reports %s over %i characters", (field, max) => {
     const errors = validatePersona({
-      name: "Mary",
+      name: "Marketing Mary",
       [field]: "a".repeat(max + 1),
     });
     expect(errors[field]).toBeTruthy();
@@ -156,13 +196,13 @@ describe("PER-012 — maximum length", () => {
   it("bounds comma separated fields by total length and entry count", () => {
     expect(
       validatePersona({
-        name: "Mary",
+        name: "Marketing Mary",
         goals: "a".repeat(PERSONA_LIMITS.goals.max + 1),
       }).goals,
     ).toBeTruthy();
     expect(
       validatePersona({
-        name: "Mary",
+        name: "Marketing Mary",
         areas_of_expertise: Array.from({ length: 21 }, (_, i) => `Topic ${i}`),
       }).areas_of_expertise,
     ).toBeTruthy();
@@ -171,7 +211,7 @@ describe("PER-012 — maximum length", () => {
   it("accepts a normal comma separated list", () => {
     expect(
       validatePersona({
-        name: "Mary",
+        name: "Marketing Mary",
         areas_of_expertise: "SEO, Content Strategy, Analytics",
       }).areas_of_expertise,
     ).toBeUndefined();
@@ -198,7 +238,7 @@ describe("avatars the system itself set are not held to the pasted-link rule", (
     const key = "avatars/personas/abc/avatar_1.png";
     expect(isServerOwnedAvatar(key)).toBe(true);
     expect(
-      validatePersona({ name: "Mary", avatar_url: key }).avatar_url,
+      validatePersona({ name: "Marketing Mary", avatar_url: key }).avatar_url,
     ).toBeUndefined();
     expect(isServerOwnedAvatar("data:image/svg+xml;base64,AA==")).toBe(true);
   });
@@ -206,7 +246,8 @@ describe("avatars the system itself set are not held to the pasted-link rule", (
   it("does not mistake a bare typed word for a key", () => {
     expect(isServerOwnedAvatar("exampledotcom")).toBe(false);
     expect(
-      validatePersona({ name: "Mary", avatar_url: "exampledotcom" }).avatar_url,
+      validatePersona({ name: "Marketing Mary", avatar_url: "exampledotcom" })
+        .avatar_url,
     ).toBeTruthy();
   });
 });
