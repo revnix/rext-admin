@@ -359,6 +359,7 @@ export function WorkspaceCreateWizard() {
                   id="name"
                   type="text"
                   placeholder="e.g., My Company Workspace"
+                  maxLength={200}
                   {...register("name")}
                   className={`text-base sm:text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
                   autoFocus
