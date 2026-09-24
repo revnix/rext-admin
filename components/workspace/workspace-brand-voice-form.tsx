@@ -40,8 +40,14 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
  * Validation schema for brand voice form
  */
 const brandVoiceSchema = z.object({
-  brand_name: z.string().optional(),
-  about: z.string().optional(),
+  brand_name: z
+    .string()
+    .max(255, "Brand name must be 255 characters or less")
+    .optional(),
+  about: z
+    .string()
+    .max(255, "About your brand must be 255 characters or less")
+    .optional(),
   customer_profile: z.string().optional(),
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
@@ -287,6 +293,7 @@ export function WorkspaceBrandVoiceForm({
                       <Input
                         {...field}
                         placeholder="e.g., Everlane"
+                        maxLength={255}
                         className="bg-background/50 border-border focus:bg-background transition-colors"
                       />
                     </FormControl>
@@ -314,6 +321,7 @@ export function WorkspaceBrandVoiceForm({
                         {...field}
                         placeholder="Brief description of your company or brand. Example: We provide enterprise software solutions for data management..."
                         rows={3}
+                        maxLength={255}
                         className="resize-none bg-background/50 border-border focus:bg-background transition-colors break-words whitespace-pre-wrap word-break"
                       />
                     </FormControl>
