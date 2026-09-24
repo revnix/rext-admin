@@ -33,10 +33,28 @@ import * as React from "react";
 import type { Route } from "next";
 
 const generalInfoSchema = z.object({
-  name: z.string().min(1, "Workspace name is required").max(200),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Workspace name is required")
+    .max(200, "Workspace name must be 200 characters or less"),
   slug: z.string(),
   description: z.string().max(500).optional(),
-  url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  url: z
+    .string()
+    .trim()
+    .min(1, "Website URL is required")
+    .url("Must be a valid URL")
+    .refine((value) => {
+      try {
+        const hostname = new URL(value).hostname;
+        return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
+          hostname,
+        );
+      } catch {
+        return false;
+      }
+    }, "URL must include a valid domain extension"),
 });
 
 type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
@@ -151,7 +169,11 @@ export function GeneralInfoSection() {
           }
         >
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-4"
+              noValidate
+            >
               <FormField
                 control={form.control}
                 name="name"
@@ -200,7 +222,7 @@ export function GeneralInfoSection() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Your company or project website (optional)
+                      Your company or project website
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
