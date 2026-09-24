@@ -668,81 +668,95 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       const integrationsData =
         await integrationsApiService.listIntegrations(workspaceId);
+      const activeIntegrations = integrationsData.filter(
+        (integration) => integration.is_active !== false,
+      );
 
-      if (integrationsData.length === 0) {
+      if (activeIntegrations.length === 0) {
+        // A workspace with no connected sites is not a permission problem —
+        // open the connect-a-site flow so the user can add an integration.
+        setStatusModal((prev) => ({ ...prev, isOpen: false }));
         setIntegrationModalOpen(true);
         return;
-      } else {
-        setStatusModal({
-          title: `${statusDetails.label} Content...`,
-          isOpen: true,
-          type: "success",
-          action: "publish",
-          message: `Sending content to WordPress with status "${selectedStatus}"...`,
-        });
-        const cmsType = integrationsData[0]?.integration_type;
-        analytics.track("cms_publish_attempted", {
-          cms_type: cmsType,
-          wordpress_status: selectedStatus,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? undefined,
-        });
-        const payload = getContentPayload();
-        if (contentSavedId) {
-          // POST /content/{id}/publish accepts only site_id/status/scheduled_at;
-          // the article in its request body is discarded and the backend
-          // publishes the stored row. Persist the current editor state first, or
-          // the publish ships whatever was saved last — including an image the
-          // user has since removed.
-          await apiClient.content.update(workspaceId, contentSavedId, payload);
-        }
-        const response = contentSavedId
-          ? await apiClient.content.publish(
-              workspaceId,
-              payload,
-              contentSavedId,
-              selectedStatus,
-            )
-          : await apiClient.content.save_publish(
-              workspaceId,
-              payload,
-              selectedStatus,
-            );
-
-        analytics.track("content_published", {
-          title: displayTitle,
-          keyword: userKeyword,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? response?.id ?? undefined,
-          seo_score: seoScore?.seo_health_score,
-          wordpress_status: selectedStatus,
-        });
-        analytics.track("cms_publish_succeeded", {
-          cms_type: cmsType,
-          wordpress_status: selectedStatus,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? response?.id ?? undefined,
-        });
-        invalidateContentCache();
-        setStatusModal({
-          title: statusDetails.successTitle,
-          isOpen: true,
-          type: "success",
-          action: "publish",
-          message: statusDetails.successMessage,
-        });
       }
+
+      setStatusModal({
+        title: `${statusDetails.label} Content...`,
+        isOpen: true,
+        type: "success",
+        action: "publish",
+        message: `Sending content to WordPress with status "${selectedStatus}"...`,
+      });
+
+      const cmsType = activeIntegrations[0]?.integration_type;
+      analytics.track("cms_publish_attempted", {
+        cms_type: cmsType,
+        wordpress_status: selectedStatus,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? undefined,
+      });
+      const payload = getContentPayload();
+      if (contentSavedId) {
+        // POST /content/{id}/publish accepts only site_id/status/scheduled_at;
+        // the article in its request body is discarded and the backend
+        // publishes the stored row. Persist the current editor state first, or
+        // the publish ships whatever was saved last — including an image the
+        // user has since removed.
+        await apiClient.content.update(workspaceId, contentSavedId, payload);
+      }
+      const response = contentSavedId
+        ? await apiClient.content.publish(
+            workspaceId,
+            payload,
+            contentSavedId,
+            selectedStatus,
+          )
+        : await apiClient.content.save_publish(
+            workspaceId,
+            payload,
+            selectedStatus,
+          );
+
+      analytics.track("content_published", {
+        title: displayTitle,
+        keyword: userKeyword,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? response?.id ?? undefined,
+        seo_score: seoScore?.seo_health_score,
+        wordpress_status: selectedStatus,
+      });
+      analytics.track("cms_publish_succeeded", {
+        cms_type: cmsType,
+        wordpress_status: selectedStatus,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? response?.id ?? undefined,
+      });
+      invalidateContentCache();
+      setStatusModal({
+        title: statusDetails.successTitle,
+        isOpen: true,
+        type: "success",
+        action: "publish",
+        message: statusDetails.successMessage,
+      });
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error & { statusCode?: number };
       const errorMessage = err.message?.toLowerCase() ?? "";
+      const statusCode = err.statusCode ?? 0;
       const isIntegrationIssue =
+        statusCode === 403 ||
+        statusCode === 401 ||
         errorMessage.includes("no active sites") ||
         errorMessage.includes("no active sites found") ||
         errorMessage.includes("please connect a site") ||
         errorMessage.includes("integration disabled") ||
         errorMessage.includes("disabled integration") ||
         errorMessage.includes("site is disabled") ||
-        errorMessage.includes("inactive site");
+        errorMessage.includes("inactive site") ||
+        errorMessage.includes("not configured") ||
+        errorMessage.includes("not available") ||
+        errorMessage.includes("misconfigured") ||
+        errorMessage.includes("permission");
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
@@ -751,14 +765,16 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
       setStatusModal({
         title: isIntegrationIssue
-          ? "Site Integration Not Connected"
+          ? "Permission Required"
           : "Failed to Publish Content",
         isOpen: true,
         type: "error",
         action: "publish",
         message: isIntegrationIssue
-          ? "Your site integration is disabled or not connected. Please go to Integrations to enable it."
+          ? "You do not have permission to perform this action."
           : err.message || "Failed to publish content. Please try again.",
+        // Permission and integration failures get the existing escape hatch
+        // to the integrations page instead of a dead-end error dialog.
         showIntegrationLink: isIntegrationIssue,
       });
     } finally {

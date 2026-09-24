@@ -173,27 +173,23 @@ export function PermissionMultiSelect({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Search */}
+    <div className="space-y-3">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search permissions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
+          className="h-9 pl-9"
         />
       </div>
 
-      {/* Selected count */}
-      <div className="text-sm font-medium">
-        {selectedPermissionIds.length} permissions{" "}
-        {disabled ? "assigned" : "selected"}
+      <div className="text-xs font-medium text-muted-foreground">
+        {selectedPermissionIds.length} {disabled ? "assigned" : "selected"}
       </div>
 
-      {/* Permissions list */}
-      <ScrollArea className="h-[400px] rounded-md border p-4">
-        <div className="space-y-6">
+      <ScrollArea className="h-[320px] rounded-md border bg-background/40 p-3">
+        <div className="space-y-4">
           {sortedResources.length === 0 ? (
             <div className="text-center text-sm text-muted-foreground py-8">
               No permissions found
@@ -202,7 +198,7 @@ export function PermissionMultiSelect({
             sortedResources.map((resource) => (
               <div key={resource} className="space-y-3">
                 {/* Resource header with checkbox */}
-                <div className="flex items-center gap-2 pb-2 border-b">
+                <div className="flex items-center gap-2 border-b pb-1.5">
                   <Checkbox
                     id={`resource-${resource}`}
                     checked={isResourceFullySelected(resource)}
@@ -218,7 +214,7 @@ export function PermissionMultiSelect({
                   />
                   <Label
                     htmlFor={`resource-${resource}`}
-                    className={`text-sm font-semibold capitalize ${disabled ? "cursor-default" : "cursor-pointer"}`}
+                    className={`text-xs font-semibold uppercase tracking-wide ${disabled ? "cursor-default" : "cursor-pointer"}`}
                   >
                     {resource} (
                     {
@@ -230,8 +226,7 @@ export function PermissionMultiSelect({
                   </Label>
                 </div>
 
-                {/* Permission checkboxes */}
-                <div className="space-y-2 pl-6">
+                <div className="space-y-2 pl-5">
                   {groupedPermissions[resource].map((permission) => (
                     <div key={permission.id} className="flex items-start gap-2">
                       <Checkbox

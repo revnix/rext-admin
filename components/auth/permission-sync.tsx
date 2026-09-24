@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
   PERMISSIONS_STALE_EVENT,
@@ -21,28 +21,36 @@ const STALE_403_COOLDOWN_MS = 5_000;
  */
 export function PermissionSync() {
   const { status, update } = useSession();
+  const isAuthenticated = status === "authenticated";
+  // Every sync flips status to "loading" and back and gives update() a new
+  // identity, re-running the effect below. The cooldown and in-flight flag
+  // live in refs so a re-run can't reset them — otherwise one 403 turns into
+  // an endless update() loop.
+  const updateRef = useRef(update);
+  updateRef.current = update;
+  const inFlight = useRef(false);
+  const lastStaleSync = useRef(0);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-
-    let inFlight = false;
-    let lastStaleSync = 0;
+    if (!isAuthenticated) return;
 
     const sync = async () => {
-      if (inFlight || document.visibilityState !== "visible") return;
-      inFlight = true;
+      if (inFlight.current || document.visibilityState !== "visible") return;
+      inFlight.current = true;
       try {
-        await update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION });
+        await updateRef.current({
+          authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
+        });
       } catch {
         // Keep the current permissions; the next trigger retries.
       } finally {
-        inFlight = false;
+        inFlight.current = false;
       }
     };
 
     const onStale = () => {
-      if (Date.now() - lastStaleSync < STALE_403_COOLDOWN_MS) return;
-      lastStaleSync = Date.now();
+      if (Date.now() - lastStaleSync.current < STALE_403_COOLDOWN_MS) return;
+      lastStaleSync.current = Date.now();
       void sync();
     };
     const onFocus = () => void sync();
@@ -55,7 +63,7 @@ export function PermissionSync() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener(PERMISSIONS_STALE_EVENT, onStale);
     };
-  }, [status, update]);
+  }, [isAuthenticated]);
 
   return null;
 }

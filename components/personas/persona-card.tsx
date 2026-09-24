@@ -9,8 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Persona } from "@/types/workspace";
-import { ArrowRight, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
@@ -65,22 +64,6 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               </AvatarFallback>
             </Avatar>
           </div>
-          {/*
-            The backend names one persona the brand should write as, chosen on
-            provenance and output rather than score alone - a masthead can
-            outscore every writer on a site and still have no voice to borrow.
-            Without this the choice was returned by the API and visible to
-            nobody, so a reader had to infer it from position in a grid.
-          */}
-          {persona.is_recommended && (
-            <Badge
-              variant="default"
-              className="gap-1 shrink-0 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
-            >
-              <Star className="h-3 w-3 fill-current" />
-              Recommended
-            </Badge>
-          )}
         </CardHeader>
         <CardContent className="p-6 pt-2 flex-grow">
           <CardTitle className="text-base font-semibold mb-2 capitalize leading-tight">
