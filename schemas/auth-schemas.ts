@@ -26,36 +26,27 @@ const passwordSchema = z
   .min(8, "Password must be at least 8 characters")
   .max(128, "Password must be 128 characters or less");
 
-const signupFullNameSchema = z.preprocess(
-  (value) => value ?? "",
-  z
-    .string()
-    .trim()
-    .min(1, "Full name is required")
-    .max(50, "Full name must be 50 characters or less")
-    .regex(/^[^0-9]*$/, "Name should not contain numbers")
-    .regex(/[a-zA-Z]/, "Name must contain at least one letter"),
-);
+const signupFullNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Full name is required")
+  .max(50, "Full name must be 50 characters or less")
+  .regex(/^[^0-9]*$/, "Name should not contain numbers")
+  .regex(/[a-zA-Z]/, "Name must contain at least one letter");
 
-const signupEmailSchema = z.preprocess(
-  (value) => value ?? "",
-  z
-    .string()
-    .trim()
-    .min(1, "Enter your email address")
-    .email("Invalid email address")
-    .toLowerCase(),
-);
+const signupEmailSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter your email address")
+  .email("Invalid email address")
+  .toLowerCase();
 
-const signupPasswordSchema = z.preprocess(
-  (value) => value ?? "",
-  z.string().min(1, "Enter password").pipe(passwordSchema),
-);
+const signupPasswordSchema = z
+  .string()
+  .min(1, "Enter password")
+  .pipe(passwordSchema);
 
-const signupConfirmPasswordSchema = z.preprocess(
-  (value) => value ?? "",
-  z.string().min(1, "Confirm your password"),
-);
+const signupConfirmPasswordSchema = z.string().min(1, "Confirm your password");
 
 // Password change form schema
 export const passwordChangeSchema = z
@@ -86,7 +77,8 @@ export const signupFormSchema = z
 
 // Forgot password form schema
 export const forgotPasswordSchema = z.object({
-  email: z.string()
+  email: z
+    .string()
     .trim()
     .min(1, "Enter your email address")
     .email("Invalid email address")

@@ -28,6 +28,7 @@ import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { useToast } from "@/hooks/use-toast";
 import { checkPasswordBreach } from "@/lib/password-utils";
+import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
 
 export function SignupForm({
@@ -51,6 +52,12 @@ export function SignupForm({
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupFormSchema),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const { handleSubmit, setValue } = form;
@@ -144,8 +151,6 @@ export function SignupForm({
       analytics.track("user_signed_up", {
         method: isInvitationSignup ? "invitation" : "credentials",
       });
-      // Show success toast
-      toast.success("Account created successfully! Logging you in...");
 
       // Auto-login after successful registration
       const result = await signIn("credentials", {
@@ -157,6 +162,7 @@ export function SignupForm({
       if (result?.ok) {
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
+        toast.success("Account created successfully! Logging you in...");
 
         // Explicitly accept the invitation now that the user is authenticated.
         // The register-with-invitation endpoint creates the account but does not
@@ -262,7 +268,14 @@ export function SignupForm({
         return;
       }
 
-      toast.error(errorMessage);
+      const classifiedError = classifyError(err);
+      const userMessage =
+        classifiedError.type === "network_error" ||
+        classifiedError.type === "server_error"
+          ? classifiedError.message
+          : errorMessage;
+
+      toast.error(userMessage);
     } finally {
       setIsLoading(false);
     }

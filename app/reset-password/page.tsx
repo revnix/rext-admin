@@ -21,7 +21,12 @@ import {
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
 import { checkPasswordBreach } from "@/lib/password-utils";
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import {
+  classifyError,
+  extractApiError,
+  safeParseErrorBody,
+} from "@/lib/error-utils";
+import { ApiError } from "@/lib/api-client/core";
 import type { Route } from "next";
 
 function ResetPasswordForm() {
@@ -115,7 +120,10 @@ function ResetPasswordForm() {
 
       if (!response.ok) {
         const errorData = await safeParseErrorBody(response);
-        throw new Error(extractApiError(errorData, "Password reset failed"));
+        throw new ApiError(
+          response.status,
+          extractApiError(errorData, "Password reset failed"),
+        );
       }
 
       setSuccess(true);
@@ -124,7 +132,15 @@ function ResetPasswordForm() {
         router.push("/login" as Route);
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Password reset failed");
+      const classifiedError = classifyError(err);
+      setError(
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : err instanceof Error
+            ? err.message
+            : "Password reset failed",
+      );
     } finally {
       setIsLoading(false);
     }

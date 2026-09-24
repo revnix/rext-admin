@@ -138,9 +138,9 @@ export function classifyError(
       errorType = "abort_error";
     } else if (error.name === "TimeoutError") {
       errorType = "timeout_error";
-    } else if (error.message.includes("fetch")) {
+    } else if (error.message.toLowerCase().includes("fetch")) {
       errorType = "network_error";
-    } else if (error.message.includes("CORS")) {
+    } else if (error.message.toLowerCase().includes("cors")) {
       errorType = "cors_error";
     }
 
