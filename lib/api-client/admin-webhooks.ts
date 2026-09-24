@@ -14,15 +14,25 @@ import { ENDPOINTS } from "./endpoints";
 // ============================================================================
 
 export interface WebhookEvent {
+  /** Database id (webhook_events.id, a UUID). Use this for retry / detail. */
   id: string;
   event_name: string;
+  /** External LemonSqueezy event id - informational only. */
   event_id: string;
-  payload: Record<string, unknown>;
+  payload?: Record<string, unknown> | null;
   processed: boolean;
   error_message: string | null;
+  retry_count?: number;
   created_at: string;
+  updated_at?: string;
   processed_at: string | null;
   status: "processed" | "pending" | "failed";
+}
+
+export interface WebhookRetryResult {
+  success: boolean;
+  message: string;
+  event?: WebhookEvent;
 }
 
 export interface WebhookEventsSummary {
@@ -79,10 +89,15 @@ interface WebhookStatsApiResponse {
   }>;
 }
 
+export type WebhookStatusFilter = "all" | "processed" | "pending" | "failed";
+
 export interface WebhookEventsFilters {
   page?: number;
   per_page?: number;
   event_name?: string;
+  /** Preferred: server-side lifecycle filter driving the row list + pagination. */
+  status?: WebhookStatusFilter;
+  /** @deprecated use `status` */
   processed?: boolean;
   start_date?: string;
   end_date?: string;
@@ -112,6 +127,10 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
         page: filters?.page,
         per_page: filters?.per_page,
         event_name: filters?.event_name,
+        status:
+          filters?.status && filters.status !== "all"
+            ? filters.status
+            : undefined,
         processed: filters?.processed,
         start_date: filters?.start_date,
         end_date: filters?.end_date,
@@ -134,26 +153,66 @@ export function createAdminWebhooksNamespace(client: ApiClient) {
       page = 1,
       perPage = 50,
       hours = 24,
+      includePayload = false,
     ): Promise<WebhookEventsResponse> => {
-      return client.request<WebhookEventsResponse>(
-        `${ENDPOINTS.ADMIN_WEBHOOKS.failed}?page=${page}&per_page=${perPage}&hours=${hours}`,
+      const raw = await client.request<{
+        failed_events: WebhookEvent[];
+        pagination: WebhookEventsPagination;
+        statistics?: { total_failed?: number };
+      }>(
+        `${ENDPOINTS.ADMIN_WEBHOOKS.failed}?page=${page}&per_page=${perPage}&hours=${hours}&include_payload=${includePayload}`,
         {
           method: "GET",
         },
       );
+
+      // Normalise the failed-events contract onto the shared events shape.
+      const events = raw.failed_events ?? [];
+      return {
+        events,
+        pagination: raw.pagination,
+        summary: {
+          total:
+            raw.statistics?.total_failed ??
+            raw.pagination?.total ??
+            events.length,
+          processed: 0,
+          pending: 0,
+          failed:
+            raw.statistics?.total_failed ??
+            raw.pagination?.total ??
+            events.length,
+        },
+      };
     },
 
     /**
-     * Retry a failed webhook event
+     * Fetch a single webhook event including its redacted payload body.
      *
-     * @param eventId - UUID of the webhook event to retry
+     * @param webhookId - Database id (webhook_events.id) of the event
      * @requires Super admin role
      */
-    retryWebhook: async (
-      eventId: string,
-    ): Promise<{ success: boolean; message: string }> => {
-      return client.request<{ success: boolean; message: string }>(
-        ENDPOINTS.ADMIN_WEBHOOKS.retry(eventId),
+    getEventDetail: async (webhookId: string): Promise<WebhookEvent> => {
+      return client.request<WebhookEvent>(
+        ENDPOINTS.ADMIN_WEBHOOKS.detail(webhookId),
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Retry (reprocess) a failed webhook event.
+     *
+     * The backend re-routes the stored payload through the full handler
+     * registry and returns `{ success, message, event }`. A failed reprocess
+     * responds with HTTP 400 (thrown by the client), so a resolved promise
+     * always means the event was actually reprocessed.
+     *
+     * @param webhookId - Database id (webhook_events.id) of the event to retry
+     * @requires Super admin role
+     */
+    retryWebhook: async (webhookId: string): Promise<WebhookRetryResult> => {
+      return client.request<WebhookRetryResult>(
+        ENDPOINTS.ADMIN_WEBHOOKS.retry(webhookId),
         {
           method: "POST",
         },

@@ -40,10 +40,8 @@ export default function WorkspaceContentPage() {
     CONTENT_PERMISSIONS.UPDATE,
     workspaceId,
   );
-  const { isLoading: isDeleteLoading } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.DELETE,
-    workspaceId,
-  );
+  const { hasPermission: canDeleteContent, isLoading: isDeleteLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.DELETE, workspaceId);
 
   const isPermissionLoading =
     isCreateLoading || isUpdateLoading || isDeleteLoading;
@@ -170,7 +168,7 @@ export default function WorkspaceContentPage() {
                     key={item.id}
                     item={item}
                     workspaceSlug={workspaceSlug}
-                    onDelete={handleDelete}
+                    onDelete={canDeleteContent ? handleDelete : undefined}
                   />
                 ))}
               </div>

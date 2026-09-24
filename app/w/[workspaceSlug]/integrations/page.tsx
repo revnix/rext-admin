@@ -26,12 +26,24 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { INTEGRATION_PERMISSIONS } from "@/lib/permissions";
 
 export default function IntegrationsPage() {
   const { workspace } = useWorkspace();
-  const { hasPermission: canManage, isLoading: isPermLoading } =
-    useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspace?.id);
+  const { hasPermission: canRead, isLoading: isPermLoading } =
+    useWorkspacePermission(INTEGRATION_PERMISSIONS.READ, workspace?.id);
+  const { hasPermission: canCreate } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.CREATE,
+    workspace?.id,
+  );
+  const { hasPermission: canUpdate } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.UPDATE,
+    workspace?.id,
+  );
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    INTEGRATION_PERMISSIONS.DELETE,
+    workspace?.id,
+  );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +52,7 @@ export default function IntegrationsPage() {
   );
 
   const fetchIntegrations = useCallback(async () => {
-    if (!workspace?.id) return;
+    if (!workspace?.id || !canRead) return;
     try {
       setIsLoading(true);
       const data = await integrationsApiService.listIntegrations(workspace.id);
@@ -63,7 +75,7 @@ export default function IntegrationsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [workspace?.id]);
+  }, [workspace?.id, canRead]);
 
   useEffect(() => {
     fetchIntegrations();
@@ -164,7 +176,7 @@ export default function IntegrationsPage() {
       title="Integrations"
       description="Connect your workspace with third-party platforms."
       actions={
-        canManage ? (
+        canCreate ? (
           <Button
             className="w-full sm:w-auto"
             onClick={() => setIsAddModalOpen(true)}
@@ -173,7 +185,7 @@ export default function IntegrationsPage() {
             Add Integration
           </Button>
         ) : (
-          <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+          <LockedFeatureTooltip message="You need integration.create to connect an integration">
             <Button className="w-full sm:w-auto" disabled>
               <Plus className="mr-2 h-4 w-4" />
               Add Integration
@@ -231,7 +243,7 @@ export default function IntegrationsPage() {
                 </CardContent>
                 <CardFooter className="flex items-center justify-between p-6 border-t border-slate-100">
                   <div className="flex gap-2">
-                    {canManage ? (
+                    {canUpdate || canDelete ? (
                       <Button
                         variant="outline"
                         size="icon"
@@ -242,7 +254,7 @@ export default function IntegrationsPage() {
                         <span className="sr-only">Settings</span>
                       </Button>
                     ) : (
-                      <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+                      <LockedFeatureTooltip message="You need integration.update or integration.delete to manage this integration">
                         <Button
                           variant="outline"
                           size="icon"
@@ -255,7 +267,7 @@ export default function IntegrationsPage() {
                       </LockedFeatureTooltip>
                     )}
                   </div>
-                  {canManage ? (
+                  {canUpdate ? (
                     <Switch
                       checked={integration.is_active}
                       onCheckedChange={(checked) =>
@@ -264,7 +276,7 @@ export default function IntegrationsPage() {
                     />
                   ) : (
                     <div className="className">
-                      <LockedFeatureTooltip message="Not available for your role — Admin or above required">
+                      <LockedFeatureTooltip message="You need integration.update to change activation">
                         <Switch checked={integration.is_active} disabled />
                       </LockedFeatureTooltip>
                     </div>
@@ -286,6 +298,8 @@ export default function IntegrationsPage() {
         isOpen={!!viewIntegration}
         onClose={() => setViewIntegration(null)}
         integration={viewIntegration}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
         onUpdate={handleIntegrationUpdated}
         onDelete={handleIntegrationDeleted}
       />

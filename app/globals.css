@@ -1837,3 +1837,20 @@
   background-size: 800px 100%;
   animation: shimmer 1.6s infinite linear;
 }
+
+/*
+ * LemonSqueezy checkout overlay — background scroll lock.
+ *
+ * lemon.js toggles `lemonsqueezy-loading` and `lemonsqueezy-open` on <body>
+ * while the checkout is up, but ships no CSS for either: the only overflow
+ * rules it sets are on its own iframe. Without these the page behind the
+ * overlay keeps scrolling under the checkout.
+ *
+ * `position: fixed` would also lock iOS Safari, but it resets scroll position
+ * on close, which is worse on the pricing page than a little rubber-banding.
+ */
+body.lemonsqueezy-open,
+body.lemonsqueezy-loading {
+  overflow: hidden;
+  overscroll-behavior: none;
+}

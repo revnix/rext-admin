@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,44 +14,75 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
+import { isProtectedRole } from "@/lib/permissions";
 import type { Role } from "@/types/role";
 import { usePermissionStore } from "@/stores/permission-store";
+
+const NO_REASSIGNMENT = "__none__";
 
 interface DeleteRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   role: Role | null;
+  /** All roles, used to populate the reassignment target list */
+  roles?: Role[];
 }
 
 export function DeleteRoleDialog({
   open,
   onOpenChange,
   role,
+  roles = [],
 }: DeleteRoleDialogProps) {
   const queryClient = useQueryClient();
+  const [reassignTo, setReassignTo] = useState<string>(NO_REASSIGNMENT);
+
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
+
+  // Reset the selector whenever a different role is opened, so a target
+  // picked for one role can't leak into the next deletion.
+  useEffect(() => {
+    setReassignTo(NO_REASSIGNMENT);
+  }, []);
+
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
-      return await apiClient.roles.delete(role.id);
+      return await apiClient.roles.delete(
+        role.id,
+        reassignTo === NO_REASSIGNMENT ? undefined : reassignTo,
+      );
     },
     onSuccess: async () => {
-      toast.success("Role deleted successfully");
+      toast.success(
+        reassignTo === NO_REASSIGNMENT
+          ? "Role deleted successfully"
+          : "Role deleted and its users reassigned",
+      );
       invalidateWorkspacePermissions();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-logs"] }),
       ]);
       onOpenChange(false);
     },
     onError: (error: Error) => {
       toast.error(
         error.message ||
-          "Failed to delete role. It may be assigned to users or be a system role.",
+          "Failed to delete role. It may be assigned to users or be protected.",
       );
     },
   });
@@ -60,6 +92,13 @@ export function DeleteRoleDialog({
   };
 
   if (!role) return null;
+
+  const isProtected = isProtectedRole(role);
+
+  // Only roles that can actually receive users: anything but the one being
+  // deleted. Protected roles are valid targets — the backend only blocks
+  // deleting them, not assigning to them.
+  const reassignmentTargets = roles.filter((r) => r.id !== role.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,12 +114,13 @@ export function DeleteRoleDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {role.is_system_role ? (
+          {isProtected ? (
             <Alert variant="destructive">
               <Shield className="h-4 w-4" />
               <AlertDescription>
-                This is a system role and cannot be deleted. System roles are
-                essential for the application to function properly.
+                {role.is_system_role
+                  ? "This is a system role and cannot be deleted. System roles are essential for the application to function properly."
+                  : "This is a standard workspace role and cannot be deleted. It is required for workspace membership to function properly."}
               </AlertDescription>
             </Alert>
           ) : (
@@ -102,12 +142,36 @@ export function DeleteRoleDialog({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="reassign-to">
+                  Reassign users to{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Select value={reassignTo} onValueChange={setReassignTo}>
+                  <SelectTrigger id="reassign-to">
+                    <SelectValue placeholder="Don't reassign" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_REASSIGNMENT}>
+                      Don&apos;t reassign
+                    </SelectItem>
+                    {reassignmentTargets.map((target) => (
+                      <SelectItem key={target.id} value={target.id}>
+                        {target.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Warning:</strong> If this role is assigned to any
-                  users, the deletion will fail. You must first unassign the
-                  role from all users or provide a role to reassign them to.
+                  users, the deletion will fail unless you pick a role above to
+                  reassign them to.
                 </AlertDescription>
               </Alert>
             </>
@@ -127,7 +191,7 @@ export function DeleteRoleDialog({
             type="button"
             variant="destructive"
             onClick={handleDelete}
-            disabled={deleteMutation.isPending || role.is_system_role}
+            disabled={deleteMutation.isPending || isProtected}
           >
             {deleteMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

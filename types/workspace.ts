@@ -18,6 +18,8 @@
  */
 export interface Workspace {
   id: string; // UUID
+  user_id?: string; // Workspace owner user ID
+  owner_id?: string; // Optional owner identifier
   title?: string; // optional for backward compatibility - deprecated, use 'name' instead
   name: string; // unique, required — workspace display name
   slug: string; // URL-safe identifier for workspace
@@ -37,13 +39,13 @@ export interface Workspace {
     total: number;
   };
   analytics?: {
-    knowledge_counts: {
+    knowledge_counts?: {
       web_knowledge: number;
       files: number;
       text_knowledge: number;
       total_knowledge_items: number;
     };
-    content_metrics: {
+    content_metrics?: {
       total_words: number;
       web_content_words: number;
       file_content_words: number;
@@ -51,7 +53,7 @@ export interface Workspace {
       avg_file_words: number;
       estimated_reading_time_minutes: number;
     };
-    team_metrics: {
+    team_metrics?: {
       total_members: number;
     };
   };
@@ -90,6 +92,16 @@ export interface Persona {
   tone_of_voice?: string;
   bio?: string;
   avatar_url?: string | null;
+  /**
+   * Where the picture came from. "custom" when someone chose it, "page" when
+   * the site published it, "gravatar" when it was derived from an address, and
+   * "generated" when nothing was found and initials were drawn. A photograph of
+   * someone and a coloured circle bearing their letters are not the same claim,
+   * and the URL alone does not say which is on screen.
+   */
+  avatar_source?: "custom" | "page" | "gravatar" | "generated" | null;
+  /** Used to derive a Gravatar when no photograph was found. */
+  email?: string | null;
   linkedin_url?: string | null;
   demographics?: string;
   pain_points?: string | string[];
@@ -105,7 +117,7 @@ export interface BrandVoice {
   workspace_id: string;
   brand_name?: string; // The actual brand/product name — distinct from the workspace name
   about?: string; // Brand description
-  customer_profile?: string; // Target customer details
+  customer_profile?: string | null; // Target customer details
   selling_position?: string; // Unique selling proposition
   target_audience?: string[]; // Array of audience segments
   brand_voice?: string[]; // Communication tone/style characteristics

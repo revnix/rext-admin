@@ -20,6 +20,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
+import { classifyError } from "@/lib/error-utils";
+import { loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 
 export function LoginForm({
@@ -30,6 +32,10 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
     useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +55,13 @@ export function LoginForm({
     error: invitationError,
   } = useInvitationValidation();
 
+  // Prefill email from the URL (e.g. redirected here from an invitation signup
+  // because the account already exists).
+  useEffect(() => {
+    const prefill = searchParams.get("email");
+    if (prefill) setEmail(prefill);
+  }, [searchParams]);
+
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
     const urlError = searchParams.get("error");
@@ -57,6 +70,10 @@ export function LoginForm({
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
+        AccountSuspended:
+          "Your account has been suspended. Contact support to have it reviewed.",
+        AccountBanned:
+          "Your account has been permanently banned and cannot be used.",
         OAuthSignin: "Error occurred during OAuth sign in.",
         OAuthCallback: "Error occurred during OAuth callback.",
         OAuthCreateAccount: "Could not create OAuth account.",
@@ -82,28 +99,48 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const attemptSignIn = async (confirmReactivation: boolean) => {
-    // Backend validated successfully, now use NextAuth for session creation
+  const attemptSignIn = async () => {
+    // Backend validated successfully, now use NextAuth for session creation.
+    // There is deliberately no "confirm reactivation" flag here — a deactivated
+    // account is only reactivated by opening the emailed link.
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
+      // signIn() otherwise uses window.location.href, and reads `error` back
+      // from it — on /login?error=SessionExpired a successful login would
+      // report that stale error. Navigation is handled manually below.
+      redirectTo: "/",
       rememberMe: rememberMe.toString(),
-      confirmReactivation: confirmReactivation.toString(),
     });
 
     if (result?.error) {
       if (result.code === "ACCOUNT_DEACTIVATED") {
+        // Reactivation is deliberately NOT granted by signing in again: the
+        // password alone doesn't prove the mailbox owner wants the account
+        // back. We email a single-use link instead, and /account-recovery
+        // reactivates the account when it's opened.
         const shouldReactivate = await confirm({
           title: "Reactivate your account?",
           description:
-            "This account was deactivated. Log in again to reactivate it and continue.",
-          confirmText: "Reactivate & Log In",
+            "This account was deactivated. We'll email you a link to confirm it's you — your account is reactivated as soon as you open it, then you can log in.",
+          confirmText: "Email me the link",
           cancelText: "Cancel",
         });
 
         if (shouldReactivate) {
-          await attemptSignIn(true);
+          try {
+            // Always reports success, so it can't be used to probe which
+            // addresses have accounts.
+            await apiClient.account.requestRecovery({ email });
+            toast.success(
+              "Check your inbox for the reactivation link. It's valid for 30 minutes.",
+            );
+          } catch {
+            toast.error(
+              "Couldn't send the reactivation email. Please try again.",
+            );
+          }
         }
         return;
       }
@@ -114,8 +151,16 @@ export function LoginForm({
         result.code && result.code !== "CredentialsSignin"
           ? result.code
           : "Authentication failed. Please check your credentials and try again.";
+      const classifiedError = classifyError(
+        new Error(result.code || result.error || "Authentication failed"),
+      );
+      const displayErrorMessage =
+        classifiedError.type === "network_error" ||
+        classifiedError.type === "server_error"
+          ? classifiedError.message
+          : errorMessage;
 
-      const isInvalidCredentials = errorMessage
+      const isInvalidCredentials = displayErrorMessage
         .toLowerCase()
         .includes("invalid email or password");
 
@@ -124,7 +169,7 @@ export function LoginForm({
         emailInputRef.current?.focus();
       }
 
-      toast.error(errorMessage);
+      toast.error(displayErrorMessage);
       return;
     }
 
@@ -133,6 +178,9 @@ export function LoginForm({
     resetAuthRedirectState();
 
     if (hasValidInvitation && invitationToken) {
+      // Force a fresh auth-headers read before navigating so the accept page's
+      // very first request doesn't race the session hydration.
+      await getAuthHeaders(true);
       router.push(`/invitations/accept?token=${invitationToken}` as Route);
     } else {
       await getAuthHeaders(true);
@@ -159,20 +207,25 @@ export function LoginForm({
     e.preventDefault();
     setHasInvalidCredentialsError(false);
 
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    const hasEmail = trimmedEmail.length > 0;
-    const hasPassword = trimmedPassword.length > 0;
-
-    // Do not show credential errors for empty fields; only focus the first missing field.
-    if (!hasEmail || !hasPassword) {
-      if (!hasEmail) {
+    const validationResult = loginSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      const nextValidationErrors: typeof validationErrors = {};
+      for (const issue of validationResult.error.issues) {
+        const field = issue.path[0];
+        if (field === "email" || field === "password") {
+          nextValidationErrors[field] ??= issue.message;
+        }
+      }
+      setValidationErrors(nextValidationErrors);
+      if (nextValidationErrors.email) {
         emailInputRef.current?.focus();
       } else {
         passwordInputRef.current?.focus();
       }
       return;
     }
+
+    setValidationErrors({});
 
     setIsLoading(true);
 
@@ -182,10 +235,16 @@ export function LoginForm({
     }
 
     try {
-      await attemptSignIn(false);
+      await attemptSignIn();
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
-      toast.error("An error occurred. Please try again.");
+      const classifiedError = classifyError(error);
+      toast.error(
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : "An error occurred. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -197,14 +256,14 @@ export function LoginForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.name}
-          workspaceSlug={invitation.workspace.slug}
+          workspaceName={invitation.workspace?.name}
+          workspaceSlug={invitation.workspace?.slug}
           inviterName={
-            invitation.invited_by.display_name ||
-            invitation.invited_by.full_name ||
+            invitation.invited_by?.display_name ||
+            invitation.invited_by?.full_name ||
             "Workspace Admin"
           }
-          roleName={invitation.role.display_name}
+          roleName={invitation.role?.display_name || invitation.role?.name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
         />
@@ -255,6 +314,10 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                    setValidationErrors((current) => ({
+                      ...current,
+                      email: undefined,
+                    }));
                     if (hasInvalidCredentialsError) {
                       setHasInvalidCredentialsError(false);
                     }
@@ -265,6 +328,11 @@ export function LoginForm({
                       "border-destructive focus-visible:ring-destructive/30",
                   )}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-destructive">
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
@@ -286,6 +354,10 @@ export function LoginForm({
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
+                      setValidationErrors((current) => ({
+                        ...current,
+                        password: undefined,
+                      }));
                       if (hasInvalidCredentialsError) {
                         setHasInvalidCredentialsError(false);
                       }
@@ -311,6 +383,11 @@ export function LoginForm({
                     )}
                   </button>
                 </div>
+                {validationErrors.password && (
+                  <p className="text-sm text-destructive">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox

@@ -6,8 +6,8 @@
 
 import type {
   AssignPermissionsRequest,
-  CreatePermissionRequest,
   CreateRoleRequest,
+  PermissionWithRoles,
   UpdatePermissionRequest,
   UpdateRoleRequest,
 } from "@/types/role";
@@ -18,16 +18,22 @@ import { ENDPOINTS } from "./endpoints";
 export function createRolesNamespace(client: ApiClient) {
   return {
     /**
-     * List all roles with optional permissions
+     * List all roles with optional permissions — fetches all pages automatically
+     *
+     * The backend paginates this endpoint (default 50, max 100 per page), so a
+     * single unparameterised request silently truncates once the system has
+     * more than 50 roles. Same page-walking approach as listPermissions below.
      */
     list: async (includePermissions = false) => {
-      return client.request<{
+      const PER_PAGE = 100;
+      type RoleListResponse = {
         roles: Array<{
           id: string;
           name: string;
           display_name: string;
           description?: string;
           is_system_role: boolean;
+          is_workspace_role?: boolean;
           hierarchy_level: number;
           created_at: string;
           updated_at: string;
@@ -40,39 +46,50 @@ export function createRolesNamespace(client: ApiClient) {
           }>;
         }>;
         count: number;
-      }>(`${ENDPOINTS.ROLES.list}?include_permissions=${includePermissions}`, {
+        pagination?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+          has_next: boolean;
+          has_prev: boolean;
+        };
+      };
+
+      const pageUrl = (page: number) =>
+        buildUrl(ENDPOINTS.ROLES.list, {
+          include_permissions: includePermissions ? "true" : "false",
+          page,
+          per_page: PER_PAGE,
+        });
+
+      const firstPage = await client.request<RoleListResponse>(pageUrl(1), {
         method: "GET",
       });
-    },
 
-    /**
-     * Get role by ID with optional permissions
-     */
-    get: async (roleId: string, includePermissions = false) => {
-      return client.request<{
-        role: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          is_system_role: boolean;
-          hierarchy_level: number;
-          created_at: string;
-          updated_at: string;
-          permissions?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            resource: string;
-            action: string;
-          }>;
+      const totalPages = firstPage.pagination?.total_pages ?? 1;
+      if (totalPages <= 1) {
+        return {
+          roles: firstPage.roles,
+          count: firstPage.pagination?.total ?? firstPage.count,
         };
-      }>(
-        `${ENDPOINTS.ROLES.get(roleId)}?include_permissions=${includePermissions}`,
-        {
-          method: "GET",
-        },
+      }
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          client.request<RoleListResponse>(pageUrl(i + 2), { method: "GET" }),
+        ),
       );
+
+      const allRoles = [
+        ...firstPage.roles,
+        ...remainingPages.flatMap((p) => p.roles),
+      ];
+
+      return {
+        roles: allRoles,
+        count: firstPage.pagination?.total ?? allRoles.length,
+      };
     },
 
     /**
@@ -123,13 +140,19 @@ export function createRolesNamespace(client: ApiClient) {
 
     /**
      * Delete a role
+     *
+     * The backend refuses to delete a role that is still assigned to users
+     * unless `reassignTo` names another role to move those users to first.
      */
-    delete: async (roleId: string) => {
+    delete: async (roleId: string, reassignTo?: string) => {
       return client.request<{
         role_id: string;
-      }>(ENDPOINTS.ROLES.delete(roleId), {
-        method: "DELETE",
-      });
+      }>(
+        buildUrl(ENDPOINTS.ROLES.delete(roleId), { reassign_to: reassignTo }),
+        {
+          method: "DELETE",
+        },
+      );
     },
 
     /**
@@ -153,6 +176,26 @@ export function createRolesNamespace(client: ApiClient) {
     },
 
     /**
+     * Atomically update/replace permissions assigned to a role
+     */
+    updatePermissions: async (
+      roleId: string,
+      data: AssignPermissionsRequest,
+    ) => {
+      return client.request<{
+        role_id: string;
+        role_name: string;
+        added_count: number;
+        skipped_count: number;
+        invalid_count: number;
+      }>(ENDPOINTS.ROLES.permissions.update(roleId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
      * Revoke a permission from a role
      */
     revokePermission: async (roleId: string, permissionId: string) => {
@@ -167,72 +210,29 @@ export function createRolesNamespace(client: ApiClient) {
     },
 
     /**
-     * List permissions for a single page
-     */
-    listPermissionsPage: async (
-      resource?: string,
-      includeRoles = false,
-      page = 1,
-      perPage = 100,
-    ) => {
-      const url = buildUrl(ENDPOINTS.PERMISSIONS.list, {
-        resource,
-        include_roles: includeRoles ? "true" : undefined,
-        page,
-        per_page: perPage,
-      });
-
-      return client.request<{
-        permissions: Array<{
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        }>;
-        count: number;
-        page: number;
-        per_page: number;
-        total_pages: number;
-      }>(url, {
-        method: "GET",
-      });
-    },
-
-    /**
      * List all permissions with optional roles — fetches all pages automatically
      */
     listPermissions: async (resource?: string, includeRoles = false) => {
       const PER_PAGE = 100;
-      const firstPage = await client.request<{
-        permissions: Array<{
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        }>;
+      type PermissionListResponse = {
+        // Canonical shape — an inline duplicate here silently drifted from
+        // types/role.ts when is_system was added, breaking the roles page build.
+        permissions: PermissionWithRoles[];
         count: number;
-        page: number;
-        per_page: number;
-        total_pages: number;
-      }>(
+        page?: number;
+        per_page?: number;
+        total_pages?: number;
+        pagination?: {
+          page: number;
+          per_page: number;
+          total: number;
+          total_pages: number;
+          has_next: boolean;
+          has_prev: boolean;
+        };
+      };
+
+      const firstPage = await client.request<PermissionListResponse>(
         buildUrl(ENDPOINTS.PERMISSIONS.list, {
           resource,
           include_roles: includeRoles ? "true" : undefined,
@@ -242,34 +242,18 @@ export function createRolesNamespace(client: ApiClient) {
         { method: "GET" },
       );
 
-      const totalPages = firstPage.total_pages ?? 1;
+      const totalPages =
+        firstPage.pagination?.total_pages ?? firstPage.total_pages ?? 1;
       if (totalPages <= 1) {
-        return { permissions: firstPage.permissions, count: firstPage.count };
+        return {
+          permissions: firstPage.permissions,
+          count: firstPage.pagination?.total ?? firstPage.count,
+        };
       }
 
       const remainingPages = await Promise.all(
         Array.from({ length: totalPages - 1 }, (_, i) =>
-          client.request<{
-            permissions: Array<{
-              id: string;
-              name: string;
-              display_name: string;
-              description?: string;
-              resource: string;
-              action: string;
-              created_at: string;
-              roles?: Array<{
-                id: string;
-                name: string;
-                display_name: string;
-                hierarchy_level: number;
-              }>;
-            }>;
-            count: number;
-            page: number;
-            per_page: number;
-            total_pages: number;
-          }>(
+          client.request<PermissionListResponse>(
             buildUrl(ENDPOINTS.PERMISSIONS.list, {
               resource,
               include_roles: includeRoles ? "true" : undefined,
@@ -286,56 +270,10 @@ export function createRolesNamespace(client: ApiClient) {
         ...remainingPages.flatMap((p) => p.permissions),
       ];
 
-      return { permissions: allPermissions, count: firstPage.count };
-    },
-
-    /**
-     * Get permission by ID
-     */
-    getPermission: async (permissionId: string, includeRoles = false) => {
-      return client.request<{
-        permission: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-          roles?: Array<{
-            id: string;
-            name: string;
-            display_name: string;
-            hierarchy_level: number;
-          }>;
-        };
-      }>(
-        `${ENDPOINTS.PERMISSIONS.get(permissionId)}?include_roles=${includeRoles}`,
-        {
-          method: "GET",
-        },
-      );
-    },
-
-    /**
-     * Create a new permission
-     */
-    createPermission: async (data: CreatePermissionRequest) => {
-      return client.request<{
-        permission: {
-          id: string;
-          name: string;
-          display_name: string;
-          description?: string;
-          resource: string;
-          action: string;
-          created_at: string;
-        };
-      }>(ENDPOINTS.PERMISSIONS.create, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      return {
+        permissions: allPermissions,
+        count: firstPage.pagination?.total ?? allPermissions.length,
+      };
     },
 
     /**
@@ -359,17 +297,6 @@ export function createRolesNamespace(client: ApiClient) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-    },
-
-    /**
-     * Delete a permission
-     */
-    deletePermission: async (permissionId: string) => {
-      return client.request<{
-        permission_id: string;
-      }>(ENDPOINTS.PERMISSIONS.delete(permissionId), {
-        method: "DELETE",
       });
     },
   };

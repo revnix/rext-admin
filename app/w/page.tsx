@@ -18,6 +18,8 @@ import { DataTable } from "@/components/data-table";
 import { PageLayout } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
@@ -32,6 +34,8 @@ import type { Route } from "next";
 export default function WorkspacePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
   const [deleteDialogWorkspace, setDeleteDialogWorkspace] =
     useState<WorkspaceData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -235,14 +239,25 @@ export default function WorkspacePage() {
         />
         Refresh
       </Button>
-      <Button
-        size="sm"
-        className="!w-[59%] sm:w-4"
-        onClick={() => router.push("/w/create" as Route)}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        New Workspace
-      </Button>
+
+      {isLimitReached ? (
+        <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
+          <Button size="sm" className="" disabled>
+            <Plus className="h-4 w-4 mr-2" />
+            Limit reached
+          </Button>
+        </LockedFeatureTooltip>
+      ) : (
+        <Button
+          size="sm"
+          className="!w-[59%] sm:w-4"
+          onClick={() => router.push("/w/create" as Route)}
+          disabled={isLimitLoading}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {isLimitLoading ? "Checking plan..." : "New Workspace"}
+        </Button>
+      )}
     </div>
   );
 

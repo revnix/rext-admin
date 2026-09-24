@@ -23,7 +23,7 @@ import {
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { KnowledgeBase } from "@/lib/api-client/knowledge";
-import { KNOWLEDGE_PERMISSIONS } from "@/lib/permissions";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
 
@@ -33,7 +33,7 @@ export default function WorkspaceKnowledgePage() {
   const router = useRouter();
 
   const { hasPermission: canCreateKnowledge, isLoading: isPermissionLoading } =
-    useWorkspacePermission(KNOWLEDGE_PERMISSIONS.CREATE, workspaceId);
+    useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspaceId);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [kbToEdit, setKbToEdit] = useState<KnowledgeBase | null>(null);
@@ -60,10 +60,9 @@ export default function WorkspaceKnowledgePage() {
   const handleEdited = () => handleRefresh();
   const handleDeleted = () => handleRefresh();
 
-  const handleView = (kb: KnowledgeBase) => {
-    // Navigate to knowledge base items page
-    // For now, just show a toast - you can implement a detail page later
-    router.push(`/w/${workspace?.slug}/knowledge/${kb.id}` as Route);
+  const handleRowClick = (kb: KnowledgeBase) => {
+    if (!workspace?.slug) return;
+    router.push(`/w/${workspace.slug}/knowledge/${kb.id}` as Route);
   };
 
   // Calculate stats
@@ -75,36 +74,36 @@ export default function WorkspaceKnowledgePage() {
     (kb) => kb.type === "custom",
   ).length;
 
-  const headerActions = (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleRefresh}
-        disabled={isKnowledgeLoading}
-      >
-        <RefreshCw
-          className={`h-4 w-4 ${isKnowledgeLoading ? "animate-spin" : ""}`}
-        />
-      </Button>
-      {canCreateKnowledge && (
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Knowledge Base
-        </Button>
-      )}
-    </>
-  );
-
   return (
     <PageLayout
-      title="Knowledge"
-      description="Organize and manage your workspace knowledge bases"
-      actions={headerActions}
+      title="Knowledge Bases"
+      description="Upload documents, brand guidelines, and target audience profiles to train AI generators."
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isKnowledgeLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${
+                isKnowledgeLoading ? "animate-spin" : ""
+              }`}
+            />
+            Refresh
+          </Button>
+          {canCreateKnowledge && (
+            <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Knowledge Base
+            </Button>
+          )}
+        </div>
+      }
     >
-      {/* Loading state inside layout */}
-      {!workspace?.id || isPermissionLoading ? (
-        <div className={`flex h-screen items-center justify-center`}>
+      {isPermissionLoading ? (
+        <div className="flex h-64 items-center justify-center">
           <div className="space-y-4 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -112,7 +111,7 @@ export default function WorkspaceKnowledgePage() {
         </div>
       ) : (
         <PermissionGuard
-          permission={KNOWLEDGE_PERMISSIONS.READ}
+          permission={WORKSPACE_PERMISSIONS.READ}
           fallback={
             <Card className="border-destructive">
               <CardHeader>
@@ -196,7 +195,7 @@ export default function WorkspaceKnowledgePage() {
               <CardContent>
                 <WorkspaceKnowledgeBasesTable
                   knowledgeBases={knowledgeBases}
-                  onView={handleView}
+                  onView={handleRowClick}
                   onEdit={setKbToEdit}
                   onDelete={setKbToDelete}
                   isLoading={isKnowledgeLoading}

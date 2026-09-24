@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
 import type { WorkspaceCrudState } from "@/types/workspace";
 import { useWorkspaceContextStore } from "./use-workspace-context-store";
+import { useSubscriptionStore } from "../subscription-store";
 
 export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
   devtools(
@@ -105,6 +106,8 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
           set((state) => ({
             loadingStates: { ...state.loadingStates, deleting: false },
           }));
+
+          await useSubscriptionStore.getState().fetchSubscription();
 
           return workspaceId;
         } catch (error) {

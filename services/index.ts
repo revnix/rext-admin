@@ -141,17 +141,8 @@ export {
 } from "./impersonation-api";
 // Knowledge API services have been migrated to apiClient
 // Use: import { apiClient } from '@/lib/api-client'; apiClient.knowledge.*
-export type {
-  Permission,
-  PermissionListResponse,
-  Role,
-  RoleListResponse,
-} from "./role-api";
-// Export role API service
-export {
-  RoleApiService,
-  roleApiService,
-} from "./role-api";
+// Role API has been migrated to apiClient
+// Use: import { apiClient } from '@/lib/api-client'; apiClient.roles.*
 // Security monitoring API has been migrated to apiClient
 // Use: import { apiClient } from '@/lib/api-client'; apiClient.security.*
 // Session API has been migrated to apiClient

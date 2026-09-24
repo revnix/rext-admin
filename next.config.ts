@@ -165,7 +165,7 @@ const nextConfig: NextConfig = {
   // ============================================================================
   // 4. DEPLOYMENT CONFIGURATION
   // ============================================================================
-  output: "standalone", // For Docker/container deployments
+  output: process.env.VERCEL ? undefined : "standalone", // Disable standalone on Vercel to fix .nft.json errors
 
   // Turbopack root directory to avoid workspace-root inference warnings
   turbopack: {
@@ -181,6 +181,18 @@ const nextConfig: NextConfig = {
       {
         source: "/settings/billing",
         destination: "/settings/subscription",
+        permanent: false,
+      },
+      {
+        // Customer management was folded into User Management. Redirect rather
+        // than 404 so existing bookmarks and links keep working.
+        source: "/admin/customers",
+        destination: "/admin/users",
+        permanent: false,
+      },
+      {
+        source: "/admin/customers/:path*",
+        destination: "/admin/users",
         permanent: false,
       },
     ];

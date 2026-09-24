@@ -122,38 +122,6 @@ export const invitationQueries = {
 };
 
 // ============================================================================
-// MEDIA QUERIES
-// ============================================================================
-
-export const mediaQueries = {
-  all: (workspaceId: string) => ["media", workspaceId] as const,
-  list: (workspaceId: string, params?: Record<string, unknown>) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "list", params] as const,
-      queryFn: () => apiClient.media.list(workspaceId, params),
-    }),
-  picker: (workspaceId: string, params?: Record<string, unknown>) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "picker", params] as const,
-      queryFn: () => apiClient.media.list(workspaceId, params),
-    }),
-  usage: (workspaceId: string) =>
-    queryOptions({
-      queryKey: [...mediaQueries.all(workspaceId), "usage"] as const,
-      queryFn: () => apiClient.media.getUsage(workspaceId),
-    }),
-  mediaUsage: (workspaceId: string, mediaId: string) =>
-    queryOptions({
-      queryKey: [
-        ...mediaQueries.all(workspaceId),
-        "media-usage",
-        mediaId,
-      ] as const,
-      queryFn: () => apiClient.media.getMediaUsage(workspaceId, mediaId),
-    }),
-};
-
-// ============================================================================
 // PROFILE QUERIES
 // ============================================================================
 
@@ -243,63 +211,6 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
     }),
-};
-
-// ============================================================================
-// ADMIN QUERIES
-// ============================================================================
-
-export const adminQueries = {
-  roles: {
-    all: () => ["roles"] as const,
-    list: () =>
-      queryOptions({
-        queryKey: adminQueries.roles.all(),
-        queryFn: () => apiClient.roles.list(true),
-      }),
-  },
-  permissions: {
-    all: () => ["permissions"] as const,
-    list: () =>
-      queryOptions({
-        queryKey: adminQueries.permissions.all(),
-        queryFn: () => apiClient.roles.listPermissions(),
-      }),
-  },
-  invitations: {
-    all: () => ["admin-invitations"] as const,
-    list: (status?: string) =>
-      queryOptions({
-        queryKey: [...adminQueries.invitations.all(), status] as const,
-        queryFn: () => apiClient.adminInvitations.list({ status }),
-      }),
-  },
-  customers: {
-    all: () => ["admin", "customers"] as const,
-    detail: (customerId: string) =>
-      queryOptions({
-        queryKey: [...adminQueries.customers.all(), customerId] as const,
-        queryFn: () => apiClient.users.get(customerId), // Adjust based on actual API
-      }),
-  },
-  auditLogs: {
-    all: () => ["audit-logs"] as const,
-    list: (action?: string, startDate?: string, endDate?: string) =>
-      queryOptions({
-        queryKey: [
-          ...adminQueries.auditLogs.all(),
-          action,
-          startDate,
-          endDate,
-        ] as const,
-        queryFn: () =>
-          apiClient.auditLogs.getMyLogs({
-            action,
-            date_from: startDate,
-            date_to: endDate,
-          }),
-      }),
-  },
 };
 
 // ============================================================================

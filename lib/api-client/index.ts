@@ -17,7 +17,7 @@
  * The backend uses two patterns for workspace-scoped endpoints:
  *
  * 1. Path parameter: /api/v1/workspaces/{workspaceId}/...
- *    Used by: workspaces, members, media, knowledge, personas
+ *    Used by: workspaces, members, knowledge, personas
  *
  * 2. Query parameter: ?workspace_id={workspaceId}
  *    Used by: content, topics, users (list), admin-analytics
@@ -35,10 +35,12 @@ import {
   createImpersonationNamespace,
   type EmailTemplate,
 } from "./admin";
+import { createAdminAccountAllowlistNamespace } from "./admin-account-allowlist";
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
 import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
+import { createAccountRecoveryNamespace } from "./account-recovery";
 
 // Re-export types for convenience
 export type { EmailTemplate };
@@ -49,7 +51,6 @@ import { createDashboardNamespace } from "./dashboard";
 import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createLicensesClient } from "./licenses";
-import { createMediaNamespace } from "./media";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createOnboardingNamespace } from "./onboarding";
 import { createPersonasNamespace } from "./personas";
@@ -89,7 +90,6 @@ function createApiClient() {
     workspaces: createWorkspacesNamespace(client),
     knowledge: createKnowledgeNamespace(client),
     keywordLibrary: createKeywordLibraryNamespace(client),
-    media: createMediaNamespace(client),
     members: createMembersNamespace(client),
     invitations: createInvitationsNamespace(client),
     roles: createRolesNamespace(client),
@@ -109,6 +109,8 @@ function createApiClient() {
     adminWebhooks: createAdminWebhooksNamespace(client),
     adminRefunds: createAdminRefundsNamespace(client),
     adminInvitations: createAdminInvitationsNamespace(client),
+    accountAllowlist: createAdminAccountAllowlistNamespace(client),
+    accountRecovery: createAccountRecoveryNamespace(client),
 
     // Settings namespaces
     notifications: createNotificationsNamespace(client),

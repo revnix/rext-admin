@@ -102,8 +102,11 @@ export function useAuthSession() {
 
   // User is only truly authenticated if status is "authenticated" AND there's no refresh error
   // AND the session hasn't been explicitly marked as invalid by a logout process
+  // update() flips status to "loading" while it re-fetches; the session it
+  // already holds is still valid, so don't drop to unauthenticated — AuthGuard
+  // would unmount the whole page for the duration of that request.
   const isAuthenticated =
-    status === "authenticated" &&
+    (status === "authenticated" || (status === "loading" && !!session)) &&
     !session?.error &&
     !(
       typeof window !== "undefined" &&
@@ -113,7 +116,7 @@ export function useAuthSession() {
   return {
     user,
     isAuthenticated,
-    isLoading: status === "loading",
+    isLoading: status === "loading" && !session,
     logout,
     session,
     activity: {

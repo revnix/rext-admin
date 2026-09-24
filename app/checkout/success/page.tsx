@@ -12,7 +12,7 @@
 import confetti from "canvas-confetti";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,44 +24,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import {
+  READY_STATUSES,
+  useSubscriptionSync,
+} from "@/hooks/use-subscription-sync";
 import { analytics } from "@/lib/analytics";
 import type { Route } from "next";
-
-// Polling configuration
-const POLL_INTERVAL_MS = 1500;
-const POLL_TIMEOUT_MS = 20_000;
-const READY_STATUSES = new Set(["active", "trial", "cancelled"]);
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRefreshing, setIsRefreshing] = useState(true);
   const [syncTimedOut, setSyncTimedOut] = useState(false);
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+  const { subscription } = useSubscriptionStore();
 
-  const waitForSubscriptionSync = useCallback(
-    async (signal: AbortSignal): Promise<boolean> => {
-      const startedAt = Date.now();
-
-      while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
-        if (signal.aborted) return false;
-
-        await fetchSubscription();
-        const latest = useSubscriptionStore.getState().subscription;
-
-        if (latest && READY_STATUSES.has(latest?.subscription?.status || "")) {
-          return true;
-        }
-
-        await new Promise<void>((resolve) =>
-          setTimeout(resolve, POLL_INTERVAL_MS),
-        );
-      }
-
-      return false;
-    },
-    [fetchSubscription],
-  );
+  const { waitForSubscriptionSync } = useSubscriptionSync();
 
   // Get query parameters from LemonSqueezy redirect
   const checkoutId = searchParams.get("checkout_id");

@@ -30,7 +30,7 @@ export default function WorkspaceSettingsLayout({
       description="Manage workspace configuration and preferences"
     >
       <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-        {/* Sidebar Navigation */}
+        {/* Sidebar Navigation
         <aside className="lg:w-1/5">
           <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
             {settingsTabs.map((tab) => {
@@ -45,7 +45,7 @@ export default function WorkspaceSettingsLayout({
                   key={tab.name}
                   href={href as Route}
                   className={cn(
-                    "inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    "inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground ",
                     isActive
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground",
@@ -57,7 +57,7 @@ export default function WorkspaceSettingsLayout({
               );
             })}
           </nav>
-        </aside>
+        </aside> */}
 
         {/* Content Area */}
         <div className="flex-1 lg:max-w-3xl">{children}</div>

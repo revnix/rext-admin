@@ -1,16 +1,13 @@
 "use client";
-import type { InvoiceStatus } from "@/types/subscription";
-
-/**
- * Invoice List Component
- *
- * Displays invoice history with download/view links to LemonSqueezy invoices.
- *
- * @module components/subscription/invoice-list
- */
-
-import { Download, ExternalLink, FileText, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  FileText,
+  Loader2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +17,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  downloadInvoicePdf,
+  formatCurrency,
+  formatDate,
+  getStatusBadge,
+  InvoiceDocument,
+} from "@/components/subscription/invoice-document";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
-import type { Route } from "next";
+import type { Invoice } from "@/types/subscription";
 
 export interface InvoiceListProps {
   /** Additional CSS classes */
@@ -34,7 +53,7 @@ export interface InvoiceListProps {
 }
 
 /**
- * Invoice list with download/view links
+ * Invoice list with in-app view modal and direct PDF download
  */
 export function InvoiceList({
   className,
@@ -42,6 +61,10 @@ export function InvoiceList({
   compact = false,
 }: InvoiceListProps) {
   const { invoices, invoicesLoading, fetchInvoices } = useSubscriptionStore();
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Fetch invoices on mount
   useEffect(() => {
@@ -50,46 +73,27 @@ export function InvoiceList({
     }
   }, [fetchInvoices, invoices.length]);
 
-  // Get status badge variant
-  const getStatusBadge = (status: InvoiceStatus) => {
-    switch (status) {
-      case "paid":
-        return (
-          <Badge variant="default" className="bg-green-500">
-            Paid
-          </Badge>
-        );
-      case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
-      case "void":
-        return <Badge variant="outline">Void</Badge>;
-      case "refunded":
-        return <Badge variant="outline">Refunded</Badge>;
-      case "partial_refunded":
-        return <Badge variant="outline">Partially Refunded</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
+  // Handle View Invoice (Opens in-app modal)
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsModalOpen(true);
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const isPaginated = !limit;
+  const totalPages = isPaginated
+    ? Math.ceil(invoices.length / itemsPerPage)
+    : 1;
 
-  // Format currency
-  const formatCurrency = (amount: number, currency: string = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
-  };
+  const displayedInvoices = limit
+    ? invoices.slice(0, limit)
+    : invoices.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+      );
 
-  const displayedInvoices = limit ? invoices.slice(0, limit) : invoices;
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   if (invoicesLoading && invoices.length === 0) {
     return (
@@ -113,137 +117,199 @@ export function InvoiceList({
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle>Invoice History</CardTitle>
-            <CardDescription className="mt-1">
-              View and download your past invoices
-            </CardDescription>
+    <>
+      <Card className={className}>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Invoice History</CardTitle>
+              <CardDescription className="mt-1">
+                View and download your past invoices directly
+              </CardDescription>
+            </div>
+            <Badge variant="outline">
+              {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
+            </Badge>
           </div>
-          <Badge variant="outline">
-            {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
-          </Badge>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
-      <CardContent>
-        <div className="space-y-3">
-          {displayedInvoices.map((invoice) => {
-            const invoiceItems = invoice.items ?? [];
-            return (
-              <div
-                key={invoice.invoice_id}
-                className={cn(
-                  "flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
-                  compact && "p-3",
-                )}
-              >
-                {/* Invoice Info */}
-                <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <div className="shrink-0">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                  </div>
+        <CardContent>
+          <div className="space-y-3">
+            {displayedInvoices.map((invoice) => {
+              const invoiceItems = invoice.items ?? [];
+              const invoiceNum =
+                invoice.invoice_number ||
+                `INV-${invoice.invoice_id.slice(0, 8)}`;
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">
-                        {invoice.invoice_number ||
-                          `INV-${invoice.invoice_id.slice(0, 8)}`}
-                      </p>
-                      {getStatusBadge(invoice.status)}
+              return (
+                <div
+                  key={invoice.invoice_id}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
+                    compact && "p-3",
+                  )}
+                >
+                  {/* Invoice Info */}
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="shrink-0 pt-0.5">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{formatDate(invoice.invoice_date)}</span>
-                      <span className="font-medium text-foreground">
-                        {formatCurrency(invoice.amount, invoice.currency)}
-                      </span>
-                      {invoice.paid_at && (
-                        <span className="text-green-600 dark:text-green-400 text-xs">
-                          Paid {formatDate(invoice.paid_at)}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{invoiceNum}</p>
+                        {getStatusBadge(invoice.status)}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{formatDate(invoice.invoice_date)}</span>
+                        <span className="font-medium text-foreground">
+                          {formatCurrency(invoice.amount, invoice.currency)}
                         </span>
+                        {invoice.paid_at && (
+                          <span className="text-green-600 dark:text-green-400 text-xs">
+                            Paid {formatDate(invoice.paid_at)}
+                          </span>
+                        )}
+                      </div>
+
+                      {!compact && invoiceItems.length > 0 && (
+                        <div className="text-xs text-muted-foreground pt-1">
+                          {invoiceItems.map((item, idx) => (
+                            <span
+                              key={`${invoice.invoice_id}-item-${item.description}`}
+                            >
+                              {item.description}
+                              {idx < invoiceItems.length - 1 && " • "}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    {!compact && invoiceItems.length > 0 && (
-                      <div className="text-xs text-muted-foreground pt-1">
-                        {invoiceItems.map((item, idx) => (
-                          <span
-                            key={`${invoice.invoice_id}-item-${item.description}`}
-                          >
-                            {item.description}
-                            {idx < invoiceItems.length - 1 && " • "}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewInvoice(invoice)}
+                      className="hidden sm:inline-flex gap-1.5"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {invoice.invoice_url && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        className="hidden sm:inline-flex"
-                      >
-                        <a
-                          href={invoice.invoice_url as Route}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View
-                        </a>
-                      </Button>
+          {/* Load More */}
+          {limit && invoices.length > limit && (
+            <div className="mt-4 text-center">
+              <Button variant="outline" size="sm" asChild>
+                <a href="/dashboard/billing">View All Invoices</a>
+              </Button>
+            </div>
+          )}
 
-                      <Button variant="ghost" size="sm" asChild>
-                        <a
-                          href={invoice.invoice_url as Route}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                        >
-                          <Download className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Download</span>
-                        </a>
-                      </Button>
-                    </>
-                  )}
+          {/* Pagination Controls */}
+          {isPaginated && invoices.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span>Rows per page:</span>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(val) => {
+                      setItemsPerPage(Number(val));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage.toString()} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="hidden sm:inline">
+                  {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, invoices.length)} of{" "}
+                  {invoices.length}
+                </span>
+              </div>
 
-                  {!invoice.invoice_url && (
-                    <span className="text-xs text-muted-foreground">
-                      No download available
-                    </span>
-                  )}
+              <div className="flex items-center gap-2">
+                <span className="sm:hidden">
+                  {(currentPage - 1) * itemsPerPage + 1}-
+                  {Math.min(currentPage * itemsPerPage, invoices.length)} of{" "}
+                  {invoices.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* In-App Invoice Details Modal */}
+      {selectedInvoice && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <div className="flex items-center justify-between gap-4 pr-6">
+                <div>
+                  <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                    Invoice #
+                    {selectedInvoice.invoice_number ||
+                      `INV-${selectedInvoice.invoice_id.slice(0, 8)}`}
+                    {getStatusBadge(selectedInvoice.status)}
+                  </DialogTitle>
+                  <DialogDescription className="mt-1">
+                    Issued on {formatDate(selectedInvoice.invoice_date)}
+                  </DialogDescription>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </DialogHeader>
 
-        {/* Load More */}
-        {limit && invoices.length > limit && (
-          <div className="mt-4 text-center">
-            <Button variant="outline" size="sm" asChild>
-              <a href="/dashboard/billing">View All Invoices</a>
-            </Button>
-          </div>
-        )}
+            <InvoiceDocument invoice={selectedInvoice} />
 
-        {/* Empty State */}
-        {displayedInvoices.length === 0 && !invoicesLoading && (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>No invoices to display</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => downloadInvoicePdf(selectedInvoice)}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Invoice
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }

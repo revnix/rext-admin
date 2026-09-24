@@ -76,8 +76,10 @@ interface TemplateStats {
 interface TimelineData {
   date: string;
   sent: number;
+  delivered: number;
   opened: number;
   clicked: number;
+  failed: number;
 }
 
 interface EmailFailure {
@@ -260,7 +262,7 @@ export default function EmailAnalyticsPage() {
               </Card>
 
               {/* Email Health Score */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Email Health Score</CardTitle>
                   <CardDescription>
@@ -298,7 +300,7 @@ export default function EmailAnalyticsPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
             </TabsContent>
 
             <TabsContent value="templates" className="space-y-4">
@@ -319,17 +321,4 @@ export default function EmailAnalyticsPage() {
       </PageLayout>
     </AdminGuard>
   );
-}
-
-function calculateHealthScore(data: EmailOverview): number {
-  // Health score based on:
-  // - Delivery rate (50% weight)
-  // - Low bounce rate (30% weight)
-  // - Low complaint rate (20% weight)
-
-  const deliveryScore = data.delivery_rate * 0.5;
-  const bounceScore = (100 - data.bounce_rate) * 0.3;
-  const complaintScore = (100 - data.complaint_rate * 10) * 0.2; // Scale complaint rate
-
-  return Math.round(deliveryScore + bounceScore + complaintScore);
 }

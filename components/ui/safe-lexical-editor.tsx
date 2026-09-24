@@ -9,6 +9,7 @@ interface SafeLexicalEditorProps {
   readOnly?: boolean;
   showDebug?: boolean;
   toolbarClass?: string;
+  onRequestEdit?: () => void;
 }
 
 function LexicalEditorFallback({

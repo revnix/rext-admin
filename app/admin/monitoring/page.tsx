@@ -5,7 +5,6 @@ import { AlertTriangle, BarChart3, Server } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
-import { SystemHealthCards } from "@/components/admin/monitoring/system-health-cards";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,12 +51,25 @@ interface SystemHealthData {
     status: string;
     response_time_ms: number;
     connection_count: number;
+    connections_checked_in: number;
+    connections_checked_out: number;
+    pool_overflow: number;
+    pool_size: number;
+    max_overflow: number;
     max_connections: number;
   };
   cache: {
     status: string;
+    enabled: boolean;
+    keyspace_hits: number;
+    keyspace_misses: number;
     hit_rate?: number;
     memory_used_mb?: number;
+    memory_used_bytes: number;
+    memory_max_mb: number;
+    memory_used_percent: number;
+    evicted_keys: number;
+    expired_keys: number;
   };
   api: {
     status: string;
@@ -137,7 +149,7 @@ export default function MonitoringPage() {
   >("24_hours");
 
   // Fetch system health
-  const { data: healthData, isLoading: healthLoading } = useQuery({
+  const { data: healthData } = useQuery({
     queryKey: ["admin", "monitoring", "system-health"],
     queryFn: async () => {
       return apiClient.request<SystemHealthData>(
@@ -151,6 +163,8 @@ export default function MonitoringPage() {
   const {
     data: errorLogsData,
     isLoading: errorLogsLoading,
+    isError: errorLogsIsError,
+    error: errorLogsError,
     refetch: refetchErrorLogs,
   } = useQuery({
     queryKey: [
@@ -167,6 +181,7 @@ export default function MonitoringPage() {
         severity: errorLogFilters.severity || undefined,
         start_date: errorLogFilters.start_date || undefined,
         end_date: errorLogFilters.end_date || undefined,
+        include_stack_trace: "true",
       });
       return apiClient.request<ErrorLogData>(url);
     },
@@ -218,9 +233,9 @@ export default function MonitoringPage() {
       <AdminGuard>
         <div className="space-y-8">
           {/* System Health Cards */}
-          {health && (
+          {/* {health && (
             <SystemHealthCards health={health} isLoading={healthLoading} />
-          )}
+          )} */}
 
           {/* Tabs for detailed monitoring */}
           <Tabs defaultValue="health" className="space-y-6">
@@ -241,7 +256,7 @@ export default function MonitoringPage() {
 
             {/* System Health Tab */}
             <TabsContent value="health" className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-3">
                 {/* Database Health */}
                 <Card>
                   <CardHeader>
@@ -278,10 +293,134 @@ export default function MonitoringPage() {
                         Connections
                       </span>
                       <span className="text-sm font-medium">
-                        {health?.database?.connection_count || 0} /{" "}
-                        {health?.database?.max_connections || 100}
+                        {health?.database?.connection_count ?? 0} /{" "}
+                        {health?.database?.max_connections ?? 0}
                       </span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Checked In
+                      </span>
+                      <span className="text-sm font-medium">
+                        {health?.database?.connections_checked_in ?? 0} /{" "}
+                        {health?.database?.connection_count ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Checked Out
+                      </span>
+                      <span className="text-sm font-medium">
+                        {health?.database?.connections_checked_out ?? 0} /{" "}
+                        {health?.database?.connection_count ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Pool Size
+                      </span>
+                      <span className="text-sm font-medium">
+                        {health?.database?.pool_size ?? 0} /{" "}
+                        {health?.database?.max_connections ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Overflow
+                      </span>
+                      <span className="text-sm font-medium">
+                        {health?.database?.pool_overflow ?? 0} /{" "}
+                        {health?.database?.max_overflow ?? 0}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Cache Health */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cache</CardTitle>
+                    <CardDescription>Redis cache metrics</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Status
+                      </span>
+
+                      <span
+                        className={`text-sm font-medium ${
+                          health?.database?.status === "healthy"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {health?.cache?.status || "Unknown"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Enabled
+                      </span>
+                      <span className="text-sm font-medium">
+                        {health?.cache?.enabled ? "Yes" : "No"}
+                      </span>
+                    </div>
+                    {health?.cache?.status !== "not_configured" && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Hit Rate
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.hit_rate || 0}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Memory Used
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.memory_used_mb ?? 0} /{" "}
+                            {health?.cache?.memory_max_mb ?? 0} MB
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Cache Hits / Misses
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.keyspace_hits ?? 0} /{" "}
+                            {health?.cache?.keyspace_misses ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Memory Used %
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.memory_used_percent ?? 0}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Memory Used (bytes)
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.memory_used_bytes ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Evicted / Expired
+                          </span>
+                          <span className="text-sm font-medium">
+                            {health?.cache?.evicted_keys ?? 0} /{" "}
+                            {health?.cache?.expired_keys ?? 0}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -333,46 +472,8 @@ export default function MonitoringPage() {
                   </CardContent>
                 </Card>
 
-                {/* Cache Health */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cache</CardTitle>
-                    <CardDescription>Redis cache metrics</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Status
-                      </span>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {health?.cache?.status || "Not Configured"}
-                      </span>
-                    </div>
-                    {health?.cache?.status !== "not_configured" && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Hit Rate
-                          </span>
-                          <span className="text-sm font-medium">
-                            {health?.cache?.hit_rate || 0}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Memory Used
-                          </span>
-                          <span className="text-sm font-medium">
-                            {health?.cache?.memory_used_mb || 0} MB
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-
                 {/* Workers Health */}
-                <Card>
+                {/* <Card>
                   <CardHeader>
                     <CardTitle>Background Workers</CardTitle>
                     <CardDescription>
@@ -409,7 +510,7 @@ export default function MonitoringPage() {
                       </>
                     )}
                   </CardContent>
-                </Card>
+                </Card> */}
               </div>
             </TabsContent>
 
@@ -427,6 +528,8 @@ export default function MonitoringPage() {
                     logs={errorLogs}
                     pagination={errorLogsPagination}
                     isLoading={errorLogsLoading}
+                    isError={errorLogsIsError}
+                    error={errorLogsError}
                     filters={errorLogFilters}
                     onPageChange={setErrorLogPage}
                     onFiltersChange={setErrorLogFilters}

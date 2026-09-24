@@ -38,6 +38,7 @@ import {
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
+import { deriveImagesData } from "@/lib/content/image-data";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,6 +52,7 @@ import {
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +71,7 @@ import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
+import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
 import { Skeleton } from "../ui/skeleton";
 
 const TAG_SKELETON_KEYS = Array.from(
@@ -367,7 +370,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     readabilityScore,
     trustScore,
     generatedContent,
-    seoScore,
+    seoScore: rawSeoScore,
     isEditing,
     userKeyword,
     outline,
@@ -377,11 +380,23 @@ function ContentEditorInner(props: ContentEditorProps) {
     pipelineSteps = [],
   } = props;
 
+  // JSON-LD is not part of content-level on-page SEO: hide those findings and
+  // compensate the score. Idempotent — results the backend already filtered
+  // pass through unchanged.
+  const seoScore = useMemo(
+    () => excludeJsonLdFromSeoResult(rawSeoScore),
+    [rawSeoScore],
+  );
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const isFinal =
     !!allContent && !!readabilityScore && !!trustScore && !!seoScore;
   const tags = allContent?.tags || [];
-  const displayTitle = allContent?.meta_title || "";
+  // The article title is `title` -- the exact title the user selected, locked by
+  // the backend. It used to read `meta_title`, a separately model-written SEO
+  // field, so the editor showed (and Save/Publish/Schedule wrote back as the
+  // article title) a different title from the one the user picked.
+  const displayTitle = allContent?.title || allContent?.meta_title || "";
   const body = generatedContent;
   const previewHtml = useMemo(() => {
     if (!body) return "";
@@ -581,6 +596,16 @@ function ContentEditorInner(props: ContentEditorProps) {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // The editor writes through apiClient directly rather than the mutation
+  // hooks in use-content.ts, so nothing invalidates the content cache — and
+  // useContentDetail holds results for 5 minutes. Without this, navigating
+  // back after a publish re-renders the pre-publish body and an image the user
+  // removed reappears, ready to be published again.
+  const invalidateContentCache = useCallback(() => {
+    if (!workspaceId) return;
+    queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
+  }, [queryClient, workspaceId]);
+
   // Actions
   const getContentPayload = () => ({
     title: displayTitle,
@@ -609,10 +634,13 @@ function ContentEditorInner(props: ContentEditorProps) {
       seo_details: JSON.stringify(seoScore || {}),
       trust_score: trustScore?.score || 0,
     },
-    media_items: [],
-    images_data: {},
-    links_data: {},
-    schema_markup: {},
+    // Derived from the body, so removing an image in the editor removes it
+    // everywhere — including the WordPress featured image. Sending a hardcoded
+    // {} here used to wipe the column instead of describing the current state.
+    images_data: deriveImagesData(body),
+    // links_data / schema_markup are deliberately not sent: the
+    // editor is not their source of truth, and sending empty values deleted
+    // every ContentMedia link and the AI-generated JSON-LD on each save.
     langgraph_thread_id: threadId,
   });
 
@@ -640,72 +668,95 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       const integrationsData =
         await integrationsApiService.listIntegrations(workspaceId);
+      const activeIntegrations = integrationsData.filter(
+        (integration) => integration.is_active !== false,
+      );
 
-      if (integrationsData.length === 0) {
+      if (activeIntegrations.length === 0) {
+        // A workspace with no connected sites is not a permission problem —
+        // open the connect-a-site flow so the user can add an integration.
+        setStatusModal((prev) => ({ ...prev, isOpen: false }));
         setIntegrationModalOpen(true);
         return;
-      } else {
-        setStatusModal({
-          title: `${statusDetails.label} Content...`,
-          isOpen: true,
-          type: "success",
-          action: "publish",
-          message: `Sending content to WordPress with status "${selectedStatus}"...`,
-        });
-        const cmsType = integrationsData[0]?.integration_type;
-        analytics.track("cms_publish_attempted", {
-          cms_type: cmsType,
-          wordpress_status: selectedStatus,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? undefined,
-        });
-        const payload = getContentPayload();
-        const response = contentSavedId
-          ? await apiClient.content.publish(
-              workspaceId,
-              payload,
-              contentSavedId,
-              selectedStatus,
-            )
-          : await apiClient.content.save_publish(
-              workspaceId,
-              payload,
-              selectedStatus,
-            );
-
-        analytics.track("content_published", {
-          title: displayTitle,
-          keyword: userKeyword,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? response?.id ?? undefined,
-          seo_score: seoScore?.seo_health_score,
-          wordpress_status: selectedStatus,
-        });
-        analytics.track("cms_publish_succeeded", {
-          cms_type: cmsType,
-          wordpress_status: selectedStatus,
-          workspace_id: workspaceId ?? undefined,
-          content_id: contentSavedId ?? response?.id ?? undefined,
-        });
-        setStatusModal({
-          title: statusDetails.successTitle,
-          isOpen: true,
-          type: "success",
-          action: "publish",
-          message: statusDetails.successMessage,
-        });
       }
+
+      setStatusModal({
+        title: `${statusDetails.label} Content...`,
+        isOpen: true,
+        type: "success",
+        action: "publish",
+        message: `Sending content to WordPress with status "${selectedStatus}"...`,
+      });
+
+      const cmsType = activeIntegrations[0]?.integration_type;
+      analytics.track("cms_publish_attempted", {
+        cms_type: cmsType,
+        wordpress_status: selectedStatus,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? undefined,
+      });
+      const payload = getContentPayload();
+      if (contentSavedId) {
+        // POST /content/{id}/publish accepts only site_id/status/scheduled_at;
+        // the article in its request body is discarded and the backend
+        // publishes the stored row. Persist the current editor state first, or
+        // the publish ships whatever was saved last — including an image the
+        // user has since removed.
+        await apiClient.content.update(workspaceId, contentSavedId, payload);
+      }
+      const response = contentSavedId
+        ? await apiClient.content.publish(
+            workspaceId,
+            payload,
+            contentSavedId,
+            selectedStatus,
+          )
+        : await apiClient.content.save_publish(
+            workspaceId,
+            payload,
+            selectedStatus,
+          );
+
+      analytics.track("content_published", {
+        title: displayTitle,
+        keyword: userKeyword,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? response?.id ?? undefined,
+        seo_score: seoScore?.seo_health_score,
+        wordpress_status: selectedStatus,
+      });
+      analytics.track("cms_publish_succeeded", {
+        cms_type: cmsType,
+        wordpress_status: selectedStatus,
+        workspace_id: workspaceId ?? undefined,
+        content_id: contentSavedId ?? response?.id ?? undefined,
+      });
+      invalidateContentCache();
+      setStatusModal({
+        title: statusDetails.successTitle,
+        isOpen: true,
+        type: "success",
+        action: "publish",
+        message: statusDetails.successMessage,
+      });
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error & { statusCode?: number };
       const errorMessage = err.message?.toLowerCase() ?? "";
+      const statusCode = err.statusCode ?? 0;
       const isIntegrationIssue =
+        statusCode === 403 ||
+        statusCode === 401 ||
         errorMessage.includes("no active sites") ||
         errorMessage.includes("no active sites found") ||
         errorMessage.includes("please connect a site") ||
         errorMessage.includes("integration disabled") ||
         errorMessage.includes("disabled integration") ||
         errorMessage.includes("site is disabled") ||
-        errorMessage.includes("inactive site");
+        errorMessage.includes("inactive site") ||
+        errorMessage.includes("not configured") ||
+        errorMessage.includes("not available") ||
+        errorMessage.includes("misconfigured") ||
+        errorMessage.includes("permission");
       analytics.track("cms_publish_failed", {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
@@ -714,14 +765,16 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
       setStatusModal({
         title: isIntegrationIssue
-          ? "Site Integration Not Connected"
+          ? "Permission Required"
           : "Failed to Publish Content",
         isOpen: true,
         type: "error",
         action: "publish",
         message: isIntegrationIssue
-          ? "Your site integration is disabled or not connected. Please go to Integrations to enable it."
+          ? "You do not have permission to perform this action."
           : err.message || "Failed to publish content. Please try again.",
+        // Permission and integration failures get the existing escape hatch
+        // to the integrations page instead of a dead-end error dialog.
         showIntegrationLink: isIntegrationIssue,
       });
     } finally {
@@ -748,6 +801,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       if (!contentSavedId && response.id) {
         setContentSavedId(response.id);
       }
+      invalidateContentCache();
       setStatusModal({
         title: "Content Saved Successfully!",
         isOpen: true,
@@ -797,6 +851,13 @@ function ContentEditorInner(props: ContentEditorProps) {
       const scheduledAt = `${scheduleDateStr}T${scheduleTime}:00`;
 
       if (contentSavedId) {
+        // Same as publish: the schedule endpoint publishes the stored row, so
+        // the current editor state has to be saved before it is queued.
+        await apiClient.content.update(
+          workspaceId,
+          contentSavedId,
+          getContentPayload(),
+        );
         await apiClient.content.schedule(
           workspaceId,
           contentSavedId,
@@ -818,6 +879,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         content_id: contentSavedId ?? undefined,
         scheduled_at: scheduledAt,
       });
+      invalidateContentCache();
       setStatusModal({
         title: "Content Scheduled!",
         isOpen: true,
@@ -846,7 +908,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         await navigator.clipboard.writeText(htmlContent);
       } else if (format === "markdown") {
         const mdIntro = allContent?.meta_description
-          ? `\n\n*${allContent.meta_description}*\n`
+          ? `\n\n*${allContent?.meta_description}*\n`
           : "";
         const contentToCopy = `# ${displayTitle}${mdIntro}\n${body}`;
         await navigator.clipboard.writeText(contentToCopy);
@@ -888,15 +950,22 @@ function ContentEditorInner(props: ContentEditorProps) {
       <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
         <div className="flex-1">
           {canUpdate ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
-              onClick={onEditToggle}
-              disabled={!isFinal}
-            >
-              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+                  onClick={onEditToggle}
+                  disabled={!isFinal}
+                >
+                  {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {isEditing ? "View preview mode" : "Edit content"}
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <LockedFeatureTooltip message="Editing requires Editor role or above">
               <Button
@@ -912,15 +981,22 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div className="flex-1">
           {canUpdate ? (
-            <Button
-              onClick={saveContent}
-              disabled={!isFinal || isSaving || isPublishing}
-              variant="secondary"
-              size="sm"
-              className="h-8 px-2! text-xs font-bold transition-all !w-full"
-            >
-              <Save size={14} className={isSaving ? "animate-pulse" : ""} />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={saveContent}
+                  disabled={!isFinal || isSaving || isPublishing}
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                >
+                  <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Saves the content in the workspace
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <LockedFeatureTooltip message="Saving requires Editor role or above">
               <Button
@@ -936,16 +1012,21 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div className="flex-1">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                disabled={!isFinal}
-                variant="secondary"
-                size="sm"
-                className="h-8 px-2! text-xs font-bold transition-all !w-full"
-              >
-                <Copy size={14} />
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={!isFinal}
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                  >
+                    <Copy size={14} />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Copy content</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent className="w-48" align="center">
               <DropdownMenuItem onClick={() => handleCopy("html")}>
                 Copy HTML
@@ -1497,6 +1578,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                         initialValue={body}
                         onChange={onContentChange}
                         toolbarClass="top-0 z-50"
+                        onRequestEdit={
+                          canUpdate && isFinal ? onEditToggle : undefined
+                        }
                       />
                     </>
                   )}

@@ -64,9 +64,17 @@ export function getPrimaryRole(data: {
 // component can import one source of truth instead of hardcoding the string.
 export const AUTH_SESSION_UPDATE_ACTION = "refresh-backend-token";
 export const AUTH_SESSION_TOKEN_SWAP_ACTION = "replace-backend-tokens";
+// Re-reads platform role/permissions without rotating any token.
+export const AUTH_SESSION_SYNC_PERMISSIONS_ACTION = "sync-permissions";
+// Dispatched on window when the backend answers 403, so PermissionSync can
+// check whether the session's permissions have gone stale.
+export const PERMISSIONS_STALE_EVENT = "rext:permissions-stale";
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
+// Set by classifyUnauthorized() when the 401 was a suspended/banned account, so
+// the forced sign-out can tell the login page why.
+let blockedAccountError: string | null = null;
 
 // Mutex: shared by EVERY trigger of an explicit backend refresh — the
 // reactive 401 handler below, and the proactive timer in
@@ -251,11 +259,11 @@ async function forceSessionRefresh(): Promise<Session | null> {
  * Ensures only one redirect occurs even when multiple parallel requests return 401.
  * Performs full cleanup of state and storage.
  */
-function redirectToLogin(): void {
+export function redirectToLogin(errorCode: string = "SessionExpired"): void {
   if (isRedirectingToLogin) return;
   isRedirectingToLogin = true;
 
-  log.error("[AuthJS] Session expired, redirecting to login");
+  log.error(`[AuthJS] ${errorCode}, redirecting to login`);
 
   // Clear the auth headers cache immediately
   authHeadersCache = null;
@@ -267,11 +275,12 @@ function redirectToLogin(): void {
         // Use dynamic import to avoid circular dependency
         const { performLogout } = await import("./logout-utils");
 
-        const currentPath = window.location.pathname + window.location.search;
+        const { pathname } = window.location;
+        const currentPath = pathname + window.location.search;
         const redirectParam =
-          currentPath !== "/login" && currentPath !== "/"
-            ? `?redirect=${encodeURIComponent(currentPath)}&error=SessionExpired`
-            : "?error=SessionExpired";
+          pathname !== "/login" && pathname !== "/"
+            ? `?redirect=${encodeURIComponent(currentPath)}&error=${errorCode}`
+            : `?error=${errorCode}`;
 
         await performLogout(`/login${redirectParam}`);
       } catch (error) {
@@ -282,7 +291,7 @@ function redirectToLogin(): void {
         // Fallback cleanup
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = "/login?error=SessionExpired";
+        window.location.href = `/login?error=${errorCode}`;
       }
     }
   }, 0);
@@ -345,16 +354,28 @@ export async function getAuthHeaders(
     log.warn("[AuthJS] No access token in client session", {
       hasSession: !!session,
       hasUser: !!session?.user,
+      hasUserKey: !!session?.user?.id,
       sessionKeys: session ? Object.keys(session) : [],
       userKeys: session?.user ? Object.keys(session.user) : [],
     });
   }
 
-  // Cache the headers on client-side
-  authHeadersCache = {
-    headers,
-    timestamp: Date.now(),
-  };
+  // Cache the headers on client-side - but never cache an empty/unauthenticated
+  // result. Any unauthenticated call (e.g. validating an invitation token on
+  // /invitations/accept before the user signs in) would otherwise poison the
+  // cache with `{}` for CACHE_TTL_MS. If sign-in completes inside that window,
+  // every request fired by the destination page (dashboard queries, invitation
+  // accept, subscription usage, etc.) reads the stale empty cache instead of
+  // the fresh session and gets a 422 "authorization: Field required" from the
+  // backend even though the user is, in fact, logged in.
+  if (headers.Authorization) {
+    authHeadersCache = {
+      headers,
+      timestamp: Date.now(),
+    };
+  } else {
+    authHeadersCache = null;
+  }
 
   return headers;
 }
@@ -375,7 +396,27 @@ const REVOKED_SESSION_MESSAGES = [
   "authentication session is invalid",
   "token has been revoked",
   "user not found or has been deleted",
+  "user not found",
+  "user session not found",
+  "session not found",
+  "could not validate credentials",
+  "could not validate auth token",
+  "invalid authentication credentials",
+  "invalid token",
+  "token is invalid",
+  "invalid refresh token",
+  "refresh token revoked",
+  "refresh token expired",
+  "invalid session",
 ];
+
+// Account statuses the backend reports via a typed error_code on every
+// authenticated request once an admin suspends or bans the user. Mapped to the
+// message the login page shows after the forced sign-out.
+const BLOCKED_ACCOUNT_ERRORS: Record<string, string> = {
+  account_suspended: "AccountSuspended",
+  account_banned: "AccountBanned",
+};
 
 type UnauthorizedKind = "expired" | "revoked" | "other";
 
@@ -390,6 +431,7 @@ type UnauthorizedKind = "expired" | "revoked" | "other";
 async function classifyUnauthorized(
   response: Response,
 ): Promise<UnauthorizedKind> {
+  blockedAccountError = null;
   try {
     const body = await response.clone().json();
     const error = body?.error ?? body;
@@ -404,6 +446,11 @@ async function classifyUnauthorized(
       message === "token has expired"
     ) {
       return "expired";
+    }
+
+    if (BLOCKED_ACCOUNT_ERRORS[code]) {
+      blockedAccountError = BLOCKED_ACCOUNT_ERRORS[code];
+      return "revoked";
     }
 
     if (REVOKED_SESSION_MESSAGES.some((pattern) => message.includes(pattern))) {
@@ -447,6 +494,10 @@ export async function authenticatedFetch(
     headers,
   });
 
+  if (response.status === 403 && typeof window !== "undefined") {
+    window.dispatchEvent(new Event(PERMISSIONS_STALE_EVENT));
+  }
+
   if (response.status !== 401 || !retry || typeof window === "undefined") {
     return response;
   }
@@ -476,8 +527,8 @@ export async function authenticatedFetch(
       "[AuthJS] Backend reports the session is no longer valid — signing out",
       { url },
     );
-    redirectToLogin();
-    throw new Error("Session expired");
+    redirectToLogin(blockedAccountError ?? "SessionExpired");
+    throw new Error(blockedAccountError ?? "Session expired");
   }
 
   if (unauthorizedKind !== "expired") {
@@ -559,13 +610,15 @@ export async function authenticatedFetch(
     throw new Error("Session expired");
   }
 
-  // Network errors and 5xx refresh failures are transient. Return the
-  // original typed 401 so the caller can handle/retry it without destroying
-  // a refresh session that may still be valid for days.
-  log.warn("[AuthJS] Access-token refresh did not advance the session", {
-    url,
-  });
-  return response;
+  // Access-token refresh did not advance the session after an expired 401.
+  // The refresh token is either invalid or expired. Sign out cleanly to prevent
+  // stale auth loops and 500 error pages.
+  log.warn(
+    "[AuthJS] Access-token refresh did not advance the session — redirecting to login",
+    { url },
+  );
+  redirectToLogin("SessionExpired");
+  throw new Error("Session expired");
 }
 
 /**

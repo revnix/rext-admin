@@ -31,16 +31,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { PersonasGrid, PersonaSelection } from "@/components/workspace";
+import { PersonaSelection } from "@/components/workspace";
 import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice, Persona } from "@/types/workspace";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
 /**
  * Validation schema for brand voice form
  */
 const brandVoiceSchema = z.object({
-  brand_name: z.string().optional(),
-  about: z.string().optional(),
+  brand_name: z
+    .string()
+    .max(255, "Brand name must be 255 characters or less")
+    .optional(),
+  about: z
+    .string()
+    .max(255, "About your brand must be 255 characters or less")
+    .optional(),
   customer_profile: z.string().optional(),
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
@@ -167,6 +174,8 @@ export function WorkspaceBrandVoiceForm({
         ? selectedPersonasList
         : undefined,
     });
+
+    await useSubscriptionStore.getState().fetchSubscription();
   };
 
   // Array field helpers
@@ -284,6 +293,7 @@ export function WorkspaceBrandVoiceForm({
                       <Input
                         {...field}
                         placeholder="e.g., Everlane"
+                        maxLength={255}
                         className="bg-background/50 border-border focus:bg-background transition-colors"
                       />
                     </FormControl>
@@ -311,6 +321,7 @@ export function WorkspaceBrandVoiceForm({
                         {...field}
                         placeholder="Brief description of your company or brand. Example: We provide enterprise software solutions for data management..."
                         rows={3}
+                        maxLength={255}
                         className="resize-none bg-background/50 border-border focus:bg-background transition-colors break-words whitespace-pre-wrap word-break"
                       />
                     </FormControl>
@@ -735,10 +746,11 @@ export function WorkspaceBrandVoiceForm({
                 <div className="space-y-4">
                   <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
-                      Select Persona (Optional)
+                      Select Personas
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      Choose a persona to represent your brand voice
+                      Choose one or more personas to represent your brand voice.
+                      Multiple selections are supported.
                     </p>
                   </div>
                   <PersonaSelection
@@ -763,11 +775,11 @@ export function WorkspaceBrandVoiceForm({
                 </div>
               )}
 
-              {data.personas && data.personas.length > 0 && (
+              {/* {data.personas && data.personas.length > 0 && (
                 <div className="pt-4 border-t border-border/50">
                   <PersonasGrid personas={data.personas} />
                 </div>
-              )}
+              )} */}
             </TabsContent>
           </Tabs>
 

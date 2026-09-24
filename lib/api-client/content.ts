@@ -25,8 +25,35 @@ import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
 import { ENDPOINTS } from "./endpoints";
 
+export interface BlogImageUpload {
+  filename: string;
+  original_filename: string;
+  file_type: string;
+  file_size: number;
+  storage_backend: "minio";
+  storage_path: string;
+  storage_bucket: string;
+  public_url: string;
+  width: number | null;
+  height: number | null;
+}
+
 export function createContentNamespace(client: ApiClient) {
   return {
+    async uploadBlogImage(
+      workspaceId: string,
+      file: File,
+    ): Promise<BlogImageUpload> {
+      const formData = new FormData();
+      formData.append("file", file);
+      return client.request<BlogImageUpload>(
+        ENDPOINTS.CONTENT.uploadBlogImage(workspaceId),
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+    },
     /**
      * List content for workspace
      */

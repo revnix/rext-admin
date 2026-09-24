@@ -11,8 +11,8 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ export default function AcceptInvitationPage() {
   const { data: session, status: sessionStatus } = useSession();
   const token = searchParams.get("token");
   const [isAccepting, setIsAccepting] = useState(false);
+  const hasAttemptedAccept = useRef(false);
 
   // Validate invitation token
   const {
@@ -51,6 +52,39 @@ export default function AcceptInvitationPage() {
   });
 
   const invitation = invitationData?.invitation;
+
+  // If the backend tells us an account already exists for the invited email,
+  // don't offer "Create Account" - it would only fail with a duplicate error.
+  const accountExists = Boolean(
+    invitationData?.user_exists ?? invitation?.user_exists,
+  );
+
+  // The invitation is bound to a specific email. If someone else is already
+  // signed in, we must not silently accept it as the wrong account (the backend
+  // rejects it anyway) - prompt them to switch accounts instead.
+  const sessionEmail = session?.user?.email?.trim().toLowerCase();
+  const inviteEmail = invitation?.email?.trim().toLowerCase();
+  const isWrongAccount =
+    !!session &&
+    !!sessionEmail &&
+    !!inviteEmail &&
+    sessionEmail !== inviteEmail;
+
+  const handleSwitchAccount = useCallback(
+    async (destination: "login" | "signup") => {
+      const params = new URLSearchParams({
+        invitation_token: token ?? "",
+      });
+      if (invitation?.email) params.set("email", invitation.email);
+      const target =
+        destination === "signup"
+          ? `/signup?${params.toString()}`
+          : `/login?${params.toString()}`;
+      await signOut({ redirect: false });
+      router.push(target as Route);
+    },
+    [token, invitation?.email, router],
+  );
 
   const handleAcceptInvitation = useCallback(async () => {
     if (!token || !invitation) return;
@@ -101,19 +135,29 @@ export default function AcceptInvitationPage() {
   useEffect(() => {
     if (
       session &&
+      !isWrongAccount &&
       invitation &&
       invitation.status === "pending" &&
-      !isAccepting
+      !isAccepting &&
+      !hasAttemptedAccept.current
     ) {
+      hasAttemptedAccept.current = true;
       handleAcceptInvitation();
     }
-  }, [session, invitation, isAccepting, handleAcceptInvitation]);
+  }, [
+    session,
+    isWrongAccount,
+    invitation,
+    isAccepting,
+    handleAcceptInvitation,
+  ]);
 
-  // Handle login redirect
+  // Handle login redirect. login-form picks up `invitation_token` and routes
+  // back to /invitations/accept after a successful sign-in.
   const handleLogin = () => {
-    router.push(
-      `/login?callbackUrl=/invitations/accept?token=${token}` as Route,
-    );
+    const params = new URLSearchParams({ invitation_token: token ?? "" });
+    if (invitation?.email) params.set("email", invitation.email);
+    router.push(`/login?${params.toString()}` as Route);
   };
 
   // Handle signup redirect
@@ -233,6 +277,52 @@ export default function AcceptInvitationPage() {
     );
   }
 
+  // Signed in as the wrong account - the invitation is for a different email
+  if (isWrongAccount) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <div className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-6 w-6" />
+              <CardTitle>Wrong Account</CardTitle>
+            </div>
+            <CardDescription>
+              This invitation is for a different email address.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Switch accounts to continue</AlertTitle>
+              <AlertDescription>
+                This invitation was sent to{" "}
+                <span className="font-semibold">{invitation.email}</span>, but
+                you're currently signed in as{" "}
+                <span className="font-semibold">{session?.user?.email}</span>.
+              </AlertDescription>
+            </Alert>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                onClick={() => handleSwitchAccount("login")}
+              >
+                Sign out & sign in as {invitation.email}
+              </Button>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => handleSwitchAccount("signup")}
+              >
+                Sign out & create account for {invitation.email}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // User is accepting (logged in)
   if (session && isAccepting) {
     return (
@@ -337,24 +427,36 @@ export default function AcceptInvitationPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Authentication Required</AlertTitle>
                 <AlertDescription>
-                  To accept this invitation, you need to either sign in to your
-                  existing account or create a new account with{" "}
-                  <span className="font-semibold">{invitation.email}</span>
+                  {accountExists ? (
+                    <>
+                      An account already exists for{" "}
+                      <span className="font-semibold">{invitation.email}</span>.
+                      Sign in to accept this invitation.
+                    </>
+                  ) : (
+                    <>
+                      To accept this invitation, you need to either sign in to
+                      your existing account or create a new account with{" "}
+                      <span className="font-semibold">{invitation.email}</span>
+                    </>
+                  )}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-2">
-                <Button className="w-full" onClick={handleSignup}>
-                  <User className="h-4 w-4 mr-2" />
-                  Create Account & Accept
-                </Button>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={handleLogin}
-                >
+                <Button className="w-full" onClick={handleLogin}>
                   Sign In & Accept
                 </Button>
+                {!accountExists && (
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={handleSignup}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Create Account & Accept
+                  </Button>
+                )}
               </div>
 
               <p className="text-xs text-muted-foreground text-center">

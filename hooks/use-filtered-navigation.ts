@@ -43,7 +43,9 @@ function hasAccessToItem(
     string,
     { workspaceId: string; role: string; permissions: string[] }
   >,
+  globalOnly = false,
 ): boolean {
+  if (globalOnly) workspacePermissions = {};
   // If no permission/role requirements, allow access
   if (
     !item.permission &&
@@ -116,14 +118,17 @@ function filterNavItems(
     string,
     { workspaceId: string; role: string; permissions: string[] }
   >,
+  globalOnly = false,
 ): NavItem[] {
   return items
-    .filter((item) => hasAccessToItem(user, item, workspacePermissions))
+    .filter((item) =>
+      hasAccessToItem(user, item, workspacePermissions, globalOnly),
+    )
     .map((item) => {
       // Filter sub-items if they exist
       if (item.items && item.items.length > 0) {
         const filteredSubItems = item.items.filter((subItem) =>
-          hasAccessToItem(user, subItem, workspacePermissions),
+          hasAccessToItem(user, subItem, workspacePermissions, globalOnly),
         );
 
         // Only include parent if it has accessible sub-items or is accessible itself
@@ -199,7 +204,12 @@ export function useFilteredNavigation(groups: NavGroup[]): NavGroup[] {
       .filter((group) => hasAccessToGroup(user, group))
       .map((group) => ({
         ...group,
-        items: filterNavItems(user, group.items, workspacePermissions),
+        items: filterNavItems(
+          user,
+          group.items,
+          workspacePermissions,
+          group.globalOnly,
+        ),
       }))
       .filter((group) => group.items.length > 0); // Remove empty groups
   }, [user, groups, workspacePermissions]);

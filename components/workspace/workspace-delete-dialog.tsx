@@ -121,10 +121,10 @@ export function WorkspaceDeleteDialog({
       await deleteWorkspace(workspace.id);
 
       // Success feedback - the workspace is soft-deleted and can be restored
-      // within 30 days via apiClient.workspaces.restore(workspace.id).
+      // within 14 days via apiClient.workspaces.restore(workspace.id).
       toast.success(`Workspace "${workspaceName}" has been deleted`, {
         description:
-          "It's been moved to trash. You have 30 days to restore it before it's permanently removed.",
+          "It's been moved to trash. You have 14 days to restore it before it's permanently removed.",
         action: {
           label: "Undo",
           onClick: async () => {

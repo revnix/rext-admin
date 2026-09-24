@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
+  RefreshCw,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
@@ -36,7 +37,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { SECURITY_PERMISSIONS } from "@/lib/permissions";
 
 interface ErrorLog {
   id: string;
@@ -63,6 +66,8 @@ interface ErrorLogsTableProps {
   logs: ErrorLog[];
   pagination?: Pagination;
   isLoading: boolean;
+  isError?: boolean;
+  error?: unknown;
   filters: {
     severity?: string;
     start_date?: string;
@@ -81,12 +86,16 @@ export function ErrorLogsTable({
   logs,
   pagination,
   isLoading,
+  isError = false,
+  error,
   filters,
   onPageChange,
   onFiltersChange,
   onRefresh,
 }: ErrorLogsTableProps) {
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
+  // Viewing needs security.read (page gate); resolving is a write.
+  const canResolve = usePermission(SECURITY_PERMISSIONS.MANAGE);
 
   const resolveMutation = useMutation({
     mutationFn: async (logId: string) => {
@@ -155,6 +164,27 @@ export function ErrorLogsTable({
     );
   }
 
+  if (isError) {
+    const message =
+      (error instanceof Error && error.message) ||
+      "Unable to load error logs from the server.";
+    return (
+      <div className="rounded-md border">
+        <div className="text-center py-12 text-muted-foreground">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-2 text-destructive opacity-70" />
+          <p className="font-medium text-foreground">
+            Failed to load error logs
+          </p>
+          <p className="text-sm mb-4">{message}</p>
+          <Button variant="outline" size="sm" onClick={() => onRefresh()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -187,7 +217,7 @@ export function ErrorLogsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-x-auto">
         {logs.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-600 opacity-50" />
@@ -213,7 +243,7 @@ export function ErrorLogsTable({
                     {formatDate(log.timestamp)}
                   </TableCell>
                   <TableCell>{getSeverityBadge(log.severity)}</TableCell>
-                  <TableCell className="max-w-md">
+                  <TableCell className="max-w-sm">
                     <div className="truncate">{log.message}</div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground font-mono">
@@ -285,7 +315,7 @@ export function ErrorLogsTable({
       {/* Error Detail Dialog */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40">
             <DialogHeader>
               <DialogTitle>Error Details</DialogTitle>
               <DialogDescription>
@@ -309,6 +339,49 @@ export function ErrorLogsTable({
                 </p>
               </div>
 
+              <div className="grid grid-cols-1 gap-4 text-sm">
+                <div>
+                  <div className="font-medium">Timestamp</div>
+                  <p className="mt-1 text-muted-foreground">
+                    {new Date(selectedLog.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Status</div>
+                  <p className="mt-1 text-muted-foreground">
+                    {selectedLog.resolved
+                      ? `Resolved${
+                          selectedLog.resolved_at
+                            ? ` · ${new Date(
+                                selectedLog.resolved_at,
+                              ).toLocaleString()}`
+                            : ""
+                        }`
+                      : "Open"}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Source</div>
+                  <p className="mt-1 text-muted-foreground font-mono break-all">
+                    {selectedLog.source || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <div className="font-medium">Request ID</div>
+                  <p className="mt-1 text-muted-foreground font-mono break-all">
+                    {selectedLog.request_id || "N/A"}
+                  </p>
+                </div>
+                {selectedLog.user_id && (
+                  <div>
+                    <div className="font-medium">User ID</div>
+                    <p className="mt-1 text-muted-foreground font-mono break-all">
+                      {selectedLog.user_id}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {selectedLog.stack_trace && (
                 <div>
                   <div className="text-sm font-medium">Stack Trace</div>
@@ -320,7 +393,7 @@ export function ErrorLogsTable({
 
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
-                  <div>
+                  <div className="w-78 sm:w-full">
                     <div className="text-sm font-medium">Metadata</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
@@ -329,7 +402,7 @@ export function ErrorLogsTable({
                 )}
 
               <div className="flex items-center gap-4 pt-4">
-                {!selectedLog.resolved && (
+                {!selectedLog.resolved && canResolve && (
                   <Button
                     onClick={() => resolveMutation.mutate(selectedLog.id)}
                     disabled={resolveMutation.isPending}

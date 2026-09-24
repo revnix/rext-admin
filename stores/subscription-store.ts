@@ -22,9 +22,19 @@ import type {
   UserSubscription,
   CreditBalance,
 } from "@/types/subscription";
-import { InvoiceListResponseSchema } from "@/schemas/subscription-schemas";
-import { SubscriptionListResponseSchema } from "@/schemas/subscription-schemas";
-import { getLemonSqueezyClient } from "@/lib/lemonsqueezy/get-client";
+import {
+  InvoiceListResponseSchema,
+  InvoiceSchema,
+  SubscriptionListResponseSchema,
+} from "@/schemas/subscription-schemas";
+import {
+  ensureLemonSqueezy,
+  getLemonSqueezyClient,
+} from "@/lib/lemonsqueezy/get-client";
+import {
+  getPurchaseState,
+  type PurchaseState,
+} from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
 
 let inFlightSubscriptionFetch: Promise<void> | null = null;
@@ -53,6 +63,16 @@ interface SubscriptionStore {
   selectedPlan: SubscriptionPlan | null;
   selectedPeriod: BillingPeriod | null;
   checkoutUrl: string | null;
+  checkoutDialogOpen: boolean;
+  /** Purchase state captured when checkout opened, so the post-payment
+   *  poll can tell a completed purchase from the pre-existing state. */
+  checkoutBaseline: PurchaseState | null;
+
+  // ========================================
+  // PAYMENT METHOD DIALOG STATE
+  // ========================================
+  paymentMethodDialogOpen: boolean;
+  paymentMethodUrl: string | null;
 
   // ========================================
   // INVOICES STATE
@@ -76,9 +96,9 @@ interface SubscriptionStore {
   fetchUsage: () => Promise<void>;
 
   /**
-   * Fetch credit balance
+   * Fetch credit balance (optionally for an active workspace's owner)
    */
-  fetchCredits: () => Promise<void>;
+  fetchCredits: (workspaceId?: string) => Promise<void>;
 
   /**
    * Patch current_credits in place (from live SSE update — no round-trip)
@@ -138,9 +158,24 @@ interface SubscriptionStore {
   resetCheckout: () => void;
 
   /**
-   * Open LemonSqueezy checkout overlay
+   * Open LemonSqueezy checkout dialog
    */
   openCheckout: (checkoutUrl: string) => void;
+
+  /**
+   * Close dedicated purchase checkout dialog
+   */
+  closeCheckoutDialog: () => void;
+
+  /**
+   * Open dedicated payment method dialog
+   */
+  openPaymentMethodDialog: (url: string) => void;
+
+  /**
+   * Close dedicated payment method dialog and refresh subscription details
+   */
+  closePaymentMethodDialog: () => void;
 
   // ========================================
   // INVOICES ACTIONS
@@ -186,6 +221,12 @@ const initialState = {
   selectedPlan: null,
   selectedPeriod: null,
   checkoutUrl: null,
+  checkoutBaseline: null,
+  checkoutDialogOpen: false,
+
+  // Payment method dialog state
+  paymentMethodDialogOpen: false,
+  paymentMethodUrl: null,
 
   // Invoices state
   invoices: [],
@@ -283,9 +324,9 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         }
       },
 
-      fetchCredits: async () => {
+      fetchCredits: async (workspaceId?: string) => {
         try {
-          const credits = await apiClient.subscriptions.getCredits();
+          const credits = await apiClient.subscriptions.getCredits(workspaceId);
           set({ credits });
         } catch (error) {
           const errorMessage =
@@ -522,16 +563,45 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       openCheckout: (checkoutUrl: string) => {
-        const client = getLemonSqueezyClient();
+        if (typeof window === "undefined") return;
 
-        if (client) {
-          client.Url.Open(checkoutUrl);
-          return;
-        }
+        // Ensure lemon.js script state setup
+        ensureLemonSqueezy();
 
-        if (typeof window !== "undefined") {
-          window.open(checkoutUrl, "_blank");
-        }
+        // Snapshot current subscription so post-payment sync can verify purchase
+        set({
+          checkoutBaseline: getPurchaseState(get().subscription),
+          checkoutDialogOpen: true,
+          checkoutUrl: checkoutUrl,
+        });
+      },
+
+      closeCheckoutDialog: () => {
+        set({
+          checkoutDialogOpen: false,
+          checkoutUrl: null,
+        });
+      },
+
+      openPaymentMethodDialog: (url: string) => {
+        set({
+          paymentMethodDialogOpen: true,
+          paymentMethodUrl: url,
+        });
+      },
+
+      closePaymentMethodDialog: () => {
+        set({
+          paymentMethodDialogOpen: false,
+          paymentMethodUrl: null,
+        });
+
+        // Immediately refetch subscription details to update UI if card changed
+        get()
+          .fetchSubscription({ force: true })
+          .catch((err) => {
+            log.error("Failed to refresh subscription on dialog close", err);
+          });
       },
 
       // ========================================
@@ -543,10 +613,49 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         try {
           const response = await apiClient.subscriptions.getInvoices();
-          const parsed = InvoiceListResponseSchema.parse(response);
+
+          let invoicesData = response;
+          // In case the API response returned { invoices: [...] } or array or wrapped data
+          if (
+            response &&
+            typeof response === "object" &&
+            !("invoices" in response) &&
+            "data" in response
+          ) {
+            invoicesData = (response as { data: unknown })
+              .data as typeof response;
+          }
+
+          const parsed = InvoiceListResponseSchema.safeParse(invoicesData);
+
+          let invoicesList: Invoice[] = [];
+
+          if (parsed.success) {
+            invoicesList = parsed.data.invoices as Invoice[];
+          } else if (
+            invoicesData &&
+            typeof invoicesData === "object" &&
+            "invoices" in invoicesData &&
+            Array.isArray((invoicesData as { invoices: unknown[] }).invoices)
+          ) {
+            const rawList = (invoicesData as { invoices: unknown[] }).invoices;
+            invoicesList = rawList
+              .map((item) => {
+                const itemParse = InvoiceSchema.safeParse(item);
+                return itemParse.success ? (itemParse.data as Invoice) : null;
+              })
+              .filter((item): item is Invoice => item !== null);
+          } else if (Array.isArray(invoicesData)) {
+            invoicesList = invoicesData
+              .map((item) => {
+                const itemParse = InvoiceSchema.safeParse(item);
+                return itemParse.success ? (itemParse.data as Invoice) : null;
+              })
+              .filter((item): item is Invoice => item !== null);
+          }
 
           set({
-            invoices: parsed.invoices,
+            invoices: invoicesList,
             invoicesLoading: false,
             invoicesError: null,
           });
@@ -602,9 +711,12 @@ declare global {
         Close: () => void;
       };
       /**
-       * Setup LemonSqueezy
+       * Setup LemonSqueezy. Pass an eventHandler to receive checkout
+       * lifecycle events such as Checkout.Success.
        */
-      Setup: () => void;
+      Setup: (options?: {
+        eventHandler?: (event: { event: string; data?: unknown }) => void;
+      }) => void;
     };
     createLemonSqueezy?: () => void;
   }

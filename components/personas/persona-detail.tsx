@@ -15,26 +15,47 @@ import {
   Loader2,
   Link as LinkIcon,
   Image as ImageIcon,
+  Mail,
+  Upload,
 } from "lucide-react";
 import type { Persona } from "@/types/workspace";
 import type { Route } from "next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useUpdatePersona,
+  useUploadPersonaAvatar,
   usePersona,
+  usePersonas,
   useDeletePersona,
 } from "@/hooks/use-personas";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { CONTENT_PERMISSIONS } from "@/lib/permissions";
-import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  PERSONA_LIMITS,
+  firstError,
+  isValidHttpUrl,
+  normalizePersonaName,
+  splitList,
+  validatePersona,
+  type PersonaErrors,
+} from "@/lib/validation/persona-validation";
+import { toast } from "sonner";
 
 interface PersonaDetailProps {
   persona: Persona;
@@ -88,37 +109,163 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   const persona = personaData?.persona || initialPersona;
 
   const { hasPermission: canEdit } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.UPDATE,
+    PERSONA_PERMISSIONS.UPDATE,
     workspace?.id,
   );
   const { hasPermission: canDelete } = useWorkspacePermission(
-    CONTENT_PERMISSIONS.DELETE,
+    PERSONA_PERMISSIONS.DELETE,
     workspace?.id,
   );
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Persona>(persona);
+  const [errors, setErrors] = useState<PersonaErrors>({});
+  /** Flips inside the click itself, before React re-renders the disabled
+   *  button, so a fast double-click cannot send two updates. */
+  const saving = useRef(false);
+  const { data: personaList } = usePersonas(workspace?.id || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedAvatar, setUploadedAvatar] = useState<string | null>(null);
+  const uploadAvatar = useUploadPersonaAvatar(workspace?.id || "");
+  const isUploadingAvatar = uploadAvatar.isPending;
+
+  /** One place to set the photo: a file upload or a pasted link, both behind
+   *  the avatar in either mode. `urlDraft` is the link being edited in the
+   *  dialog; it is only committed on Save. */
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [urlDraft, setUrlDraft] = useState("");
+
+  const openPhotoDialog = () => {
+    setUrlDraft(formData.avatar_url || "");
+    setPhotoDialogOpen(true);
+  };
+
+  const initials = persona.name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
+  /** Uploads immediately rather than waiting for the form to be saved: the
+   *  server stores the file and answers with the persona, so the picture on
+   *  screen is the one that was kept. */
+  const handleAvatarFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    // Cleared here so choosing the same file twice still fires a change.
+    event.target.value = "";
+    if (!file || !persona.id) return;
+    const updated = await uploadAvatar.mutateAsync({
+      personaId: persona.id,
+      file,
+    });
+    if (updated?.avatar_url) {
+      setUploadedAvatar(updated.avatar_url);
+      setUrlDraft(updated.avatar_url);
+    }
+    setFormData((current) => ({
+      ...current,
+      avatar_url: updated?.avatar_url ?? current.avatar_url,
+      avatar_source: updated?.avatar_source ?? "custom",
+    }));
+    setPhotoDialogOpen(false);
+  };
 
   const updatePersona = useUpdatePersona(workspace?.id || "");
   const deletePersona = useDeletePersona(workspace?.id || "");
 
-  useEffect(() => {
-    if (persona) {
-      setFormData(persona);
+  /** Commits the pasted link. While editing the form it only updates local
+   *  state and is saved with the rest; otherwise it is persisted on its own. */
+  const savePhotoUrl = () => {
+    const next = urlDraft.trim();
+    // "https:///example.com", "https://-example.com" and "https://example,com"
+    // all parse as URLs and none of them resolve to a picture, so the host is
+    // checked properly before this is stored.
+    if (next && !isValidHttpUrl(next)) {
+      toast.error(
+        "Enter a valid image URL, e.g. https://example.com/photo.jpg",
+      );
+      return;
     }
+    setUploadedAvatar(null);
+    setFormData((current) => ({
+      ...current,
+      avatar_url: next,
+      avatar_source: next ? "custom" : current.avatar_source,
+    }));
+    if (!isEditing && workspace?.id && persona.id) {
+      updatePersona.mutate({
+        personaId: persona.id,
+        data: { ...persona, avatar_url: next },
+      });
+    }
+    setPhotoDialogOpen(false);
+  };
+
+  useEffect(() => {
+    if (!persona) return;
+    setFormData(persona);
+    // `uploadedAvatar` is a local override so the picture on screen is the one
+    // just uploaded, before the query refetches. It has to be dropped as soon
+    // as the server reports a different picture, or it keeps winning over it:
+    // that is why adding a Gravatar email after uploading a file looked like
+    // it had done nothing — the server had switched to the Gravatar, and this
+    // stale value was still being rendered on top of it.
+    setUploadedAvatar((current) =>
+      current && current !== persona.avatar_url ? null : current,
+    );
   }, [persona]);
+
+  /** Every field rule, plus the one check that needs the rest of the
+   *  workspace: a name another persona already uses. */
+  const validate = (): PersonaErrors => {
+    const next = validatePersona({
+      ...formData,
+      // An uploaded photo is stored as an object key and served back as a
+      // presigned link; that is ours, not something the person typed, so it is
+      // not held to the pasted-URL rule.
+      avatar_url: uploadedAvatar ? "" : formData.avatar_url,
+    });
+
+    const typed = normalizePersonaName(formData.name || "");
+    const clash = (personaList?.personas ?? []).some(
+      (p) =>
+        p.id !== persona.id && normalizePersonaName(p.name || "") === typed,
+    );
+    if (typed && !next.name && clash) {
+      next.name = "A persona with this name already exists in this workspace";
+    }
+
+    setErrors(next);
+    return next;
+  };
 
   const handleSave = () => {
     if (!workspace?.id || !persona.id) return;
+    if (saving.current) return;
+
+    const found = validate();
+    if (Object.keys(found).length > 0) {
+      toast.error(firstError(found) ?? "Please fix the highlighted fields");
+      return;
+    }
 
     const payload = {
       ...formData,
-      areas_of_expertise: toArray(formData.areas_of_expertise),
-      goals: toArray(formData.goals),
-      pain_points: toArray(formData.pain_points),
-      behaviors: toArray(formData.behaviors),
+      name: (formData.name || "").trim(),
+      // `name` and `full_name` are separate facts and neither stands in for
+      // the other; the detail view labels them separately for the same reason.
+      full_name: formData.full_name?.trim() || null,
+      professional_title: formData.professional_title?.trim() || null,
+      areas_of_expertise: splitList(formData.areas_of_expertise),
+      goals: splitList(formData.goals),
+      pain_points: splitList(formData.pain_points),
+      behaviors: splitList(formData.behaviors),
     };
 
+    saving.current = true;
     updatePersona.mutate(
       {
         personaId: persona.id,
@@ -126,7 +273,11 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
       },
       {
         onSuccess: () => {
+          setErrors({});
           setIsEditing(false);
+        },
+        onSettled: () => {
+          saving.current = false;
         },
       },
     );
@@ -144,6 +295,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
   const handleCancel = () => {
     setFormData(persona);
+    setErrors({});
     setIsEditing(false);
   };
 
@@ -152,7 +304,30 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
   ) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+    if (errors[id as keyof PersonaErrors]) {
+      setErrors((prev) => ({ ...prev, [id]: undefined }));
+    }
   };
+
+  /** "12 / 200", turning red once the limit is passed. */
+  const counter = (value: string | string[] | undefined, max: number) => {
+    const length = toStringValue(value).trim().length;
+    return (
+      <span
+        className={`text-xs tabular-nums ${
+          length > max ? "text-destructive" : "text-muted-foreground"
+        }`}
+      >
+        {length} / {max}
+      </span>
+    );
+  };
+
+  /** The message under a field, or its hint when there is nothing wrong. */
+  const fieldError = (field: keyof PersonaErrors) =>
+    errors[field] ? (
+      <p className="text-sm text-destructive">{errors[field]}</p>
+    ) : null;
 
   return (
     <div className="space-y-6">
@@ -208,21 +383,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Delete Persona
                 </Button>
               </ConfirmationDialog>
-            ) : (
-              <LockedFeatureTooltip
-                permission={CONTENT_PERMISSIONS.DELETE}
-                message="Deleting personas requires Editor role or above"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20"
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  Delete Persona
-                </Button>
-              </LockedFeatureTooltip>
-            )}
+            ) : null}
 
             {canEdit ? (
               <Button
@@ -234,21 +395,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Edit2 size={16} className="mr-2" />
                 Edit Persona
               </Button>
-            ) : (
-              <LockedFeatureTooltip
-                permission={CONTENT_PERMISSIONS.UPDATE}
-                message="Editing personas requires Editor role or above"
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="!w-[49%] sm:w-auto border-primary/20 text-primary"
-                >
-                  <Edit2 size={16} className="mr-2" />
-                  Edit Persona
-                </Button>
-              </LockedFeatureTooltip>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -268,89 +415,308 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
               {isEditing && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="name">Persona Display Name</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="name">Persona Display Name *</Label>
+                      {counter(formData.name, PERSONA_LIMITS.name.max)}
+                    </div>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.name.max}
+                      aria-invalid={!!errors.name}
                       placeholder="e.g. Marketing Manager Mary"
+                      className={errors.name ? "border-destructive" : ""}
                     />
+                    {fieldError("name")}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="full_name">Persona Full Name</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="full_name">Persona Full Name</Label>
+                      {counter(
+                        formData.full_name || "",
+                        PERSONA_LIMITS.full_name.max,
+                      )}
+                    </div>
                     <Input
                       id="full_name"
                       value={formData.full_name || ""}
                       onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.full_name.max}
+                      aria-invalid={!!errors.full_name}
                       placeholder="e.g. Mary Jane"
+                      className={errors.full_name ? "border-destructive" : ""}
                     />
+                    {fieldError("full_name")}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Short Description</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="description">Short Description</Label>
+                      {counter(
+                        formData.description,
+                        PERSONA_LIMITS.description.max,
+                      )}
+                    </div>
                     <Textarea
                       id="description"
                       value={formData.description || ""}
                       onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.description.max}
+                      aria-invalid={!!errors.description}
                       placeholder="Short description of this persona..."
+                      className={errors.description ? "border-destructive" : ""}
                     />
+                    {fieldError("description")}
                   </div>
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="avatar_url"
-                      className="flex items-center gap-2"
-                    >
-                      <ImageIcon size={14} />
-                      Avatar URL
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail size={14} />
+                      Email
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
                     </Label>
                     <Input
-                      id="avatar_url"
-                      value={formData.avatar_url || ""}
+                      id="email"
+                      type="email"
+                      value={formData.email || ""}
                       onChange={handleChange}
-                      placeholder="https://example.com/image.jpg"
+                      maxLength={PERSONA_LIMITS.email.max}
+                      aria-invalid={!!errors.email}
+                      placeholder="writer@example.com"
+                      className={errors.email ? "border-destructive" : ""}
                     />
+                    {errors.email ? (
+                      fieldError("email")
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Used only to look up a Gravatar. Setting one replaces
+                        the current photo, an uploaded one included.
+                      </p>
+                    )}
                   </div>
                 </>
               )}
 
+              {/* Outside the edit block: the avatar is clickable in both modes. */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                className="hidden"
+                onChange={handleAvatarFile}
+              />
+
+              <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Persona photo</DialogTitle>
+                    <DialogDescription>
+                      Upload a file from your machine or paste a link to an
+                      image. A link you set is kept; clear it to fall back to
+                      the photo on their site, then a Gravatar, then initials.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={uploadedAvatar || urlDraft || ""}
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-2xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="gap-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {isUploadingAvatar ? "Uploading..." : "Upload a photo"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        JPEG, PNG, GIF or WebP, up to 5MB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="avatar_url_dialog"
+                      className="flex items-center gap-2"
+                    >
+                      <ImageIcon size={14} />
+                      Image link
+                    </Label>
+                    <Input
+                      id="avatar_url_dialog"
+                      value={urlDraft}
+                      onChange={(e) => setUrlDraft(e.target.value)}
+                      placeholder="https://example.com/photo.jpg"
+                    />
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    {urlDraft.trim() && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mr-auto text-destructive hover:text-destructive"
+                        onClick={() => setUrlDraft("")}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPhotoDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={savePhotoUrl}
+                      disabled={
+                        isUploadingAvatar ||
+                        urlDraft.trim() === (formData.avatar_url || "").trim()
+                      }
+                    >
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
-                  <AvatarImage
-                    src={persona.avatar_url || ""}
-                    alt={`${persona.name}'s avatar`}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
-                    {persona.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                {/*
+                  While editing, the avatar is the one control for the photo:
+                  clicking it opens a dialog that takes a file upload or a
+                  pasted link. Outside edit mode it is just the picture.
+                */}
+                {(() => {
+                  const avatar = (
+                    <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                      <AvatarImage
+                        src={
+                          uploadedAvatar ||
+                          formData.avatar_url ||
+                          persona.avatar_url ||
+                          ""
+                        }
+                        alt={`${persona.name}'s avatar`}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  );
+
+                  if (!isEditing) return avatar;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={openPhotoDialog}
+                      disabled={isUploadingAvatar}
+                      title="Change photo"
+                      className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {avatar}
+                      <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-white" />
+                        ) : (
+                          <Upload className="h-5 w-5 text-white" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })()}
+                {isEditing &&
+                  !uploadedAvatar &&
+                  persona.avatar_source === "generated" && (
+                    <span className="text-xs text-muted-foreground">
+                      No photo found - click the circle to add one
+                    </span>
+                  )}
+                {/*
+                  `persona.name` is the display name and `persona.full_name`
+                  is the person's real name. Printing the first under a
+                  "Full Name" heading is what made it look as though the
+                  display name was being written into the full-name field.
+                */}
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Full Name
+                    Display Name
                   </Label>
-                  <p className="text-xl font-bold">{persona.name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xl font-bold">{persona.name}</p>
+                  </div>
+                  {persona.full_name?.trim() ? (
+                    <>
+                      <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Full Name
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {persona.full_name}
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               </div>
 
               {/* Professional Title */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="professional_title"
-                  className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                >
-                  Professional Title
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="professional_title"
+                    className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  >
+                    Professional Title
+                    {isEditing ? (
+                      <span className="ml-1 normal-case font-normal">
+                        (optional)
+                      </span>
+                    ) : null}
+                  </Label>
+                  {isEditing
+                    ? counter(
+                        formData.professional_title || "",
+                        PERSONA_LIMITS.professional_title.max,
+                      )
+                    : null}
+                </div>
                 {isEditing ? (
-                  <Input
-                    id="professional_title"
-                    value={formData.professional_title || ""}
-                    onChange={handleChange}
-                    placeholder="e.g. Senior Marketing Manager"
-                  />
+                  <>
+                    <Input
+                      id="professional_title"
+                      value={formData.professional_title || ""}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.professional_title.max}
+                      aria-invalid={!!errors.professional_title}
+                      placeholder="e.g. Senior Marketing Manager"
+                      className={
+                        errors.professional_title ? "border-destructive" : ""
+                      }
+                    />
+                    {fieldError("professional_title")}
+                  </>
                 ) : (
                   persona.professional_title && (
                     <p className="text-base font-medium">
@@ -362,20 +728,32 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
 
               {/* Bio */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="bio"
-                  className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                >
-                  Bio
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="bio"
+                    className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                  >
+                    Bio
+                  </Label>
+                  {isEditing
+                    ? counter(formData.bio, PERSONA_LIMITS.bio.max)
+                    : null}
+                </div>
                 {isEditing ? (
-                  <Textarea
-                    id="bio"
-                    value={formData.bio || ""}
-                    onChange={handleChange}
-                    placeholder="Short biography about this persona..."
-                    className="min-h-[120px]"
-                  />
+                  <>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio || ""}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.bio.max}
+                      aria-invalid={!!errors.bio}
+                      placeholder="Short biography about this persona..."
+                      className={`min-h-[120px] ${
+                        errors.bio ? "border-destructive" : ""
+                      }`}
+                    />
+                    {fieldError("bio")}
+                  </>
                 ) : (
                   persona.bio && (
                     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -395,12 +773,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   LinkedIn
                 </Label>
                 {isEditing ? (
-                  <Input
-                    id="linkedin_url"
-                    value={formData.linkedin_url || ""}
-                    onChange={handleChange}
-                    placeholder="https://linkedin.com/in/..."
-                  />
+                  <>
+                    <Input
+                      id="linkedin_url"
+                      value={formData.linkedin_url || ""}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.linkedin_url.max}
+                      aria-invalid={!!errors.linkedin_url}
+                      placeholder="https://linkedin.com/in/..."
+                      className={
+                        errors.linkedin_url ? "border-destructive" : ""
+                      }
+                    />
+                    {fieldError("linkedin_url")}
+                  </>
                 ) : (
                   persona.linkedin_url && (
                     <a
@@ -427,13 +813,26 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </CardHeader>
             <CardContent className="pt-6">
               {isEditing ? (
-                <Textarea
-                  id="demographics"
-                  value={formData.demographics || ""}
-                  onChange={handleChange}
-                  placeholder="Age, location, education, etc."
-                  className="min-h-[100px]"
-                />
+                <>
+                  <div className="flex items-center justify-end pb-2">
+                    {counter(
+                      formData.demographics,
+                      PERSONA_LIMITS.demographics.max,
+                    )}
+                  </div>
+                  <Textarea
+                    id="demographics"
+                    value={formData.demographics || ""}
+                    onChange={handleChange}
+                    maxLength={PERSONA_LIMITS.demographics.max}
+                    aria-invalid={!!errors.demographics}
+                    placeholder="Age, location, education, etc."
+                    className={`min-h-[100px] ${
+                      errors.demographics ? "border-destructive" : ""
+                    }`}
+                  />
+                  {fieldError("demographics")}
+                </>
               ) : (
                 persona.demographics && (
                   <p className="text-sm leading-relaxed text-muted-foreground">
@@ -464,12 +863,27 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Areas of Expertise
                 </Label>
                 {isEditing ? (
-                  <Input
-                    id="areas_of_expertise"
-                    value={toStringValue(formData.areas_of_expertise)}
-                    onChange={handleChange}
-                    placeholder="Comma separated values"
-                  />
+                  <>
+                    <Input
+                      id="areas_of_expertise"
+                      value={toStringValue(formData.areas_of_expertise)}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.areas_of_expertise.max}
+                      aria-invalid={!!errors.areas_of_expertise}
+                      placeholder="e.g. SEO, Content Strategy, Analytics"
+                      className={
+                        errors.areas_of_expertise ? "border-destructive" : ""
+                      }
+                    />
+                    {errors.areas_of_expertise ? (
+                      fieldError("areas_of_expertise")
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Separate each area with a comma — up to{" "}
+                        {PERSONA_LIMITS.areas_of_expertise.maxItems} entries.
+                      </p>
+                    )}
+                  </>
                 ) : (
                   toArray(persona.areas_of_expertise).length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -496,12 +910,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Tone of Voice
                 </Label>
                 {isEditing ? (
-                  <Input
-                    id="tone_of_voice"
-                    value={formData.tone_of_voice || ""}
-                    onChange={handleChange}
-                    placeholder="e.g. Professional, friendly, expert"
-                  />
+                  <>
+                    <Input
+                      id="tone_of_voice"
+                      value={formData.tone_of_voice || ""}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.tone_of_voice.max}
+                      aria-invalid={!!errors.tone_of_voice}
+                      placeholder="e.g. Professional, friendly, expert"
+                      className={
+                        errors.tone_of_voice ? "border-destructive" : ""
+                      }
+                    />
+                    {fieldError("tone_of_voice")}
+                  </>
                 ) : (
                   persona.tone_of_voice && (
                     <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
@@ -532,13 +954,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Goals
                 </Label>
                 {isEditing ? (
-                  <Textarea
-                    id="goals"
-                    value={toStringValue(formData.goals)}
-                    onChange={handleChange}
-                    placeholder="Primary objectives and goals"
-                    className="min-h-[80px]"
-                  />
+                  <>
+                    <Textarea
+                      id="goals"
+                      value={toStringValue(formData.goals)}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.goals.max}
+                      aria-invalid={!!errors.goals}
+                      placeholder="Comma separated, e.g. Grow organic traffic, Build authority"
+                      className={`min-h-[80px] ${
+                        errors.goals ? "border-destructive" : ""
+                      }`}
+                    />
+                    {fieldError("goals")}
+                  </>
                 ) : (
                   toArray(persona.goals).length > 0 && (
                     <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
@@ -559,13 +988,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   Pain Points
                 </Label>
                 {isEditing ? (
-                  <Textarea
-                    id="pain_points"
-                    value={toStringValue(formData.pain_points)}
-                    onChange={handleChange}
-                    placeholder="Main challenges and pain points"
-                    className="min-h-[80px]"
-                  />
+                  <>
+                    <Textarea
+                      id="pain_points"
+                      value={toStringValue(formData.pain_points)}
+                      onChange={handleChange}
+                      maxLength={PERSONA_LIMITS.pain_points.max}
+                      aria-invalid={!!errors.pain_points}
+                      placeholder="Comma separated, e.g. Limited budget, Tight deadlines"
+                      className={`min-h-[80px] ${
+                        errors.pain_points ? "border-destructive" : ""
+                      }`}
+                    />
+                    {fieldError("pain_points")}
+                  </>
                 ) : (
                   toArray(persona.pain_points).length > 0 && (
                     <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">
@@ -589,13 +1025,20 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </CardHeader>
             <CardContent className="pt-6">
               {isEditing ? (
-                <Textarea
-                  id="behaviors"
-                  value={toStringValue(formData.behaviors)}
-                  onChange={handleChange}
-                  placeholder="Key behaviors and habits"
-                  className="min-h-[100px]"
-                />
+                <>
+                  <Textarea
+                    id="behaviors"
+                    value={toStringValue(formData.behaviors)}
+                    onChange={handleChange}
+                    maxLength={PERSONA_LIMITS.behaviors.max}
+                    aria-invalid={!!errors.behaviors}
+                    placeholder="Comma separated, e.g. Research driven, Data oriented"
+                    className={`min-h-[100px] ${
+                      errors.behaviors ? "border-destructive" : ""
+                    }`}
+                  />
+                  {fieldError("behaviors")}
+                </>
               ) : (
                 toArray(persona.behaviors).length > 0 && (
                   <ul className="text-sm leading-relaxed text-muted-foreground list-disc list-inside space-y-1">

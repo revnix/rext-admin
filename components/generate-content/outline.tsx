@@ -6,6 +6,7 @@ import type {
   KeywordCluster,
   InternalLinkSuggestion,
   BrandVoicePromotion,
+  PersonaRecommendation,
 } from "@/types/generate-content";
 import type { Persona } from "@/types/workspace";
 import { usePersonas } from "@/hooks/use-personas";
@@ -41,7 +42,7 @@ import {
   RefreshCw,
   UserCircle2,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
@@ -638,24 +639,42 @@ export function OutlineDisplay({
     [personasData],
   );
 
-  // Sync the manually-selectable persona with the outline's auto-selected
-  // one whenever a fresh outline arrives (new generation / regeneration).
+  // The backend scores every persona against this outline's topic, title,
+  // search intent and content type; the best fit seeds the selection below.
+  const personaRecommendations: PersonaRecommendation[] = useMemo(
+    () => outline?.persona_recommendations ?? [],
+    [outline],
+  );
+  const recommendedPersonaId = personaRecommendations[0]?.persona_id ?? null;
+  const personaScoreById = useMemo(() => {
+    const scores = new Map<string, number>();
+    for (const recommendation of personaRecommendations) {
+      scores.set(recommendation.persona_id, recommendation.score);
+    }
+    return scores;
+  }, [personaRecommendations]);
+
+  // Adopt each recommendation exactly once. Tracking the recommendation the UI
+  // has already applied — rather than re-deriving a selection on every render —
+  // is what makes the choice stick: a cleared persona used to snap straight
+  // back, and an unrelated edit (tone, audience, word count) replaces the
+  // outline object, which must not undo the author the user picked.
+  const appliedRecommendation = useRef<string | null | undefined>(undefined);
   useEffect(() => {
-    if (!personas.length) return;
+    if (!outline) return;
+    const recommendation = outline.selected_persona_id ?? null;
+    if (appliedRecommendation.current === recommendation) return;
+    appliedRecommendation.current = recommendation;
+    setSelectedPersonaId(recommendation);
+  }, [outline]);
 
-    const fallbackPersonaId = personas[0]
-      ? personas[0].id || personas[0].name
-      : null;
-
-    if (outline?.selected_persona_id) {
-      setSelectedPersonaId(outline.selected_persona_id);
-      return;
-    }
-
-    if (!selectedPersonaId && fallbackPersonaId) {
-      setSelectedPersonaId(fallbackPersonaId);
-    }
-  }, [outline, personas, selectedPersonaId]);
+  const selectedPersona = useMemo(
+    () =>
+      personas.find(
+        (persona) => (persona.id || persona.name) === selectedPersonaId,
+      ) ?? null,
+    [personas, selectedPersonaId],
+  );
   const isDraft = !outline;
   const derivedOutline = useMemo(
     () => deriveOutlineFromTokens(rawTokens),
@@ -1270,8 +1289,9 @@ export function OutlineDisplay({
                 Author Persona
               </p>
               <p className="text-xs text-muted-foreground">
-                Who this article is written as — auto-selected based on topic
-                fit, or pick one yourself
+                Who this article is written as — recommended by fit with the
+                topic, title, search intent and content type. Pick another, or
+                clear it to write with no persona.
               </p>
             </div>
           </div>
@@ -1288,28 +1308,25 @@ export function OutlineDisplay({
                   className="w-full justify-between h-11 rounded-xl border-border/60 bg-muted/30 text-left px-3 hover:bg-muted/40"
                 >
                   <div className="flex min-w-0 flex-col items-start overflow-hidden">
-                    {(() => {
-                      const selectedPersona =
-                        personas.find(
-                          (persona) =>
-                            (persona.id || persona.name) === selectedPersonaId,
-                        ) ?? personas[0];
-
-                      return (
-                        <>
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {selectedPersona?.full_name ||
-                              selectedPersona?.name ||
-                              "Select persona"}
-                          </span>
-                          {selectedPersona?.professional_title && (
-                            <span className="truncate text-xs text-muted-foreground">
-                              {selectedPersona.professional_title}
-                            </span>
-                          )}
-                        </>
-                      );
-                    })()}
+                    {/* No fallback to personas[0]: showing a persona the user
+                        has not selected made a cleared selection unreadable. */}
+                    <span
+                      className={cn(
+                        "truncate text-sm font-medium",
+                        selectedPersona
+                          ? "text-foreground"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {selectedPersona
+                        ? selectedPersona.full_name || selectedPersona.name
+                        : "No author persona"}
+                    </span>
+                    {selectedPersona?.professional_title && (
+                      <span className="truncate text-xs text-muted-foreground">
+                        {selectedPersona.professional_title}
+                      </span>
+                    )}
                   </div>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -1324,17 +1341,40 @@ export function OutlineDisplay({
                   <CommandList>
                     <CommandEmpty>No persona found.</CommandEmpty>
                     <CommandGroup>
+                      <CommandItem
+                        key="__no_persona__"
+                        value="No author persona"
+                        onSelect={() => {
+                          setSelectedPersonaId(null);
+                          setIsPersonaSearchOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedPersonaId === null
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                        <span className="font-medium text-muted-foreground">
+                          No author persona
+                        </span>
+                      </CommandItem>
                       {personas.map((persona) => {
                         const id = persona.id || persona.name;
                         const displayName = persona.full_name || persona.name;
                         const isSelected = selectedPersonaId === id;
+                        const score = personaScoreById.get(id);
 
                         return (
                           <CommandItem
                             key={id}
                             value={`${displayName} ${persona.professional_title ?? ""} ${persona.name}`}
                             onSelect={() => {
-                              setSelectedPersonaId(id);
+                              // Selecting the selected persona clears it, so the
+                              // same control that picks an author can drop one.
+                              setSelectedPersonaId(isSelected ? null : id);
                               setIsPersonaSearchOpen(false);
                             }}
                           >
@@ -1344,11 +1384,23 @@ export function OutlineDisplay({
                                 isSelected ? "opacity-100" : "opacity-0",
                               )}
                             />
-                            <div className="flex flex-col items-start">
+                            <div className="flex min-w-0 flex-1 flex-col items-start">
                               <span className="font-medium">{displayName}</span>
                               {persona.professional_title && (
                                 <span className="text-xs text-muted-foreground">
                                   {persona.professional_title}
+                                </span>
+                              )}
+                            </div>
+                            <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                              {id === recommendedPersonaId && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                  Recommended
+                                </span>
+                              )}
+                              {score !== undefined && (
+                                <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+                                  {Math.round(score)}% fit
                                 </span>
                               )}
                             </div>

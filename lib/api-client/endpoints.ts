@@ -40,6 +40,10 @@ export const ENDPOINTS = {
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
     deleted: () => "/api/v1/workspaces/deleted" as const,
     restore: (id: string) => `/api/v1/workspaces/${id}/restore` as const,
+    transferOwnership: (id: string) =>
+      `/api/v1/workspaces/${id}/transfer-ownership` as const,
+    permanentDelete: (id: string) =>
+      `/api/v1/workspaces/${id}/permanent` as const,
 
     // Brand Voice
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
@@ -94,6 +98,8 @@ export const ENDPOINTS = {
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
     delete: (workspaceId: string, personaId: string) =>
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+    uploadAvatar: (workspaceId: string, personaId: string) =>
+      `/api/v1/workspaces/${workspaceId}/personas/${personaId}/avatar` as const,
   },
 
   /**
@@ -155,6 +161,8 @@ export const ENDPOINTS = {
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
     cancel_schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
     calendar: "/api/v1/content/calendar",
+    uploadBlogImage: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
   },
 
   /**
@@ -163,6 +171,7 @@ export const ENDPOINTS = {
    */
   USERS: {
     list: "/api/v1/user/users", // Inconsistent: /user/users
+    stats: "/api/v1/user/users/stats",
     byId: (id: string) => `/api/v1/user/${id}` as const,
     register: "/api/v1/user/register",
     registerWithInvitation: "/api/v1/user/register-with-invitation",
@@ -174,6 +183,44 @@ export const ENDPOINTS = {
       detail: (id: string) => `/api/v1/user/sessions/${id}` as const,
       revokeAll: "/api/v1/user/sessions",
     },
+
+    // Admin status actions (require user.update)
+    suspend: (id: string) => `/api/v1/user/${id}/suspend` as const,
+    activate: (id: string) => `/api/v1/user/${id}/activate` as const,
+    ban: (id: string) => `/api/v1/user/${id}/ban` as const,
+
+    // Admin user operations
+    delete: (id: string) => `/api/v1/user/delete/${id}` as const,
+    update: (id: string) => `/api/v1/user/update/${id}` as const,
+
+    // Soft Deleted Users tab
+    deleted: "/api/v1/user/deleted",
+    restore: (id: string) => `/api/v1/user/restore/${id}` as const,
+    // Permanent deletion — Super Admin only
+    permanentDelete: (id: string) => `/api/v1/user/permanent/${id}` as const,
+
+    // Admin role assignment (require user.manage_roles)
+    roles: {
+      list: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      assign: (userId: string) => `/api/v1/user/${userId}/roles` as const,
+      revoke: (userId: string, roleId: string) =>
+        `/api/v1/user/${userId}/roles/${roleId}` as const,
+      // Workspaces this user belongs to, usable as an assignment scope.
+      workspaces: (userId: string) =>
+        `/api/v1/user/${userId}/workspaces` as const,
+    },
+  },
+
+  /**
+   * Admin Account Recovery Endpoints
+   * @note Admin-reviewed account recovery queue (Account Recovery tab)
+   */
+  ACCOUNT_RECOVERY: {
+    requests: "/api/v1/admin/account-recovery/requests",
+    approve: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/approve` as const,
+    reject: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/reject` as const,
   },
 
   /**
@@ -198,6 +245,9 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
+    delete: "/api/v1/user/delete",
+    recoveryRequest: "/api/v1/user/account-recovery/request",
+    recoveryVerify: "/api/v1/user/account-recovery/verify",
   },
 
   /**
@@ -240,6 +290,11 @@ export const ENDPOINTS = {
     downgrade: "/api/v1/subscriptions/downgrade",
     cancel: "/api/v1/subscriptions/cancel",
     invoices: "/api/v1/subscriptions/invoices",
+    orders: "/api/v1/subscriptions/orders",
+    refundRequests: "/api/v1/subscriptions/refund-requests",
+    billingUrls: "/api/v1/subscriptions/billing-urls",
+    pause: "/api/v1/subscriptions/pause",
+    resume: "/api/v1/subscriptions/resume",
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
     credits: "/api/v1/subscriptions/credits",
@@ -321,6 +376,18 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Account-Creation IP Allowlist
+   * @note Requires admin / super_admin role
+   */
+  ADMIN_ACCOUNT_ALLOWLIST: {
+    base: "/api/v1/admin/account-creation-allowlist",
+    list: "/api/v1/admin/account-creation-allowlist",
+    create: "/api/v1/admin/account-creation-allowlist",
+    detail: (id: string) =>
+      `/api/v1/admin/account-creation-allowlist/${id}` as const,
+  },
+
+  /**
    * Admin Analytics Endpoints
    * @note Platform-level analytics for subscriptions and invitations
    * @note Requires super admin role
@@ -347,6 +414,20 @@ export const ENDPOINTS = {
     get: (refundId: string) =>
       `/api/v1/admin/subscriptions/refunds/${refundId}` as const,
     create: "/api/v1/admin/subscriptions/refunds/create",
+    orders: "/api/v1/admin/subscriptions/refunds/orders",
+    requests: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: log a refund a customer asked for by email. */
+    createRequest: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: take back an approval, returning the request to pending. */
+    unapproveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/unapprove` as const,
+    approveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/approve` as const,
+    rejectRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/reject` as const,
+    /** Issues the money for an already-approved request. */
+    processRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/process` as const,
   },
 
   /**
@@ -357,8 +438,12 @@ export const ENDPOINTS = {
   ADMIN_WEBHOOKS: {
     events: "/api/v1/admin/subscriptions/webhooks/events",
     failed: "/api/v1/admin/subscriptions/webhooks/failed",
-    retry: (eventId: string) =>
-      `/api/v1/admin/subscriptions/webhooks/${eventId}/retry` as const,
+    // `webhookId` is the database id (webhook_events.id, a UUID) - the same
+    // `id` returned by the list endpoints, NOT the LemonSqueezy event_id.
+    detail: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/detail/${webhookId}` as const,
+    retry: (webhookId: string) =>
+      `/api/v1/admin/subscriptions/webhooks/${webhookId}/retry` as const,
     stats: "/api/v1/admin/subscriptions/webhooks/stats",
   },
 
@@ -404,29 +489,6 @@ export const ENDPOINTS = {
       `/api/v1/licenses/${licenseId}/deactivate` as const,
     validate: "/api/v1/licenses/validate",
   },
-  /**
-   * Media Endpoints
-   * @note Workspace-scoped media/file management
-   * @note Handles file uploads, storage, and usage tracking
-   */
-  MEDIA: {
-    base: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media` as const,
-    upload: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/upload` as const,
-    uploadBlogImage: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
-    detail: (workspaceId: string, mediaId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/${mediaId}` as const,
-    bulkDelete: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/bulk-delete` as const,
-    usage: {
-      stats: (workspaceId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/usage/stats` as const,
-      detail: (workspaceId: string, mediaId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/${mediaId}/usage` as const,
-    },
-  },
 
   /**
    * Roles Endpoints
@@ -441,6 +503,8 @@ export const ENDPOINTS = {
     permissions: {
       assign: (roleId: string) =>
         `/api/v1/roles/${roleId}/permissions` as const,
+      update: (roleId: string) =>
+        `/api/v1/roles/${roleId}/permissions` as const,
       revoke: (roleId: string, permissionId: string) =>
         `/api/v1/roles/${roleId}/permissions/${permissionId}` as const,
     },
@@ -454,10 +518,7 @@ export const ENDPOINTS = {
     list: "/api/v1/permissions/",
     get: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    create: "/api/v1/permissions/",
     update: (permissionId: string) =>
-      `/api/v1/permissions/${permissionId}` as const,
-    delete: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
   },
 

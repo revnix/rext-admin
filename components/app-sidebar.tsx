@@ -18,6 +18,9 @@ import {
   Library,
   Palette,
   CalendarDays,
+  ShieldCheck,
+  DollarSign,
+  FileText,
 } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
@@ -37,10 +40,19 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { ADMIN_PERMISSIONS, ROLES, USER_PERMISSIONS } from "@/lib/permissions";
+import {
+  AUDIT_PERMISSIONS,
+  BILLING_PERMISSIONS,
+  ROLE_PERMISSIONS,
+  ROLES,
+  SECURITY_PERMISSIONS,
+  USER_PERMISSIONS,
+} from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
+import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import type { NavGroup } from "@/types/navigation";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import {
@@ -78,6 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     : undefined;
   const { role: _fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
   const { state: sidebarState } = useSidebar();
+  const { isLimitReached } = useResourceLimit("workspaces");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
     null,
@@ -137,7 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
           icon: User,
-          permission: "content.read",
+          permission: "persona.read",
         },
         {
           title: "Brand Voice",
@@ -145,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.brand_voice(currentWorkspace.slug)
             : "/",
           icon: Palette,
-          permission: "content.read",
+          permission: "brand_voice.read",
         },
         {
           title: "Members",
@@ -161,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ? workspaceRoutes.integrations(currentWorkspace.slug)
             : "/",
           icon: Plug,
-          permission: "workspace.read",
+          permission: "integration.read",
         },
         {
           title: "Settings",
@@ -178,7 +191,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   if (!hasWorkspaces) {
     mainNavigationGroups[0].items.push({
       title: "Create Workspace",
-      url: "/w/create",
+      url: isLimitReached ? "#" : "/w/create",
       icon: Plus,
     });
   }
@@ -209,41 +222,65 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const administratorNavigationGroups: NavGroup[] = [
     {
       groupLabel: "Administration",
-      anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+      // Visibility is per-item: a role holding only audit.read (support) gets
+      // just the Audit Logs entry, not the whole admin area.
+      // Admin pages are global-scoped (proxy.ts); a workspace grant of the
+      // same permission must not surface them.
+      globalOnly: true,
       items: [
-        { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+        {
+          title: "Dashboard",
+          url: "/admin",
+          icon: LayoutDashboard,
+          anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+        },
         {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
-          permission: USER_PERMISSIONS.READ,
+          permission: USER_PERMISSIONS.MANAGE,
         },
         {
           title: "Subscriptions",
           url: "/admin/subscriptions",
           icon: CreditCard,
-          anyPermission: ["subscription.analytics", "subscription.read"],
+          permission: BILLING_PERMISSIONS.READ,
+        },
+        {
+          title: "Refund Management",
+          url: "/admin/refunds",
+          icon: DollarSign,
+          permission: BILLING_PERMISSIONS.READ,
         },
         {
           title: "System Monitoring",
           url: "/admin/monitoring",
           icon: Monitor,
-          permission: "system.manage",
+          permission: SECURITY_PERMISSIONS.READ,
         },
         {
           title: "Email Analytics",
           url: "/admin/email-analytics",
           icon: Mail,
-          anyPermission: ["system.manage", "audit.read"],
+          permission: SECURITY_PERMISSIONS.READ,
         },
         {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
-          anyPermission: [
-            ADMIN_PERMISSIONS.ROLE_READ,
-            ADMIN_PERMISSIONS.PERMISSION_READ,
-          ],
+          permission: ROLE_PERMISSIONS.READ,
+        },
+        {
+          title: "Audit Logs",
+          url: "/admin/audit-logs",
+          icon: FileText,
+          permission: AUDIT_PERMISSIONS.READ,
+        },
+        {
+          title: "Security",
+          url: "/admin/security",
+          icon: ShieldCheck,
+          permission: SECURITY_PERMISSIONS.READ,
         },
       ],
     },
@@ -285,19 +322,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {group.items.map((item) => {
                   const Icon = item.icon as React.ElementType;
                   const isActive = pathname === item.url.split("?")[0];
+                  const isCreateWorkspaceLocked =
+                    item.title === "Create Workspace" && isLimitReached;
+
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={isActive}
-                        asChild
-                        className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                      >
-                        <Link href={item.url as Route}>
-                          {Icon && <Icon />}
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      {isCreateWorkspaceLocked ? (
+                        <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
+                          <SidebarMenuButton
+                            tooltip={
+                              "Upgrade your plan to create more workspaces."
+                            }
+                            isActive={false}
+                            className="cursor-not-allowed opacity-60 hover:bg-transparent data-[active=true]:bg-transparent"
+                            onClick={(event) => event.preventDefault()}
+                            aria-disabled="true"
+                          >
+                            {Icon && <Icon />}
+                            <span className="font-medium">{item.title}</span>
+                          </SidebarMenuButton>
+                        </LockedFeatureTooltip>
+                      ) : (
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          isActive={isActive}
+                          asChild
+                          className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
+                        >
+                          <Link href={item.url as Route}>
+                            {Icon && <Icon />}
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}

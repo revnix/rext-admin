@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { isProtectedRole } from "@/lib/permissions";
 import type { RoleWithPermissions } from "@/types/role";
 import { usePermissionStore } from "@/stores/permission-store";
 
@@ -36,7 +37,6 @@ export function EditRoleDialog({
   const [formData, setFormData] = useState({
     display_name: "",
     description: "",
-    hierarchy_level: 1,
   });
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
@@ -46,7 +46,6 @@ export function EditRoleDialog({
       setFormData({
         display_name: role.display_name,
         description: role.description || "",
-        hierarchy_level: role.hierarchy_level,
       });
     }
   }, [role]);
@@ -58,7 +57,6 @@ export function EditRoleDialog({
       return await apiClient.roles.update(role.id, {
         display_name: formData.display_name,
         description: formData.description || undefined,
-        hierarchy_level: formData.hierarchy_level,
       });
     },
     onSuccess: async () => {
@@ -68,6 +66,7 @@ export function EditRoleDialog({
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-logs"] }),
       ]);
       onOpenChange(false);
     },
@@ -85,15 +84,12 @@ export function EditRoleDialog({
       return;
     }
 
-    if (formData.hierarchy_level < 0 || formData.hierarchy_level > 100) {
-      toast.error("Hierarchy level must be between 0 and 100");
-      return;
-    }
-
     updateMutation.mutate();
   };
 
   if (!role) return null;
+
+  const isProtected = isProtectedRole(role);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,12 +103,13 @@ export function EditRoleDialog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {role.is_system_role && (
+            {isProtected && (
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
-                  This is a system role. Some restrictions apply to maintain
-                  system integrity.
+                  {role.is_system_role
+                    ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
+                    : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
                 </AlertDescription>
               </Alert>
             )}
@@ -144,7 +141,7 @@ export function EditRoleDialog({
                   setFormData({ ...formData, display_name: e.target.value })
                 }
                 required
-                disabled={role.is_system_role}
+                disabled={isProtected}
               />
             </div>
 
@@ -161,28 +158,6 @@ export function EditRoleDialog({
                 rows={3}
               />
             </div>
-
-            {/* Hierarchy Level */}
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level (0-100)</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.hierarchy_level}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hierarchy_level: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                disabled={role.is_system_role}
-              />
-              <p className="text-xs text-muted-foreground">
-                Higher numbers indicate higher authority
-              </p>
-            </div>
           </div>
 
           <DialogFooter>
@@ -196,7 +171,7 @@ export function EditRoleDialog({
             </Button>
             <Button
               type="submit"
-              disabled={updateMutation.isPending || role.is_system_role}
+              disabled={updateMutation.isPending || isProtected}
             >
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

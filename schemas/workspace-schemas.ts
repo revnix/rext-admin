@@ -54,12 +54,16 @@ export const WORKSPACE_CONSTRAINTS = {
 export const workspaceFormSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Name is required")
     .max(
       WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH,
       `Name must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
     )
-    .trim(),
+    .regex(
+      /^[A-Za-z0-9 ]+$/,
+      "Name can only contain letters, numbers, and spaces",
+    ),
 
   url: urlSchema,
 
@@ -69,9 +73,13 @@ export const workspaceFormSchema = z.object({
 export const createWorkspaceRequestSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
     .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
-    .trim(),
+    .regex(
+      /^[A-Za-z0-9 ]+$/,
+      "Name can only contain letters, numbers, and spaces",
+    ),
   title: z
     .string()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
@@ -136,23 +144,29 @@ export type UpdateWorkspaceRequest = z.infer<
  * Workspace analytics schema (nested under 'analytics' key)
  */
 export const workspaceAnalyticsSchema = z.object({
-  knowledge_counts: z.object({
-    web_knowledge: z.number(),
-    files: z.number(),
-    text_knowledge: z.number(),
-    total_knowledge_items: z.number(),
-  }),
-  content_metrics: z.object({
-    total_words: z.number(),
-    web_content_words: z.number(),
-    file_content_words: z.number(),
-    avg_web_article_words: z.number(),
-    avg_file_words: z.number(),
-    estimated_reading_time_minutes: z.number(),
-  }),
-  team_metrics: z.object({
-    total_members: z.number(),
-  }),
+  knowledge_counts: z
+    .object({
+      web_knowledge: z.number(),
+      files: z.number(),
+      text_knowledge: z.number(),
+      total_knowledge_items: z.number(),
+    })
+    .optional(),
+  content_metrics: z
+    .object({
+      total_words: z.number(),
+      web_content_words: z.number(),
+      file_content_words: z.number(),
+      avg_web_article_words: z.number(),
+      avg_file_words: z.number(),
+      estimated_reading_time_minutes: z.number(),
+    })
+    .optional(),
+  team_metrics: z
+    .object({
+      total_members: z.number(),
+    })
+    .optional(),
 });
 
 /**
@@ -163,7 +177,7 @@ export const brandVoiceSchema = z.object({
   workspace_id: z.string(),
   brand_name: z.string().optional(),
   about: z.string().optional(),
-  customer_profile: z.string().optional(),
+  customer_profile: z.string().nullable().optional(),
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
   brand_voice: z.array(z.string()).optional(),
@@ -177,14 +191,16 @@ export const brandVoiceSchema = z.object({
         description: z.string(),
         full_name: z.string().nullable().optional(),
         professional_title: z.string().nullable().optional(),
-        areas_of_expertise: z.string().optional(),
+        areas_of_expertise: z
+          .union([z.string(), z.array(z.string())])
+          .optional(),
         tone_of_voice: z.string().optional(),
         bio: z.string().optional(),
         linkedin_url: z.string().nullable().optional(),
         demographics: z.string().optional(),
-        pain_points: z.string().optional(),
-        goals: z.string().optional(),
-        behaviors: z.string().optional(),
+        pain_points: z.union([z.string(), z.array(z.string())]).optional(),
+        goals: z.union([z.string(), z.array(z.string())]).optional(),
+        behaviors: z.union([z.string(), z.array(z.string())]).optional(),
       }),
     )
     .optional(),

@@ -60,6 +60,8 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import {
+  createContext,
+  useContext,
   useState,
   useEffect,
   useCallback,
@@ -155,8 +157,11 @@ const theme = {
   },
   list: {
     ul: "list-disc ml-4 mb-2",
-    ol: "list-decimal ml-4 mb-2",
-    listitem: "ml-1",
+    // Tag-like content should not auto-render numeric markers. Keep the list
+    // semantic but suppress browser-generated numbering so items appear as chips
+    // or plain labels instead of an ordered list.
+   ol: "list-none ml-0 mb-2 [&>li]:list-none [&>li]:pl-0",
+    listitem: "ml-0 pl-0",
   },
   quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
   code: "bg-muted p-1 rounded font-mono text-sm",
@@ -180,6 +185,168 @@ const theme = {
 const lexicalLog = log.forComponent("LexicalEditor");
 
 // ---------------------------------------------------------------------------
+// Manual-upload image placeholder — a non-fetchable `src` scheme the backend
+// embeds (as ordinary markdown image syntax) at the spot its image-planning
+// pipeline suggested an image, whenever real image generation is disabled
+// (cost control). Recognizing the scheme here lets the same ImageNode /
+// markdown transformer round-trip it untouched, while rendering an
+// upload/dismiss slot instead of a broken <img>. Never sent to a publish
+// target unresolved — the backend strips any leftover marker at publish time.
+// ---------------------------------------------------------------------------
+const IMAGE_PLACEHOLDER_SCHEME = "rext-placeholder:";
+
+// Lets a read-only editor ask its host page to switch into Edit mode (set when
+// the viewer may edit). Absent when they may not.
+const RequestEditContext = createContext<(() => void) | undefined>(undefined);
+
+function isImagePlaceholderSrc(src: string): boolean {
+  return src.startsWith(IMAGE_PLACEHOLDER_SCHEME);
+}
+
+function ImagePlaceholderSlot({
+  editor,
+  nodeKey,
+  altText,
+}: {
+  editor: import("lexical").LexicalEditor;
+  nodeKey: string;
+  altText: string;
+}) {
+  const workspaceId = useCurrentWorkspaceId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const isEditable = editor.isEditable();
+  const onRequestEdit = useContext(RequestEditContext);
+
+  const requireEditMode = useCallback(() => {
+    if (onRequestEdit) {
+      onRequestEdit();
+      toast.info("Switched to Edit mode — choose your image.");
+      return;
+    }
+    toast.info("Editing requires Editor role or above.");
+  }, [onRequestEdit]);
+
+  const applyImage = useCallback(
+    (url: string, alt: string) => {
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if ($isImageNode(node)) {
+          node.setSrc(url);
+          if (alt) node.setAltText(alt);
+        }
+      });
+    },
+    [editor, nodeKey],
+  );
+
+  const handleUploadClick = useCallback(() => {
+    if (!isEditable) {
+      requireEditMode();
+      return;
+    }
+    if (!workspaceId) {
+      toast.error("No workspace selected — cannot upload.");
+      return;
+    }
+    fileInputRef.current?.click();
+  }, [isEditable, requireEditMode, workspaceId]);
+
+  const handleFileSelected = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // Reset so re-picking the same file fires change again.
+      e.target.value = "";
+      if (!file || !workspaceId) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please choose an image file.");
+        return;
+      }
+      if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
+        toast.error("Image exceeds 20MB. Please choose a smaller file.");
+        return;
+      }
+      setUploading(true);
+      try {
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
+        const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
+        if (!uploadedSrc) {
+          toast.error("Upload succeeded but no image URL was returned.");
+          return;
+        }
+        applyImage(uploadedSrc, altText);
+        toast.success("Image added.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [workspaceId, altText, applyImage],
+  );
+
+  const handleDismiss = useCallback(() => {
+    if (!isEditable) {
+      requireEditMode();
+      return;
+    }
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  }, [editor, nodeKey, isEditable, requireEditMode]);
+
+  return (
+    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+      <span className="inline-flex items-start gap-2 text-muted-foreground">
+        <ImageIcon size={16} className="mt-0.5 shrink-0" />
+        <span>
+          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
+          here, or remove this slot and publish without it.
+        </span>
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={handleUploadClick}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <Loader2 size={14} className="mr-1.5 animate-spin" />
+          ) : (
+            <Upload size={14} className="mr-1.5" />
+          )}
+          Upload image
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-8 text-muted-foreground"
+          onClick={handleDismiss}
+        >
+          <X size={14} className="mr-1.5" />
+          Remove
+        </Button>
+      </span>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ImageNodeComponent — renders image with a remove button overlay
 // ---------------------------------------------------------------------------
 function ImageNodeComponent({
@@ -197,12 +364,28 @@ function ImageNodeComponent({
   width?: number;
   height?: number;
 }) {
+  // In read-only mode OnChangePlugin is not mounted, so a removal here would
+  // never reach the parent's body — the image would vanish from view, come
+  // back on the next remount, and still be published. Removal belongs to Edit
+  // mode, matching ImagePlaceholderSlot.
+  const isEditable = editor.isEditable();
+
   const handleRemove = useCallback(() => {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
       if (node) node.remove();
     });
   }, [editor, nodeKey]);
+
+  if (isImagePlaceholderSrc(src)) {
+    return (
+      <ImagePlaceholderSlot
+        editor={editor}
+        nodeKey={nodeKey}
+        altText={altText}
+      />
+    );
+  }
 
   return (
     <span className="relative inline-block group my-2">
@@ -215,14 +398,16 @@ function ImageNodeComponent({
         style={{ maxHeight: 480 }}
         unoptimized
       />
-      <button
-        type="button"
-        title="Remove image"
-        onClick={handleRemove}
-        className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
-      >
-        <X size={13} />
-      </button>
+      {isEditable && (
+        <button
+          type="button"
+          title="Remove image"
+          onClick={handleRemove}
+          className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
+        >
+          <X size={13} />
+        </button>
+      )}
     </span>
   );
 }
@@ -319,6 +504,19 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   isInline(): boolean {
     return false;
+  }
+
+  // Used to turn a manual-upload placeholder (see IMAGE_PLACEHOLDER_SCHEME)
+  // into a real image in place once the user uploads one, without needing to
+  // replace the node (which would lose its position/selection context).
+  setSrc(src: string): void {
+    const writable = this.getWritable();
+    writable.__src = src;
+  }
+
+  setAltText(altText: string): void {
+    const writable = this.getWritable();
+    writable.__altText = altText;
   }
 }
 
@@ -695,7 +893,10 @@ function ImageInsertPopover() {
       setError(null);
       setUploading(true);
       try {
-        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
         const src = toAbsoluteMediaUrl(media.public_url);
         if (!src) {
           setError("Upload succeeded but no image URL was returned.");
@@ -1465,6 +1666,8 @@ interface LexicalEditorProps {
   readOnly?: boolean;
   showDebug?: boolean;
   toolbarClass?: string;
+  /** Called when a read-only editor needs Edit mode (e.g. image upload). */
+  onRequestEdit?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -1476,6 +1679,7 @@ export default function LexicalEditor({
   readOnly = false,
   showDebug = false,
   toolbarClass,
+  onRequestEdit,
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
@@ -1607,53 +1811,55 @@ export default function LexicalEditor({
 
   return (
     <div className="space-y-6">
-      <LexicalComposer initialConfig={initialConfig}>
-        <MarkdownUpdatePlugin
-          markdown={markdownOutput}
-          shouldUpdate={shouldUpdateEditor}
-          onUpdateComplete={() => setShouldUpdateEditor(false)}
-        />
-        <div
-          className={cn(
-            "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
-            readOnly
-              ? "border-none shadow-none bg-transparent"
-              : "border-border shadow-sm",
-          )}
-        >
-          {!readOnly && <ToolbarPlugin className={toolbarClass} />}
-          <div className="relative grow">
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable
-                  className={cn(
-                    "min-h-[150px] outline-none",
-                    readOnly ? "p-0 cursor-default" : "p-6",
-                  )}
-                />
-              }
-              placeholder={
-                !readOnly ? (
-                  <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
-                    Type here (Markdown supported)…
-                  </div>
-                ) : null
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <ListPlugin />
-            <LinkPlugin
-              attributes={{ target: "_blank", rel: "noopener noreferrer" }}
-            />
-            <TablePlugin hasHorizontalScroll />
-            <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-            {!readOnly && <NewTabLinkPlugin />}
-            {readOnly && <ReadOnlyLinkClickPlugin />}
-            {!readOnly && <OnChangePlugin onChange={handleChange} />}
+      <RequestEditContext.Provider value={onRequestEdit}>
+        <LexicalComposer initialConfig={initialConfig}>
+          <MarkdownUpdatePlugin
+            markdown={markdownOutput}
+            shouldUpdate={shouldUpdateEditor}
+            onUpdateComplete={() => setShouldUpdateEditor(false)}
+          />
+          <div
+            className={cn(
+              "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
+              readOnly
+                ? "border-none shadow-none bg-transparent"
+                : "border-border shadow-sm",
+            )}
+          >
+            {!readOnly && <ToolbarPlugin className={toolbarClass} />}
+            <div className="relative grow">
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable
+                    className={cn(
+                      "min-h-[150px] outline-none",
+                      readOnly ? "p-0 cursor-default" : "p-6",
+                    )}
+                  />
+                }
+                placeholder={
+                  !readOnly ? (
+                    <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
+                      Type here (Markdown supported)…
+                    </div>
+                  ) : null
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <HistoryPlugin />
+              <ListPlugin />
+              <LinkPlugin
+                attributes={{ target: "_blank", rel: "noopener noreferrer" }}
+              />
+              <TablePlugin hasHorizontalScroll />
+              <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
+              {!readOnly && <NewTabLinkPlugin />}
+              {readOnly && <ReadOnlyLinkClickPlugin />}
+              {!readOnly && <OnChangePlugin onChange={handleChange} />}
+            </div>
           </div>
-        </div>
-      </LexicalComposer>
+        </LexicalComposer>
+      </RequestEditContext.Provider>
 
       {showDebug && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

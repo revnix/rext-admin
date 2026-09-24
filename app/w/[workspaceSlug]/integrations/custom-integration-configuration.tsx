@@ -24,12 +24,14 @@ interface CustomIntegrationConfigurationProps {
   integration: Integration;
   onUpdate: (updatedIntegration: Partial<Integration>) => void;
   onDelete?: () => void;
+  canUpdate?: boolean;
 }
 
 export function CustomIntegrationConfiguration({
   integration,
   onUpdate,
   onDelete,
+  canUpdate = true,
 }: CustomIntegrationConfigurationProps) {
   const [showApiKey, setShowApiKey] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -296,13 +298,14 @@ export function CustomIntegrationConfiguration({
                 variant="destructive"
                 className="w-full sm:w-auto"
                 type="button"
+                disabled={!onDelete}
               >
                 Delete Integration
               </Button>
             </ConfirmationDialog>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canUpdate}
               className="w-full sm:w-auto min-w-[120px]"
             >
               {isSubmitting ? (

@@ -26,6 +26,17 @@ import type {
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
+/** Compact role summary returned inline with User from the list endpoint. */
+export interface UserRoleSummary {
+  role_id: string;
+  name: string;
+  display_name: string;
+  hierarchy_level: number;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  is_platform: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -36,8 +47,33 @@ export interface User {
   avatar_url?: string | null;
   language?: string;
   timezone?: string;
+  display_role?: string;
+  /** All roles the user holds, sorted highest hierarchy first. */
+  roles?: UserRoleSummary[];
+  /**
+   * True when the user holds a platform-wide role at hierarchy >= 100.
+   * The admin UI greys out every management action on these rows unless the
+   * viewer is themselves a Super Admin (the backend enforces the same rule).
+   */
+  is_super_admin?: boolean;
+  last_login_at?: string | null;
+  login_count?: number;
+  initials?: string;
   created_at?: string;
   updated_at?: string;
+  /** Soft-delete timestamp, present on rows from the Soft Deleted Users tab. */
+  deleted_at?: string | null;
+  deactivated_at?: string | null;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  full_name?: string;
+  display_name?: string;
+  password?: string;
+  avatar_url?: string | null;
+  language?: string;
+  timezone?: string;
 }
 
 export interface UsersListPagination {
@@ -56,6 +92,86 @@ export interface UsersListResponse {
   pagination?: UsersListPagination;
 }
 
+export interface UserListParams {
+  workspace_id?: string;
+  page?: number;
+  per_page?: number;
+  search?: string;
+  status?: string;
+  role?: string;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+}
+
+export interface UserStats {
+  total: number;
+  active: number;
+  inactive: number;
+  suspended: number;
+  banned: number;
+  verified: number;
+  unverified: number;
+}
+
+/** Admin-initiated status transitions. Mirrors the backend's valid status set. */
+export type UserStatusAction = "suspend" | "activate" | "ban";
+
+export interface UserStatusChangeResponse {
+  user_id: string;
+  full_name?: string | null;
+  email: string;
+  old_status: string;
+  new_status: string;
+  changed_by?: string | null;
+  reason?: string | null;
+  changed_at: string;
+}
+
+/**
+ * A single role assignment for a user.
+ *
+ * Shape comes from RoleService.get_user_roles(), which is richer than the
+ * route's declared UserRolesListResponse schema. The declared schema is not
+ * enforced (routes return a JSONResponse via success(), which bypasses
+ * FastAPI response_model validation), so this matches the real payload.
+ */
+export interface UserRoleAssignment {
+  id: string;
+  role_id: string;
+  role_name: string;
+  role_display_name: string;
+  hierarchy_level: number;
+  is_workspace_role: boolean;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  is_primary: boolean;
+  assigned_at: string | null;
+}
+
+export interface UserRolesListResponse {
+  roles: UserRoleAssignment[];
+  count: number;
+}
+
+export interface UserWorkspaceScopeItem {
+  workspace_id: string;
+  workspace_name: string;
+  current_role_display_name: string | null;
+}
+
+export interface UserWorkspaceScopeListResponse {
+  user_id: string;
+  workspaces: UserWorkspaceScopeItem[];
+  count: number;
+}
+
+export interface AssignUserRoleRequest {
+  role_id: string;
+  /** null = platform-wide (global) role */
+  workspace_id?: string | null;
+  is_primary?: boolean;
+}
+
 export function createUsersNamespace(client: ApiClient) {
   return {
     /**
@@ -66,38 +182,47 @@ export function createUsersNamespace(client: ApiClient) {
      * so consumers (e.g. the admin User Management table and its stat
      * cards) see the complete, accurate user set rather than just page 1.
      */
-    list: async (workspaceId?: string): Promise<UsersListResponse> => {
-      const perPage = 100;
-      let page = 1;
-      let allUsers: User[] = [];
-      let totalCount = 0;
-
-      // Bounded by has_next from the server; the extra page-count guard
-      // just prevents a runaway loop if that flag were ever wrong.
-      for (let safety = 0; safety < 1000; safety++) {
-        const params = new URLSearchParams({
-          page: String(page),
-          per_page: String(perPage),
-        });
-        if (workspaceId) params.set("workspace_id", workspaceId);
-
-        const response = await client.request<UsersListResponse>(
-          `${ENDPOINTS.USERS.list}?${params.toString()}`,
-          { method: "GET" },
-        );
-
-        allUsers = allUsers.concat(response.users);
-        totalCount = response.total_count;
-
-        if (!response.pagination?.has_next) break;
-        page += 1;
+    /**
+     * List users with server-side pagination, search, role & status filtering, and sorting.
+     */
+    list: async (
+      params?: UserListParams | string,
+    ): Promise<UsersListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (typeof params === "string") {
+        if (params) searchParams.set("workspace_id", params);
+      } else if (params) {
+        if (params.workspace_id)
+          searchParams.set("workspace_id", params.workspace_id);
+        if (params.page) searchParams.set("page", String(params.page));
+        if (params.per_page)
+          searchParams.set("per_page", String(params.per_page));
+        if (params.search?.trim())
+          searchParams.set("search", params.search.trim());
+        if (params.status && params.status !== "all")
+          searchParams.set("status", params.status);
+        if (params.role && params.role !== "all")
+          searchParams.set("role", params.role);
+        if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+        if (params.sort_order)
+          searchParams.set("sort_order", params.sort_order);
       }
 
-      return {
-        users: allUsers,
-        total_count: totalCount,
-        workspace_id: workspaceId ?? null,
-      };
+      const queryString = searchParams.toString();
+      const url = queryString
+        ? `${ENDPOINTS.USERS.list}?${queryString}`
+        : ENDPOINTS.USERS.list;
+
+      return client.request<UsersListResponse>(url, { method: "GET" });
+    },
+
+    /**
+     * Get aggregate statistics for users (backing the stat cards).
+     */
+    stats: async (): Promise<UserStats> => {
+      return client.request<UserStats>(ENDPOINTS.USERS.stats, {
+        method: "GET",
+      });
     },
 
     /**
@@ -106,6 +231,179 @@ export function createUsersNamespace(client: ApiClient) {
     get: async (userId: string): Promise<User> => {
       return client.request<User>(ENDPOINTS.USERS.byId(userId), {
         method: "GET",
+      });
+    },
+
+    /**
+     * Change a user's account status (admin).
+     *
+     * Requires `user.update`. The backend records an audit log entry with the
+     * old status, new status and reason, so always pass a reason where the
+     * action is punitive.
+     */
+    setStatus: async (
+      userId: string,
+      action: UserStatusAction,
+      reason?: string,
+    ): Promise<UserStatusChangeResponse> => {
+      return client.request<UserStatusChangeResponse>(
+        ENDPOINTS.USERS[action](userId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // The body is required even though `reason` itself is optional.
+          body: JSON.stringify({ reason: reason?.trim() || null }),
+        },
+      );
+    },
+
+    /**
+     * Update user details (admin).
+     * Requires `user.update`.
+     */
+    updateUser: async (
+      userId: string,
+      data: UpdateUserRequest,
+    ): Promise<User> => {
+      return client.request<User>(ENDPOINTS.USERS.update(userId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+
+    /**
+     * Soft delete a user (admin).
+     * Requires `user.delete`.
+     */
+    deleteUser: async (userId: string): Promise<{ id: string }> => {
+      return client.request<{ id: string }>(ENDPOINTS.USERS.delete(userId), {
+        method: "DELETE",
+      });
+    },
+
+    /**
+     * List soft-deleted users (Soft Deleted Users tab).
+     * Requires `user.read`.
+     */
+    listDeleted: async (params?: {
+      page?: number;
+      per_page?: number;
+    }): Promise<UsersListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set("page", String(params.page));
+      if (params?.per_page)
+        searchParams.set("per_page", String(params.per_page));
+      const query = searchParams.toString();
+      return client.request<UsersListResponse>(
+        query ? `${ENDPOINTS.USERS.deleted}?${query}` : ENDPOINTS.USERS.deleted,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Restore a soft-deleted user (admin). Requires `user.update`.
+     */
+    restoreUser: async (userId: string): Promise<User> => {
+      return client.request<User>(ENDPOINTS.USERS.restore(userId), {
+        method: "POST",
+      });
+    },
+
+    /**
+     * Permanently delete a soft-deleted user. **Super Admin only.**
+     *
+     * Irreversible: hard-deletes owned workspaces and their data, prunes
+     * sessions/tokens/OAuth/media, cancels subscriptions, then scrubs the
+     * account's PII. The account can never be recovered afterwards.
+     */
+    permanentlyDeleteUser: async (userId: string): Promise<{ id: string }> => {
+      return client.request<{ id: string }>(
+        ENDPOINTS.USERS.permanentDelete(userId),
+        { method: "DELETE" },
+      );
+    },
+
+    /**
+     * List every role assigned to a user, global and workspace-scoped.
+     */
+    listRoles: async (
+      userId: string,
+      workspaceId?: string,
+    ): Promise<UserRolesListResponse> => {
+      const query = workspaceId
+        ? `?${new URLSearchParams({ workspace_id: workspaceId })}`
+        : "";
+      return client.request<UserRolesListResponse>(
+        `${ENDPOINTS.USERS.roles.list(userId)}${query}`,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Workspaces the user belongs to, for scoping a role assignment.
+     * Requires `user.manage_roles`.
+     *
+     * Each entry carries the role the user currently holds there, so the
+     * caller can show what an assignment would replace.
+     */
+    listWorkspaces: async (userId: string) => {
+      return client.request<{
+        user_id: string;
+        workspaces: Array<{
+          workspace_id: string;
+          workspace_name: string;
+          current_role_display_name: string | null;
+        }>;
+        count: number;
+      }>(ENDPOINTS.USERS.roles.workspaces(userId), { method: "GET" });
+    },
+
+    /**
+     * Assign a role to a user. Requires `user.manage_roles`.
+     *
+     * Omit `workspace_id` (or pass null) for a platform-wide role. A
+     * workspace-scoped assignment is rejected unless the user is already a
+     * member of that workspace.
+     */
+    assignRole: async (userId: string, data: AssignUserRoleRequest) => {
+      return client.request<{
+        assignment: Record<string, unknown>;
+        role_name: string;
+        role_display_name: string;
+        workspace_name: string | null;
+      }>(ENDPOINTS.USERS.roles.assign(userId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role_id: data.role_id,
+          workspace_id: data.workspace_id ?? null,
+          is_primary: data.is_primary ?? false,
+        }),
+      });
+    },
+
+    /**
+     * Revoke a role from a user. Requires `user.manage_roles`.
+     *
+     * `workspaceId` must match the scope the role was assigned under,
+     * otherwise the assignment will not be found.
+     */
+    revokeRole: async (
+      userId: string,
+      roleId: string,
+      workspaceId?: string | null,
+    ) => {
+      const query = workspaceId
+        ? `?${new URLSearchParams({ workspace_id: workspaceId })}`
+        : "";
+      return client.request<{
+        user_id: string;
+        role_id: string;
+        workspace_id: string | null;
+        role_name: string;
+      }>(`${ENDPOINTS.USERS.roles.revoke(userId, roleId)}${query}`, {
+        method: "DELETE",
       });
     },
 

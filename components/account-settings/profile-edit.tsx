@@ -19,18 +19,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { profileQueries } from "@/lib/query-keys";
-import { PROFILE_TIMEZONE_OPTIONS } from "@/lib/constants/localization";
 import {
   AVATAR_ACCEPT_ATTRIBUTE,
   type ProfileFormData,
@@ -411,7 +403,7 @@ export function ProfileEdit() {
               }}
             /> */}
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="timezone"
               render={({ field }) => {
@@ -440,7 +432,7 @@ export function ProfileEdit() {
                   </FormItem>
                 );
               }}
-            />
+            /> */}
           </div>
 
           <div className="flex justify-end">

@@ -16,6 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -24,6 +29,7 @@ import {
 import { workspaceQueries } from "@/lib/query-keys";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
+import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
@@ -50,6 +56,8 @@ export function WorkspaceSwitcher() {
   );
 
   const workspaces = workspaceListResponse?.workspaces || [];
+  const { isLimitReached, isLoading: isLimitLoading } =
+    useResourceLimit("workspaces");
 
   // Update local store when API data changes
   React.useEffect(() => {
@@ -63,16 +71,34 @@ export function WorkspaceSwitcher() {
     // renamed workspace's old slug 404s straight back to /w. WorkspaceProvider
     // already does this inside /w/[slug], but not on /w, / or account pages -
     // which is exactly where the dead links were being rendered.
-    if (currentWorkspace) {
-      const serverCopy = workspaces.find((w) => w.id === currentWorkspace.id);
+    //
+    // The store can also hold nothing at all (fresh account whose create wizard
+    // was left before it navigated into the workspace) or a workspace this
+    // account can't see (deleted, or persisted from another session). The
+    // sidebar fetches permissions for currentWorkspace.id, so in both cases no
+    // workspace permissions ever load and every workspace nav item is hidden -
+    // the owner is left with Dashboard, All Workspaces and Personal. Fall back
+    // to the first accessible workspace, which is what this switcher already
+    // displays. Matching by slug keeps WorkspaceProvider's preliminary
+    // (id: "") entry on the workspace named in the URL.
+    const serverCopy = currentWorkspace
+      ? workspaces.find(
+          (w) =>
+            w.id === currentWorkspace.id || w.slug === currentWorkspace.slug,
+        )
+      : undefined;
 
-      if (
-        serverCopy &&
-        (serverCopy.slug !== currentWorkspace.slug ||
-          serverCopy.name !== currentWorkspace.name)
-      ) {
-        setCurrentWorkspace(serverCopy);
-      }
+    if (!serverCopy) {
+      setCurrentWorkspace(workspaces[0]);
+      return;
+    }
+
+    if (
+      serverCopy.slug !== currentWorkspace?.slug ||
+      serverCopy.name !== currentWorkspace?.name ||
+      serverCopy.id !== currentWorkspace?.id
+    ) {
+      setCurrentWorkspace(serverCopy);
     }
   }, [workspaces, setWorkspaceList, currentWorkspace, setCurrentWorkspace]);
 
@@ -173,11 +199,10 @@ export function WorkspaceSwitcher() {
                   <p className="text-sm font-medium text-foreground mb-1">
                     No workspaces yet
                   </p>
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <p className="text-xs text-muted-foreground">
                     Create your first workspace to get started
                   </p>
                 </div>
-                <DropdownMenuSeparator />
               </>
             ) : (
               <>
@@ -218,16 +243,48 @@ export function WorkspaceSwitcher() {
               </>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/w/create" className="gap-2 p-2">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="text-muted-foreground font-medium">
-                  Create Workspace
-                </div>
-              </Link>
-            </DropdownMenuItem>
+            {isLimitReached || isLimitLoading ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="block">
+                    <DropdownMenuItem
+                      asChild
+                      disabled={true}
+                      className="pointer-events-none opacity-60"
+                    >
+                      <Link
+                        href="#"
+                        onClick={(event) => event.preventDefault()}
+                        className="gap-2 p-2"
+                      >
+                        <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                          <Plus className="size-4" />
+                        </div>
+                        <div className="text-muted-foreground font-medium">
+                          {isLimitReached
+                            ? "Workspace limit reached"
+                            : "Checking plan..."}
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  Upgrade your plan to create more workspaces.
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <DropdownMenuItem asChild>
+                <Link href="/w/create" className="gap-2 p-2">
+                  <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                    <Plus className="size-4" />
+                  </div>
+                  <div className="text-muted-foreground font-medium">
+                    Create Workspace
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

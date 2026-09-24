@@ -23,7 +23,6 @@ import {
   WorkspaceInviteMembersDialog,
   WorkspaceRemoveMemberDialog,
 } from "@/components/workspace";
-import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
@@ -31,7 +30,9 @@ import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceMembersPanelProps {
   workspace: Workspace;
-  canManage?: boolean;
+  canInvite?: boolean;
+  canChangeRole?: boolean;
+  canRemove?: boolean;
 }
 
 interface WorkspaceMember {
@@ -40,18 +41,26 @@ interface WorkspaceMember {
   workspace_id: string;
   status: string;
   is_default: boolean;
+  is_owner?: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
   role?: {
+    id?: string;
+    name?: string;
     display_name: string;
-  };
+  } | null;
+  roles?: Array<{
+    id?: string;
+    name?: string;
+    display_name: string;
+  }>;
   user: {
     id: string;
     name: string;
     email: string;
     display_name: string | null;
     is_verified: boolean;
-    avatar: string | null;
+    avatar?: string | null;
   };
 }
 
@@ -61,8 +70,10 @@ interface MemberData extends Record<string, unknown> {
   display_name: string;
   email: string;
   roleName: string;
+  rolesList: Array<{ id?: string; name?: string; display_name: string }>;
   status: string;
   is_default: boolean;
+  is_owner: boolean;
   is_verified: boolean;
   joined_at: string;
   initials: string;
@@ -71,7 +82,9 @@ interface MemberData extends Record<string, unknown> {
 
 export function WorkspaceMembersPanel({
   workspace,
-  canManage = false,
+  canInvite = false,
+  canChangeRole = false,
+  canRemove = false,
 }: WorkspaceMembersPanelProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
@@ -80,13 +93,11 @@ export function WorkspaceMembersPanel({
   const [memberToChangeRole, setMemberToChangeRole] =
     useState<WorkspaceMember | null>(null);
 
-  // Use permission gates (kept), but ensure we don't fall back to default Edit/View/Delete
-  const canInviteMember = usePermission(MEMBER_PERMISSIONS.INVITE);
-
   // Fetch workspace members
   const {
     data: membersResponse,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -132,19 +143,41 @@ export function WorkspaceMembersPanel({
   };
 
   // Transform data for DataTable
-  const tableData: MemberData[] = members.map((member: WorkspaceMember) => ({
-    id: member.id,
-    user_id: member.user_id,
-    display_name: member.user.display_name || member.user.name,
-    email: member.user.email,
-    status: member.status,
-    roleName: member.role?.display_name ?? "",
-    is_default: member.is_default,
-    is_verified: member.user.is_verified,
-    joined_at: formatDate(member.joined_at),
-    initials: getInitials(member.user.display_name || member.user.name),
-    avatar: member.user?.avatar ?? null,
-  }));
+  const tableData: MemberData[] = members.map((member: WorkspaceMember) => {
+    const rolesList =
+      member.roles && member.roles.length > 0
+        ? member.roles
+        : member.role
+          ? [member.role]
+          : [];
+    const roleName =
+      rolesList.length > 0
+        ? rolesList.map((r) => r.display_name).join(", ")
+        : "No role assigned";
+
+    const isOwner = Boolean(
+      member.is_owner ||
+        (workspace &&
+          (workspace.user_id === member.user_id ||
+            workspace.owner_id === member.user_id)),
+    );
+
+    return {
+      id: member.id,
+      user_id: member.user_id,
+      display_name: member.user.display_name || member.user.name,
+      email: member.user.email,
+      status: member.status,
+      roleName,
+      rolesList,
+      is_default: member.is_default,
+      is_owner: isOwner,
+      is_verified: member.user.is_verified,
+      joined_at: formatDate(member.joined_at),
+      initials: getInitials(member.user.display_name || member.user.name),
+      avatar: member.user?.avatar ?? null,
+    };
+  });
 
   // Define columns
   const columns: Column<MemberData>[] = [
@@ -177,7 +210,7 @@ export function WorkspaceMembersPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="font-medium truncate">{value as string}</p>
-              {row.is_default && (
+              {row.is_owner && (
                 <span title="Workspace Owner">
                   <Crown className="h-4 w-4 text-yellow-600" />
                 </span>
@@ -208,6 +241,25 @@ export function WorkspaceMembersPanel({
       key: "roleName",
       header: "Role",
       width: "250px",
+      cell: (_value, row) => {
+        const rolesList = row.rolesList;
+        if (!rolesList || rolesList.length === 0) {
+          return (
+            <span className="text-sm text-muted-foreground italic">
+              No role assigned
+            </span>
+          );
+        }
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            {rolesList.map((r, idx) => (
+              <Badge key={r.id || idx} variant="outline" className="text-xs">
+                {r.display_name}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: "status",
@@ -229,27 +281,30 @@ export function WorkspaceMembersPanel({
     },
   ];
 
-  // Define row actions (filtered by permissions)
+  // Define row actions, each gated on the permission its backend route enforces
+  // (PATCH .../role -> member.update_role, DELETE member -> member.remove).
+  const changeRoleAction: RowAction<MemberData> = {
+    label: "Change Role",
+    icon: <Shield className="h-4 w-4" />,
+    onClick: (row: MemberData) => {
+      const member = members.find((m: WorkspaceMember) => m.id === row.id);
+      if (member) setMemberToChangeRole(member);
+    },
+    disabled: (row: MemberData) => Boolean(row.is_owner),
+  };
+  const removeMemberAction: RowAction<MemberData> = {
+    label: "Remove Member",
+    icon: <UserMinus className="h-4 w-4" />,
+    onClick: (row: MemberData) => {
+      const member = members.find((m: WorkspaceMember) => m.id === row.id);
+      if (member) setMemberToRemove(member);
+    },
+    variant: "destructive",
+    disabled: (row: MemberData) => Boolean(row.is_owner),
+  };
   const rowActions: RowAction<MemberData>[] = [
-    {
-      label: "Change Role",
-      icon: <Shield className="h-4 w-4" />,
-      onClick: (row: MemberData) => {
-        const member = members.find((m: WorkspaceMember) => m.id === row.id);
-        if (member) setMemberToChangeRole(member);
-      },
-      disabled: (row: MemberData) => row.is_default as boolean,
-    },
-    {
-      label: "Remove Member",
-      icon: <UserMinus className="h-4 w-4" />,
-      onClick: (row: MemberData) => {
-        const member = members.find((m: WorkspaceMember) => m.id === row.id);
-        if (member) setMemberToRemove(member);
-      },
-      variant: "destructive",
-      disabled: (row: MemberData) => row.is_default as boolean,
-    },
+    ...(canChangeRole ? [changeRoleAction] : []),
+    ...(canRemove ? [removeMemberAction] : []),
   ];
 
   const headerActions = (
@@ -258,10 +313,13 @@ export function WorkspaceMembersPanel({
         variant="outline"
         size="sm"
         onClick={() => refetch()}
-        disabled={isLoading}
+        disabled={isLoading || isFetching}
         className="shrink-0 w-[29%] sm:w-auto"
+        aria-label="Refresh members"
       >
-        <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        <RefreshCw
+          className={`h-4 w-4 ${isLoading || isFetching ? "animate-spin" : ""}`}
+        />
       </Button>
       <PermissionGuard
         permission={MEMBER_PERMISSIONS.INVITE}
@@ -295,12 +353,12 @@ export function WorkspaceMembersPanel({
           columns={columns.filter((col) => col.key !== "email")} // Hide email column since it's in Member column
           data={tableData}
           isLoading={isLoading}
-          rowActions={canManage ? rowActions : []}
+          rowActions={rowActions}
           emptyTitle="No members yet"
           emptyDescription="Invite members to collaborate on this workspace"
           emptyIcon={<Users className="h-12 w-12" />}
           emptyActions={
-            canInviteMember
+            canInvite
               ? [
                   {
                     label: "Invite Members",

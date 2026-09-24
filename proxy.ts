@@ -91,9 +91,15 @@ async function readSessionWithoutWritingCookie(
  */
 const PROTECTED_ROUTES: Record<string, string | string[]> = {
   "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-  "/admin/users": "user.read",
-  "/admin/monitoring": "audit.read",
-  "/admin/reports": "audit.read",
+  "/admin/users": "user.manage",
+  "/admin/monitoring": "security.read",
+  "/admin/email-analytics": "security.read",
+  "/admin/security": "security.read",
+  "/admin/audit-logs": "audit.read",
+  "/admin/reports": "billing.read",
+  "/admin/subscriptions": "billing.read",
+  "/admin/refunds": "billing.read",
+  "/admin/roles": "role.read",
 };
 
 const PROTECTED_ROUTE_ENTRIES = Object.entries(PROTECTED_ROUTES).sort(
@@ -178,6 +184,10 @@ export default async function proxy(request: NextRequest) {
   const publicRoutes = [
     ...AUTH_PAGE_PATHS,
     "/invitations/accept", // Allow unauthenticated users to view and accept invitations
+    // A deleted user has no session (delete revokes them all), so the recovery
+    // link must open without one. Kept out of AUTH_PAGE_PATHS so that someone
+    // signed in as another account isn't bounced away from the link.
+    "/account-recovery",
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>

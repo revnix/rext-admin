@@ -8,7 +8,7 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -53,57 +53,13 @@ type GenerationStatusResponse = {
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
-/** Progress bar + percentage for one generation. Used by the primary row and
- *  by every row in the expanded list, so they can never drift apart. */
-function GenerationProgress({
-  title,
-  progress,
-  compact = false,
-  className,
-}: {
-  title: string;
-  progress: number;
-  compact?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <div
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${title} generation progress`}
-        className={cn(
-          "relative flex-1 overflow-hidden rounded-full",
-          compact ? "h-1.5" : "h-2",
-        )}
-        style={{ backgroundColor: "rgb(52, 64, 84)" }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${progress}%`,
-            backgroundColor: "hsl(var(--primary))",
-          }}
-        />
-      </div>
-      <span
-        className={cn(
-          "text-right font-semibold tabular-nums text-foreground",
-          compact ? "w-8 text-xs" : "w-10 text-sm",
-        )}
-      >
-        {progress}%
-      </span>
-    </div>
-  );
-}
+
 
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // The thread actually open on screen, if any. `?thread=` is the only
   // thing that identifies WHICH generation is being viewed — the pathname
@@ -490,10 +446,18 @@ export function BackgroundGenerationDock() {
     }
   };
 
-  if (!isMounted || visibleJobs.length === 0) return null;
+  const isViewingGenerationThread =
+    (pathname?.endsWith("/generate_content") ?? false) &&
+    Boolean(openThreadId);
 
-  const job = visibleJobs.find(isPending) ?? visibleJobs[0];
-  const otherJobs = visibleJobs.filter(
+  const displayedJobs = isViewingGenerationThread
+    ? visibleJobs.filter((job) => job.threadId !== openThreadId)
+    : visibleJobs;
+
+  if (!isMounted || displayedJobs.length === 0) return null;
+
+  const job = displayedJobs.find(isPending) ?? displayedJobs[0];
+  const otherJobs = displayedJobs.filter(
     (item) => item.threadId !== job.threadId,
   );
   const pending = isPending(job);
@@ -570,12 +534,23 @@ export function BackgroundGenerationDock() {
           </p>
         </div>
 
+        {/* Spinner / check + status text — replaces the old percentage bar */}
         {pending && (
-          <GenerationProgress
-            title={job.title}
-            progress={job.progress}
-            className="min-w-[170px] flex-1 basis-[220px] sm:max-w-sm"
-          />
+          <div className="flex items-center gap-2 min-w-[170px] flex-1 basis-[220px] sm:max-w-sm">
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+            <span className="truncate text-sm text-muted-foreground animate-pulse">
+              {job.stage}
+              <span className="tracking-widest">…</span>
+            </span>
+          </div>
+        )}
+        {completed && (
+          <div className="flex items-center gap-2 min-w-[170px] flex-1 basis-[220px] sm:max-w-sm">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+            <span className="truncate text-sm text-emerald-500 font-medium">
+              {job.stage}
+            </span>
+          </div>
         )}
 
         <div className="flex shrink-0 items-center gap-1">
@@ -656,14 +631,22 @@ export function BackgroundGenerationDock() {
 
               {/* Fixed-width slot so rows stay column-aligned whether or not
                   this generation is still running. */}
-              <div className="w-28 shrink-0">
-                {isPending(other) && (
-                  <GenerationProgress
-                    title={other.title}
-                    progress={other.progress}
-                    compact
-                  />
-                )}
+              <div className="w-32 shrink-0 flex items-center gap-1.5">
+                {isPending(other) ? (
+                  <>
+                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+                    <span className="truncate text-xs text-muted-foreground animate-pulse">
+                      {other.stage}
+                    </span>
+                  </>
+                ) : other.status === "completed" ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-500" />
+                    <span className="truncate text-xs text-emerald-500">
+                      {other.stage}
+                    </span>
+                  </>
+                ) : null}
               </div>
 
               <Button

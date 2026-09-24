@@ -6,7 +6,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
 import { PageLayout } from "@/components/page-layout";
-import { AdminGuard } from "@/components/permission/admin-guard";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ErrorPage } from "@/components/ui/error-states";
+import { usePermission } from "@/hooks/use-permission";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
-import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { AUDIT_PERMISSIONS } from "@/lib/permissions";
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(0);
@@ -38,6 +38,7 @@ export default function AuditLogsPage() {
     null,
   );
   const debouncedSearch = useDebounce(search, 300);
+  const canReadAuditLogs = usePermission(AUDIT_PERMISSIONS.READ);
 
   // Fetch audit logs
   const { data, isLoading, error, refetch } = useQuery({
@@ -59,6 +60,7 @@ export default function AuditLogsPage() {
         resource_type: resourceTypeFilter || undefined,
       });
     },
+    enabled: canReadAuditLogs,
   });
 
   if (error) {
@@ -105,7 +107,7 @@ export default function AuditLogsPage() {
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
-        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={AUDIT_PERMISSIONS.EXPORT}>
           <Button variant="outline" onClick={() => handleExport("csv")}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -117,7 +119,27 @@ export default function AuditLogsPage() {
         </PermissionGuard>
       }
     >
-      <AdminGuard>
+      <PermissionGuard
+        permission={AUDIT_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view audit logs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  audit.read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
         {/* Filters */}
         <Card>
           <CardHeader>
@@ -193,7 +215,7 @@ export default function AuditLogsPage() {
             </div>
           </CardContent>
         </Card>
-
+        <br />
         {/* Audit Logs Table */}
         <Card>
           <CardHeader>
@@ -215,7 +237,7 @@ export default function AuditLogsPage() {
             />
           </CardContent>
         </Card>
-      </AdminGuard>
+      </PermissionGuard>
     </PageLayout>
   );
 }

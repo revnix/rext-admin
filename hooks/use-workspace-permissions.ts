@@ -50,8 +50,10 @@ export function useWorkspacePermissions(workspaceId?: string) {
       }
     },
     enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 1000, // 10 seconds for quick reactive updates on navigation
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Update loading state in store when query status changes

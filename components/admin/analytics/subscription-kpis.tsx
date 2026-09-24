@@ -14,10 +14,14 @@ interface SubscriptionKPIsProps {
     total_subscriptions: number;
     active_subscriptions: number;
     trial_subscriptions: number;
+    cancelled_subscriptions: number;
+    expired_subscriptions?: number;
+    suspended_subscriptions?: number;
     mrr: number;
     arr: number;
     churn_rate_monthly: number;
     trial_conversion_rate: number;
+    average_ltv?: number | null;
   };
   growthMetrics?: {
     new_revenue_30d: number;
@@ -29,7 +33,11 @@ export function SubscriptionKPIs({
   stats,
   growthMetrics,
 }: SubscriptionKPIsProps) {
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value == null || !Number.isFinite(value)) {
+      return "N/A";
+    }
+
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -38,9 +46,18 @@ export function SubscriptionKPIs({
     }).format(value);
   };
 
-  const formatPercent = (value: number) => {
+  const formatPercent = (value: number | null | undefined) => {
+    if (value == null || !Number.isFinite(value)) {
+      return "N/A";
+    }
+
     return `${value.toFixed(1)}%`;
   };
+
+  const churnRate =
+    stats.total_subscriptions > 0
+      ? (stats.cancelled_subscriptions / stats.total_subscriptions) * 100
+      : 0;
 
   const kpis = [
     {
@@ -62,7 +79,9 @@ export function SubscriptionKPIs({
       value: formatCurrency(stats.mrr),
       icon: DollarSign,
       description: growthMetrics
-        ? `${growthMetrics.growth_rate >= 0 ? "+" : ""}${formatPercent(growthMetrics.growth_rate)}`
+        ? `${growthMetrics.growth_rate >= 0 ? "+" : ""}${formatPercent(
+            growthMetrics.growth_rate,
+          )}`
         : undefined,
       trend: growthMetrics
         ? growthMetrics.growth_rate >= 0
@@ -79,8 +98,15 @@ export function SubscriptionKPIs({
       color: "text-purple-600",
     },
     {
+      title: "Avg Customer LTV",
+      value: formatCurrency(stats.average_ltv),
+      icon: DollarSign,
+      description: "Average customer lifetime value",
+      color: "text-cyan-600",
+    },
+    {
       title: "Churn Rate",
-      value: formatPercent(stats.churn_rate_monthly),
+      value: formatPercent(churnRate),
       icon: Percent,
       description: "Last 30 days",
       color: stats.churn_rate_monthly > 5 ? "text-red-600" : "text-orange-600",
@@ -93,12 +119,20 @@ export function SubscriptionKPIs({
       description: "Trial to paid",
       color: "text-indigo-600",
     },
+    {
+      title: "Trial Subscriptions",
+      value: stats.trial_subscriptions.toLocaleString(),
+      icon: Users,
+      description: "Currently trialing",
+      color: "text-amber-600",
+    },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
+
         const TrendIcon =
           kpi.trend === "up"
             ? TrendingUp
@@ -110,17 +144,23 @@ export function SubscriptionKPIs({
           <Card key={kpi.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+
               <Icon className={`h-4 w-4 ${kpi.color}`} />
             </CardHeader>
+
             <CardContent>
               <div className="text-2xl font-bold">{kpi.value}</div>
+
               {kpi.description && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                   {TrendIcon && (
                     <TrendIcon
-                      className={`h-3 w-3 ${kpi.trend === "up" ? "text-green-600" : "text-red-600"}`}
+                      className={`h-3 w-3 ${
+                        kpi.trend === "up" ? "text-green-600" : "text-red-600"
+                      }`}
                     />
                   )}
+
                   {kpi.description}
                 </p>
               )}

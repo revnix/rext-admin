@@ -5,9 +5,20 @@ import { Loader2, Settings } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-retention-matrix";
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
+import { Badge } from "@/components/ui/badge";
 import { PageLayout } from "@/components/page-layout";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
@@ -19,6 +30,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Lazy load chart components (use recharts - heavy library ~400KB)
 const RevenueChart = dynamic(
@@ -33,7 +51,7 @@ const RevenueChart = dynamic(
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-100 w-full" />
         </CardContent>
       </Card>
     ),
@@ -53,7 +71,7 @@ const PlanDistributionChart = dynamic(
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-75 w-full" />
         </CardContent>
       </Card>
     ),
@@ -63,7 +81,7 @@ const PlanDistributionChart = dynamic(
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
+import { BILLING_PERMISSIONS } from "@/lib/permissions";
 
 interface AnalyticsOverview {
   stats: {
@@ -90,6 +108,20 @@ interface AnalyticsOverview {
   }>;
 }
 
+interface SubscriptionStats {
+  total_subscriptions: number;
+  active_subscriptions: number;
+  trial_subscriptions: number;
+  cancelled_subscriptions: number;
+  expired_subscriptions: number;
+  suspended_subscriptions: number;
+  mrr: number;
+  arr: number;
+  churn_rate_monthly: number;
+  trial_conversion_rate: number;
+  average_ltv: number | null;
+}
+
 type RevenueHistory = Array<{
   month: string;
   mrr: number;
@@ -110,6 +142,16 @@ type PlanDistribution = Array<{
 
 type PlanDistributionItem = PlanDistribution[number];
 
+const formatCurrency = (value: number | undefined | null): string =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value ?? 0);
+
+const formatPercentage = (value: number | undefined | null): string =>
+  `${(value ?? 0).toFixed(1)}%`;
 const toNumber = (value: unknown): number => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim() !== "") {
@@ -218,13 +260,27 @@ export default function SubscriptionAnalyticsPage() {
   const [revenuePeriod, setRevenuePeriod] = useState<
     "3_months" | "6_months" | "12_months"
   >("12_months");
+  const [churnPeriod, setChurnPeriod] = useState(30);
+  const [revenueDisplayPeriod, setRevenueDisplayPeriod] = useState<
+    "monthly" | "yearly"
+  >("monthly");
 
-  // Fetch analytics overview
   const { data: overview, isLoading: overviewLoading } = useQuery({
     queryKey: ["admin", "subscriptions", "analytics", "overview"],
     queryFn: async () => {
       return apiClient.request<AnalyticsOverview>(
         "/api/v1/admin/subscriptions/analytics/overview",
+      );
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch analytics overview
+  const { data: stats } = useQuery({
+    queryKey: ["admin", "subscriptions", "stats", "overview"],
+    queryFn: async () => {
+      return apiClient.request<SubscriptionStats>(
+        "/api/v1/admin/subscriptions/stats/overview",
       );
     },
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -268,6 +324,21 @@ export default function SubscriptionAnalyticsPage() {
     },
   });
 
+  const { data: revenueMetrics, isLoading: revenueMetricsLoading } = useQuery({
+    queryKey: ["admin", "subscriptions", "analytics", "revenue-metrics"],
+    queryFn: () => apiClient.adminAnalytics.getRevenueMetrics(),
+  });
+
+  const { data: trialConversion } = useQuery({
+    queryKey: ["admin", "subscriptions", "analytics", "trial-conversion"],
+    queryFn: () => apiClient.adminAnalytics.getTrialConversion(),
+  });
+
+  const { data: churnAnalysis, isLoading: churnLoading } = useQuery({
+    queryKey: ["admin", "subscriptions", "analytics", "churn", churnPeriod],
+    queryFn: () => apiClient.adminAnalytics.getChurnAnalysis(churnPeriod),
+  });
+
   // if (overviewError) {
   //   return (
   //     <ErrorPage
@@ -288,7 +359,6 @@ export default function SubscriptionAnalyticsPage() {
     );
   }
 
-  const stats = overview?.stats;
   const revenueByPlan = overview?.revenue_by_plan;
   const growthMetrics = overview?.growth_metrics;
   const recentSubscriptions = overview?.recent_subscriptions;
@@ -296,10 +366,24 @@ export default function SubscriptionAnalyticsPage() {
     Array.isArray(planDistribution) && planDistribution.length > 0
       ? planDistribution
       : normalizePlanDistribution(revenueByPlan);
+  const trialFunnelData = (trialConversion?.conversion_by_plan ?? []).map(
+    (plan) => ({
+      name: plan.plan_name,
+      trials: plan.trials,
+      conversions: plan.conversions,
+    }),
+  );
+  const revenueByPlanMetrics = (revenueMetrics?.by_plan ?? []).map((plan) => ({
+    name: plan.plan_display_name || plan.plan_name,
+    revenue:
+      revenueDisplayPeriod === "monthly"
+        ? plan.revenue_monthly
+        : plan.revenue_yearly,
+  }));
 
   return (
     <PageLayout
-      title="Subscription Management"
+      title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
         <Link href="/admin/subscriptions/plans" className="w-full sm:w-auto">
@@ -311,13 +395,13 @@ export default function SubscriptionAnalyticsPage() {
       }
     >
       <PermissionGuard
-        permission={SUBSCRIPTION_PERMISSIONS.READ}
+        permission={BILLING_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
               <CardDescription>
-                You don't have permission to view subscription management.
+                You don't have permission to view subscription analytics.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -335,6 +419,260 @@ export default function SubscriptionAnalyticsPage() {
           {stats && (
             <SubscriptionKPIs stats={stats} growthMetrics={growthMetrics} />
           )}
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Breakdown</CardTitle>
+                <CardDescription>Current month activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {revenueMetricsLoading ? (
+                  <div className="flex h-24 items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 grid-cols-2 gap-4">
+                    {[
+                      [
+                        "New",
+                        revenueMetrics?.current_month.new_revenue,
+                        "bg-emerald-50 text-emerald-600",
+                      ],
+                      [
+                        "Expansion",
+                        revenueMetrics?.current_month.expansion_revenue,
+                        "bg-blue-50 text-blue-600",
+                      ],
+                      [
+                        "Contraction",
+                        revenueMetrics?.current_month.contraction_revenue,
+                        "bg-orange-50 text-orange-600",
+                      ],
+                      [
+                        "Churned",
+                        revenueMetrics?.current_month.churned_revenue,
+                        "bg-red-50 text-red-600",
+                      ],
+                    ].map(([label, value, color]) => (
+                      <div
+                        key={label}
+                        className={`rounded-lg border-0 p-4 ${color}`}
+                      >
+                        <p className="text-sm font-medium">{label}</p>
+                        <p className="text-2xl font-semibold">
+                          {formatCurrency(value as number)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-8">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-sm font-semibold">Revenue by Plan</p>
+                    <Select
+                      value={revenueDisplayPeriod}
+                      onValueChange={(value) =>
+                        setRevenueDisplayPeriod(
+                          value as typeof revenueDisplayPeriod,
+                        )
+                      }
+                    >
+                      <SelectTrigger className="h-10 w-43">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {revenueMetricsLoading ? (
+                    <div className="flex h-52 items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : revenueByPlanMetrics.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={245}>
+                      <BarChart data={revenueByPlanMetrics}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) => formatCurrency(Number(value))}
+                        />
+                        <Bar
+                          dataKey="revenue"
+                          fill="#3b82f6"
+                          name={`${revenueDisplayPeriod === "monthly" ? "Monthly" : "Yearly"} revenue`}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <p className="py-12 text-center text-sm text-muted-foreground">
+                      No revenue by plan data available
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex flex-col gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trial Conversion Funnel</CardTitle>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    <span>
+                      Total Trials:{" "}
+                      <Badge variant="secondary">
+                        {trialConversion?.total_trials_started ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
+                      Active:{" "}
+                      <Badge variant="outline">
+                        {trialConversion?.trials_active ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
+                      Conversions:{" "}
+                      <Badge
+                        variant="secondary"
+                        className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                      >
+                        {trialConversion?.trials_converted ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
+                      Expired:{" "}
+                      <Badge variant="outline">
+                        {trialConversion?.trials_expired ?? 0}
+                      </Badge>
+                    </span>
+                    {trialConversion?.trials_cancelled !== undefined && (
+                      <span>
+                        Cancelled:{" "}
+                        <Badge variant="outline">
+                          {trialConversion?.trials_cancelled}
+                        </Badge>
+                      </span>
+                    )}
+                    <span>
+                      Conversion Rate:{" "}
+                      <Badge variant="secondary">
+                        {formatPercentage(trialConversion?.conversion_rate)}
+                      </Badge>
+                    </span>
+                    <span>
+                      Avg Duration:{" "}
+                      <Badge variant="secondary">
+                        {(
+                          trialConversion?.average_trial_length_days ?? 0
+                        ).toFixed(1)}{" "}
+                        days
+                      </Badge>
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="min-h-20">
+                  {trialFunnelData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={trialFunnelData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar
+                          dataKey="trials"
+                          fill="#f59e0b"
+                          name="Trial starts"
+                        />
+                        <Bar
+                          dataKey="conversions"
+                          fill="#10b981"
+                          name="Conversions"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex min-h-55 items-center justify-center">
+                      <p className="text-center text-sm text-muted-foreground">
+                        No per-plan trial data available
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="">
+                <CardHeader className="flex flex-col gap-2">
+                  <div className="flex justify-between gap-2 w-full">
+                    <div>
+                      <CardTitle>Churn Analysis</CardTitle>
+                    </div>
+                    <Select
+                      value={String(churnPeriod)}
+                      onValueChange={(value) => setChurnPeriod(Number(value))}
+                    >
+                      <SelectTrigger className="h-11 w-56">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">Last 7 days</SelectItem>
+                        <SelectItem value="30">Last 30 days</SelectItem>
+                        <SelectItem value="60">Last 60 days</SelectItem>
+                        <SelectItem value="90">Last 90 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                    <span>
+                      Cancellations:{" "}
+                      <Badge variant="destructive">
+                        {churnAnalysis?.cancellations ?? 0}
+                      </Badge>
+                    </span>
+                    <span>
+                      Retention Rate:{" "}
+                      <Badge variant="secondary">
+                        {formatPercentage(churnAnalysis?.retention_rate)}
+                      </Badge>
+                    </span>
+                    <span>
+                      Churn Rate:{" "}
+                      <Badge variant="destructive">
+                        {formatPercentage(churnAnalysis?.churn_rate)}
+                      </Badge>
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {churnLoading ? (
+                    <div className="flex min-h-12 items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                  ) : (
+                    churnAnalysis?.cancellation_reasons && (
+                      <div className="min-h-20">
+                        <p className="mb-5 font-medium">Cancellation Reasons</p>
+                        {Object.keys(churnAnalysis?.cancellation_reasons ?? {})
+                          .length > 0 && (
+                          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                            {Object.entries(
+                              churnAnalysis?.cancellation_reasons ?? {},
+                            ).map(([reason, count]) => (
+                              <span key={reason}>
+                                {reason}: {count}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {/* Charts and Analytics */}
           <Tabs defaultValue="revenue" className="space-y-6">

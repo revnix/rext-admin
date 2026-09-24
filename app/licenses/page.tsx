@@ -13,12 +13,10 @@
  */
 
 import { Loader2, Plus, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
 import { PageLayout } from "@/components/page-layout";
-import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,12 +29,8 @@ import {
 import { apiClient } from "@/lib/api-client";
 import type { License, LicenseActivation } from "@/types/license";
 import { LicenseStatus } from "@/types/license";
-import type { Route } from "next";
-
-const LICENSE_VIEW = "license.read";
 
 export default function LicensesPage() {
-  const router = useRouter();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedLicense, setExpandedLicense] = useState<string | null>(null);
@@ -145,262 +139,217 @@ export default function LicensesPage() {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
-      day: "numeric",
     });
   };
 
-  const AccessDeniedFallback = (
-    <PageLayout
-      title="Access Denied"
-      description="You don't have permission to view licenses"
-    >
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            License Management Access Restricted
-          </CardTitle>
-          <CardDescription>
-            Only workspace admins and owners can view license information.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            License management contains device activation details.
-          </p>
-          <div className="bg-muted p-3 rounded-md">
-            <p className="text-xs font-mono">
-              Required permission:{" "}
-              <span className="font-semibold">license.read</span>
-            </p>
-          </div>
-          <Button onClick={() => router.push("/" as Route)} variant="outline">
-            Return to Dashboard
-          </Button>
-        </CardContent>
-      </Card>
-    </PageLayout>
-  );
-
   if (loading) {
     return (
-      <PermissionGuard
-        permission={LICENSE_VIEW}
-        fallback={AccessDeniedFallback}
-      >
-        <PageLayout
-          title="License Management"
-          description="Manage your license keys and device activations"
-        >
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading licenses...</p>
-            </div>
-          </div>
-        </PageLayout>
-      </PermissionGuard>
-    );
-  }
-
-  return (
-    <PermissionGuard permission={LICENSE_VIEW} fallback={AccessDeniedFallback}>
       <PageLayout
         title="License Management"
         description="Manage your license keys and device activations"
       >
-        {/* Licenses List */}
-        {licenses.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">
-                  No Licenses Found
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  You don't have any license keys yet. Purchase a lifetime
-                  license to get started.
-                </p>
-                <Button asChild>
-                  <a href="/pricing">View Pricing</a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {licenses.map((license) => (
-              <Card key={license.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        {license.product_name}
-                        <Badge variant={getStatusBadgeVariant(license.status)}>
-                          {license.status}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        <span className="font-mono text-sm">
-                          {license.license_key}
-                        </span>
-                      </CardDescription>
-                    </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading licenses...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout
+      title="License Management"
+      description="Manage your license keys and device activations"
+    >
+      {/* Licenses List */}
+      {licenses.length === 0 ? (
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Licenses Found</h3>
+              <p className="text-muted-foreground mb-6">
+                You don't have any license keys yet. Purchase a lifetime license
+                to get started.
+              </p>
+              <Button asChild>
+                <a href="/pricing">View Pricing</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {licenses.map((license) => (
+            <Card key={license.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2">
+                      {license.product_name}
+                      <Badge variant={getStatusBadgeVariant(license.status)}>
+                        {license.status}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="mt-2">
+                      <span className="font-mono text-sm">
+                        {license.license_key}
+                      </span>
+                    </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {/* Activation Status */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Activations
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {license.activation_count}
-                        {license.activation_limit
-                          ? ` / ${license.activation_limit}`
-                          : " / Unlimited"}
-                      </p>
-                    </div>
-
-                    {/* Expiration */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Expires
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {license.expires_at
-                          ? formatDate(license.expires_at)
-                          : "Never"}
-                      </p>
-                    </div>
-
-                    {/* Created Date */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Created
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {formatDate(license.created_at)}
-                      </p>
-                    </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Activation Status */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Activations
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {license.activation_count}
+                      {license.activation_limit
+                        ? ` / ${license.activation_limit}`
+                        : " / Unlimited"}
+                    </p>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
-                      onClick={() => loadActivations(license.id)}
-                      disabled={loadingActivations[license.id]}
-                    >
-                      {loadingActivations[license.id] ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="mr-2 h-4 w-4" />
-                          {expandedLicense === license.id
-                            ? "Hide Activations"
-                            : "View Activations"}
-                        </>
-                      )}
-                    </Button>
-
-                    {license.status === LicenseStatus.ACTIVE &&
-                      (!license.activation_limit ||
-                        license.activation_count <
-                          license.activation_limit) && (
-                        <Button
-                          size="sm"
-                          className="w-full sm:w-auto"
-                          onClick={() => handleActivateClick(license)}
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Activate on New Device
-                        </Button>
-                      )}
+                  {/* Expiration */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Expires
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {license.expires_at
+                        ? formatDate(license.expires_at)
+                        : "Never"}
+                    </p>
                   </div>
 
-                  {/* Activations List */}
-                  {expandedLicense === license.id &&
-                    activations[license.id] && (
-                      <div className="mt-6 border-t pt-4">
-                        <h4 className="font-semibold mb-3">
-                          Active Instances (
-                          {
-                            activations[license.id].filter((a) => a.is_active)
-                              .length
-                          }
-                          )
-                        </h4>
+                  {/* Created Date */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Created
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {formatDate(license.created_at)}
+                    </p>
+                  </div>
+                </div>
 
-                        {activations[license.id].length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            No activations yet
-                          </p>
-                        ) : (
-                          <div className="space-y-2">
-                            {activations[license.id]
-                              .filter((a) => a.is_active)
-                              .map((activation) => (
-                                <div
-                                  key={activation.id}
-                                  className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                                >
-                                  <div className="flex-1">
-                                    <p className="font-medium">
-                                      {activation.instance_name ||
-                                        activation.instance_id}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Activated{" "}
-                                      {formatDate(activation.activated_at)}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleDeactivate(
-                                        license.id,
-                                        activation.instance_id,
-                                      )
-                                    }
-                                  >
-                                    Deactivate
-                                  </Button>
-                                </div>
-                              ))}
-                          </div>
-                        )}
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={() => loadActivations(license.id)}
+                    disabled={loadingActivations[license.id]}
+                  >
+                    {loadingActivations[license.id] ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="mr-2 h-4 w-4" />
+                        {expandedLicense === license.id
+                          ? "Hide Activations"
+                          : "View Activations"}
+                      </>
+                    )}
+                  </Button>
+
+                  {license.status === LicenseStatus.ACTIVE &&
+                    (!license.activation_limit ||
+                      license.activation_count < license.activation_limit) && (
+                      <Button
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() => handleActivateClick(license)}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Activate on New Device
+                      </Button>
+                    )}
+                </div>
+
+                {/* Activations List */}
+                {expandedLicense === license.id && activations[license.id] && (
+                  <div className="mt-6 border-t pt-4">
+                    <h4 className="font-semibold mb-3">
+                      Active Instances (
+                      {
+                        activations[license.id].filter((a) => a.is_active)
+                          .length
+                      }
+                      )
+                    </h4>
+
+                    {activations[license.id].length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No activations yet
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {activations[license.id]
+                          .filter((a) => a.is_active)
+                          .map((activation) => (
+                            <div
+                              key={activation.id}
+                              className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {activation.instance_name ||
+                                    activation.instance_id}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Activated{" "}
+                                  {formatDate(activation.activated_at)}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeactivate(
+                                    license.id,
+                                    activation.instance_id,
+                                  )
+                                }
+                              >
+                                Deactivate
+                              </Button>
+                            </div>
+                          ))}
                       </div>
                     )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-        {/* Activation Modal */}
-        {selectedLicense && (
-          <ActivateLicenseModal
-            open={showActivateModal}
-            onOpenChange={setShowActivateModal}
-            license={selectedLicense}
-            onSuccess={() => {
-              // Refresh activations for the license
-              loadActivations(selectedLicense.id);
-              // Refresh licenses to update activation count
-              loadLicenses();
-            }}
-          />
-        )}
-      </PageLayout>
-    </PermissionGuard>
+      {/* Activation Modal */}
+      {selectedLicense && (
+        <ActivateLicenseModal
+          open={showActivateModal}
+          onOpenChange={setShowActivateModal}
+          license={selectedLicense}
+          onSuccess={() => {
+            // Refresh activations for the license
+            loadActivations(selectedLicense.id);
+            // Refresh licenses to update activation count
+            loadLicenses();
+          }}
+        />
+      )}
+    </PageLayout>
   );
 }

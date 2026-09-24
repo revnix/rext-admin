@@ -84,8 +84,12 @@ export function PlanChangeModal({
   currentPlanId,
   currentBillingPeriod,
 }: PlanChangeModalProps) {
-  const { upgradeSubscription, downgradeSubscription, fetchSubscription } =
-    useSubscriptionStore();
+  const {
+    upgradeSubscription,
+    downgradeSubscription,
+    fetchSubscription,
+    openCheckout,
+  } = useSubscriptionStore();
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlanId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +141,11 @@ export function PlanChangeModal({
       } else {
         const result = await upgradeSubscription(selectedPlanId);
         if (result.action === "checkout_required" && result.checkout_url) {
-          window.location.href = result.checkout_url;
+          // Open in the LemonSqueezy overlay rather than navigating away — the
+          // user keeps their place in the app and the Checkout.Success handler
+          // closes the overlay and refreshes the subscription in place.
+          openCheckout(result.checkout_url);
+          onOpenChange(false);
           return;
         }
         toast.success("Plan upgraded", {
@@ -202,7 +210,9 @@ export function PlanChangeModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Plan</p>
-                  <p className="text-lg font-semibold">{currentPlan?.name}</p>
+                  <p className="text-lg font-semibold">
+                    {currentPlan?.display_name || currentPlan?.name}
+                  </p>
                 </div>
                 <Badge variant="outline">{formatPrice(currentPlan)}</Badge>
               </div>
@@ -249,9 +259,9 @@ export function PlanChangeModal({
                       <div className="flex items-center justify-between">
                         <Label
                           htmlFor={plan.id}
-                          className={`font-semibold capitalize ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`font-semibold ${isCurrent ? "cursor-not-allowed" : "cursor-pointer"}`}
                         >
-                          {plan.name}
+                          {plan.display_name || plan.name}
                           {isCurrent && (
                             <Badge variant="secondary" className="ml-2">
                               Current
@@ -284,6 +294,10 @@ export function PlanChangeModal({
                         </li>
                         <li className="text-sm flex items-center gap-1">
                           <Check className="h-3 w-3 text-green-600" />
+                          {`${plan.credits_per_month} credits/month`}
+                        </li>
+                        {/* <li className="text-sm flex items-center gap-1">
+                          <Check className="h-3 w-3 text-green-600" />
                           {plan.max_topics === -1
                             ? "Unlimited topics"
                             : `${plan.max_topics} topics`}
@@ -293,7 +307,7 @@ export function PlanChangeModal({
                           {plan.max_api_calls_per_month === -1
                             ? "Unlimited API requests"
                             : `${plan.max_api_calls_per_month} API requests/month`}
-                        </li>
+                        </li> */}
                       </ul>
                     </div>
                   </div>

@@ -26,6 +26,28 @@ const passwordSchema = z
   .min(8, "Password must be at least 8 characters")
   .max(128, "Password must be 128 characters or less");
 
+const signupFullNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Full name is required")
+  .max(50, "Full name must be 50 characters or less")
+  .regex(/^[^0-9]*$/, "Name should not contain numbers")
+  .regex(/[a-zA-Z]/, "Name must contain at least one letter");
+
+const signupEmailSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter your email address")
+  .email("Invalid email address")
+  .toLowerCase();
+
+const signupPasswordSchema = z
+  .string()
+  .min(1, "Enter password")
+  .pipe(passwordSchema);
+
+const signupConfirmPasswordSchema = z.string().min(1, "Confirm your password");
+
 // Password change form schema
 export const passwordChangeSchema = z
   .object({
@@ -43,16 +65,10 @@ export type PasswordChangeData = z.infer<typeof passwordChangeSchema>;
 // Signup form schema
 export const signupFormSchema = z
   .object({
-    full_name: z
-      .string()
-      .min(1, "First name is required")
-      .max(50, "First name must be 50 characters or less")
-      .regex(/^[^0-9]*$/, "Name should not contain numbers")
-      .regex(/[a-zA-Z]/, "Name must contain at least one letter")
-      .trim(),
-    email: z.string().email("Invalid email address").trim().toLowerCase(),
-    password: passwordSchema,
-    confirmPassword: z.string(),
+    full_name: signupFullNameSchema,
+    email: signupEmailSchema,
+    password: signupPasswordSchema,
+    confirmPassword: signupConfirmPasswordSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -61,7 +77,12 @@ export const signupFormSchema = z
 
 // Forgot password form schema
 export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address").trim().toLowerCase(),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter your email address")
+    .email("Invalid email address")
+    .toLowerCase(),
 });
 
 // Reset password form schema
@@ -77,23 +98,22 @@ export const resetPasswordSchema = z
 
 // Login form schema
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address").trim().toLowerCase(),
-  password: z.string().min(1, "Password is required"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter your email address")
+    .email("Invalid email address")
+    .toLowerCase(),
+  password: z.string().min(1, "Enter password"),
 });
 
 // Signup with invitation schema (merges with base signup)
 export const signupWithInvitationSchema = z
   .object({
-    full_name: z
-      .string()
-      .min(1, "First name is required")
-      .max(50, "First name must be 50 characters or less")
-      .regex(/^[^0-9]*$/, "Name should not contain numbers")
-      .regex(/[a-zA-Z]/, "Name must contain at least one letter")
-      .trim(),
-    email: z.string().email("Invalid email address").trim().toLowerCase(),
-    password: passwordSchema,
-    confirmPassword: z.string(),
+    full_name: signupFullNameSchema,
+    email: signupEmailSchema,
+    password: signupPasswordSchema,
+    confirmPassword: signupConfirmPasswordSchema,
     invitationToken: z.string().min(1, "Invitation token is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {

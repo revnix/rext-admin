@@ -110,22 +110,19 @@ export const ROLES = {
 // User Management
 export const USER_PERMISSIONS = {
   READ: "user.read",
-  CREATE: "user.create",
+  MANAGE: "user.manage", // admin-only: list/edit/suspend/delete other accounts
+  INVITE: "user.invite",
   UPDATE: "user.update",
   DELETE: "user.delete",
   MANAGE_ROLES: "user.manage_roles",
+  IMPERSONATE: "user.impersonate",
 } as const;
 
 // Workspace Management
 export const WORKSPACE_PERMISSIONS = {
-  CREATE: "workspace.create",
   READ: "workspace.read",
   UPDATE: "workspace.update",
   DELETE: "workspace.delete",
-  TRANSFER: "workspace.transfer",
-  MANAGE_MEMBERS: "workspace.manage_members",
-  MANAGE_ROLES: "workspace.manage_roles",
-  INVITE: "workspace.invite",
 } as const;
 
 // Content Management
@@ -135,33 +132,23 @@ export const CONTENT_PERMISSIONS = {
   UPDATE: "content.update",
   DELETE: "content.delete",
   PUBLISH: "content.publish",
-  SUBMIT_REVIEW: "content.submit_review",
-  APPROVE: "content.approve",
-  REJECT: "content.reject",
-  EXPORT: "content.export",
 } as const;
 
-// Topic Management
-export const TOPIC_PERMISSIONS = {
-  CREATE: "topic.create",
-  READ: "topic.read",
-  UPDATE: "topic.update",
-  DELETE: "topic.delete",
-  APPROVE: "topic.approve",
+// Member Management
+export const MEMBER_PERMISSIONS = {
+  READ: "member.read",
+  UPDATE_ROLE: "member.update_role",
+  INVITE: "member.invite",
+  REMOVE: "member.remove",
 } as const;
 
-// Knowledge Base
-export const KNOWLEDGE_PERMISSIONS = {
-  CREATE: "knowledge.create",
-  READ: "knowledge.read",
-  UPDATE: "knowledge.update",
-  DELETE: "knowledge.delete",
-} as const;
-
-// Subscription Management
-export const SUBSCRIPTION_PERMISSIONS = {
-  READ: "subscription.read",
-  MANAGE: "subscription.manage",
+// Role Management
+export const ROLE_PERMISSIONS = {
+  READ: "role.read",
+  CREATE: "role.create",
+  UPDATE: "role.update",
+  DELETE: "role.delete",
+  MANAGE_PERMISSIONS: "role.manage_permissions",
 } as const;
 
 // Billing Management
@@ -170,59 +157,34 @@ export const BILLING_PERMISSIONS = {
   MANAGE: "billing.manage",
 } as const;
 
-// Usage Monitoring
-export const USAGE_PERMISSIONS = {
-  READ: "usage.read",
+// Security
+export const SECURITY_PERMISSIONS = {
+  READ: "security.read",
+  MANAGE: "security.manage",
 } as const;
 
-// Media Management
-export const MEDIA_PERMISSIONS = {
-  CREATE: "media.create",
-  READ: "media.read",
-  UPDATE: "media.update",
-  DELETE: "media.delete",
-  ORGANIZE: "media.organize",
+export const INTEGRATION_PERMISSIONS = {
+  READ: "integration.read",
+  CREATE: "integration.create",
+  UPDATE: "integration.update",
+  DELETE: "integration.delete",
 } as const;
 
-// Member Management
-export const MEMBER_PERMISSIONS = {
-  READ: "member.read",
-  UPDATE: "member.update",
-  UPDATE_ROLE: "member.update_role",
-  INVITE: "member.invite",
-  REMOVE: "member.remove",
-  RESEND_INVITATION: "member.resend_invitation",
-  REVOKE_INVITATION: "member.revoke_invitation",
+export const BRAND_VOICE_PERMISSIONS = {
+  READ: "brand_voice.read",
+  UPDATE: "brand_voice.update",
 } as const;
 
-// License Management (One-time purchases)
-export const LICENSE_PERMISSIONS = {
-  READ: "license.read",
-  ACTIVATE: "license.activate",
-  DEACTIVATE: "license.deactivate",
-  REVOKE: "license.revoke",
+export const PERSONA_PERMISSIONS = {
+  READ: "persona.read",
+  CREATE: "persona.create",
+  UPDATE: "persona.update",
+  DELETE: "persona.delete",
 } as const;
 
-// System/Admin
-export const ADMIN_PERMISSIONS = {
-  ROLE_READ: "role.read",
-  ROLE_CREATE: "role.create",
-  ROLE_UPDATE: "role.update",
-  ROLE_DELETE: "role.delete",
-  ROLE_MANAGE_PERMISSIONS: "role.manage_permissions",
-  PERMISSION_CREATE: "permission.create",
-  PERMISSION_READ: "permission.read",
-  PERMISSION_UPDATE: "permission.update",
-  PERMISSION_DELETE: "permission.delete",
-  AUDIT_READ: "audit.read",
-  AUDIT_EXPORT: "audit.export",
-  ADMIN_INVITE: "admin.invite",
-} as const;
-
-// Support Staff Permissions
-export const SUPPORT_PERMISSIONS = {
-  VIEW_WORKSPACE: "support.view_workspace",
-  VIEW_BILLING: "support.view_billing",
+export const AUDIT_PERMISSIONS = {
+  READ: "audit.read",
+  EXPORT: "audit.export",
 } as const;
 
 /**
@@ -232,16 +194,14 @@ export const ALL_PERMISSIONS = {
   USER: Object.values(USER_PERMISSIONS),
   WORKSPACE: Object.values(WORKSPACE_PERMISSIONS),
   CONTENT: Object.values(CONTENT_PERMISSIONS),
-  TOPIC: Object.values(TOPIC_PERMISSIONS),
-  KNOWLEDGE: Object.values(KNOWLEDGE_PERMISSIONS),
-  SUBSCRIPTION: Object.values(SUBSCRIPTION_PERMISSIONS),
-  BILLING: Object.values(BILLING_PERMISSIONS),
-  USAGE: Object.values(USAGE_PERMISSIONS),
-  MEDIA: Object.values(MEDIA_PERMISSIONS),
   MEMBER: Object.values(MEMBER_PERMISSIONS),
-  LICENSE: Object.values(LICENSE_PERMISSIONS),
-  ADMIN: Object.values(ADMIN_PERMISSIONS),
-  SUPPORT: Object.values(SUPPORT_PERMISSIONS),
+  ROLE: Object.values(ROLE_PERMISSIONS),
+  BILLING: Object.values(BILLING_PERMISSIONS),
+  SECURITY: Object.values(SECURITY_PERMISSIONS),
+  INTEGRATION: Object.values(INTEGRATION_PERMISSIONS),
+  BRAND_VOICE: Object.values(BRAND_VOICE_PERMISSIONS),
+  PERSONA: Object.values(PERSONA_PERMISSIONS),
+  AUDIT: Object.values(AUDIT_PERMISSIONS),
 } as const;
 
 /**
@@ -256,4 +216,30 @@ export function isAdmin(user: UserWithPermissions | null): boolean {
  */
 export function isSuperAdmin(user: UserWithPermissions | null): boolean {
   return checkRole(user, ROLES.SUPER_ADMIN);
+}
+
+/**
+ * Standard workspace roles the backend refuses to update or delete.
+ *
+ * Mirrors `RoleService.PROTECTED_WORKSPACE_ROLES` in rext-backend
+ * (src/services/role_service.py). These roles carry `is_system_role = false`,
+ * so checking that flag alone lets the UI offer Edit/Delete on roles the API
+ * will always reject. Matched by name, not by `is_workspace_role` — that flag
+ * is also true for user-created workspace roles, which are not protected.
+ */
+export const PROTECTED_WORKSPACE_ROLES = new Set([
+  "workspace_owner",
+  "workspace_admin",
+  "editor",
+  "viewer",
+]);
+
+/**
+ * Whether a role is protected from modification or deletion by the backend.
+ */
+export function isProtectedRole(role: {
+  name: string;
+  is_system_role: boolean;
+}): boolean {
+  return role.is_system_role || PROTECTED_WORKSPACE_ROLES.has(role.name);
 }

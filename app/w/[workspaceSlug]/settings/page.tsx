@@ -14,7 +14,7 @@ import { BrandVoiceSection } from "@/components/workspace-settings/brand-voice-s
 import { DangerZoneSection } from "@/components/workspace-settings/danger-zone-section";
 import { GeneralInfoSection } from "@/components/workspace-settings/general-info-section";
 import { TeamAccessSection } from "@/components/workspace-settings/team-access-section";
-import { WorkspacePreferencesSection } from "@/components/workspace-settings/workspace-preferences-section";
+// import { WorkspacePreferencesSection } from "@/components/workspace-settings/workspace-preferences-section";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 
 /**
@@ -64,12 +64,6 @@ export default function WorkspaceSettingsPage() {
       }
     >
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h2 className="text-lg font-medium">General Information</h2>
-          <p className="text-sm text-muted-foreground">
-            Update your workspace name, and other basic information
-          </p>
-        </div>
         <GeneralInfoSection />
 
         <Separator />
@@ -80,9 +74,9 @@ export default function WorkspaceSettingsPage() {
 
         <TeamAccessSection />
 
-        <Separator />
+        {/* <Separator /> */}
 
-        <WorkspacePreferencesSection />
+        {/* <WorkspacePreferencesSection /> */}
 
         <Separator />
 

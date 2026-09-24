@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api-client";
-import { SUBSCRIPTION_PERMISSIONS } from "@/lib/permissions";
+import { BILLING_PERMISSIONS } from "@/lib/permissions";
 import type { SubscriptionPlan } from "@/types/subscription";
 
 interface PlansResponse {
@@ -158,7 +158,7 @@ export default function SubscriptionPlansPage() {
       description="Manage subscription plans and pricing"
       actions={
         <Button
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto hidden"
           onClick={() => setCreateDialogOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function SubscriptionPlansPage() {
       }
     >
       <PermissionGuard
-        permission={SUBSCRIPTION_PERMISSIONS.MANAGE}
+        permission={BILLING_PERMISSIONS.MANAGE}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

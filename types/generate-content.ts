@@ -25,6 +25,20 @@ export type BrandVoicePromotion = {
   recommended: boolean;
 };
 
+/** One persona's fit for the article being outlined, as scored by the backend. */
+export type PersonaRecommendation = {
+  persona_id: string;
+  name: string;
+  /** Weighted 0-100 relevance across topic, title, search intent, content type. */
+  score: number;
+  breakdown?: {
+    topic?: number;
+    title?: number;
+    search_intent?: number;
+    content_type?: number;
+  };
+};
+
 export type Interrupt = {
   id: string;
   value: {
@@ -37,6 +51,7 @@ export type Interrupt = {
     seo_state?: SEORESULT;
     internal_links?: InternalLinkSuggestion[];
     brand_voice_promotion?: BrandVoicePromotion;
+    persona_recommendations?: PersonaRecommendation[];
     "Primary Keyword"?: string;
     "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;
@@ -266,6 +281,12 @@ export type ContentOutline = {
   status: "approved" | "rejected" | "reviewing";
   rejected_reason?: string;
   selected_persona_id?: string | null;
+  /**
+   * Every workspace persona scored against this outline's topic, title, search
+   * intent and content type — best fit first. The first entry is what
+   * `selected_persona_id` defaults to; the user can pick another or none.
+   */
+  persona_recommendations?: PersonaRecommendation[];
 
   // ── Informational type-specific ───────────────────────────────────────────
   total_time?: string; // HowToGuide, Checklist
@@ -434,6 +455,12 @@ export type ContentImage = {
   alt_text: string;
   context: string;
   placement: string;
+  /** "pending_manual_upload" when image generation is disabled and this entry
+   *  is a manual-upload placeholder awaiting a real image from the user. */
+  status?: string;
+  /** Matches the id encoded in the body_markdown placeholder marker
+   *  (rext-placeholder:<id>) when status is "pending_manual_upload". */
+  placeholder_id?: string;
 };
 
 export type ContentLink = {

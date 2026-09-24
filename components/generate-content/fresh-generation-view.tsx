@@ -2195,9 +2195,10 @@ export function FreshGenerationView({
                     ...(interruptBrandVoicePromotion
                       ? { promote_brand: promoteBrand }
                       : {}),
-                    ...(selectedPersonaId
-                      ? { selected_persona_id: selectedPersonaId }
-                      : {}),
+                    // Always sent, null included: the backend reads the key's
+                    // presence as the user's decision, so omitting it on a
+                    // cleared persona would restore the recommended one.
+                    selected_persona_id: selectedPersonaId,
                   },
                   status: "Approving and generating content...",
                 });

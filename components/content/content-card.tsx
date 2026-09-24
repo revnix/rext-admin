@@ -115,23 +115,26 @@ export function ContentCard({
       </span>
     ),
     getStatusConfig: (item: ContentItem) => statusConfig[item.status] || null,
-    getActions: (): CardAction[] => [
-      {
-        icon: Trash2,
-        label: "Delete",
-        variant: "destructive",
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-        },
-        requiresConfirmation: true,
-        confirmationConfig: {
-          title: "Delete Content",
-          description:
-            "Are you sure you want to delete this content? This action cannot be undone.",
-          confirmText: "Delete",
-        },
-      },
-    ],
+    getActions: (): CardAction[] =>
+      onDelete
+        ? [
+            {
+              icon: Trash2,
+              label: "Delete",
+              variant: "destructive",
+              onClick: (e: React.MouseEvent) => {
+                e.stopPropagation();
+              },
+              requiresConfirmation: true,
+              confirmationConfig: {
+                title: "Delete Content",
+                description:
+                  "Are you sure you want to delete this content? This action cannot be undone.",
+                confirmText: "Delete",
+              },
+            },
+          ]
+        : [],
     getMetadataSections: (item: ContentItem): MetadataSection[] => [
       {
         id: "stats",

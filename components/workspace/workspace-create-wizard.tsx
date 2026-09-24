@@ -21,7 +21,7 @@ import {
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
-import { workspaceQueries } from "@/lib/query-keys";
+import { personaQueries, workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
@@ -85,7 +85,7 @@ export function WorkspaceCreateWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>("details");
 
   // Check workspace limit
-  const { checkLimit, warnIfApproaching } = useCheckLimit("workspaces");
+  const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
   // SSE-related state
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -100,11 +100,9 @@ export function WorkspaceCreateWizard() {
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-
-  // Warn if approaching limit when wizard opens
-  useEffect(() => {
-    warnIfApproaching(80);
-  }, [warnIfApproaching]);
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
 
   // Form for details step
   const form = useForm<WorkspaceFormData>({
@@ -165,7 +163,7 @@ export function WorkspaceCreateWizard() {
   // Step 1: Handle details form submission (creates workspace immediately)
   const handleDetailsSubmit = async (data: WorkspaceFormData) => {
     // Check workspace limit before creating
-    if (!checkLimit("create a workspace")) {
+    if (!canCreate || isLimitReached || !checkLimit("create a workspace")) {
       return;
     }
 
@@ -183,6 +181,13 @@ export function WorkspaceCreateWizard() {
       // Store workspace IDs
       setWorkspaceId(workspace.id);
       setWorkspaceSlug(workspace.slug);
+
+      // crudStore.createWorkspace doesn't touch the context store, and the
+      // switcher's list query stays stale for 2 minutes. Until now nothing set
+      // currentWorkspace unless the user sat through the pipeline to the final
+      // redirect, so leaving early left the sidebar with no workspace nav.
+      setCurrentWorkspace(workspace);
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
 
       analytics.track(
         isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
@@ -234,11 +239,14 @@ export function WorkspaceCreateWizard() {
         ...brandVoiceData
       } = editedData;
 
-      // Update brand voice via API (include selected personas if provided)
+      // Update brand voice via API. The personas sent here are the workspace's
+      // persona set from now on: extraction saved every author it found, and
+      // the ones the user did not pick in this step are dropped server-side.
+      // Sending none (nobody picked any) keeps them all.
       await apiClient.workspaces.updateBrandVoice(workspaceId, {
         brand_name: brandVoiceData.brand_name,
         about: brandVoiceData.about,
-        customer_profile: brandVoiceData.customer_profile,
+        customer_profile: brandVoiceData.customer_profile ?? undefined,
         selling_position: brandVoiceData.selling_position,
         target_audience: brandVoiceData.target_audience,
         brand_voice: brandVoiceData.brand_voice,
@@ -251,44 +259,6 @@ export function WorkspaceCreateWizard() {
             ? [selectedPersona]
             : undefined,
       });
-
-      // Manually save personas if they exist in the extracted data
-      // This is a workaround because the backend updateBrandVoice endpoint
-      // does not currently persist personas.
-      if (brandVoiceData.personas && brandVoiceData.personas.length > 0) {
-        log.info(
-          `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
-        );
-
-        const toArray = (value: string | string[] | undefined): string[] => {
-          if (!value) return [];
-          if (Array.isArray(value)) return value;
-          return value
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        };
-
-        await Promise.all(
-          brandVoiceData.personas.map((persona: Persona) =>
-            apiClient.personas.create(workspaceId, {
-              name: persona.name,
-              description:
-                persona.description || persona.professional_title || "",
-              full_name: persona.full_name || persona.name,
-              professional_title: persona.professional_title,
-              areas_of_expertise: toArray(persona.areas_of_expertise),
-              tone_of_voice: persona.tone_of_voice,
-              bio: persona.bio,
-              linkedin_url: persona.linkedin_url,
-              demographics: persona.demographics,
-              pain_points: toArray(persona.pain_points),
-              goals: toArray(persona.goals),
-              behaviors: toArray(persona.behaviors),
-            }),
-          ),
-        );
-      }
 
       // Log selected persona(s) for future API integration
       const primaryPersonaId = selectedPersonaIds?.length
@@ -303,6 +273,12 @@ export function WorkspaceCreateWizard() {
       // Invalidate workspace queries to refresh data
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
       queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
+      // The save just changed which personas the workspace has; the personas
+      // list is cached under its own key and would otherwise still show the
+      // ones the user declined.
+      queryClient.invalidateQueries({
+        queryKey: personaQueries.all(workspaceId),
+      });
 
       // Redirect directly to workspace generate content page
       if (workspaceSlug) {
@@ -383,6 +359,7 @@ export function WorkspaceCreateWizard() {
                   id="name"
                   type="text"
                   placeholder="e.g., My Company Workspace"
+                  maxLength={200}
                   {...register("name")}
                   className={`text-base sm:text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
                   autoFocus
@@ -548,7 +525,12 @@ export function WorkspaceCreateWizard() {
             <Button
               size="lg"
               onClick={handleSubmit(handleDetailsSubmit)}
-              disabled={!isValid || form.formState.isSubmitting}
+              disabled={
+                !isValid ||
+                form.formState.isSubmitting ||
+                !canCreate ||
+                isLimitReached
+              }
               className="gap-2 text-white"
             >
               {form.formState.isSubmitting ? (

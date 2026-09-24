@@ -1,6 +1,7 @@
 "use client";
 
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRightLeft, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -38,6 +46,49 @@ export function DangerZoneSection() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const queryClient = useQueryClient();
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [newOwnerId, setNewOwnerId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+
+  // Only fetched while the transfer dialog is open; the owner row is excluded
+  // since it is the caller.
+  const { data: membersData, isLoading: membersLoading } = useQuery({
+    queryKey: ["workspace-members", workspace?.id],
+    queryFn: () => apiClient.members.list(workspace?.id ?? ""),
+    enabled: transferDialogOpen && Boolean(workspace?.id),
+  });
+  const candidates = (membersData?.members ?? []).filter(
+    (m) => !m.is_owner && m.status === "active",
+  );
+  const newOwner = candidates.find((m) => m.user_id === newOwnerId);
+
+  const handleTransfer = async () => {
+    if (!workspace?.id || !newOwnerId) return;
+    setIsTransferring(true);
+    try {
+      await apiClient.workspaces.transferOwnership(workspace.id, newOwnerId);
+      toast.success(
+        `Ownership transferred to ${newOwner?.user.name ?? "the selected member"}. You are now a Workspace Admin.`,
+      );
+      setTransferDialogOpen(false);
+      setNewOwnerId("");
+      // Permissions, owner info and the Members table all changed.
+      await queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          queryKey[0] === "workspaces" ||
+          queryKey[0] === "workspace-members" ||
+          String(queryKey[0]).startsWith("workspace-permission"),
+      });
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to transfer ownership",
+      );
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!passwordConfirmation) {
@@ -65,7 +116,7 @@ export function DangerZoneSection() {
 
       // Show success message with recovery info
       toast.success(
-        "The workspace has been deleted. You have 30 days to recover it.",
+        "The workspace has been deleted. You have 14 days to recover it.",
       );
 
       setDeleteDialogOpen(false);
@@ -98,7 +149,7 @@ export function DangerZoneSection() {
           }
         >
           <div className="space-y-4">
-            {/* Transfer Ownership - Future Feature */}
+            {/* Transfer Ownership */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg">
               <div>
                 <h4 className="text-sm font-medium">Transfer Ownership</h4>
@@ -106,14 +157,83 @@ export function DangerZoneSection() {
                   Transfer workspace ownership to another member
                 </p>
               </div>
-              <Button
-                className="w-full sm:w-auto"
-                variant="outline"
-                size="sm"
-                disabled
+              <AlertDialog
+                open={transferDialogOpen}
+                onOpenChange={(open) => {
+                  setTransferDialogOpen(open);
+                  if (!open) setNewOwnerId("");
+                }}
               >
-                Coming Soon
-              </Button>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    size="sm"
+                    disabled={isTransferring}
+                  >
+                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                    Transfer Ownership
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Transfer "{workspace?.name}"?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The selected member becomes the Workspace Owner. You will
+                      be demoted to Workspace Admin and can no longer delete the
+                      workspace or transfer it again.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+
+                  <div className="space-y-2 py-4">
+                    <Label htmlFor="new-owner">New owner</Label>
+                    <Select
+                      value={newOwnerId}
+                      onValueChange={setNewOwnerId}
+                      disabled={membersLoading || isTransferring}
+                    >
+                      <SelectTrigger id="new-owner">
+                        <SelectValue
+                          placeholder={
+                            membersLoading
+                              ? "Loading members..."
+                              : candidates.length === 0
+                                ? "No other active members"
+                                : "Select a member"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {candidates.map((m) => (
+                          <SelectItem key={m.user_id} value={m.user_id}>
+                            {m.user.name}{" "}
+                            <span className="text-xs text-muted-foreground">
+                              {m.user.email}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isTransferring}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleTransfer();
+                      }}
+                      disabled={!newOwnerId || isTransferring}
+                    >
+                      {isTransferring ? "Transferring..." : "Transfer"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {/* Delete Workspace */}
@@ -153,8 +273,7 @@ export function DangerZoneSection() {
                       All associated data will be preserved during the recovery
                       period:
                       <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Knowledge bases and content</li>
-                        <li>Topics and generations</li>
+                        <li>Generated content</li>
                         <li>Team members and their access</li>
                         <li>Settings and configurations</li>
                       </ul>

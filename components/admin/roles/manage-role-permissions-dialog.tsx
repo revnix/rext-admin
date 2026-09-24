@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { isProtectedRole } from "@/lib/permissions";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ interface ManageRolePermissionsDialogProps {
   onOpenChange: (open: boolean) => void;
   role: RoleWithPermissions | null;
   allPermissions: Permission[];
+  /** Caller holds role.manage_permissions; without it the dialog is view-only. */
+  canManage: boolean;
 }
 
 export function ManageRolePermissionsDialog({
@@ -30,11 +33,15 @@ export function ManageRolePermissionsDialog({
   onOpenChange,
   role,
   allPermissions,
+  canManage,
 }: ManageRolePermissionsDialogProps) {
   const queryClient = useQueryClient();
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     [],
   );
+
+  const isProtected = role ? isProtectedRole(role) : false;
+  const isReadOnly = isProtected || !canManage;
 
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
@@ -55,33 +62,22 @@ export function ManageRolePermissionsDialog({
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!role) throw new Error("No role selected");
-
-      const currentPermissionIds = role.permissions?.map((p) => p.id) || [];
-      const toAdd = selectedPermissionIds.filter(
-        (id) => !currentPermissionIds.includes(id),
-      );
-      const toRemove = currentPermissionIds.filter(
-        (id) => !selectedPermissionIds.includes(id),
-      );
-
-      // Add new permissions
-      if (toAdd.length > 0) {
-        await apiClient.roles.assignPermissions(role.id, {
-          permission_ids: toAdd,
-        });
+      if (isProtectedRole(role)) {
+        throw new Error("Protected role permissions cannot be modified");
+      }
+      if (!canManage) {
+        throw new Error(
+          "You do not have permission to modify role permissions",
+        );
       }
 
-      // Remove permissions
-      for (const permissionId of toRemove) {
-        await apiClient.roles.revokePermission(role.id, permissionId);
-      }
-
-      return { added: toAdd.length, removed: toRemove.length };
+      // Use atomic single-transaction update endpoint
+      return await apiClient.roles.updatePermissions(role.id, {
+        permission_ids: selectedPermissionIds,
+      });
     },
-    onSuccess: async (data) => {
-      toast.success(
-        `Permissions updated: ${data.added} added, ${data.removed} removed`,
-      );
+    onSuccess: async () => {
+      toast.success("Role permissions updated successfully");
 
       invalidateWorkspacePermissions();
 
@@ -89,6 +85,7 @@ export function ManageRolePermissionsDialog({
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-logs"] }),
       ]);
 
       onOpenChange(false);
@@ -102,6 +99,14 @@ export function ManageRolePermissionsDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) {
+      toast.error(
+        isProtected
+          ? "Protected role permissions cannot be modified"
+          : "You do not have permission to modify role permissions",
+      );
+      return;
+    }
     updateMutation.mutate();
   };
 
@@ -112,36 +117,71 @@ export function ManageRolePermissionsDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Manage Permissions</DialogTitle>
+            <DialogTitle>
+              {isReadOnly ? "View Role Permissions" : "Manage Permissions"}
+            </DialogTitle>
             <DialogDescription>
-              Assign or revoke permissions for{" "}
-              <strong>{role.display_name}</strong>
+              {isProtected ? (
+                <>
+                  Permissions assigned to protected role{" "}
+                  <strong>{role.display_name}</strong> (Read-Only)
+                </>
+              ) : isReadOnly ? (
+                <>
+                  Permissions assigned to <strong>{role.display_name}</strong>{" "}
+                  (Read-Only)
+                </>
+              ) : (
+                <>
+                  Assign or revoke permissions for{" "}
+                  <strong>{role.display_name}</strong>
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
+
+          {isProtected && (
+            <div className="my-3 p-3 text-sm rounded-md bg-muted text-muted-foreground flex items-center gap-2 border">
+              <AlertCircle className="h-4 w-4 shrink-0 text-primary" />
+              <span>
+                This is a built-in system role. Assigned permissions are fixed
+                and read-only.
+              </span>
+            </div>
+          )}
 
           <div className="py-4">
             <PermissionMultiSelect
               permissions={allPermissions}
               selectedPermissionIds={selectedPermissionIds}
               onChange={setSelectedPermissionIds}
+              disabled={isReadOnly}
             />
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={updateMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Update Permissions
-            </Button>
+            {isReadOnly ? (
+              <Button type="button" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={updateMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Update Permissions
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

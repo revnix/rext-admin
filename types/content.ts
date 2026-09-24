@@ -181,11 +181,6 @@ export interface CreateContentRequest {
   topic_id?: string;
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
-  media_items?: Array<{
-    media_id: string;
-    usage_type?: string;
-    position?: number;
-  }>;
   images_data?: Record<string, unknown>;
   links_data?: Record<string, unknown>;
   schema_markup?: Record<string, unknown>;
@@ -209,11 +204,6 @@ export interface UpdateContentRequest {
   langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
-  media_items?: Array<{
-    media_id: string;
-    usage_type?: string;
-    position?: number;
-  }>;
   images_data?: Record<string, unknown>;
   links_data?: Record<string, unknown>;
   schema_markup?: SchemaMarkup | Record<string, unknown>;

@@ -48,6 +48,11 @@ interface WorkspaceMember {
   is_default: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
+  role?: {
+    id?: string;
+    name?: string;
+    display_name: string;
+  } | null;
   user: {
     id: string;
     name: string;
@@ -81,7 +86,9 @@ export function WorkspaceChangeRoleDialog({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const roles = rolesResponse?.roles || [];
+  const roles = (rolesResponse?.roles || []).filter(
+    (r) => r.name.toLowerCase() !== "workspace_owner",
+  );
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
