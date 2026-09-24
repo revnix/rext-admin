@@ -109,6 +109,22 @@ export function BrandVoiceRefreshControl({
       },
     });
 
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setIsDialogOpen(true);
+        return;
+      }
+
+      // Closing the dialog is a cancellation from the user's perspective.
+      // Clear the refresh state immediately instead of leaving the button in
+      // a loading state until the backend operation eventually finishes.
+      disconnect();
+      closeDialog();
+    },
+    [closeDialog, disconnect],
+  );
+
   // Reset subscription when dialog closes manually
   useEffect(() => {
     if (!isDialogOpen) {
@@ -177,7 +193,7 @@ export function BrandVoiceRefreshControl({
         )}
       </Button>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Refreshing Brand Voice</DialogTitle>
