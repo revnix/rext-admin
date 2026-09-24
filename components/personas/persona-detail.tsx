@@ -710,7 +710,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       onChange={handleChange}
                       maxLength={PERSONA_LIMITS.professional_title.max}
                       aria-invalid={!!errors.professional_title}
-                      placeholder="e.g. SEO Lead"
+                      placeholder="e.g. Senior Marketing Manager"
                       className={
                         errors.professional_title ? "border-destructive" : ""
                       }

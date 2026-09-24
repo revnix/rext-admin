@@ -13,8 +13,11 @@
 export const PERSONA_LIMITS = {
   name: { min: 2, max: 60 },
   full_name: { min: 2, max: 100 },
-  /** Per the meeting decision: optional, and deliberately short. */
-  professional_title: { min: 4, max: 14 },
+  /** Optional, per the meeting decision. The bounds have to clear a real
+   *  title at both ends: "CEO" and "VP" are shorter than a name would be
+   *  allowed to get away with, and "Board-Certified Dermatologist and Clinical
+   *  Researcher" is the kind of length an E-E-A-T byline actually runs to. */
+  professional_title: { min: 2, max: 80 },
   description: { min: 0, max: 200 },
   bio: { min: 10, max: 1000 },
   demographics: { min: 0, max: 300 },

@@ -69,7 +69,7 @@ describe("PER-003 — display name is required and stands alone", () => {
 
   it("still bounds a title that is provided", () => {
     expect(
-      validatePersona({ name: "Mary", professional_title: "SEO" })
+      validatePersona({ name: "Mary", professional_title: "x" })
         .professional_title,
     ).toBeTruthy();
     expect(
@@ -80,8 +80,18 @@ describe("PER-003 — display name is required and stands alone", () => {
         ),
       }).professional_title,
     ).toBeTruthy();
+  });
+
+  it.each([
+    "VP",
+    "CEO",
+    "SEO Lead",
+    "Senior Marketing Manager",
+    "Board-Certified Dermatologist and Clinical Researcher",
+    "Professor of Computer Science (AI Lab)",
+  ])("accepts the real title %s", (title) => {
     expect(
-      validatePersona({ name: "Mary", professional_title: "SEO Lead" })
+      validatePersona({ name: "Mary", professional_title: title })
         .professional_title,
     ).toBeUndefined();
   });
