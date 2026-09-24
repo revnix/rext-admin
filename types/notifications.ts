@@ -13,7 +13,9 @@ export const NOTIFICATION_TYPE_VALUES = [
   "workspace",
   "billing",
   "knowledge",
+  "kb",
   "content",
+  "generation",
   "system",
   "user",
 ] as const;
