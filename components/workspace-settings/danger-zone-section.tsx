@@ -266,15 +266,14 @@ export function DangerZoneSection() {
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       This will soft-delete the workspace. You'll have{" "}
-                      <strong>14 days</strong> to recover it before permanent
+                      <strong>30 days</strong> to recover it before permanent
                       deletion.
                       <br />
                       <br />
                       All associated data will be preserved during the recovery
                       period:
                       <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Knowledge bases and content</li>
-                        <li>Topics and generations</li>
+                        <li>Generated content</li>
                         <li>Team members and their access</li>
                         <li>Settings and configurations</li>
                       </ul>
