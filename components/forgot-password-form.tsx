@@ -4,7 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import {
+  classifyError,
+  extractApiError,
+  safeParseErrorBody,
+} from "@/lib/error-utils";
+import { ApiError } from "@/lib/api-client/core";
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
@@ -49,15 +54,22 @@ export function ForgotPasswordForm({
 
       if (!response.ok) {
         const errorData = await safeParseErrorBody(response);
-        throw new Error(
+        throw new ApiError(
+          response.status,
           extractApiError(errorData, "Failed to send reset email"),
         );
       }
 
       setSuccess(true);
     } catch (err) {
+      const classifiedError = classifyError(err);
       setError(
-        err instanceof Error ? err.message : "Failed to send reset email",
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to send reset email",
       );
     } finally {
       setIsLoading(false);

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
+import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
 
 export function LoginForm({
@@ -145,8 +146,16 @@ export function LoginForm({
         result.code && result.code !== "CredentialsSignin"
           ? result.code
           : "Authentication failed. Please check your credentials and try again.";
+      const classifiedError = classifyError(
+        new Error(result.code || result.error || "Authentication failed"),
+      );
+      const displayErrorMessage =
+        classifiedError.type === "network_error" ||
+        classifiedError.type === "server_error"
+          ? classifiedError.message
+          : errorMessage;
 
-      const isInvalidCredentials = errorMessage
+      const isInvalidCredentials = displayErrorMessage
         .toLowerCase()
         .includes("invalid email or password");
 
@@ -155,7 +164,7 @@ export function LoginForm({
         emailInputRef.current?.focus();
       }
 
-      toast.error(errorMessage);
+      toast.error(displayErrorMessage);
       return;
     }
 
@@ -219,7 +228,13 @@ export function LoginForm({
       await attemptSignIn();
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
-      toast.error("An error occurred. Please try again.");
+      const classifiedError = classifyError(error);
+      toast.error(
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : "An error occurred. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }

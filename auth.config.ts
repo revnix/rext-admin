@@ -14,7 +14,11 @@ import {
   getPrimaryRole,
 } from "@/lib/auth-utils";
 import { safeJsonParse } from "@/lib/utils";
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import {
+  classifyError,
+  extractApiError,
+  safeParseErrorBody,
+} from "@/lib/error-utils";
 
 const authSecret =
   process.env.AUTH_SECRET ??
@@ -445,7 +449,9 @@ export default {
             const errorData = await safeParseErrorBody(response);
             const errorMessage = extractApiError(
               errorData,
-              "Invalid email or password",
+              response.status >= 500
+                ? "Our servers are experiencing issues. Please try again in a few minutes."
+                : "Invalid email or password",
             );
             log.error("[AuthJS] Login failed:", response.status, errorMessage);
 
@@ -498,12 +504,22 @@ export default {
             rememberMe,
           };
         } catch (error) {
-          // Re-throw CredentialsSignin to propagate the specific error message to the client
-          if (error instanceof CredentialsSignin) {
-            throw error;
-          }
           log.error("[AuthJS] Authorization error:", error);
-          return null;
+
+          const classifiedError = classifyError(error);
+
+          const authError = new CredentialsSignin();
+
+          if (
+            classifiedError.type === "network_error" ||
+            classifiedError.type === "server_error"
+          ) {
+            authError.code = classifiedError.message;
+          } else {
+            authError.code = "Authentication failed. Please try again.";
+          }
+
+          throw authError;
         }
       },
     }),
@@ -662,16 +678,16 @@ export default {
       const requestedBackendRefresh =
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-          AUTH_SESSION_UPDATE_ACTION;
+        AUTH_SESSION_UPDATE_ACTION;
       const requestedTokenSwap =
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-          AUTH_SESSION_TOKEN_SWAP_ACTION;
+        AUTH_SESSION_TOKEN_SWAP_ACTION;
 
       if (
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-          AUTH_SESSION_SYNC_PERMISSIONS_ACTION
+        AUTH_SESSION_SYNC_PERMISSIONS_ACTION
       ) {
         return await syncPlatformPermissions(token);
       }
