@@ -64,6 +64,7 @@ import {
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
+import { extractStructuredBodyPartial } from "@/lib/generate-content/structured-body-stream";
 import type { ToolCall } from "@/components/generate-content/agent-feed";
 import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -886,6 +887,12 @@ export function FreshGenerationView({
     const html = extractJsonStringFieldPartial(buf, "html_content");
     if (html) return htmlToMarkdownLite(html);
 
+    // Structured-body generation leaves `body_markdown` null and streams the
+    // article as introduction + heading/markdown sections. Read the raw buffer:
+    // the normalized one has lost the `\"` escapes the section values rely on.
+    const structured = extractStructuredBodyPartial(content.streamedText);
+    if (structured) return structured;
+
     // If still JSON → don't render anything
     if (buf.trim().startsWith("{")) {
       return "";
@@ -1155,12 +1162,11 @@ export function FreshGenerationView({
                 ? raw.filter((p: unknown) => typeof p === "string").join("")
                 : "";
 
-          if (token) {
-            if (tokenTargetRef.current === "outline")
-              outline.appendToken(token);
-            else if (tokenTargetRef.current === "content") {
-              content.appendToken(token);
-            }
+          // Article tokens come only from `custom` token events below. These
+          // partials also carry other LLM calls inside generate_content (e.g.
+          // the subheading rewrite), which would corrupt the article preview.
+          if (token && tokenTargetRef.current === "outline") {
+            outline.appendToken(token);
           }
 
           continue;
