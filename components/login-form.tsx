@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
 import { classifyError } from "@/lib/error-utils";
+import { loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 
 export function LoginForm({
@@ -31,6 +32,10 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
     useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -202,20 +207,25 @@ export function LoginForm({
     e.preventDefault();
     setHasInvalidCredentialsError(false);
 
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    const hasEmail = trimmedEmail.length > 0;
-    const hasPassword = trimmedPassword.length > 0;
-
-    // Do not show credential errors for empty fields; only focus the first missing field.
-    if (!hasEmail || !hasPassword) {
-      if (!hasEmail) {
+    const validationResult = loginSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      const nextValidationErrors: typeof validationErrors = {};
+      for (const issue of validationResult.error.issues) {
+        const field = issue.path[0];
+        if (field === "email" || field === "password") {
+          nextValidationErrors[field] ??= issue.message;
+        }
+      }
+      setValidationErrors(nextValidationErrors);
+      if (nextValidationErrors.email) {
         emailInputRef.current?.focus();
       } else {
         passwordInputRef.current?.focus();
       }
       return;
     }
+
+    setValidationErrors({});
 
     setIsLoading(true);
 
@@ -304,6 +314,10 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                    setValidationErrors((current) => ({
+                      ...current,
+                      email: undefined,
+                    }));
                     if (hasInvalidCredentialsError) {
                       setHasInvalidCredentialsError(false);
                     }
@@ -314,6 +328,11 @@ export function LoginForm({
                       "border-destructive focus-visible:ring-destructive/30",
                   )}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-destructive">
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
@@ -335,6 +354,10 @@ export function LoginForm({
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
+                      setValidationErrors((current) => ({
+                        ...current,
+                        password: undefined,
+                      }));
                       if (hasInvalidCredentialsError) {
                         setHasInvalidCredentialsError(false);
                       }
@@ -360,6 +383,11 @@ export function LoginForm({
                     )}
                   </button>
                 </div>
+                {validationErrors.password && (
+                  <p className="text-sm text-destructive">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
