@@ -75,10 +75,15 @@ export function EditableBrandVoiceCard({
     onSuccess: (response) => {
       const updated = response.brand_voice;
       setFormData(toFormData(updated));
-      // Invalidate both ID and slug based queries to ensure UI updates regardless of which was used as the key
-      queryClient.invalidateQueries({ queryKey: ["workspace", workspace.id] });
+      // Invalidate the canonical "workspaces" keys so the workspace detail
+      // query (which carries brand_voice) refetches instead of serving stale
+      // data for up to its 5-minute staleTime. The old singular "workspace"
+      // keys matched no registered queries.
       queryClient.invalidateQueries({
-        queryKey: ["workspace", workspace.slug],
+        queryKey: ["workspaces", "detail", workspace.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["workspaces", "detail", workspace.slug],
       });
       queryClient.invalidateQueries({
         queryKey: ["workspaces", "brand-voice", workspace.id],

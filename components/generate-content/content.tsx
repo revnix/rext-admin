@@ -1088,7 +1088,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <LockedFeatureTooltip message="Publishing requires Editor role or above">
+            <LockedFeatureTooltip message="Publishing requires a role above Editor">
               <Button
                 size="sm"
                 className="h-8 px-2! text-xs font-bold w-full!"
@@ -1494,7 +1494,11 @@ function ContentEditorInner(props: ContentEditorProps) {
           ref={scrollRef}
           className="w-full flex-1 bg-background px-2 py-4 scroll-smooth"
         >
-          <article className="overflow-hidden w-full sm:mx-auto sm:max-w-3xl sm:px-4 pb-16">
+          {/* overflow-clip (not overflow-hidden): still contains wide tables
+              and images, but unlike `hidden` it does not create a scroll
+              container — so the editor toolbar's `sticky top-0` keeps working
+              against the real page scroller. */}
+          <article className="overflow-clip w-full sm:mx-auto sm:max-w-3xl sm:px-4 pb-16">
             <div>
               {isEditing ? (
                 <div className="space-y-4">

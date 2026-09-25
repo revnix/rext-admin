@@ -39,6 +39,7 @@ export const initialState: PageState = {
   keywordClusters: [],
   recommendedContentType: null,
   recommendedTopic: null,
+  selectedContentType: null,
 };
 
 export function generationReducer(
@@ -86,6 +87,9 @@ export function generationReducer(
       return { ...state, interrupt: action.payload };
     case "SET_RECOMMENDED_CONTENT_TYPE":
       return { ...state, recommendedContentType: action.payload };
+    case "SET_SELECTED_CONTENT_TYPE":
+      if (state.selectedContentType === action.payload) return state;
+      return { ...state, selectedContentType: action.payload };
     case "SET_RECOMMENDED_TOPIC":
       return { ...state, recommendedTopic: action.payload };
     case "SET_TOPICS":

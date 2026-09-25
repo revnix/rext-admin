@@ -23,6 +23,7 @@ import {
   WorkspaceKnowledgeTable,
 } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
@@ -40,11 +41,18 @@ import type { Route } from "next";
  * - Back navigation to KB list
  */
 export default function KnowledgeBaseDetailPage() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const kbId = params.kbId as string;
+
+  // workspace.update is the permission the backend enforces for knowledge
+  // deletion — hide the Delete action for roles that lack it.
+  const { hasPermission: canDeleteKnowledge } = useWorkspacePermission(
+    WORKSPACE_PERMISSIONS.UPDATE,
+    workspaceId,
+  );
 
   // Dialog states
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -286,7 +294,7 @@ export default function KnowledgeBaseDetailPage() {
               <WorkspaceKnowledgeTable
                 items={knowledgeItems}
                 onEdit={setItemToEdit}
-                onDelete={setItemToDelete}
+                onDelete={canDeleteKnowledge ? setItemToDelete : undefined}
                 isLoading={isLoading}
               />
             </CardContent>

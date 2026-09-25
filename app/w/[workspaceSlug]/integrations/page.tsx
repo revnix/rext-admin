@@ -185,7 +185,7 @@ export default function IntegrationsPage() {
             Add Integration
           </Button>
         ) : (
-          <LockedFeatureTooltip message="You need integration.create to connect an integration">
+          <LockedFeatureTooltip message="You need the Create Integration permission to connect an integration">
             <Button className="w-full sm:w-auto" disabled>
               <Plus className="mr-2 h-4 w-4" />
               Add Integration
@@ -254,7 +254,7 @@ export default function IntegrationsPage() {
                         <span className="sr-only">Settings</span>
                       </Button>
                     ) : (
-                      <LockedFeatureTooltip message="You need integration.update or integration.delete to manage this integration">
+                      <LockedFeatureTooltip message="You need the Update Integration or Delete Integration permission to manage this integration">
                         <Button
                           variant="outline"
                           size="icon"
@@ -276,7 +276,7 @@ export default function IntegrationsPage() {
                     />
                   ) : (
                     <div className="className">
-                      <LockedFeatureTooltip message="You need integration.update to change activation">
+                      <LockedFeatureTooltip message="You need the Update Integration permission to change activation">
                         <Switch checked={integration.is_active} disabled />
                       </LockedFeatureTooltip>
                     </div>

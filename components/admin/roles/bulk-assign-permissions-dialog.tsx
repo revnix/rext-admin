@@ -279,7 +279,10 @@ export function BulkAssignPermissionsDialog({
                                 {role.display_name}
                               </span>
                               {role.is_system_role && (
-                                <Badge variant="secondary" className="text-[10px]">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px]"
+                                >
                                   System
                                 </Badge>
                               )}

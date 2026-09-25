@@ -155,6 +155,23 @@ export function WorkspaceBrandVoiceForm({
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>(
     selectedPersonaId ? [selectedPersonaId] : [],
   );
+  // Tracks whether the user has manually toggled any persona checkbox, so the
+  // single-persona pre-check below never overrides an explicit choice.
+  const userTouchedPersonasRef = useRef(false);
+
+  // When the workspace has exactly one persona, the save flow keeps it even if
+  // the user never touches the checkbox (sending no selection keeps all
+  // personas). Pre-check the box so the display matches what will be saved.
+  useEffect(() => {
+    if (userTouchedPersonasRef.current) return;
+    if (
+      personas.length === 1 &&
+      personas[0].id &&
+      selectedPersonaIds.length === 0
+    ) {
+      setSelectedPersonaIds([personas[0].id]);
+    }
+  }, [personas, selectedPersonaIds]);
 
   // Handle form submission
   const handleSubmit = async (formData: BrandVoiceFormData) => {
@@ -758,6 +775,7 @@ export function WorkspaceBrandVoiceForm({
                     selectedPersonaId={selectedPersonaId}
                     selectedPersonaIds={selectedPersonaIds}
                     onSelect={(val) => {
+                      userTouchedPersonasRef.current = true;
                       if (Array.isArray(val)) {
                         setSelectedPersonaIds(val);
                         // keep existing single-select callback compatible by

@@ -333,11 +333,11 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
     <div className="space-y-6">
       <div className="flex sm:justify-end w-full sm:w-auto">
         {isEditing ? (
-          <div className="flex gap-2 w-full sm:w-72 justify-between">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
-              className="!w-[49%] sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={handleCancel}
               disabled={updatePersona.isPending}
             >
@@ -347,7 +347,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             <Button
               variant="default"
               size="sm"
-              className="!w-[49%] sm:w-36"
+              className="w-full sm:w-auto"
               onClick={handleSave}
               disabled={updatePersona.isPending}
             >
@@ -360,7 +360,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2 w-full sm:w-auto justify-between">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {canDelete ? (
               <ConfirmationDialog
                 title="Delete Persona"
@@ -372,7 +372,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="!w-[49%] sm:w-auto text-destructive border-destructive/20 hover:bg-destructive/5"
+                  className="w-full sm:w-auto text-destructive border-destructive/20 hover:bg-destructive/5"
                   disabled={deletePersona.isPending}
                 >
                   {deletePersona.isPending ? (
@@ -390,7 +390,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="!w-[49%] sm:w-auto border-primary/20 text-primary hover:bg-primary/5"
+                className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/5"
               >
                 <Edit2 size={16} className="mr-2" />
                 Edit Persona

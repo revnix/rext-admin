@@ -157,11 +157,11 @@ const theme = {
   },
   list: {
     ul: "list-disc ml-4 mb-2",
-    // Tag-like content should not auto-render numeric markers. Keep the list
-    // semantic but suppress browser-generated numbering so items appear as chips
-    // or plain labels instead of an ordered list.
-   ol: "list-none ml-0 mb-2 [&>li]:list-none [&>li]:pl-0",
-    listitem: "ml-0 pl-0",
+    // Ordered lists must render their numeric markers — otherwise the
+    // "Numbered List" toolbar button appears to do nothing (the list node is
+    // created but looks unchanged).
+    ol: "list-decimal ml-4 mb-2",
+    listitem: "ml-1",
   },
   quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
   code: "bg-muted p-1 rounded font-mono text-sm",
@@ -801,7 +801,7 @@ const ToolbarButton = ({
     }}
     disabled={disabled}
     className={cn(
-      "p-2 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+      "p-2 rounded hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
       active ? "bg-muted text-foreground" : "text-muted-foreground",
     )}
     title={title}
@@ -941,7 +941,7 @@ function ImageInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors",
+            "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Image"
@@ -951,7 +951,10 @@ function ImageInsertPopover() {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-80 p-4 space-y-3" align="end">
+      <PopoverContent
+        className="w-80 p-4 space-y-3 max-h-[70vh] overflow-y-auto"
+        align="end"
+      >
         <div className="space-y-1">
           <h4 className="font-semibold text-sm leading-none">Insert Image</h4>
           <p className="text-xs text-muted-foreground">
@@ -1096,7 +1099,7 @@ function TableInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors",
+            "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Table"
@@ -1473,7 +1476,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "p-2 rounded hover:bg-muted transition-colors",
+              "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
               isLink || isLinkPopoverOpen
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground",

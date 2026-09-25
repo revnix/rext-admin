@@ -20,7 +20,8 @@ interface KnowledgeBaseData extends Record<string, unknown> {
 interface WorkspaceKnowledgeBasesTableProps {
   knowledgeBases: KnowledgeBase[];
   onEdit: (kb: KnowledgeBase) => void;
-  onDelete: (kb: KnowledgeBase) => void;
+  /** Omit when the caller lacks the delete permission — the Delete action is then not rendered. */
+  onDelete?: (kb: KnowledgeBase) => void;
   onView: (kb: KnowledgeBase) => void;
   isLoading?: boolean;
 }
@@ -145,22 +146,28 @@ export function WorkspaceKnowledgeBasesTable({
       tooltip: "Edit knowledge base details",
       showLabel: true,
     },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => {
-        const kb = knowledgeBases.find((k) => k.id === row.id);
-        if (kb) onDelete(kb);
-      },
-      variant: "destructive" as const,
-      requiresConfirmation: true,
-      confirmationTitle: "Delete Knowledge Base",
-      confirmationDescription:
-        "Are you sure you want to delete this knowledge base? This action cannot be undone.",
-      tooltip: "Delete this knowledge base permanently",
-      disabled: (row) => row.type === "default",
-      showLabel: true,
-    },
+    // Delete is only offered when the caller passes a handler, i.e. when the
+    // user holds the permission the backend enforces for knowledge deletion.
+    ...(onDelete
+      ? [
+          {
+            label: "Delete",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: KnowledgeBaseData) => {
+              const kb = knowledgeBases.find((k) => k.id === row.id);
+              if (kb) onDelete(kb);
+            },
+            variant: "destructive" as const,
+            requiresConfirmation: true,
+            confirmationTitle: "Delete Knowledge Base",
+            confirmationDescription:
+              "Are you sure you want to delete this knowledge base? This action cannot be undone.",
+            tooltip: "Delete this knowledge base permanently",
+            disabled: (row: KnowledgeBaseData) => row.type === "default",
+            showLabel: true,
+          },
+        ]
+      : []),
   ];
 
   return (
