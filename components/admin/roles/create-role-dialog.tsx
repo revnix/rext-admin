@@ -20,6 +20,7 @@ import { apiClient } from "@/lib/api-client";
 import type { Permission } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 import { usePermissionStore } from "@/stores/permission-store";
+import { isWorkspaceAssignablePermission } from "@/lib/permissions";
 
 interface CreateRoleDialogProps {
   open: boolean;
@@ -31,16 +32,6 @@ interface CreateRoleDialogProps {
 // the hierarchy, which the backend's escalation guard allows any role creator
 // to grant.
 const NEW_ROLE_HIERARCHY_LEVEL = 1;
-
-// Roles created here are always workspace roles, so platform-scoped
-// resources are not offerable.
-const PLATFORM_RESOURCES = new Set([
-  "user",
-  "role",
-  "permission",
-  "audit",
-  "support",
-]);
 
 export function CreateRoleDialog({
   open,
@@ -59,11 +50,10 @@ export function CreateRoleDialog({
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
+  // Roles created here are always workspace roles, so platform-scoped
+  // resources are not offerable.
   const workspacePermissions = useMemo(
-    () =>
-      permissions.filter(
-        (p) => !PLATFORM_RESOURCES.has(p.resource.toLowerCase()),
-      ),
+    () => permissions.filter(isWorkspaceAssignablePermission),
     [permissions],
   );
   const createMutation = useMutation({
