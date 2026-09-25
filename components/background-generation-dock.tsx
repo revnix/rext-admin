@@ -53,8 +53,6 @@ type GenerationStatusResponse = {
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
-
-
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 export function BackgroundGenerationDock() {
@@ -447,8 +445,7 @@ export function BackgroundGenerationDock() {
   };
 
   const isViewingGenerationThread =
-    (pathname?.endsWith("/generate_content") ?? false) &&
-    Boolean(openThreadId);
+    (pathname?.endsWith("/generate_content") ?? false) && Boolean(openThreadId);
 
   const displayedJobs = isViewingGenerationThread
     ? visibleJobs.filter((job) => job.threadId !== openThreadId)

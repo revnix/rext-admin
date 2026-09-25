@@ -102,67 +102,67 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
             </div>
           </div>
           {(regularActions.length > 0 || deleteAction) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {regularActions.map((action) => (
-                <DropdownMenuItem
-                  key={action.label}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    action.onClick(e);
-                  }}
-                  disabled={action.disabled}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <action.icon className="mr-2 h-4 w-4" />
-                  {action.label}
-                </DropdownMenuItem>
-              ))}
-              {deleteAction && regularActions.length > 0 && (
-                <DropdownMenuSeparator />
-              )}
-              {deleteAction && (
-                <ConfirmationDialog
-                  title={
-                    deleteAction.confirmationConfig?.title || "Delete Item"
-                  }
-                  description={
-                    deleteAction.confirmationConfig?.description ||
-                    "Are you sure? This action cannot be undone."
-                  }
-                  confirmText={
-                    deleteAction.confirmationConfig?.confirmText || "Delete"
-                  }
-                  variant="destructive"
-                  onConfirm={handleDelete}
-                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {regularActions.map((action) => (
                   <DropdownMenuItem
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => e.preventDefault()}
-                    disabled={deleteAction.disabled}
+                    key={action.label}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      action.onClick(e);
+                    }}
+                    disabled={action.disabled}
                   >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <deleteAction.icon className="mr-2 h-4 w-4" />
-                    )}
-                    {deleteAction.label}
+                    <action.icon className="mr-2 h-4 w-4" />
+                    {action.label}
                   </DropdownMenuItem>
-                </ConfirmationDialog>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ))}
+                {deleteAction && regularActions.length > 0 && (
+                  <DropdownMenuSeparator />
+                )}
+                {deleteAction && (
+                  <ConfirmationDialog
+                    title={
+                      deleteAction.confirmationConfig?.title || "Delete Item"
+                    }
+                    description={
+                      deleteAction.confirmationConfig?.description ||
+                      "Are you sure? This action cannot be undone."
+                    }
+                    confirmText={
+                      deleteAction.confirmationConfig?.confirmText || "Delete"
+                    }
+                    variant="destructive"
+                    onConfirm={handleDelete}
+                  >
+                    <DropdownMenuItem
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => e.preventDefault()}
+                      disabled={deleteAction.disabled}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <deleteAction.icon className="mr-2 h-4 w-4" />
+                      )}
+                      {deleteAction.label}
+                    </DropdownMenuItem>
+                  </ConfirmationDialog>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </CardHeader>

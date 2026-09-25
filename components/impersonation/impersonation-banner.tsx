@@ -12,7 +12,10 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import type { Route } from "next";
-import { AUTH_SESSION_TOKEN_SWAP_ACTION } from "@/lib/auth-utils";
+import {
+  AUTH_SESSION_TOKEN_SWAP_ACTION,
+  clearAuthHeadersCache,
+} from "@/lib/auth-utils";
 
 /**
  * Impersonation Banner Component
@@ -55,6 +58,9 @@ export function ImpersonationBanner() {
       // The Zustand store is only an impersonation override. Keeping the
       // restored token there would bypass future NextAuth refreshes forever.
       clearTokens();
+      // Purge the auth headers cache so getAuthHeaders() doesn't return the
+      // now-invalidated impersonation token on the next API call.
+      clearAuthHeadersCache();
 
       // Fetch and update original user profile
       try {

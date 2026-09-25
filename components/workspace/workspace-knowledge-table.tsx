@@ -29,7 +29,8 @@ export type KnowledgeItem = {
 interface WorkspaceKnowledgeTableProps {
   items: KnowledgeItem[];
   onEdit: (item: KnowledgeItem) => void;
-  onDelete: (item: KnowledgeItem) => void;
+  /** Omit when the caller lacks the delete permission — the Delete action is then not rendered. */
+  onDelete?: (item: KnowledgeItem) => void;
   isLoading?: boolean;
 }
 
@@ -191,18 +192,24 @@ export function WorkspaceKnowledgeTable({
       showLabel: true,
       primary: true,
     },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row) => onDelete(row),
-      variant: "destructive" as const,
-      requiresConfirmation: true,
-      confirmationTitle: "Delete Knowledge Item",
-      confirmationDescription:
-        "Are you sure you want to delete this knowledge item? This action cannot be undone.",
-      tooltip: "Delete this knowledge item permanently",
-      showLabel: true,
-    },
+    // Delete is only offered when the caller passes a handler, i.e. when the
+    // user holds the permission the backend enforces for knowledge deletion.
+    ...(onDelete
+      ? [
+          {
+            label: "Delete",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: (row: KnowledgeItem) => onDelete(row),
+            variant: "destructive" as const,
+            requiresConfirmation: true,
+            confirmationTitle: "Delete Knowledge Item",
+            confirmationDescription:
+              "Are you sure you want to delete this knowledge item? This action cannot be undone.",
+            tooltip: "Delete this knowledge item permanently",
+            showLabel: true,
+          },
+        ]
+      : []),
   ];
 
   return (

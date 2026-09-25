@@ -182,19 +182,23 @@ export function WorkspaceChangeRoleDialog({
                     </FormControl>
                     <SelectContent>
                       {roles
-                        .filter((role) => !role.is_system_role) // Filter out system roles
+                        .filter(
+                          (role) =>
+                            !role.is_system_role && // Filter out system roles
+                            role.id !== currentRoleId, // The member's current role is not a valid "new" role
+                        )
                         .map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {role.display_name}
-                              </span>
-                              {role.description && (
-                                <span className="text-xs text-muted-foreground">
-                                  {role.description}
-                                </span>
-                              )}
-                            </div>
+                          <SelectItem
+                            key={role.id}
+                            value={role.id}
+                            // Description moves to a tooltip: rendering it as a
+                            // second line made every item tall enough that the
+                            // open dropdown overflowed the dialog's box.
+                            title={role.description || role.display_name}
+                          >
+                            <span className="font-medium">
+                              {role.display_name}
+                            </span>
                           </SelectItem>
                         ))}
                     </SelectContent>
