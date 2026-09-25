@@ -148,7 +148,7 @@ export default function AdminUsersPage() {
   });
 
   // Fetch users with server-side pagination, search, and filters
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [
       "admin-users",
       page,
@@ -166,6 +166,13 @@ export default function AdminUsersPage() {
         role: roleFilter !== "all" ? roleFilter : undefined,
       }),
   });
+
+  // A cached error from a previous visit replays on mount (status stays
+  // "error" in TanStack Query v5) while refetchOnMount already refires the
+  // query in the background. Treating that in-flight state as "failed" made
+  // a sub-second "Failed to load users" flash before the fresh data landed.
+  // Only an idle error is terminal; a refetching one is "recovering".
+  const isRecovering = !!error && isFetching;
 
   const findUser = (userId: string) =>
     data?.users.find((u) => u.id === userId) ?? null;
@@ -564,7 +571,10 @@ export default function AdminUsersPage() {
       : []),
   ];
 
-  if (error) {
+  // Error page only for an idle error — while a refetch is running the
+  // loading skeleton below shows instead of a failure screen (see
+  // isRecovering).
+  if (error && !isFetching) {
     return (
       <ErrorPage
         title="Failed to load users"
@@ -689,7 +699,11 @@ export default function AdminUsersPage() {
                   <DataTable
                     columns={columns}
                     data={tableData}
-                    isLoading={isLoading}
+                    // isLoading is false while recovering from a cached
+                    // error (v5: isPending && isFetching, and an errored
+                    // query is not pending) — include isRecovering so the
+                    // skeleton shows instead of an empty table flash.
+                    isLoading={isLoading || isRecovering}
                     rowActions={rowActions}
                     mobileCards
                     manualPagination
