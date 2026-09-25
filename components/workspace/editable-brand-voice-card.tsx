@@ -13,6 +13,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Textarea } from "@/components/ui/textarea";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
+import { validateCompetitorInput } from "@/schemas/workspace-schemas";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
@@ -107,17 +108,29 @@ export function EditableBrandVoiceCard({
   };
 
   const handleArrayItemAdd = (field: keyof BrandVoiceFormData) => {
-    const value = (
-      document.getElementById(`${field}-input`) as HTMLInputElement
-    )?.value;
-    if (value?.trim()) {
+    const inputEl = document.getElementById(`${field}-input`) as HTMLInputElement;
+    const value = inputEl?.value;
+    if (!value?.trim()) return;
+
+    if (field === "competitors") {
+      const validation = validateCompetitorInput(value, formData.competitors);
+      if (!validation.isValid) {
+        toast.error(validation.error || "Invalid competitor");
+        return;
+      }
       setFormData({
         ...formData,
-        [field]: [...(formData[field] as string[]), value.trim()],
+        competitors: [...formData.competitors, validation.sanitized!],
       });
-      (document.getElementById(`${field}-input`) as HTMLInputElement).value =
-        "";
+      inputEl.value = "";
+      return;
     }
+
+    setFormData({
+      ...formData,
+      [field]: [...(formData[field] as string[]), value.trim()],
+    });
+    inputEl.value = "";
   };
 
   const handleArrayItemRemove = (

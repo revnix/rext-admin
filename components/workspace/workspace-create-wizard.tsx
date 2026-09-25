@@ -25,6 +25,7 @@ import { personaQueries, workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useSSE } from "@/providers/sse-provider";
 import {
+  normalizeUrl,
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
@@ -378,9 +379,19 @@ export function WorkspaceCreateWizard() {
                 </Label>
                 <Input
                   id="url"
-                  type="url"
-                  placeholder="https://your-company.com"
-                  {...register("url")}
+                  type="text"
+                  placeholder="your-company.com or https://your-company.com"
+                  {...register("url", {
+                    onBlur: (e) => {
+                      const val = e.target.value;
+                      if (val && !/^https?:\/\//i.test(val)) {
+                        const normalized = normalizeUrl(val);
+                        form.setValue("url", normalized, {
+                          shouldValidate: true,
+                        });
+                      }
+                    },
+                  })}
                   className={`text-base sm:text-lg h-12 ${errors.url ? "border-destructive" : ""}`}
                 />
                 {errors.url && (

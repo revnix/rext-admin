@@ -35,6 +35,11 @@ import { PersonaSelection } from "@/components/workspace";
 import { usePersonas } from "@/hooks/use-personas";
 import type { BrandVoice, Persona } from "@/types/workspace";
 import { useSubscriptionStore } from "@/stores/subscription-store";
+import { toast } from "sonner";
+import {
+  competitorsArraySchema,
+  validateCompetitorInput,
+} from "@/schemas/workspace-schemas";
 
 /**
  * Validation schema for brand voice form
@@ -52,7 +57,7 @@ const brandVoiceSchema = z.object({
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
   brand_voice: z.array(z.string()).optional(),
-  competitors: z.array(z.string()).optional(),
+  competitors: competitorsArraySchema,
   content_strategy: z.array(z.string()).optional(),
 });
 
@@ -182,9 +187,24 @@ export function WorkspaceBrandVoiceForm({
   const addItem = (field: keyof BrandVoiceFormData, value: string) => {
     if (!value.trim()) return;
 
-    const currentArray = form.getValues(field) as string[];
+    if (field === "competitors") {
+      const currentArray = (form.getValues(field) as string[]) || [];
+      const validation = validateCompetitorInput(value, currentArray);
+      if (!validation.isValid) {
+        toast.error(validation.error || "Invalid competitor");
+        return;
+      }
+      form.setValue(field, [...currentArray, validation.sanitized!], {
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    const currentArray = (form.getValues(field) as string[]) || [];
     if (!currentArray.includes(value.trim())) {
-      form.setValue(field, [...currentArray, value.trim()]);
+      form.setValue(field, [...currentArray, value.trim()], {
+        shouldValidate: true,
+      });
     }
   };
 

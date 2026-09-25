@@ -7,30 +7,166 @@ import { z } from "zod";
  * Based on backend requirements and constraints defined in types/workspace.ts
  */
 
-// URL validation schema with proper HTTP/HTTPS checking
-const urlSchema = z
-  .string()
-  .min(1, "Website URL is required")
-  .url("Please enter a valid URL")
-  .refine(
-    (url) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol !== "https:") return false;
+// Forbidden SSRF hosts and private IP prefixes
+const FORBIDDEN_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "::1"];
+const FORBIDDEN_IP_PREFIXES = [
+  "10.",
+  "172.16.",
+  "172.17.",
+  "172.18.",
+  "172.19.",
+  "172.20.",
+  "172.21.",
+  "172.22.",
+  "172.23.",
+  "172.24.",
+  "172.25.",
+  "172.26.",
+  "172.27.",
+  "172.28.",
+  "172.29.",
+  "172.30.",
+  "172.31.",
+  "192.168.",
+];
 
-        const hostname = parsed.hostname;
-        // Strict domain regex: supports subdomains, valid labels (hyphen in middle), and TLD (at least 2 chars)
-        const domainRegex =
-          /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
-        return domainRegex.test(hostname);
-      } catch {
-        return false;
-      }
-    },
-    {
-      message: "URL must start with https:// and contain a valid domain",
-    },
+/**
+ * Normalizes a URL input by trimming and auto-prepending https:// if missing.
+ */
+export function normalizeUrl(input: string): string {
+  let trimmed = input.trim();
+  if (!trimmed) return trimmed;
+  if (!/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
+// URL validation schema with protocol normalization and proper HTTP/HTTPS checking
+export const urlSchema = z
+  .string()
+  .trim()
+  .min(1, "Website URL is required")
+  .transform((val) => normalizeUrl(val))
+  .pipe(
+    z
+      .string()
+      .url("Please enter a valid URL")
+      .refine(
+        (url) => {
+          try {
+            const parsed = new URL(url);
+            if (parsed.protocol !== "https:" && parsed.protocol !== "http:")
+              return false;
+
+            const hostname = parsed.hostname.toLowerCase();
+            if (
+              FORBIDDEN_HOSTS.includes(hostname) ||
+              FORBIDDEN_IP_PREFIXES.some((prefix) => hostname.startsWith(prefix))
+            ) {
+              return false;
+            }
+
+            // Strict domain regex: supports subdomains, valid labels (hyphen in middle), and TLD (at least 2 chars)
+            const domainRegex =
+              /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
+            return domainRegex.test(hostname);
+          } catch {
+            return false;
+          }
+        },
+        {
+          message:
+            "URL must contain a valid domain name (e.g. example.com). Local/private addresses are not allowed.",
+        },
+      ),
   );
+
+/**
+ * Single competitor item validation schema
+ */
+export const competitorItemSchema = z
+  .string()
+  .trim()
+  .min(2, "Competitor name must be at least 2 characters")
+  .max(100, "Competitor name must be 100 characters or less")
+  .refine(
+    (val) => !/<[^>]*>/g.test(val),
+    "HTML or script tags are not allowed in competitor names",
+  );
+
+/**
+ * Competitors array validation schema (max 20 items, case-insensitive deduplication)
+ */
+export const competitorsArraySchema = z
+  .array(competitorItemSchema)
+  .max(20, "Maximum 20 competitors allowed")
+  .refine(
+    (items) => {
+      const lower = items.map((i) => i.trim().toLowerCase());
+      return new Set(lower).size === lower.length;
+    },
+    { message: "Duplicate competitors are not allowed" },
+  )
+  .optional();
+
+/**
+ * Helper to validate a competitor input against existing competitors
+ */
+export function validateCompetitorInput(
+  input: string,
+  existingCompetitors: string[] = [],
+): {
+  isValid: boolean;
+  error?: string;
+  sanitized?: string;
+} {
+  let sanitized = input.trim();
+  if (!sanitized) {
+    return { isValid: false, error: "Competitor name cannot be empty" };
+  }
+
+  // If user entered a full URL, attempt to clean/extract domain
+  if (/^https?:\/\//i.test(sanitized) || /^www\./i.test(sanitized)) {
+    try {
+      const urlToParse = /^https?:\/\//i.test(sanitized)
+        ? sanitized
+        : `https://${sanitized}`;
+      const parsed = new URL(urlToParse);
+      if (parsed.hostname) {
+        sanitized = parsed.hostname.replace(/^www\./i, "");
+      }
+    } catch {
+      // Keep as is if parsing fails
+    }
+  }
+
+  const parseResult = competitorItemSchema.safeParse(sanitized);
+  if (!parseResult.success) {
+    return {
+      isValid: false,
+      error:
+        parseResult.error.errors[0]?.message || "Invalid competitor name",
+    };
+  }
+
+  if (
+    existingCompetitors.some(
+      (c) => c.trim().toLowerCase() === sanitized.toLowerCase(),
+    )
+  ) {
+    return {
+      isValid: false,
+      error: `Competitor "${sanitized}" is already added`,
+    };
+  }
+
+  if (existingCompetitors.length >= 20) {
+    return { isValid: false, error: "Maximum limit of 20 competitors reached" };
+  }
+
+  return { isValid: true, sanitized };
+}
 
 // Timezone validation schema with IANA timezone support
 const timezoneSchema = z
@@ -181,7 +317,7 @@ export const brandVoiceSchema = z.object({
   selling_position: z.string().optional(),
   target_audience: z.array(z.string()).optional(),
   brand_voice: z.array(z.string()).optional(),
-  competitors: z.array(z.string()).optional(),
+  competitors: competitorsArraySchema,
   content_pillar: z.array(z.string()).optional(),
   personas: z
     .array(

@@ -31,6 +31,7 @@ import { Separator } from "@/components/ui/separator";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import {
+  normalizeUrl,
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
@@ -164,10 +165,18 @@ export function WorkspaceOverviewForm({
             <Label htmlFor="workspace-url">Website URL</Label>
             <Input
               id="workspace-url"
-              type="url"
-              placeholder="https://example.com"
+              type="text"
+              placeholder="example.com or https://example.com"
               autoComplete="off"
-              {...register("url")}
+              {...register("url", {
+                onBlur: (e) => {
+                  const val = e.target.value;
+                  if (val && !/^https?:\/\//i.test(val)) {
+                    const normalized = normalizeUrl(val);
+                    form.setValue("url", normalized, { shouldValidate: true });
+                  }
+                },
+              })}
               disabled={isSubmitting}
               className={errors.url ? "border-destructive" : undefined}
             />
