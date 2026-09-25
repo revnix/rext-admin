@@ -79,6 +79,11 @@ async function readSessionWithoutWritingCookie(
 /**
  * Protected routes configuration
  *
+ * Value forms:
+ * - string: a single GLOBAL permission
+ * - string[]: ANY of these ROLES
+ * - { anyPermission / anyRole }: ANY of these permissions OR roles
+ *
  * NOTE:
  * - These are GLOBAL (user-level) permissions, NOT workspace-scoped.
  * - Workspace-scoped permissions are checked at the page/component level
@@ -89,9 +94,18 @@ async function readSessionWithoutWritingCookie(
  * so they are no longer enforced here to avoid mismatches with the new
  * `/permissions/me` API.
  */
-const PROTECTED_ROUTES: Record<string, string | string[]> = {
+const PROTECTED_ROUTES: Record<
+  string,
+  string | string[] | { anyPermission?: string[]; anyRole?: string[] }
+> = {
   "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-  "/admin/users": "user.manage",
+  // user.manage = full management (admin/super_admin); the global support
+  // role gets read-only visibility. user.read cannot gate this route — it is
+  // the self-service permission every account holds.
+  "/admin/users": {
+    anyPermission: ["user.manage"],
+    anyRole: [ROLES.SUPPORT],
+  },
   "/admin/monitoring": "security.read",
   "/admin/email-analytics": "security.read",
   "/admin/security": "security.read",
@@ -129,12 +143,15 @@ function matchesRoute(pathname: string, routePattern: string): boolean {
 /**
  * Check if user has required permission or role
  * @param session - User session with permissions and role
- * @param requirement - Single permission string, or array of roles
+ * @param requirement - Single permission, array of roles, or any-of permissions/roles
  * @returns true if user has access, false otherwise
  */
 function checkAccess(
   session: Session | null,
-  requirement: string | string[],
+  requirement:
+    | string
+    | string[]
+    | { anyPermission?: string[]; anyRole?: string[] },
 ): boolean {
   if (!session?.user) return false;
 
@@ -144,6 +161,14 @@ function checkAccess(
 
   if (Array.isArray(requirement)) {
     return requirement.includes(user.role || "");
+  }
+
+  if (typeof requirement === "object") {
+    const byPermission = (requirement.anyPermission ?? []).some((permission) =>
+      user.permissions?.includes(permission),
+    );
+    const byRole = (requirement.anyRole ?? []).includes(user.role || "");
+    return byPermission || byRole;
   }
 
   return user.permissions?.includes(requirement) || false;
@@ -233,7 +258,12 @@ export default async function proxy(request: NextRequest) {
         // Add required permission/role to help users understand what's needed
         const requiredLabel = Array.isArray(requirement)
           ? requirement.join(" or ")
-          : requirement;
+          : typeof requirement === "object"
+            ? [
+                ...(requirement.anyPermission ?? []),
+                ...(requirement.anyRole ?? []),
+              ].join(" or ")
+            : requirement;
         unauthorizedUrl.searchParams.set("required", requiredLabel);
 
         return NextResponse.redirect(unauthorizedUrl);

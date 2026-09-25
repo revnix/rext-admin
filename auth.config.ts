@@ -707,6 +707,34 @@ export default {
         }
 
         token.error = undefined;
+
+        // After swapping tokens (start or stop impersonation), update the
+        // session's role and permissions from the new access token's JWT
+        // claims — the backend embeds roles[] and permissions[] in every
+        // access token it creates. Without this, the session retains the
+        // previous user's role/permissions, causing Access Denied on admin
+        // routes after stopping impersonation.
+        try {
+          const parts = session.accessToken.split(".");
+          if (parts[1]) {
+            const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+            const json =
+              typeof atob === "function"
+                ? atob(base64)
+                : Buffer.from(base64, "base64").toString("utf-8");
+            const payload = JSON.parse(json);
+            if (Array.isArray(payload.roles)) {
+              token.role = getPrimaryRole({ roles: payload.roles });
+            }
+            if (Array.isArray(payload.permissions)) {
+              token.permissions = payload.permissions;
+            }
+          }
+        } catch {
+          // If JWT decoding fails, fall back to a backend sync
+          return await syncPlatformPermissions(token);
+        }
+
         return token;
       }
 

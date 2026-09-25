@@ -93,6 +93,7 @@ export function checkAnyRole(
 export const ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
+  SUPPORT: "support",
   WORKSPACE_OWNER: "workspace_owner",
   WORKSPACE_ADMIN: "workspace_admin",
   EDITOR: "editor",

@@ -56,7 +56,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { USER_PERMISSIONS } from "@/lib/permissions";
+import { ROLES, USER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 
 interface UserData extends Record<string, unknown> {
@@ -580,7 +580,10 @@ export default function AdminUsersPage() {
       description="Manage system users and impersonation"
     >
       <PermissionGuard
-        permission={USER_PERMISSIONS.MANAGE}
+        // user.manage is held only by admin/super_admin; the global support
+        // role additionally gets read-only visibility (list + view details).
+        // Write actions below stay gated on their own permissions.
+        anyRole={[ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.SUPPORT]}
         fallback={
           <Card className="border-destructive">
             <CardHeader>

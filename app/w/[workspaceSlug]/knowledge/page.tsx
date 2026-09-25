@@ -32,6 +32,8 @@ export default function WorkspaceKnowledgePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  // workspace.update backs knowledge create/edit AND delete on the backend, so
+  // the same permission gates the Delete action here.
   const { hasPermission: canCreateKnowledge, isLoading: isPermissionLoading } =
     useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspaceId);
 
@@ -197,7 +199,7 @@ export default function WorkspaceKnowledgePage() {
                   knowledgeBases={knowledgeBases}
                   onView={handleRowClick}
                   onEdit={setKbToEdit}
-                  onDelete={setKbToDelete}
+                  onDelete={canCreateKnowledge ? setKbToDelete : undefined}
                   isLoading={isKnowledgeLoading}
                 />
               </CardContent>

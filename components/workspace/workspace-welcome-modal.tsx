@@ -108,7 +108,7 @@ export function WorkspaceWelcomeModal({
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent
-        className="!max-w-2xl w-[95vw] p-0 overflow-hidden"
+        className="!max-w-2xl w-[95vw] p-0"
         showCloseButton={false}
       >
         {/* Accessible title and description */}
@@ -295,7 +295,7 @@ function ConfettiEffect() {
   );
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-0">
       {confettiPieces.map((piece) => (
         <div
           key={piece.id}
