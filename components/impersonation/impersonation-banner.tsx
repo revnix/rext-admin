@@ -12,7 +12,10 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import type { Route } from "next";
-import { AUTH_SESSION_TOKEN_SWAP_ACTION, clearAuthHeadersCache } from "@/lib/auth-utils";
+import {
+  AUTH_SESSION_TOKEN_SWAP_ACTION,
+  clearAuthHeadersCache,
+} from "@/lib/auth-utils";
 
 /**
  * Impersonation Banner Component

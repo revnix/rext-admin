@@ -467,6 +467,14 @@ export default function AdminUsersPage() {
     row.is_super_admin ? "Super Admin accounts are protected" : null;
   const isProtected = (row: UserData) => protectedReason(row) !== null;
 
+  // Impersonation is for verified users only — the backend rejects unverified
+  // targets, this greys the button out with the reason instead of a 403.
+  const impersonateDisabledReason = (row: UserData): string | null =>
+    protectedReason(row) ??
+    (row.email_verified
+      ? null
+      : "User hasn't verified their email address yet");
+
   // Define row actions.
   // Gated on the same permissions the backend enforces, so nothing renders
   // that would only come back as a 403.
@@ -481,8 +489,9 @@ export default function AdminUsersPage() {
               if (user) setDialogState({ type: "impersonate", user });
             },
             primary: true,
-            disabled: isProtected,
-            disabledReason: protectedReason,
+            disabled: (row: UserData) =>
+              impersonateDisabledReason(row) !== null,
+            disabledReason: impersonateDisabledReason,
           },
         ]
       : []),

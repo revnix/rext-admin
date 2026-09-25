@@ -137,6 +137,13 @@ export function CreateRoleDialog({
       return;
     }
 
+    // A custom role with no permissions grants nothing and only clutters the
+    // role list — it must not be created.
+    if (selectedPermissionIds.length === 0) {
+      toast.error("Select at least one permission for the role");
+      return;
+    }
+
     createMutation.mutate();
   };
 
@@ -215,12 +222,18 @@ export function CreateRoleDialog({
 
             {/* Permissions */}
             <div className="space-y-2">
-              <Label>Permissions</Label>
+              <Label>
+                Permissions <span className="text-destructive">*</span>
+              </Label>
               <PermissionMultiSelect
                 permissions={workspacePermissions}
                 selectedPermissionIds={selectedPermissionIds}
                 onChange={setSelectedPermissionIds}
               />
+              <p className="text-xs text-muted-foreground">
+                At least one permission is required — a role without permissions
+                cannot be created.
+              </p>
             </div>
           </div>
 
@@ -233,7 +246,12 @@ export function CreateRoleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createMutation.isPending || selectedPermissionIds.length === 0
+              }
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
