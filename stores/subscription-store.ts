@@ -36,8 +36,27 @@ import {
   type PurchaseState,
 } from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
+import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 
 let inFlightSubscriptionFetch: Promise<void> | null = null;
+
+/**
+ * Resolve the credits scope for the current page.
+ *
+ * Mirrors the WorkspaceProvider mount boundary (app/w/[workspaceSlug]/layout.tsx):
+ * - workspace UUID on /w/<slug>/ pages (owner's credits) once the workspace resolves
+ * - null while the workspace id is still resolving — caller should skip the fetch
+ * - undefined on account-level pages (signed-in user's own credits)
+ */
+function resolveCreditsWorkspaceId(): string | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  const segments = window.location.pathname.split("/").filter(Boolean);
+  const isWorkspacePage =
+    segments[0] === "w" && segments.length > 1 && segments[1] !== "create";
+  if (!isWorkspacePage) return undefined;
+  const id = useWorkspaceContextStore.getState().currentWorkspace?.id;
+  return id || null;
+}
 
 // ============================================================================
 // STORE INTERFACE
@@ -252,12 +271,19 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           set({ isLoading: true, error: null });
 
           try {
+            // Workspace page with an unresolved id yet — skipping keeps the
+            // scope-correct credits already shown instead of clobbering them
+            // with personal credits.
+            const creditsWorkspaceId = resolveCreditsWorkspaceId();
+
             // Use allSettled so that if usage stats fail (500), we still get the subscription
             const [subscriptionResult, usageResult, creditsResult] =
               await Promise.allSettled([
                 apiClient.subscriptions.getCurrentPlan(),
                 apiClient.subscriptions.getUsageStats(),
-                apiClient.subscriptions.getCredits(),
+                creditsWorkspaceId === null
+                  ? Promise.resolve(null)
+                  : apiClient.subscriptions.getCredits(creditsWorkspaceId),
               ]);
 
             const nextSubscription =
@@ -285,7 +311,8 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
             set({
               subscription: nextSubscription,
               usage: nextUsage,
-              credits: nextCredits,
+              // null = skipped or failed — keep the credits already displayed
+              ...(nextCredits ? { credits: nextCredits } : {}),
               subscriptionFetchedAt: Date.now(),
               isLoading: false,
               error:

@@ -6,6 +6,8 @@ import {
 } from "@/lib/generate-content/thread-access";
 
 const ASSISTANT_ID = "agent";
+// LangGraph calls this back in-process when the run ends (Generation Failed).
+const GENERATION_RUN_WEBHOOK = "/api/v1/content/generation/run-finished";
 
 export async function POST(
   request: NextRequest,
@@ -34,6 +36,7 @@ export async function POST(
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
     streamResumable: true,
+    webhook: GENERATION_RUN_WEBHOOK,
     onDisconnect: "continue",
     onRunCreated: ({ run_id }) => {
       createdRunId = run_id;

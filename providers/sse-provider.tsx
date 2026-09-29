@@ -171,7 +171,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       let retryCount = 0;
       let abortController = new AbortController();
 
-      markOperationCompleted(operationId);
       const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
       const buildUrl = () =>
@@ -442,7 +441,13 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               error: errorMessage,
             });
 
-            if (retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES) {
+            // The per-user notification channel lives as long as the page, so
+            // it keeps retrying (at the capped delay) through backend restarts
+            // instead of going silent until a reload.
+            if (
+              !operationId.startsWith("user-notifications-") &&
+              retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES
+            ) {
               stop({
                 connected: false,
                 retryCount,

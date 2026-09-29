@@ -18,20 +18,22 @@ const apiNotificationSchema = z.object({
   created_at: z.string(),
 });
 
-const apiNotificationListSchema = z.array(apiNotificationSchema);
-
 export function parseApiNotifications(payload: unknown): ApiNotification[] {
   if (!payload || !Array.isArray(payload)) {
     log.warn("[parseApiNotifications] Payload is not an array:", payload);
     return [];
   }
 
-  try {
-    return apiNotificationListSchema.parse(payload);
-  } catch (error) {
-    log.error("[parseApiNotifications] Zod error:", error);
-    // Return empty array instead of throwing to avoid application-wide crashes
-    // if the notification format changes on the backend.
-    return [];
-  }
+  // Validate per item so one unrecognized record doesn't blank the whole feed.
+  return payload.flatMap((item) => {
+    const result = apiNotificationSchema.safeParse(item);
+    if (!result.success) {
+      log.error("[parseApiNotifications] Dropping invalid notification:", {
+        item,
+        error: result.error,
+      });
+      return [];
+    }
+    return [result.data];
+  });
 }

@@ -24,6 +24,7 @@ import {
   WorkspaceRemoveMemberDialog,
 } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { Workspace } from "@/types/workspace";
@@ -86,6 +87,7 @@ export function WorkspaceMembersPanel({
   canChangeRole = false,
   canRemove = false,
 }: WorkspaceMembersPanelProps) {
+  const { user } = useAuthSession();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
     null,
@@ -300,7 +302,10 @@ export function WorkspaceMembersPanel({
       if (member) setMemberToRemove(member);
     },
     variant: "destructive",
-    disabled: (row: MemberData) => Boolean(row.is_owner),
+    // Disabled actions are hidden by the actions cell: the owner cannot be
+    // removed at all, and members cannot remove themselves through this UI.
+    disabled: (row: MemberData) =>
+      Boolean(row.is_owner) || row.user_id === user?.id,
   };
   const rowActions: RowAction<MemberData>[] = [
     ...(canChangeRole ? [changeRoleAction] : []),
