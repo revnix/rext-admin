@@ -91,4 +91,41 @@ describe("CreateWorkspacePage", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/workspace details/i)).not.toBeInTheDocument();
   });
+
+  it("keeps the wizard mounted when creating the last allowed workspace", () => {
+    mockUseResourceLimit.mockReturnValue({
+      isLimitReached: false,
+      isLoading: false,
+      canCreate: true,
+      usagePercentage: 50,
+    });
+
+    const queryClient = new QueryClient();
+
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <CreateWorkspacePage />
+        </ThemeProvider>
+      </QueryClientProvider>,
+    );
+
+    mockUseResourceLimit.mockReturnValue({
+      isLimitReached: true,
+      isLoading: false,
+      canCreate: false,
+      usagePercentage: 100,
+    });
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <CreateWorkspacePage />
+        </ThemeProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
+    expect(screen.queryByText(/workspace limit reached/i)).not.toBeInTheDocument();
+  });
 });
