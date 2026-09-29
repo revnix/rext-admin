@@ -89,6 +89,8 @@ describe("PER-003 — display name is required and stands alone", () => {
   it.each([
     "CEO",
     "SEO Lead",
+    "VP, R&D (AI) 2025",
+    "C++ / AI",
     "Senior Marketing Manager",
     "Board Certified Dermatologist and Clinical Researcher",
     "Professor of Computer Science",
@@ -98,50 +100,36 @@ describe("PER-003 — display name is required and stands alone", () => {
         .professional_title,
     ).toBeUndefined();
   });
+
+  it("requires a letter when a professional title is provided", () => {
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        professional_title: "123 @#$",
+      }).professional_title,
+    ).toBe("Professional title must contain at least one letter");
+  });
 });
 
 describe("PER-011 — only words, no numbers, no symbols", () => {
-  it.each([
-    ["name", "<script>alert(1)</script>"],
-    ["description", "Hello <b>there</b>"],
-    ["bio", "A marketer who writes {{payload}} posts about search"],
-    ["demographics", "Urban, `whoami`"],
-    ["professional_title", "Head of Growth @ Rext"],
-  ] as const)("rejects symbols in %s", (field, value) => {
-    expect(
-      validatePersona({ name: "Marketing Mary", [field]: value })[field],
-    ).toBeTruthy();
+  it("rejects symbols in the display name", () => {
+    expect(validatePersona({ name: "<script>alert(1)</script>" }).name)
+      .toBeTruthy();
   });
 
-  it.each([
-    ["name", "Mary2"],
-    ["bio", "78e329hrdo3nekdndihidn is what she writes about all day long"],
-    ["description", "Marketer with 10 years of experience"],
-    ["demographics", "oiwjioj2iohd"],
-  ] as const)("rejects numbers in %s", (field, value) => {
-    expect(
-      validatePersona({ name: "Marketing Mary", [field]: value })[field],
-    ).toContain("cannot contain numbers");
+  it("rejects numbers in the display name", () => {
+    expect(validatePersona({ name: "Mary2" }).name).toContain(
+      "cannot contain numbers",
+    );
   });
 
-  it.each(["areas_of_expertise", "goals", "pain_points", "behaviors"] as const)(
-    "rejects numbers in each entry of %s",
-    (field) => {
-      expect(
-        validatePersona({ name: "Marketing Mary", [field]: "2ws2nkdnkn" })[
-          field
-        ],
-      ).toContain("cannot contain numbers");
-    },
-  );
-
-  it("asks a joined-up expertise to be written out", () => {
+  it("allows hyphens in areas of expertise", () => {
     expect(
       validatePersona({
         name: "Marketing Mary",
         areas_of_expertise: "seo-nothing",
       }).areas_of_expertise,
-    ).toContain("may only contain letters and spaces");
+    ).toBeUndefined();
     expect(
       validatePersona({
         name: "Marketing Mary",
@@ -162,6 +150,65 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
     ).toEqual({});
   });
 
+  it.each(["12345", "!@#$%^&*()"])(
+    "rejects a short description containing no letters: %s",
+    (description) => {
+      expect(validatePersona({ name: "Marketing Mary", description }).description)
+        .toBe("Short description must contain at least one letter");
+    },
+  );
+
+  it.each(["Product lead with 10+ years' experience!", "Studio @ 42nd Street"])(
+    "accepts numbers and punctuation in a short description with letters: %s",
+    (description) => {
+      expect(
+        validatePersona({ name: "Marketing Mary", description }).description,
+      ).toBeUndefined();
+    },
+  );
+
+  it.each([
+    ["bio", "12345"],
+    ["bio", "!@#$%^&*()"],
+    ["demographics", "12345"],
+    ["demographics", "!@#$%^&*()"],
+  ] as const)("requires letters in %s when given %s", (field, value) => {
+    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
+      .toBe(`${field === "bio" ? "Bio" : "Demographics"} must contain at least one letter`);
+  });
+
+  it.each([
+    ["bio", "Bio 2026 & beyond!"],
+    ["demographics", "Age: 25+, location @ NYC"],
+  ] as const)("allows numbers and punctuation in %s with letters", (field, value) => {
+    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
+      .toBeUndefined();
+  });
+
+  it.each([
+    ["tone_of_voice", "12345"],
+    ["tone_of_voice", "!@#$%^&*()"],
+    ["goals", "12345"],
+    ["goals", "!@#$%^&*()"],
+    ["pain_points", "12345"],
+    ["pain_points", "!@#$%^&*()"],
+    ["behaviors", "12345"],
+    ["behaviors", "!@#$%^&*()"],
+  ] as const)("requires at least one letter in %s", (field, value) => {
+    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
+      .toBe(`${field.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase())} must contain at least one letter`);
+  });
+
+  it.each([
+    ["tone_of_voice", "Friendly & direct, 2026"],
+    ["goals", "Increase sign-ups by 20%"],
+    ["pain_points", "Budget: $5k / month"],
+    ["behaviors", "Researches online, compares options (2–3 days)"],
+  ] as const)("allows punctuation and numbers in %s with letters", (field, value) => {
+    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
+      .toBeUndefined();
+  });
+
   it("takes tone of voice as a comma separated list", () => {
     expect(
       validatePersona({
@@ -174,7 +221,7 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
         name: "Marketing Mary",
         tone_of_voice: "friendly |& direct",
       }).tone_of_voice,
-    ).toBeTruthy();
+    ).toBeUndefined();
   });
 });
 

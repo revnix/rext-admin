@@ -33,16 +33,12 @@ export const PERSONA_LIMITS = {
  *  name, not a typo, and refusing it would reject real people. */
 const PERSON_NAME_ALLOWED = /^[\p{L} '’-]+$/u;
 
-/** Titles: letters and spaces only, no numbers. */
-const WORDS_ONLY = /^[\p{L} ]+$/u;
-
 const CONTAINS_DIGIT = /\p{N}/u;
 
 /** How to describe a charset in the error, so the message says what to do
  *  rather than only that something is wrong. */
 const CHARSET_HELP = new Map<RegExp, string>([
   [PERSON_NAME_ALLOWED, "letters, spaces, apostrophes and hyphens"],
-  [WORDS_ONLY, "letters and spaces"],
 ]);
 
 /** Tabs and newlines are fine in a textarea; the rest of C0 and DEL are not.
@@ -137,7 +133,7 @@ function charsOutside(value: string, charset: RegExp): string[] {
  *  what the field takes. */
 function charsetError(label: string, value: string, charset: RegExp): string {
   if (CONTAINS_DIGIT.test(value)) {
-    return `${label} cannot contain numbers — use ${CHARSET_HELP.get(charset)}`;
+    return `${label} cannot contain numbers and special characters — use ${CHARSET_HELP.get(charset)}`;
   }
   const bad = charsOutside(value, charset).filter(
     (c) => !CONTAINS_DIGIT.test(c),
@@ -189,17 +185,28 @@ export function validateText({
 export function validateFreeText({
   label,
   value,
+  min,
   max,
+  requireLetter = false,
 }: {
   label: string;
   value: string | undefined;
+  min?: number;
   max?: number;
+  /** Reject values made only of digits and/or punctuation. */
+  requireLetter?: boolean;
 }): string | undefined {
   const text = (value ?? "").trim();
   if (!text) return undefined;
 
   if (hasControlChars(text)) {
     return `${label} contains characters that are not allowed`;
+  }
+  if (requireLetter && !CONTAINS_LETTER.test(text)) {
+    return `${label} must contain at least one letter`;
+  }
+  if (min && text.length < min) {
+    return `${label} must be at least ${min} characters`;
   }
   if (max && text.length > max) {
     return `${label} must be ${max} characters or fewer (currently ${text.length})`;
@@ -220,16 +227,19 @@ type ListRuleOptions = {
   max: number;
   maxItems?: number;
   strictWords?: boolean;
+  requireLetter?: boolean;
 };
 
 /** Comma-separated fields: checked for total length and max items.
- *  If strictWords is true, each item must be words only and not hyphenated. */
+ *  If strictWords is true, each item allows only letters, numbers, spaces,
+ *  and hyphens. */
 export function validateList({
   label,
   value,
   max,
   maxItems,
   strictWords = false,
+  requireLetter = false,
 }: ListRuleOptions): string | undefined {
   const raw = Array.isArray(value) ? value.join(", ") : (value ?? "").trim();
   if (!raw) return undefined;
@@ -249,13 +259,14 @@ export function validateList({
     return `${label} may list at most ${maxItems} entries`;
   }
 
+  if (requireLetter && !CONTAINS_LETTER.test(raw)) {
+    return `${label} must contain at least one letter`;
+  }
+
   if (strictWords) {
     for (const item of items) {
-      if (item.includes("-")) {
-        return `"${item}" in ${label} must be words only (not hyphenated)`;
-      }
-      if (!/^[\p{L}\p{N} ]+$/u.test(item)) {
-        return `"${item}" in ${label} may only contain letters, numbers and spaces`;
+      if (!/^[\p{L}\p{N} -]+$/u.test(item)) {
+        return `"${item}" in ${label} may only contain letters, numbers, spaces and hyphens`;
       }
     }
   }
@@ -322,12 +333,12 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
 
   set(
     "professional_title",
-    validateText({
+    validateFreeText({
       label: "Professional title",
       value: values.professional_title ?? undefined,
       min: L.professional_title.min,
       max: L.professional_title.max,
-      charset: WORDS_ONLY,
+      requireLetter: true,
     }),
   );
 
@@ -337,6 +348,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Short description",
       value: values.description,
       max: L.description.max,
+      requireLetter: true,
     }),
   );
 
@@ -346,6 +358,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Bio",
       value: values.bio,
       max: L.bio.max,
+      requireLetter: true,
     }),
   );
 
@@ -355,6 +368,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Demographics",
       value: values.demographics,
       max: L.demographics.max,
+      requireLetter: true,
     }),
   );
 
@@ -364,6 +378,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Tone of voice",
       value: values.tone_of_voice,
       max: L.tone_of_voice.max,
+      requireLetter: true,
     }),
   );
 
@@ -384,6 +399,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Goals",
       value: values.goals,
       max: L.goals.max,
+      requireLetter: true,
     }),
   );
 
@@ -393,6 +409,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Pain points",
       value: values.pain_points,
       max: L.pain_points.max,
+      requireLetter: true,
     }),
   );
 
@@ -402,6 +419,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       label: "Behaviors",
       value: values.behaviors,
       max: L.behaviors.max,
+      requireLetter: true,
     }),
   );
 
