@@ -159,14 +159,14 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filters row */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Select
                 value={actionFilter || "all"}
                 onValueChange={(value) =>
                   setActionFilter(value === "all" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Actions" />
                 </SelectTrigger>
                 <SelectContent>
@@ -186,7 +186,7 @@ export default function AuditLogsPage() {
                   setResourceTypeFilter(value === "all" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Resources" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,6 +202,7 @@ export default function AuditLogsPage() {
               {(actionFilter || resourceTypeFilter || search) && (
                 <Button
                   variant="ghost"
+                  className="ms-auto sm:ms-0"
                   size="sm"
                   onClick={() => {
                     setActionFilter(null);

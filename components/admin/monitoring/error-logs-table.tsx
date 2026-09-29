@@ -315,7 +315,7 @@ export function ErrorLogsTable({
       {/* Error Detail Dialog */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40">
+          <DialogContent className="max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40 p-4">
             <DialogHeader>
               <DialogTitle>Error Details</DialogTitle>
               <DialogDescription>
@@ -383,7 +383,7 @@ export function ErrorLogsTable({
               </div>
 
               {selectedLog.stack_trace && (
-                <div>
+                <div className="w-80 sm:w-full">
                   <div className="text-sm font-medium">Stack Trace</div>
                   <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                     {selectedLog.stack_trace}
@@ -393,7 +393,7 @@ export function ErrorLogsTable({
 
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
-                  <div className="w-78 sm:w-full">
+                  <div className="w-80 sm:w-full">
                     <div className="text-sm font-medium">Metadata</div>
                     <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}

@@ -205,7 +205,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
                 ) : payloadError ? (
                   <p className="text-sm text-red-600">{payloadError}</p>
                 ) : payload && Object.keys(payload).length > 0 ? (
-                  <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
+                  <pre className="bg-white max-w-270 dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
                     {JSON.stringify(payload, null, 2)}
                   </pre>
                 ) : (
@@ -566,7 +566,7 @@ export default function WebhookMonitoringPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div>
                     <Table>
                       <TableHeader>
                         <TableRow>

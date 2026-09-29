@@ -261,7 +261,7 @@ export function AuditLogsTable({
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm font-medium">Action</div>
                   <div className="mt-1">
