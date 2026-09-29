@@ -13,6 +13,11 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Textarea } from "@/components/ui/textarea";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { apiClient } from "@/lib/api-client";
+import {
+  validateBrandName,
+  validateBrandVoiceItems,
+  validateBrandVoiceText,
+} from "@/lib/validation/brand-voice-validation";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 
@@ -103,6 +108,24 @@ export function EditableBrandVoiceCard({
   }, [brandVoice, isEditing]);
 
   const handleSave = () => {
+    const validationErrors = [
+      validateBrandName(formData.brand_name),
+      validateBrandVoiceText(formData.about, "About"),
+      validateBrandVoiceText(formData.customer_profile, "Customer profile"),
+      validateBrandVoiceText(
+        formData.selling_position,
+        "Unique selling position",
+      ),
+      validateBrandVoiceItems(formData.target_audience, "Target audience"),
+      validateBrandVoiceItems(formData.brand_voice, "Voice characteristics"),
+      validateBrandVoiceItems(formData.content_strategy, "Content strategy"),
+      validateBrandVoiceItems(formData.competitors, "Competitors"),
+    ].filter((error): error is string => Boolean(error));
+
+    if (validationErrors.length > 0) {
+      toast.error(validationErrors[0]);
+      return;
+    }
     updateMutation.mutate(formData);
   };
 
@@ -116,6 +139,20 @@ export function EditableBrandVoiceCard({
       document.getElementById(`${field}-input`) as HTMLInputElement
     )?.value;
     if (value?.trim()) {
+      const fieldLabels: Partial<Record<keyof BrandVoiceFormData, string>> = {
+        target_audience: "Target audience",
+        brand_voice: "Voice characteristics",
+        content_strategy: "Content strategy",
+        competitors: "Competitors",
+      };
+      const error = validateBrandVoiceItems(
+        [value.trim()],
+        fieldLabels[field] ?? "This field",
+      );
+      if (error) {
+        toast.error(error);
+        return;
+      }
       setFormData({
         ...formData,
         [field]: [...(formData[field] as string[]), value.trim()],

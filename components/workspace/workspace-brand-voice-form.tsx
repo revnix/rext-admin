@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PersonaSelection } from "@/components/workspace";
 import { usePersonas } from "@/hooks/use-personas";
+import {
+  validateBrandName,
+  validateBrandVoiceItems,
+  validateBrandVoiceText,
+} from "@/lib/validation/brand-voice-validation";
 import type { BrandVoice, Persona } from "@/types/workspace";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
@@ -43,17 +49,53 @@ const brandVoiceSchema = z.object({
   brand_name: z
     .string()
     .max(255, "Brand name must be 255 characters or less")
+    .refine((value) => !validateBrandName(value), {
+      message: "Brand name may only contain letters and spaces",
+    })
     .optional(),
   about: z
     .string()
     .max(255, "About your brand must be 255 characters or less")
+    .refine((value) => !validateBrandVoiceText(value, "About"), {
+      message: "About must contain at least one letter",
+    })
     .optional(),
-  customer_profile: z.string().optional(),
-  selling_position: z.string().optional(),
-  target_audience: z.array(z.string()).optional(),
-  brand_voice: z.array(z.string()).optional(),
-  competitors: z.array(z.string()).optional(),
-  content_strategy: z.array(z.string()).optional(),
+  customer_profile: z
+    .string()
+    .refine((value) => !validateBrandVoiceText(value, "Customer profile"), {
+      message: "Customer profile must contain at least one letter",
+    })
+    .optional(),
+  selling_position: z
+    .string()
+    .refine((value) => !validateBrandVoiceText(value, "Unique selling position"), {
+      message: "Unique selling position must contain at least one letter",
+    })
+    .optional(),
+  target_audience: z
+    .array(z.string())
+    .refine((items) => !validateBrandVoiceItems(items, "Target audience"), {
+      message: "Target audience entries must each contain at least one letter",
+    })
+    .optional(),
+  brand_voice: z
+    .array(z.string())
+    .refine((items) => !validateBrandVoiceItems(items, "Voice characteristics"), {
+      message: "Voice characteristics entries must each contain at least one letter",
+    })
+    .optional(),
+  competitors: z
+    .array(z.string())
+    .refine((items) => !validateBrandVoiceItems(items, "Competitors"), {
+      message: "Competitors entries must each contain at least one letter",
+    })
+    .optional(),
+  content_strategy: z
+    .array(z.string())
+    .refine((items) => !validateBrandVoiceItems(items, "Content strategy"), {
+      message: "Content strategy entries must each contain at least one letter",
+    })
+    .optional(),
 });
 
 /**
@@ -197,12 +239,28 @@ export function WorkspaceBrandVoiceForm({
 
   // Array field helpers
   const addItem = (field: keyof BrandVoiceFormData, value: string) => {
-    if (!value.trim()) return;
+    if (!value.trim()) return false;
+
+    const fieldLabels: Partial<Record<keyof BrandVoiceFormData, string>> = {
+      target_audience: "Target audience",
+      brand_voice: "Voice characteristics",
+      content_strategy: "Content strategy",
+      competitors: "Competitors",
+    };
+    const error = validateBrandVoiceItems(
+      [value.trim()],
+      fieldLabels[field] ?? "This field",
+    );
+    if (error) {
+      toast.error(error);
+      return false;
+    }
 
     const currentArray = form.getValues(field) as string[];
     if (!currentArray.includes(value.trim())) {
       form.setValue(field, [...currentArray, value.trim()]);
     }
+    return true;
   };
 
   const removeItem = (field: keyof BrandVoiceFormData, index: number) => {
@@ -435,8 +493,9 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  addItem("brand_voice", brandVoiceInput);
-                                  setBrandVoiceInput("");
+                                  if (addItem("brand_voice", brandVoiceInput)) {
+                                    setBrandVoiceInput("");
+                                  }
                                 }
                               }}
                               placeholder="Type a characteristic and press Enter or click Add"
@@ -447,8 +506,9 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("brand_voice", brandVoiceInput);
-                              setBrandVoiceInput("");
+                              if (addItem("brand_voice", brandVoiceInput)) {
+                                setBrandVoiceInput("");
+                              }
                             }}
                             className="font-medium"
                           >
@@ -523,11 +583,14 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  addItem(
-                                    "content_strategy",
-                                    contentStrategyInput,
-                                  );
-                                  setContentStrategyInput("");
+                                  if (
+                                    addItem(
+                                      "content_strategy",
+                                      contentStrategyInput,
+                                    )
+                                  ) {
+                                    setContentStrategyInput("");
+                                  }
                                 }
                               }}
                               placeholder="Type a content pillar and press Enter or click Add"
@@ -538,8 +601,11 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("content_strategy", contentStrategyInput);
-                              setContentStrategyInput("");
+                              if (
+                                addItem("content_strategy", contentStrategyInput)
+                              ) {
+                                setContentStrategyInput("");
+                              }
                             }}
                             className="font-medium"
                           >
@@ -614,8 +680,9 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  addItem("competitors", competitorsInput);
-                                  setCompetitorsInput("");
+                                  if (addItem("competitors", competitorsInput)) {
+                                    setCompetitorsInput("");
+                                  }
                                 }
                               }}
                               placeholder="Enter competitor name and press Enter or click Add"
@@ -626,8 +693,9 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("competitors", competitorsInput);
-                              setCompetitorsInput("");
+                              if (addItem("competitors", competitorsInput)) {
+                                setCompetitorsInput("");
+                              }
                             }}
                             className="font-medium"
                           >
@@ -698,11 +766,14 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  addItem(
-                                    "target_audience",
-                                    targetAudienceInput,
-                                  );
-                                  setTargetAudienceInput("");
+                                  if (
+                                    addItem(
+                                      "target_audience",
+                                      targetAudienceInput,
+                                    )
+                                  ) {
+                                    setTargetAudienceInput("");
+                                  }
                                 }
                               }}
                               placeholder="e.g., Small Business Owners, Startups, Enterprises"
@@ -713,8 +784,11 @@ export function WorkspaceBrandVoiceForm({
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              addItem("target_audience", targetAudienceInput);
-                              setTargetAudienceInput("");
+                              if (
+                                addItem("target_audience", targetAudienceInput)
+                              ) {
+                                setTargetAudienceInput("");
+                              }
                             }}
                             className="font-medium"
                           >
