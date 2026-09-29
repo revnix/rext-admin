@@ -34,7 +34,7 @@ export function useContentDetail(workspaceId: string, contentId: string) {
       const result = await apiClient.content.get(workspaceId, contentId);
       // If it's still generating, refetch credits to show live burn-down
       if (result?.content?.status === "generating") {
-        fetchCredits().catch(() => {});
+        fetchCredits(workspaceId).catch(() => {});
       }
       return result;
     },
