@@ -75,10 +75,15 @@ export function EditableBrandVoiceCard({
     onSuccess: (response) => {
       const updated = response.brand_voice;
       setFormData(toFormData(updated));
-      // Invalidate both ID and slug based queries to ensure UI updates regardless of which was used as the key
-      queryClient.invalidateQueries({ queryKey: ["workspace", workspace.id] });
+      // Invalidate the canonical "workspaces" keys so the workspace detail
+      // query (which carries brand_voice) refetches instead of serving stale
+      // data for up to its 5-minute staleTime. The old singular "workspace"
+      // keys matched no registered queries.
       queryClient.invalidateQueries({
-        queryKey: ["workspace", workspace.slug],
+        queryKey: ["workspaces", "detail", workspace.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["workspaces", "detail", workspace.slug],
       });
       queryClient.invalidateQueries({
         queryKey: ["workspaces", "brand-voice", workspace.id],
@@ -247,6 +252,7 @@ export function EditableBrandVoiceCard({
             <Input
               id="brand_name"
               value={formData.brand_name}
+              maxLength={255}
               onChange={(e) =>
                 setFormData({ ...formData, brand_name: e.target.value })
               }
@@ -268,6 +274,7 @@ export function EditableBrandVoiceCard({
             <Textarea
               id="about"
               value={formData.about}
+              maxLength={255}
               onChange={(e) =>
                 setFormData({ ...formData, about: e.target.value })
               }

@@ -60,30 +60,38 @@ export function QuickActions({ workspace }: QuickActionsProps) {
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <div className="flex flex-col gap-1">
-          {actions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href as Route}
-              className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center ${action.color}`}
-                >
-                  <action.icon className="h-5 w-5" />
+          {actions.map((action) => {
+            // External websites must open in a new tab, never a same-tab
+            // client-side navigation away from the dashboard.
+            const isExternalUrl = /^https?:\/\//i.test(action.href);
+            return (
+              <Link
+                key={action.href}
+                href={action.href as Route}
+                {...(isExternalUrl
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+                className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`h-10 w-10 rounded-lg flex items-center justify-center ${action.color}`}
+                  >
+                    <action.icon className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="font-medium text-sm text-foreground block">
+                      {action.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground block">
+                      Perform task
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <span className="font-medium text-sm text-foreground block">
-                    {action.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground block">
-                    Perform task
-                  </span>
-                </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Link>
-          ))}
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </Link>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

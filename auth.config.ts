@@ -504,6 +504,16 @@ export default {
             rememberMe,
           };
         } catch (error) {
+          // Errors deliberately thrown above (backend-derived messages such
+          // as "Please verify your email address…" and the
+          // ACCOUNT_DEACTIVATED code) must pass through untouched — this
+          // catch used to re-wrap every one of them as the generic
+          // "Authentication failed. Please try again.", hiding the real
+          // reason from the login form.
+          if (error instanceof CredentialsSignin) {
+            throw error;
+          }
+
           log.error("[AuthJS] Authorization error:", error);
 
           const classifiedError = classifyError(error);
@@ -678,16 +688,16 @@ export default {
       const requestedBackendRefresh =
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-        AUTH_SESSION_UPDATE_ACTION;
+          AUTH_SESSION_UPDATE_ACTION;
       const requestedTokenSwap =
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-        AUTH_SESSION_TOKEN_SWAP_ACTION;
+          AUTH_SESSION_TOKEN_SWAP_ACTION;
 
       if (
         trigger === "update" &&
         (session as { authAction?: string } | undefined)?.authAction ===
-        AUTH_SESSION_SYNC_PERMISSIONS_ACTION
+          AUTH_SESSION_SYNC_PERMISSIONS_ACTION
       ) {
         return await syncPlatformPermissions(token);
       }
@@ -707,6 +717,34 @@ export default {
         }
 
         token.error = undefined;
+
+        // After swapping tokens (start or stop impersonation), update the
+        // session's role and permissions from the new access token's JWT
+        // claims — the backend embeds roles[] and permissions[] in every
+        // access token it creates. Without this, the session retains the
+        // previous user's role/permissions, causing Access Denied on admin
+        // routes after stopping impersonation.
+        try {
+          const parts = session.accessToken.split(".");
+          if (parts[1]) {
+            const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+            const json =
+              typeof atob === "function"
+                ? atob(base64)
+                : Buffer.from(base64, "base64").toString("utf-8");
+            const payload = JSON.parse(json);
+            if (Array.isArray(payload.roles)) {
+              token.role = getPrimaryRole({ roles: payload.roles });
+            }
+            if (Array.isArray(payload.permissions)) {
+              token.permissions = payload.permissions;
+            }
+          }
+        } catch {
+          // If JWT decoding fails, fall back to a backend sync
+          return await syncPlatformPermissions(token);
+        }
+
         return token;
       }
 

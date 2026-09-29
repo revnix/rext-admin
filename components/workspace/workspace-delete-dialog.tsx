@@ -232,7 +232,7 @@ export function WorkspaceDeleteDialog({
             )}{" "}
             <span className="font-medium">
               The workspace will be moved to trash and become inaccessible
-              immediately. You'll have 14 days to restore it before it's
+              immediately. You'll have 30 days to restore it before it's
               permanently and irreversibly deleted.
             </span>
           </AlertDialogDescription>

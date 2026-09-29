@@ -3,11 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { useAnyPermission, useIsAdmin } from "@/hooks/use-permission";
+import { useAnyPermission, useIsAdmin, useRole } from "@/hooks/use-permission";
 import {
   AUDIT_PERMISSIONS,
   BILLING_PERMISSIONS,
   ROLE_PERMISSIONS,
+  ROLES,
   SECURITY_PERMISSIONS,
   USER_PERMISSIONS,
 } from "@/lib/permissions";
@@ -28,6 +29,9 @@ export default function AdminLayout({
   // audit.read for the Audit Logs page). proxy.ts and each page still enforce
   // the specific permission; this only decides whether the area is entered.
   const hasAdminRole = useIsAdmin();
+  // The global support role unlocks the admin area for its read-only pages
+  // (Audit Logs, Subscriptions, read-only User Management).
+  const hasSupportRole = useRole(ROLES.SUPPORT);
   const hasAdminPagePermission = useAnyPermission([
     AUDIT_PERMISSIONS.READ,
     BILLING_PERMISSIONS.READ,
@@ -35,7 +39,7 @@ export default function AdminLayout({
     SECURITY_PERMISSIONS.READ,
     USER_PERMISSIONS.MANAGE,
   ]);
-  const isAdmin = hasAdminRole || hasAdminPagePermission;
+  const isAdmin = hasAdminRole || hasSupportRole || hasAdminPagePermission;
   const router = useRouter();
 
   useEffect(() => {

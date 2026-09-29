@@ -46,7 +46,6 @@ import {
   ROLE_PERMISSIONS,
   ROLES,
   SECURITY_PERMISSIONS,
-  USER_PERMISSIONS,
 } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { usePermissionStore } from "@/stores/permission-store";
@@ -238,7 +237,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "User Management",
           url: "/admin/users",
           icon: UserCog,
-          permission: USER_PERMISSIONS.MANAGE,
+          // user.manage is held only by admin/super_admin; the global support
+          // role additionally gets read-only visibility (user.read itself is
+          // the self-service permission every account holds, so it can't gate).
+          anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.SUPPORT],
         },
         {
           title: "Subscriptions",

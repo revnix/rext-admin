@@ -20,6 +20,7 @@ import { apiClient } from "@/lib/api-client";
 import type { Permission } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 import { usePermissionStore } from "@/stores/permission-store";
+import { isWorkspaceAssignablePermission } from "@/lib/permissions";
 
 interface CreateRoleDialogProps {
   open: boolean;
@@ -31,16 +32,6 @@ interface CreateRoleDialogProps {
 // the hierarchy, which the backend's escalation guard allows any role creator
 // to grant.
 const NEW_ROLE_HIERARCHY_LEVEL = 1;
-
-// Roles created here are always workspace roles, so platform-scoped
-// resources are not offerable.
-const PLATFORM_RESOURCES = new Set([
-  "user",
-  "role",
-  "permission",
-  "audit",
-  "support",
-]);
 
 export function CreateRoleDialog({
   open,
@@ -59,11 +50,10 @@ export function CreateRoleDialog({
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
   );
+  // Roles created here are always workspace roles, so platform-scoped
+  // resources are not offerable.
   const workspacePermissions = useMemo(
-    () =>
-      permissions.filter(
-        (p) => !PLATFORM_RESOURCES.has(p.resource.toLowerCase()),
-      ),
+    () => permissions.filter(isWorkspaceAssignablePermission),
     [permissions],
   );
   const createMutation = useMutation({
@@ -147,6 +137,13 @@ export function CreateRoleDialog({
       return;
     }
 
+    // A custom role with no permissions grants nothing and only clutters the
+    // role list — it must not be created.
+    if (selectedPermissionIds.length === 0) {
+      toast.error("Select at least one permission for the role");
+      return;
+    }
+
     createMutation.mutate();
   };
 
@@ -225,12 +222,18 @@ export function CreateRoleDialog({
 
             {/* Permissions */}
             <div className="space-y-2">
-              <Label>Permissions</Label>
+              <Label>
+                Permissions <span className="text-destructive">*</span>
+              </Label>
               <PermissionMultiSelect
                 permissions={workspacePermissions}
                 selectedPermissionIds={selectedPermissionIds}
                 onChange={setSelectedPermissionIds}
               />
+              <p className="text-xs text-muted-foreground">
+                At least one permission is required — a role without permissions
+                cannot be created.
+              </p>
             </div>
           </div>
 
@@ -243,7 +246,12 @@ export function CreateRoleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createMutation.isPending || selectedPermissionIds.length === 0
+              }
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

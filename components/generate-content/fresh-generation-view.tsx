@@ -302,6 +302,7 @@ export function FreshGenerationView({
     currentLoadingSteps,
     keywordClusters,
     recommendedContentType,
+    selectedContentType,
     recommendedTopic,
   } = state;
 
@@ -1776,6 +1777,10 @@ export function FreshGenerationView({
         outline.resetStream();
         dispatch({ type: "SUBMIT_REJECT_REASON" });
         dispatch({
+          type: "SET_SELECTED_CONTENT_TYPE",
+          payload: value,
+        });
+        dispatch({
           type: "SET_LOADING_STEPS",
           payload: TOPIC_GENERATION_STEPS,
         });
@@ -2028,7 +2033,11 @@ export function FreshGenerationView({
             : (seoResult?.intent as string)) ||
           ""
         }
-        contentContext={recommendedContentType || ""}
+        // The chip must reflect what the user actually picked on the content
+        // type step; `recommendedContentType` is only the backend's suggestion
+        // and can differ (e.g. user picks "comparison", backend suggested
+        // "best-tools").
+        contentContext={selectedContentType || recommendedContentType || ""}
       />
     ),
     content_type: (

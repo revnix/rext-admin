@@ -98,8 +98,13 @@ export const resetPasswordSchema = z
 
 // Login form schema
 export const loginSchema = z.object({
-  email: z.string().email("Invalid email address").trim().toLowerCase(),
-  password: z.string().min(1, "Password is required"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter your email address")
+    .email("Invalid email address")
+    .toLowerCase(),
+  password: z.string().min(1, "Enter password"),
 });
 
 // Signup with invitation schema (merges with base signup)
