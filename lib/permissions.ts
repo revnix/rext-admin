@@ -93,6 +93,7 @@ export function checkAnyRole(
 export const ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
+  SUPPORT: "support",
   WORKSPACE_OWNER: "workspace_owner",
   WORKSPACE_ADMIN: "workspace_admin",
   EDITOR: "editor",
@@ -242,4 +243,31 @@ export function isProtectedRole(role: {
   is_system_role: boolean;
 }): boolean {
   return role.is_system_role || PROTECTED_WORKSPACE_ROLES.has(role.name);
+}
+
+/**
+ * Resources whose permissions are platform-scoped, not workspace-scoped.
+ *
+ * Custom roles created in the admin UI are always workspace roles, so these
+ * resources must not be offered to them — neither in the create dialog nor in
+ * Manage Permissions / Bulk Assign. Built-in roles still display them
+ * (read-only) via the unfiltered permission list.
+ */
+export const PLATFORM_SCOPED_RESOURCES = new Set([
+  "user",
+  "role",
+  "permission",
+  "audit",
+  "support",
+  "billing",
+  "security",
+]);
+
+/**
+ * Whether a permission can be assigned to a custom workspace role.
+ */
+export function isWorkspaceAssignablePermission(permission: {
+  resource: string;
+}): boolean {
+  return !PLATFORM_SCOPED_RESOURCES.has(permission.resource.toLowerCase());
 }

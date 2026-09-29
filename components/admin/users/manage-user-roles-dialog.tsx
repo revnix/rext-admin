@@ -396,8 +396,9 @@ export function ManageUserRolesDialog({
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      This user already has the {heldInWorkspace.role_display_name}{" "}
-                      role in this workspace. Assigning a new role will replace it.
+                      This user already has the{" "}
+                      {heldInWorkspace.role_display_name} role in this
+                      workspace. Assigning a new role will replace it.
                     </AlertDescription>
                   </Alert>
                 )}

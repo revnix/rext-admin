@@ -829,7 +829,7 @@ export function OutlineDisplay({
                 Tone
               </p>
               {editingTone ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <Input
                     value={tone}
                     onChange={(e) => setTone(e.target.value)}
@@ -885,7 +885,7 @@ export function OutlineDisplay({
                 Audience
               </p>
               {editingAudience ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <Input
                     value={audience}
                     onChange={(e) => setAudience(e.target.value)}
@@ -957,9 +957,9 @@ export function OutlineDisplay({
               <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
                 <FileText className="w-5 h-5 text-primary" />
               </div>
-              <div className="flex gap-8">
+              <div className="flex flex-1 min-w-0 flex-wrap gap-x-8 gap-y-2">
                 {outline.schema_type && (
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                       Schema
                     </p>
@@ -969,19 +969,19 @@ export function OutlineDisplay({
                   </div>
                 )}
                 {displayedTargetWordCount && (
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
                       Target Words
                     </p>
 
                     {editingTargetWords ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Input
                           type="number"
                           min={0}
                           value={targetWordCount}
                           onChange={(e) => setTargetWordCount(e.target.value)}
-                          className="h-7 w-28 text-sm"
+                          className="h-7 w-28 text-sm min-w-0"
                         />
 
                         <Button

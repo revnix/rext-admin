@@ -441,7 +441,7 @@ export function AddIntegrationModal({
           <button
             type="button"
             onClick={() => setSelectedType(null)}
-            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -mt-1 mb-1"
+            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -mt-1 mb-1 cursor-pointer"
           >
             ← Back to integrations
           </button>

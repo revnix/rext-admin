@@ -40,7 +40,11 @@ import { ErrorPage } from "@/components/ui/error-states";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { usePermission } from "@/hooks/use-permission";
-import { ROLE_PERMISSIONS, isProtectedRole } from "@/lib/permissions";
+import {
+  ROLE_PERMISSIONS,
+  isProtectedRole,
+  isWorkspaceAssignablePermission,
+} from "@/lib/permissions";
 import type { Column, RowAction } from "@/types/data-table";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
 
@@ -64,10 +68,10 @@ interface PermissionTableData extends Record<string, unknown> {
   is_system: boolean;
 }
 
-// billing, security and permission management are platform-level, not
-// workspace-level: not assignable to custom roles, but built-in roles still
-// show them.
-const HIDDEN_RESOURCES = new Set(["billing", "security", "permission"]);
+// Permissions offerable to custom roles: platform-scoped resources (user, role,
+// permission, audit, support, billing, security) are excluded — the same filter
+// CreateRoleDialog applies — but built-in roles still show them (read-only)
+// via the unfiltered list below.
 
 // The platform-wide `user` floor role has been removed from the backend
 // (own-account routes are authentication-gated; signup no longer assigns a
@@ -131,7 +135,7 @@ export default function AdminRolesPage() {
   });
   const allPermissions = permissionsData?.permissions || [];
   const customRolePermissions = allPermissions.filter(
-    (p) => !HIDDEN_RESOURCES.has(p.resource),
+    isWorkspaceAssignablePermission,
   );
 
   // Roles shown in the table and passed to this page's dialogs. Excludes the
