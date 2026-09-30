@@ -189,20 +189,20 @@ export default function WorkspacePage() {
     //     );
     //   },
     // },
-    {
-      key: "status",
-      header: "Status",
-      width: "80px",
-      searchable: true,
-      cell: (value: unknown) => (
-        <Badge
-          variant={String(value) === "active" ? "default" : "secondary"}
-          className="text-[10px] px-1.5 py-0"
-        >
-          {String(value || "active")}
-        </Badge>
-      ),
-    },
+    // {
+    //   key: "status",
+    //   header: "Status",
+    //   width: "80px",
+    //   searchable: true,
+    //   cell: (value: unknown) => (
+    //     <Badge
+    //       variant={String(value) === "active" ? "default" : "secondary"}
+    //       className="text-[10px] px-1.5 py-0"
+    //     >
+    //       {String(value || "active")}
+    //     </Badge>
+    //   ),
+    // },
     {
       key: "created_at",
       header: "Created",
