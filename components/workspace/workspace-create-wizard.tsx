@@ -93,6 +93,7 @@ export function WorkspaceCreateWizard() {
   const [workspaceSlug, setWorkspaceSlug] = useState<string | null>(null);
   const [extractedBrandVoice, setExtractedBrandVoice] =
     useState<Partial<BrandVoice> | null>(null);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
     null,
@@ -128,9 +129,12 @@ export function WorkspaceCreateWizard() {
       setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
     }
 
+    setIsFinalizing(true);
+
     // Add delay before transitioning to review
     // This gives time for finalization step to display (1-2 seconds)
     setTimeout(() => {
+      setIsFinalizing(false);
       setCurrentStep("review");
       toast.success("Workspace analysis complete!");
     }, 2000); // 2 second delay
@@ -139,6 +143,7 @@ export function WorkspaceCreateWizard() {
   const handleSSEError = useCallback((error: string) => {
     log.error("[Wizard] Pipeline failed", error);
     toast.error(`Analysis failed: ${error}`);
+    setIsFinalizing(false);
 
     // Could navigate back to details or show retry option
     // For now, still allow user to proceed to review with partial data
@@ -408,6 +413,7 @@ export function WorkspaceCreateWizard() {
               <WorkspaceProgressTimeline
                 events={events}
                 progress={overallProgress}
+                isFinalizing={isFinalizing}
               />
 
               {/* Connection status indicator */}

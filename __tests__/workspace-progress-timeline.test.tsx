@@ -39,6 +39,9 @@ describe("WorkspaceProgressTimeline", () => {
     const competitorStep = screen
       .getByText("Competitor Analysis")
       .closest(".relative");
+    const personaStep = screen
+      .getByText("Persona Extraction")
+      .closest(".relative");
     const finalizeStep = screen.getByText("Finalize").closest(".relative");
 
     expect(
@@ -52,10 +55,12 @@ describe("WorkspaceProgressTimeline", () => {
         "Completing workspace setup",
       ),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Persona Extraction")).not.toBeInTheDocument();
+    expect(
+      personaStep?.querySelector("svg.animate-spin"),
+    ).not.toBeInTheDocument();
   });
 
-  it("starts Finalize only after competitor discovery completes", () => {
+  it("starts Persona Extraction after competitor discovery completes", () => {
     render(
       <WorkspaceProgressTimeline
         progress={98}
@@ -80,11 +85,55 @@ describe("WorkspaceProgressTimeline", () => {
     const competitorStep = screen
       .getByText("Competitor Analysis")
       .closest(".relative");
+    const personaStep = screen
+      .getByText("Persona Extraction")
+      .closest(".relative");
     const finalizeStep = screen.getByText("Finalize").closest(".relative");
 
     expect(
       competitorStep?.querySelector("svg.animate-spin"),
     ).not.toBeInTheDocument();
+    expect(personaStep?.querySelector("svg.animate-spin")).toBeInTheDocument();
+    expect(
+      finalizeStep?.querySelector("svg.animate-spin"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows Finalize after pipeline completion and Persona Extraction", () => {
+    render(
+      <WorkspaceProgressTimeline
+        progress={100}
+        isFinalizing
+        events={[
+          createEvent("scrape.completed", "completed", 30, "Scraping complete"),
+          createEvent(
+            "brand_voice.completed",
+            "completed",
+            90,
+            "Brand voice extracted successfully",
+          ),
+          createEvent(
+            "competitor_discovery.completed",
+            "completed",
+            98,
+            "Competitor discovery completed",
+          ),
+          createEvent(
+            "pipeline.completed",
+            "completed",
+            100,
+            "Workspace creation pipeline completed successfully",
+          ),
+        ]}
+      />,
+    );
+
+    const personaStep = screen
+      .getByText("Persona Extraction")
+      .closest(".relative");
+    const finalizeStep = screen.getByText("Finalize").closest(".relative");
+
+    expect(personaStep?.querySelector("svg.animate-spin")).not.toBeInTheDocument();
     expect(finalizeStep?.querySelector("svg.animate-spin")).toBeInTheDocument();
   });
 });

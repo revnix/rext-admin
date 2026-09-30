@@ -24,6 +24,11 @@ const WORKSPACE_STEPS: ProgressStep[] = [
     description: "Extracting brand characteristics with AI",
   },
   {
+    id: "persona_extraction",
+    label: "Persona Extraction",
+    description: "Identifying target audience and buyer personas",
+  },
+  {
     id: "competitor_analysis",
     label: "Competitor Analysis",
     description: "Researching market competitors and positioning",
@@ -48,6 +53,13 @@ const STEP_ID_ALIASES: Record<string, string[]> = {
     "competitor_find",
     "competitor-find",
   ],
+  persona_extraction: [
+    "persona_extraction",
+    "persona-extraction",
+    "persona",
+    "persona_find",
+    "persona-find",
+  ],
   pipeline: ["pipeline", "finalize", "finalization"],
 };
 
@@ -56,8 +68,9 @@ const STEP_PROGRESS_THRESHOLDS: Record<
   { startsAt: number; completesAt: number }
 > = {
   scrape: { startsAt: 10, completesAt: 30 },
-  brand_voice: { startsAt: 70, completesAt: 90 },
-  competitor_analysis: { startsAt: 92, completesAt: 98 },
+  brand_voice: { startsAt: 70, completesAt: 80 },
+  persona_extraction: { startsAt: 81, completesAt: 90 },
+  competitor_analysis: { startsAt: 91, completesAt: 98 },
   pipeline: { startsAt: 98, completesAt: 100 },
 };
 type StepStatus = "pending" | "in-progress" | "completed" | "failed";
@@ -65,13 +78,15 @@ type StepStatus = "pending" | "in-progress" | "completed" | "failed";
 interface WorkspaceProgressTimelineProps {
   events: SSEEvent[];
   progress?: number;
+  isFinalizing?: boolean;
 }
 
 /**
  * WorkspaceProgressTimeline Component
  *
  * Displays real-time progress updates for workspace creation pipeline.
- * Shows the backend sequence: Website Scraping → Brand Voice → Competitor Analysis → Finalize.
+ * Shows the backend sequence, inferring Persona Extraction between competitor
+ * discovery and pipeline completion because the backend emits no persona event.
  *
  * @example
  * ```tsx
@@ -85,6 +100,7 @@ interface WorkspaceProgressTimelineProps {
 export function WorkspaceProgressTimeline({
   events,
   progress = 0,
+  isFinalizing = false,
 }: WorkspaceProgressTimelineProps) {
   /**
    * Determine step status from events
@@ -112,6 +128,18 @@ export function WorkspaceProgressTimeline({
     });
 
     if (stepEvents.length === 0) {
+      if (stepId === "persona_extraction") {
+        const pipelineCompleted = events.some(
+          (event) =>
+            event.step.toLowerCase() === "pipeline.completed" ||
+            (event.step.toLowerCase().startsWith("pipeline") &&
+              event.status === "completed"),
+        );
+        if (pipelineCompleted) return "completed";
+        if (getStepStatus("competitor_analysis") === "completed") {
+          return "in-progress";
+        }
+      }
       return getFallbackStatus(stepId);
     }
 
@@ -149,7 +177,11 @@ export function WorkspaceProgressTimeline({
         return "pending";
       }
     }
-    return getStepStatus(stepId);
+    const status = getStepStatus(stepId);
+    if (stepId === "pipeline" && status === "completed" && isFinalizing) {
+      return "in-progress";
+    }
+    return status;
   };
 
   /**
