@@ -563,7 +563,8 @@ export default function CreatePersonaPage() {
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Letters and spaces only, no numbers —{" "}
+                        Include at least one letter; numbers and punctuation are
+                        allowed —{" "}
                         {PERSONA_LIMITS.professional_title.min}–
                         {PERSONA_LIMITS.professional_title.max} characters if
                         provided.
@@ -703,8 +704,8 @@ export default function CreatePersonaPage() {
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        One area per comma, each written out in words — "seo
-                        marketing, analytics", not "seo-marketing". Up to{" "}
+                        One area per comma; hyphens are allowed, e.g.
+                        "seo-marketing, analytics". Up to{" "}
                         {PERSONA_LIMITS.areas_of_expertise.maxItems} entries.
                       </p>
                     )}

@@ -9,6 +9,7 @@ import { PageLoader } from "@/components/ui/loading-states";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useRef } from "react";
 
 /**
  * Create Workspace Page
@@ -35,12 +36,20 @@ export default function CreateWorkspacePage() {
 
   const { isLimitReached, isLoading: isLimitLoading } =
     useResourceLimit("workspaces");
+  const initialLimitReached = useRef<boolean | null>(null);
+
+  // Only block entry based on the limit when this page first finishes loading.
+  // Creating the final allowed workspace updates usage while the wizard remains
+  // mounted; that update must not replace the in-progress wizard with this gate.
+  if (!isLimitLoading && initialLimitReached.current === null) {
+    initialLimitReached.current = isLimitReached;
+  }
 
   if (isLimitLoading) {
     return <PageLoader message="Checking workspace limits..." />;
   }
 
-  if (isLimitReached) {
+  if (initialLimitReached.current) {
     return (
       <PageLayout
         title="Workspace limit reached"

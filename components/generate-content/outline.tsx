@@ -1087,7 +1087,7 @@ export function OutlineDisplay({
                   {/* Header info */}
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <h4 className="text-sm font-bold text-foreground capitalize">
+                      <h4 className="text-sm font-bold text-foreground">
                         {cluster.cluster_name}
                       </h4>
                       <div className="flex items-center gap-2 mt-1">

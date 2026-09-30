@@ -2,7 +2,7 @@
 A modern Next.js application for generating, managing, and utilizing AI-powered content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
            
 
-## 🔒 Security Notice  
+## 🔒 Security Notice 
 **This application has been updated with comprehensive security measures (September 2024).**
 
 Key security features implemented:  
@@ -10,7 +10,7 @@ Key security features implemented:
 - **Rate limiting** protects against API abuse (60 req/min per IP)   
 - **Input validation & sanitization** blocks XSS attacks
 - **Security headers** via middleware (CSP, HSTS, XSS protection) 
-- **Environment variable security** with proper isolation
+- **Environment variable security** with proper isolation  
 
 📖 **Review the [Security Implementation Guide](docs/security-implementation.md) before deployment.**
 

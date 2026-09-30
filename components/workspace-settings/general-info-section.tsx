@@ -1,11 +1,17 @@
+
 "use client";
+
+import * as React from "react";
+import * as z from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+
+import type { Route } from "next";
+
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,17 +35,25 @@ import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useWorkspaceStore } from "@/stores/workspace";
-import * as React from "react";
-import type { Route } from "next";
 
 const generalInfoSchema = z.object({
   name: z
     .string()
     .trim()
     .min(1, "Workspace name is required")
-    .max(200, "Workspace name must be 200 characters or less"),
+    .max(200, "Workspace name must be 200 characters or less")
+    .regex(
+      /[A-Za-z]/,
+      "Workspace name must contain at least one letter",
+    ),
+
   slug: z.string(),
-  description: z.string().max(500).optional(),
+
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
+
   url: z
     .string()
     .trim()
@@ -48,6 +62,7 @@ const generalInfoSchema = z.object({
     .refine((value) => {
       try {
         const hostname = new URL(value).hostname;
+
         return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
           hostname,
         );
@@ -63,37 +78,50 @@ export function GeneralInfoSection() {
   const { workspace } = useWorkspace();
   const router = useRouter();
   const queryClient = useQueryClient();
+
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
+
   const updateWorkspaceInList = useWorkspaceStore(
     (state) => state.updateWorkspaceInList,
   );
 
   const form = useForm<GeneralInfoForm>({
     resolver: zodResolver(generalInfoSchema),
-    values: {
-      name: workspace?.name || "",
-      slug: workspace?.slug || "",
-      url: workspace?.url || "",
+
+    // Validate while the user is typing.
+    mode: "onChange",
+    reValidateMode: "onChange",
+
+    defaultValues: {
+      name: "",
+      slug: "",
+      description: "",
+      url: "",
     },
   });
 
-  // Reset form when workspace changes
+  // Reset form when workspace changes.
   React.useEffect(() => {
-    if (workspace) {
-      form.reset({
-        name: workspace.name || "",
-        slug: workspace.slug || "",
-        url: workspace.url || "",
-      });
+    if (!workspace) {
+      return;
     }
+
+    form.reset({
+      name: workspace.name || "",
+      slug: workspace.slug || "",
+      description: workspace.description || "",
+      url: workspace.url || "",
+    });
   }, [workspace, form]);
 
   const onSubmit = async (data: GeneralInfoForm) => {
     try {
       if (!workspace?.id) {
-        throw new Error("Workspace data is not loaded yet. Please try again.");
+        throw new Error(
+          "Workspace data is not loaded yet. Please try again.",
+        );
       }
 
       const response = await apiClient.workspaces.update(workspace.id, {
@@ -101,21 +129,26 @@ export function GeneralInfoSection() {
         url: data.url,
       });
 
-      // Update local store immediately so UI reflects changes without waiting for refetch
+      // Update local store immediately.
       if (response?.workspace) {
         setCurrentWorkspace(response.workspace);
         updateWorkspaceInList(response.workspace);
 
-        // Update TanStack Query cache for detail query so reopening Settings page shows updated URL & info
+        // Update detail cache.
         queryClient.setQueryData(
           ["workspaces", "detail", response.workspace.slug],
           response,
         );
+
         queryClient.setQueryData(
           ["workspaces", "detail", response.workspace.id],
           response,
         );
-        if (workspace.slug && workspace.slug !== response.workspace.slug) {
+
+        if (
+          workspace.slug &&
+          workspace.slug !== response.workspace.slug
+        ) {
           queryClient.setQueryData(
             ["workspaces", "detail", workspace.slug],
             response,
@@ -123,7 +156,7 @@ export function GeneralInfoSection() {
         }
       }
 
-      // Refresh the list and switcher caches so they stop serving the old name.
+      // Refresh workspace-related caches.
       await queryClient.invalidateQueries({
         predicate: ({ queryKey }) =>
           queryKey[0] === "workspaces" &&
@@ -133,20 +166,24 @@ export function GeneralInfoSection() {
             queryKey[1] === "detail"),
       });
 
-      // A rename regenerates the slug, so the URL we are on no longer resolves.
+      // Rename can regenerate the workspace slug.
       const newSlug = response?.workspace?.slug;
+
       if (newSlug && newSlug !== workspace.slug) {
         router.replace(`/w/${newSlug}/settings` as Route);
       } else {
         router.refresh();
       }
 
-      toast.success("Workspace settings have been saved successfully.");
+      toast.success(
+        "Workspace settings have been saved successfully.",
+      );
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to update workspace settings";
+
       toast.error(errorMessage);
     }
   };
@@ -155,10 +192,12 @@ export function GeneralInfoSection() {
     <Card>
       <CardHeader>
         <CardTitle>General Information</CardTitle>
+
         <CardDescription>
           Update your workspace name, and other basic information
         </CardDescription>
       </CardHeader>
+
       <CardContent>
         <PermissionGuard
           permission={WORKSPACE_PERMISSIONS.UPDATE}
@@ -174,46 +213,63 @@ export function GeneralInfoSection() {
               className="space-y-4"
               noValidate
             >
+              {/* Workspace Name */}
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Workspace Name</FormLabel>
+
                     <FormControl>
-                      <Input placeholder="My Workspace" {...field} />
+                      <Input
+                        placeholder="My Workspace"
+                        {...field}
+                      />
                     </FormControl>
+
                     <FormDescription>
                       The display name for your workspace
                     </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Workspace Slug */}
               <FormField
                 control={form.control}
                 name="slug"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Workspace Slug</FormLabel>
+
                     <FormControl>
-                      <Input placeholder="my-workspace" {...field} disabled />
+                      <Input
+                        placeholder="my-workspace"
+                        {...field}
+                        disabled
+                      />
                     </FormControl>
+
                     <FormDescription>
                       Used in URLs. Cannot be changed after creation
                     </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Website URL */}
               <FormField
                 control={form.control}
                 name="url"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Website URL</FormLabel>
+
                     <FormControl>
                       <Input
                         placeholder="https://example.com"
@@ -221,9 +277,11 @@ export function GeneralInfoSection() {
                         {...field}
                       />
                     </FormControl>
+
                     <FormDescription>
                       Your company or project website
                     </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -233,10 +291,13 @@ export function GeneralInfoSection() {
                 type="submit"
                 className="w-full sm:w-auto"
                 disabled={
-                  form.formState.isSubmitting || !form.formState.isDirty
+                  form.formState.isSubmitting ||
+                  !form.formState.isDirty
                 }
               >
-                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                {form.formState.isSubmitting
+                  ? "Saving..."
+                  : "Save Changes"}
               </Button>
             </form>
           </Form>
@@ -245,3 +306,4 @@ export function GeneralInfoSection() {
     </Card>
   );
 }
+

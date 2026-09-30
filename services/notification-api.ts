@@ -137,6 +137,28 @@ export async function markNotificationsAsRead(
 }
 
 /**
+ * Clear (soft delete) all read notifications.
+ * Throws when the backend request fails.
+ */
+export async function clearReadNotifications(): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  const url = buildUrl(
+    `${getNotificationApiBaseUrl()}/api/v1/notifications/clear`,
+    { clear_all_read: true },
+  );
+
+  const response = await authenticatedFetch(url, { method: "POST" });
+
+  if (!response.ok) {
+    throw new Error(`Failed to clear notifications: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
  * Mark all notifications as read
  *
  * @returns Success response

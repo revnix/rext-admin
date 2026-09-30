@@ -30,20 +30,53 @@ async function refreshNotificationsWithState(): Promise<void> {
  * and general events when the user is logged in. Fetches notifications from API whenever an event occurs.
  */
 export function useUserNotifications() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
+  // Keyed on the user id alone: a token refresh (session update()) briefly
+  // flips `status` to "loading" while the session stays populated, and must
+  // not tear down the subscription and reload the list (visible flicker).
+  const userId = session?.user?.id;
   const { subscribe } = useSSE();
   const hasHydrated = useNotificationStore((state) => state.hasHydrated);
   const unsubscribeUserNotificationsRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // Only subscribe if user is authenticated and store has hydrated
-    if (status !== "authenticated" || !session?.user?.id || !hasHydrated) {
+    if (!userId || !hasHydrated) {
       return;
     }
 
-    const userId = session.user.id;
     const userNotificationsChannelId = `user-notifications-${userId}`;
     void refreshNotificationsWithState();
+
+    // A (re)connect replays buffered events in one burst. Coalesce them: while
+    // a fetch is in flight, just queue one more, so a burst costs two
+    // requests instead of one per event (the endpoint is rate-limited).
+    let fetchInFlight = false;
+    let fetchQueued = false;
+    const refreshFeed = () => {
+      if (fetchInFlight) {
+        fetchQueued = true;
+        return;
+      }
+      fetchInFlight = true;
+      fetchNotifications()
+        .then((incoming) => {
+          useNotificationStore.getState().mergeNotifications(incoming);
+        })
+        .catch((error) => {
+          userNotificationsLogger.error("Failed to refresh user notifications", {
+            userId,
+            error,
+          });
+        })
+        .finally(() => {
+          fetchInFlight = false;
+          if (fetchQueued) {
+            fetchQueued = false;
+            refreshFeed();
+          }
+        });
+    };
 
     // Subscribe to user notification events
     unsubscribeUserNotificationsRef.current = subscribe(
@@ -57,21 +90,7 @@ export function useUserNotifications() {
             status: event.status,
           },
         );
-
-        // Fetch notifications from API
-        fetchNotifications()
-          .then((incoming) => {
-            useNotificationStore.getState().mergeNotifications(incoming);
-          })
-          .catch((error) => {
-            userNotificationsLogger.error(
-              "Failed to refresh user notifications",
-              {
-                userId,
-                error,
-              },
-            );
-          });
+        refreshFeed();
       },
       (status) => {
         userNotificationsLogger.debug("User notification connection status", {
@@ -92,5 +111,5 @@ export function useUserNotifications() {
         unsubscribeUserNotificationsRef.current = null;
       }
     };
-  }, [session?.user?.id, status, subscribe, hasHydrated]);
+  }, [userId, subscribe, hasHydrated]);
 }

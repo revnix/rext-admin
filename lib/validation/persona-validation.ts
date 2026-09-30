@@ -17,40 +17,21 @@ export const PERSONA_LIMITS = {
    *  enough for "Board Certified Dermatologist and Clinical Researcher". */
   professional_title: { min: 3, max: 80 },
   description: { min: 0, max: 200 },
-  bio: { min: 10, max: 1000 },
+  bio: { min: 0, max: 1000 },
   demographics: { min: 0, max: 300 },
-  tone_of_voice: { max: 100, maxItems: 6, itemMin: 3, itemMax: 30 },
-  areas_of_expertise: { max: 300, maxItems: 20, itemMin: 3, itemMax: 50 },
-  goals: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
-  pain_points: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
-  behaviors: { max: 500, maxItems: 20, itemMin: 3, itemMax: 120 },
+  tone_of_voice: { max: 100 },
+  areas_of_expertise: { max: 300, maxItems: 20 },
+  goals: { max: 500 },
+  pain_points: { max: 500 },
+  behaviors: { max: 500 },
   linkedin_url: { min: 0, max: 500 },
   avatar_url: { min: 0, max: 500 },
   email: { min: 0, max: 320 },
 } as const;
 
-/**
- * What each kind of field may be made of.
- *
- * These are allowlists, not blocklists. A blocklist only stops the characters
- * someone thought to name, which is how "78e329hrdo3nekdndihidn" passed as a
- * bio and "seo-nothing" as an area of expertise: neither contained markup, so
- * neither was caught. A persona is written in words, so the rule is words.
- *
- * Digits are excluded from all three: no field here is a quantity, and a
- * number in one is a sign of pasted noise rather than of a fact about a
- * person.
- */
 /** A person's name. Apostrophes and hyphens stay: "Mary-Jane O'Brien" is a
  *  name, not a typo, and refusing it would reject real people. */
 const PERSON_NAME_ALLOWED = /^[\p{L} '’-]+$/u;
-/** Titles, and each entry in a comma-separated field. Words and the spaces
- *  between them, nothing else — so "seo marketing" is an area of expertise
- *  and "seo-marketing" is asked to be written out. */
-const WORDS_ONLY = /^[\p{L} ]+$/u;
-/** Prose. Sentence punctuation is part of writing a sentence, so it is
- *  allowed here and nowhere else. */
-const PROSE_ALLOWED = /^[\p{L} .,;:!?'’-]+$/u;
 
 const CONTAINS_DIGIT = /\p{N}/u;
 
@@ -58,11 +39,6 @@ const CONTAINS_DIGIT = /\p{N}/u;
  *  rather than only that something is wrong. */
 const CHARSET_HELP = new Map<RegExp, string>([
   [PERSON_NAME_ALLOWED, "letters, spaces, apostrophes and hyphens"],
-  [WORDS_ONLY, "letters and spaces"],
-  [
-    PROSE_ALLOWED,
-    "letters, spaces and ordinary punctuation ( . , ; : ! ? ' - )",
-  ],
 ]);
 
 /** Tabs and newlines are fine in a textarea; the rest of C0 and DEL are not.
@@ -80,7 +56,7 @@ function hasControlChars(value: string): boolean {
 const CONTAINS_LETTER = /\p{L}/u;
 
 export const LINKEDIN_URL_RE =
-  /^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[\p{L}\p{N}_-]+\/?$/iu;
+  /^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[\p{L}\p{N}_-]+\/?(\?.*)?$/iu;
 
 /** Deliberately permissive: this only has to catch a typed mistake, and the
  *  address is used to derive a Gravatar rather than to reach anyone. */
@@ -97,10 +73,6 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export function isValidHttpUrl(value: string): boolean {
   const raw = value.trim();
-  // "https:///example.com" has an empty authority. The WHATWG parser quietly
-  // rewrites it to "https://example.com/" and reports success, so it has to be
-  // caught on the raw string — the backend's parser does not forgive it, and a
-  // link the form accepts and the API then rejects is the worse outcome.
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/{3,}/.test(raw)) return false;
 
   let parsed: URL;
@@ -140,9 +112,6 @@ export function isValidHttpUrl(value: string): boolean {
  */
 export function isServerOwnedAvatar(value: string): boolean {
   const v = value.trim();
-  // The slash is required: every key the upload route writes is
-  // "avatars/personas/<id>/<file>", and without it a bare typed word like
-  // "exampledotcom" would be waved through as though it were one.
   return (
     v.startsWith("data:image/") ||
     /^[A-Za-z0-9][A-Za-z0-9._-]*(\/[A-Za-z0-9][A-Za-z0-9._-]*)+$/.test(v)
@@ -164,7 +133,7 @@ function charsOutside(value: string, charset: RegExp): string[] {
  *  what the field takes. */
 function charsetError(label: string, value: string, charset: RegExp): string {
   if (CONTAINS_DIGIT.test(value)) {
-    return `${label} cannot contain numbers — use ${CHARSET_HELP.get(charset)}`;
+    return `${label} cannot contain numbers and special characters — use ${CHARSET_HELP.get(charset)}`;
   }
   const bad = charsOutside(value, charset).filter(
     (c) => !CONTAINS_DIGIT.test(c),
@@ -199,11 +168,41 @@ export function validateText({
   if (hasControlChars(text)) {
     return `${label} contains characters that are not allowed`;
   }
-  // The charset is checked before the length, so "2ws" is told it cannot
-  // contain a number rather than that it is too short — the first thing to fix
-  // is the first thing reported.
   if (!charset.test(text)) return charsetError(label, text, charset);
   if (!CONTAINS_LETTER.test(text)) {
+    return `${label} must contain at least one letter`;
+  }
+  if (min && text.length < min) {
+    return `${label} must be at least ${min} characters`;
+  }
+  if (max && text.length > max) {
+    return `${label} must be ${max} characters or fewer (currently ${text.length})`;
+  }
+  return undefined;
+}
+
+/** Validates free text fields (description, bio, demographics) with only length and control char checks. */
+export function validateFreeText({
+  label,
+  value,
+  min,
+  max,
+  requireLetter = false,
+}: {
+  label: string;
+  value: string | undefined;
+  min?: number;
+  max?: number;
+  /** Reject values made only of digits and/or punctuation. */
+  requireLetter?: boolean;
+}): string | undefined {
+  const text = (value ?? "").trim();
+  if (!text) return undefined;
+
+  if (hasControlChars(text)) {
+    return `${label} contains characters that are not allowed`;
+  }
+  if (requireLetter && !CONTAINS_LETTER.test(text)) {
     return `${label} must contain at least one letter`;
   }
   if (min && text.length < min) {
@@ -226,21 +225,21 @@ type ListRuleOptions = {
   label: string;
   value: string | string[] | undefined;
   max: number;
-  maxItems: number;
-  itemMin: number;
-  itemMax: number;
+  maxItems?: number;
+  strictWords?: boolean;
+  requireLetter?: boolean;
 };
 
-/** Comma-separated fields: the separator is part of the contract, so an entry
- *  that is empty (", ,") or over-long is reported as such rather than silently
- *  dropped the way `splitList` would. */
+/** Comma-separated fields: checked for total length and max items.
+ *  If strictWords is true, each item allows only letters, numbers, spaces,
+ *  and hyphens. */
 export function validateList({
   label,
   value,
   max,
   maxItems,
-  itemMin,
-  itemMax,
+  strictWords = false,
+  requireLetter = false,
 }: ListRuleOptions): string | undefined {
   const raw = Array.isArray(value) ? value.join(", ") : (value ?? "").trim();
   if (!raw) return undefined;
@@ -254,24 +253,21 @@ export function validateList({
 
   const items = splitList(raw);
   if (!items.length) {
-    return `${label} must be a comma separated list, e.g. "Seo Marketing, Analytics"`;
+    return `${label} must be a comma separated list`;
   }
-  if (items.length > maxItems) {
+  if (maxItems && items.length > maxItems) {
     return `${label} may list at most ${maxItems} entries`;
   }
 
-  // The comma is the only separator. Each entry is then words and the spaces
-  // between them, which is what makes "seo marketing" an entry and asks
-  // "seo-marketing" to be written out rather than joined up.
-  for (const item of items) {
-    if (!WORDS_ONLY.test(item)) {
-      return charsetError(`"${item}" in ${label}`, item, WORDS_ONLY);
-    }
-    if (item.length < itemMin) {
-      return `"${item}" is too short — each entry in ${label} needs at least ${itemMin} letters`;
-    }
-    if (item.length > itemMax) {
-      return `An entry in ${label} must be ${itemMax} characters or fewer`;
+  if (requireLetter && !CONTAINS_LETTER.test(raw)) {
+    return `${label} must contain at least one letter`;
+  }
+
+  if (strictWords) {
+    for (const item of items) {
+      if (!/^[\p{L}\p{N} -]+$/u.test(item)) {
+        return `"${item}" in ${label} may only contain letters, numbers, spaces and hyphens`;
+      }
     }
   }
   return undefined;
@@ -337,54 +333,52 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
 
   set(
     "professional_title",
-    validateText({
+    validateFreeText({
       label: "Professional title",
       value: values.professional_title ?? undefined,
       min: L.professional_title.min,
       max: L.professional_title.max,
-      charset: WORDS_ONLY,
+      requireLetter: true,
     }),
   );
 
   set(
     "description",
-    validateText({
+    validateFreeText({
       label: "Short description",
       value: values.description,
       max: L.description.max,
-      charset: PROSE_ALLOWED,
+      requireLetter: true,
     }),
   );
 
   set(
     "bio",
-    validateText({
+    validateFreeText({
       label: "Bio",
       value: values.bio,
-      min: L.bio.min,
       max: L.bio.max,
-      charset: PROSE_ALLOWED,
+      requireLetter: true,
     }),
   );
 
   set(
     "demographics",
-    validateText({
+    validateFreeText({
       label: "Demographics",
       value: values.demographics,
       max: L.demographics.max,
-      charset: PROSE_ALLOWED,
+      requireLetter: true,
     }),
   );
 
-  // Comma separated like the others: "Professional, friendly, expert" is
-  // three adjectives, not one string with punctuation in it.
   set(
     "tone_of_voice",
     validateList({
       label: "Tone of voice",
       value: values.tone_of_voice,
-      ...L.tone_of_voice,
+      max: L.tone_of_voice.max,
+      requireLetter: true,
     }),
   );
 
@@ -393,27 +387,39 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
     validateList({
       label: "Areas of expertise",
       value: values.areas_of_expertise,
-      ...L.areas_of_expertise,
+      max: L.areas_of_expertise.max,
+      maxItems: L.areas_of_expertise.maxItems,
+      strictWords: true,
     }),
   );
+
   set(
     "goals",
-    validateList({ label: "Goals", value: values.goals, ...L.goals }),
+    validateList({
+      label: "Goals",
+      value: values.goals,
+      max: L.goals.max,
+      requireLetter: true,
+    }),
   );
+
   set(
     "pain_points",
     validateList({
       label: "Pain points",
       value: values.pain_points,
-      ...L.pain_points,
+      max: L.pain_points.max,
+      requireLetter: true,
     }),
   );
+
   set(
     "behaviors",
     validateList({
       label: "Behaviors",
       value: values.behaviors,
-      ...L.behaviors,
+      max: L.behaviors.max,
+      requireLetter: true,
     }),
   );
 

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import { Coins } from "lucide-react";
 
 interface CreditBalanceWidgetProps {
@@ -18,12 +19,18 @@ export function CreditBalanceWidget({
   className,
   variant = "pill",
 }: CreditBalanceWidgetProps) {
+  // WorkspaceProvider only mounts on /w/<slug>/ pages — elsewhere (account
+  // pages) we show the signed-in user's own credits instead of the workspace owner's.
+  const onWorkspacePage = useWorkspaceOptional() !== null;
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const { credits, fetchCredits } = useSubscriptionStore();
+  const workspaceId = onWorkspacePage ? currentWorkspace?.id : undefined;
 
   useEffect(() => {
-    fetchCredits(currentWorkspace?.id).catch(() => {});
-  }, [currentWorkspace?.id, fetchCredits]);
+    // Wait for the real workspace id — the provider briefly sets id: "" while loading
+    if (onWorkspacePage && !workspaceId) return;
+    fetchCredits(workspaceId).catch(() => {});
+  }, [onWorkspacePage, workspaceId, fetchCredits]);
 
   if (!credits) return null;
 

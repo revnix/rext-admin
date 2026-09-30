@@ -27,6 +27,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { log } from "@/lib/logger";
 import type { OperationNotification } from "@/types/sse";
 import {
+  clearReadNotifications,
   markAllNotificationsAsRead,
   markNotificationsAsRead,
 } from "@/services/notification-api";
@@ -91,6 +92,13 @@ export function NotificationsDrawer({
   const setAllNotificationsRead = useNotificationStore(
     (state) => state.setAllNotificationsRead,
   );
+  const removeNotification = useNotificationStore(
+    (state) => state.removeNotification,
+  );
+  const mergeNotifications = useNotificationStore(
+    (state) => state.mergeNotifications,
+  );
+  const readCount = notifications.length - unreadCount;
 
   const handleMarkAsRead = async (id: string) => {
     // Optimistic update
@@ -118,6 +126,21 @@ export function NotificationsDrawer({
       log.error("Failed to mark all notifications as read", error);
       // Revert
       setAllNotificationsRead(unreadIds);
+    }
+  };
+
+  const handleClearRead = async () => {
+    const readItems = notifications.filter((n) => n.read);
+    if (readItems.length === 0) return;
+
+    // Optimistic update
+    readItems.forEach((n) => removeNotification(n.id));
+
+    try {
+      await clearReadNotifications();
+    } catch {
+      // Revert
+      mergeNotifications(readItems);
     }
   };
 
@@ -171,7 +194,7 @@ export function NotificationsDrawer({
           aria-busy={isLoading}
           className="h-[calc(100vh-180px)] px-6"
         >
-          {isLoading ? (
+          {isLoading && notifications.length === 0 ? (
             <div className="flex h-full items-center justify-center py-8 text-sm text-muted-foreground">
               Loading notifications...
             </div>
@@ -261,14 +284,22 @@ export function NotificationsDrawer({
           )}
         </ScrollArea>
 
-        <div className="border-t p-6 pt-4">
+        <div className="border-t p-6 pt-4 flex gap-2">
           <Button
             variant="outline"
-            className="w-full"
+            className="flex-1"
             onClick={() => handleMarkAllAsRead()}
             disabled={unreadCount === 0}
           >
             Mark All as Read ({unreadCount})
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => handleClearRead()}
+            disabled={readCount === 0}
+          >
+            Clear Read ({readCount})
           </Button>
         </div>
       </SheetContent>

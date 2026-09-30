@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
   getGenerationClient,
   requireThreadOwner,
@@ -38,6 +39,7 @@ export async function POST(
         streamMode: ["updates", "messages", "custom"],
         streamSubgraphs: true,
         streamResumable: true,
+        ...runWebhookOption,
       });
 
       return Response.json(
@@ -69,6 +71,7 @@ export async function POST(
     streamSubgraphs: true,
     streamResumable: true,
     onDisconnect: "continue",
+    ...runWebhookOption,
     onRunCreated: ({ run_id }) => {
       createdRunId = run_id;
     },

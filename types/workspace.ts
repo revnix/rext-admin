@@ -25,6 +25,9 @@ export interface Workspace {
   slug: string; // URL-safe identifier for workspace
   timezone?: string; // optional IANA timezone
   url: string; // required
+  // Not returned by the backend yet (pending workspace-validation PR); the
+  // general-info form reads it optimistically, so keep it optional.
+  description?: string;
   created_at: string; // DateTime ISO string
   updated_at?: string; // DateTime ISO string
   brand_voice?: BrandVoice;
