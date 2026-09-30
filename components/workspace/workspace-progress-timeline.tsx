@@ -29,11 +29,6 @@ const WORKSPACE_STEPS: ProgressStep[] = [
     description: "Researching market competitors and positioning",
   },
   {
-    id: "persona_extraction",
-    label: "Persona Extraction",
-    description: "Identifying target audience and buyer personas",
-  },
-  {
     id: "pipeline",
     label: "Finalize",
     description: "Completing workspace setup",
@@ -47,26 +42,23 @@ const STEP_ID_ALIASES: Record<string, string[]> = {
     "competitor_analysis",
     "competitor-analysis",
     "competitor",
+    "competitor_discovery",
+    "competitor-discovery",
     "find",
     "competitor_find",
     "competitor-find",
   ],
-  persona_extraction: [
-    "persona_extraction",
-    "persona-extraction",
-    "persona",
-    "persona_find",
-    "persona-find",
-  ],
   pipeline: ["pipeline", "finalize", "finalization"],
 };
 
-const STEP_PROGRESS_THRESHOLDS: Record<string, number> = {
-  scrape: 15,
-  brand_voice: 35,
-  competitor_analysis: 55,
-  persona_extraction: 75,
-  pipeline: 90,
+const STEP_PROGRESS_THRESHOLDS: Record<
+  string,
+  { startsAt: number; completesAt: number }
+> = {
+  scrape: { startsAt: 10, completesAt: 30 },
+  brand_voice: { startsAt: 70, completesAt: 90 },
+  competitor_analysis: { startsAt: 92, completesAt: 98 },
+  pipeline: { startsAt: 98, completesAt: 100 },
 };
 type StepStatus = "pending" | "in-progress" | "completed" | "failed";
 
@@ -79,7 +71,7 @@ interface WorkspaceProgressTimelineProps {
  * WorkspaceProgressTimeline Component
  *
  * Displays real-time progress updates for workspace creation pipeline.
- * Shows the full setup flow: Website Scraping → Brand Voice → Competitor Analysis → Persona Extraction → Finalize.
+ * Shows the backend sequence: Website Scraping → Brand Voice → Competitor Analysis → Finalize.
  *
  * @example
  * ```tsx
@@ -98,17 +90,10 @@ export function WorkspaceProgressTimeline({
    * Determine step status from events
    */
   const getFallbackStatus = (stepId: string): StepStatus => {
-    const threshold = STEP_PROGRESS_THRESHOLDS[stepId] ?? 0;
-
-    if (stepId === "pipeline") {
-      if (progress >= 100) return "completed";
-      if (progress >= threshold) return "in-progress";
-      return "pending";
-    }
-
-    if (progress >= 100) return "completed";
-    if (progress >= threshold) return "completed";
-    if (progress >= threshold - 15) return "in-progress";
+    const threshold = STEP_PROGRESS_THRESHOLDS[stepId];
+    if (!threshold) return "pending";
+    if (progress >= threshold.completesAt) return "completed";
+    if (progress >= threshold.startsAt) return "in-progress";
     return "pending";
   };
 
@@ -152,6 +137,19 @@ export function WorkspaceProgressTimeline({
       return "in-progress";
 
     return getFallbackStatus(stepId);
+  };
+
+  // Show pipeline stages one at a time. Progress percentages can move ahead of
+  // the active SSE step, so later stages must wait until every earlier stage
+  // has explicitly reached completed.
+  const getSequentialStepStatus = (stepId: string): StepStatus => {
+    const stepIndex = WORKSPACE_STEPS.findIndex((step) => step.id === stepId);
+    for (let index = 0; index < stepIndex; index += 1) {
+      if (getStepStatus(WORKSPACE_STEPS[index].id) !== "completed") {
+        return "pending";
+      }
+    }
+    return getStepStatus(stepId);
   };
 
   /**
@@ -204,7 +202,7 @@ export function WorkspaceProgressTimeline({
         {/* Step Timeline */}
         <div className="space-y-4">
           {WORKSPACE_STEPS.map((step, index) => {
-            const status = getStepStatus(step.id);
+            const status = getSequentialStepStatus(step.id);
             const latestMessage = getLatestMessage(step.id);
             const isLast = index === WORKSPACE_STEPS.length - 1;
 
@@ -220,7 +218,7 @@ export function WorkspaceProgressTimeline({
                   {/* Icon */}
                   <div
                     className={`
-                    flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full
+                    flex h-10 w-10 shrink-0 items-center justify-center rounded-full
                     ${status === "completed" ? "bg-green-100" : ""}
                     ${status === "in-progress" ? "bg-blue-100" : ""}
                     ${status === "failed" ? "bg-red-100" : ""}
