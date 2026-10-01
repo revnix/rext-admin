@@ -1,12 +1,11 @@
 const CONTAINS_LETTER = /\p{L}/u;
-const BRAND_NAME_CHARACTERS = /^[\p{L} ]+$/u;
 
-/** Brand name accepts letters and spaces only; blank remains optional. */
+/** Brand name may contain numbers and punctuation, but needs a letter. */
 export function validateBrandName(value: string): string | undefined {
   const text = value.trim();
   if (!text) return undefined;
-  if (!BRAND_NAME_CHARACTERS.test(text)) {
-    return "Brand name may only contain letters and spaces";
+  if (!CONTAINS_LETTER.test(text)) {
+    return "Brand name must contain at least one letter";
   }
   return undefined;
 }

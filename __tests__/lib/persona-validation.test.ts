@@ -61,6 +61,49 @@ describe("PER-003 — display name is required and stands alone", () => {
     ).toBeTruthy();
   });
 
+  it.each([
+    ["name", "Mary-Jane O'Brien"],
+    ["full_name", "Dr. Mary-Jane O'Brien"],
+    ["name", "Anne Marie. "],
+  ] as const)(
+    "allows the supported name punctuation in %s",
+    (field, value) => {
+      expect(
+        validatePersona({ name: "Marketing Mary", [field]: value })[field],
+      ).toBeUndefined();
+    },
+  );
+
+  it.each([
+    ["name", "12345"],
+    ["full_name", "!@#$%^&*()"],
+  ] as const)("requires at least one letter in %s", (field, value) => {
+    const label = field === "name" ? "Persona display name" : "Persona full name";
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toBe(`${label} must contain at least one letter`);
+  });
+
+  it.each([
+    ["name", "Mary 2"],
+    ["full_name", "Mary Jane 2"],
+  ] as const)("rejects numbers in %s", (field, value) => {
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toBe(
+      `${field === "name" ? "Persona display name" : "Persona full name"} cannot contain numbers`,
+    );
+  });
+
+  it.each([
+    ["name", "R&D @ Home"],
+    ["full_name", "Mary_Jane"],
+  ] as const)("rejects unsupported punctuation in %s", (field, value) => {
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toContain("may only contain letters, spaces, apostrophes, hyphens and periods");
+  });
+
   it("no longer requires a professional title", () => {
     expect(
       validatePersona({ name: "Marketing Mary" }).professional_title,
@@ -117,12 +160,6 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
       .toBeTruthy();
   });
 
-  it("rejects numbers in the display name", () => {
-    expect(validatePersona({ name: "Mary2" }).name).toContain(
-      "cannot contain numbers",
-    );
-  });
-
   it("allows hyphens in areas of expertise", () => {
     expect(
       validatePersona({
@@ -134,6 +171,29 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
       validatePersona({
         name: "Marketing Mary",
         areas_of_expertise: "seo marketing, analytics",
+      }).areas_of_expertise,
+    ).toBeUndefined();
+  });
+
+  it.each(["12345", "SEO, 12345", "SEO, !!!"])(
+    "rejects expertise list entries with no letters: %s",
+    (areasOfExpertise) => {
+      expect(
+        validatePersona({
+          name: "Marketing Mary",
+          areas_of_expertise: areasOfExpertise,
+        }).areas_of_expertise,
+      ).toBe(
+        "Areas of expertise entries must each contain at least one letter",
+      );
+    },
+  );
+
+  it("allows digits and hyphens in an expertise item that contains letters", () => {
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        areas_of_expertise: "SEO-2026, Content Strategy",
       }).areas_of_expertise,
     ).toBeUndefined();
   });

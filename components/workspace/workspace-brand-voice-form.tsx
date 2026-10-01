@@ -50,7 +50,7 @@ const brandVoiceSchema = z.object({
     .string()
     .max(255, "Brand name must be 255 characters or less")
     .refine((value) => !validateBrandName(value), {
-      message: "Brand name may only contain letters and spaces",
+      message: "Brand name must contain at least one letter",
     })
     .optional(),
   about: z
@@ -68,9 +68,12 @@ const brandVoiceSchema = z.object({
     .optional(),
   selling_position: z
     .string()
-    .refine((value) => !validateBrandVoiceText(value, "Unique selling position"), {
-      message: "Unique selling position must contain at least one letter",
-    })
+    .refine(
+      (value) => !validateBrandVoiceText(value, "Unique selling position"),
+      {
+        message: "Unique selling position must contain at least one letter",
+      },
+    )
     .optional(),
   target_audience: z
     .array(z.string())
@@ -80,9 +83,13 @@ const brandVoiceSchema = z.object({
     .optional(),
   brand_voice: z
     .array(z.string())
-    .refine((items) => !validateBrandVoiceItems(items, "Voice characteristics"), {
-      message: "Voice characteristics entries must each contain at least one letter",
-    })
+    .refine(
+      (items) => !validateBrandVoiceItems(items, "Voice characteristics"),
+      {
+        message:
+          "Voice characteristics entries must each contain at least one letter",
+      },
+    )
     .optional(),
   competitors: z
     .array(z.string())
@@ -602,7 +609,10 @@ export function WorkspaceBrandVoiceForm({
                             variant="outline"
                             onClick={() => {
                               if (
-                                addItem("content_strategy", contentStrategyInput)
+                                addItem(
+                                  "content_strategy",
+                                  contentStrategyInput,
+                                )
                               ) {
                                 setContentStrategyInput("");
                               }
@@ -680,7 +690,9 @@ export function WorkspaceBrandVoiceForm({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
-                                  if (addItem("competitors", competitorsInput)) {
+                                  if (
+                                    addItem("competitors", competitorsInput)
+                                  ) {
                                     setCompetitorsInput("");
                                   }
                                 }
