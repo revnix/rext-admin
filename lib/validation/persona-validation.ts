@@ -11,11 +11,11 @@
 /** Bounds every persona field is held to, in one place so a limit can be
  *  changed without hunting through JSX. Lengths are in characters. */
 export const PERSONA_LIMITS = {
-  name: { min: 4, max: 60 },
-  full_name: { min: 4, max: 100 },
+  name: { min: 3, max: 50 },
+  full_name: { min: 3, max: 50 },
   /** Optional, per the meeting decision. Short enough to admit "CEO", long
    *  enough for "Board Certified Dermatologist and Clinical Researcher". */
-  professional_title: { min: 3, max: 80 },
+  professional_title: { min: 3, max: 70 },
   description: { min: 0, max: 200 },
   bio: { min: 0, max: 1000 },
   demographics: { min: 0, max: 300 },
