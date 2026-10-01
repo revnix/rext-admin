@@ -139,6 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: CalendarDays,
           permission: "content.read",
+          prefetch: false,
         },
         {
           title: "Persona",
@@ -147,6 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: User,
           permission: "persona.read",
+          prefetch: false,
         },
         {
           title: "Brand Voice",
@@ -155,6 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Palette,
           permission: "brand_voice.read",
+          prefetch: false,
         },
         {
           title: "Members",
@@ -163,6 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Users,
           permission: "member.read",
+          prefetch: false,
         },
         {
           title: "Integrations",
@@ -171,6 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Plug,
           permission: "integration.read",
+          prefetch: false,
         },
         {
           title: "Settings",
@@ -179,6 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Settings2,
           permission: "workspace.update",
+          prefetch: false,
         },
       ],
     },
@@ -197,7 +203,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       groupLabel: "Personal",
       items: [
-        { title: "Account", url: settingsRoutes.root, icon: User },
+        {
+          title: "Account",
+          url: settingsRoutes.root,
+          icon: User,
+          prefetch: false,
+        },
         {
           title: "Subscription",
           url: "/subscription",
@@ -229,6 +240,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/admin",
           icon: LayoutDashboard,
           anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN],
+          prefetch: false,
         },
         {
           title: "User Management",
@@ -238,48 +250,56 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           // role additionally gets read-only visibility (user.read itself is
           // the self-service permission every account holds, so it can't gate).
           anyRole: [ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.SUPPORT],
+          prefetch: false,
         },
         {
           title: "Subscriptions",
           url: "/admin/subscriptions",
           icon: CreditCard,
           permission: BILLING_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "Refund Management",
           url: "/admin/refunds",
           icon: DollarSign,
           permission: BILLING_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "System Monitoring",
           url: "/admin/monitoring",
           icon: Monitor,
           permission: SECURITY_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "Email Analytics",
           url: "/admin/email-analytics",
           icon: Mail,
           permission: SECURITY_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "Roles & Permissions",
           url: "/admin/roles",
           icon: Shield,
           permission: ROLE_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "Audit Logs",
           url: "/admin/audit-logs",
           icon: FileText,
           permission: AUDIT_PERMISSIONS.READ,
+          prefetch: false,
         },
         {
           title: "Security",
           url: "/admin/security",
           icon: ShieldCheck,
           permission: SECURITY_PERMISSIONS.READ,
+          prefetch: false,
         },
       ],
     },
@@ -348,7 +368,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           asChild
                           className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                         >
-                          <Link href={item.url as Route}>
+                          {/* prefetch passthrough: undefined = framework
+                              default (auto); false = skip viewport prefetch */}
+                          <Link href={item.url as Route} prefetch={item.prefetch}>
                             {Icon && <Icon />}
                             <span className="font-medium">{item.title}</span>
                           </Link>
@@ -499,6 +521,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       >
                         <Link
                           href={item.url as Route}
+                          prefetch={item.prefetch}
                           className="flex items-center gap-2"
                         >
                           {Icon && <Icon />}
@@ -538,7 +561,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         isActive={isActive}
                         className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                       >
-                        <Link href={item.url as Route}>
+                        <Link href={item.url as Route} prefetch={item.prefetch}>
                           {Icon && <Icon />}
                           <span className="font-medium">{item.title}</span>
                         </Link>

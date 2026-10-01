@@ -11,6 +11,17 @@ export interface NavItem {
   items?: NavSubItem[];
 
   /**
+   * Next.js Link viewport prefetch control (production only).
+   * Omit to keep the framework default ("auto" partial prefetch for the
+   * loading boundary) — do this for high-probability destinations only.
+   * Set false for low-probability links: every navigation changes the
+   * router state (the _rsc token), which re-prefetches ALL visible links,
+   * so a full sidebar of default links fires a duplicate _rsc wave per
+   * page view. Hover still prefetches when prefetch is false.
+   */
+  prefetch?: boolean;
+
+  /**
    * Required permission to view this item (single permission)
    */
   permission?: string;
