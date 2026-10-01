@@ -51,19 +51,20 @@ export const WORKSPACE_CONSTRAINTS = {
   URL_PATTERN: /^https?:\/\/.+/,
 } as const;
 
+const workspaceNameSchema = z
+  .string()
+  .trim()
+  .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Name is required")
+  .max(
+    WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH,
+    `Name must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
+  )
+  .refine((name) => /\p{L}/u.test(name), {
+    message: "Workspace name must contain at least one letter",
+  });
+
 export const workspaceFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Name is required")
-    .max(
-      WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH,
-      `Name must be ${WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH} characters or less`,
-    )
-    .regex(
-      /^[A-Za-z0-9 ]+$/,
-      "Name can only contain letters, numbers, and spaces",
-    ),
+  name: workspaceNameSchema,
 
   url: urlSchema,
 
@@ -71,15 +72,7 @@ export const workspaceFormSchema = z.object({
 });
 
 export const createWorkspaceRequestSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)
-    .max(WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH)
-    .regex(
-      /^[A-Za-z0-9 ]+$/,
-      "Name can only contain letters, numbers, and spaces",
-    ),
+  name: workspaceNameSchema,
   title: z
     .string()
     .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH)

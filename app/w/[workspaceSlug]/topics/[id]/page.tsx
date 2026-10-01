@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useTopic } from "@/hooks/use-topics";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import { useWorkspace } from "@/providers/workspace-provider";
 
 type WorkspaceTopicDetailPageProps = {
   params: Promise<{
@@ -25,8 +26,13 @@ type WorkspaceTopicDetailPageProps = {
 export default function WorkspaceTopicDetailPage({
   params,
 }: WorkspaceTopicDetailPageProps) {
-  const { id, workspaceSlug } = use(params);
-  const { data: topic, isLoading, error } = useTopic(id, workspaceSlug);
+  const { id } = use(params);
+  const { workspace } = useWorkspace();
+  // Key topic queries by the canonical workspace UUID so the detail page and
+  // the wizard (which already uses currentWorkspace.id) share one cache entry
+  // instead of fetching the same topic under slug- and UUID-keyed queries.
+  const workspaceUuid = workspace?.id || "";
+  const { data: topic, isLoading, error } = useTopic(id, workspaceUuid);
 
   if (isLoading) {
     return (

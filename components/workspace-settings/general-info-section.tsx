@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -42,10 +41,7 @@ const generalInfoSchema = z.object({
     .trim()
     .min(1, "Workspace name is required")
     .max(200, "Workspace name must be 200 characters or less")
-    .regex(
-      /[A-Za-z]/,
-      "Workspace name must contain at least one letter",
-    ),
+    .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
 
   slug: z.string(),
 
@@ -119,9 +115,7 @@ export function GeneralInfoSection() {
   const onSubmit = async (data: GeneralInfoForm) => {
     try {
       if (!workspace?.id) {
-        throw new Error(
-          "Workspace data is not loaded yet. Please try again.",
-        );
+        throw new Error("Workspace data is not loaded yet. Please try again.");
       }
 
       const response = await apiClient.workspaces.update(workspace.id, {
@@ -145,10 +139,7 @@ export function GeneralInfoSection() {
           response,
         );
 
-        if (
-          workspace.slug &&
-          workspace.slug !== response.workspace.slug
-        ) {
+        if (workspace.slug && workspace.slug !== response.workspace.slug) {
           queryClient.setQueryData(
             ["workspaces", "detail", workspace.slug],
             response,
@@ -175,9 +166,7 @@ export function GeneralInfoSection() {
         router.refresh();
       }
 
-      toast.success(
-        "Workspace settings have been saved successfully.",
-      );
+      toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -222,10 +211,7 @@ export function GeneralInfoSection() {
                     <FormLabel>Workspace Name</FormLabel>
 
                     <FormControl>
-                      <Input
-                        placeholder="My Workspace"
-                        {...field}
-                      />
+                      <Input placeholder="My Workspace" {...field} />
                     </FormControl>
 
                     <FormDescription>
@@ -246,11 +232,7 @@ export function GeneralInfoSection() {
                     <FormLabel>Workspace Slug</FormLabel>
 
                     <FormControl>
-                      <Input
-                        placeholder="my-workspace"
-                        {...field}
-                        disabled
-                      />
+                      <Input placeholder="my-workspace" {...field} disabled />
                     </FormControl>
 
                     <FormDescription>
@@ -291,13 +273,10 @@ export function GeneralInfoSection() {
                 type="submit"
                 className="w-full sm:w-auto"
                 disabled={
-                  form.formState.isSubmitting ||
-                  !form.formState.isDirty
+                  form.formState.isSubmitting || !form.formState.isDirty
                 }
               >
-                {form.formState.isSubmitting
-                  ? "Saving..."
-                  : "Save Changes"}
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </form>
           </Form>
@@ -306,4 +285,3 @@ export function GeneralInfoSection() {
     </Card>
   );
 }
-

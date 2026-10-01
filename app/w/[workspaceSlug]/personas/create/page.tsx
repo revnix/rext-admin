@@ -338,9 +338,9 @@ export default function CreatePersonaPage() {
                       <p className="text-sm text-destructive">{errors.name}</p>
                     ) : (
                       <p className="text-xs text-muted-foreground">
-                        Required. Letters, spaces, apostrophes and hyphens — at
-                        least {PERSONA_LIMITS.name.min} characters, and no
-                        numbers.
+                        Required. Use letters, spaces, apostrophes, hyphens and
+                        periods; numbers aren't allowed. At least{" "}
+                        {PERSONA_LIMITS.name.min} characters.
                       </p>
                     )}
                   </div>

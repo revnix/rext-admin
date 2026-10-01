@@ -262,7 +262,9 @@ export default function AdminUsersPage() {
 
   // Fetch all system roles to populate role filter dropdown
   const { data: systemRolesData } = useQuery({
-    queryKey: ["all-system-roles"],
+    // Same key as /admin/roles — one endpoint, one cache entry (finding #15:
+    // the old ["all-system-roles"] key refetched the same data per page).
+    queryKey: ["roles"],
     queryFn: () => apiClient.roles.list(true),
   });
 

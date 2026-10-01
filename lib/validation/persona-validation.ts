@@ -29,17 +29,10 @@ export const PERSONA_LIMITS = {
   email: { min: 0, max: 320 },
 } as const;
 
-/** A person's name. Apostrophes and hyphens stay: "Mary-Jane O'Brien" is a
- *  name, not a typo, and refusing it would reject real people. */
-const PERSON_NAME_ALLOWED = /^[\p{L} '’-]+$/u;
-
-const CONTAINS_DIGIT = /\p{N}/u;
-
-/** How to describe a charset in the error, so the message says what to do
- *  rather than only that something is wrong. */
-const CHARSET_HELP = new Map<RegExp, string>([
-  [PERSON_NAME_ALLOWED, "letters, spaces, apostrophes and hyphens"],
-]);
+/** Matches the API's allowed characters for both display and full names. */
+const PERSON_NAME_ALLOWED = /^[\p{L} .'’\u0027\-]+$/u;
+const PERSON_NAME_CHARACTERS_MESSAGE =
+  "may only contain letters, spaces, apostrophes, hyphens and periods";
 
 /** Tabs and newlines are fine in a textarea; the rest of C0 and DEL are not.
  *  Checked by code point rather than by regex — a literal control character in
@@ -54,6 +47,7 @@ function hasControlChars(value: string): boolean {
 }
 
 const CONTAINS_LETTER = /\p{L}/u;
+const CONTAINS_DIGIT = /\p{N}/u;
 
 export const LINKEDIN_URL_RE =
   /^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[\p{L}\p{N}_-]+\/?(\?.*)?$/iu;
@@ -118,38 +112,14 @@ export function isServerOwnedAvatar(value: string): boolean {
   );
 }
 
-/** The characters in `value` that `charset` does not admit, de-duplicated, so
- *  the error can point at them instead of only saying "invalid". */
-function charsOutside(value: string, charset: RegExp): string[] {
-  const bad = new Set<string>();
-  for (const char of value) {
-    if (char === "\n" || char === "\r" || char === "\t") continue;
-    if (!charset.test(char)) bad.add(char);
-  }
-  return Array.from(bad);
-}
-
-/** One message for a value that breaks a charset, naming what is wrong and
- *  what the field takes. */
-function charsetError(label: string, value: string, charset: RegExp): string {
-  if (CONTAINS_DIGIT.test(value)) {
-    return `${label} cannot contain numbers and special characters — use ${CHARSET_HELP.get(charset)}`;
-  }
-  const bad = charsOutside(value, charset).filter(
-    (c) => !CONTAINS_DIGIT.test(c),
-  );
-  const named = bad.length ? ` (remove ${bad.join(" ")})` : "";
-  return `${label} may only contain ${CHARSET_HELP.get(charset)}${named}`;
-}
-
 type TextRuleOptions = {
   label: string;
   value: string | undefined;
   required?: boolean;
   min?: number;
   max?: number;
-  /** Which allowlist the field is held to. */
-  charset: RegExp;
+  charset?: RegExp;
+  charsetMessage?: string;
 };
 
 /** One field's error message, or undefined when it passes. */
@@ -160,6 +130,7 @@ export function validateText({
   min = 0,
   max,
   charset,
+  charsetMessage,
 }: TextRuleOptions): string | undefined {
   const text = (value ?? "").trim();
 
@@ -168,9 +139,17 @@ export function validateText({
   if (hasControlChars(text)) {
     return `${label} contains characters that are not allowed`;
   }
-  if (!charset.test(text)) return charsetError(label, text, charset);
+  if (/<\/?[a-z][^>]*>/i.test(text)) {
+    return `${label} cannot contain HTML markup`;
+  }
   if (!CONTAINS_LETTER.test(text)) {
     return `${label} must contain at least one letter`;
+  }
+  if (CONTAINS_DIGIT.test(text)) {
+    return `${label} cannot contain numbers`;
+  }
+  if (charset && !charset.test(text)) {
+    return `${label} ${charsetMessage ?? "contains unsupported characters"}`;
   }
   if (min && text.length < min) {
     return `${label} must be at least ${min} characters`;
@@ -259,8 +238,8 @@ export function validateList({
     return `${label} may list at most ${maxItems} entries`;
   }
 
-  if (requireLetter && !CONTAINS_LETTER.test(raw)) {
-    return `${label} must contain at least one letter`;
+  if (requireLetter && items.some((item) => !CONTAINS_LETTER.test(item))) {
+    return `${label} entries must each contain at least one letter`;
   }
 
   if (strictWords) {
@@ -317,6 +296,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       min: L.name.min,
       max: L.name.max,
       charset: PERSON_NAME_ALLOWED,
+      charsetMessage: PERSON_NAME_CHARACTERS_MESSAGE,
     }),
   );
 
@@ -328,6 +308,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       min: L.full_name.min,
       max: L.full_name.max,
       charset: PERSON_NAME_ALLOWED,
+      charsetMessage: PERSON_NAME_CHARACTERS_MESSAGE,
     }),
   );
 
@@ -390,6 +371,7 @@ export function validatePersona(values: PersonaFormValues): PersonaErrors {
       max: L.areas_of_expertise.max,
       maxItems: L.areas_of_expertise.maxItems,
       strictWords: true,
+      requireLetter: true,
     }),
   );
 

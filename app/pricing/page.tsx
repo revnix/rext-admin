@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Footer, SubscriptionAgreement } from "@/components/layout/footer";
@@ -36,11 +37,16 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const { fetchSubscription } = useSubscriptionStore();
+  const { status } = useSession();
 
   useEffect(() => {
-    // Fetch subscription if user is logged in
-    fetchSubscription();
-  }, [fetchSubscription]);
+    // Fetch subscription only for signed-in visitors. The ungated call fired
+    // the 3-endpoint burst (plus token-refresh retries) as guaranteed 401s
+    // for anonymous users (finding #23, verified at runtime).
+    if (status === "authenticated") {
+      fetchSubscription();
+    }
+  }, [status, fetchSubscription]);
 
   useEffect(() => {
     const loadPlans = async () => {

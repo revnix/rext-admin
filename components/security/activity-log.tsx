@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { workspaceQueries } from "@/lib/query-keys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,8 +91,7 @@ export function ActivityLog() {
 
   // Fetch workspaces to synthesize missing workspace logs
   const { data: workspacesData } = useQuery({
-    queryKey: ["workspaces-for-logs"],
-    queryFn: () => apiClient.workspaces.list(),
+    ...workspaceQueries.list(),
   });
 
   const { data: profileData } = useQuery({

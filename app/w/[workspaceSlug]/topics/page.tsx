@@ -25,18 +25,25 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
 
 export default function WorkspaceTopicsPage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
   const queryClient = useQueryClient();
+
+  // Canonical workspace UUID for query keys — one identifier form across the
+  // list page, detail page, and wizard so they share cache entries instead
+  // of duplicating fetches under slug- and UUID-keyed queries (finding #10).
+  // Note: /api/v1/topic/* currently 404s for ANY identifier — the backend
+  // build has no topic routes registered — which is a separate gap.
+  const workspaceUuid = workspace?.id || "";
 
   // Permissions
   const {
     hasPermission: canCreateTopic,
     isLoading: isCreatePermissionLoading,
-  } = useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
+  } = useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceUuid);
 
   const { isLoading: isReadPermissionLoading } = useWorkspacePermission(
     CONTENT_PERMISSIONS.READ,
-    workspaceId,
+    workspaceUuid,
   );
 
   // Topics data
@@ -44,24 +51,27 @@ export default function WorkspaceTopicsPage() {
     data: topics,
     isLoading: isTopicsLoading,
     error,
-    refetch,
-  } = useTopics(workspaceId);
+  } = useTopics(workspaceUuid);
 
   // Handlers
   const handleRetry = async () => {
     try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["topics", workspaceId] }),
-        refetch(),
-      ]);
+      // invalidateQueries already refetches active queries; a parallel
+      // refetch() of the same key only duplicates work (React Query
+      // coalesces them at the network layer).
+      await queryClient.invalidateQueries({
+        queryKey: ["topics", workspaceUuid],
+      });
     } catch (err) {
       log.error("Retry failed:", err);
     }
   };
 
   const handleForceRefresh = () => {
-    queryClient.clear();
-    queryClient.invalidateQueries();
+    // Scope the hard refresh to topics queries. The previous clear() +
+    // blanket invalidateQueries() wiped every cache in the app and, as
+    // verified at runtime, issued no refetch at all — a no-op button.
+    queryClient.invalidateQueries({ queryKey: ["topics"] });
   };
 
   // 🧩 Wait for all permission states before showing layout
