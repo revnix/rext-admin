@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import { workspaceQueries } from "@/lib/query-keys";
 import { EmailFailuresTable } from "@/components/admin/email/email-failures-table";
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
@@ -98,12 +99,11 @@ export default function EmailAnalyticsPage() {
 
   // Fetch workspaces list (for filter dropdown)
   const { data: workspaces } = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: async () => {
-      const response = await apiClient.workspaces.list();
-      return response.workspaces as Array<{ id: string; name: string }>;
-    },
-    select: (data) => (Array.isArray(data) ? data : []),
+    ...workspaceQueries.list(),
+    select: (data) =>
+      Array.isArray(data?.workspaces)
+        ? (data.workspaces as Array<{ id: string; name: string }>)
+        : [],
   });
 
   // Build query params with optional workspace filter

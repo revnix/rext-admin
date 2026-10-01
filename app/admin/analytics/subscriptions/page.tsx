@@ -227,40 +227,32 @@ export default function SubscriptionAnalyticsPage() {
   }, []);
 
   // Fetch data
-  const fetchAnalytics = useCallback(
-    async (currentChurnPeriod: number = churnPeriod) => {
-      try {
-        setLoading(true);
-        const requestId = ++churnRequestRef.current;
+  // Churn is intentionally NOT part of this bundle — the effect below owns
+  // churn so it isn't fetched twice per load/period change (finding #19).
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const [overviewData, revenueData, churnData, trialData] =
-          await Promise.all([
-            apiClient.adminAnalytics.getOverview(),
-            apiClient.adminAnalytics.getRevenueMetrics(),
-            apiClient.adminAnalytics.getChurnAnalysis(currentChurnPeriod),
-            apiClient.adminAnalytics.getTrialConversion(),
-          ]);
+      const [overviewData, revenueData, trialData] = await Promise.all([
+        apiClient.adminAnalytics.getOverview(),
+        apiClient.adminAnalytics.getRevenueMetrics(),
+        apiClient.adminAnalytics.getTrialConversion(),
+      ]);
 
-        setOverview(overviewData);
-        setRevenue(revenueData);
-        setTrialConversion(trialData);
-
-        if (requestId === churnRequestRef.current) {
-          setChurn(churnData);
-        }
-      } catch (_error) {
-        toast.error("Failed to load analytics data. Please try again.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [churnPeriod],
-  );
+      setOverview(overviewData);
+      setRevenue(revenueData);
+      setTrialConversion(trialData);
+    } catch (_error) {
+      toast.error("Failed to load analytics data. Please try again.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     // Initial fetch
-    fetchAnalytics(30);
+    fetchAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAnalytics]);
 
@@ -273,7 +265,8 @@ export default function SubscriptionAnalyticsPage() {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchAnalytics(churnPeriod);
+    fetchAnalytics();
+    fetchChurnData(churnPeriod);
   };
 
   if (loading) {
@@ -302,7 +295,12 @@ export default function SubscriptionAnalyticsPage() {
             <p className="text-muted-foreground mb-4">
               Unable to retrieve analytics data
             </p>
-            <Button onClick={() => fetchAnalytics(churnPeriod)}>
+            <Button
+              onClick={() => {
+                fetchAnalytics();
+                fetchChurnData(churnPeriod);
+              }}
+            >
               Try Again
             </Button>
           </CardContent>

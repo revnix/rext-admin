@@ -193,13 +193,13 @@ function WordPressForm({
               <FormControl>
                 <Input
                   type="url"
-                  placeholder="https://yoursite.com"
+                  placeholder="https://wordpress.org"
                   {...field}
                 />
               </FormControl>
               <p className="text-[0.8rem] text-muted-foreground">
                 Must start with https:// and include a valid domain (e.g.
-                yoursite.com)
+                wordpress.org)
               </p>
               <FormMessage />
             </FormItem>
@@ -232,7 +232,7 @@ function WordPressForm({
               <FormLabel>API Endpoint *</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="https://yoursite.com/wp-json/rext-ai/v1/"
+                  placeholder="https://wordpress.org/wp-json/rext-ai/v1/"
                   {...field}
                 />
               </FormControl>

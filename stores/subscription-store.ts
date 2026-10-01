@@ -27,10 +27,7 @@ import {
   InvoiceSchema,
   SubscriptionListResponseSchema,
 } from "@/schemas/subscription-schemas";
-import {
-  ensureLemonSqueezy,
-  getLemonSqueezyClient,
-} from "@/lib/lemonsqueezy/get-client";
+import { ensureLemonSqueezy } from "@/lib/lemonsqueezy/get-client";
 import {
   getPurchaseState,
   type PurchaseState,
@@ -38,7 +35,30 @@ import {
 import { log } from "@/lib/logger";
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 
+/**
+ * Single-flight promise for fetchSubscription — concurrent callers share one
+ * network burst instead of each firing the 3-endpoint fan-out.
+ */
 let inFlightSubscriptionFetch: Promise<void> | null = null;
+
+/**
+ * Single-flight promise for fetchUsage — concurrent callers share one request.
+ */
+let inFlightUsageFetch: Promise<void> | null = null;
+
+/**
+ * In-flight + freshness tracking for fetchCredits, keyed by credits scope
+ * (workspace UUID, "" for account-level credits).
+ */
+const inFlightCreditsFetches = new Map<string, Promise<void>>();
+const creditsFetchedAt = new Map<string, number>();
+
+/**
+ * How long a successful subscription/credits fetch stays fresh. Callers that
+ * need newer data must pass { force: true } (e.g. checkout settlement).
+ */
+const SUBSCRIPTION_FETCH_TTL_MS = 60 * 1000;
+const CREDITS_FETCH_TTL_MS = 30 * 1000;
 
 /**
  * Resolve the credits scope for the current page.
@@ -106,8 +126,15 @@ interface SubscriptionStore {
 
   /**
    * Fetch current subscription and usage stats
+   *
+   * @param options.force - Bypass the freshness TTL (post-mutation/checkout)
+   * @param options.planOnly - Fetch only the current plan; leaves usage/credits
+   *   untouched. For settlement polling that only needs the plan status.
    */
-  fetchSubscription: (options?: { force?: boolean }) => Promise<void>;
+  fetchSubscription: (options?: {
+    force?: boolean;
+    planOnly?: boolean;
+  }) => Promise<void>;
 
   /**
    * Fetch usage stats only
@@ -266,7 +293,54 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       // SUBSCRIPTION ACTIONS
       // ========================================
 
-      fetchSubscription: async () => {
+      fetchSubscription: async (options) => {
+        // Deduplicate concurrent callers: they all await the same burst.
+        if (inFlightSubscriptionFetch) {
+          return inFlightSubscriptionFetch;
+        }
+
+        // Skip when the last successful fetch is still fresh (unless forced)
+        // so mount-effects across the page tree don't re-fire the burst.
+        const fetchedAt = get().subscriptionFetchedAt;
+        if (
+          !options?.force &&
+          fetchedAt !== null &&
+          Date.now() - fetchedAt < SUBSCRIPTION_FETCH_TTL_MS
+        ) {
+          return Promise.resolve();
+        }
+
+        // Plan-only mode: used by checkout settlement polling, which only
+        // needs the subscription status each tick — fetching usage/credits
+        // per 1.5s tick tripled the polling traffic (finding #24).
+        if (options?.planOnly) {
+          inFlightSubscriptionFetch = (async () => {
+            set({ isLoading: true, error: null });
+            try {
+              const nextSubscription =
+                await apiClient.subscriptions.getCurrentPlan();
+              set({
+                subscription: nextSubscription,
+                subscriptionFetchedAt: Date.now(),
+                isLoading: false,
+                error: null,
+              });
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Failed to fetch subscription";
+
+              set({ isLoading: false, error: errorMessage });
+              throw error;
+            } finally {
+              inFlightSubscriptionFetch = null;
+            }
+          })();
+
+          return inFlightSubscriptionFetch;
+        }
+
         inFlightSubscriptionFetch = (async () => {
           set({ isLoading: true, error: null });
 
@@ -313,7 +387,11 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
               usage: nextUsage,
               // null = skipped or failed — keep the credits already displayed
               ...(nextCredits ? { credits: nextCredits } : {}),
-              subscriptionFetchedAt: Date.now(),
+              // Only stamp freshness on a successful plan fetch so failed
+              // fetches are not TTL-cached and callers can retry promptly.
+              ...(subscriptionResult.status === "fulfilled"
+                ? { subscriptionFetchedAt: Date.now() }
+                : {}),
               isLoading: false,
               error:
                 subscriptionResult.status === "rejected"
@@ -337,33 +415,69 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       },
 
       fetchUsage: async () => {
-        try {
-          const usage = await apiClient.subscriptions.getUsageStats();
-          set({ usage });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch usage stats";
-
-          set({ error: errorMessage });
-          throw error;
+        // Deduplicate concurrent callers — they share one request.
+        if (inFlightUsageFetch) {
+          return inFlightUsageFetch;
         }
+
+        inFlightUsageFetch = (async () => {
+          try {
+            const usage = await apiClient.subscriptions.getUsageStats();
+            set({ usage });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch usage stats";
+
+            set({ error: errorMessage });
+            throw error;
+          } finally {
+            inFlightUsageFetch = null;
+          }
+        })();
+
+        return inFlightUsageFetch;
       },
 
       fetchCredits: async (workspaceId?: string) => {
-        try {
-          const credits = await apiClient.subscriptions.getCredits(workspaceId);
-          set({ credits });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch credit balance";
-
-          set({ error: errorMessage });
-          throw error;
+        // Deduplicate concurrent callers and throttle repeat fetches per
+        // credits scope (workspace UUID, or "" for account-level credits).
+        // Live updates arrive via patchCredits (SSE), so a short TTL is safe.
+        const scopeKey = workspaceId ?? "";
+        const inFlight = inFlightCreditsFetches.get(scopeKey);
+        if (inFlight) {
+          return inFlight;
         }
+        const fetchedAt = creditsFetchedAt.get(scopeKey);
+        if (
+          fetchedAt !== undefined &&
+          Date.now() - fetchedAt < CREDITS_FETCH_TTL_MS
+        ) {
+          return Promise.resolve();
+        }
+
+        const request = (async () => {
+          try {
+            const credits =
+              await apiClient.subscriptions.getCredits(workspaceId);
+            set({ credits });
+            creditsFetchedAt.set(scopeKey, Date.now());
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch credit balance";
+
+            set({ error: errorMessage });
+            throw error;
+          } finally {
+            inFlightCreditsFetches.delete(scopeKey);
+          }
+        })();
+
+        inFlightCreditsFetches.set(scopeKey, request);
+        return request;
       },
 
       patchCredits: (currentCredits: number) => {

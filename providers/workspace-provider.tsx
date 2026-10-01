@@ -77,11 +77,6 @@ export function WorkspaceProvider({
       workspaceId,
     );
 
-  // Load workspace permissions (Phase 1 integration)
-  // Triggers permission loading and Zustand store sync via internal hook effects.
-  // Permissions and role are consumed by WorkspacePermissionProvider and individual components.
-  useWorkspacePermissions(workspaceId);
-
   // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
@@ -106,6 +101,19 @@ export function WorkspaceProvider({
   });
 
   const workspace = workspaceResponse?.workspace;
+
+  // Load workspace permissions (Phase 1 integration)
+  // Triggers permission loading and Zustand store sync via internal hook effects.
+  // Permissions and role are consumed by WorkspacePermissionProvider and individual components.
+  //
+  // Key by the workspace UUID once resolved so every consumer (this provider,
+  // the /w page rows, permission dialogs) shares ONE cache entry. While the
+  // detail query is loading we wait instead of fetching under the slug key —
+  // that produced a duplicate permissions request (slug + UUID) per page.
+  const permissionIdentifier = isUuid
+    ? workspaceId
+    : (workspace?.id || undefined);
+  useWorkspacePermissions(permissionIdentifier);
 
   // Immediately set a preliminary workspace in store using the slug from URL
   // This ensures workspace context is available even before API call completes

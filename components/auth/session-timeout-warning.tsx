@@ -241,7 +241,10 @@ export function SessionTimeoutWarning() {
       if (document.visibilityState === "visible") {
         void checkActiveStatus();
       }
-    }, 10000);
+      // 60s cadence: a 10s heartbeat measured ~360 profile GETs/hour/tab
+      // (verified 2026-09-30), duplicating data the ["profile"] query
+      // already caches. Remote suspension/ban detection stays within a minute.
+    }, 60000);
 
     const handleResume = () => {
       if (document.visibilityState === "visible") {
