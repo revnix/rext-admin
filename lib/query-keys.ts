@@ -21,10 +21,17 @@ import { apiClient } from "@/lib/api-client";
 export const workspaceQueries = {
   all: () => ["workspaces"] as const,
   lists: () => [...workspaceQueries.all(), "list"] as const,
+  /**
+   * The single workspace-list query. Keyed exactly ["workspaces"] so every
+   * consumer (dashboard, /w, switcher, admin filters, auto-select) shares one
+   * cache entry — previous per-caller keys ("workspaces", "workspaces/switcher",
+   * "workspaces-for-logs") caused parallel duplicate GET /workspaces/all.
+   */
   list: () =>
     queryOptions({
-      queryKey: [...workspaceQueries.lists()],
+      queryKey: [...workspaceQueries.all()],
       queryFn: () => apiClient.workspaces.list(),
+      staleTime: 5 * 60 * 1000, // 5 minutes
     }),
   details: () => [...workspaceQueries.all(), "detail"] as const,
   detail: (workspaceId: string) =>
@@ -42,29 +49,10 @@ export const workspaceQueries = {
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
     }),
-  permissions: (workspaceId: string) =>
-    queryOptions({
-      queryKey: [
-        ...workspaceQueries.all(),
-        "permissions",
-        workspaceId,
-      ] as const,
-      queryFn: () => apiClient.workspaces.getPermissions(workspaceId),
-    }),
-  stats: (workspaceId: string) =>
-    queryOptions({
-      queryKey: [...workspaceQueries.all(), "stats", workspaceId] as const,
-      queryFn: () => apiClient.workspaces.getStats(workspaceId),
-    }),
   availableRoles: () =>
     queryOptions({
       queryKey: [...workspaceQueries.all(), "available-roles"] as const,
       queryFn: () => apiClient.workspaces.getAvailableRoles(),
-    }),
-  switcher: () =>
-    queryOptions({
-      queryKey: [...workspaceQueries.all(), "switcher"] as const,
-      queryFn: () => apiClient.workspaces.list(),
     }),
   brandVoice: (workspaceId: string) =>
     queryOptions({
@@ -185,15 +173,6 @@ export const impersonationQueries = {
 // ============================================================================
 // OAUTH QUERIES
 // ============================================================================
-
-export const oauthQueries = {
-  all: () => ["oauth-accounts"] as const,
-  accounts: () =>
-    queryOptions({
-      queryKey: oauthQueries.all(),
-      queryFn: () => apiClient.profile.get(), // Adjust based on actual API
-    }),
-};
 
 // ============================================================================
 // SUBSCRIPTION QUERIES

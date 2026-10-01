@@ -52,7 +52,7 @@ export function WorkspaceSwitcher() {
 
   // Fetch all workspaces for the switcher
   const { data: workspaceListResponse, isLoading } = useQuery(
-    workspaceQueries.switcher(),
+    workspaceQueries.list(),
   );
 
   const workspaces = workspaceListResponse?.workspaces || [];

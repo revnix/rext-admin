@@ -48,12 +48,10 @@ import {
   SECURITY_PERMISSIONS,
 } from "@/lib/permissions";
 import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
-import { usePermissionStore } from "@/stores/permission-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import type { NavGroup } from "@/types/navigation";
-import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import {
   Popover,
   PopoverContent,
@@ -82,12 +80,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
-  const { workspacePermissions } = usePermissionStore();
-  const _storeRole = currentWorkspace
-    ? (workspacePermissions[currentWorkspace.id]?.role ??
-      workspacePermissions[currentWorkspace.slug]?.role)
-    : undefined;
-  const { role: _fetchedRole } = useWorkspacePermissions(currentWorkspace?.id);
+  // Workspace permissions are fetched once by WorkspaceProvider (keyed by
+  // the workspace UUID) and consumed via useWorkspacePermission()/the
+  // permission store. Do not add a useWorkspacePermissions() call here — it
+  // duplicated the permissions request under a different cache key and its
+  // result was unused.
   const { state: sidebarState } = useSidebar();
   const { isLimitReached } = useResourceLimit("workspaces");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);

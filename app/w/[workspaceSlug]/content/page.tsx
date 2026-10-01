@@ -30,8 +30,13 @@ import type { Route } from "next";
  * - Handles permission & workspace consistency gracefully
  */
 export default function WorkspaceContentPage() {
-  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Canonical workspace UUID for query keys and mutation payloads — the
+  // content editor invalidates ["content", <uuid>]; keying these queries by
+  // the URL slug meant the invalidation never matched (finding #10).
+  const workspaceId = workspace?.id || "";
 
   // Workspace permissions
   const { hasPermission: canCreateContent, isLoading: isCreateLoading } =

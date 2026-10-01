@@ -50,7 +50,10 @@ export function useWorkspacePermissions(workspaceId?: string) {
       }
     },
     enabled: !!workspaceId,
-    staleTime: 10 * 1000, // 10 seconds for quick reactive updates on navigation
+    // 60s staleness window: permissions rarely change and role dialogs
+    // invalidate the ["workspace-permissions"] prefix on mutation, so the old
+    // 10s window only caused refetches on every navigation/tab focus.
+    staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -72,11 +75,23 @@ export function useWorkspacePermissions(workspaceId?: string) {
         userRole: data.user_role,
       });
 
-      setWorkspacePermissions(workspaceId, {
+      const entry = {
         workspaceId: data.workspace_id,
         role: data.user_role, // Single role from Phase 1 backend
         permissions: data.permissions,
-      });
+      };
+
+      // Index the entry under every identifier a consumer may use — the
+      // request identifier, the canonical workspace UUID, and the slug.
+      // Consumers across the app pass either form to useWorkspacePermission;
+      // aliasing keeps all lookups hitting the same fetched data instead of
+      // re-fetching per identifier form.
+      const keys = new Set([workspaceId]);
+      if (data.workspace_id) keys.add(data.workspace_id);
+      if (data.workspace_slug) keys.add(data.workspace_slug);
+      for (const key of keys) {
+        setWorkspacePermissions(key, entry);
+      }
     }
   }, [data, workspaceId, setWorkspacePermissions]);
 

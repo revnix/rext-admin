@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { workspaceQueries } from "@/lib/query-keys";
 import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
@@ -52,9 +53,7 @@ export default function DashboardPage() {
 
   // Data Fetching: Total Workspaces
   const { data: workspacesResponse } = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: () => apiClient.workspaces.list(),
-    staleTime: 5 * 60 * 1000,
+    ...workspaceQueries.list(),
     throwOnError: true,
     enabled: !!currentWorkspace, // Only fetch if we have workspaces generally
   });

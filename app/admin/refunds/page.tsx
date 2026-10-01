@@ -145,7 +145,6 @@ export default function RefundManagementPage() {
   const fetchRefunds = useCallback(async () => {
     try {
       setLoading(true);
-      setRefreshKey((prev) => prev + 1);
 
       const response = await apiClient.adminRefunds.list({
         page: 1,
@@ -279,7 +278,16 @@ export default function RefundManagementPage() {
               <ExternalLink className="h-4 w-4 mr-2" />
               LemonSqueezy
             </Button>
-            <Button onClick={fetchRefunds} disabled={loading}>
+            <Button
+              onClick={() => {
+                // Bump the table's refreshKey only on explicit refresh —
+                // bumping inside fetchRefunds re-triggered the table's load
+                // effect on the initial mount and double-fetched the list.
+                setRefreshKey((prev) => prev + 1);
+                fetchRefunds();
+              }}
+              disabled={loading}
+            >
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
               />

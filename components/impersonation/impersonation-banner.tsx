@@ -38,7 +38,12 @@ export function ImpersonationBanner() {
     isError,
   } = useQuery({
     ...impersonationQueries.status(),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // Only keep polling while impersonation is actually active. The old
+    // unconditional 30s interval polled forever for every non-impersonating
+    // user on every page (verified: 2 req/min/tab). Detection still works
+    // via the initial fetch and focus refetches.
+    refetchInterval: (query) =>
+      query.state.data?.is_impersonating ? 30000 : false,
     staleTime: 20000, // Consider stale after 20 seconds
     retry: false, // Don't retry if endpoint doesn't exist (404)
     // Gracefully handle errors (endpoint not implemented yet)

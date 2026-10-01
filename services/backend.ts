@@ -161,9 +161,9 @@ export class BackendService {
       ? `/api/v1/topic/generate-topic?workspace_id=${encodeURIComponent(workspaceId)}`
       : "/api/v1/topic/generate-topic";
 
-    // Request deduplication based on form data
+    // Request deduplication based on endpoint + full form payload
     if (this.config.enableDeduplication) {
-      const dedupeKey = this.createDeduplicationKey(payload);
+      const dedupeKey = this.createDeduplicationKey(endpoint, payload);
       const existingRequest = this.requestDeduplicationMap.get(dedupeKey);
       if (existingRequest) {
         this.log.debug("Using deduplicated request", { requestId });
@@ -760,19 +760,19 @@ export class BackendService {
   }
 
   /**
-   * Create a deduplication key for requests
+   * Create a deduplication key for requests.
+   *
+   * The key covers the full workspace-scoped endpoint and the complete
+   * serialized payload. The previous implementation (btoa of a 4-field
+   * subset, truncated to 16 chars) collapsed every request onto one
+   * constant key — a second distinct generation could silently return the
+   * first one's response — and btoa() threw on non-Latin1 input.
    */
   private createDeduplicationKey(
+    endpoint: string,
     payload: BackendTopicGenerationPayload,
   ): string {
-    // Create a hash-like key based on important payload fields
-    const keyData = {
-      industry: payload.industry,
-      subject: payload.subject,
-      num_topics: payload.num_topics,
-      purpose: payload.purpose,
-    };
-    return btoa(JSON.stringify(keyData)).slice(0, 16);
+    return `${endpoint}:${JSON.stringify(payload)}`;
   }
 
   /**

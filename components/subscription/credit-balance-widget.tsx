@@ -29,6 +29,8 @@ export function CreditBalanceWidget({
   useEffect(() => {
     // Wait for the real workspace id — the provider briefly sets id: "" while loading
     if (onWorkspacePage && !workspaceId) return;
+    // The store single-flights and TTL-throttles this call per credits scope,
+    // so remounts on navigation are served from the recent fetch.
     fetchCredits(workspaceId).catch(() => {});
   }, [onWorkspacePage, workspaceId, fetchCredits]);
 
