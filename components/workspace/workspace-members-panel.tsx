@@ -399,6 +399,12 @@ export function WorkspaceMembersPanel({
       {/* Change Role Dialog */}
       <WorkspaceChangeRoleDialog
         member={memberToChangeRole}
+        // The member's current role must not appear as a "new role" option
+        // in the dropdown — without this the dialog's role.id !== currentRoleId
+        // filter compares against undefined and lets it through.
+        currentRoleId={
+          memberToChangeRole?.role?.id || memberToChangeRole?.roles?.[0]?.id
+        }
         open={!!memberToChangeRole}
         onOpenChange={(open) => !open && setMemberToChangeRole(null)}
         onRoleChanged={() => refetch()}
