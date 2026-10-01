@@ -34,9 +34,13 @@ type WorkspaceContentDetailPageProps = {
 export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
-  const { workspaceSlug, id } = use(params);
-  const { workspaceId } = useWorkspace();
+  const { id } = use(params);
+  const { workspace } = useWorkspace();
   const router = useRouter();
+
+  // Canonical workspace UUID — keeps the detail query key in the same cache
+  // family as the list page and the editor's invalidation (finding #10).
+  const workspaceId = workspace?.id || "";
 
   // Fetch content details using hook
   const {
@@ -219,7 +223,9 @@ export default function WorkspaceContentDetailPage({
               variant="outline"
               className="h-10 px-4 rounded-xl border-slate-200"
               onClick={() =>
-                router.push(workspaceRoutes.content(workspaceSlug) as Route)
+                router.push(
+                  workspaceRoutes.content(workspace?.slug || "") as Route,
+                )
               }
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -267,7 +273,9 @@ export default function WorkspaceContentDetailPage({
               </p>
               <Button
                 onClick={() =>
-                  router.push(workspaceRoutes.content(workspaceSlug) as Route)
+                  router.push(
+                    workspaceRoutes.content(workspace?.slug || "") as Route,
+                  )
                 }
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />

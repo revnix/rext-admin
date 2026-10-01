@@ -96,10 +96,14 @@ export function useSubscriptionSync() {
       while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
         if (signal?.aborted) return false;
 
-        await fetchSubscription();
+        // Poll the plan status only — usage/credits don't change the
+        // settlement verdict and the old full burst tripled per-tick traffic.
+        await fetchSubscription({ force: true, planOnly: true });
         const latest = useSubscriptionStore.getState().subscription;
 
         if (latest && READY_STATUSES.has(latest?.subscription?.status || "")) {
+          // Settled: refresh usage/credits once, then stop polling.
+          await fetchSubscription({ force: true });
           return true;
         }
 
@@ -127,12 +131,14 @@ export function useSubscriptionSync() {
       while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
         if (signal?.aborted) return false;
 
-        await fetchSubscription();
+        // Plan-only polling (see waitForSubscriptionSync).
+        await fetchSubscription({ force: true, planOnly: true });
         const latest = getPurchaseState(
           useSubscriptionStore.getState().subscription,
         );
 
         if (isPurchaseSettled(baseline, latest)) {
+          await fetchSubscription({ force: true });
           return true;
         }
 

@@ -57,9 +57,7 @@ export default function WorkspacePage() {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: () => apiClient.workspaces.list(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.list(),
   });
 
   // Transform workspaces to include title field and handle API response structure

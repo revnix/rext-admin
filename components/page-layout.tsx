@@ -101,15 +101,11 @@ export function PageLayout({
 
   const subscription = useSubscriptionStore((state) => state.subscription);
   const usage = useSubscriptionStore((state) => state.usage);
-  const fetchSubscription = useSubscriptionStore(
-    (state) => state.fetchSubscription,
-  );
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchSubscription();
-    }
-  }, [isAuthenticated, fetchSubscription]);
+  // Note: subscription data is fetched by the gated consumers in the chrome
+  // (useResourceLimit in AppSidebar/WorkspaceSwitcher) via the subscription
+  // store, which single-flights and TTL-throttles the burst. Do not add an
+  // ungated fetchSubscription() effect here — it re-fired the 3-request
+  // burst on every page navigation.
 
   const planName =
     subscription?.subscription?.plan_display_name ||
@@ -431,7 +427,9 @@ export function PageLayout({
                   </DropdownMenuLabel>
 
                   <div className="sm:hidden px-0.5 pb-1">
-                    <CreditBalanceWidget variant="row" />
+                    {activeDropdown === "profile" && (
+                      <CreditBalanceWidget variant="row" />
+                    )}
                   </div>
 
                   <DropdownMenuSeparator className="bg-border my-1" />

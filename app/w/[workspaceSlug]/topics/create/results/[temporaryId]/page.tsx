@@ -68,9 +68,11 @@ export default function ResultsPage() {
   } = useTopicBuilderStore();
   const generateMoreMutation = useTopicGenerationMutation();
 
-  // Prefer workspace slug from URL params (most reliable), fallback to currentWorkspace
-  const workspaceId = urlWorkspaceSlug || currentWorkspace?.id || "";
-  const _isWorkspaceLoading = !urlWorkspaceSlug && !currentWorkspace;
+  // Mutations (save / bulk-save / generate-more) must receive the workspace
+  // UUID — sending the URL slug as workspace_id produces 404s/wrong-scope
+  // saves. The slug stays reserved for routing (router.push below).
+  const workspaceId = currentWorkspace?.id || "";
+  const _isWorkspaceLoading = !currentWorkspace;
 
   // Use workspace ID from URL or current workspace
   const bulkSaveMutation = useTopicBulkSaveMutation(

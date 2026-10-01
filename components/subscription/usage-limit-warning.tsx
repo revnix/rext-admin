@@ -373,6 +373,10 @@ export function useResourceLimit(
   const [usagePercentage, setUsagePercentage] = useState(0);
 
   useEffect(() => {
+    // Both store actions single-flight their requests, so multiple mounted
+    // consumers (sidebar + switchers + usage warnings) share one fetch.
+    // fetchSubscription's burst already includes usage stats; the standalone
+    // fetchUsage only covers the case where the plan landed but usage failed.
     if (!usage) {
       void fetchUsage();
     }
