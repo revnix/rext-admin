@@ -111,9 +111,7 @@ export default function CheckoutSuccessPage() {
         setIsRefreshing(true);
         setSyncTimedOut(false);
         const synced = await waitForSubscriptionSync(controller.signal);
-        if (synced && !controller.signal.aborted) {
-          router.replace("/" as Route);
-        } else if (!controller.signal.aborted) {
+        if (!synced && !controller.signal.aborted) {
           setSyncTimedOut(true);
         }
       } catch {
@@ -127,7 +125,7 @@ export default function CheckoutSuccessPage() {
 
     refreshSubscription();
     return () => controller.abort();
-  }, [router, waitForSubscriptionSync]);
+  }, [waitForSubscriptionSync]);
   const handleGoToDashboard = () => {
     router.push("/" as Route);
   };

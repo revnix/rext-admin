@@ -17,9 +17,18 @@
 
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { toast } from "sonner";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { CheckoutDialog } from "@/components/subscription/checkout-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/subscription/payment-method-dialog";
 import {
   getPurchaseState,
@@ -32,10 +41,27 @@ import {
   ensureLemonSqueezy,
   setCheckoutEventHandler,
 } from "@/lib/lemonsqueezy/get-client";
+import type { Route } from "next";
 
 export function LemonSqueezyProvider() {
   const router = useRouter();
   const { waitForPurchaseSettled } = useSubscriptionSync();
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [purchaseStatus, setPurchaseStatus] = useState<
+    "confirming" | "active" | "unconfirmed"
+  >("confirming");
+  const purchaseSyncRef = useRef<AbortController | null>(null);
+
+  const cancelPurchaseDialog = () => {
+    purchaseSyncRef.current?.abort();
+    purchaseSyncRef.current = null;
+    setPurchaseDialogOpen(false);
+  };
+
+  const goToDashboard = () => {
+    cancelPurchaseDialog();
+    router.push("/" as Route);
+  };
 
   useEffect(() => {
     setCheckoutEventHandler((event) => {
@@ -55,9 +81,10 @@ export function LemonSqueezyProvider() {
         "lemonsqueezy-loading",
       );
 
-      const toastId = toast.loading("Payment received", {
-        description: "Activating your subscription…",
-      });
+      const controller = new AbortController();
+      purchaseSyncRef.current = controller;
+      setPurchaseStatus("confirming");
+      setPurchaseDialogOpen(true);
 
       // Payment succeeds on LemonSqueezy's side before their webhook reaches
       // our backend, so the subscription is briefly stale. The webhook is what
@@ -70,8 +97,9 @@ export function LemonSqueezyProvider() {
         useSubscriptionStore.getState().checkoutBaseline ??
         getPurchaseState(null);
 
-      waitForPurchaseSettled(baseline)
+      waitForPurchaseSettled(baseline, controller.signal)
         .then((synced) => {
+          if (controller.signal.aborted) return;
           if (synced) {
             const latest =
               useSubscriptionStore.getState().subscription?.subscription;
@@ -81,35 +109,32 @@ export function LemonSqueezyProvider() {
               status: latest?.status ?? undefined,
             });
 
-            toast.success("You're all set", {
-              id: toastId,
-              description: "Your subscription is active.",
-            });
-            router.replace("/");
+            setPurchaseStatus("active");
             return;
           }
 
           // Never claim success we could not observe. Payment may well have
           // gone through, but the webhook has not reached us.
-          toast.warning("Still confirming your payment", {
-            id: toastId,
-            description:
-              "Your payment went through, but we haven't been able to confirm activation yet. Refresh in a moment, or contact support if it doesn't appear.",
-          });
+          setPurchaseStatus("unconfirmed");
         })
         .catch((error) => {
+          if (controller.signal.aborted) return;
           log.error("Failed to sync subscription after checkout", error);
           // The payment itself succeeded — never imply otherwise.
-          toast.info("Payment received", {
-            id: toastId,
-            description:
-              "We couldn't confirm activation just yet. Refresh in a moment.",
-          });
+          setPurchaseStatus("unconfirmed");
+        })
+        .finally(() => {
+          if (purchaseSyncRef.current === controller) {
+            purchaseSyncRef.current = null;
+          }
         });
     });
 
-    return () => setCheckoutEventHandler(null);
-  }, [router, waitForPurchaseSettled]);
+    return () => {
+      setCheckoutEventHandler(null);
+      purchaseSyncRef.current?.abort();
+    };
+  }, [waitForPurchaseSettled]);
 
   return (
     <>
@@ -120,6 +145,42 @@ export function LemonSqueezyProvider() {
       />
       <CheckoutDialog />
       <PaymentMethodDialog />
+      <Dialog
+        open={purchaseDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) cancelPurchaseDialog();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {purchaseStatus === "confirming" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : purchaseStatus === "active" ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              ) : null}
+              {purchaseStatus === "confirming"
+                ? "Confirming your subscription"
+                : purchaseStatus === "active"
+                  ? "Subscription active"
+                  : "Payment received"}
+            </DialogTitle>
+            <DialogDescription>
+              {purchaseStatus === "confirming"
+                ? "Your payment was received. We're waiting for the subscription to activate."
+                : purchaseStatus === "active"
+                  ? "Your subscription is active and ready to use."
+                  : "Your payment was received, but activation could not be confirmed yet. Check your billing page in a moment."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelPurchaseDialog}>
+              Cancel
+            </Button>
+            <Button onClick={goToDashboard}>Go to Dashboard</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
