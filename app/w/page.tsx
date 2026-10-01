@@ -140,6 +140,9 @@ export default function WorkspacePage() {
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href={`/w/${row.slug}/settings` as Route}
+                // Every visible row prefetched its settings page on viewport;
+                // the user clicks at most one row, so prefetch on hover only.
+                prefetch={false}
                 className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer truncate"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
               >
