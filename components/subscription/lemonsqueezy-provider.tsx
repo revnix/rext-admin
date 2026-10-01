@@ -16,6 +16,7 @@
  */
 
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { CheckoutDialog } from "@/components/subscription/checkout-dialog";
@@ -33,6 +34,7 @@ import {
 } from "@/lib/lemonsqueezy/get-client";
 
 export function LemonSqueezyProvider() {
+  const router = useRouter();
   const { waitForPurchaseSettled } = useSubscriptionSync();
 
   useEffect(() => {
@@ -83,6 +85,7 @@ export function LemonSqueezyProvider() {
               id: toastId,
               description: "Your subscription is active.",
             });
+            router.replace("/");
             return;
           }
 
@@ -106,7 +109,7 @@ export function LemonSqueezyProvider() {
     });
 
     return () => setCheckoutEventHandler(null);
-  }, [waitForPurchaseSettled]);
+  }, [router, waitForPurchaseSettled]);
 
   return (
     <>
