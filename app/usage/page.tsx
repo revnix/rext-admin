@@ -159,7 +159,7 @@ export default function UsagePage() {
             </div>
 
             {/* Plan Limits Summary */}
-            {subscription?.subscription?.plan_limits && (
+            {/* {subscription?.subscription?.plan_limits && (
               <div className="mt-6 pt-6 border-t">
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">
                   Plan Limits
@@ -195,7 +195,7 @@ export default function UsagePage() {
                         : subscription?.subscription?.plan_limits
                             ?.max_knowledge_items}
                     </p>
-                  </div> */}
+                  </div> 
                   <div>
                     <p className="text-sm text-muted-foreground">
                       API Calls/Month
@@ -209,7 +209,7 @@ export default function UsagePage() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </CardContent>
         </Card>
       )}
