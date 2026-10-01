@@ -12,7 +12,7 @@
  *  changed without hunting through JSX. Lengths are in characters. */
 export const PERSONA_LIMITS = {
   name: { min: 3, max: 50 },
-  full_name: { min: 3, max: 50 },
+  full_name: { min: 3, max: 60 },
   /** Optional, per the meeting decision. Short enough to admit "CEO", long
    *  enough for "Board Certified Dermatologist and Clinical Researcher". */
   professional_title: { min: 3, max: 70 },
