@@ -289,7 +289,6 @@ export function EditableBrandVoiceCard({
             <Input
               id="brand_name"
               value={formData.brand_name}
-              maxLength={255}
               onChange={(e) =>
                 setFormData({ ...formData, brand_name: e.target.value })
               }
@@ -311,7 +310,6 @@ export function EditableBrandVoiceCard({
             <Textarea
               id="about"
               value={formData.about}
-              maxLength={255}
               onChange={(e) =>
                 setFormData({ ...formData, about: e.target.value })
               }

@@ -73,7 +73,7 @@ export function LoginForm({
         AccountSuspended:
           "Your account has been suspended. Contact support to have it reviewed.",
         AccountBanned:
-          "Your account has been permanently banned and cannot be used.",
+          "Your account has been banned. Please contact support for assistance.",
         OAuthSignin: "Error occurred during OAuth sign in.",
         OAuthCallback: "Error occurred during OAuth callback.",
         OAuthCreateAccount: "Could not create OAuth account.",

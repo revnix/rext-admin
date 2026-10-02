@@ -54,6 +54,7 @@ export interface NavSubItem {
   title: string;
   url: string;
   icon?: LucideIcon;
+  prefetch?: boolean;
 
   /**
    * Required permission to view this item (single permission)

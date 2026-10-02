@@ -51,48 +51,78 @@ function getNotificationApiBaseUrl(): string {
  * - Logs and swallows errors (does not throw)
  */
 
-export async function fetchNotifications(): Promise<OperationNotification[]> {
-  try {
-    const res = await authenticatedFetch(
-      `${getNotificationApiBaseUrl()}/api/v1/notifications`,
-    );
-    if (!res.ok) {
-      throw new Error(`Failed to fetch notifications: ${res.status}`);
-    }
+let inFlightNotificationsFetch: Promise<OperationNotification[]> | null = null;
+let lastNotificationsFetchTime = 0;
+let cachedNotifications: OperationNotification[] = [];
+const NOTIFICATIONS_CACHE_TTL_MS = 15_000;
 
-    const json = await res.json();
-    if (!json.success) {
-      log.error("Notification API error: success=false", { json });
-      throw new Error("Notification API returned success=false");
-    }
-
-    // Attempt to handle both { data: { notifications: [] } } and { data: [] }
-    const rawNotifications = json.data?.notifications || json.data;
-
-    if (!rawNotifications) {
-      log.warn("No notifications found in API response", { json });
-      return [];
-    }
-
-    const notifications = parseApiNotifications(rawNotifications);
-
-    log.info(`Fetched ${notifications.length} notifications`, {
-      source: json.data?.notifications ? "data.notifications" : "data",
-    });
-
-    return notifications.map((n) => ({
-      id: n.id,
-      title: n.title,
-      message: n.message,
-      type: mapApiNotificationToUiType(n.status, n.type),
-      read: n.is_read,
-      createdAt: n.created_at,
-    }));
-  } catch (err) {
-    const normalizedError = err instanceof Error ? err : new Error(String(err));
-    log.error("Error fetching notifications", { error: normalizedError });
-    return []; // Return empty instead of throwing to avoid breaking the layout
+export async function fetchNotifications(options?: {
+  force?: boolean;
+}): Promise<OperationNotification[]> {
+  if (
+    !options?.force &&
+    cachedNotifications.length > 0 &&
+    Date.now() - lastNotificationsFetchTime < NOTIFICATIONS_CACHE_TTL_MS
+  ) {
+    return cachedNotifications;
   }
+
+  if (inFlightNotificationsFetch) {
+    return inFlightNotificationsFetch;
+  }
+
+  inFlightNotificationsFetch = (async () => {
+    try {
+      const res = await authenticatedFetch(
+        `${getNotificationApiBaseUrl()}/api/v1/notifications`,
+      );
+      if (!res.ok) {
+        throw new Error(`Failed to fetch notifications: ${res.status}`);
+      }
+
+      const json = await res.json();
+      if (!json.success) {
+        log.error("Notification API error: success=false", { json });
+        throw new Error("Notification API returned success=false");
+      }
+
+      // Attempt to handle both { data: { notifications: [] } } and { data: [] }
+      const rawNotifications = json.data?.notifications || json.data;
+
+      if (!rawNotifications) {
+        log.warn("No notifications found in API response", { json });
+        return [];
+      }
+
+      const notifications = parseApiNotifications(rawNotifications);
+
+      log.info(`Fetched ${notifications.length} notifications`, {
+        source: json.data?.notifications ? "data.notifications" : "data",
+      });
+
+      const mapped = notifications.map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        type: mapApiNotificationToUiType(n.status, n.type),
+        read: n.is_read,
+        createdAt: n.created_at,
+      }));
+
+      cachedNotifications = mapped;
+      lastNotificationsFetchTime = Date.now();
+      return mapped;
+    } catch (err) {
+      const normalizedError =
+        err instanceof Error ? err : new Error(String(err));
+      log.error("Error fetching notifications", { error: normalizedError });
+      return []; // Return empty instead of throwing to avoid breaking the layout
+    } finally {
+      inFlightNotificationsFetch = null;
+    }
+  })();
+
+  return inFlightNotificationsFetch;
 }
 
 // function mapStatusToType(status: string): OperationNotification["type"] {

@@ -48,14 +48,12 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 const brandVoiceSchema = z.object({
   brand_name: z
     .string()
-    .max(255, "Brand name must be 255 characters or less")
     .refine((value) => !validateBrandName(value), {
       message: "Brand name must contain at least one letter",
     })
     .optional(),
   about: z
     .string()
-    .max(255, "About your brand must be 255 characters or less")
     .refine((value) => !validateBrandVoiceText(value, "About"), {
       message: "About must contain at least one letter",
     })

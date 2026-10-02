@@ -420,6 +420,12 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
           return inFlightUsageFetch;
         }
 
+        // If a full subscription fetch is already in flight, await it since it includes usage stats
+        if (inFlightSubscriptionFetch) {
+          await inFlightSubscriptionFetch;
+          return;
+        }
+
         inFlightUsageFetch = (async () => {
           try {
             const usage = await apiClient.subscriptions.getUsageStats();

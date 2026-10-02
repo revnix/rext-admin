@@ -189,10 +189,14 @@ export function PermissionGuard({
 
   // Show loading state while permissions are being fetched or before hydration
   // This ensures server and client render the same loading UI to prevent hydration mismatches
-  if ((!hasMounted || isLoading) && showLoading) {
-    return (
-      <PermissionLoading variant={loadingVariant} message={loadingMessage} />
-    );
+  // If showLoading is false, render null instead of prematurely displaying the fallback (Access Denied)
+  if (!hasMounted || isLoading) {
+    if (showLoading) {
+      return (
+        <PermissionLoading variant={loadingVariant} message={loadingMessage} />
+      );
+    }
+    return null;
   }
 
   // Permission check failed - show fallback

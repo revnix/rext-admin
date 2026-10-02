@@ -162,7 +162,7 @@ export default function Page() {
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
                 <code className="text-xs bg-muted px-1 rounded">
-                  content:create
+                  {CONTENT_PERMISSIONS.READ}
                 </code>
               </p>
             </CardContent>

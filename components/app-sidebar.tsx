@@ -101,11 +101,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Dashboard",
           url: "/",
           icon: LayoutDashboard,
+          prefetch: false,
         },
         {
           title: "All Workspaces",
           url: "/w",
           icon: FolderOpen,
+          prefetch: false,
         },
       ],
     },
@@ -123,6 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Sparkles,
           permission: "content.create",
+          prefetch: false,
         },
         {
           title: "Content Library",
@@ -131,6 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             : "/",
           icon: Library,
           permission: "content.read",
+          prefetch: false,
         },
         {
           title: "Content Calendar",
@@ -214,10 +218,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/subscription",
           icon: CreditCard,
           items: [
-            { title: "Overview", url: "/subscription" },
-            { title: "Billing", url: "/billing" },
-            { title: "Usage", url: "/usage" },
-            { title: "Licenses", url: "/licenses" },
+            { title: "Overview", url: "/subscription", prefetch: false },
+            { title: "Billing", url: "/billing", prefetch: false },
+            { title: "Usage", url: "/usage", prefetch: false },
+            { title: "Licenses", url: "/licenses", prefetch: false },
           ],
         },
         // { title: "Settings", url: "/settings", icon: Settings2 },
@@ -443,7 +447,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     isActive={pathname === subItem.url}
                                     className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
                                   >
-                                    <Link href={subItem.url as Route}>
+                                    <Link
+                                      href={subItem.url as Route}
+                                      prefetch={subItem.prefetch}
+                                    >
                                       <span>{subItem.title}</span>
                                     </Link>
                                   </SidebarMenuButton>
@@ -498,7 +505,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                   isActive={pathname === subItem.url}
                                   className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)] pl-9 transition-colors"
                                 >
-                                  <Link href={subItem.url as Route}>
+                                  <Link
+                                    href={subItem.url as Route}
+                                    prefetch={subItem.prefetch}
+                                  >
                                     {subItem.title}
                                   </Link>
                                 </SidebarMenuButton>

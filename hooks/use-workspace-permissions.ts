@@ -29,6 +29,7 @@ import { usePermissionStore } from "@/stores/permission-store";
  * }
  */
 export function useWorkspacePermissions(workspaceId?: string) {
+  const queryClient = useQueryClient();
   const { setWorkspacePermissions, setWorkspaceLoading } = usePermissionStore();
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -91,9 +92,10 @@ export function useWorkspacePermissions(workspaceId?: string) {
       if (data.workspace_slug) keys.add(data.workspace_slug);
       for (const key of keys) {
         setWorkspacePermissions(key, entry);
+        queryClient.setQueryData(["workspace-permissions", key], data);
       }
     }
-  }, [data, workspaceId, setWorkspacePermissions]);
+  }, [data, workspaceId, setWorkspacePermissions, queryClient]);
 
   return {
     permissions: data?.permissions || [],
