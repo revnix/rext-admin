@@ -59,7 +59,7 @@ export function useUserNotifications() {
         return;
       }
       fetchInFlight = true;
-      fetchNotifications()
+      fetchNotifications({ force: true })
         .then((incoming) => {
           useNotificationStore.getState().mergeNotifications(incoming);
         })

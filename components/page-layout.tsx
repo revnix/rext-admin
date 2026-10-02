@@ -186,18 +186,18 @@ export function PageLayout({
       <AppSidebar />
       <SidebarInset>
         {/* Mobile/Tablet Workspace Switcher + Header - stick together as one unit so they don't overlap while scrolling */}
-        <div className="sticky top-0 z-50 bg-white dark:bg-sidebar">
+        <div className="sticky top-0 z-50 bg-sidebar">
           <div className="lg:hidden border-b border-border px-4 py-3">
             <WorkspaceSwitcher />
           </div>
 
-          <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-white px-6 dark:bg-sidebar transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
+          <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-sidebar px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-background text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
               <div className="hidden lg:flex items-center gap-4">
                 <Button
                   variant="outline"
-                  className="justify-start w-74 xl:w-96 h-10 rounded-md bg-white border-input px-3 overflow-hidden relative shadow-none hover:border-input text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                  className="justify-start w-74 xl:w-96 h-10 rounded-md bg-sidebar-accent/30 border-border px-3 overflow-hidden relative shadow-none hover:border-input text-sidebar-foreground/70 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
                   onClick={() => setSearchOpen(true)}
                 >
                   <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />

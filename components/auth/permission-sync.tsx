@@ -11,6 +11,7 @@ import {
 // re-renders the session, which can refetch that request. The cooldown stops
 // that from looping; tab focus is never delayed by it.
 const STALE_403_COOLDOWN_MS = 5_000;
+const FOCUS_SYNC_COOLDOWN_MS = 60_000;
 
 /**
  * Keeps the session's platform role/permissions in step with the backend, so
@@ -30,6 +31,7 @@ export function PermissionSync() {
   updateRef.current = update;
   const inFlight = useRef(false);
   const lastStaleSync = useRef(0);
+  const lastFocusSync = useRef(0);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -53,7 +55,11 @@ export function PermissionSync() {
       lastStaleSync.current = Date.now();
       void sync();
     };
-    const onFocus = () => void sync();
+    const onFocus = () => {
+      if (Date.now() - lastFocusSync.current < FOCUS_SYNC_COOLDOWN_MS) return;
+      lastFocusSync.current = Date.now();
+      void sync();
+    };
 
     document.addEventListener("visibilitychange", onFocus);
     window.addEventListener("focus", onFocus);

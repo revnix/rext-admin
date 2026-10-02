@@ -229,7 +229,9 @@ export function SessionTimeoutWarning() {
   useEffect(() => {
     if (!session?.user) return;
 
+    let lastCheckTime = 0;
     const checkActiveStatus = async () => {
+      lastCheckTime = Date.now();
       try {
         await apiClient.profile.get();
       } catch (err) {
@@ -247,7 +249,11 @@ export function SessionTimeoutWarning() {
     }, 60000);
 
     const handleResume = () => {
-      if (document.visibilityState === "visible") {
+      // Avoid firing on rapid window focus/tab switches if checked within last 60s
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastCheckTime > 60000
+      ) {
         void checkActiveStatus();
       }
     };

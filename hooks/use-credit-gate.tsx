@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { InsufficientCreditsModal } from "@/components/subscription/insufficient-credits-modal";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspaceOptional } from "@/providers/workspace-provider";
 
 const OUT_OF_CREDITS_MESSAGE =
   "You're out of credits. Please upgrade your plan to continue.";
@@ -24,14 +25,19 @@ const OUT_OF_CREDITS_MESSAGE =
  * bails before anything is sent.
  */
 export function useCreditGate() {
+  const onWorkspacePage = useWorkspaceOptional() !== null;
   const currentWorkspace = useWorkspaceStore((s) => s.currentWorkspace);
   const credits = useSubscriptionStore((s) => s.credits);
   const fetchCredits = useSubscriptionStore((s) => s.fetchCredits);
   const [showModal, setShowModal] = useState(false);
+  const workspaceId = onWorkspacePage ? currentWorkspace?.id : undefined;
 
   useEffect(() => {
-    fetchCredits(currentWorkspace?.id).catch(() => {});
-  }, [fetchCredits, currentWorkspace?.id]);
+    // Wait for the real workspace id on workspace pages — prevents firing an account-level
+    // fetch before the workspace UUID resolves, which causes duplicate calls
+    if (onWorkspacePage && !workspaceId) return;
+    fetchCredits(workspaceId).catch(() => {});
+  }, [onWorkspacePage, workspaceId, fetchCredits]);
 
   // articles_remaining is the backend's own `credits // 15` — how many whole
   // articles the balance covers. null means an unlimited plan; an unloaded
