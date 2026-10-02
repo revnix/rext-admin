@@ -119,6 +119,8 @@ export const profileQueries = {
     queryOptions({
       queryKey: profileQueries.all(),
       queryFn: () => apiClient.profile.get(),
+      staleTime: 5 * 60 * 1000, // 5 minutes (user profile rarely changes during a session)
+      refetchOnWindowFocus: false,
     }),
 };
 

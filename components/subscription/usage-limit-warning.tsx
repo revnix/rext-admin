@@ -377,12 +377,10 @@ export function useResourceLimit(
     // consumers (sidebar + switchers + usage warnings) share one fetch.
     // fetchSubscription's burst already includes usage stats; the standalone
     // fetchUsage only covers the case where the plan landed but usage failed.
-    if (!usage) {
-      void fetchUsage();
-    }
-
     if (!subscription) {
       void fetchSubscription();
+    } else if (!usage) {
+      void fetchUsage();
     }
 
     if (!usage || !subscription) {
