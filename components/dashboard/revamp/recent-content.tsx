@@ -123,10 +123,7 @@ export function RecentContent({ workspace }: RecentContentProps) {
                 </tr>
               ) : (
                 recentActivities.map((item, index) => (
-                  <tr
-                    key={item.id || index}
-                    className="hover:bg-muted/40 transition-colors"
-                  >
+                  <tr key={item.id || index} className="transition-colors">
                     <td className="px-6 py-4 font-medium text-foreground">
                       {item.content_title ||
                         item.name ||

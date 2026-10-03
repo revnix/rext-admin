@@ -116,7 +116,7 @@ export function CreateAdminInvitationDialog({
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Mail className="z-10 pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="admin@example.com"
                         className="pl-10"

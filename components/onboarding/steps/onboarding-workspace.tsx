@@ -179,7 +179,7 @@ export function OnboardingWorkspace({
             onValueChange={setTimezone}
             disabled={creating}
           >
-            <SelectTrigger id="timezone" className="bg-background">
+            <SelectTrigger id="timezone" className="bg-card">
               <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
             <SelectContent>

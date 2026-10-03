@@ -118,7 +118,7 @@ export function FilterBar({
     <div className="grid gap-3 md:grid-cols-[minmax(0,_1fr)_auto] md:items-center">
       {/* Search input */}
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="z-10 pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search title, content, URL, or tags"
           value={searchQuery}
