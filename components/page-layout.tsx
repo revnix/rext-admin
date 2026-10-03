@@ -70,6 +70,10 @@ interface PageLayoutProps {
 
 import type { Route } from "next";
 
+// Header search is hidden for now. Flip to true to restore the search
+// field, the Cmd/Ctrl+K shortcut and the search dialog together.
+const SHOW_HEADER_SEARCH = false;
+
 export function PageLayout({
   title,
   hideTitle = false,
@@ -170,6 +174,7 @@ export function PageLayout({
 
   // Add keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
+    if (!SHOW_HEADER_SEARCH) return;
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -194,23 +199,25 @@ export function PageLayout({
           <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-sidebar px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-background text-slate-500 hover:bg-foreground/5 hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current" />
-              <div className="hidden lg:flex items-center gap-4">
-                {/* Plain button on purpose: the shared Button adds a press
+              {SHOW_HEADER_SEARCH && (
+                <div className="hidden lg:flex items-center gap-4">
+                  {/* Plain button on purpose: the shared Button adds a press
                     scale (btn-active) and a tinted shadow this field shouldn't have. */}
-                <button
-                  type="button"
-                  className="relative flex h-10 w-74 xl:w-96 cursor-pointer items-center justify-start overflow-hidden rounded-md border border-border bg-sidebar-accent/30 px-3 text-sm text-sidebar-foreground/70 transition-colors outline-none hover:bg-foreground/5 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-sidebar-border dark:bg-sidebar-accent/50 dark:text-sidebar-foreground"
-                  onClick={() => setSearchOpen(true)}
-                >
-                  <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />
-                  <span className="text-sm font-normal inline-block truncate">
-                    Search or type command...
-                  </span>
-                  <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded-md bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
-                    <span className="text-xs">⌘</span>K
-                  </kbd>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    className="relative flex h-10 w-74 xl:w-96 cursor-pointer items-center justify-start overflow-hidden rounded-md border border-border bg-sidebar-accent/30 px-3 text-sm text-sidebar-foreground/70 transition-colors outline-none hover:bg-foreground/5 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-sidebar-border dark:bg-sidebar-accent/50 dark:text-sidebar-foreground"
+                    onClick={() => setSearchOpen(true)}
+                  >
+                    <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />
+                    <span className="text-sm font-normal inline-block truncate">
+                      Search or type command...
+                    </span>
+                    <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded-md bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
+                      <span className="text-xs">⌘</span>K
+                    </kbd>
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
@@ -512,7 +519,9 @@ export function PageLayout({
         onClose={() => setDrawerOpen(false)}
       />
 
-      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      {SHOW_HEADER_SEARCH && (
+        <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      )}
     </SidebarProvider>
   );
 }
