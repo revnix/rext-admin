@@ -3,7 +3,7 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
-  Eye,
+  Settings2,
   Globe,
   Plus,
   RefreshCw,
@@ -26,6 +26,7 @@ import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
 import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
@@ -139,9 +140,10 @@ export default function WorkspacePage() {
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <Link
-                href={`/w/${row.slug}/settings` as Route}
-                // Every visible row prefetched its settings page on viewport;
-                // the user clicks at most one row, so prefetch on hover only.
+                // Opens the workspace dashboard (`/` renders the current
+                // workspace), so the row becomes current before navigating.
+                href={workspaceRoutes.root(String(row.slug)) as Route}
+                // The user clicks at most one row, so prefetch on hover only.
                 prefetch={false}
                 className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer truncate"
                 onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
@@ -277,13 +279,13 @@ export default function WorkspacePage() {
       disabled: (row: WorkspaceData) => currentWorkspace?.id === row.id,
     },
     {
-      label: "View",
-      icon: <Eye className="h-4 w-4" />,
+      label: "Settings",
+      icon: <Settings2 className="h-4 w-4" />,
       onClick: (row: WorkspaceData) => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}/settings` as Route);
+        router.push(workspaceRoutes.settings.root(String(row.slug)) as Route);
       },
-      tooltip: "View workspace details",
+      tooltip: "Workspace settings",
       disabled: (row: WorkspaceData) => !canUpdateWorkspace[row.id],
     },
     {

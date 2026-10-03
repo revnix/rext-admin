@@ -33,6 +33,7 @@ import {
 } from "@/schemas/integration-schemas";
 import { log } from "@/lib/logger";
 import { useState } from "react";
+import { BookOpen, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 
@@ -43,6 +44,8 @@ interface AddIntegrationModalProps {
 }
 
 type IntegrationType = "wordpress" | "shopify";
+
+const WORDPRESS_GUIDE_URL = "https://rext.ai/wordpress";
 
 function WordPressLogo({ className }: { className?: string }) {
   return (
@@ -169,6 +172,21 @@ function WordPressForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+        <div className="flex items-start gap-3 rounded-md border border-border bg-muted/40 p-3 text-sm">
+          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
+          <p className="text-muted-foreground">
+            New to the Rext AI plugin?{" "}
+            <a
+              href={WORDPRESS_GUIDE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              Read the WordPress integration guide
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </p>
+        </div>
         <FormField
           control={form.control}
           name="is_active"
@@ -218,7 +236,15 @@ function WordPressForm({
                 />
               </FormControl>
               <p className="text-[0.8rem] text-muted-foreground">
-                Get this from the Rext AI WordPress plugin settings
+                Get this from the Rext AI WordPress plugin settings.{" "}
+                <a
+                  href={WORDPRESS_GUIDE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground underline underline-offset-4 hover:no-underline"
+                >
+                  How to find it
+                </a>
               </p>
               <FormMessage />
             </FormItem>
