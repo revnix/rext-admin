@@ -157,15 +157,11 @@ export default function WorkspaceTopicsPage() {
             </div>
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-6">
-              <TopicsClientWrapper
-                data={transformTopicsForDisplay(topics || [])}
-                emptyActions={emptyActions}
-                tableActions={tableActions}
-              />
-            </CardContent>
-          </Card>
+          <TopicsClientWrapper
+            data={transformTopicsForDisplay(topics || [])}
+            emptyActions={emptyActions}
+            tableActions={tableActions}
+          />
         )}
       </PermissionGuard>
     </PageLayout>

@@ -180,7 +180,7 @@ export function TopicsSection({
               variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="!bg-background !border !border-border text-foreground h-9 w-full sm:w-auto"
+              className="!bg-card !border !border-border text-foreground h-9 w-full sm:w-auto"
             >
               {isRegenerating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -208,7 +208,7 @@ export function TopicsSection({
               variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating || !feedback.trim()}
-              className="!bg-background h-9 !border !border-border w-full sm:w-auto"
+              className="!bg-card h-9 !border !border-border w-full sm:w-auto"
             >
               <ArrowRight className="w-4 h-4" />
             </Button>

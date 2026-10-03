@@ -369,7 +369,7 @@ export default function RefundManagementPage() {
                       value={statusFilter}
                       onValueChange={setStatusFilter}
                     >
-                      <SelectTrigger className="h-9 text-xs bg-background">
+                      <SelectTrigger className="h-9 text-xs bg-card">
                         <SelectValue placeholder="All Statuses" />
                       </SelectTrigger>
                       <SelectContent>
@@ -384,7 +384,7 @@ export default function RefundManagementPage() {
                   {/* Type Filter */}
                   <div className="w-[150px]">
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger className="h-9 text-xs bg-background">
+                      <SelectTrigger className="h-9 text-xs bg-card">
                         <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>

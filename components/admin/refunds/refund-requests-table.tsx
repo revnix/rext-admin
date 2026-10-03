@@ -340,7 +340,7 @@ export function RefundRequestsTable({
           <div className="flex flex-wrap items-center gap-2">
             <div className="w-[180px]">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 text-xs bg-background">
+                <SelectTrigger className="h-9 text-xs bg-card">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>

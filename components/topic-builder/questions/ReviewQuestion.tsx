@@ -360,7 +360,7 @@ export function ReviewQuestion({
                   variant="outline"
                   size="sm"
                   onClick={handleFixFirstError}
-                  className="text-xs bg-background hover:bg-muted"
+                  className="text-xs bg-card hover:bg-muted"
                 >
                   Fix First Issue
                 </Button>

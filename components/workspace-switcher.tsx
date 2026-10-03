@@ -34,6 +34,16 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
 
+/** Host of a workspace site URL for display, e.g. "revnix.com". */
+function siteHost(url?: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).host;
+  } catch {
+    return null;
+  }
+}
+
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const router = useRouter();
@@ -162,7 +172,7 @@ export function WorkspaceSwitcher() {
                 <span className="truncate text-xs">
                   {isLoading
                     ? "Fetching workspaces..."
-                    : displayWorkspace?.timezone || "Choose a workspace"}
+                    : siteHost(displayWorkspace?.url) || "Choose a workspace"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
@@ -228,9 +238,9 @@ export function WorkspaceSwitcher() {
                             "Untitled Workspace",
                           )}
                         </span>
-                        {workspace.slug && (
+                        {siteHost(workspace.url) && (
                           <span className="text-xs text-muted-foreground">
-                            {workspace.slug}
+                            {siteHost(workspace.url)}
                           </span>
                         )}
                       </div>

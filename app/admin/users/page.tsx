@@ -742,7 +742,7 @@ export default function AdminUsersPage() {
                               setPage(1);
                             }}
                           >
-                            <SelectTrigger className="h-9 text-xs bg-background">
+                            <SelectTrigger className="h-9 text-xs bg-card">
                               <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
@@ -766,7 +766,7 @@ export default function AdminUsersPage() {
                               setPage(1);
                             }}
                           >
-                            <SelectTrigger className="h-9 text-xs bg-background">
+                            <SelectTrigger className="h-9 text-xs bg-card">
                               <SelectValue placeholder="All Roles" />
                             </SelectTrigger>
                             <SelectContent>

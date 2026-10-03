@@ -58,6 +58,11 @@ interface DataTableProps<
   searchFields?: (keyof T)[];
   isLoading?: boolean;
   tableId?: string; // For localStorage persistence
+  /**
+   * Higher-contrast header row (white, foreground text). Opt-in while the
+   * style is reviewed; becomes the default once approved.
+   */
+  strongHeader?: boolean;
   // Render each row as a stacked card below `md`. The table's min-content
   // width (cell padding + the actions column) is far wider than a phone
   // viewport, so on mobile the table would only ever show its first column
@@ -91,6 +96,7 @@ export function DataTable<
   searchFields = [],
   isLoading = false,
   tableId,
+  strongHeader = false,
   mobileCards = false,
   searchWidth = "md:w-80",
   manualPagination = false,
@@ -436,14 +442,14 @@ export function DataTable<
   return (
     <Card className="border-none bg-transparent">
       {(actions || showSearch || columnFilters.length > 0) && (
-        <CardHeader className="px-0 pt-0 pb-6">
+        <CardHeader className="px-0 pt-0 pb-4">
           {(actions || showSearch) && (
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               {showSearch && (
                 <div
                   className={`relative w-full sm:flex-1 min-w-0 sm:max-w-md ${searchWidth}`}
                 >
-                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="z-10 pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={searchPlaceholder}
                     className="pl-9 pr-9 w-full"
@@ -510,17 +516,26 @@ export function DataTable<
           hasFilteredData ? (
             <>
               <div
-                className={`relative w-full overflow-x-auto rounded-md border ${
+                className={`relative w-full overflow-x-auto rounded-md border bg-card ${
                   mobileCards ? "hidden md:block" : ""
                 }`}
               >
                 <Table>
-                  <TableHeader>
+                  <TableHeader
+                    className={
+                      strongHeader ? "bg-card [&_tr]:border-border" : undefined
+                    }
+                  >
                     <TableRow>
                       {columns.map((column) => (
                         <TableHead
                           key={column.key}
                           style={{ width: column.width }}
+                          className={
+                            strongHeader
+                              ? "h-11 text-[13px] font-medium text-foreground"
+                              : undefined
+                          }
                         >
                           <div className="flex items-center gap-1">
                             <span>{column.header}</span>
@@ -546,7 +561,13 @@ export function DataTable<
                         </TableHead>
                       ))}
                       {displayRowActions.length > 0 && (
-                        <TableHead className="w-[200px] text-right font-medium">
+                        <TableHead
+                          className={
+                            strongHeader
+                              ? "h-11 w-[200px] text-right text-[13px] font-medium text-foreground"
+                              : "w-[200px] text-right font-medium"
+                          }
+                        >
                           Actions
                         </TableHead>
                       )}
@@ -557,7 +578,7 @@ export function DataTable<
                       <TableRow
                         key={getRowKey(row as T, index)}
                         className={`group ${
-                          onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
+                          onRowClick ? "cursor-pointer" : ""
                         }`}
                         onClick={() => onRowClick?.(row)}
                       >
@@ -588,8 +609,8 @@ export function DataTable<
                     <li
                       key={getRowKey(row as T, index)}
                       data-testid="data-table-card"
-                      className={`rounded-md border p-4 ${
-                        onRowClick ? "cursor-pointer hover:bg-muted/50" : ""
+                      className={`rounded-md border bg-card p-4 ${
+                        onRowClick ? "cursor-pointer" : ""
                       }`}
                       onClick={() => onRowClick?.(row)}
                       onKeyDown={(e) => {
@@ -744,36 +765,42 @@ export function DataTable<
             </>
           ) : (
             // No search results
-            <SearchEmptyState onClear={() => handleSearchChange("")} />
+            <div className="rounded-md border bg-card">
+              <SearchEmptyState onClear={() => handleSearchChange("")} />
+            </div>
           )
         ) : displayEmptyActions.length > 0 ? (
           // Empty State with actions
-          <EmptyState
-            icon={emptyIcon}
-            title={emptyTitle || "No data available"}
-            description={
-              emptyDescription || "Get started by adding your first item."
-            }
-            action={
-              displayEmptyActions[0]
-                ? {
-                    label: displayEmptyActions[0].label,
-                    href: displayEmptyActions[0].href,
-                    onClick: displayEmptyActions[0].onClick,
-                    variant: displayEmptyActions[0].variant,
-                  }
-                : undefined
-            }
-          />
+          <div className="rounded-md border bg-card">
+            <EmptyState
+              icon={emptyIcon}
+              title={emptyTitle || "No data available"}
+              description={
+                emptyDescription || "Get started by adding your first item."
+              }
+              action={
+                displayEmptyActions[0]
+                  ? {
+                      label: displayEmptyActions[0].label,
+                      href: displayEmptyActions[0].href,
+                      onClick: displayEmptyActions[0].onClick,
+                      variant: displayEmptyActions[0].variant,
+                    }
+                  : undefined
+              }
+            />
+          </div>
         ) : (
           // Empty State without actions
-          <EmptyState
-            icon={emptyIcon}
-            title={emptyTitle || "No data available"}
-            description={
-              emptyDescription || "Get started by adding your first item."
-            }
-          />
+          <div className="rounded-md border bg-card">
+            <EmptyState
+              icon={emptyIcon}
+              title={emptyTitle || "No data available"}
+              description={
+                emptyDescription || "Get started by adding your first item."
+              }
+            />
+          </div>
         )}
       </CardContent>
     </Card>

@@ -284,7 +284,7 @@ export function ActivityFilter({
             onClick={() => openDatePicker(fromDateRef)}
             aria-label="Open from date picker"
           >
-            <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Calendar className="z-10 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               ref={fromDateRef}
               id="date-from"
@@ -306,7 +306,7 @@ export function ActivityFilter({
             onClick={() => openDatePicker(toDateRef)}
             aria-label="Open to date picker"
           >
-            <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Calendar className="z-10 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               ref={toDateRef}
               id="date-to"

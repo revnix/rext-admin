@@ -108,7 +108,7 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
   return (
     <div className="flex min-h-0 flex-col gap-2">
       <div className="relative shrink-0">
-        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="z-10 pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}

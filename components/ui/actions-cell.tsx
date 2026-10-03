@@ -122,23 +122,28 @@ export function ActionsCell<
 
         const href = getHref();
 
-        const getButtonVariant = (): "outline" => {
-          return "outline";
+        // Quiet icon buttons: muted at rest, foreground when the row is
+        // hovered, and destructive actions only turn red on their own hover.
+        const getButtonVariant = (): "ghost" => {
+          return "ghost";
         };
 
         const getButtonClassName = () => {
           const baseClasses = action.showLabel
             ? "h-8 px-2 gap-1"
             : "h-8 w-8 p-0";
-          const primaryClasses = action.primary
-            ? "border-primary text-primary hover:bg-primary/10 hover:text-primary"
-            : "";
-          const destructiveClasses =
+          const toneClasses =
             action.variant === "destructive"
-              ? "border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-              : "";
+              ? "text-muted-foreground group-hover:text-foreground hover:bg-destructive/10 hover:text-destructive group-hover:hover:text-destructive"
+              : action.primary
+                ? "text-foreground hover:bg-foreground/[0.08] hover:text-foreground"
+                : "text-muted-foreground group-hover:text-foreground hover:bg-foreground/[0.08] hover:text-foreground";
 
-          return cn(baseClasses, primaryClasses, destructiveClasses);
+          return cn(
+            baseClasses,
+            "transition-colors focus-visible:text-foreground",
+            toneClasses,
+          );
         };
 
         const buttonContent = (
