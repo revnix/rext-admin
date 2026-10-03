@@ -134,7 +134,7 @@ export function NotificationsDrawer({
     if (readItems.length === 0) return;
 
     // Optimistic update
-    readItems.forEach((n) => removeNotification(n.id));
+    for (const n of readItems) removeNotification(n.id);
 
     try {
       await clearReadNotifications();

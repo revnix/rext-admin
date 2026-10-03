@@ -45,31 +45,36 @@ export function RestoreUserDialog({
       });
       entries.forEach(([key]) => {
         // key is the query key array, e.g. ["admin-users", page, pageSize, ...]
-        queryClient.setQueryData(key, (old: any) => {
-          if (!old || !old.users) return old;
-          const users: any[] = Array.isArray(old.users) ? [...old.users] : [];
-          // Remove any existing instance of the restored user
-          const filtered = users.filter((u) => u.id !== restoredUser.id);
+        queryClient.setQueryData(
+          key,
+          (old: { users?: User[]; total_count?: number } | undefined) => {
+            if (!old?.users) return old;
+            const users: User[] = Array.isArray(old.users)
+              ? [...old.users]
+              : [];
+            // Remove any existing instance of the restored user
+            const filtered = users.filter((u) => u.id !== restoredUser.id);
 
-          // If this is page 1 (or no page present), put restored user at front
-          const page =
-            Array.isArray(key) && key.length > 1 ? key[1] : undefined;
-          if (!page || page === 1) {
-            filtered.unshift(restoredUser);
-            // If paginated, ensure we don't exceed page size by trimming
-            const perPage =
-              Array.isArray(key) && key.length > 2 ? key[2] : undefined;
-            if (perPage && filtered.length > Number(perPage)) {
-              filtered.length = Number(perPage);
+            // If this is page 1 (or no page present), put restored user at front
+            const page =
+              Array.isArray(key) && key.length > 1 ? key[1] : undefined;
+            if (!page || page === 1) {
+              filtered.unshift(restoredUser);
+              // If paginated, ensure we don't exceed page size by trimming
+              const perPage =
+                Array.isArray(key) && key.length > 2 ? key[2] : undefined;
+              if (perPage && filtered.length > Number(perPage)) {
+                filtered.length = Number(perPage);
+              }
             }
-          }
 
-          return {
-            ...old,
-            users: filtered,
-            total_count: (old.total_count ?? 0) + 1,
-          };
-        });
+            return {
+              ...old,
+              users: filtered,
+              total_count: (old.total_count ?? 0) + 1,
+            };
+          },
+        );
       });
 
       queryClient.invalidateQueries({ queryKey: ["admin-users-deleted"] });
