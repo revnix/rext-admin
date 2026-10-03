@@ -200,8 +200,8 @@
   --radius: 6px;
 
   /* Semantic Colors - Light Mode */
-  --background: #f2f4f7;
-  /* Gray.100 - Increased contrast for dashboard look */
+  --background: #f8f9fb;
+  /* Between Gray.25 and Gray.50 - light canvas; cards separate via border + shadow */
   --foreground: #344054;
   /* Gray.700 */
 
@@ -223,8 +223,8 @@
   --secondary-foreground: #101828;
   /* Gray.900 */
 
-  --muted: #f9fafb;
-  /* Gray.50 */
+  --muted: #f2f4f7;
+  /* Gray.100 - visible on white cards (icon tiles, table headers) */
   --muted-foreground: #667085;
   /* Gray.500 */
 

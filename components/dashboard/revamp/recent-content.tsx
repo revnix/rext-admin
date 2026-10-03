@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Inbox, Loader2 } from "lucide-react";
 import type { Workspace } from "@/types/workspace";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
@@ -76,22 +76,27 @@ export function RecentContent({ workspace }: RecentContentProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
-        <CardTitle className="text-base font-semibold">
+      <CardHeader className="space-y-1 p-6 pb-4">
+        <CardTitle className="text-base font-semibold text-foreground">
           Recent Activities
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Latest content changes in this workspace
+        </p>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-muted/30 text-xs text-muted-foreground uppercase font-semibold">
+            <thead className="border-y border-border bg-muted/60 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-6 py-3 min-w-60">Content Title</th>
-                <th className="px-6 py-3 min-w-46">Author</th>
-                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-2.5 min-w-60 font-medium">
+                  Content Title
+                </th>
+                <th className="px-6 py-2.5 min-w-46 font-medium">Author</th>
+                <th className="px-6 py-2.5 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/50">
+            <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
                   <td colSpan={3} className="h-24 text-center">
@@ -100,18 +105,27 @@ export function RecentContent({ workspace }: RecentContentProps) {
                 </tr>
               ) : recentActivities.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No recent activities found.
+                  <td colSpan={3} className="px-6 py-12">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                        <Inbox className="h-5 w-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          No recent activity yet
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Content you create or publish will appear here.
+                        </p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 recentActivities.map((item, index) => (
                   <tr
                     key={item.id || index}
-                    className="hover:bg-muted/20 transition-colors"
+                    className="hover:bg-muted/40 transition-colors"
                   >
                     <td className="px-6 py-4 font-medium text-foreground">
                       {item.content_title ||
