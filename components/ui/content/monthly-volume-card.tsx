@@ -2,7 +2,7 @@ import { Area, AreaChart } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import React from "react";
 
-const VOLUME_COLOR = "var(--chart-1)";
+const VOLUME_COLOR = "var(--foreground)";
 
 const chartConfig = {
   volume: {
@@ -40,7 +40,7 @@ export function MonthlyVolumeCard({ volume = "0" }) {
   return (
     <>
       <div className="flex flex-col">
-        <h3 className="text-3xl font-bold text-foreground">
+        <h3 className="text-3xl font-semibold text-foreground">
           {formattedVolume}
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
@@ -53,7 +53,7 @@ export function MonthlyVolumeCard({ volume = "0" }) {
           <AreaChart data={sparkData}>
             <defs>
               <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={VOLUME_COLOR} stopOpacity={0.3} />
+                <stop offset="5%" stopColor={VOLUME_COLOR} stopOpacity={0.08} />
                 <stop offset="95%" stopColor={VOLUME_COLOR} stopOpacity={0} />
               </linearGradient>
             </defs>
@@ -62,7 +62,7 @@ export function MonthlyVolumeCard({ volume = "0" }) {
               type="monotone"
               fill="url(#fillVolume)"
               stroke={VOLUME_COLOR}
-              strokeWidth={2}
+              strokeWidth={1.5}
               isAnimationActive={true}
               dot={false}
             />

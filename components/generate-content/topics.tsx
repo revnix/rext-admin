@@ -62,7 +62,7 @@ export function TopicsSection({
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold text-foreground tracking-tight leading-tight"
+          className="text-3xl font-semibold text-foreground tracking-tight leading-tight"
         >
           {instruction}
         </motion.h2>
@@ -97,10 +97,10 @@ export function TopicsSection({
               className={cn(
                 "group relative flex flex-col items-start gap-2 text-left p-6 rounded-md cursor-pointer border outline-none",
                 "transition-all duration-200",
-                "active:scale-[0.985] active:shadow-none",
+                "active:scale-[0.985]",
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "bg-card/60 border-border/50 backdrop-blur-sm hover:border-primary/40 hover:bg-card",
+                  ? "border-foreground ring-1 ring-foreground bg-card"
+                  : "bg-card border-border hover:border-foreground/40",
                 isRegenerating && "opacity-40 pointer-events-none",
               )}
             >
@@ -109,15 +109,13 @@ export function TopicsSection({
                   <span
                     className={cn(
                       "text-sm font-semibold leading-snug pr-4 transition-colors",
-                      isSelected
-                        ? "text-primary"
-                        : "text-foreground group-hover:text-primary",
+                      isSelected ? "text-foreground" : "text-foreground",
                     )}
                   >
                     {topic}
 
                     {isRecommended && (
-                      <span className="inline-block m-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                      <span className="inline-block m-1 rounded-md border border-foreground px-1.5 py-0.5 text-[11px] font-medium text-foreground">
                         Recommended
                       </span>
                     )}
@@ -150,15 +148,15 @@ export function TopicsSection({
                   className={cn(
                     "shrink-0 mt-0.5 w-7 h-7 rounded-md flex items-center justify-center transition-colors duration-200",
                     isSelected
-                      ? "bg-foreground/10"
-                      : "bg-muted/60 group-hover:bg-muted",
+                      ? "bg-foreground"
+                      : "bg-muted group-hover:bg-muted",
                   )}
                 >
                   <ArrowRight
                     className={cn(
                       "w-4 h-4 transition-all duration-200",
                       isSelected
-                        ? "text-foreground translate-x-0.5"
+                        ? "text-background translate-x-0.5"
                         : "text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5",
                     )}
                   />
@@ -176,13 +174,13 @@ export function TopicsSection({
         transition={{ delay: 0.35 }}
         className="relative"
       >
-        <div className="w-full max-w-3xl rounded-md border border-border/70 bg-card/70 p-1.5 shadow-sm">
+        <div className="w-full max-w-3xl rounded-md border border-border bg-card p-1.5">
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <Button
               variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="!bg-background !border !border-border/60 text-foreground h-9 w-full sm:w-auto"
+              className="!bg-background !border !border-border text-foreground h-9 w-full sm:w-auto"
             >
               {isRegenerating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -195,7 +193,7 @@ export function TopicsSection({
 
             <Input
               type="text"
-              className="!bg-background !border !border-border/60 !h-9 placeholder:text-muted-foreground"
+              className="!bg-background !border !border-border !h-9 placeholder:text-muted-foreground"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Or describe what you're looking for..."
@@ -210,7 +208,7 @@ export function TopicsSection({
               variant="outline"
               onClick={handleRegenerate}
               disabled={isRegenerating || !feedback.trim()}
-              className="!bg-background h-9 !border !border-border/60 w-full sm:w-auto"
+              className="!bg-background h-9 !border !border-border w-full sm:w-auto"
             >
               <ArrowRight className="w-4 h-4" />
             </Button>

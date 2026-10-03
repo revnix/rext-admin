@@ -6,16 +6,11 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 export const description = "A keyword difficulty gauge chart";
 
 const DIFFICULTY_STOPS = [
-  { offset: "0%", color: "var(--color-success-500)" },
-  { offset: "15%", color: "var(--color-success-400)" },
-  { offset: "30%", color: "var(--color-success-300)" },
-  { offset: "50%", color: "var(--color-warning-500)" },
-  { offset: "70%", color: "var(--color-warning-600)" },
-  { offset: "85%", color: "var(--color-error-500)" },
-  { offset: "100%", color: "var(--color-error-600)" },
+  { offset: "0%", color: "var(--foreground)" },
+  { offset: "100%", color: "var(--foreground)" },
 ] as const;
 
-const REMAINING_COLOR = "var(--color-gray-200)";
+const REMAINING_COLOR = "var(--muted)";
 
 // Chart configuration
 const chartConfig = {
