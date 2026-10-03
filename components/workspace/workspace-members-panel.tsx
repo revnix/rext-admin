@@ -190,7 +190,7 @@ export function WorkspaceMembersPanel({
       cell: (value, row) => (
         <div className="flex items-center gap-3">
           {/* <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            <AvatarFallback className="bg-muted text-foreground font-semibold">
               {row.initials}
             </AvatarFallback>
           </Avatar> */}
@@ -214,12 +214,12 @@ export function WorkspaceMembersPanel({
               <p className="font-medium truncate">{value as string}</p>
               {row.is_owner && (
                 <span title="Workspace Owner">
-                  <Crown className="h-4 w-4 text-yellow-600" />
+                  <Crown className="h-4 w-4 text-foreground" />
                 </span>
               )}
               {row.is_verified && (
                 <span title="Email Verified">
-                  <UserCheck className="h-4 w-4 text-green-600" />
+                  <UserCheck className="h-4 w-4 text-foreground" />
                 </span>
               )}
             </div>

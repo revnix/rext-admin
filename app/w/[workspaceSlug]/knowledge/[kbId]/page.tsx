@@ -159,7 +159,7 @@ export default function KnowledgeBaseDetailPage() {
       >
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg border-destructive/50">
+            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-md border-destructive/50">
               <BookOpen className="h-12 w-12 text-destructive mb-4" />
               <p className="text-lg font-medium mb-2 text-destructive">
                 Knowledge Base Not Found
@@ -221,7 +221,7 @@ export default function KnowledgeBaseDetailPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   knowledge.read
                 </code>
               </p>

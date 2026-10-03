@@ -81,7 +81,7 @@ export function InvitedUserFirstTasks({
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${
+                      className={`flex h-12 w-12 items-center justify-center rounded-md transition-transform group-hover:scale-110 ${
                         task.priority === "high"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground"
@@ -93,7 +93,7 @@ export function InvitedUserFirstTasks({
                       <h3 className="font-semibold text-lg flex items-center gap-2 mb-1">
                         {task.title}
                         {task.priority === "high" && (
-                          <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                          <Sparkles className="h-4 w-4 text-foreground shrink-0" />
                         )}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-2">

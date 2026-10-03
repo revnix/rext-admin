@@ -150,7 +150,7 @@ export function DangerZoneSection() {
         >
           <div className="space-y-4">
             {/* Transfer Ownership */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-md">
               <div>
                 <h4 className="text-sm font-medium">Transfer Ownership</h4>
                 <p className="text-sm text-muted-foreground">
@@ -237,7 +237,7 @@ export function DangerZoneSection() {
             </div>
 
             {/* Delete Workspace */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-destructive rounded-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-destructive rounded-md">
               <div>
                 <h4 className="text-sm font-medium">Delete Workspace</h4>
                 <p className="text-sm text-muted-foreground">

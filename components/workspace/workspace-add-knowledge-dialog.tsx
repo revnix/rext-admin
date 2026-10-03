@@ -439,7 +439,7 @@ export function WorkspaceAddKnowledgeDialog({
                             />
                           </div>
                           {selectedFile && (
-                            <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
                               <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium break-all">

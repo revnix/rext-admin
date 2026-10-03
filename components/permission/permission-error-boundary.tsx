@@ -98,7 +98,7 @@ export class PermissionErrorBoundary extends React.Component<
             </p>
 
             {this.state.error && (
-              <p className="text-sm text-muted-foreground mb-4 font-mono bg-muted p-2 rounded">
+              <p className="text-sm text-muted-foreground mb-4 font-mono bg-muted p-2 rounded-md">
                 {this.state.error.message}
               </p>
             )}

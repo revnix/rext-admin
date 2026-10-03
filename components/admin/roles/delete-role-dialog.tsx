@@ -125,7 +125,7 @@ export function DeleteRoleDialog({
             </Alert>
           ) : (
             <>
-              <div className="rounded-lg border p-4 bg-muted/50">
+              <div className="rounded-md border p-4 bg-muted/50">
                 <div className="space-y-2">
                   <div>
                     <span className="text-sm font-medium">Role Name:</span>

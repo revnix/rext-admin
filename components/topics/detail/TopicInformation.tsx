@@ -24,10 +24,10 @@ export function TopicInformation({ topic }: TopicInformationProps) {
 
       <div className="space-y-6">
         {/* Overview - Most Prominent */}
-        <div className="bg-background rounded-lg p-6 border-2 border-muted/40 shadow-sm">
+        <div className="bg-background rounded-md p-6 border-2 border-muted/40 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mt-1">
-              <FileText className="w-5 h-5 text-primary" />
+            <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-md flex items-center justify-center mt-1">
+              <FileText className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-medium text-foreground mb-3">
@@ -45,10 +45,10 @@ export function TopicInformation({ topic }: TopicInformationProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Angle */}
           {topic.angle && (
-            <div className="bg-background rounded-lg p-5 border-2 border-muted/50 shadow-sm">
+            <div className="bg-background rounded-md p-5 border-2 border-muted/50 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
-                  <Sparkles className="w-4 h-4 text-primary" />
+                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-md flex items-center justify-center mt-0.5">
+                  <Sparkles className="w-4 h-4 text-foreground" />
                 </div>
                 <div className="flex-1">
                   <h4 className="text-base font-medium text-foreground mb-2">
@@ -64,10 +64,10 @@ export function TopicInformation({ topic }: TopicInformationProps) {
 
           {/* Why This Works */}
           {topic.why_it_works && (
-            <div className="bg-background rounded-lg p-5 border-2 border-muted/50 shadow-sm">
+            <div className="bg-background rounded-md p-5 border-2 border-muted/50 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
-                  <Target className="w-4 h-4 text-primary" />
+                <div className="flex-shrink-0 w-8 h-8 bg-muted rounded-md flex items-center justify-center mt-0.5">
+                  <Target className="w-4 h-4 text-foreground" />
                 </div>
                 <div className="flex-1">
                   <h4 className="text-base font-medium text-foreground mb-2">

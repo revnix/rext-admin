@@ -142,7 +142,7 @@ export function ManageRolePermissionsDialog({
 
           {isProtected && (
             <div className="my-3 p-3 text-sm rounded-md bg-muted text-muted-foreground flex items-center gap-2 border">
-              <AlertCircle className="h-4 w-4 shrink-0 text-primary" />
+              <AlertCircle className="h-4 w-4 shrink-0 text-foreground" />
               <span>
                 This is a built-in system role. Assigned permissions are fixed
                 and read-only.

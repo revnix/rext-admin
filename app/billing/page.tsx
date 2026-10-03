@@ -112,7 +112,7 @@ export default function BillingHistoryPage() {
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               Loading billing information...
             </p>
@@ -317,7 +317,7 @@ export default function BillingHistoryPage() {
                 <CardDescription>Your payment method on file</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                <div className="flex items-center justify-between p-4 border rounded-md bg-card">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-muted rounded-full">
                       <CreditCard className="h-6 w-6 text-foreground" />
@@ -346,7 +346,7 @@ export default function BillingHistoryPage() {
             </Card>
 
             {/* 4. Manage Billing Action */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border rounded-lg bg-muted/40">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border rounded-md bg-muted/40">
               <div className="space-y-1">
                 <h4 className="font-semibold">Customer Billing Portal</h4>
                 <p className="text-sm text-muted-foreground">

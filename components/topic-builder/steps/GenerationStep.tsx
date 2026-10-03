@@ -11,7 +11,7 @@ export function GenerationStep({ formData, onGenerate }: GenerationStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
+        <Sparkles className="h-12 w-12 mx-auto mb-4 text-foreground" />
         <h3 className="text-lg font-semibold mb-2">Ready to Generate!</h3>
         <p className="text-muted-foreground mb-4">
           We'll create {formData.num_topics} targeted topics based on your

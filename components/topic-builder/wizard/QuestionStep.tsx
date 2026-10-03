@@ -56,7 +56,7 @@ const WizardModeQuestion = lazy(() =>
 // Loading fallback component
 const QuestionLoadingFallback = () => (
   <div className="flex items-center justify-center p-8">
-    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    <Loader2 className="h-6 w-6 animate-spin text-foreground" />
   </div>
 );
 
@@ -200,7 +200,7 @@ export function QuestionStep({
         <motion.div
           className={cn(
             "absolute inset-0 bg-background/80 backdrop-blur-sm",
-            "flex items-center justify-center z-10 rounded-lg",
+            "flex items-center justify-center z-10 rounded-md",
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

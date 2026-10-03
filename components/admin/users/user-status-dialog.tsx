@@ -164,12 +164,12 @@ export function UserStatusDialog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="rounded-lg border p-3 bg-muted/50">
+            <div className="rounded-md border p-3 bg-muted/50">
               <p className="text-sm font-medium">{displayName}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Current status:{" "}
-                <code className="text-xs bg-background px-1 rounded">
+                <code className="text-xs bg-background px-1 rounded-md">
                   {user.status}
                 </code>
               </p>

@@ -120,7 +120,7 @@ export function DefaultErrorFallback({
         </p>
 
         {process.env.NODE_ENV === "development" && (
-          <details className="rounded bg-muted p-3 text-xs text-muted-foreground">
+          <details className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
             <summary className="cursor-pointer font-medium mb-2">
               Technical Details (Development Only)
             </summary>

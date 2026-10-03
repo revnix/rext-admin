@@ -81,7 +81,7 @@ function ReviewCard({
         {hasError && errorMessage && (
           <div
             id={`${field}-error`}
-            className="text-xs text-destructive mb-3 p-2 bg-destructive/10 rounded border border-destructive/20"
+            className="text-xs text-destructive mb-3 p-2 bg-destructive/10 rounded-md border border-destructive/20"
             role="alert"
           >
             <div className="flex items-start gap-2">
@@ -372,7 +372,7 @@ export function ReviewQuestion({
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 💡 Tip: Press{" "}
-                <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                <kbd className="px-1 py-0.5 bg-muted rounded-md text-xs">
                   Ctrl+E
                 </kbd>{" "}
                 to quickly fix the first error
@@ -384,8 +384,8 @@ export function ReviewQuestion({
 
       {/* Summary Section with Number of Topics Input */}
       <div className="text-center space-y-4 sm:space-y-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-2 sm:mb-3">
-          <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-muted rounded-full mb-2 sm:mb-3">
+          <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-foreground" />
         </div>
 
         {/* Number of Topics Input */}
@@ -399,8 +399,8 @@ export function ReviewQuestion({
 
           {/* Enhanced Number Input - Bigger */}
           <div className="flex items-center justify-center">
-            <div className="flex items-center gap-4 bg-muted/50 rounded-2xl px-6 py-4 border border-border/50 hover:border-primary/30 transition-all duration-200 shadow-sm">
-              <Hash className="h-6 w-6 text-primary flex-shrink-0" />
+            <div className="flex items-center gap-4 bg-muted/50 rounded-md px-6 py-4 border border-border/50 hover:border-primary/30 transition-all duration-200 shadow-sm">
+              <Hash className="h-6 w-6 text-foreground flex-shrink-0" />
               <Input
                 id="num_topics"
                 type="number"
@@ -437,7 +437,7 @@ export function ReviewQuestion({
                 type="button"
                 onClick={() => updateFormData("num_topics", count)}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer",
+                  "px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 cursor-pointer",
                   "border hover:border-primary/50 shadow-sm hover:shadow-md",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
@@ -484,7 +484,7 @@ export function ReviewQuestion({
       {/* Configuration Review Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
         <ReviewCard
-          icon={<Settings className="h-4 w-4 text-primary" />}
+          icon={<Settings className="h-4 w-4 text-foreground" />}
           label="Wizard Mode"
           value={
             formData.wizardMode === "subject-first"
@@ -504,7 +504,7 @@ export function ReviewQuestion({
 
         {formData.subject && (
           <ReviewCard
-            icon={<Target className="h-4 w-4 text-primary" />}
+            icon={<Target className="h-4 w-4 text-foreground" />}
             label="Subject"
             value={formData.subject}
             field="subject"
@@ -520,7 +520,7 @@ export function ReviewQuestion({
         )}
 
         <ReviewCard
-          icon={<Settings className="h-4 w-4 text-primary" />}
+          icon={<Settings className="h-4 w-4 text-foreground" />}
           label="Industry"
           value={getDisplayValue(INDUSTRY_OPTIONS, formData.industry)}
           field="industry"
@@ -536,7 +536,7 @@ export function ReviewQuestion({
 
         {formData.audience && formData.audience.length > 0 && (
           <ReviewCard
-            icon={<Target className="h-4 w-4 text-primary" />}
+            icon={<Target className="h-4 w-4 text-foreground" />}
             label="Target Audience"
             value={formData.audience}
             field="audience"
@@ -552,7 +552,7 @@ export function ReviewQuestion({
         )}
 
         <ReviewCard
-          icon={<Target className="h-4 w-4 text-primary" />}
+          icon={<Target className="h-4 w-4 text-foreground" />}
           label="Purpose"
           value={formData.purpose.map((p) =>
             getDisplayValue(PURPOSE_OPTIONS, p),

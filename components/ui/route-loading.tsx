@@ -184,7 +184,7 @@ export function RouteLoading({
                   key={`workspace-activity-${i}`}
                   className="flex items-start gap-3"
                 >
-                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-3 w-2/3" />
@@ -216,7 +216,7 @@ export function RouteLoading({
               {Array.from({ length: rows }, (_, i) => i).map((i) => (
                 <div
                   key={`list-item-${i}`}
-                  className="border rounded-lg p-4 space-y-3"
+                  className="border rounded-md p-4 space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
@@ -273,10 +273,10 @@ export function RouteLoading({
             {Array.from({ length: 6 }, (_, i) => i).map((i) => (
               <div
                 key={`grid-item-${i}`}
-                className="border rounded-lg p-4 space-y-3"
+                className="border rounded-md p-4 space-y-3"
               >
                 <div className="flex items-start justify-between">
-                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
                   <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
                 <div className="space-y-2">
@@ -403,7 +403,7 @@ export function RouteLoading({
   return (
     <PageLayout title={title}>
       <div className={`flex h-screen items-center justify-center ${className}`}>
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-foreground" />
       </div>
     </PageLayout>
   );

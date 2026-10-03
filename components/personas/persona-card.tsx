@@ -51,14 +51,14 @@ export function PersonaCard({ persona }: PersonaCardProps) {
       <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border bg-card flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 rounded-lg shadow-sm">
+            <Avatar className="h-10 w-10 rounded-md shadow-sm">
               <AvatarImage
                 src={persona.avatar_url || ""}
                 alt={`${persona.name}'s avatar`}
                 className="object-cover"
               />
               <AvatarFallback
-                className={`rounded-lg ${avatarColor} text-white font-bold text-sm`}
+                className={`rounded-md ${avatarColor} text-white font-bold text-sm`}
               >
                 {initials}
               </AvatarFallback>

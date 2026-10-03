@@ -112,7 +112,7 @@ function SessionRecoveryDialog({
             availableSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-4 border rounded-md hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

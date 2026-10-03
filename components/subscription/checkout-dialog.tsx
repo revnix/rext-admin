@@ -65,7 +65,7 @@ export function CheckoutDialog() {
           <div className="flex items-center justify-between gap-4 pr-6">
             <div>
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
+                <CreditCard className="h-5 w-5 text-foreground" />
                 {selectedPlan ? `Subscribe to ${planTitle}` : "Checkout"}
               </DialogTitle>
               <DialogDescription className="mt-1.5 text-sm text-muted-foreground flex items-center gap-2">

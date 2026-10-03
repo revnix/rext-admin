@@ -277,7 +277,7 @@ export function AccountDeactivation() {
                   control={form.control}
                   name="understood"
                   render={({ field }) => (
-                    <FormItem className="p-4 border rounded-lg bg-muted/50">
+                    <FormItem className="p-4 border rounded-md bg-muted/50">
                       <div className="flex flex-row items-start space-x-3 space-y-0">
                         <FormControl>
                           <Checkbox
@@ -309,7 +309,7 @@ export function AccountDeactivation() {
                     control={form.control}
                     name="cancel_subscriptions"
                     render={({ field }) => (
-                      <FormItem className="p-4 border rounded-lg bg-destructive/10 border-destructive/20">
+                      <FormItem className="p-4 border rounded-md bg-destructive/10 border-destructive/20">
                         <div className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox

@@ -245,11 +245,11 @@ export function OnboardingProgress({
                       {/* Icon */}
                       <div
                         className={cn(
-                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          "h-10 w-10 rounded-md flex items-center justify-center",
                           milestone.completed
                             ? "bg-green-100 dark:bg-green-900/30"
                             : isNext
-                              ? "bg-primary/10"
+                              ? "bg-foreground/10"
                               : "bg-muted",
                         )}
                       >
@@ -259,7 +259,9 @@ export function OnboardingProgress({
                           <Circle
                             className={cn(
                               "h-5 w-5",
-                              isNext ? "text-primary" : "text-muted-foreground",
+                              isNext
+                                ? "text-foreground"
+                                : "text-muted-foreground",
                             )}
                           />
                         )}
@@ -282,7 +284,7 @@ export function OnboardingProgress({
                         {milestone.label}
                       </CardTitle>
                       {milestone.optional && isEnabled && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium shrink-0">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium shrink-0">
                           Optional
                         </span>
                       )}

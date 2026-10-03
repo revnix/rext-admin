@@ -160,11 +160,11 @@ export default function TrashSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
-            <div className="rounded border border-dashed p-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
               Loading deleted workspaces…
             </div>
           ) : workspaces.length === 0 ? (
-            <div className="rounded border border-dashed p-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
               Nothing in trash.
             </div>
           ) : (
@@ -178,7 +178,7 @@ export default function TrashSettingsPage() {
                 return (
                   <div
                     key={workspace.id}
-                    className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
+                    className="flex flex-col gap-3 rounded-md border p-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="space-y-1">
                       <div className="font-medium">{workspace.name}</div>

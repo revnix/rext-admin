@@ -228,7 +228,7 @@ export default function CreatePersonaPage() {
     return (
       <PageLayout title="Loading Permissions...">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </PageLayout>
@@ -299,7 +299,7 @@ export default function CreatePersonaPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   persona.create
                 </code>
               </p>
@@ -315,7 +315,7 @@ export default function CreatePersonaPage() {
               <Card>
                 <CardHeader className="pb-3 border-b">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <User size={18} className="text-primary" />
+                    <User size={18} className="text-foreground" />
                     Profile Details
                   </h3>
                 </CardHeader>
@@ -501,13 +501,13 @@ export default function CreatePersonaPage() {
                   </div>
 
                   <div className="flex items-center gap-4 mb-6">
-                    <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                    <Avatar className="h-16 w-16 rounded-md shadow-md border border-border/50">
                       <AvatarImage
                         src={avatarPreview || formData.avatar_url || ""}
                         alt={`${avatarDisplayName}'s avatar`}
                         className="object-cover"
                       />
-                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                      <AvatarFallback className="rounded-md bg-muted text-foreground font-bold text-xl">
                         {avatarDisplayName
                           .split(" ")
                           .map((word) => word[0])
@@ -564,8 +564,7 @@ export default function CreatePersonaPage() {
                     ) : (
                       <p className="text-xs text-muted-foreground">
                         Include at least one letter; numbers and punctuation are
-                        allowed —{" "}
-                        {PERSONA_LIMITS.professional_title.min}–
+                        allowed — {PERSONA_LIMITS.professional_title.min}–
                         {PERSONA_LIMITS.professional_title.max} characters if
                         provided.
                       </p>
@@ -633,7 +632,7 @@ export default function CreatePersonaPage() {
                 <CardHeader className="pb-3 border-b">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold flex items-center gap-2">
-                      <User size={18} className="text-primary" />
+                      <User size={18} className="text-foreground" />
                       Demographics
                     </h3>
                     {counter(
@@ -669,7 +668,7 @@ export default function CreatePersonaPage() {
               <Card>
                 <CardHeader className="pb-3 border-b">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <TrendingUp size={18} className="text-primary" />
+                    <TrendingUp size={18} className="text-foreground" />
                     Capabilities
                   </h3>
                 </CardHeader>
@@ -749,7 +748,7 @@ export default function CreatePersonaPage() {
               <Card>
                 <CardHeader className="pb-3 border-b">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <Target size={18} className="text-primary" />
+                    <Target size={18} className="text-foreground" />
                     Objectives & Challenges
                   </h3>
                 </CardHeader>
@@ -819,7 +818,7 @@ export default function CreatePersonaPage() {
                 <CardHeader className="pb-3 border-b">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold flex items-center gap-2">
-                      <Activity size={18} className="text-primary" />
+                      <Activity size={18} className="text-foreground" />
                       Behaviors
                     </h3>
                     {counter(formData.behaviors, PERSONA_LIMITS.behaviors.max)}

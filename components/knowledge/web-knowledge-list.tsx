@@ -110,7 +110,7 @@ function WebKnowledgeListSkeleton() {
       {LIST_SKELETON_KEYS.map((key) => (
         <div
           key={key}
-          className="flex items-center gap-4 p-4 border rounded-lg"
+          className="flex items-center gap-4 p-4 border rounded-md"
         >
           <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-4" />
@@ -405,7 +405,7 @@ export function WebKnowledgeList({
 
       {/* Bulk Actions */}
       {hasSelection && (
-        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
           <span className="text-sm font-medium">
             {selectedItems.length} item{selectedItems.length > 1 ? "s" : ""}{" "}
             selected

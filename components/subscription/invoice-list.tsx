@@ -145,7 +145,7 @@ export function InvoiceList({
                 <div
                   key={invoice.invoice_id}
                   className={cn(
-                    "flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
+                    "flex items-center justify-between p-4 rounded-md border bg-card hover:bg-accent/50 transition-colors",
                     compact && "p-3",
                   )}
                 >

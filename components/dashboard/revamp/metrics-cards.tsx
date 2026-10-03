@@ -66,7 +66,7 @@ export function MetricsCards({
             <CardContent className="p-6">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-brand-50)] text-[var(--color-brand-600)] dark:bg-[var(--color-brand-900)]/40 dark:text-[var(--color-brand-300)]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="font-medium text-sm text-muted-foreground">

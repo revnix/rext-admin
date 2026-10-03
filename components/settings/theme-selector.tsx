@@ -16,7 +16,7 @@ export function ThemeSelector({ showHeader = true }: ThemeSelectorProps) {
     <div className="space-y-4">
       {showHeader && (
         <div className="flex items-center gap-2">
-          <Palette className="h-5 w-5 text-primary" />
+          <Palette className="h-5 w-5 text-foreground" />
           <div>
             <h3 className="text-lg font-semibold">Appearance</h3>
             <p className="text-sm text-muted-foreground">

@@ -71,7 +71,7 @@ export function AutoFilledFieldWrapper({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-blue-600 cursor-help" />
+                  <Info className="h-4 w-4 text-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Pre-filled from topic data</p>

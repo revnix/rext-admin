@@ -65,14 +65,14 @@ export function SubscriptionKPIs({
       value: stats.total_subscriptions.toLocaleString(),
       icon: Users,
       description: `${stats.active_subscriptions} active`,
-      color: "text-blue-600",
+      color: "text-foreground",
     },
     {
       title: "Active Subscriptions",
       value: stats.active_subscriptions.toLocaleString(),
       icon: Users,
       description: `${stats.trial_subscriptions} trials`,
-      color: "text-green-600",
+      color: "text-foreground",
     },
     {
       title: "MRR",
@@ -88,28 +88,28 @@ export function SubscriptionKPIs({
           ? "up"
           : "down"
         : undefined,
-      color: "text-emerald-600",
+      color: "text-foreground",
     },
     {
       title: "ARR",
       value: formatCurrency(stats.arr),
       icon: DollarSign,
       description: "Annual recurring revenue",
-      color: "text-purple-600",
+      color: "text-foreground",
     },
     {
       title: "Avg Customer LTV",
       value: formatCurrency(stats.average_ltv),
       icon: DollarSign,
       description: "Average customer lifetime value",
-      color: "text-cyan-600",
+      color: "text-foreground",
     },
     {
       title: "Churn Rate",
       value: formatPercent(churnRate),
       icon: Percent,
       description: "Last 30 days",
-      color: stats.churn_rate_monthly > 5 ? "text-red-600" : "text-orange-600",
+      color: stats.churn_rate_monthly > 5 ? "text-red-600" : "text-foreground",
       trend: "down",
     },
     {
@@ -117,14 +117,14 @@ export function SubscriptionKPIs({
       value: formatPercent(stats.trial_conversion_rate),
       icon: Percent,
       description: "Trial to paid",
-      color: "text-indigo-600",
+      color: "text-foreground",
     },
     {
       title: "Trial Subscriptions",
       value: stats.trial_subscriptions.toLocaleString(),
       icon: Users,
       description: "Currently trialing",
-      color: "text-amber-600",
+      color: "text-foreground",
     },
   ];
 

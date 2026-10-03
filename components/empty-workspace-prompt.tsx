@@ -48,8 +48,8 @@ export function EmptyWorkspacePrompt() {
       <Card className="border-dashed bg-muted/30">
         <CardContent className="p-3 space-y-2">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-              <Building2 className="h-4 w-4 text-primary" />
+            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+              <Building2 className="h-4 w-4 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">

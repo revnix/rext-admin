@@ -224,7 +224,7 @@ export function CancelSubscriptionModal({
             </div>
 
             {/* Confirmation Checkbox */}
-            <div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
+            <div className="flex items-start space-x-2 p-4 bg-muted rounded-md">
               <Checkbox
                 id="confirm-cancel"
                 checked={confirmed}

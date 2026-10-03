@@ -97,15 +97,15 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
       <div className="mt-4 flex items-center gap-2 text-xs">
         <span className="font-medium">Legend:</span>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-100 rounded" />
+          <div className="w-4 h-4 bg-green-100 rounded-md" />
           <span>90%+</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-yellow-50 rounded" />
+          <div className="w-4 h-4 bg-yellow-50 rounded-md" />
           <span>70-90%</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-50 rounded" />
+          <div className="w-4 h-4 bg-red-50 rounded-md" />
           <span>&lt;60%</span>
         </div>
       </div>

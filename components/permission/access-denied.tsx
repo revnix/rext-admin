@@ -177,7 +177,7 @@ export function AccessDenied({
 
         {/* Upgrade Prompt */}
         {showUpgrade && (
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 p-4 rounded-lg">
+          <div className="bg-muted/40 border border-border p-4 rounded-md">
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               <HelpCircle className="h-4 w-4" aria-hidden="true" />
               Need Access?

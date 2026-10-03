@@ -50,7 +50,7 @@ export function InvitationBanner({
 
   return (
     <Alert className="mb-6 border-primary/20 bg-primary/5">
-      <Mail className="h-5 w-5 text-primary" />
+      <Mail className="h-5 w-5 text-foreground" />
       <AlertDescription className="mt-0 ml-8">
         <div className="space-y-2">
           {/* Main invitation message */}

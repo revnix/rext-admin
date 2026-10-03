@@ -150,7 +150,7 @@ export default function LicensesPage() {
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Loading licenses...</p>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function LicensesPage() {
                           .map((activation) => (
                             <div
                               key={activation.id}
-                              className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                              className="flex items-center justify-between p-3 bg-muted rounded-md"
                             >
                               <div className="flex-1">
                                 <p className="font-medium">

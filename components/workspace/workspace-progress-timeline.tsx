@@ -194,7 +194,7 @@ export function WorkspaceProgressTimeline({
       case "failed":
         return <X className="h-5 w-5 text-red-600" />;
       case "in-progress":
-        return <Loader2 className="h-5 w-5 animate-spin text-blue-600" />;
+        return <Loader2 className="h-5 w-5 animate-spin text-foreground" />;
       default:
         return <Clock className="h-5 w-5 text-gray-400" />;
     }
@@ -315,7 +315,7 @@ export function WorkspaceProgressTimeline({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 rounded-lg bg-muted p-3"
+            className="mt-4 rounded-md bg-muted p-3"
           >
             <p className="text-sm text-muted-foreground">
               {events[events.length - 1].message}

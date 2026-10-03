@@ -81,28 +81,28 @@ export function UsageCharts({
       value: stats?.user_activity.active_users || 0,
       description: `${stats?.user_activity.new_users || 0} new users`,
       icon: Users,
-      color: "text-blue-600",
+      color: "text-foreground",
     },
     {
       title: "Content Created",
       value: stats?.content_generation.total || 0,
       description: `${stats?.content_generation.successful || 0} successful`,
       icon: FileText,
-      color: "text-green-600",
+      color: "text-foreground",
     },
     {
       title: "API Calls",
       value: stats?.api_calls.total || 0,
       description: "Total requests",
       icon: Activity,
-      color: "text-purple-600",
+      color: "text-foreground",
     },
     {
       title: "Workspaces",
       value: stats?.user_activity.new_workspaces || 0,
       description: "New workspaces",
       icon: Layers,
-      color: "text-orange-600",
+      color: "text-foreground",
     },
   ];
 

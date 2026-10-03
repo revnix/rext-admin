@@ -161,10 +161,10 @@ export function WorkspaceWelcomeModal({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            <div className="rounded-lg border border-border/70 bg-muted/40 dark:bg-muted/20 p-5 sm:p-6 space-y-4">
+            <div className="rounded-md border border-border/70 bg-muted/40 dark:bg-muted/20 p-5 sm:p-6 space-y-4">
               {/* Inviter */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground border border-border">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -175,7 +175,7 @@ export function WorkspaceWelcomeModal({
 
               {/* Role */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground border border-border">
                   <UserCog className="h-5 w-5" />
                 </div>
                 <div>
@@ -187,9 +187,9 @@ export function WorkspaceWelcomeModal({
 
             {/* Permissions */}
             {permissions.length > 0 && (
-              <div className="rounded-lg border border-primary/15 bg-primary/5 dark:bg-primary/10 p-5 sm:p-6">
+              <div className="rounded-md border border-primary/15 bg-primary/5 dark:bg-primary/10 p-5 sm:p-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
+                  <Building2 className="h-5 w-5 text-foreground" />
                   As {roleName}, you can:
                 </h3>
                 <ul className="space-y-2">
@@ -201,7 +201,7 @@ export function WorkspaceWelcomeModal({
                       transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                       className="flex items-center gap-2 text-sm"
                     >
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/25 dark:bg-primary/20 dark:border-primary/30 shrink-0">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-foreground border border-border shrink-0">
                         <Check className="h-3 w-3" />
                       </div>
                       <span>{permission}</span>

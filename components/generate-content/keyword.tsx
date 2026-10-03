@@ -39,7 +39,7 @@ export function KeywordForm({
           if (disabled) return;
           onSubmit();
         }}
-        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-xl"
+        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-md"
       >
         <div className="flex-1 flex items-center px-4">
           <Search className="w-6 h-6 text-muted-foreground mr-4" />

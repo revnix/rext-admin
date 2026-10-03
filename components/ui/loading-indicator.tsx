@@ -74,7 +74,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
         )}
       >
         <Loader2
-          className={cn(sizeClass, "animate-spin text-primary")}
+          className={cn(sizeClass, "animate-spin text-foreground")}
           aria-hidden="true"
         />
         {props.message ? (
@@ -212,7 +212,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     return (
       <div
         className={cn(
-          "w-full border border-border/40 rounded-xl overflow-hidden bg-card",
+          "w-full border border-border/40 rounded-md overflow-hidden bg-card",
           props.className,
         )}
       >

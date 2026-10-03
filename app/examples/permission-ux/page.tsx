@@ -264,7 +264,7 @@ export default function PermissionUXExamplesPage() {
           <CardContent className="space-y-3 text-sm">
             <div>
               <p className="font-semibold mb-1">1. Locked Feature Tooltips</p>
-              <code className="block bg-muted p-2 rounded text-xs">
+              <code className="block bg-muted p-2 rounded-md text-xs">
                 {`<LockedFeatureTooltip permission="content.delete">
   <Button disabled>Delete</Button>
 </LockedFeatureTooltip>`}
@@ -273,7 +273,7 @@ export default function PermissionUXExamplesPage() {
 
             <div>
               <p className="font-semibold mb-1">2. CanAccess with Tooltips</p>
-              <code className="block bg-muted p-2 rounded text-xs">
+              <code className="block bg-muted p-2 rounded-md text-xs">
                 {`<PermissionGuard permission="content.update" showLockedTooltip>
   <Button>Edit</Button>
 </PermissionGuard>`}
@@ -282,7 +282,7 @@ export default function PermissionUXExamplesPage() {
 
             <div>
               <p className="font-semibold mb-1">3. Loading States</p>
-              <code className="block bg-muted p-2 rounded text-xs">
+              <code className="block bg-muted p-2 rounded-md text-xs">
                 {`<PermissionGuard
   permission="content.read"
   showLoading

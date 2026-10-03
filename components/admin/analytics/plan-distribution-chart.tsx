@@ -84,7 +84,7 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
           {safeData.map((plan, index) => (
             <div
               key={plan.plan_name}
-              className="flex items-center justify-between p-3 rounded-lg border"
+              className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center gap-3">
                 <div

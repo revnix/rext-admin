@@ -155,7 +155,7 @@ export function LemonSqueezyProvider() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {purchaseStatus === "confirming" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <Loader2 className="h-5 w-5 animate-spin text-foreground" />
               ) : purchaseStatus === "active" ? (
                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               ) : null}

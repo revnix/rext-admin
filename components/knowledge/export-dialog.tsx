@@ -648,7 +648,7 @@ export function ExportDialog({
 
             {/* Export Preview */}
             {previewData && (
-              <div className="p-4 bg-muted rounded-lg">
+              <div className="p-4 bg-muted rounded-md">
                 <h4 className="font-medium mb-2">Export Preview</h4>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>

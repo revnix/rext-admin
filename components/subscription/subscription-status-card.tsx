@@ -199,9 +199,9 @@ export function SubscriptionStatusCard({
       <CardContent className="space-y-6">
         {/* Trial Warning */}
         {isTrialActive && trialDaysRemaining !== null && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <Sparkles className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-medium text-blue-900 dark:text-blue-100">
                   Trial Period
@@ -274,7 +274,7 @@ export function SubscriptionStatusCard({
         {/* Cancelled Subscription Warning */}
         {subscription?.subscription?.status ===
           SubscriptionStatus.CANCELLED && (
-          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 space-y-3">
+          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md p-4 space-y-3">
             <p className="text-sm text-orange-900 dark:text-orange-100">
               Your subscription has been cancelled and will remain active until{" "}
               {subscription?.subscription?.end_date &&

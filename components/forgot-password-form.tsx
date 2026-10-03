@@ -91,12 +91,12 @@ export function ForgotPasswordForm({
         <div className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md">
                 Password reset email sent! Check your inbox for the reset link.
               </div>
             )}

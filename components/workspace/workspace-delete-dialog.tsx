@@ -243,7 +243,7 @@ export function WorkspaceDeleteDialog({
             <Label htmlFor="confirmation-input" className="text-sm font-medium">
               To confirm deletion, type the workspace name below:
             </Label>
-            <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
+            <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded-md">
               {workspaceName}
             </div>
             <Input

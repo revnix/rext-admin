@@ -107,11 +107,11 @@ export function SecuritySettings() {
         {securityItems.map((item) => (
           <div
             key={item.label}
-            className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+            className="flex items-start gap-4 p-4 border rounded-md hover:bg-accent/5 transition-colors"
           >
             <div
               className={`
-              p-2 rounded-lg
+              p-2 rounded-md
               ${item.status === "success" ? "bg-green-100 text-green-700" : ""}
               ${item.status === "warning" ? "bg-yellow-100 text-yellow-700" : ""}
               ${item.status === "info" ? "bg-blue-100 text-blue-700" : ""}

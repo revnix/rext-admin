@@ -80,7 +80,7 @@ export default function WorkspaceTopicsPage() {
       <PageLayout title="Loading Permissions...">
         <div className="flex h-screen items-center justify-center">
           <div className="space-y-4 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function WorkspaceTopicsPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   topic.read
                 </code>
               </p>

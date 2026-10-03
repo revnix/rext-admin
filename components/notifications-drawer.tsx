@@ -47,9 +47,9 @@ const getNotificationIcon = (type: OperationNotification["type"]) => {
     case "error":
       return <AlertTriangle className="h-5 w-5 text-red-500" />;
     case "info":
-      return <Info className="h-5 w-5 text-blue-500" />;
+      return <Info className="h-5 w-5 text-foreground" />;
     case "user":
-      return <User className="h-5 w-5 text-purple-500" />;
+      return <User className="h-5 w-5 text-foreground" />;
     case "system":
       return <Settings className="h-5 w-5 text-gray-500" />;
     default:
@@ -219,7 +219,7 @@ export function NotificationsDrawer({
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-3 rounded-lg border transition-all hover:bg-muted/50 ${
+                  className={`p-3 rounded-md border transition-all hover:bg-muted/50 ${
                     !notification.read
                       ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
                       : "bg-background border-border dark:bg-background dark:border-border"

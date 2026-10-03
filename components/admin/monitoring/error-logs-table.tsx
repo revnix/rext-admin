@@ -385,7 +385,7 @@ export function ErrorLogsTable({
               {selectedLog.stack_trace && (
                 <div className="w-80 sm:w-full">
                   <div className="text-sm font-medium">Stack Trace</div>
-                  <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                  <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                     {selectedLog.stack_trace}
                   </pre>
                 </div>
@@ -395,7 +395,7 @@ export function ErrorLogsTable({
                 Object.keys(selectedLog.metadata).length > 0 && (
                   <div className="w-80 sm:w-full">
                     <div className="text-sm font-medium">Metadata</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
                   </div>

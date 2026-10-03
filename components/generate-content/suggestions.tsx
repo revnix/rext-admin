@@ -112,9 +112,9 @@ export function SuggestionsSection({
         type="button"
         variants={itemVariants}
         onClick={() => onSelect(primaryKeyword)}
-        className="w-full mt-4 text-left relative cursor-pointer overflow-hidden rounded-xl border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
+        className="w-full mt-4 text-left relative cursor-pointer overflow-hidden rounded-md border border-primary/20 bg-card px-5 py-4 group transition-all duration-200 hover:border-primary/50 hover:bg-accent/10"
       >
-        <span className="absolute left-0 top-0 h-full w-[2px] bg-primary rounded-l-xl" />
+        <span className="absolute left-0 top-0 h-full w-[2px] bg-primary rounded-l-md" />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] text-muted-foreground/40 font-black uppercase tracking-[0.18em] mb-0.5">
@@ -124,7 +124,7 @@ export function SuggestionsSection({
               {primaryKeyword}
             </h1>
           </div>
-          <div className="h-8 w-8 rounded-lg bg-primary/5 border border-primary/15 flex items-center justify-center text-primary/50 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200">
+          <div className="h-8 w-8 rounded-md bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200">
             <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
@@ -134,13 +134,13 @@ export function SuggestionsSection({
       <div className="grid grid-cols-1 md:grid-cols-2 mt-3 gap-3">
         <motion.div
           variants={itemVariants}
-          className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
+          className="bg-card border border-border/50 rounded-md p-4 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
               Difficulty
             </span>
-            <Zap className="w-3.5 h-3.5 text-primary/60" />
+            <Zap className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
           <div className="flex-1 flex items-center justify-center">
             <SafeChartRadialStacked difficultyScore={difficultyScore} />
@@ -150,13 +150,13 @@ export function SuggestionsSection({
         <div className="flex flex-col gap-3">
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
+            className="bg-card border border-border/50 rounded-md p-4 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Search Intent
               </span>
-              <Compass className="w-3.5 h-3.5 text-primary/60" />
+              <Compass className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -220,13 +220,13 @@ export function SuggestionsSection({
 
           <motion.div
             variants={itemVariants}
-            className="bg-card border border-border/50 rounded-xl p-4 flex flex-col justify-between"
+            className="bg-card border border-border/50 rounded-md p-4 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Monthly Volume
               </span>
-              <TrendingUp className="w-3.5 h-3.5 text-sky-400/70" />
+              <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
             <AnimatePresence mode="wait">
               {seoResult?.volume ? (
@@ -282,7 +282,7 @@ export function SuggestionsSection({
                   duration: 0.35,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="w-full sm:w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-lg transition-all duration-200 text-left cursor-pointer"
+                className="w-full sm:w-[49%] group flex items-center justify-between px-4 py-3 bg-card hover:bg-accent/25 border border-border hover:border-primary/30 rounded-md transition-all duration-200 text-left cursor-pointer"
                 onClick={() => onSelect(kw)}
               >
                 <span className="text-[13px] font-medium text-foreground/80 group-hover:text-primary transition-colors">
@@ -315,7 +315,7 @@ export function SuggestionsSection({
             className="mt-6"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-3.5 h-3.5 text-primary/60" />
+              <Layers className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.16em]">
                 Semantic Clusters
               </span>
@@ -326,7 +326,7 @@ export function SuggestionsSection({
                 <motion.div
                   key={cluster.cluster_name}
                   variants={itemVariants}
-                  className="border border-border/50 rounded-xl bg-card px-4 py-3"
+                  className="border border-border/50 rounded-md bg-card px-4 py-3"
                 >
                   <div className="flex items-center gap-2 mb-2.5">
                     <span className="text-[13px] font-semibold text-foreground/80 capitalize">

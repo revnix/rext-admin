@@ -231,14 +231,14 @@ export function WizardNavigation({
           {isInEditMode ? (
             <span>
               Edit mode: Press{" "}
-              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded-md border">
                 Enter
               </kbd>{" "}
               to continue or use Save
               {!isFirstQuestion && (
                 <>
                   {" · "}
-                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded-md border">
                     Esc
                   </kbd>{" "}
                   to go back
@@ -248,14 +248,14 @@ export function WizardNavigation({
           ) : (
             <span>
               Press{" "}
-              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+              <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded-md border">
                 Enter
               </kbd>{" "}
               to continue
               {!isFirstQuestion && (
                 <>
                   {" or "}
-                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border">
+                  <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded-md border">
                     Esc
                   </kbd>{" "}
                   to go back

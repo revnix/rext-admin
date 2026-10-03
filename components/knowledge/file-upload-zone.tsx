@@ -290,7 +290,7 @@ export function FileUploadZone({
               {uploadingFiles.map((uploadingFile) => (
                 <div
                   key={uploadingFile.id}
-                  className="flex items-center gap-3 p-3 border rounded-lg"
+                  className="flex items-center gap-3 p-3 border rounded-md"
                 >
                   <FileText className="h-4 w-4 flex-shrink-0" />
                   <div className="flex-1 min-w-0">

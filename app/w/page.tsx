@@ -130,7 +130,7 @@ export default function WorkspacePage() {
       cell: (value: unknown, row: WorkspaceData) => (
         <div className="flex items-start gap-2 min-w-[150px]">
           <div className="flex-shrink-0 mt-0.5">
-            <div className="h-5 w-5 rounded bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+            <div className="h-5 w-5 rounded-md bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
               {String(value || "W")
                 .charAt(0)
                 .toUpperCase()}

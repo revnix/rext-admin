@@ -169,7 +169,7 @@ export function WorkspaceSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-md"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
@@ -181,10 +181,10 @@ export function WorkspaceSwitcher() {
                 </DropdownMenuLabel>
                 <DropdownMenuItem disabled>
                   <div className="flex items-center gap-2">
-                    <div className="size-6 rounded bg-muted animate-pulse" />
+                    <div className="size-6 rounded-md bg-muted animate-pulse" />
                     <div className="flex-1">
-                      <div className="h-3 bg-muted rounded animate-pulse mb-1" />
-                      <div className="h-2 bg-muted rounded animate-pulse w-2/3" />
+                      <div className="h-3 bg-muted rounded-md animate-pulse mb-1" />
+                      <div className="h-2 bg-muted rounded-md animate-pulse w-2/3" />
                     </div>
                   </div>
                 </DropdownMenuItem>
@@ -235,7 +235,7 @@ export function WorkspaceSwitcher() {
                         )}
                       </div>
                       {isActive && (
-                        <Check className="size-4 text-primary shrink-0" />
+                        <Check className="size-4 text-foreground shrink-0" />
                       )}
                     </DropdownMenuItem>
                   );

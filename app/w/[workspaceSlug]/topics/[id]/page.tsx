@@ -67,7 +67,9 @@ export default function WorkspaceTopicDetailPage({
           <CardContent>
             <p className="text-sm text-muted-foreground">
               Required permission:{" "}
-              <code className="text-xs bg-muted px-1 rounded">topic.read</code>
+              <code className="text-xs bg-muted px-1 rounded-md">
+                topic.read
+              </code>
             </p>
           </CardContent>
         </Card>

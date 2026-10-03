@@ -302,7 +302,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.metadata).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">Metadata</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
                   </div>
@@ -312,7 +312,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.old_values).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">Old Values</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.old_values, null, 2)}
                     </pre>
                   </div>
@@ -322,7 +322,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.new_values).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">New Values</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.new_values, null, 2)}
                     </pre>
                   </div>

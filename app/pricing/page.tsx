@@ -79,7 +79,7 @@ export default function PricingPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="h-12 w-12 animate-spin text-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Loading plans...</p>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function PricingPage() {
         </div>
 
         {/* Contact Section */}
-        <div className="text-center mt-12 p-8 bg-muted rounded-lg">
+        <div className="text-center mt-12 p-8 bg-muted rounded-md">
           <h3 className="text-xl font-semibold mb-2">
             Need help choosing a plan?
           </h3>

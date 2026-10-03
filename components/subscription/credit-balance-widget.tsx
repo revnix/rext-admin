@@ -40,12 +40,12 @@ export function CreditBalanceWidget({
     return (
       <div
         className={cn(
-          "flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-2.5 py-2",
+          "flex items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2",
           className,
         )}
       >
         <div className="flex items-center gap-1.5">
-          <Coins className="h-4 w-4 text-amber-500" />
+          <Coins className="h-4 w-4 text-foreground" />
           <span className="text-sm font-medium">
             {credits.current_credits.toLocaleString()} credits
           </span>
@@ -84,7 +84,7 @@ export function CreditBalanceWidget({
               className,
             )}
           >
-            <CircleDollarSign className="h-4 w-4 text-[#0061FF] dark:text-brand-100" />
+            <CircleDollarSign className="h-4 w-4 text-foreground" />
             <span className="text-sm font-medium">
               {credits.current_credits.toLocaleString()}
             </span>
@@ -95,14 +95,14 @@ export function CreditBalanceWidget({
             align="end"
             sideOffset={6}
             className={cn(
-              "z-50 w-64 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-md",
+              "z-50 w-64 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md",
               "animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
             )}
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 rounded-full py-0.5">
-                  <CircleDollarSign className="h-3.5 w-3.5 text-[#0061FF] dark:text-brand-300" />
+                  <CircleDollarSign className="h-3.5 w-3.5 text-foreground" />
                   <span className="text-xs font-medium">Credits</span>
                 </div>
                 {credits.plan_name && (

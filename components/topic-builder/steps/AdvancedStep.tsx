@@ -34,7 +34,7 @@ export function AdvancedStep({
         <div>
           <div className="flex justify-between items-center mb-3">
             <Label htmlFor="num_topics">Number of topics</Label>
-            <span className="text-sm font-medium bg-muted px-2 py-1 rounded">
+            <span className="text-sm font-medium bg-muted px-2 py-1 rounded-md">
               {formData.num_topics || 5}
             </span>
           </div>

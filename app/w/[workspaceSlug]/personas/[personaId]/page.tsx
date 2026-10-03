@@ -50,7 +50,7 @@ export default function PersonaDetailPage() {
           <Link href={`/w/${workspaceSlug}/personas` as Route}>
             <Button
               variant="outline"
-              className="h-10 px-4 rounded-xl border-slate-200"
+              className="h-10 px-4 rounded-md border-slate-200"
             >
               <ArrowLeft size={16} className="mr-2" />
               Back to Personas

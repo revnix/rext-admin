@@ -50,7 +50,7 @@ export function ActivityFilter({
   };
 
   return (
-    <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
+    <div className="rounded-md border bg-muted/50 p-4 space-y-4">
       {/* Filter Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Event Type Filter */}

@@ -164,7 +164,7 @@ export default function IntegrationsPage() {
     return (
       <PageLayout title="Loading Permissions...">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </PageLayout>
@@ -200,7 +200,7 @@ export default function IntegrationsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : integrations.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground bg-slate-100 dark:bg-accent rounded-lg border border-dashed">
+          <div className="text-center py-12 text-muted-foreground bg-slate-100 dark:bg-accent rounded-md border border-dashed">
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (

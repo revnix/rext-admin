@@ -40,22 +40,22 @@ export function WorkspaceKnowledgeSummaryCard({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Globe className="h-8 w-8 text-blue-500" />
+          <div className="flex items-center gap-3 p-3 border rounded-md">
+            <Globe className="h-8 w-8 text-foreground" />
             <div>
               <div className="text-2xl font-bold">{webCount}</div>
               <div className="text-sm text-muted-foreground">Web URLs</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <Upload className="h-8 w-8 text-green-500" />
+          <div className="flex items-center gap-3 p-3 border rounded-md">
+            <Upload className="h-8 w-8 text-foreground" />
             <div>
               <div className="text-2xl font-bold">{fileCount}</div>
               <div className="text-sm text-muted-foreground">Files</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 border rounded-lg">
-            <FileText className="h-8 w-8 text-purple-500" />
+          <div className="flex items-center gap-3 p-3 border rounded-md">
+            <FileText className="h-8 w-8 text-foreground" />
             <div>
               <div className="text-2xl font-bold">{textCount}</div>
               <div className="text-sm text-muted-foreground">Text Notes</div>

@@ -132,7 +132,7 @@ export function RecentContent({ workspace }: RecentContentProps) {
                               ""
                             }
                           />
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                          <AvatarFallback className="text-[10px] bg-muted text-foreground">
                             {typeof item.author === "string"
                               ? item.author.charAt(0).toUpperCase()
                               : item.author?.initials ||

@@ -29,13 +29,13 @@ export function SelectionView({
 
   const freshCard = (
     <Card
-      className={`group relative overflow-hidden border-border/50 transition-all duration-300 rounded-xl bg-card ${
+      className={`group relative overflow-hidden border-border/50 transition-all duration-300 rounded-md bg-card ${
         isLocked ? "" : "hover:border-primary/50 cursor-pointer"
       }`}
       onClick={isLocked ? undefined : onStartFresh}
     >
       <CardHeader className="pt-8 px-8 pb-4">
-        <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+        <div className="h-14 w-14 rounded-full bg-muted text-foreground flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
           <Sparkles className="w-7 h-7" />
         </div>
         <CardTitle className="text-2xl font-bold mb-2">Start Fresh</CardTitle>
@@ -53,13 +53,13 @@ export function SelectionView({
 
   const libraryCard = (
     <Card
-      className={`group relative overflow-hidden border-border/50 transition-all duration-300 rounded-xl bg-card ${
+      className={`group relative overflow-hidden border-border/50 transition-all duration-300 rounded-md bg-card ${
         isLocked ? "" : "hover:border-primary/50 cursor-pointer"
       }`}
       onClick={isLocked ? undefined : onPickFromLibrary}
     >
       <CardHeader className="pt-8 px-8 pb-4">
-        <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+        <div className="h-14 w-14 rounded-full bg-muted text-foreground flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
           <Library className="w-7 h-7" />
         </div>
         <CardTitle className="text-2xl font-bold mb-2">

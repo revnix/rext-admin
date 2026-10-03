@@ -367,7 +367,7 @@ export function SubscriptionPlanForm({
             control={form.control}
             name="is_active"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">Active</FormLabel>
                   <FormDescription>
@@ -388,7 +388,7 @@ export function SubscriptionPlanForm({
             control={form.control}
             name="is_public"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">Public</FormLabel>
                   <FormDescription>

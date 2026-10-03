@@ -17,7 +17,7 @@ function ChartFallback({
   requestId?: string;
 }) {
   return (
-    <div className="w-full rounded-xl border border-border bg-card p-4 text-center">
+    <div className="w-full rounded-md border border-border bg-card p-4 text-center">
       <p className="text-sm font-medium text-foreground">
         Difficulty chart unavailable
       </p>

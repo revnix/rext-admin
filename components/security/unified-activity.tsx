@@ -246,7 +246,7 @@ export function UnifiedActivity() {
 
             {/* Error State */}
             {auditError && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4">
                 <p className="text-sm text-destructive">
                   Failed to load activity log: {auditError.message}
                 </p>
@@ -255,7 +255,7 @@ export function UnifiedActivity() {
 
             {/* Empty State */}
             {!auditLoading && !auditError && logs.length === 0 && (
-              <div className="rounded-lg border border-dashed p-8 text-center">
+              <div className="rounded-md border border-dashed p-8 text-center">
                 <Activity className="mx-auto h-12 w-12 text-muted-foreground/50" />
                 <p className="mt-4 text-sm text-muted-foreground">
                   {hasActiveFilters
@@ -271,7 +271,7 @@ export function UnifiedActivity() {
                 {logs.map((log) => (
                   <div
                     key={log.id}
-                    className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                    className="rounded-md border p-4 hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4 min-w-0">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 flex-1">
@@ -386,7 +386,7 @@ export function UnifiedActivity() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : historyError ? (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+              <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4">
                 <p className="text-sm text-destructive">
                   Failed to load login history: {historyError.message}
                 </p>
@@ -395,7 +395,7 @@ export function UnifiedActivity() {
               <div className="space-y-4">
                 {/* Summary Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-md border p-3">
                     <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <LogIn className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
@@ -406,7 +406,7 @@ export function UnifiedActivity() {
                       {loginHistory.total_count}
                     </p>
                   </div>
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-md border p-3">
                     <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
@@ -421,7 +421,7 @@ export function UnifiedActivity() {
                         : "Never"}
                     </p>
                   </div>
-                  <div className="rounded-lg border p-3">
+                  <div className="rounded-md border p-3">
                     <div className="flex justify-center sm:justify-start items-center gap-2 mb-1">
                       <AlertCircle className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
@@ -443,7 +443,7 @@ export function UnifiedActivity() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Recent Login Activity</p>
                   {(loginHistory.history ?? []).length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
+                    <div className="rounded-md border border-dashed p-8 text-center">
                       <History className="mx-auto h-12 w-12 text-muted-foreground/50" />
                       <p className="mt-4 text-sm text-muted-foreground">
                         No login history available
@@ -454,7 +454,7 @@ export function UnifiedActivity() {
                       {(loginHistory.history ?? []).map((event) => (
                         <div
                           key={event.created_at}
-                          className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                          className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                             <div

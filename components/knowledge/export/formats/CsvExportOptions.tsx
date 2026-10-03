@@ -169,7 +169,7 @@ export function CsvExportOptions({
               .map((column) => (
                 <div
                   key={column.id}
-                  className="flex items-center gap-4 p-3 border rounded-lg"
+                  className="flex items-center gap-4 p-3 border rounded-md"
                 >
                   <Checkbox
                     checked={column.included}

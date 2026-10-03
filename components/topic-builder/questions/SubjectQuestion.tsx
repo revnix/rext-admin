@@ -96,7 +96,7 @@ export function SubjectQuestion({
                 onClick={() => handleChange(suggestion)}
                 disabled={isLoading}
                 className={cn(
-                  "px-3 py-2 text-sm rounded-lg border transition-all duration-200",
+                  "px-3 py-2 text-sm rounded-md border transition-all duration-200",
                   "border-border hover:border-primary/50 cursor-pointer",
                   "bg-background hover:bg-primary/5 text-foreground",
                   "hover:text-primary shadow-sm hover:shadow-md",

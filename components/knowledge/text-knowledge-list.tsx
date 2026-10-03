@@ -109,7 +109,7 @@ function TextKnowledgeListSkeleton() {
   return (
     <div className="space-y-3">
       {LIST_SKELETON_KEYS.map((key) => (
-        <div key={key} className="flex items-start gap-4 p-4 border rounded-lg">
+        <div key={key} className="flex items-start gap-4 p-4 border rounded-md">
           <Skeleton className="h-8 w-8 mt-1" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/3" />
@@ -404,7 +404,7 @@ export function TextKnowledgeList({
 
       {/* Bulk Actions */}
       {selectedItems.length > 0 && (
-        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-muted rounded-md">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">
               {selectedItems.length} text note(s) selected

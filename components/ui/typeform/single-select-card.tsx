@@ -67,7 +67,7 @@ export function SingleSelectCard({
         disabled={disabled}
         className={cn(
           "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
-          "border-2 transition-all duration-150 rounded-xl",
+          "border-2 transition-all duration-150 rounded-md",
           "hover:shadow-md hover:border-primary/50",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",

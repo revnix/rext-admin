@@ -153,7 +153,7 @@ export function AudienceGoalsStep({
                   return (
                     <Label
                       key={option.value}
-                      className={`flex items-center space-x-3 border rounded-lg p-3 cursor-pointer transition-colors ${
+                      className={`flex items-center space-x-3 border rounded-md p-3 cursor-pointer transition-colors ${
                         isSelected
                           ? "border-primary bg-primary/5"
                           : isDisabled
@@ -171,7 +171,7 @@ export function AudienceGoalsStep({
                             e.target.checked,
                           )
                         }
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                        className="w-4 h-4 text-primary border-gray-300 rounded-md focus:ring-primary"
                       />
                       <span className="font-medium">{option.label}</span>
                     </Label>
@@ -258,7 +258,7 @@ export function AudienceGoalsStep({
                   return (
                     <Label
                       key={option.value}
-                      className={`flex items-center space-x-3 border rounded-lg p-3 cursor-pointer transition-colors ${
+                      className={`flex items-center space-x-3 border rounded-md p-3 cursor-pointer transition-colors ${
                         isSelected
                           ? "border-primary bg-primary/5"
                           : isDisabled
@@ -273,7 +273,7 @@ export function AudienceGoalsStep({
                         onChange={(e) =>
                           handleGoalsChange(option.value, e.target.checked)
                         }
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                        className="w-4 h-4 text-primary border-gray-300 rounded-md focus:ring-primary"
                       />
                       <div className="flex-1">
                         <div className="font-medium">{option.label}</div>

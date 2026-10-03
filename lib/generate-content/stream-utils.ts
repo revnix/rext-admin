@@ -78,9 +78,17 @@ export async function* streamFromSSE(
   }
 }
 
+// Words that must always render fully uppercase in node/tool labels.
+const UPPERCASE_WORDS = new Set(["seo", "serp", "eeat", "ai", "url", "llm"]);
+
 export function formatNodeName(name: string): string {
   return name
-    .split(/[_-]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((word) =>
+      UPPERCASE_WORDS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
     .join(" ");
 }

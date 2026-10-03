@@ -135,7 +135,7 @@ export function KnowledgeDuplicateSummary({
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-lg border border-amber-200 bg-white/80 p-3 dark:border-amber-800 dark:bg-amber-950/40">
+              <div className="space-y-2 rounded-md border border-amber-200 bg-white/80 p-3 dark:border-amber-800 dark:bg-amber-950/40">
                 {reasonGroups.map((group) => (
                   <div
                     key={`${reason}-${group.signature}`}

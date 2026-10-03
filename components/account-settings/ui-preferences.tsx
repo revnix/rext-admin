@@ -48,7 +48,7 @@ export function UIPreferences() {
       {/* Feature Hints */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
+          <Lightbulb className="h-5 w-5 text-foreground" />
           <div>
             <h3 className="text-lg font-semibold">Feature Hints</h3>
             <p className="text-sm text-muted-foreground">
@@ -74,7 +74,7 @@ export function UIPreferences() {
           />
         </div>
 
-        <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+        <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-md">
           <p>
             <strong>Tip:</strong> Feature hints provide contextual information
             about key features as you navigate the app. They're especially

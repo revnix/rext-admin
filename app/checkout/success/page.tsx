@@ -135,7 +135,7 @@ export default function CheckoutSuccessPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-green-50 via-background to-blue-50 dark:from-green-950/20 dark:via-background dark:to-blue-950/20">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="max-w-2xl w-full">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4 relative">
@@ -161,7 +161,7 @@ export default function CheckoutSuccessPage() {
               <span>Activating your subscription...</span>
             </div>
           ) : subscription?.subscription ? (
-            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+            <div className="bg-muted/50 rounded-md p-6 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -232,7 +232,7 @@ export default function CheckoutSuccessPage() {
             <div className="text-center text-sm text-muted-foreground">
               <p>
                 Reference:{" "}
-                <code className="bg-muted px-2 py-1 rounded text-xs">
+                <code className="bg-muted px-2 py-1 rounded-md text-xs">
                   {sessionId || checkoutId}
                 </code>
               </p>
@@ -240,7 +240,7 @@ export default function CheckoutSuccessPage() {
           )}
 
           {/* Next Steps */}
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 space-y-2">
+          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-4 space-y-2">
             <h4 className="font-semibold text-sm">What's Next?</h4>
             <ul className="text-sm space-y-1.5 text-muted-foreground">
               <li className="flex items-start gap-2">

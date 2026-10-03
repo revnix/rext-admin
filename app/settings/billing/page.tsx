@@ -623,18 +623,18 @@ function BillingDashboardContent() {
                   <Separator />
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />5 Workspaces
+                      <Zap className="h-4 w-4 text-foreground" />5 Workspaces
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />
+                      <Zap className="h-4 w-4 text-foreground" />
                       15 Team Members
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />
+                      <Zap className="h-4 w-4 text-foreground" />
                       100 Topics
                     </li>
                     <li className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" />
+                      <Zap className="h-4 w-4 text-foreground" />
                       Priority Support
                     </li>
                   </ul>

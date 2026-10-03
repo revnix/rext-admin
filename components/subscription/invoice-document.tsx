@@ -122,7 +122,7 @@ export function InvoiceDocument({
   return (
     <div className="space-y-6 py-2">
       {/* Customer & Payment Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50 border text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-md bg-muted/50 border text-sm">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" /> Billed To
@@ -165,7 +165,7 @@ export function InvoiceDocument({
       </div>
 
       {/* Items Breakdown */}
-      <div className="border rounded-lg overflow-x-auto">
+      <div className="border rounded-md overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-xs uppercase font-medium text-muted-foreground border-b">
             <tr>

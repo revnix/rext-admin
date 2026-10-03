@@ -363,7 +363,7 @@ export default function AcceptInvitationPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Invitation Details */}
-          <div className="space-y-3 border rounded-lg p-4 bg-muted/50">
+          <div className="space-y-3 border rounded-md p-4 bg-muted/50">
             <div className="flex items-start gap-3">
               <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">

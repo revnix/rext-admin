@@ -136,7 +136,7 @@ export function WizardSidebar({
           })}
         </div>
 
-        <div className="mt-6 p-4 bg-muted rounded-lg">
+        <div className="mt-6 p-4 bg-muted rounded-md">
           <div className="text-sm text-muted-foreground">
             <div className="flex items-center justify-between mb-2">
               <span>Progress</span>

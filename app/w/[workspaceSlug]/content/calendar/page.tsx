@@ -286,7 +286,7 @@ export default function ContentCalendarPage() {
                             <div
                               key={`${entry.id}-${entry.platform}`}
                               className={cn(
-                                "text-[10px] truncate rounded px-1 py-0.5 border font-medium",
+                                "text-[10px] truncate rounded-md px-1 py-0.5 border font-medium",
                                 entryBadgeClass(entry),
                               )}
                             >
@@ -412,7 +412,7 @@ export default function ContentCalendarPage() {
             {selectedEntries.map((entry) => (
               <div
                 key={`${entry.id}-${entry.platform}`}
-                className="flex flex-wrap sm:flex-nowrap items-start gap-3 p-3 rounded-lg border bg-card"
+                className="flex flex-wrap sm:flex-nowrap items-start gap-3 p-3 rounded-md border bg-card"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium wrap-break-word">

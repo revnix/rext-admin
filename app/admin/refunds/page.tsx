@@ -300,7 +300,7 @@ export default function RefundManagementPage() {
         <Card className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
                   Refund Processing Workflow

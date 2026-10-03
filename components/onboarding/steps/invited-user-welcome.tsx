@@ -32,10 +32,10 @@ export function InvitedUserWelcome({
   isLoading = false,
 }: InvitedUserWelcomeProps) {
   const ROLE_ICONS: Record<RoleCategory, React.ReactNode> = {
-    owner: <Crown className="h-8 w-8 text-yellow-500" />,
-    admin: <Crown className="h-8 w-8 text-yellow-500" />,
-    editor: <UserCheck className="h-8 w-8 text-blue-500" />,
-    viewer: <Shield className="h-8 w-8 text-green-500" />,
+    owner: <Crown className="h-8 w-8 text-foreground" />,
+    admin: <Crown className="h-8 w-8 text-foreground" />,
+    editor: <UserCheck className="h-8 w-8 text-foreground" />,
+    viewer: <Shield className="h-8 w-8 text-foreground" />,
   };
 
   return (
@@ -65,8 +65,8 @@ export function InvitedUserWelcome({
             <CardContent className="p-6 space-y-6">
               {/* Workspace Name */}
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10">
-                  <Building2 className="h-8 w-8 text-primary" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted">
+                  <Building2 className="h-8 w-8 text-foreground" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">
@@ -86,7 +86,7 @@ export function InvitedUserWelcome({
                   Invited by
                 </p>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
                     {inviterName.charAt(0).toUpperCase()}
                   </div>
                   <p className="font-medium">{inviterName}</p>

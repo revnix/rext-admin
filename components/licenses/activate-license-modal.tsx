@@ -111,7 +111,7 @@ export function ActivateLicenseModal({
         <form onSubmit={handleActivate}>
           <div className="space-y-4 py-4">
             {/* License Info */}
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="p-3 bg-muted rounded-md">
               <p className="text-sm font-medium mb-1">License Key</p>
               <p className="text-sm font-mono text-muted-foreground">
                 {license.license_key}

@@ -206,7 +206,7 @@ export function PlanChangeModal({
 
           <div className="space-y-4 py-4">
             {/* Current Plan Info */}
-            <div className="bg-muted rounded-lg p-4">
+            <div className="bg-muted rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Plan</p>
@@ -239,7 +239,7 @@ export function PlanChangeModal({
                 return (
                   <div
                     key={plan.id}
-                    className={`relative flex items-start space-x-3 rounded-lg border p-4 transition-colors w-full ${
+                    className={`relative flex items-start space-x-3 rounded-md border p-4 transition-colors w-full ${
                       isSelected
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
@@ -317,7 +317,7 @@ export function PlanChangeModal({
 
             {isBusy && (
               <Alert>
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <Loader2 className="h-4 w-4 animate-spin text-foreground" />
                 <AlertDescription>
                   {phase === "submitting"
                     ? "Submitting plan change..."

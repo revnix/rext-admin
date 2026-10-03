@@ -258,7 +258,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
             <motion.div
               className={cn(
                 "flex flex-col items-center text-center space-y-4",
-                "bg-card border rounded-lg p-8 shadow-lg max-w-sm mx-4",
+                "bg-card border rounded-md p-8 shadow-lg max-w-sm mx-4",
                 "relative overflow-hidden",
               )}
               variants={motionVariants}
@@ -267,7 +267,7 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
               {/* Background Glow Effect */}
               <div
                 className={cn(
-                  "absolute inset-0 opacity-10 rounded-lg",
+                  "absolute inset-0 opacity-10 rounded-md",
                   `bg-gradient-to-br from-${colors[0]}-500 to-${colors[1]}-500`,
                 )}
                 aria-hidden="true"

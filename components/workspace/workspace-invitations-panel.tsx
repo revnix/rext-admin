@@ -215,8 +215,8 @@ export function WorkspaceInvitationsPanel({
       width: "300px",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Mail className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+            <Mail className="h-5 w-5 text-foreground" />
           </div>
           <div className="min-w-0">
             <p className="font-medium truncate">{value as string}</p>

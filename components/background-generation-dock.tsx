@@ -482,7 +482,7 @@ export function BackgroundGenerationDock() {
       <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 lg:px-6">
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
             pending && "text-primary",
             completed && "text-emerald-500",
             job.status === "failed" && "text-destructive",
@@ -513,7 +513,7 @@ export function BackgroundGenerationDock() {
                 onClick={() => setExpanded((open) => !open)}
                 aria-expanded={expanded}
                 aria-controls="background-generation-others"
-                className="shrink-0 rounded text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="shrink-0 rounded-md text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 +{otherJobs.length} more
               </button>
@@ -534,7 +534,7 @@ export function BackgroundGenerationDock() {
         {/* Spinner / check + status text — replaces the old percentage bar */}
         {pending && (
           <div className="flex items-center gap-2 min-w-[170px] flex-1 basis-[220px] sm:max-w-sm">
-            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
             <span className="truncate text-sm text-muted-foreground animate-pulse">
               {job.stage}
               <span className="tracking-widest">…</span>
@@ -615,7 +615,7 @@ export function BackgroundGenerationDock() {
               className="flex items-center gap-3 py-2 text-sm"
             >
               {isPending(other) ? (
-                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
               ) : other.status === "completed" ? (
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
               ) : (
@@ -631,7 +631,7 @@ export function BackgroundGenerationDock() {
               <div className="w-32 shrink-0 flex items-center gap-1.5">
                 {isPending(other) ? (
                   <>
-                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
                     <span className="truncate text-xs text-muted-foreground animate-pulse">
                       {other.stage}
                     </span>

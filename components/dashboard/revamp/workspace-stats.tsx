@@ -34,7 +34,7 @@ export function WorkspaceStats({ workspace }: WorkspaceStatsProps) {
       <div className="bg-muted/30 p-6 border-b border-border">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-md bg-card border border-border flex items-center justify-center shadow-colored-sm">
-            <Building2 className="h-6 w-6 text-primary" />
+            <Building2 className="h-6 w-6 text-foreground" />
           </div>
           <div>
             <h3 className="font-bold text-lg text-foreground">

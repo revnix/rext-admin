@@ -42,18 +42,18 @@ export function Celebration({ onComplete, duration = 3000 }: CelebrationProps) {
 
       {/* Center celebration message */}
       <div className="relative animate-in zoom-in-95 fade-in duration-500">
-        <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-4 p-8 rounded-md bg-background/95 border border-border shadow-lg backdrop-blur-sm">
           {/* Animated icon */}
           <div className="relative">
             <div className="absolute inset-0 animate-ping">
-              <Sparkles className="h-16 w-16 text-primary" />
+              <Sparkles className="h-16 w-16 text-foreground" />
             </div>
-            <Sparkles className="h-16 w-16 text-primary animate-pulse" />
+            <Sparkles className="h-16 w-16 text-foreground animate-pulse" />
           </div>
 
           {/* Message */}
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold text-foreground">
               🎉 Congratulations!
             </h2>
             <p className="text-muted-foreground">
@@ -111,7 +111,7 @@ export function MilestoneCelebration({
 
   return (
     <div className="fixed bottom-4 right-4 pointer-events-none z-50 animate-in slide-in-from-bottom-4 fade-in duration-500">
-      <div className="flex items-center gap-3 p-4 rounded-lg bg-primary text-primary-foreground shadow-lg">
+      <div className="flex items-center gap-3 p-4 rounded-md bg-primary text-primary-foreground shadow-lg">
         <Sparkles className="h-5 w-5 animate-pulse" />
         <div>
           <p className="font-medium">Milestone Complete!</p>

@@ -26,7 +26,7 @@ export default function BrandVoicePage() {
     return (
       <PageLayout title="Loading Permissions...">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </PageLayout>
@@ -53,7 +53,7 @@ export default function BrandVoicePage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   brand_voice.read
                 </code>
               </p>

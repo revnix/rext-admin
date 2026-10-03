@@ -90,7 +90,7 @@ export function SystemHealthCards({
       status: health.database.status,
       metric: `${health.database.response_time_ms}ms`,
       description: `${health.database.connection_count}/${health.database.max_connections} connections`,
-      color: "text-blue-600",
+      color: "text-foreground",
     },
     {
       title: "API",
@@ -98,7 +98,7 @@ export function SystemHealthCards({
       status: health.api.status,
       metric: `${health.api.requests_per_minute} req/min`,
       description: `${health.api.avg_response_time_ms}ms avg • ${health.api.error_rate}% errors`,
-      color: "text-green-600",
+      color: "text-foreground",
     },
     {
       title: "Cache",
@@ -112,7 +112,7 @@ export function SystemHealthCards({
         health.cache.status === "not_configured"
           ? "Not configured"
           : `${health.cache.memory_used_mb || 0} MB used`,
-      color: "text-purple-600",
+      color: "text-foreground",
     },
     {
       title: "Workers",
@@ -126,7 +126,7 @@ export function SystemHealthCards({
         health.workers.status === "not_configured"
           ? "Not configured"
           : `${health.workers.failed_jobs_24h || 0} failed (24h)`,
-      color: "text-orange-600",
+      color: "text-foreground",
     },
   ];
 

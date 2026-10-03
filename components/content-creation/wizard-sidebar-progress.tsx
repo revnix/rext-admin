@@ -159,7 +159,7 @@ function SidebarStepItem({
   return (
     <motion.div
       className={cn(
-        "p-3 rounded-lg border-2 cursor-pointer transition-all duration-200",
+        "p-3 rounded-md border-2 cursor-pointer transition-all duration-200",
         getStatusStyles(),
         !isClickable && "opacity-60 cursor-not-allowed",
       )}

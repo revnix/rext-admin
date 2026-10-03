@@ -191,7 +191,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
               {event.error_message && (
                 <div>
                   <h4 className="font-semibold mb-2 text-red-600">Error</h4>
-                  <pre className="bg-red-100 p-3 rounded text-sm text-red-800 overflow-x-auto">
+                  <pre className="bg-red-100 p-3 rounded-md text-sm text-red-800 overflow-x-auto">
                     {event.error_message}
                   </pre>
                 </div>
@@ -205,7 +205,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
                 ) : payloadError ? (
                   <p className="text-sm text-red-600">{payloadError}</p>
                 ) : payload && Object.keys(payload).length > 0 ? (
-                  <pre className="bg-white max-w-270 dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
+                  <pre className="bg-white max-w-270 dark:bg-gray-800 p-3 rounded-md border text-xs overflow-x-auto max-h-64">
                     {JSON.stringify(payload, null, 2)}
                   </pre>
                 ) : (

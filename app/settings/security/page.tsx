@@ -215,7 +215,7 @@ export default function SecuritySettingsPage() {
                 {/* Locked Accounts */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-orange-600" />
+                    <Shield className="h-4 w-4 text-foreground" />
                     <p className="text-sm font-medium">Locked Accounts</p>
                   </div>
                   <div className="space-y-1">
@@ -236,7 +236,7 @@ export default function SecuritySettingsPage() {
                 {/* Password Activity */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-blue-600" />
+                    <Activity className="h-4 w-4 text-foreground" />
                     <p className="text-sm font-medium">Password Activity</p>
                   </div>
                   <div className="space-y-1">
@@ -253,7 +253,7 @@ export default function SecuritySettingsPage() {
                 {/* New Accounts */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-green-600" />
+                    <Users className="h-4 w-4 text-foreground" />
                     <p className="text-sm font-medium">New Accounts</p>
                   </div>
                   <div className="space-y-1">
@@ -395,10 +395,10 @@ export default function SecuritySettingsPage() {
             <CardContent className="space-y-4">
               {/* Current Session */}
               {currentSession && (
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full sm:w-auto">
-                      <div className="rounded-full bg-primary/10 p-2">
+                      <div className="rounded-full bg-muted p-2">
                         {getDeviceIcon(currentSession.device_type)}
                       </div>
                       <div className="space-y-1">
@@ -445,7 +445,7 @@ export default function SecuritySettingsPage() {
                   <Separator />
                   <div className="space-y-3">
                     {otherSessions.map((session) => (
-                      <div key={session.id} className="rounded-lg border p-4">
+                      <div key={session.id} className="rounded-md border p-4">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full sm:w-auto">
                             <div className="rounded-full bg-muted p-2">

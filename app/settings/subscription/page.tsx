@@ -71,7 +71,7 @@ export default function SubscriptionSettingsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">Loading subscription...</p>
         </div>
       </div>
@@ -191,28 +191,28 @@ export default function SubscriptionSettingsPage() {
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border p-3 space-y-1">
+            <div className="rounded-md border p-3 space-y-1">
               <p className="font-medium text-sm">Payment Methods</p>
               <p className="text-xs text-muted-foreground">
                 Update credit cards and payment details
               </p>
             </div>
 
-            <div className="rounded-lg border p-3 space-y-1">
+            <div className="rounded-md border p-3 space-y-1">
               <p className="font-medium text-sm">Billing Address</p>
               <p className="text-xs text-muted-foreground">
                 Change your billing information
               </p>
             </div>
 
-            <div className="rounded-lg border p-3 space-y-1">
+            <div className="rounded-md border p-3 space-y-1">
               <p className="font-medium text-sm">Invoices</p>
               <p className="text-xs text-muted-foreground">
                 Download past invoices and receipts
               </p>
             </div>
 
-            <div className="rounded-lg border p-3 space-y-1">
+            <div className="rounded-md border p-3 space-y-1">
               <p className="font-medium text-sm">Payment History</p>
               <p className="text-xs text-muted-foreground">
                 View all your past payments
@@ -257,8 +257,8 @@ export default function SubscriptionSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-start gap-3">
-            <div className="rounded-full bg-primary/10 p-2">
-              <FileText className="h-4 w-4 text-primary" />
+            <div className="rounded-full bg-muted p-2">
+              <FileText className="h-4 w-4 text-foreground" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm">Documentation</p>
@@ -275,8 +275,8 @@ export default function SubscriptionSettingsPage() {
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="rounded-full bg-primary/10 p-2">
-              <CreditCard className="h-4 w-4 text-primary" />
+            <div className="rounded-full bg-muted p-2">
+              <CreditCard className="h-4 w-4 text-foreground" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm">Billing Support</p>
