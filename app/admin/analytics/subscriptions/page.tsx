@@ -110,7 +110,7 @@ function MetricCard({
 
   return (
     <Card
-      className={`relative overflow-hidden border-none shadow-sm transition-all hover:shadow-md ${className}`}
+      className={`relative overflow-hidden border-none transition-all ${className}`}
     >
       <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
         {icon}

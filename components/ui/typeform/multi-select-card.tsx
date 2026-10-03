@@ -67,15 +67,12 @@ export function MultiSelectCard({
         disabled={disabled}
         className={cn(
           "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
-          "border-2 transition-all duration-150 rounded-md",
-          "hover:shadow-md hover:border-primary/50",
+          "border transition-all duration-150 rounded-md",
+          "hover:border-foreground/40",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
           "overflow-hidden", // Prevent content overflow
-          selected && [
-            "border-primary bg-primary/5 shadow-md",
-            "hover:border-primary hover:bg-primary/10",
-          ],
+          selected && "border-foreground hover:border-foreground",
         )}
       >
         {/* Selection indicator - Rounded checkbox style for multi-select */}

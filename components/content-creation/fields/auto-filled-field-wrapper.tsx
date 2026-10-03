@@ -60,7 +60,7 @@ export function AutoFilledFieldWrapper({
   return (
     <Card
       className={`wizard-card ${className} ${
-        showAutoFillIndicator ? "bg-blue-50/50 border-blue-200/50" : ""
+        showAutoFillIndicator ? "bg-muted/40 border-border" : ""
       }`}
     >
       <CardHeader className="pb-4">
@@ -83,7 +83,7 @@ export function AutoFilledFieldWrapper({
         <CardDescription className="wizard-field-description">
           {description}
           {showAutoFillIndicator && (
-            <span className="text-blue-600 text-xs font-medium ml-2">
+            <span className="text-foreground text-xs font-medium ml-2">
               (Auto-filled)
             </span>
           )}

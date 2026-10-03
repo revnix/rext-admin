@@ -434,7 +434,7 @@ export function DataTable<
   }));
 
   return (
-    <Card className="border-none shadow-none bg-transparent">
+    <Card className="border-none bg-transparent">
       {(actions || showSearch || columnFilters.length > 0) && (
         <CardHeader className="px-0 pt-0 pb-6">
           {(actions || showSearch) && (

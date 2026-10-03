@@ -214,14 +214,14 @@ export default function AdminDashboardPage() {
           {(!user?.role ||
             !user?.permissions ||
             user.permissions.length === 0) && (
-            <Card className="border-yellow-200 bg-yellow-50/50">
+            <Card className="border-border bg-muted/40">
               <CardHeader>
-                <CardTitle className="text-yellow-800">
+                <CardTitle className="text-foreground">
                   <Users className="inline h-5 w-5 mr-2" />
                   Backend Integration Required
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-yellow-800">
+              <CardContent className="text-sm text-foreground">
                 <p>
                   The admin features will be fully functional once the backend
                   includes{" "}

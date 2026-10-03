@@ -208,7 +208,7 @@ export default function IntegrationsPage() {
             {integrations.map((integration) => (
               <Card
                 key={integration.id}
-                className="overflow-hidden transition-all hover:shadow-md"
+                className="overflow-hidden transition-all"
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
                   <div className="flex items-center gap-3">

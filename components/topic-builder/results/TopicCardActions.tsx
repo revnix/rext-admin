@@ -65,7 +65,7 @@ export const TopicCardActions = memo(function TopicCardActions({
           <Button
             variant="secondary"
             size="sm"
-            className="h-7 px-2 gap-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800 cursor-pointer"
+            className="h-7 px-2 gap-1 text-xs bg-muted/40 hover:bg-muted text-foreground border-border cursor-pointer"
             onClick={handleView}
           >
             <Eye className="h-3 w-3" />

@@ -105,10 +105,6 @@ export default function ContentType({
                   {keywordDescription}
                 </p>
               </div>
-
-              {isSelected && (
-                <div className="absolute inset-0 rounded-md border border-foreground pointer-events-none" />
-              )}
             </motion.button>
           );
         })}

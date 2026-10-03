@@ -108,9 +108,9 @@ export function InvitedUserPermissions({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
-        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900">
+        <Card className="bg-muted/40 border-border">
           <CardContent className="p-4">
-            <p className="text-sm text-blue-900 dark:text-blue-100">
+            <p className="text-sm text-foreground">
               💡 <strong>Need different permissions?</strong> Contact the
               workspace owner or an admin to update your role.
             </p>

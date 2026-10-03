@@ -9,16 +9,14 @@ const detailCardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white dark:bg-background border-border shadow-sm",
-        // Decorative variants are neutral; only warning/success keep a
-        // semantic tint.
-        highlight: "bg-muted/40 border-border",
-        accent: "bg-muted/40 border-border",
-        warning:
-          "bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/60",
+        default: "bg-card border-border",
+        // Cards are white; only success keeps a semantic tint.
+        highlight: "bg-card border-border",
+        accent: "bg-card border-border",
+        warning: "bg-card border-border",
         success:
           "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/50",
-        info: "bg-muted/40 border-border",
+        info: "bg-card border-border",
       },
       size: {
         sm: "p-4",
@@ -32,10 +30,11 @@ const detailCardVariants = cva(
         lg: "p-8",
       },
       shadow: {
+        // Cards are flat across the app; variants kept for API compatibility.
         none: "shadow-none",
-        sm: "shadow-sm",
-        md: "shadow-md hover:shadow-lg",
-        lg: "shadow-lg hover:shadow-xl",
+        sm: "shadow-none",
+        md: "shadow-none",
+        lg: "shadow-none",
       },
       border: {
         none: "border-0",
@@ -91,8 +90,7 @@ const DetailCard = React.forwardRef<HTMLDivElement, DetailCardComponentProps>(
             border,
           }),
           {
-            "hover:shadow-lg hover:border-border/80 cursor-pointer":
-              interactive,
+            "hover:border-foreground/20 cursor-pointer": interactive,
           },
           className,
         )}

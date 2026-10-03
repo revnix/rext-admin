@@ -68,7 +68,7 @@ export function KnowledgeCard({
               <Badge
                 variant="outline"
                 title={duplicateTitle}
-                className="flex items-center gap-1 border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-200/70 dark:bg-amber-900/30 dark:text-amber-100"
+                className="flex items-center gap-1 border border-border bg-muted/40 text-muted-foreground"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {duplicateLabel}

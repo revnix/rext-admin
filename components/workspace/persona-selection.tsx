@@ -150,8 +150,8 @@ function PersonaCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md relative",
-        isSelected && "ring-2 ring-primary shadow-md",
+        "cursor-pointer transition-all relative",
+        isSelected && "ring-2 ring-primary",
       )}
       onClick={onSelect}
     >

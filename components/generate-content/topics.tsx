@@ -99,7 +99,7 @@ export function TopicsSection({
                 "transition-all duration-200",
                 "active:scale-[0.985]",
                 isSelected
-                  ? "border-foreground ring-1 ring-foreground bg-card"
+                  ? "border-foreground bg-card"
                   : "bg-card border-border hover:border-foreground/40",
                 isRegenerating && "opacity-40 pointer-events-none",
               )}

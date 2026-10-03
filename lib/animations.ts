@@ -52,16 +52,16 @@ export const optionCardVariants: Variants = {
   idle: {
     scale: 1,
     y: 0,
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-    borderWidth: "2px",
-    borderColor: "hsl(var(--border))",
+    boxShadow: "none",
+    borderWidth: "1px",
+    borderColor: "var(--border)",
   },
 
   hover: {
     scale: 1.02,
     y: -2,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    borderColor: "hsl(var(--border))",
+    boxShadow: "none",
+    borderColor: "color-mix(in srgb, var(--foreground) 40%, transparent)",
     transition: {
       duration: ANIMATION_TIMING.fast,
       ease: EASING.easeOut,
@@ -78,9 +78,9 @@ export const optionCardVariants: Variants = {
 
   selected: {
     scale: 1.02,
-    boxShadow: "0 0 0 3px hsl(var(--primary) / 0.2)",
-    borderColor: "hsl(var(--primary))",
-    backgroundColor: "hsl(var(--primary) / 0.05)",
+    boxShadow: "none",
+    borderColor: "var(--foreground)",
+    backgroundColor: "var(--card)",
     transition: {
       ...EASING.spring,
     },

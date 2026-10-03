@@ -45,7 +45,7 @@ export function ProgressTimeline({
         return (
           <Badge
             variant="default"
-            className="bg-blue-100 text-blue-700 border-blue-200"
+            className="bg-muted/40 text-muted-foreground border-border"
           >
             In Progress
           </Badge>
@@ -104,7 +104,7 @@ export function ProgressTimeline({
                 <div
                   className={`flex items-start gap-4 p-4 rounded-md transition-colors ${
                     isActive
-                      ? "bg-blue-50 border border-blue-200"
+                      ? "bg-muted/40 border border-border"
                       : step.status === "completed"
                         ? "bg-green-50 border border-green-200"
                         : step.status === "failed"

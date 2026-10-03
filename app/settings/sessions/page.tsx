@@ -120,13 +120,11 @@ export default function SessionsPage() {
         </p>
       </div>
       {/* Info Card */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+      <Card className="border-border bg-muted/40">
         <CardHeader>
-          <CardTitle className="text-blue-900 dark:text-blue-100">
-            About Sessions
-          </CardTitle>
+          <CardTitle className="text-foreground">About Sessions</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+        <CardContent className="space-y-2 text-sm text-foreground">
           <p>
             Sessions represent your active logins across different devices and
             browsers. You can logout from specific devices for security.

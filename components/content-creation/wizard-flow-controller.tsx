@@ -323,7 +323,7 @@ export function WizardFlowController({
 
   return (
     <TooltipProvider>
-      <Card className={cn("w-full", mode === "compact" && "shadow-sm")}>
+      <Card className={cn("w-full", mode === "compact" && "")}>
         <CardContent className={cn("p-6", mode === "compact" && "p-4")}>
           <div className="space-y-4">
             {/* Header */}
@@ -432,9 +432,9 @@ export function WizardFlowController({
                           issue.issueType === "error" &&
                             "border-red-200 bg-red-50",
                           issue.issueType === "warning" &&
-                            "border-yellow-200 bg-yellow-50",
+                            "border-border bg-muted/40",
                           issue.issueType === "incomplete" &&
-                            "border-blue-200 bg-blue-50",
+                            "border-border bg-muted/40",
                         )}
                       >
                         <div className="flex items-center justify-between">

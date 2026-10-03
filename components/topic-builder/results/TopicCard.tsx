@@ -34,8 +34,8 @@ export const TopicCard = memo(function TopicCard({
       <Card
         className={cn(
           "transition-all duration-150 cursor-pointer group relative",
-          "hover:shadow-lg hover:shadow-primary/10 hover:border-primary/20",
-          isSelected && "ring-2 ring-primary",
+          "hover:border-foreground/40",
+          isSelected && "border-foreground",
           isHighlighted &&
             "ring-2 ring-green-500 bg-green-50/50 dark:bg-green-950/20 animate-pulse",
           className,

@@ -48,7 +48,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
       href={`/w/${workspaceSlug}/personas/${persona.id}` as Route}
       className="block h-full group"
     >
-      <Card className="h-full overflow-hidden transition-all hover:shadow-md border-border bg-card flex flex-col">
+      <Card className="h-full overflow-hidden transition-all border-border bg-card flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 rounded-md shadow-sm">

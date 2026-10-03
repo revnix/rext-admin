@@ -221,7 +221,7 @@ export function NotificationsDrawer({
                   key={notification.id}
                   className={`p-3 rounded-md border transition-all hover:bg-muted/50 ${
                     !notification.read
-                      ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
+                      ? "bg-muted/40 border-border"
                       : "bg-background border-border dark:bg-background dark:border-border"
                   }`}
                 >

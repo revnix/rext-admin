@@ -106,7 +106,7 @@ export function TrialConversionCTA({
 
   return (
     <Card
-      className={`${className} ${isModal ? "border-2 border-primary shadow-2xl" : ""}`}
+      className={`${className} ${isModal ? "border-2 border-primary" : ""}`}
     >
       <CardHeader className="relative">
         {dismissible && onDismiss && (

@@ -254,11 +254,11 @@ export function ErrorAlert({
 
         {/* Enhanced error information for BackendServiceError */}
         {process.env.NODE_ENV === "development" && "code" in error && (
-          <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20">
-            <p className="mb-2 text-sm font-medium text-blue-700 dark:text-blue-200">
+          <div className="mt-3 rounded-md border border-border bg-muted/40 p-3">
+            <p className="mb-2 text-sm font-medium text-muted-foreground">
               Enhanced Error Details:
             </p>
-            <div className="space-y-1 text-sm text-blue-600 dark:text-blue-300">
+            <div className="space-y-1 text-sm text-foreground">
               <div className="font-mono">Error Code: {errorCode}</div>
               {processingTime && (
                 <div className="font-mono">

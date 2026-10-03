@@ -120,13 +120,13 @@ export function PermissionDependencyView({
 
             {/* Required Dependencies */}
             {dependencies.length > 0 && (
-              <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+              <Card className="border-border bg-muted/40">
                 <CardHeader>
-                  <CardTitle className="text-base text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  <CardTitle className="text-base text-foreground flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     Required Dependencies
                   </CardTitle>
-                  <CardDescription className="text-blue-800 dark:text-blue-200">
+                  <CardDescription className="text-foreground">
                     These permissions should also be granted when granting this
                     permission
                   </CardDescription>

@@ -152,7 +152,7 @@ export function KnowledgeDuplicateSummary({
                         <Badge
                           key={item.id}
                           variant="outline"
-                          className="border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100"
+                          className="border-border bg-muted/40 text-muted-foreground"
                         >
                           {KNOWLEDGE_TYPE_LABELS[item.type]} · {item.title}
                         </Badge>

@@ -809,13 +809,13 @@ export default function AdminUsersPage() {
               </Card>
 
               {/* Info Card */}
-              <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+              <Card className="border-border bg-muted/40">
                 <CardHeader>
-                  <CardTitle className="text-blue-900 dark:text-blue-100">
+                  <CardTitle className="text-foreground">
                     About Impersonation
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                <CardContent className="space-y-2 text-sm text-foreground">
                   <p>
                     <strong>Impersonation</strong> allows you to view the system
                     as another user for troubleshooting and support purposes.

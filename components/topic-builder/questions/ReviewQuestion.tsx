@@ -70,8 +70,8 @@ function ReviewCard({
       className={cn(
         "h-fit transition-all duration-200",
         hasError
-          ? "border-destructive bg-destructive/5 shadow-sm ring-1 ring-destructive/20"
-          : "hover:shadow-sm",
+          ? "border-destructive bg-destructive/5 ring-1 ring-destructive/20"
+          : "",
       )}
       aria-invalid={hasError ? "true" : "false"}
       aria-describedby={hasError ? `${field}-error` : undefined}

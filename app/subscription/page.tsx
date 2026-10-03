@@ -180,7 +180,7 @@ export default function SubscriptionDashboardPage() {
     >
       {/* Debug Info (Wait for console for real data) */}
       {!usage && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-sm">
+        <div className="mb-4 p-4 bg-muted/40 border border-border rounded-md text-foreground text-sm">
           Usage statistics are currently unavailable, but your plan details are
           still accessible.
         </div>
