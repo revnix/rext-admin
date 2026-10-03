@@ -193,7 +193,7 @@ export default function AcceptAdminInvitationPage() {
   // Main invitation view
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center space-y-4">
           <div className="flex items-center justify-center">
             <div className="rounded-full bg-muted p-4">
@@ -311,11 +311,11 @@ export default function AcceptAdminInvitationPage() {
 
           {/* Warning if not logged in */}
           {!session && (
-            <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-muted/40 border border-border rounded-md">
+              <AlertCircle className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-yellow-900">Account Required</p>
-                <p className="text-yellow-700 mt-1">
+                <p className="font-medium text-foreground">Account Required</p>
+                <p className="text-muted-foreground mt-1">
                   You need to sign in with the email address this invitation was
                   sent to before accepting.
                 </p>

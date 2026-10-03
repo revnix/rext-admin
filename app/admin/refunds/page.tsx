@@ -297,15 +297,15 @@ export default function RefundManagementPage() {
         }
       >
         {/* Info Banner */}
-        <Card className="mb-6 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+        <Card className="mb-6 border-border bg-muted/40">
           <CardContent className="pt-6">
             <div className="flex gap-3">
               <AlertCircle className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                <h3 className="font-semibold text-foreground mb-1">
                   Refund Processing Workflow
                 </h3>
-                <p className="text-sm text-blue-800 dark:text-blue-200">
+                <p className="text-sm text-foreground">
                   Refunds run through Refund Requests below. Approving a request
                   records the decision; use Process refund to issue the payout.
                   Refunds issued directly from the{" "}

@@ -186,7 +186,7 @@ export function AgentActivityPanel({
           transition={{ type: "spring", stiffness: 320, damping: 30 }}
           className="fixed bottom-5 right-5 z-50 w-[290px] select-none"
         >
-          <div className="rounded-md border border-border/80 bg-card/98 backdrop-blur-2xl shadow-2xl shadow-black/20 overflow-hidden ring-1 ring-white/5">
+          <div className="rounded-md border border-border/80 bg-card/98 backdrop-blur-2xl shadow-black/20 overflow-hidden ring-1 ring-white/5">
             {/* ── Header ─────────────────────────────────────────────────────── */}
             <button
               type="button"

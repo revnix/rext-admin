@@ -50,7 +50,7 @@ export function WizardAutoFillAlert({
   }
 
   return (
-    <Alert className="border-blue-200 bg-blue-50/30">
+    <Alert className="border-border bg-muted/40">
       <AlertDescription className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="text-sm font-medium">

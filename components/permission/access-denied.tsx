@@ -143,11 +143,9 @@ export function AccessDenied({
       <CardContent className="space-y-4">
         {/* Attempted Route Context */}
         {attemptedRoute && (
-          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 rounded-md">
-            <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
-              You tried to access:
-            </p>
-            <p className="text-sm font-mono font-semibold text-amber-700 dark:text-amber-300">
+          <div className="bg-muted/40 border border-border p-3 rounded-md">
+            <p className="text-xs text-foreground mb-1">You tried to access:</p>
+            <p className="text-sm font-mono font-semibold text-muted-foreground">
               {attemptedRoute}
             </p>
           </div>
@@ -165,11 +163,9 @@ export function AccessDenied({
 
         {/* Role Hint */}
         {getRoleHint() && (
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-md">
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
-              Who can access:
-            </p>
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+          <div className="bg-muted/40 border border-border p-3 rounded-md">
+            <p className="text-xs text-foreground mb-1">Who can access:</p>
+            <p className="text-sm font-semibold text-muted-foreground">
               {getRoleHint()}
             </p>
           </div>

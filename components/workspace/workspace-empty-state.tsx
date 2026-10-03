@@ -133,15 +133,15 @@ export function WorkspaceEmptyState({
 
             {/* Help Text for Invited Users */}
             {isInvitedUser && (
-              <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900">
+              <Card className="bg-muted/40 border-border">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Lightbulb className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
                     <div className="flex-1 text-sm">
-                      <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      <p className="font-medium text-foreground mb-1">
                         New to this workspace?
                       </p>
-                      <p className="text-blue-700 dark:text-blue-200">
+                      <p className="text-muted-foreground">
                         Don't worry! Feel free to explore and try things out.
                         Your teammates are here to help if you have questions.
                         {detectRoleCategory(userRole || "") === "viewer" &&
@@ -179,7 +179,7 @@ function ActionCard({
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer">
+    <Card className="group transition-all hover:border-primary/50 cursor-pointer">
       <Link href={action.href as Route} onClick={handleClick}>
         <CardContent className="p-6 space-y-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-md bg-muted text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">

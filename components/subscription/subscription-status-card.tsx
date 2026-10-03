@@ -199,20 +199,18 @@ export function SubscriptionStatusCard({
       <CardContent className="space-y-6">
         {/* Trial Warning */}
         {isTrialActive && trialDaysRemaining !== null && (
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+          <div className="bg-muted/40 border border-border rounded-md p-4">
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="font-medium text-blue-900 dark:text-blue-100">
-                  Trial Period
-                </p>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="font-medium text-foreground">Trial Period</p>
+                <p className="text-sm text-muted-foreground">
                   {trialDaysRemaining > 0
                     ? `${trialDaysRemaining} day${trialDaysRemaining !== 1 ? "s" : ""} remaining`
                     : "Trial expires today"}
                 </p>
                 {subscription?.subscription?.trial_end_date && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                  <p className="text-xs text-foreground">
                     Ends on{" "}
                     {formatDate(subscription?.subscription?.trial_end_date)}
                   </p>

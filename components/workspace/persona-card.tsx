@@ -17,7 +17,7 @@ interface PersonaCardProps {
  */
 export function PersonaCard({ persona }: PersonaCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           {/* Avatar */}

@@ -12,8 +12,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="top-right"
       toastOptions={{
         classNames: {
-          toast:
-            "group toast group-[.toaster]:shadow-lg border-2 rounded-md p-4",
+          toast: "group toast group-[.toaster]:shadow-md border rounded-md p-4",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
@@ -21,8 +20,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
           success: "!bg-[#e8f5e9] !border-[#4caf50] !text-[#1b5e20]",
           error: "!bg-[#ffebee] !border-[#f44336] !text-[#b71c1c]",
-          warning: "!bg-[#fff9c4] !border-[#ff9800] !text-[#e65100]",
-          info: "!bg-[#e3f2fd] !border-[#2196f3] !text-[#0d47a1]",
+          // Only error and success carry colour; other notices stay neutral.
+          warning: "!bg-card !border-border !text-foreground",
+          info: "!bg-card !border-border !text-foreground",
         },
       }}
       {...props}

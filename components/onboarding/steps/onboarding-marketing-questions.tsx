@@ -160,10 +160,8 @@ export function OnboardingMarketingQuestions({
               return (
                 <Card
                   key={option.value}
-                  className={`border-2 cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm ${
-                    isSelected
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border"
+                  className={`border cursor-pointer transition-colors hover:border-foreground/40 ${
+                    isSelected ? "border-foreground" : "border-border"
                   }`}
                   onClick={() => handleSelectOption(option.value)}
                 >

@@ -146,7 +146,7 @@ function SidebarStepItem({
     }
 
     if (hasWarnings) {
-      return "border-amber-200 bg-amber-50 hover:bg-amber-100";
+      return "border-border bg-muted/40 hover:bg-muted";
     }
 
     if (status === "current") {

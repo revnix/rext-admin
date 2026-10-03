@@ -193,11 +193,13 @@ export function PageLayout({
 
           <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border bg-sidebar px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-20">
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-background text-slate-500 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current" />
+              <SidebarTrigger className="-ml-1 h-10 w-10 border border-border bg-background text-slate-500 hover:bg-foreground/5 hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current" />
               <div className="hidden lg:flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  className="justify-start w-74 xl:w-96 h-10 rounded-md bg-sidebar-accent/30 border-border px-3 overflow-hidden relative shadow-none hover:border-input text-sidebar-foreground/70 hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:bg-sidebar-accent/50 dark:border-sidebar-border dark:text-sidebar-foreground dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                {/* Plain button on purpose: the shared Button adds a press
+                    scale (btn-active) and a tinted shadow this field shouldn't have. */}
+                <button
+                  type="button"
+                  className="relative flex h-10 w-74 xl:w-96 cursor-pointer items-center justify-start overflow-hidden rounded-md border border-border bg-sidebar-accent/30 px-3 text-sm text-sidebar-foreground/70 transition-colors outline-none hover:bg-foreground/5 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-sidebar-border dark:bg-sidebar-accent/50 dark:text-sidebar-foreground"
                   onClick={() => setSearchOpen(true)}
                 >
                   <Search className="h-4 w-4 mr-2 opacity-50 shrink-0" />
@@ -207,7 +209,7 @@ export function PageLayout({
                   <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded-md bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
                     <span className="text-xs">⌘</span>K
                   </kbd>
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -219,7 +221,7 @@ export function PageLayout({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)] relative"
+                className="h-10 w-10 rounded-full hover:bg-foreground/5 text-slate-500 hover:text-foreground dark:text-sidebar-foreground relative"
                 onClick={() => setDrawerOpen(true)}
               >
                 <Bell className="h-5 w-5" />
@@ -239,7 +241,7 @@ export function PageLayout({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)]"
+                    className="h-10 w-10 rounded-full hover:bg-foreground/5 text-slate-500 hover:text-foreground dark:text-sidebar-foreground"
                   >
                     <Settings className="h-5 w-5" />
                   </Button>
@@ -251,7 +253,7 @@ export function PageLayout({
                     {currentWorkspace?.slug && (
                       <>
                         <DropdownMenuItem
-                          className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current [&_[data-slot=dropdown-menu-shortcut]]:!text-current"
+                          className="focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current [&_[data-slot=dropdown-menu-shortcut]]:!text-current"
                           onClick={() =>
                             router.push(
                               workspaceRoutes.settings.root(
@@ -265,7 +267,7 @@ export function PageLayout({
                           <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                          className="focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                           onClick={() =>
                             router.push(
                               workspaceRoutes.members(
@@ -292,7 +294,7 @@ export function PageLayout({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)]"
+                    className="h-10 w-10 rounded-full hover:bg-foreground/5 text-slate-500 hover:text-foreground dark:text-sidebar-foreground"
                     id="help-trigger"
                   >
                     <CircleHelp className="h-5 w-5" />
@@ -304,7 +306,7 @@ export function PageLayout({
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       asChild
-                      className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <a
                         href="https://rext.ai/help"
@@ -318,7 +320,7 @@ export function PageLayout({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       asChild
-                      className="focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <a
                         href="https://rext.ai/help"
@@ -345,7 +347,7 @@ export function PageLayout({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 rounded-full hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)]"
+                    className="h-10 w-10 rounded-full hover:bg-foreground/5 text-slate-500 hover:text-foreground dark:text-sidebar-foreground"
                   >
                     <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -357,21 +359,21 @@ export function PageLayout({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setTheme("light")}
-                    className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                    className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                   >
                     <Sun className="mr-2 h-4 w-4" />
                     <span>Light</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setTheme("dark")}
-                    className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                    className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                   >
                     <Moon className="mr-2 h-4 w-4" />
                     <span>Dark</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setTheme("system")}
-                    className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                    className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                   >
                     <Laptop className="mr-2 h-4 w-4" />
                     <span>System</span>
@@ -401,7 +403,7 @@ export function PageLayout({
                           className="object-cover w-full h-full"
                         />
                       ) : (
-                        <AvatarFallback className="bg-muted text-muted-foreground font-medium hover:bg-[var(--color-brand-50)] text-slate-500 hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:hover:text-[var(--color-brand-100)]">
+                        <AvatarFallback className="bg-muted text-muted-foreground font-medium hover:bg-foreground/5 text-slate-500 hover:text-foreground dark:text-sidebar-foreground">
                           {userInitials}
                         </AvatarFallback>
                       )}
@@ -436,7 +438,7 @@ export function PageLayout({
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       onClick={() => router.push(settingsRoutes.subscription)}
-                      className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <div className="flex items-center justify-center h-5 w-5 rounded-md mr-2">
                         <Sparkles className="h-3.5 w-3.5 text-gray-600 fill-gray-100/50 dark:fill-gray-600/50" />
@@ -448,21 +450,21 @@ export function PageLayout({
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       onClick={() => router.push(settingsRoutes.root)}
-                      className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <BadgeCheck className="mr-2 h-4 w-4" />
                       <span>Account</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push(settingsRoutes.subscription)}
-                      className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <CreditCard className="mr-2 h-4 w-4" />
                       <span>Billing</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push(settingsRoutes.security)}
-                      className="cursor-pointer focus:bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-50)] text-slate-500 focus:text-[var(--color-brand-700)] hover:text-[var(--color-brand-700)] dark:focus:bg-[var(--color-brand-900)]/50 dark:hover:bg-[var(--color-brand-900)]/50 dark:text-sidebar-foreground dark:focus:text-[var(--color-brand-100)] dark:hover:text-[var(--color-brand-100)] [&_svg]:!text-current"
+                      className="cursor-pointer focus:bg-foreground/5 hover:bg-foreground/5 text-slate-500 focus:text-foreground hover:text-foreground dark:text-sidebar-foreground [&_svg]:!text-current"
                     >
                       <Bell className="mr-2 h-4 w-4" />
                       <span>Security</span>
@@ -470,7 +472,7 @@ export function PageLayout({
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator className="bg-border my-1" />
                   <DropdownMenuItem
-                    className="text-rose-600 focus:text-rose-700 focus:bg-rose-50 cursor-pointer hover:bg-rose-50 text-slate-500 hover:text-rose-700 dark:hover:bg-rose-900/50 dark:text-rose-400 dark:hover:text-rose-200 focus:text-rose-700 focus:bg-rose-50"
+                    className="cursor-pointer text-slate-500 hover:bg-foreground/5 focus:bg-foreground/5 hover:text-foreground focus:text-foreground dark:text-sidebar-foreground"
                     onClick={() => logout()}
                   >
                     <LogOut className="mr-2 h-4 w-4" />

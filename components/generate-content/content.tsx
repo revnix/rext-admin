@@ -944,8 +944,8 @@ function ContentEditorInner(props: ContentEditorProps) {
   };
 
   const analysisSidebarContent = (
-    <div className="flex flex-col h-full bg-sidebar pb-20 sm:pb-0">
-      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-sidebar py-3 z-4 border-b border-border/50 lg:border-none">
+    <div className="flex flex-col h-full min-h-0 bg-card pb-20 sm:pb-0">
+      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-card py-3 z-4 border-b border-border">
         <div className="flex-1">
           {canUpdate ? (
             <Tooltip>
@@ -1099,7 +1099,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
       </div>
 
-      <section className="flex-1 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+      <section className="flex-1 min-h-0 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── Agent Activity Feed (shown while generating) ───────────── */}
         {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
           <div className="space-y-3 pb-2">
@@ -1408,11 +1408,14 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   return (
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col border-t relative h-[88.5vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
-      <div className="flex flex-1 relative border-b border-border">
+    // Full-bleed (cancels PageLayout's side padding) and, on xl, exactly the
+    // viewport below the 5rem app header: each column scrolls on its own, so
+    // there is one scrollbar per column and none on the page.
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 sm:-mx-8 xl:h-[calc(100dvh-5rem)] xl:overflow-hidden">
+      <div className="flex flex-1 min-h-0 relative">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
-          <aside className="hidden xl:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+          <aside className="hidden xl:flex w-60 border-r border-border bg-card flex-col shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-3 py-4">
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-sm font-semibold text-foreground">
@@ -1497,7 +1500,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         {/* Main Content Area */}
         <main
           ref={scrollRef}
-          className="w-full flex-1 bg-background px-2 py-4 scroll-smooth"
+          className="w-full min-w-0 flex-1 bg-background px-2 py-4 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
         >
           {/* overflow-clip (not overflow-hidden): still contains wide tables
               and images, but unlike `hidden` it does not create a scroll
@@ -1612,7 +1615,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         </main>
 
         {/* Desktop Right Sidebar */}
-        <aside className="hidden xl:flex w-64 border-l border-border bg-sidebar/30 flex-col sticky top-0 max-h-[calc(100vh-85px)]">
+        <aside className="hidden xl:flex w-72 border-l border-border bg-card flex-col shrink-0 min-h-0">
           {analysisSidebarContent}
         </aside>
       </div>
@@ -1721,7 +1724,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             Content publishes automatically via WordPress.
           </DialogDescription>
           {timezoneMismatch && syncTimezoneMutation.isError && (
-            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-foreground">
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               <div className="flex-1">
                 Couldn&apos;t update your account timezone to match your device
@@ -1731,7 +1734,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   type="button"
                   variant="link"
                   size="sm"
-                  className="h-auto p-0 ml-1 text-amber-900 underline dark:text-amber-200"
+                  className="h-auto p-0 ml-1 text-foreground underline"
                   disabled={syncTimezoneMutation.isPending}
                   onClick={() => syncTimezoneMutation.mutate()}
                 >

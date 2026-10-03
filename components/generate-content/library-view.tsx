@@ -238,10 +238,8 @@ export function LibraryView() {
               key={item.id}
               onClick={() => handleSelectKeyword(item)}
               className={cn(
-                "group cursor-pointer transition-all duration-300 border-border/50 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 bg-card overflow-hidden",
-                selectedId === item.id
-                  ? "ring-2 ring-primary border-primary bg-primary/2"
-                  : "",
+                "group cursor-pointer transition-colors duration-200 border-border hover:border-foreground/40 bg-card overflow-hidden",
+                selectedId === item.id ? "border-foreground" : "",
               )}
             >
               <div className="p-6 space-y-4">

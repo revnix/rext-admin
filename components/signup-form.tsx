@@ -301,7 +301,7 @@ export function SignupForm({
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md">
+        <div className="p-4 bg-muted/40 border border-border text-foreground rounded-md">
           <p className="font-medium">Invitation Link Issue</p>
           <p className="text-sm mt-1">
             {invitationError ||

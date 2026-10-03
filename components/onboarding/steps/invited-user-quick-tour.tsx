@@ -74,7 +74,7 @@ export function InvitedUserQuickTour({
             <Card
               className={
                 item.highlight
-                  ? "border-primary shadow-md bg-gradient-to-br from-primary/5 to-transparent"
+                  ? "border-primary bg-gradient-to-br from-primary/5 to-transparent"
                   : ""
               }
             >

@@ -208,7 +208,7 @@ export function EditableBrandVoiceCard({
   }
 
   return (
-    <DetailCard variant="highlight">
+    <DetailCard variant="default">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <SectionHeader
           title="Brand Voice Profile"
@@ -259,7 +259,6 @@ export function EditableBrandVoiceCard({
                   </span>
                 </BrandVoiceRefreshControl>
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={() => setIsEditing(true)}
                   className="w-full sm:w-auto"

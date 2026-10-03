@@ -379,9 +379,9 @@ export function ResearchSettingsStep({
 
         {/* Smart Recommendations */}
         {getSmartRecommendations.length > 0 && (
-          <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+          <Card className="bg-muted/40 border-border">
             <CardHeader>
-              <CardTitle className="text-blue-900 dark:text-blue-100 text-sm">
+              <CardTitle className="text-foreground text-sm">
                 💡 AI Recommendations
               </CardTitle>
             </CardHeader>
@@ -389,7 +389,7 @@ export function ResearchSettingsStep({
               {getSmartRecommendations.map((recommendation) => (
                 <p
                   key={`recommendation-${recommendation}-${recommendation.slice(0, 20)}`}
-                  className="text-blue-800 dark:text-blue-200"
+                  className="text-foreground"
                 >
                   • {recommendation}
                 </p>

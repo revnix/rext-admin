@@ -131,7 +131,7 @@ const DraftCard = memo<{
   return (
     <Card
       className={cn(
-        "transition-all duration-200 hover:shadow-md",
+        "transition-all duration-200",
         isLoading && "opacity-50 cursor-wait",
         compact && "p-3",
       )}

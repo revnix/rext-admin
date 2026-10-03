@@ -396,7 +396,7 @@ export function GlobalKnowledgeSearch({
               {searchResults.map((result) => (
                 <Card
                   key={`${result.type}-${result.id}`}
-                  className="hover:shadow-md transition-shadow"
+                  className="transition-shadow"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">

@@ -205,7 +205,7 @@ export function PricingTable({
               key={plan.id}
               className={cn(
                 "relative flex flex-col",
-                isPopular && "border-primary shadow-lg scale-105",
+                isPopular && "border-primary scale-105",
                 isCurrent && "border-green-500 dark:border-green-600",
               )}
             >

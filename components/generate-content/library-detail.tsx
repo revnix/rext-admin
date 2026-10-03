@@ -117,7 +117,7 @@ export default function LibraryDetail({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         {/* Difficulty Section */}
-        <Card className="xl:col-span-4 lg:col-span-5 p-8 flex flex-col items-center justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+        <Card className="xl:col-span-4 lg:col-span-5 p-8 flex flex-col items-center justify-center bg-white border-border/50 dark:bg-card">
           <SafeChartRadialStacked difficultyScore={kd} />
           <p className="text-sm text-muted-foreground mt-6 text-center max-w-[240px]">
             We estimate that you&apos;ll need followed backlinks from
@@ -131,7 +131,7 @@ export default function LibraryDetail({
 
         {/* Quick Metrics */}
         <div className="xl:col-span-8 lg:col-span-7 grid grid-cols-2 grid-rows-2 md:grid-cols-4 gap-4">
-          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white border-border/50 dark:bg-card">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">
                 Monthly Volume
@@ -147,7 +147,7 @@ export default function LibraryDetail({
               </>
             )}
           </Card>
-          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white border-border/50 dark:bg-card">
             {data.seo_state?.intent ? (
               <div className="space-y-2">
                 {selectedIntent && <SearchIntentCard intent={selectedIntent} />}
@@ -198,7 +198,7 @@ export default function LibraryDetail({
               </>
             )}
           </Card>
-          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white border-border/50 dark:bg-card">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Backlinks
             </span>
@@ -206,7 +206,7 @@ export default function LibraryDetail({
               {data.seo_state?.backlinks ?? "-"}
             </span>
           </Card>
-          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white shadow-sm border-border/50 dark:bg-card">
+          <Card className="p-4 col-span-2 flex flex-col justify-center bg-white border-border/50 dark:bg-card">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Domains
             </span>
@@ -225,7 +225,7 @@ export default function LibraryDetail({
           </h2>
         </div>
 
-        <Card className="overflow-hidden border-border/50 shadow-sm bg-white dark:bg-card">
+        <Card className="overflow-hidden border-border/50 bg-white dark:bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 border-b border-border text-muted-foreground font-medium uppercase text-xs tracking-widest dark:bg-card">
@@ -291,7 +291,7 @@ export default function LibraryDetail({
 
       {/* Related Topics */}
       <div className="mt-12">
-        <Card className="overflow-hidden border-border/50 shadow-sm bg-white dark:bg-card">
+        <Card className="overflow-hidden border-border/50 bg-white dark:bg-card">
           <div className="px-6 py-5 border-b border-border/50 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-md bg-muted ring-1 ring-border flex items-center justify-center shrink-0">

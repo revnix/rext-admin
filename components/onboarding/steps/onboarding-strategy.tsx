@@ -147,7 +147,7 @@ export const OnboardingStrategy = forwardRef<
                   key={strategy.id}
                   className={`border-2 transition-all duration-200 cursor-pointer ${
                     selectedStrategy === strategy.id
-                      ? "border-primary shadow-md"
+                      ? "border-primary"
                       : `border-border ${strategy.borderColor}`
                   }`}
                   onClick={() => handleStrategySelect(strategy.id)}
@@ -343,14 +343,14 @@ export const OnboardingStrategy = forwardRef<
                   </div>
 
                   {/* EEAT Optimization Notice */}
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-4">
+                  <div className="bg-muted/40 border border-border rounded-md p-4">
                     <div className="flex items-start gap-3">
                       <span className="text-xl">💡</span>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                        <p className="text-sm font-medium text-foreground">
                           EEAT Optimization
                         </p>
-                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                        <p className="text-sm text-foreground">
                           This persona will be used to inject authentic
                           experience and expertise into your content, improving
                           trust signals for search engines.

@@ -14,7 +14,7 @@ interface TopicInformationProps {
  */
 export function TopicInformation({ topic }: TopicInformationProps) {
   return (
-    <DetailCard variant="highlight" className="bg-muted/20 dark:bg-muted/10">
+    <DetailCard variant="highlight">
       <SectionHeader
         title="Topic Information"
         icon={<FileText className="w-5 h-5" />}
