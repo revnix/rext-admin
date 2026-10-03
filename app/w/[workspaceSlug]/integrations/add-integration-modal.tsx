@@ -101,19 +101,19 @@ const INTEGRATION_OPTIONS: {
   Logo: React.ComponentType<{ className?: string }>;
   description: string;
 }[] = [
-    {
-      type: "wordpress",
-      label: "WordPress",
-      Logo: WordPressLogo,
-      description: "Publish content directly to your WordPress site",
-    },
-    {
-      type: "shopify",
-      label: "Shopify",
-      Logo: ShopifyLogo,
-      description: "Sync content with your Shopify store blog",
-    },
-  ];
+  {
+    type: "wordpress",
+    label: "WordPress",
+    Logo: WordPressLogo,
+    description: "Publish content directly to your WordPress site",
+  },
+  {
+    type: "shopify",
+    label: "Shopify",
+    Logo: ShopifyLogo,
+    description: "Sync content with your Shopify store blog",
+  },
+];
 
 // ── WordPress form ────────────────────────────────────────────────────────────
 
@@ -419,8 +419,10 @@ export function AddIntegrationModal({
                   setSelectedType(opt.type);
                 }}
                 className={cn(
-                  "flex flex-col items-center gap-3 p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-accent/10 transition-all duration-200 cursor-pointer text-left group",
-                  opt.type === "shopify" && "hidden disabled:opacity-50 disabled:cursor-not-allowed")}
+                  "flex flex-col items-center gap-3 p-5 rounded-md border border-border/50 bg-card hover:border-primary/40 hover:bg-accent/10 transition-all duration-200 cursor-pointer text-left group",
+                  opt.type === "shopify" &&
+                    "hidden disabled:opacity-50 disabled:cursor-not-allowed",
+                )}
               >
                 <opt.Logo className="h-8 w-auto object-contain" />
                 <div>

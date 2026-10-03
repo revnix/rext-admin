@@ -142,7 +142,7 @@ export function AudienceQuestion({
                     isLoading || (!isSelected && currentAudiences.length >= 5)
                   }
                   className={cn(
-                    "px-3 py-2 text-sm rounded-lg transition-all duration-200 cursor-pointer",
+                    "px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer",
                     "border hover:border-primary/50 shadow-sm hover:shadow-md",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",

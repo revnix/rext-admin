@@ -34,7 +34,7 @@ export function SelectedTopicDisplay({
         icon: FileText,
       }}
     >
-      <div className="flex items-center justify-between gap-3 p-3 border rounded-lg bg-muted/30">
+      <div className="flex items-center justify-between gap-3 p-3 border rounded-md bg-muted/30">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
           <div className="min-w-0 flex-1">

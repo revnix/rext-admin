@@ -121,7 +121,7 @@ export function MultiSelectCheckboxGrid({
             return (
               <Label
                 key={option.value}
-                className={`relative flex items-center justify-center border rounded-lg p-3 cursor-pointer transition-colors ${
+                className={`relative flex items-center justify-center border rounded-md p-3 cursor-pointer transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/5"
                     : isDisabled
@@ -142,7 +142,7 @@ export function MultiSelectCheckboxGrid({
                   <div className="flex items-center justify-center mb-1">
                     <span className="font-medium text-sm">{option.label}</span>
                     {isSelected && (
-                      <Check className="h-4 w-4 ml-2 text-primary" />
+                      <Check className="h-4 w-4 ml-2 text-foreground" />
                     )}
                   </div>
                   {option.description && (

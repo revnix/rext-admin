@@ -95,11 +95,11 @@ export function WorkspaceEmptyState({
             {/* Hero Icon */}
             <div className="flex justify-center">
               <div className="relative">
-                <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center border-2 border-primary/20">
+                <div className="h-24 w-24 rounded-md bg-muted flex items-center justify-center border-2 border-border">
                   {isInvitedUser ? (
-                    <Sparkles className="h-12 w-12 text-primary" />
+                    <Sparkles className="h-12 w-12 text-foreground" />
                   ) : (
-                    <Plus className="h-12 w-12 text-primary" />
+                    <Plus className="h-12 w-12 text-foreground" />
                   )}
                 </div>
               </div>
@@ -136,7 +136,7 @@ export function WorkspaceEmptyState({
               <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <Lightbulb className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <Lightbulb className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
                     <div className="flex-1 text-sm">
                       <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
                         New to this workspace?
@@ -182,7 +182,7 @@ function ActionCard({
     <Card className="group hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer">
       <Link href={action.href as Route} onClick={handleClick}>
         <CardContent className="p-6 space-y-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-muted text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
             {action.icon}
           </div>
           <div>

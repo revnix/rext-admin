@@ -170,14 +170,14 @@ export function DashboardCharts() {
               (h) => (
                 <div
                   key={`bar-${h}-${h}`}
-                  className="w-full bg-blue-100 rounded-t-sm relative group h-full flex items-end"
+                  className="w-full bg-blue-100 rounded-t-md relative group h-full flex items-end"
                 >
                   <div
-                    className="w-full bg-blue-600 rounded-t-sm transition-all duration-300 hover:opacity-80 absolute bottom-0"
+                    className="w-full bg-blue-600 rounded-t-md transition-all duration-300 hover:opacity-80 absolute bottom-0"
                     style={{ height: `${h}%` }}
                   ></div>
                   <div
-                    className="w-full bg-blue-400 rounded-t-sm transition-all duration-300 hover:opacity-80 absolute bottom-0 mb-[1px]"
+                    className="w-full bg-blue-400 rounded-t-md transition-all duration-300 hover:opacity-80 absolute bottom-0 mb-[1px]"
                     style={{ height: `${h * 0.6}%` }}
                   ></div>
                 </div>

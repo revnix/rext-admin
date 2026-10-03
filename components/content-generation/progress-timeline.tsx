@@ -22,7 +22,7 @@ export function ProgressTimeline({
       case "completed":
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "in-progress":
-        return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-5 w-5 text-foreground animate-spin" />;
       case "failed":
         return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
@@ -102,7 +102,7 @@ export function ProgressTimeline({
 
                 {/* Step content */}
                 <div
-                  className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${
+                  className={`flex items-start gap-4 p-4 rounded-md transition-colors ${
                     isActive
                       ? "bg-blue-50 border border-blue-200"
                       : step.status === "completed"
@@ -158,7 +158,7 @@ export function ProgressTimeline({
 
                     {/* Error message */}
                     {step.error && (
-                      <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded text-sm text-red-700">
+                      <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-md text-sm text-red-700">
                         {step.error}
                       </div>
                     )}

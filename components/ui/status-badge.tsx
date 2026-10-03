@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import type { StatusConfig } from "@/types/detail-page";
 
 const statusBadgeVariants = cva(
-  "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-medium border transition-all duration-200",
+  "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium border transition-all duration-200",
   {
     variants: {
       variant: {

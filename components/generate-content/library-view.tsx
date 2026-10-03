@@ -316,7 +316,7 @@ export function LibraryView() {
       </div>
 
       {!isLoading && keywords.length === 0 && (
-        <div className="text-center py-20 border-2 border-dashed border-border/50 rounded-3xl bg-muted/20">
+        <div className="text-center py-20 border-2 border-dashed border-border/50 rounded-md bg-muted/20">
           <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
             <Search className="h-8 w-8 text-muted-foreground/50" />
           </div>

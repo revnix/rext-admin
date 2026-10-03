@@ -132,7 +132,7 @@ function VerifyEmailContent() {
 
             {success && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-md">
                   <p className="font-medium">Email verified successfully!</p>
                   <p className="text-sm mt-1">
                     Your account is now active. Redirecting to login...
@@ -146,7 +146,7 @@ function VerifyEmailContent() {
 
             {error && !isVerifying && !resendSuccess && (
               <div className="space-y-4">
-                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
                   <p className="font-medium">Verification Failed</p>
                   <p className="text-sm mt-1">{error}</p>
                 </div>
@@ -187,7 +187,7 @@ function VerifyEmailContent() {
 
             {resendSuccess && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-md">
                   <p className="font-medium">Verification Email Sent!</p>
                   <p className="text-sm mt-1">
                     We've sent a new verification link to your email. Please

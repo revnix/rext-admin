@@ -107,7 +107,7 @@ export function EditPermissionDialog({
 
           <div className="space-y-4 py-4">
             {/* Current Name */}
-            <div className="rounded-lg border p-3 bg-muted/50">
+            <div className="rounded-md border p-3 bg-muted/50">
               <span className="text-sm font-medium">
                 Permission Identifier:{" "}
               </span>

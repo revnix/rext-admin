@@ -203,7 +203,7 @@ export default function InvitationAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Accepted</p>
                     <p className="text-2xl font-bold">{summary.accepted}</p>
@@ -212,14 +212,14 @@ export default function InvitationAnalyticsPage() {
                     {summary.acceptance_rate.toFixed(1)}%
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Pending</p>
                     <p className="text-2xl font-bold">{summary.pending}</p>
                   </div>
                   <Badge variant="secondary">Active</Badge>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Declined</p>
                     <p className="text-2xl font-bold">{summary.declined}</p>
@@ -228,7 +228,7 @@ export default function InvitationAnalyticsPage() {
                     {summary.decline_rate.toFixed(1)}%
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Expired</p>
                     <p className="text-2xl font-bold">{summary.expired}</p>

@@ -136,7 +136,7 @@ export function ContentLengthSelector({
       >
         <CardHeader className="pb-4">
           <CardTitle className="wizard-field-label">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText className="h-5 w-5 text-foreground" />
             {label}
           </CardTitle>
           <CardDescription className="wizard-field-description">
@@ -172,9 +172,9 @@ export function ContentLengthSelector({
 
             {/* Enhanced Custom Length Preview */}
             {value?.type === "custom" && value.custom && (
-              <div className="wizard-card-success p-4 rounded-lg">
+              <div className="wizard-card-success p-4 rounded-md">
                 <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-green-600" />
+                  <FileText className="h-4 w-4 text-foreground" />
                   <div>
                     <div className="font-semibold text-green-700">
                       Custom Length Set

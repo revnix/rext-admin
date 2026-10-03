@@ -406,7 +406,7 @@ export default function SubscriptionAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   subscription.read
                 </code>
               </p>
@@ -457,7 +457,7 @@ export default function SubscriptionAnalyticsPage() {
                     ].map(([label, value, color]) => (
                       <div
                         key={label}
-                        className={`rounded-lg border-0 p-4 ${color}`}
+                        className={`rounded-md border-0 p-4 ${color}`}
                       >
                         <p className="text-sm font-medium">{label}</p>
                         <p className="text-2xl font-semibold">

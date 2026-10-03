@@ -42,7 +42,7 @@ export function DetailPageSkeleton({
             {Array.from({ length: sections }, (_, i) => i).map((i) => (
               <div
                 key={`section-${i}`}
-                className="bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 rounded-xl p-6 border border-blue-200/60 dark:border-blue-800/60"
+                className="bg-muted/40 rounded-md p-6 border border-border"
               >
                 <div className="space-y-4">
                   {/* Section header */}
@@ -64,7 +64,7 @@ export function DetailPageSkeleton({
                       {Array.from({ length: 4 }, (_, j) => j).map((j) => (
                         <div
                           key={`metric-${j}`}
-                          className="bg-white/80 dark:bg-background/80 rounded-xl p-4 text-center"
+                          className="bg-white/80 dark:bg-background/80 rounded-md p-4 text-center"
                         >
                           <Skeleton className="h-8 w-16 mx-auto mb-2" />
                           <Skeleton className="h-3 w-20 mx-auto" />
@@ -94,7 +94,7 @@ export function DetailPageSkeleton({
           <div className="lg:col-span-4 xl:col-span-3">
             <div className="space-y-6">
               {/* Metadata card skeleton */}
-              <div className="bg-white dark:bg-background rounded-lg border p-6">
+              <div className="bg-white dark:bg-background rounded-md border p-6">
                 <Skeleton className="h-5 w-16 mb-4" /> {/* Card title */}
                 <div className="space-y-3">
                   {Array.from({ length: 6 }, (_, i) => i).map((i) => (
@@ -113,7 +113,7 @@ export function DetailPageSkeleton({
               </div>
 
               {/* Additional sidebar cards */}
-              <div className="bg-white dark:bg-background rounded-lg border p-6">
+              <div className="bg-white dark:bg-background rounded-md border p-6">
                 <Skeleton className="h-5 w-24 mb-4" /> {/* Card title */}
                 <div className="space-y-4">
                   <div className="space-y-2">

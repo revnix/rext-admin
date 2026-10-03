@@ -139,7 +139,7 @@ export default function WorkspaceContentPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Required permission:{" "}
-                  <code className="text-xs bg-muted px-1 rounded">
+                  <code className="text-xs bg-muted px-1 rounded-md">
                     content:read
                   </code>
                 </p>
@@ -179,7 +179,7 @@ export default function WorkspaceContentPage() {
               </div>
             ) : (
               /* Replicating DataTable empty state */
-              <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed rounded-lg p-12">
+              <div className="flex flex-col items-center justify-center h-64 text-center border-2 border-dashed rounded-md p-12">
                 <FileText className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No content available</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mt-2">

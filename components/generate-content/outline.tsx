@@ -99,9 +99,9 @@ function MetadataSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50"
+          className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50"
         >
-          <Skeleton className="w-10 h-10 rounded-xl" />
+          <Skeleton className="w-10 h-10 rounded-md" />
 
           <div className="flex-1 space-y-2">
             <Skeleton className="w-20 h-3" />
@@ -121,7 +121,7 @@ function SectionSkeleton() {
           {/* timeline dot */}
           <Skeleton className="absolute left-0 top-1 w-10 h-10 rounded-full" />
 
-          <div className="p-5 rounded-xl border border-border/50 bg-card space-y-4">
+          <div className="p-5 rounded-md border border-border/50 bg-card space-y-4">
             <div className="flex justify-between items-center">
               <Skeleton className="w-40 h-5" />
               <Skeleton className="w-20 h-4" />
@@ -154,7 +154,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.key_points.map((point: string) => (
           <div
             key={point}
-            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
+            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
           >
             <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
             <span className="text-sm font-medium text-muted-foreground">
@@ -173,9 +173,9 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.items.map((item) => (
           <div
             key={item.label}
-            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
-            <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <Check className="w-4 h-4 text-foreground mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-foreground">
                 {item.label}
@@ -202,7 +202,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.items_faq.map((faq) => (
           <div
             key={faq.question}
-            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <p className="text-sm font-semibold text-foreground">
               {faq.question}
@@ -225,7 +225,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.entries.map((entry) => (
           <div
             key={entry.term}
-            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <p className="text-sm font-bold text-foreground">{entry.term}</p>
             {entry.definition && (
@@ -246,7 +246,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.resources.map((res) => (
           <div
             key={res.title}
-            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <p className="text-sm font-semibold text-foreground">{res.title}</p>
             {res.description && (
@@ -272,7 +272,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.steps.map((step, i) => (
           <div
             key={`step-${step.title}`}
-            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
               {i + 1}.
@@ -300,7 +300,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.steps_howto.map((step, i) => (
           <div
             key={`howto-${step.title}`}
-            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
               {i + 1}.
@@ -333,7 +333,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {section.findings.map((f) => (
           <div
             key={f.topic}
-            className="p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <p className="text-sm font-semibold text-foreground">{f.topic}</p>
             {f.data_points?.length ? (
@@ -365,7 +365,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {highlights.map((h) => (
           <div
             key={h}
-            className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
             <span className="text-sm font-medium text-muted-foreground">
@@ -376,7 +376,7 @@ function SectionContent({ section }: { section: ContentSection }) {
         {results.map((r) => (
           <div
             key={r.metric_name}
-            className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-transparent"
+            className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
             <span className="text-sm font-bold text-foreground">
               {r.metric_name}:
@@ -445,7 +445,7 @@ function RenderBlocks({
                         {String(start + j + 1).padStart(2, "0")}
                       </span>
                     </div>
-                    <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                    <div className="p-5 rounded-md border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                       {/* Heading row with optional word-count badge */}
                       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                         {item.label && (
@@ -500,7 +500,7 @@ function RenderBlocks({
                           {item.points.map((pt) => (
                             <div
                               key={pt}
-                              className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
+                              className="flex items-start gap-3 p-3 rounded-md bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
                             >
                               <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                               <span className="text-sm font-medium text-muted-foreground">
@@ -820,9 +820,9 @@ export function OutlineDisplay({
       {!isDraft && outline && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
-          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
-            <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-              <Mic2 className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
+            <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+              <Mic2 className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
@@ -876,9 +876,9 @@ export function OutlineDisplay({
           </div>
 
           {/* Audience */}
-          <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
-            <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-              <Target className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
+            <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+              <Target className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
@@ -936,9 +936,9 @@ export function OutlineDisplay({
 
           {/* Focus Keyphrase */}
           {outline.focus_keyphrase && (
-            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
-              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-                <Hash className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
+              <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+                <Hash className="w-5 h-5 text-foreground" />
               </div>
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
@@ -953,9 +953,9 @@ export function OutlineDisplay({
 
           {/* Schema Type + Target Word Count */}
           {(outline.schema_type || displayedTargetWordCount) && (
-            <div className="flex items-center gap-4 p-5 rounded-xl bg-card border border-border/50">
-              <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border">
-                <FileText className="w-5 h-5 text-primary" />
+            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
+              <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+                <FileText className="w-5 h-5 text-foreground" />
               </div>
               <div className="flex flex-1 min-w-0 flex-wrap gap-x-8 gap-y-2">
                 {outline.schema_type && (
@@ -1043,9 +1043,9 @@ export function OutlineDisplay({
           {/* Keywords to include */}
           {outline.keywords_to_include &&
             outline.keywords_to_include.length > 0 && (
-              <div className="col-span-full flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50">
-                <div className="p-3 rounded-xl bg-card shadow-sm ring-1 ring-border shrink-0">
-                  <Tag className="w-5 h-5 text-primary" />
+              <div className="col-span-full flex items-start gap-4 p-5 rounded-md bg-card border border-border/50">
+                <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border shrink-0">
+                  <Tag className="w-5 h-5 text-foreground" />
                 </div>
                 <div className="flex-1">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
@@ -1071,7 +1071,7 @@ export function OutlineDisplay({
       {!isDraft && keywordClusters && keywordClusters.length > 0 && (
         <div className="mb-12 space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <Layers className="w-5 h-5 text-primary" />
+            <Layers className="w-5 h-5 text-foreground" />
             <h3 className="text-lg font-bold text-foreground">
               Keyword Clusters
             </h3>
@@ -1082,7 +1082,7 @@ export function OutlineDisplay({
               return (
                 <div
                   key={cluster.cluster_name}
-                  className="flex flex-col p-5 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
+                  className="flex flex-col p-5 rounded-md bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
                 >
                   {/* Header info */}
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -1147,7 +1147,7 @@ export function OutlineDisplay({
                   </span>
                 </div>
 
-                <div className="p-5 rounded-xl border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                <div className="p-5 rounded-md border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                       {section.heading}
@@ -1196,10 +1196,10 @@ export function OutlineDisplay({
 
       {/* Internal Links Panel */}
       {sortedInternalLinks.length > 0 && (
-        <div className="mt-8 p-5 rounded-xl border border-border/50 bg-card">
+        <div className="mt-8 p-5 rounded-md border border-border/50 bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
-              <Link2 className="w-4 h-4 text-primary" />
+            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+              <Link2 className="w-4 h-4 text-foreground" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -1218,7 +1218,7 @@ export function OutlineDisplay({
                 <label
                   key={link.url}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+                    "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-all duration-200 border",
                     isChecked
                       ? "bg-primary/5 border-primary/30"
                       : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
@@ -1237,7 +1237,7 @@ export function OutlineDisplay({
                   />
                   <div
                     className={cn(
-                      "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                      "w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-colors",
                       isChecked
                         ? "bg-primary border-primary"
                         : "bg-background border-border",
@@ -1279,10 +1279,10 @@ export function OutlineDisplay({
 
       {/* Author Persona Panel */}
       {personas.length > 0 && (
-        <div className="mt-8 p-5 rounded-xl border border-border/50 bg-card">
+        <div className="mt-8 p-5 rounded-md border border-border/50 bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
-              <UserCircle2 className="w-4 h-4 text-primary" />
+            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+              <UserCircle2 className="w-4 h-4 text-foreground" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -1305,7 +1305,7 @@ export function OutlineDisplay({
                   variant="outline"
                   role="combobox"
                   aria-expanded={isPersonaSearchOpen}
-                  className="w-full justify-between h-11 rounded-xl border-border/60 bg-muted/30 text-left px-3 hover:bg-muted/40"
+                  className="w-full justify-between h-11 rounded-md border-border/60 bg-muted/30 text-left px-3 hover:bg-muted/40"
                 >
                   <div className="flex min-w-0 flex-col items-start overflow-hidden">
                     {/* No fallback to personas[0]: showing a persona the user
@@ -1418,10 +1418,10 @@ export function OutlineDisplay({
 
       {/* Brand Voice Promotion Panel */}
       {brandVoicePromotion && (
-        <div className="mt-6 p-5 rounded-xl border border-border/50 bg-card">
+        <div className="mt-6 p-5 rounded-md border border-border/50 bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-card shadow-sm ring-1 ring-border">
-              <Megaphone className="w-4 h-4 text-primary" />
+            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+              <Megaphone className="w-4 h-4 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -1478,7 +1478,7 @@ export function OutlineDisplay({
 
           <label
             className={cn(
-              "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border",
+              "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-all duration-200 border",
               promoteBrand
                 ? "bg-primary/5 border-primary/30"
                 : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
@@ -1492,7 +1492,7 @@ export function OutlineDisplay({
             />
             <div
               className={cn(
-                "w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors",
+                "w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-colors",
                 promoteBrand
                   ? "bg-primary border-primary"
                   : "bg-background border-border",
@@ -1515,7 +1515,7 @@ export function OutlineDisplay({
           onClick={onReject}
           disabled={isLoading || isDraft}
           variant="outline"
-          className="h-11 px-7 rounded-xl border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
+          className="h-11 px-7 rounded-md border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
         </Button>
@@ -1527,7 +1527,7 @@ export function OutlineDisplay({
             onApprove(selected, promoteBrand, selectedPersonaId);
           }}
           disabled={isLoading || isDraft}
-          className="h-11 px-8 rounded-xl font-semibold gap-2 shadow-lg shadow-primary/15"
+          className="h-11 px-8 rounded-md font-semibold gap-2 shadow-lg shadow-primary/15"
         >
           <Check className="w-4 h-4" /> Approve & Generate
         </Button>
@@ -1554,10 +1554,10 @@ export function OutlineRejectSection({
 }) {
   return (
     <div className="w-full max-w-2xl mx-auto py-3">
-      <div className="p-7 rounded-2xl bg-card border border-border/50">
+      <div className="p-7 rounded-md bg-card border border-border/50">
         <div className="flex items-center gap-4 mb-7">
-          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-primary" />
+          <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-foreground" />
           </div>
           <div>
             <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-0.5">
@@ -1572,7 +1572,7 @@ export function OutlineRejectSection({
           value={rejectedReason}
           onChange={(e) => onChange(e.target.value)}
           placeholder={instruction}
-          className="w-full min-h-[140px] p-4 rounded-xl border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
+          className="w-full min-h-[140px] p-4 rounded-md border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
         />
         {wordCountRange && (
           <p className="mt-3 text-xs text-muted-foreground">
@@ -1584,7 +1584,7 @@ export function OutlineRejectSection({
         <div className="flex items-center justify-end mt-6">
           <Button
             onClick={onSubmit}
-            className="h-11 px-8 rounded-xl font-semibold gap-1.5 group"
+            className="h-11 px-8 rounded-md font-semibold gap-1.5 group"
           >
             Submit Feedback
             <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />

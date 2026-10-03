@@ -203,7 +203,7 @@ export default function RootError({
               <Button
                 asChild
                 variant="outline"
-                className="h-12 px-8 rounded-xl border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
+                className="h-12 px-8 rounded-md border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm"
               >
                 <Link href="/">Back to Home Page</Link>
               </Button>

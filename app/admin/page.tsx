@@ -159,8 +159,8 @@ export default function AdminDashboardPage() {
                   <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                     <CardHeader>
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Icon className="h-6 w-6 text-primary" />
+                        <div className="p-2 rounded-md bg-muted">
+                          <Icon className="h-6 w-6 text-foreground" />
                         </div>
                         <CardTitle className="text-xl">{card.title}</CardTitle>
                       </div>
@@ -225,8 +225,9 @@ export default function AdminDashboardPage() {
                 <p>
                   The admin features will be fully functional once the backend
                   includes{" "}
-                  <code className="bg-yellow-100 px-1 rounded">role</code> and{" "}
-                  <code className="bg-yellow-100 px-1 rounded">
+                  <code className="bg-yellow-100 px-1 rounded-md">role</code>{" "}
+                  and{" "}
+                  <code className="bg-yellow-100 px-1 rounded-md">
                     permissions
                   </code>{" "}
                   in the JWT token during login.

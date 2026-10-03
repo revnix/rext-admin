@@ -53,7 +53,7 @@ export function KnowledgeRow({
     .join(", ");
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4 transition hover:bg-muted/60 md:flex-row md:items-start md:justify-between">
+    <div className="flex flex-col gap-3 rounded-md border p-4 transition hover:bg-muted/60 md:flex-row md:items-start md:justify-between">
       <div className="flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge

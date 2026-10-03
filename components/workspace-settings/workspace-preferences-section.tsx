@@ -65,7 +65,7 @@ export function WorkspacePreferencesSection() {
 
             {/* Future Settings Placeholders */}
             <div className="pt-4 space-y-3">
-              <div className="p-3 bg-muted rounded-lg">
+              <div className="p-3 bg-muted rounded-md">
                 <p className="text-sm font-medium text-muted-foreground">
                   Working Hours
                 </p>
@@ -74,7 +74,7 @@ export function WorkspacePreferencesSection() {
                 </p>
               </div>
 
-              <div className="p-3 bg-muted rounded-lg">
+              <div className="p-3 bg-muted rounded-md">
                 <p className="text-sm font-medium text-muted-foreground">
                   Content Defaults
                 </p>
@@ -83,7 +83,7 @@ export function WorkspacePreferencesSection() {
                 </p>
               </div>
 
-              <div className="p-3 bg-muted rounded-lg">
+              <div className="p-3 bg-muted rounded-md">
                 <p className="text-sm font-medium text-muted-foreground">
                   Visibility Settings
                 </p>

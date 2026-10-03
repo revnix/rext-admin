@@ -45,9 +45,9 @@ export function InvitedUserPermissions({
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4"
+          className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-muted mb-4"
         >
-          <Shield className="h-8 w-8 text-white" />
+          <Shield className="h-8 w-8 text-foreground" />
         </motion.div>
         <h2 className="text-2xl font-bold">Your Role: {roleName}</h2>
         <p className="text-muted-foreground">
@@ -74,7 +74,7 @@ export function InvitedUserPermissions({
               <CardHeader className="pb-3">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-md ${
                       permission.allowed
                         ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"

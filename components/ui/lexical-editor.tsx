@@ -164,7 +164,7 @@ const theme = {
     listitem: "ml-1",
   },
   quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
-  code: "bg-muted p-1 rounded font-mono text-sm",
+  code: "bg-muted p-1 rounded-md font-mono text-sm",
   link: "text-primary hover:underline cursor-pointer",
   text: {
     bold: "font-bold",
@@ -300,7 +300,7 @@ function ImagePlaceholderSlot({
   }, [editor, nodeKey, isEditable, requireEditMode]);
 
   return (
-    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
+    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-md border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
       <input
         ref={fileInputRef}
         type="file"
@@ -801,7 +801,7 @@ const ToolbarButton = ({
     }}
     disabled={disabled}
     className={cn(
-      "p-2 rounded hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+      "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
       active ? "bg-muted text-foreground" : "text-muted-foreground",
     )}
     title={title}
@@ -941,7 +941,7 @@ function ImageInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
+            "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Image"
@@ -1099,7 +1099,7 @@ function TableInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
+            "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Table"
@@ -1476,7 +1476,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "p-2 rounded hover:bg-muted transition-colors cursor-pointer",
+              "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
               isLink || isLinkPopoverOpen
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground",

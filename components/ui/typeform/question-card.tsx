@@ -127,7 +127,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
             aria-live="polite"
             className={cn(
               // Responsive error spacing
-              "mb-2 sm:mb-3 md:mb-4 p-3 sm:p-4 rounded-lg",
+              "mb-2 sm:mb-3 md:mb-4 p-3 sm:p-4 rounded-md",
               "bg-destructive/10 border border-destructive/20",
               "text-sm sm:text-base text-destructive font-medium",
             )}

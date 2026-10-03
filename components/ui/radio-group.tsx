@@ -62,7 +62,7 @@ const RadioGroup = React.forwardRef<
           const isDisabled = option.disabled;
 
           const labelClasses = cn(
-            "flex items-start gap-3 rounded-lg border-2 p-4 transition-all duration-200",
+            "flex items-start gap-3 rounded-md border-2 p-4 transition-all duration-200",
             isDisabled ? "cursor-not-allowed" : "cursor-pointer",
             isDisabled
               ? "border-border/70 bg-muted text-muted-foreground"
@@ -100,7 +100,7 @@ const RadioGroup = React.forwardRef<
                         isDisabled
                           ? "text-muted-foreground"
                           : isSelected
-                            ? "text-primary"
+                            ? "text-foreground"
                             : "text-muted-foreground",
                       )}
                     />

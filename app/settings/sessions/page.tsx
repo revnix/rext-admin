@@ -234,7 +234,7 @@ export default function SessionsPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-20 rounded-lg bg-muted animate-pulse"
+                  className="h-20 rounded-md bg-muted animate-pulse"
                 />
               ))}
             </div>
@@ -249,7 +249,7 @@ export default function SessionsPage() {
               {otherSessions.map((session: UserSession) => (
                 <div
                   key={session.id}
-                  className="flex items-start gap-4 p-4 rounded-lg border"
+                  className="flex items-start gap-4 p-4 rounded-md border"
                 >
                   <div className="mt-1 text-muted-foreground">
                     {getDeviceIcon(session.device_type)}

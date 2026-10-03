@@ -41,7 +41,7 @@ export default function CheckoutCancelPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 via-background to-red-50 dark:from-orange-950/20 dark:via-background dark:to-red-950/20">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="max-w-2xl w-full">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4">
@@ -97,7 +97,7 @@ export default function CheckoutCancelPage() {
               </ul>
             </div>
 
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <div className="bg-muted/50 rounded-md p-4 space-y-2">
               <h4 className="font-semibold text-sm">What Happens Next?</h4>
               <ul className="text-sm space-y-1.5 text-muted-foreground">
                 <li className="flex items-start gap-2">

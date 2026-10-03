@@ -65,7 +65,7 @@ export class TopicBuilderErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-background border border-destructive/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-background border border-destructive/20 rounded-md">
           <AlertTriangle className="h-12 w-12 text-destructive" />
           <div className="text-center space-y-2">
             <h3 className="text-lg font-semibold text-destructive">
@@ -76,7 +76,7 @@ export class TopicBuilderErrorBoundary extends Component<Props, State> {
               refreshing the page.
             </p>
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="text-xs text-left bg-muted p-2 rounded mt-4">
+              <details className="text-xs text-left bg-muted p-2 rounded-md mt-4">
                 <summary className="cursor-pointer font-medium">
                   Error Details
                 </summary>

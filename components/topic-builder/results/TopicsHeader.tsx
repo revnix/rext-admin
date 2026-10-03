@@ -39,7 +39,7 @@ export const TopicsHeader = memo(function TopicsHeader({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <Sparkles className="h-6 w-6 text-foreground" />
             Generated Topics
           </h2>
           <p className="text-muted-foreground">

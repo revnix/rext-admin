@@ -136,7 +136,7 @@ export default function LibraryDetail({
               <span className="text-sm font-medium text-muted-foreground">
                 Monthly Volume
               </span>
-              <TrendingUp className="w-4 h-4 text-blue-500" />
+              <TrendingUp className="w-4 h-4 text-foreground" />
             </div>
             {selectedItem?.volume ? (
               <MonthlyVolumeCard volume={String(selectedItem?.volume)} />
@@ -294,8 +294,8 @@ export default function LibraryDetail({
         <Card className="overflow-hidden border-border/50 shadow-sm bg-white dark:bg-card">
           <div className="px-6 py-5 border-b border-border/50 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/10 ring-1 ring-blue-500/20 flex items-center justify-center shrink-0">
-                <Tags className="w-4 h-4 text-blue-500" />
+              <div className="w-9 h-9 rounded-md bg-muted ring-1 ring-border flex items-center justify-center shrink-0">
+                <Tags className="w-4 h-4 text-foreground" />
               </div>
               <div>
                 <h3 className="font-semibold text-foreground leading-tight">

@@ -100,6 +100,7 @@ export function RefundRequestsTable({
     }
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is a parent-driven reload trigger.
   useEffect(() => {
     load();
   }, [load, refreshKey]);

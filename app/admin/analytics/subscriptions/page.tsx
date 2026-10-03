@@ -445,19 +445,19 @@ export default function SubscriptionAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="p-3 bg-green-50 rounded-lg">
+                <div className="p-3 bg-green-50 rounded-md">
                   <p className="text-xs text-green-600 font-medium">NEW</p>
                   <p className="text-lg font-bold dark:text-green-600">
                     {formatCurrency(revenue.current_month.new_revenue)}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="p-3 bg-blue-50 rounded-md">
                   <p className="text-xs text-blue-600 font-medium">EXPANSION</p>
                   <p className="text-lg font-bold dark:text-blue-600">
                     {formatCurrency(revenue.current_month.expansion_revenue)}
                   </p>
                 </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
+                <div className="p-3 bg-orange-50 rounded-md">
                   <p className="text-xs text-orange-600 font-medium">
                     CONTRACTION
                   </p>
@@ -465,7 +465,7 @@ export default function SubscriptionAnalyticsPage() {
                     {formatCurrency(revenue.current_month.contraction_revenue)}
                   </p>
                 </div>
-                <div className="p-3 bg-red-50 rounded-lg">
+                <div className="p-3 bg-red-50 rounded-md">
                   <p className="text-xs text-red-600 font-medium">CHURNED</p>
                   <p className="text-lg font-bold dark:text-red-600">
                     {formatCurrency(revenue.current_month.churned_revenue)}

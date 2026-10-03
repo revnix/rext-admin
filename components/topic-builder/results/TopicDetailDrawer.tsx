@@ -197,18 +197,18 @@ export function TopicDetailDrawer({
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
               {/* Topic Information */}
-              <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6">
+              <div className="bg-muted/20 dark:bg-muted/10 rounded-md p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
+                  <FileText className="w-5 h-5 text-foreground" />
                   Topic Information
                 </h3>
 
                 <div className="space-y-4">
                   {/* Overview - Most Prominent */}
-                  <div className="bg-background rounded-lg p-4 border-2 border-muted/40 shadow-sm">
+                  <div className="bg-background rounded-md p-4 border-2 border-muted/40 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-1">
-                        <FileText className="w-3.5 h-3.5 text-primary" />
+                      <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-1">
+                        <FileText className="w-3.5 h-3.5 text-foreground" />
                       </div>
                       <div className="flex-1">
                         <h4 className="text-base font-medium text-foreground mb-2">
@@ -225,10 +225,10 @@ export function TopicDetailDrawer({
                   {topic.angle &&
                     topic.description &&
                     topic.angle !== topic.description && (
-                      <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                      <div className="bg-background rounded-md p-4 border-2 border-muted/50 shadow-sm">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
-                            <Sparkles className="w-3.5 h-3.5 text-primary" />
+                          <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-0.5">
+                            <Sparkles className="w-3.5 h-3.5 text-foreground" />
                           </div>
                           <div className="flex-1">
                             <h4 className="text-sm font-medium text-foreground mb-2">
@@ -244,10 +244,10 @@ export function TopicDetailDrawer({
 
                   {/* Why This Works */}
                   {topic.why_it_works && (
-                    <div className="bg-background rounded-lg p-4 border-2 border-muted/50 shadow-sm">
+                    <div className="bg-background rounded-md p-4 border-2 border-muted/50 shadow-sm">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center mt-0.5">
-                          <Target className="w-3.5 h-3.5 text-primary" />
+                        <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-0.5">
+                          <Target className="w-3.5 h-3.5 text-foreground" />
                         </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-foreground mb-2">
@@ -264,7 +264,7 @@ export function TopicDetailDrawer({
               </div>
 
               {/* Performance Scores - Minimal Design */}
-              <div className="bg-muted/20 dark:bg-muted/10 rounded-xl p-6 border border-muted/30 dark:border-muted/20">
+              <div className="bg-muted/20 dark:bg-muted/10 rounded-md p-6 border border-muted/30 dark:border-muted/20">
                 <div className="flex items-start justify-between mb-6">
                   <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
                     <TrendingUp className="w-5 h-5 text-muted-foreground" />
@@ -339,7 +339,7 @@ export function TopicDetailDrawer({
                     return (
                       <div
                         key={score.label}
-                        className="bg-background/50 rounded-lg p-3 border border-muted/40 hover:border-muted/60 transition-all duration-200"
+                        className="bg-background/50 rounded-md p-3 border border-muted/40 hover:border-muted/60 transition-all duration-200"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <IconComponent
@@ -368,9 +368,9 @@ export function TopicDetailDrawer({
 
               {/* Tags/Keywords */}
               {topic.tags && topic.tags.length > 0 && (
-                <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-xl p-6 border border-purple-200/50 dark:border-purple-800/50">
+                <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-md p-6 border border-purple-200/50 dark:border-purple-800/50">
                   <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
-                    <Hash className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <Hash className="w-5 h-5 text-foreground" />
                     Keywords & Tags
                   </h3>
                   <div className="flex flex-wrap gap-3">
@@ -378,9 +378,9 @@ export function TopicDetailDrawer({
                       <Badge
                         key={keyword}
                         variant="secondary"
-                        className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                        className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-all duration-200 font-medium"
                       >
-                        <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
+                        <Hash className="w-3 h-3 mr-1.5 text-foreground" />
                         {keyword}
                       </Badge>
                     ))}
@@ -391,19 +391,19 @@ export function TopicDetailDrawer({
               {/* Channel and Audience Fit */}
               {(topic.channel_fit?.length > 0 ||
                 topic.audience_fit?.length > 0) && (
-                <div className="bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-rose-50/40 dark:from-amber-950/20 dark:via-orange-950/15 dark:to-rose-950/20 rounded-xl p-6 border border-amber-200/60 dark:border-amber-800/60">
+                <div className="bg-muted/40 rounded-md p-6 border border-border">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {topic.channel_fit?.length > 0 && (
                       <div>
                         <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-3">
-                          <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                          <Globe className="w-5 h-5 text-foreground" />
                           Best Channels
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {topic.channel_fit.map((channel) => (
                             <div
                               key={channel}
-                              className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
+                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
                             >
                               {channel}
                             </div>
@@ -415,14 +415,14 @@ export function TopicDetailDrawer({
                     {topic.audience_fit?.length > 0 && (
                       <div>
                         <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-3">
-                          <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                          <Users className="w-5 h-5 text-foreground" />
                           Target Audience
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {topic.audience_fit.map((audience) => (
                             <div
                               key={audience}
-                              className="bg-white/90 dark:bg-background/90 rounded-lg px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
+                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
                             >
                               {audience}
                             </div>

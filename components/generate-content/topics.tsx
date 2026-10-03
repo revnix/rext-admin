@@ -95,7 +95,7 @@ export function TopicsSection({
               onClick={() => handleSelectTopic(topic)}
               disabled={isRegenerating}
               className={cn(
-                "group relative flex flex-col items-start gap-2 text-left p-6 rounded-xl cursor-pointer border outline-none",
+                "group relative flex flex-col items-start gap-2 text-left p-6 rounded-md cursor-pointer border outline-none",
                 "transition-all duration-200",
                 "active:scale-[0.985] active:shadow-none",
                 isSelected
@@ -148,18 +148,18 @@ export function TopicsSection({
 
                 <span
                   className={cn(
-                    "shrink-0 mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center transition-colors duration-200",
+                    "shrink-0 mt-0.5 w-7 h-7 rounded-md flex items-center justify-center transition-colors duration-200",
                     isSelected
-                      ? "bg-primary/10"
-                      : "bg-muted/60 group-hover:bg-primary/10",
+                      ? "bg-foreground/10"
+                      : "bg-muted/60 group-hover:bg-muted",
                   )}
                 >
                   <ArrowRight
                     className={cn(
                       "w-4 h-4 transition-all duration-200",
                       isSelected
-                        ? "text-primary translate-x-0.5"
-                        : "text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5",
+                        ? "text-foreground translate-x-0.5"
+                        : "text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5",
                     )}
                   />
                 </span>
@@ -176,7 +176,7 @@ export function TopicsSection({
         transition={{ delay: 0.35 }}
         className="relative"
       >
-        <div className="w-full max-w-3xl rounded-xl border border-border/70 bg-card/70 p-1.5 shadow-sm">
+        <div className="w-full max-w-3xl rounded-md border border-border/70 bg-card/70 p-1.5 shadow-sm">
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <Button
               variant="outline"

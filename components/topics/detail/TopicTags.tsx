@@ -44,9 +44,9 @@ export function TopicTags({ topic }: TopicTagsProps) {
                   <Badge
                     key={keyword}
                     variant="secondary"
-                    className="text-sm px-4 py-2 bg-gradient-to-r from-white/90 to-purple-50/90 dark:from-background/90 dark:to-purple-900/20 border border-purple-200/60 dark:border-purple-700/60 hover:border-purple-300/80 dark:hover:border-purple-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                    className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-all duration-200 font-medium"
                   >
-                    <Hash className="w-3 h-3 mr-1.5 text-purple-500" />
+                    <Hash className="w-3 h-3 mr-1.5 text-foreground" />
                     {keyword}
                   </Badge>
                 ))}
@@ -91,9 +91,9 @@ export function TopicTags({ topic }: TopicTagsProps) {
                   <Badge
                     key={channel}
                     variant="secondary"
-                    className="text-sm px-4 py-2 bg-gradient-to-r from-blue-50/90 to-sky-50/90 dark:from-blue-950/30 dark:to-sky-950/30 border border-blue-200/60 dark:border-blue-700/60 hover:border-blue-300/80 dark:hover:border-blue-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                    className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-all duration-200 font-medium"
                   >
-                    <Zap className="w-3 h-3 mr-1.5 text-blue-600 dark:text-blue-400" />
+                    <Zap className="w-3 h-3 mr-1.5 text-foreground" />
                     {channel}
                   </Badge>
                 ))}
@@ -138,9 +138,9 @@ export function TopicTags({ topic }: TopicTagsProps) {
                   <Badge
                     key={audience}
                     variant="secondary"
-                    className="text-sm px-4 py-2 bg-gradient-to-r from-emerald-50/90 to-green-50/90 dark:from-emerald-950/30 dark:to-green-950/30 border border-emerald-200/60 dark:border-emerald-700/60 hover:border-emerald-300/80 dark:hover:border-emerald-600/80 hover:shadow-sm transition-all duration-200 font-medium"
+                    className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-all duration-200 font-medium"
                   >
-                    <Target className="w-3 h-3 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                    <Target className="w-3 h-3 mr-1.5 text-foreground" />
                     {audience}
                   </Badge>
                 ))}

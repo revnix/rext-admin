@@ -224,7 +224,7 @@ export default function SubscriptionTermsPage() {
             </li>
           </ul>
 
-          <div className="mt-8 p-4 border rounded-lg bg-muted">
+          <div className="mt-8 p-4 border rounded-md bg-muted">
             <p className="text-sm font-semibold mb-2">Quick Links</p>
             <div className="flex flex-wrap gap-4 text-sm">
               <Link

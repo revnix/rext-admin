@@ -165,7 +165,7 @@ export function ActivityLog() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4">
             <p className="text-sm text-destructive">
               Failed to load activity log: {error.message}
             </p>
@@ -332,7 +332,7 @@ export function ActivityLog() {
         {/* Filters */}
         {showFilters && (
           <>
-            <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+            <div className="rounded-md border bg-muted/50 p-4 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label
@@ -521,7 +521,7 @@ export function ActivityLog() {
 
         {/* Activity List */}
         {logs.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center">
+          <div className="rounded-md border border-dashed p-8 text-center">
             <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <p className="mt-4 text-sm text-muted-foreground">
               {hasActiveFilters
@@ -534,7 +534,7 @@ export function ActivityLog() {
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                className="rounded-md border p-4 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4 min-w-0">
                   <div className="flex items-start gap-3 flex-1 min-w-0">

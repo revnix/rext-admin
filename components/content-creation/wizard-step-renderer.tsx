@@ -128,7 +128,7 @@ export function WizardStepRenderer({
             <h2 className="text-2xl font-bold">{step.title}</h2>
             <p className="text-muted-foreground mt-2">{step.description}</p>
           </div>
-          <div className="bg-destructive/10 p-6 rounded-lg text-center">
+          <div className="bg-destructive/10 p-6 rounded-md text-center">
             <p className="text-sm text-destructive">Unknown step: {step.id}</p>
           </div>
         </div>

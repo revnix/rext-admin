@@ -220,7 +220,7 @@ export function JsonExportOptions({
         <CollapsibleContent className="mt-4">
           <div className="space-y-3">
             {customization.includedFields.map((field) => (
-              <div key={field.id} className="p-3 border rounded-lg">
+              <div key={field.id} className="p-3 border rounded-md">
                 <div className="flex items-center gap-2 mb-2">
                   <Checkbox
                     checked={field.included}

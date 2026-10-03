@@ -96,7 +96,7 @@ export function ToneSelector({
     >
       <CardHeader className="pb-4">
         <CardTitle className="wizard-field-label">
-          <MessageSquare className="h-5 w-5 text-primary" />
+          <MessageSquare className="h-5 w-5 text-foreground" />
           {label}
         </CardTitle>
         <CardDescription className="wizard-field-description">
@@ -182,9 +182,9 @@ export function ToneSelector({
 
         {/* Enhanced selected tones preview */}
         {value.length > 0 && (
-          <div className="wizard-card-success p-4 rounded-lg">
+          <div className="wizard-card-success p-4 rounded-md">
             <div className="flex items-start gap-3">
-              <MessageSquare className="h-5 w-5 text-green-600 mt-0.5" />
+              <MessageSquare className="h-5 w-5 text-foreground mt-0.5" />
               <div>
                 <div className="font-semibold text-green-700 mb-2">
                   Selected Tones

@@ -406,7 +406,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <User size={18} className="text-primary" />
+                <User size={18} className="text-foreground" />
                 Profile Details
               </h3>
             </CardHeader>
@@ -519,13 +519,13 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   </DialogHeader>
 
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 rounded-xl shadow-md border border-border/50">
+                    <Avatar className="h-20 w-20 rounded-md shadow-md border border-border/50">
                       <AvatarImage
                         src={uploadedAvatar || urlDraft || ""}
                         alt={`${persona.name}'s avatar`}
                         className="object-cover"
                       />
-                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-2xl">
+                      <AvatarFallback className="rounded-md bg-muted text-foreground font-bold text-2xl">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -610,7 +610,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                 */}
                 {(() => {
                   const avatar = (
-                    <Avatar className="h-16 w-16 rounded-xl shadow-md border border-border/50">
+                    <Avatar className="h-16 w-16 rounded-md shadow-md border border-border/50">
                       <AvatarImage
                         src={
                           uploadedAvatar ||
@@ -621,7 +621,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                         alt={`${persona.name}'s avatar`}
                         className="object-cover"
                       />
-                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-xl">
+                      <AvatarFallback className="rounded-md bg-muted text-foreground font-bold text-xl">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -635,10 +635,10 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                       onClick={openPhotoDialog}
                       disabled={isUploadingAvatar}
                       title="Change photo"
-                      className="relative group rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="relative group rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {avatar}
-                      <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="absolute inset-0 flex items-center justify-center rounded-md bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                         {isUploadingAvatar ? (
                           <Loader2 className="h-5 w-5 animate-spin text-white" />
                         ) : (
@@ -807,7 +807,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <User size={18} className="text-primary" />
+                <User size={18} className="text-foreground" />
                 Demographics
               </h3>
             </CardHeader>
@@ -850,7 +850,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <TrendingUp size={18} className="text-primary" />
+                <TrendingUp size={18} className="text-foreground" />
                 Capabilities
               </h3>
             </CardHeader>
@@ -926,7 +926,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
                   </>
                 ) : (
                   persona.tone_of_voice && (
-                    <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="p-4 bg-muted/30 rounded-md border border-border/50">
                       <p className="text-sm italic text-muted-foreground">
                         "{persona.tone_of_voice}"
                       </p>
@@ -941,7 +941,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <Target size={18} className="text-primary" />
+                <Target size={18} className="text-foreground" />
                 Objectives & Challenges
               </h3>
             </CardHeader>
@@ -1019,7 +1019,7 @@ export function PersonaDetail({ persona: initialPersona }: PersonaDetailProps) {
           <Card>
             <CardHeader className="pb-3 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <Activity size={18} className="text-primary" />
+                <Activity size={18} className="text-foreground" />
                 Behaviors
               </h3>
             </CardHeader>

@@ -93,8 +93,8 @@ export const OnboardingStrategy = forwardRef<
       title: "Analyze Website",
       description:
         "We'll extract your brand identity and suggest personas automatically.",
-      iconBgColor: "bg-primary/10",
-      iconColor: "text-primary",
+      iconBgColor: "bg-muted",
+      iconColor: "text-foreground",
       borderColor: "hover:border-primary/50",
     },
     {
@@ -102,8 +102,8 @@ export const OnboardingStrategy = forwardRef<
       icon: UserCircle,
       title: "Manual Persona",
       description: "Directly create your first author profile from scratch.",
-      iconBgColor: "bg-primary/10",
-      iconColor: "text-primary",
+      iconBgColor: "bg-muted",
+      iconColor: "text-foreground",
       borderColor: "hover:border-primary/50",
     },
   ];
@@ -156,7 +156,7 @@ export const OnboardingStrategy = forwardRef<
                     {/* Icon */}
                     <div className="flex items-start">
                       <div
-                        className={`rounded-xl ${strategy.iconBgColor} p-3 inline-flex`}
+                        className={`rounded-md ${strategy.iconBgColor} p-3 inline-flex`}
                       >
                         <strategy.icon
                           className={`h-6 w-6 ${strategy.iconColor}`}
@@ -343,7 +343,7 @@ export const OnboardingStrategy = forwardRef<
                   </div>
 
                   {/* EEAT Optimization Notice */}
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-4">
                     <div className="flex items-start gap-3">
                       <span className="text-xl">💡</span>
                       <div className="space-y-1">

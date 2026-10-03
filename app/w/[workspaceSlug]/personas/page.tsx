@@ -39,7 +39,7 @@ export default function PersonaForgePage() {
     return (
       <PageLayout title="Loading Permissions...">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </PageLayout>
@@ -81,7 +81,7 @@ export default function PersonaForgePage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   persona.read
                 </code>
               </p>
@@ -112,9 +112,9 @@ export default function PersonaForgePage() {
                 href={workspaceRoutes.persona_create(workspaceSlug) as Route}
                 className="contents"
               >
-                <Card className="border border-dashed border-border shadow-none hover:border-primary/50 hover:bg-accent/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-2xl">
+                <Card className="border border-dashed border-border shadow-none hover:border-primary/50 hover:bg-accent/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-md">
                   <CardContent className="flex flex-col items-center justify-center text-center p-6 bg-transparent">
-                    <div className="h-14 w-14 rounded-2xl bg-card border border-border flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
+                    <div className="h-14 w-14 rounded-md bg-card border border-border flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
                       <Plus
                         className="text-muted-foreground group-hover:text-primary transition-colors"
                         size={24}

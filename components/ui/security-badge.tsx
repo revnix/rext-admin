@@ -92,7 +92,7 @@ export function SecurityBanner({
   return (
     <div
       className={cn(
-        "rounded-lg border",
+        "rounded-md border",
         isProminent
           ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
           : "bg-muted/50 border-border",

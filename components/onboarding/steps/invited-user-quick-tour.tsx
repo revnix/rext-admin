@@ -81,7 +81,7 @@ export function InvitedUserQuickTour({
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                    className={`flex h-12 w-12 items-center justify-center rounded-md ${
                       item.highlight
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
@@ -115,14 +115,14 @@ export function InvitedUserQuickTour({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.6 }}
       >
-        <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200 dark:from-purple-950/20 dark:to-blue-950/20 dark:border-purple-900">
+        <Card className="bg-muted/40 border-border">
           <CardContent className="p-4 flex items-start gap-3">
             <span className="text-2xl">💡</span>
             <div className="flex-1 text-sm">
-              <p className="font-medium text-purple-900 dark:text-purple-100 mb-1">
+              <p className="font-medium text-foreground mb-1">
                 Don't worry about making mistakes!
               </p>
-              <p className="text-purple-700 dark:text-purple-200">
+              <p className="text-muted-foreground">
                 You can't break anything. Feel free to explore and try things
                 out. Your teammates are here to help if you need guidance.
               </p>

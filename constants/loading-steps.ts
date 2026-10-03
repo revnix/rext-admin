@@ -8,14 +8,14 @@ export const INITIAL_ANALYSIS_STEPS: LoadingStep[] = [
   { id: "Starting analysis", label: "Starting analysis" },
   { id: "Normalize Serp", label: "Normalizing search results" },
   { id: "Extract Competitor", label: "Extracting competitors" },
-  { id: "Serp Payload", label: "Serp Payload" },
+  { id: "Serp Payload", label: "SERP Payload" },
   { id: "Seo Entry", label: "Processing SEO entry data" },
   { id: "Fetch Dataforseo Backlinks", label: "Analyzing backlink metrics" },
 ];
 
 export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [
   { id: "Keyword Recommendation", label: "Keyword Recommendation" },
-  { id: "Seo Engine", label: "Seo Engine" },
+  { id: "Seo Engine", label: "SEO Engine" },
 ];
 
 export const TOPIC_GENERATION_STEPS: LoadingStep[] = [

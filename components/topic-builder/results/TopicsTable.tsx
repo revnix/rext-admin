@@ -177,7 +177,7 @@ export const TopicsTable = memo(function TopicsTable({
               e.stopPropagation();
               onTopicSelect(row.id, e.target.checked);
             }}
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="h-4 w-4 rounded-md border-gray-300 text-primary focus:ring-primary"
             aria-label={`Select topic: ${row.title}`}
           />
         </div>

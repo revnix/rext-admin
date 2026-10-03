@@ -26,7 +26,7 @@ export function ProgressStatus({
       case "completed":
         return <CheckCircle className="h-6 w-6 text-green-500" />;
       case "in-progress":
-        return <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-6 w-6 text-foreground animate-spin" />;
       case "failed":
         return <AlertCircle className="h-6 w-6 text-red-500" />;
       case "cancelled":

@@ -102,7 +102,7 @@ export function PrivacySettings() {
                 control={form.control}
                 name={item.id}
                 render={({ field }) => (
-                  <FormItem className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <FormItem className="flex items-start space-x-3 p-3 border rounded-md">
                     <FormControl>
                       <Checkbox
                         id={item.id}

@@ -33,11 +33,11 @@ interface GlobalKnowledgeSearchProps {
 const getKnowledgeTypeIcon = (type: KnowledgeType) => {
   switch (type) {
     case "web":
-      return <Globe className="h-4 w-4 text-blue-500" />;
+      return <Globe className="h-4 w-4 text-foreground" />;
     case "file":
-      return <Upload className="h-4 w-4 text-green-500" />;
+      return <Upload className="h-4 w-4 text-foreground" />;
     case "text":
-      return <FileText className="h-4 w-4 text-purple-500" />;
+      return <FileText className="h-4 w-4 text-foreground" />;
     default:
       return <FileText className="h-4 w-4" />;
   }
@@ -66,7 +66,7 @@ const highlightSearchTerms = (text: string, searchQuery: string) => {
     regex.test(part) ? (
       <mark
         key={`highlight-${part}-${part.slice(0, 10)}`}
-        className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded"
+        className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded-md"
       >
         {part}
       </mark>
@@ -90,7 +90,7 @@ function SearchResultsSkeleton() {
         <Card key={key}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Skeleton className="h-8 w-8 rounded" />
+              <Skeleton className="h-8 w-8 rounded-md" />
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-5 w-24" />
@@ -278,7 +278,7 @@ export function GlobalKnowledgeSearch({
                             onChange={(e) =>
                               handleTypeFilterChange(type, e.target.checked)
                             }
-                            className="rounded"
+                            className="rounded-md"
                           />
                           <div className="flex items-center gap-1 text-sm">
                             {getKnowledgeTypeIcon(type)}
@@ -522,15 +522,15 @@ export function GlobalKnowledgeSearch({
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
-                <Globe className="h-3 w-3 text-blue-500" />
+                <Globe className="h-3 w-3 text-foreground" />
                 Web Knowledge
               </div>
               <div className="flex items-center gap-1">
-                <Upload className="h-3 w-3 text-green-500" />
+                <Upload className="h-3 w-3 text-foreground" />
                 File Knowledge
               </div>
               <div className="flex items-center gap-1">
-                <FileText className="h-3 w-3 text-purple-500" />
+                <FileText className="h-3 w-3 text-foreground" />
                 Text Knowledge
               </div>
             </div>

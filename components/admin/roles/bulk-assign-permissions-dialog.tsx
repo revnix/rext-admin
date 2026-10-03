@@ -226,7 +226,7 @@ export function BulkAssignPermissionsDialog({
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)]">
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-sm font-medium">
                     Roles ({selectedRoleIds.length})
@@ -306,7 +306,7 @@ export function BulkAssignPermissionsDialog({
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                 <Label className="text-sm font-medium">
                   Permissions ({selectedPermissionIds.length})
                 </Label>
@@ -320,7 +320,7 @@ export function BulkAssignPermissionsDialog({
             </div>
 
             {selectedRoleIds.length > 0 && selectedPermissionIds.length > 0 && (
-              <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
                 {operation === "add" ? "Adding" : "Removing"}{" "}
                 <span className="font-semibold text-foreground">
                   {selectedPermissionIds.length}

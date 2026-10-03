@@ -220,7 +220,7 @@ export function ReviewerSelector({
                   {selectedReviewerDetails.map((reviewer) => (
                     <div
                       key={reviewer.id}
-                      className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg p-2"
+                      className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-md p-2"
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage
@@ -309,7 +309,7 @@ export function ReviewerSelector({
                         key={reviewer.id}
                         type="button"
                         tabIndex={isDisabled ? -1 : 0}
-                        className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${
                           isSelected
                             ? "border-primary bg-primary/5"
                             : isDisabled
@@ -378,7 +378,7 @@ export function ReviewerSelector({
                         </div>
                         <div className="flex items-center">
                           {isSelected ? (
-                            <UserCheck className="h-4 w-4 text-primary" />
+                            <UserCheck className="h-4 w-4 text-foreground" />
                           ) : (
                             <Plus className="h-4 w-4 text-muted-foreground" />
                           )}

@@ -168,7 +168,7 @@ export default function WorkspaceContentCreatePage({
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   content.create
                 </code>
               </p>

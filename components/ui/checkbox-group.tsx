@@ -138,7 +138,7 @@ const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(
                 <label
                   htmlFor={option.value}
                   className={cn(
-                    "flex items-start gap-3 rounded-lg border-2 p-4 cursor-pointer transition-all duration-200",
+                    "flex items-start gap-3 rounded-md border-2 p-4 cursor-pointer transition-all duration-200",
                     "hover:bg-accent hover:text-accent-foreground hover:border-accent",
                     isSelected
                       ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
@@ -149,7 +149,7 @@ const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(
                 >
                   <div
                     className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded border-2 mt-0.5 shrink-0",
+                      "flex h-5 w-5 items-center justify-center rounded-md border-2 mt-0.5 shrink-0",
                       isSelected
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-muted-foreground",
@@ -165,7 +165,7 @@ const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(
                           className={cn(
                             "h-4 w-4",
                             isSelected
-                              ? "text-primary"
+                              ? "text-foreground"
                               : "text-muted-foreground",
                           )}
                         />

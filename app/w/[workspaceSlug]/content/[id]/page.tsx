@@ -192,7 +192,7 @@ export default function WorkspaceContentDetailPage({
       <PageLayout title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-foreground" />
             <p className="text-muted-foreground">Loading content...</p>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function WorkspaceContentDetailPage({
             </p>
             <Button
               variant="outline"
-              className="h-10 px-4 rounded-xl border-slate-200"
+              className="h-10 px-4 rounded-md border-slate-200"
               onClick={() =>
                 router.push(
                   workspaceRoutes.content(workspace?.slug || "") as Route,
@@ -303,7 +303,7 @@ export default function WorkspaceContentDetailPage({
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   content.read
                 </code>
               </p>
@@ -322,7 +322,7 @@ export default function WorkspaceContentDetailPage({
         {content.publishing_results &&
           content.publishing_results.length > 0 && (
             <div className="px-6 pt-4">
-              <div className="rounded-xl border border-border/50 bg-card p-4 mb-2">
+              <div className="rounded-md border border-border/50 bg-card p-4 mb-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
                   CMS Publishing Status
                 </p>
@@ -336,7 +336,7 @@ export default function WorkspaceContentDetailPage({
                     return (
                       <div
                         key={result.site_id}
-                        className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30"
+                        className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30"
                       >
                         <span className="text-sm font-semibold text-foreground flex-1 truncate">
                           {result.site_name || result.site_id}

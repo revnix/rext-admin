@@ -213,8 +213,8 @@ export function FeatureGate({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Lock className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-muted rounded-md">
+              <Lock className="h-6 w-6 text-foreground" />
             </div>
             <div>
               <CardTitle>{upgradeTitle || "Upgrade Required"}</CardTitle>
@@ -227,7 +227,7 @@ export function FeatureGate({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="bg-muted rounded-lg p-4">
+        <div className="bg-muted rounded-md p-4">
           <h4 className="font-semibold mb-2 flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Unlock with a Premium Plan

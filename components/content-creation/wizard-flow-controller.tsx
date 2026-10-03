@@ -329,7 +329,7 @@ export function WizardFlowController({
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Target className="h-5 w-5 text-primary" />
+                <Target className="h-5 w-5 text-foreground" />
                 <h3 className="font-semibold">Flow Guidance</h3>
                 {hasUnsavedChanges && (
                   <Badge variant="secondary" className="text-xs">
@@ -394,7 +394,7 @@ export function WizardFlowController({
                   )}
                   {!["fix-errors", "submit"].includes(
                     flowState.recommendedAction,
-                  ) && <Info className="h-4 w-4 text-blue-600 mt-0.5" />}
+                  ) && <Info className="h-4 w-4 text-foreground mt-0.5" />}
                   <AlertDescription>
                     {flowState.recommendedAction === "complete-current" &&
                       "Complete the current step to continue"}
@@ -428,7 +428,7 @@ export function WizardFlowController({
                     >
                       <div
                         className={cn(
-                          "p-2 rounded border text-xs",
+                          "p-2 rounded-md border text-xs",
                           issue.issueType === "error" &&
                             "border-red-200 bg-red-50",
                           issue.issueType === "warning" &&

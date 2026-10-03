@@ -225,7 +225,7 @@ export function PermissionDependencyView({
                         {hierarchyGroups.read.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-green-50 dark:bg-green-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-green-50 dark:bg-green-950/20 rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -247,7 +247,7 @@ export function PermissionDependencyView({
                         {hierarchyGroups.write.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-blue-50 dark:bg-blue-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-blue-50 dark:bg-blue-950/20 rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -269,7 +269,7 @@ export function PermissionDependencyView({
                         {hierarchyGroups.manage.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-purple-50 dark:bg-purple-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-purple-50 dark:bg-purple-950/20 rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -291,7 +291,7 @@ export function PermissionDependencyView({
                         {hierarchyGroups.delete.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-red-50 dark:bg-red-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-red-50 dark:bg-red-950/20 rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">

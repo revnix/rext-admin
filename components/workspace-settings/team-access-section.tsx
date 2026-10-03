@@ -43,7 +43,7 @@ export function TeamAccessSection() {
         <div className="space-y-3">
           <h4 className="text-sm font-medium">Workspace Roles</h4>
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-md">
               <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Owner</h5>
                 <p className="text-sm text-muted-foreground">
@@ -55,7 +55,7 @@ export function TeamAccessSection() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-md">
               <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Admin</h5>
                 <p className="text-sm text-muted-foreground">
@@ -67,7 +67,7 @@ export function TeamAccessSection() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-md">
               <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Editor</h5>
                 <p className="text-sm text-muted-foreground">
@@ -79,7 +79,7 @@ export function TeamAccessSection() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between p-3 border rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 border rounded-md">
               <div className="w-full xl:w-auto">
                 <h5 className="text-sm font-medium">Viewer</h5>
                 <p className="text-sm text-muted-foreground">
@@ -97,7 +97,7 @@ export function TeamAccessSection() {
         <div className="space-y-3">
           <h4 className="text-sm font-medium">Invitation Settings</h4>
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-md">
               <div>
                 <p className="text-sm font-medium">Invitation Expiry</p>
                 <p className="text-sm text-muted-foreground">
@@ -106,7 +106,7 @@ export function TeamAccessSection() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-lg">
+            <div className="flex flex-wrap items-center justify-between p-3 bg-muted rounded-md">
               <div>
                 <p className="text-sm font-medium">Who Can Invite</p>
                 <p className="text-sm text-muted-foreground">

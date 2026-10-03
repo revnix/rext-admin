@@ -23,59 +23,57 @@ export function MetricsCards({
   const metrics: {
     label: string;
     value: number;
-    change: string;
-    isPositive: boolean;
+    caption: string;
     icon: LucideIcon;
   }[] = [
     {
       label: "Total Personas",
       value: totalPersonas,
-      change: "+9.5%",
-      isPositive: true,
+      caption: "Audience profiles in this workspace",
       icon: Users,
     },
     {
       label: "Total Articles",
       value: totalArticles,
-      change: "-1.6%",
-      isPositive: false,
+      caption: "Drafts and published content",
       icon: FileText,
     },
     {
       label: "Total Published",
       value: publishedArticles,
-      change: "+3.5%",
-      isPositive: true,
+      caption: "Live on your connected site",
       icon: Send,
     },
     {
       label: "Total Members",
       value: totalMembers,
-      change: "+1.2%",
-      isPositive: true,
+      caption: "People with workspace access",
       icon: UsersRound,
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
           <Card key={metric.label}>
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-brand-50)] text-[var(--color-brand-600)] dark:bg-[var(--color-brand-900)]/40 dark:text-[var(--color-brand-300)]">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="font-medium text-sm text-muted-foreground">
-                    {metric.label}
-                  </h3>
+            <CardContent className="flex flex-col gap-4 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {metric.label}
+                </h3>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <span className="pl-[52px] text-2xl font-bold text-foreground">
-                  {metric.value}
-                </span>
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-semibold tracking-tight tabular-nums text-foreground">
+                  {metric.value.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {metric.caption}
+                </p>
               </div>
             </CardContent>
           </Card>

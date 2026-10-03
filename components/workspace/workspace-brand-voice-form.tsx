@@ -522,7 +522,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="w-full bg-background/30 border border-border/50 rounded-lg p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
+                        <div className="w-full bg-background/30 border border-border/50 rounded-md p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -622,7 +622,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="w-full bg-background/30 border border-border/50 rounded-lg p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
+                        <div className="w-full bg-background/30 border border-border/50 rounded-md p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -714,7 +714,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="w-full bg-background/30 border border-border/50 rounded-lg p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
+                        <div className="w-full bg-background/30 border border-border/50 rounded-md p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -807,7 +807,7 @@ export function WorkspaceBrandVoiceForm({
                         </div>
 
                         {/* Badges Container */}
-                        <div className="w-full bg-background/30 border border-border/50 rounded-lg p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
+                        <div className="w-full bg-background/30 border border-border/50 rounded-md p-4 min-h-15 flex flex-wrap items-start gap-2 overflow-y-auto overflow-x-hidden max-h-50">
                           {field.value && field.value.length > 0 ? (
                             field.value.map((item, index) => (
                               <Badge
@@ -845,7 +845,7 @@ export function WorkspaceBrandVoiceForm({
             <TabsContent value="personas" className="space-y-6 py-6">
               {workspaceId && onPersonaSelect && (
                 <div className="space-y-4">
-                  <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                  <div className="bg-primary/5 border border-primary/10 rounded-md p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
                       Select Personas
                     </h4>

@@ -13,6 +13,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
+import { formatNodeName } from "@/lib/generate-content/stream-utils";
 
 export interface ToolCall {
   id: string;
@@ -58,7 +59,7 @@ function getToolLabel(name: string) {
     name.toLowerCase().includes("search")
   )
     return "Web Search";
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return formatNodeName(name);
 }
 
 function ToolCallCard({
@@ -78,7 +79,7 @@ function ToolCallCard({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18 }}
-      className={`relative rounded-lg border overflow-hidden transition-colors ${
+      className={`relative rounded-md border overflow-hidden transition-colors ${
         isRunning
           ? "bg-amber-500/5 border-amber-500/20"
           : "bg-emerald-500/4 border-emerald-500/15"
@@ -185,7 +186,7 @@ export function AgentActivityPanel({
           transition={{ type: "spring", stiffness: 320, damping: 30 }}
           className="fixed bottom-5 right-5 z-50 w-[290px] select-none"
         >
-          <div className="rounded-2xl border border-border/80 bg-card/98 backdrop-blur-2xl shadow-2xl shadow-black/20 overflow-hidden ring-1 ring-white/5">
+          <div className="rounded-md border border-border/80 bg-card/98 backdrop-blur-2xl shadow-2xl shadow-black/20 overflow-hidden ring-1 ring-white/5">
             {/* ── Header ─────────────────────────────────────────────────────── */}
             <button
               type="button"
@@ -194,7 +195,7 @@ export function AgentActivityPanel({
             >
               <div className="flex items-center gap-2">
                 <div className="relative shrink-0">
-                  <Bot size={13} className="text-primary" />
+                  <Bot size={13} className="text-foreground" />
                   {activeToolCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                   )}

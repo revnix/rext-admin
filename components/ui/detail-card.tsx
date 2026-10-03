@@ -5,31 +5,20 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const detailCardVariants = cva(
-  "rounded-xl border transition-all duration-200",
+  "rounded-md border transition-all duration-200",
   {
     variants: {
       variant: {
         default: "bg-white dark:bg-background border-border shadow-sm",
-        highlight:
-          "bg-gradient-to-br from-blue-50/60 via-indigo-50/40 to-purple-50/60 " +
-          "dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-purple-950/30 " +
-          "border-blue-200/60 dark:border-blue-800/60",
-        accent:
-          "bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-purple-50/30 " +
-          "dark:from-purple-950/20 dark:via-pink-950/10 dark:to-purple-950/20 " +
-          "border-purple-200/50 dark:border-purple-800/50",
+        // Decorative variants are neutral; only warning/success keep a
+        // semantic tint.
+        highlight: "bg-muted/40 border-border",
+        accent: "bg-muted/40 border-border",
         warning:
-          "bg-gradient-to-br from-amber-50/40 via-yellow-50/30 to-amber-50/40 " +
-          "dark:from-amber-950/20 dark:via-yellow-950/15 dark:to-amber-950/20 " +
-          "border-amber-200/60 dark:border-amber-800/60",
+          "bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/60",
         success:
-          "bg-gradient-to-br from-green-50/50 via-emerald-50/30 to-green-50/50 " +
-          "dark:from-green-950/20 dark:via-emerald-950/15 dark:to-green-950/20 " +
-          "border-green-200/50 dark:border-green-800/50",
-        info:
-          "bg-gradient-to-br from-sky-50/50 via-blue-50/30 to-sky-50/50 " +
-          "dark:from-sky-950/20 dark:via-blue-950/15 dark:to-sky-950/20 " +
-          "border-sky-200/50 dark:border-sky-800/50",
+          "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/50",
+        info: "bg-muted/40 border-border",
       },
       size: {
         sm: "p-4",
@@ -68,6 +57,7 @@ export interface DetailCardComponentProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof detailCardVariants> {
   children: React.ReactNode;
+  /** @deprecated Cards no longer render gradients; kept for API compatibility. */
   gradient?: boolean;
   interactive?: boolean;
   as?: "div" | "section" | "article";
@@ -82,7 +72,7 @@ const DetailCard = React.forwardRef<HTMLDivElement, DetailCardComponentProps>(
       padding,
       shadow,
       border,
-      gradient = true,
+      gradient: _gradient,
       interactive = false,
       as: Component = "div",
       children,
@@ -103,7 +93,6 @@ const DetailCard = React.forwardRef<HTMLDivElement, DetailCardComponentProps>(
           {
             "hover:shadow-lg hover:border-border/80 cursor-pointer":
               interactive,
-            "bg-gradient-to-br": gradient && variant !== "default",
           },
           className,
         )}

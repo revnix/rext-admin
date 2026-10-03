@@ -68,7 +68,7 @@ export function BaseKnowledgeListItem<T extends BaseKnowledgeItem>({
   return (
     <button
       type="button"
-      className={`flex items-center gap-4 p-4 border rounded-lg transition-all hover:shadow-sm ${
+      className={`flex items-center gap-4 p-4 border rounded-md transition-all hover:shadow-sm ${
         isSelected ? "ring-2 ring-primary" : ""
       } ${onSelect ? "cursor-pointer" : ""} w-full text-left ${config.className || ""}`}
       onClick={handleItemClick}

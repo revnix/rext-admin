@@ -54,8 +54,8 @@ export function ReviewStep({
         </Button>
 
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full mb-4">
-            <Sparkles className="h-10 w-10 text-primary" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-4">
+            <Sparkles className="h-10 w-10 text-foreground" />
           </div>
           <h3 className="text-2xl font-bold">Ready to Generate Topics!</h3>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
@@ -75,7 +75,7 @@ export function ReviewStep({
         <Card className="h-fit">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Settings className="h-5 w-5 text-primary" />
+              <Settings className="h-5 w-5 text-foreground" />
               Core Settings
             </CardTitle>
             <CardDescription className="text-sm">
@@ -114,7 +114,7 @@ export function ReviewStep({
         <Card className="h-fit">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="h-5 w-5 text-primary" />
+              <Target className="h-5 w-5 text-foreground" />
               Audience & Goals
             </CardTitle>
             <CardDescription className="text-sm">
@@ -154,7 +154,7 @@ export function ReviewStep({
         <Card className="h-fit">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Lightbulb className="h-5 w-5 text-primary" />
+              <Lightbulb className="h-5 w-5 text-foreground" />
               Advanced Options
             </CardTitle>
             <CardDescription className="text-sm">

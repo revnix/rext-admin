@@ -155,7 +155,7 @@ export default function TermsOfServicePage() {
             <a href="mailto:legal@wrext.com">legal@wrext.com</a>.
           </p>
 
-          <div className="mt-8 p-4 border rounded-lg bg-muted">
+          <div className="mt-8 p-4 border rounded-md bg-muted">
             <p className="text-sm font-semibold mb-2">Related Policies</p>
             <div className="flex flex-wrap gap-4 text-sm">
               <Link

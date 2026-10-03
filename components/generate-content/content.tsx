@@ -117,7 +117,7 @@ marked.use({
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
 
-      return `<div class="relative group my-6 rounded-xl overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80 shadow-sm">
+      return `<div class="relative group my-6 rounded-md overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80 shadow-sm">
         ${
           lang
             ? `<div class="flex items-center justify-between px-4 py-2 bg-slate-800/40 border-b border-slate-800/80">
@@ -188,7 +188,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
   return (
     <div
       className={cn(
-        "relative rounded-lg border overflow-hidden transition-colors",
+        "relative rounded-md border overflow-hidden transition-colors",
         isRunning
           ? "bg-primary/5 border-primary/20"
           : "bg-primary/4 border-primary/15",
@@ -1114,7 +1114,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
             {/* Pipeline steps with connecting lines */}
             {pipelineSteps.length > 0 && (
-              <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+              <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
                 <h4 className="text-lg font-bold text-foreground">Pipeline</h4>
                 <div className="space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   {pipelineSteps.map((step, idx) => (
@@ -1156,7 +1156,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                           {step.status === "active" && (
                             <Loader2
                               size={9}
-                              className="text-primary animate-spin shrink-0"
+                              className="text-foreground animate-spin shrink-0"
                             />
                           )}
                           <span
@@ -1181,7 +1181,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
             {/* Tool call research feed */}
             {toolCalls.length > 0 && (
-              <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+              <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
                 <div className="flex items-center justify-between gap-1.5">
                   <h4 className="text-lg font-bold text-foreground">
                     Research
@@ -1211,13 +1211,13 @@ function ContentEditorInner(props: ContentEditorProps) {
         {score ? (
           <>
             <div className="flex items-center gap-2">
-              <Activity size={16} className="text-emerald-500" />
+              <Activity size={16} className="text-foreground" />
               <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
                 Performance & SEO
               </h4>
             </div>
             {/* 
-            <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+            <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
               <h4 className="text-lg font-bold text-foreground">Readability</h4>
 
               <div className="space-y-2">
@@ -1237,7 +1237,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         ) : null}
 
         {seoScore ? (
-          <div className="bg-card p-5 rounded-xl border border-border/50 space-y-6">
+          <div className="bg-card p-5 rounded-md border border-border/50 space-y-6">
             <h4 className="text-lg font-bold text-foreground">On-Page SEO</h4>
 
             <div className="flex items-center gap-6">
@@ -1326,13 +1326,13 @@ function ContentEditorInner(props: ContentEditorProps) {
           <>
             <hr />
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-blue-500" />
+              <Sparkles size={16} className="text-foreground" />
               <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
                 EEAT Assistant
               </h4>
             </div>
 
-            <div className="bg-card p-5 rounded-xl border border-border/50 space-y-4">
+            <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
               <h4 className="text-lg font-bold text-foreground leading-tight">
                 Trust Score
               </h4>
@@ -1390,7 +1390,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   setIsStructureOpen(false);
                 }
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-md group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             >
               <span className="relative truncate leading-none">
                 {sec.heading}
@@ -1453,7 +1453,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         }
                       }}
                       className={cn(
-                        "w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left cursor-pointer rounded-lg group transition-all duration-200 relative",
+                        "w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left cursor-pointer rounded-md group transition-all duration-200 relative",
                         sectionWritten
                           ? "text-foreground/75 hover:bg-muted/50 hover:text-foreground"
                           : "text-muted-foreground/30 hover:text-muted-foreground/50",
@@ -1532,8 +1532,8 @@ function ContentEditorInner(props: ContentEditorProps) {
 
                         {/* Title Skeleton */}
                         <div className="space-y-3">
-                          <Skeleton className="h-10 w-4/5 rounded-lg" />
-                          <Skeleton className="h-10 w-2/3 rounded-lg" />
+                          <Skeleton className="h-10 w-4/5 rounded-md" />
+                          <Skeleton className="h-10 w-2/3 rounded-md" />
                         </div>
 
                         {/* Intro Skeleton */}
@@ -1549,7 +1549,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       {/* Content Skeleton */}
                       <div className="blog-content space-y-4">
                         {CONTENT_SKELETON_KEYS.map((key) => (
-                          <Skeleton key={key} className="h-4 rounded" />
+                          <Skeleton key={key} className="h-4 rounded-md" />
                         ))}
                       </div>
                     </>
@@ -1590,7 +1590,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   )}
                   {!isFinal && isEnhancing && (
                     <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
-                      <div className="rounded-2xl border border-border bg-card px-6 py-4 shadow-xl">
+                      <div className="rounded-md border border-border bg-card px-6 py-4 shadow-xl">
                         <div className="text-sm font-semibold text-foreground">
                           {enhancingMsg}
                         </div>

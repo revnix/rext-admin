@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
             {row.avatar_url && (
               <AvatarImage src={row.avatar_url} alt={row.name} />
             )}
-            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-semibold">
+            <AvatarFallback className="bg-muted text-foreground text-[11px] font-semibold">
               {row.initials}
             </AvatarFallback>
           </Avatar>
@@ -616,7 +616,9 @@ export default function AdminUsersPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">user.read</code>
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  user.read
+                </code>
               </p>
             </CardContent>
           </Card>

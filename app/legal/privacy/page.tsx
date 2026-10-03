@@ -293,7 +293,7 @@ export default function PrivacyPolicyPage() {
             </li>
           </ul>
 
-          <div className="mt-8 p-4 border rounded-lg bg-muted">
+          <div className="mt-8 p-4 border rounded-md bg-muted">
             <p className="text-sm font-semibold mb-2">
               Your Data, Your Control
             </p>

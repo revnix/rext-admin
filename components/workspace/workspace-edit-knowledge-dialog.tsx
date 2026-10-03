@@ -204,7 +204,7 @@ export function WorkspaceEditKnowledgeDialog({
                 )}
               />
 
-              <div className="rounded-lg border p-3 bg-muted/50">
+              <div className="rounded-md border p-3 bg-muted/50">
                 <p className="text-sm font-medium text-muted-foreground mb-1">
                   URL
                 </p>

@@ -145,7 +145,7 @@ export function MultiSelect({
                     className={cn(
                       "mr-2 h-4 w-4",
                       selected.includes(option.value)
-                        ? "opacity-100 text-primary"
+                        ? "opacity-100 text-foreground"
                         : "opacity-0",
                     )}
                   />

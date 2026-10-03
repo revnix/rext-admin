@@ -217,7 +217,7 @@ export default function AdminRolesPage() {
       header: "Internal Name",
       width: "180px",
       cell: (value) => (
-        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+        <code className="text-xs bg-muted px-1.5 py-0.5 rounded-md">
           {value as string}
         </code>
       ),
@@ -436,9 +436,11 @@ export default function AdminRolesPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permissions:{" "}
-                <code className="text-xs bg-muted px-1 rounded">role:read</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  role:read
+                </code>{" "}
                 OR{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   permission:read
                 </code>
               </p>

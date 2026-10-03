@@ -189,7 +189,7 @@ export function WebKnowledgeCard({
         id: "error",
         condition: item.status === "failed",
         content: (
-          <div className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+          <div className="text-xs text-destructive bg-destructive/10 p-2 rounded-md">
             Failed to scrape content from this URL. Please check if the URL is
             accessible and try again.
           </div>

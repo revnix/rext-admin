@@ -86,7 +86,7 @@ export function TooltipProvider({ children }: TooltipProviderProps) {
             <div className="text-sm">{tooltip.content}</div>
           </div>
         )}
-        className="!bg-primary !text-primary-foreground !opacity-100 !rounded-lg !shadow-lg !z-50"
+        className="!bg-primary !text-primary-foreground !opacity-100 !rounded-md !shadow-lg !z-50"
         style={{
           backgroundColor: "hsl(var(--primary))",
           color: "hsl(var(--primary-foreground))",

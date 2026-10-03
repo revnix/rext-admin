@@ -65,7 +65,7 @@ export default function ContentType({
               transition={{ delay: index * 0.05 }}
               onClick={() => setSelectedType(type)}
               className={cn(
-                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-xl border transition-all duration-300 w-full outline-none h-full",
+                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-md border transition-all duration-300 w-full outline-none h-full",
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "bg-card border-border hover:border-primary active:scale-[0.98]",
@@ -79,9 +79,9 @@ export default function ContentType({
 
               <div
                 className={cn(
-                  "mb-1 p-3.5 rounded-xl transition-colors",
+                  "mb-1 p-3.5 rounded-md transition-colors",
                   isSelected
-                    ? "bg-primary/10"
+                    ? "bg-foreground/10"
                     : "bg-muted group-hover:bg-accent",
                 )}
               >
@@ -89,8 +89,8 @@ export default function ContentType({
                   className={cn(
                     "w-6 h-6 transition-colors",
                     isSelected
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-primary",
+                      ? "text-foreground"
+                      : "text-muted-foreground group-hover:text-foreground",
                   )}
                 />
               </div>
@@ -113,7 +113,7 @@ export default function ContentType({
               </div>
 
               {isSelected && (
-                <div className="absolute inset-0 rounded-xl border-2 border-primary pointer-events-none" />
+                <div className="absolute inset-0 rounded-md border-2 border-primary pointer-events-none" />
               )}
             </motion.button>
           );
@@ -126,7 +126,7 @@ export default function ContentType({
           disabled={!selectedType}
           onClick={() => selectedType && handleContentTypeSelect(selectedType)}
           className={cn(
-            "px-6 py-2.5 rounded-lg font-medium transition-all cursor-pointer",
+            "px-6 py-2.5 rounded-md font-medium transition-all cursor-pointer",
             selectedType
               ? "bg-primary text-primary-foreground hover:opacity-90"
               : "bg-muted text-muted-foreground cursor-not-allowed",

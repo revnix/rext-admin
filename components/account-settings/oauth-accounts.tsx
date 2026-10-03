@@ -108,7 +108,7 @@ export function OAuthAccounts() {
           {accounts.map((account) => (
             <div
               key={account.id}
-              className="flex items-center justify-between rounded-lg border p-4"
+              className="flex items-center justify-between rounded-md border p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -160,7 +160,7 @@ export function OAuthAccounts() {
             {unconnectedProviders.map((provider) => (
               <div
                 key={provider}
-                className="flex flex-col sm:flex-row items-center justify-between rounded-lg border p-4"
+                className="flex flex-col sm:flex-row items-center justify-between rounded-md border p-4"
               >
                 <div className="flex items-center flex-col sm:flex-row gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">

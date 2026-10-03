@@ -204,7 +204,7 @@ export function PageLayout({
                   <span className="text-sm font-normal inline-block truncate">
                     Search or type command...
                   </span>
-                  <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
+                  <kbd className="pointer-events-none absolute right-2 top-[50%] -translate-y-[50%] hidden h-6 select-none items-center gap-1 rounded-md bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 lg:flex border border-border">
                     <span className="text-xs">⌘</span>K
                   </kbd>
                 </Button>
@@ -414,7 +414,7 @@ export function PageLayout({
                   forceMount
                 >
                   <DropdownMenuLabel className="p-0 font-normal mb-1">
-                    <div className="flex items-center gap-3 px-2.5 py-3 rounded-lg bg-muted/40 mx-0.5 mt-0.5">
+                    <div className="flex items-center gap-3 px-2.5 py-3 rounded-md bg-muted/40 mx-0.5 mt-0.5">
                       <div className="grid flex-1 text-left leading-tight">
                         <span className="truncate font-semibold text-sm text-foreground">
                           {userName}

@@ -88,7 +88,7 @@ const renderRecentItem = (item: UnifiedKnowledgeItem) => {
   return (
     <div
       key={`recent-${item.id}`}
-      className="border rounded-lg p-3 flex flex-col gap-1 bg-muted/30"
+      className="border rounded-md p-3 flex flex-col gap-1 bg-muted/30"
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium line-clamp-1">{item.title}</span>
@@ -221,7 +221,7 @@ export function KnowledgeAnalytics({
               </p>
             </div>
           </div>
-          <div className="rounded-lg border p-3 bg-muted/50">
+          <div className="rounded-md border p-3 bg-muted/50">
             <p className="text-xs text-muted-foreground">Total Word Count</p>
             <p className="text-lg font-semibold">
               {formatNumber(analytics.totals.totalWordCount)}

@@ -130,11 +130,11 @@ export function SecurityOverview() {
             {securityItems.map((item) => (
               <div
                 key={item.label}
-                className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 border rounded-md hover:bg-accent/5 transition-colors"
               >
                 <div
                   className={`
-                  p-2 rounded-lg
+                  p-2 rounded-md
                   ${item.status === "success" ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400" : ""}
                   ${item.status === "warning" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400" : ""}
                   ${item.status === "info" ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400" : ""}

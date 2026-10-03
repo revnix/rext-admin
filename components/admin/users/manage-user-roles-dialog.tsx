@@ -270,7 +270,7 @@ export function ManageUserRolesDialog({
                 </AlertDescription>
               </Alert>
             ) : assigned.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center">
+              <div className="rounded-md border border-dashed p-6 text-center">
                 <p className="text-sm text-muted-foreground">
                   No roles assigned
                 </p>
@@ -279,7 +279,7 @@ export function ManageUserRolesDialog({
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border divide-y">
+              <div className="rounded-md border divide-y">
                 {assigned.map((assignment) => (
                   <div
                     key={assignment.id}
@@ -357,7 +357,11 @@ export function ManageUserRolesDialog({
                   Platform-wide (all workspaces)
                 </SelectItem>
                 {(userWorkspaces?.workspaces ?? []).map((ws) => (
-                  <SelectItem key={ws.workspace_id} value={ws.workspace_id} className="px-0 ps-1">
+                  <SelectItem
+                    key={ws.workspace_id}
+                    value={ws.workspace_id}
+                    className="px-0 ps-1"
+                  >
                     <span className="flex items-center gap-2">
                       {/* Labelled "Workspace:" because a workspace can be named
                           after a person. Unlabelled, "Hasnat Hassan currently

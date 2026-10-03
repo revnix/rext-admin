@@ -43,7 +43,7 @@ export function WizardNavigation({
   const isLastStep = currentStep === totalSteps - 1;
 
   return (
-    <div className="p-6 bg-muted/30 rounded-lg border">
+    <div className="p-6 bg-muted/30 rounded-md border">
       <div className="flex items-center justify-between">
         {/* Left side - Back button */}
         <div className="flex items-center gap-2">

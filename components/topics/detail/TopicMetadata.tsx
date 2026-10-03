@@ -17,11 +17,11 @@ export function TopicMetadata({ metadata }: TopicMetadataProps) {
       {metadata.map((item) => (
         <div
           key={item.label}
-          className="bg-gradient-to-br from-muted/5 to-muted/10 border border-muted/20 rounded-lg p-4 hover:border-muted/30 transition-all duration-200"
+          className="bg-gradient-to-br from-muted/5 to-muted/10 border border-muted/20 rounded-md p-4 hover:border-muted/30 transition-all duration-200"
         >
           <div className="flex items-start gap-3">
             {/* Icon Column */}
-            <div className="p-2 rounded-md bg-primary/10 text-primary flex-shrink-0">
+            <div className="p-2 rounded-md bg-muted text-foreground flex-shrink-0">
               {item.icon}
             </div>
             {/* Key/Value Column */}

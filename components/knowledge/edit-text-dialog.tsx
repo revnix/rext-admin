@@ -240,7 +240,7 @@ export function EditTextDialog({
           <form className="space-y-6">
             <div className="space-y-4">
               {/* Save Status */}
-              <div className="flex items-center justify-between py-2 px-3 bg-muted rounded-lg">
+              <div className="flex items-center justify-between py-2 px-3 bg-muted rounded-md">
                 <div className="flex items-center gap-2">
                   {isSaving ? (
                     <>

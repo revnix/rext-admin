@@ -25,41 +25,38 @@ export function QuickActions({ workspace }: QuickActionsProps) {
       label: "Invite Team Member",
       icon: UserPlus,
       href: slug !== "default" ? workspaceRoutes.members(slug) : "/members",
-      color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400",
+      description: "Add collaborators to this workspace",
     },
     {
       label: "Create New Persona",
       icon: FileEdit,
       href: slug !== "default" ? `/w/${slug}/personas` : "/personas",
-      color:
-        "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400",
+      description: "Define a new audience profile",
     },
     {
       label: "Workspace Settings",
       icon: Settings,
       href:
         slug !== "default" ? workspaceRoutes.settings.root(slug) : "/settings",
-      color:
-        "text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400",
+      description: "Manage details and preferences",
     },
     {
       label: "Visit Website",
       icon: ExternalLink,
       href: workspace?.url || "#",
-      color:
-        "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400",
+      description: "Open your site in a new tab",
     },
   ];
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-4 p-6">
+      <CardHeader className="p-6 pb-3">
         <CardTitle className="text-base font-semibold text-foreground">
           Quick Actions
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 pt-0">
-        <div className="flex flex-col gap-1">
+      <CardContent className="px-3 pb-3 pt-0">
+        <div className="flex flex-col gap-0.5">
           {actions.map((action) => {
             // External websites must open in a new tab, never a same-tab
             // client-side navigation away from the dashboard.
@@ -71,24 +68,22 @@ export function QuickActions({ workspace }: QuickActionsProps) {
                 {...(isExternalUrl
                   ? { target: "_blank", rel: "noopener noreferrer" }
                   : {})}
-                className="flex items-center justify-between p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                className="group flex items-center justify-between gap-3 rounded-md p-3 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`h-10 w-10 rounded-lg flex items-center justify-center ${action.color}`}
-                  >
-                    <action.icon className="h-5 w-5" />
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+                    <action.icon className="h-4 w-4" />
                   </div>
-                  <div className="space-y-0.5">
-                    <span className="font-medium text-sm text-foreground block">
+                  <div className="min-w-0 space-y-0.5">
+                    <span className="block text-sm font-medium text-foreground">
                       {action.label}
                     </span>
-                    <span className="text-xs text-muted-foreground block">
-                      Perform task
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {action.description}
                     </span>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
               </Link>
             );
           })}

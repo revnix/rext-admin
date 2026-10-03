@@ -161,7 +161,7 @@ export function PricingTable({
       {/* Billing Period Toggle */}
       {!hideBillingToggle && (
         <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-4 p-1 bg-muted rounded-lg">
+          <div className="inline-flex items-center gap-4 p-1 bg-muted rounded-md">
             <Button
               variant={
                 billingPeriod === BillingPeriod.MONTHLY ? "default" : "ghost"

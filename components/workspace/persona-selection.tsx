@@ -73,7 +73,7 @@ export function PersonaSelection({
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
-              <div className="h-20 bg-muted rounded" />
+              <div className="h-20 bg-muted rounded-md" />
             </CardContent>
           </Card>
         ))}
@@ -179,13 +179,13 @@ function PersonaCard({
             drawing the same silhouette for everyone while the photograph the
             crawler found sat unused on the record.
           */}
-          <Avatar className="flex-shrink-0 w-10 h-10 rounded-lg">
+          <Avatar className="flex-shrink-0 w-10 h-10 rounded-md">
             <AvatarImage
               src={persona.avatar_url || ""}
               alt={`${persona.full_name || persona.name} avatar`}
               className="object-cover"
             />
-            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold text-xs">
+            <AvatarFallback className="rounded-md bg-muted text-foreground font-semibold text-xs">
               {(persona.full_name || persona.name)
                 .split(" ")
                 .map((word) => word[0])
