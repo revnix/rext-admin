@@ -117,7 +117,7 @@ marked.use({
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
 
-      return `<div class="relative group my-6 rounded-md overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80 shadow-sm">
+      return `<div class="relative group my-6 rounded-md overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80">
         ${
           lang
             ? `<div class="flex items-center justify-between px-4 py-2 bg-slate-800/40 border-b border-slate-800/80">
@@ -189,22 +189,20 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
     <div
       className={cn(
         "relative rounded-md border overflow-hidden transition-colors",
-        isRunning
-          ? "bg-primary/5 border-primary/20"
-          : "bg-primary/4 border-primary/15",
+        isRunning ? "bg-card border-border" : "bg-card border-border",
       )}
     >
       <div
         className={cn(
           "absolute left-0 top-0 bottom-0 w-0.5",
-          isRunning ? "bg-primary" : "bg-primary/60",
+          isRunning ? "bg-foreground" : "bg-border",
         )}
       />
       <div className="flex items-start gap-2 pl-3 pr-2.5 py-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <Icon size={8} className="text-muted-foreground/60 shrink-0" />
-            <span className="text-[8px] font-bold text-muted-foreground/50 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-muted-foreground">
               Web Search
             </span>
           </div>
@@ -215,7 +213,7 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
           </div>
           {tc.status === "done" && tc.resultCount !== undefined && (
             <div className="flex items-center justify-between mt-1">
-              <div className="text-[9px] px-1 text-primary dark:text-primary font-bold flex items-center gap-0.5">
+              <div className="text-[10px] text-foreground font-medium flex items-center gap-0.5">
                 {tc.resultCount}&nbsp;result{tc.resultCount !== 1 ? "s" : ""}
               </div>
               {hasOutput && (
@@ -1107,15 +1105,17 @@ function ContentEditorInner(props: ContentEditorProps) {
           <div className="space-y-3 pb-2">
             {/* Header */}
             <div className="flex items-center gap-2 pt-0.5 pb-0.5">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/60 flex-1">
+              <h4 className="text-sm font-semibold text-foreground flex-1">
                 Agent Activity
               </h4>
             </div>
 
             {/* Pipeline steps with connecting lines */}
             {pipelineSteps.length > 0 && (
-              <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
-                <h4 className="text-lg font-bold text-foreground">Pipeline</h4>
+              <div className="bg-card p-5 rounded-md border border-border space-y-4">
+                <h4 className="text-base font-semibold text-foreground">
+                  Pipeline
+                </h4>
                 <div className="space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   {pipelineSteps.map((step, idx) => (
                     <div
@@ -1128,9 +1128,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                           className={cn(
                             "w-2.5 h-2.5 rounded-full border-2 shrink-0 mt-0.5 z-10 transition-all duration-300",
                             step.status === "done"
-                              ? "bg-primary border-primary"
+                              ? "bg-foreground border-foreground"
                               : step.status === "active"
-                                ? "bg-primary border-primary shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
+                                ? "bg-background border-foreground"
                                 : "bg-transparent border-border/60",
                           )}
                         ></div>
@@ -1139,7 +1139,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                             className={cn(
                               "w-px flex-1 mt-0.5 mb-0.5 min-h-2 transition-colors duration-500",
                               step.status === "done"
-                                ? "bg-primary/40"
+                                ? "bg-foreground/30"
                                 : "bg-border/40",
                             )}
                           />
@@ -1181,13 +1181,13 @@ function ContentEditorInner(props: ContentEditorProps) {
 
             {/* Tool call research feed */}
             {toolCalls.length > 0 && (
-              <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
+              <div className="bg-card p-5 rounded-md border border-border space-y-4">
                 <div className="flex items-center justify-between gap-1.5">
-                  <h4 className="text-lg font-bold text-foreground">
+                  <h4 className="text-base font-semibold text-foreground">
                     Research
                   </h4>
                   <div className="flex gap-1">
-                    <div className="text-[12px] font-bold text-primary dark:text-primary">
+                    <div className="text-[12px] font-semibold text-foreground">
                       {toolCalls.filter((t) => t.status === "done").length}
                     </div>
                     <div className="text-[12px] text-muted-foreground/40">
@@ -1212,13 +1212,13 @@ function ContentEditorInner(props: ContentEditorProps) {
           <>
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-foreground" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+              <h4 className="text-sm font-semibold text-foreground">
                 Performance & SEO
               </h4>
             </div>
             {/* 
-            <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
-              <h4 className="text-lg font-bold text-foreground">Readability</h4>
+            <div className="bg-card p-5 rounded-md border border-border space-y-4">
+              <h4 className="text-base font-semibold text-foreground">Readability</h4>
 
               <div className="space-y-2">
                 <div className={`text-xl font-bold ${color}`}>
@@ -1237,8 +1237,10 @@ function ContentEditorInner(props: ContentEditorProps) {
         ) : null}
 
         {seoScore ? (
-          <div className="bg-card p-5 rounded-md border border-border/50 space-y-6">
-            <h4 className="text-lg font-bold text-foreground">On-Page SEO</h4>
+          <div className="bg-card p-5 rounded-md border border-border space-y-6">
+            <h4 className="text-base font-semibold text-foreground">
+              On-Page SEO
+            </h4>
 
             <div className="flex items-center gap-6">
               <div className="relative flex items-center justify-center shrink-0">
@@ -1267,7 +1269,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       226.2 * (1 - seoScore.seo_health_score / 100)
                     }
                     strokeLinecap="round"
-                    className="text-emerald-600 dark:text-emerald-500 transition-all duration-1000"
+                    className="text-foreground transition-all duration-1000"
                   />
                 </svg>
                 <span className="absolute text-xl font-bold text-foreground">
@@ -1276,7 +1278,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-lg font-bold text-foreground leading-tight">
+                <div className="text-base font-semibold text-foreground leading-tight">
                   {getSEOStatusText(seoScore.seo_health_score)}
                 </div>
                 {seoScore.issue_summary?.warnings ||
@@ -1302,14 +1304,14 @@ function ContentEditorInner(props: ContentEditorProps) {
                       {status === "success" ? (
                         <CheckCircle2
                           size={18}
-                          className="text-emerald-500 shrink-0"
+                          className="text-foreground shrink-0"
                         />
                       ) : (
                         <AlertCircle
                           size={18}
                           className={
                             status === "warning"
-                              ? "text-orange-500 shrink-0"
+                              ? "text-foreground shrink-0"
                               : "text-muted-foreground shrink-0"
                           }
                         />
@@ -1327,21 +1329,24 @@ function ContentEditorInner(props: ContentEditorProps) {
             <hr />
             <div className="flex items-center gap-2">
               <Sparkles size={16} className="text-foreground" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+              <h4 className="text-sm font-semibold text-foreground">
                 EEAT Assistant
               </h4>
             </div>
 
-            <div className="bg-card p-5 rounded-md border border-border/50 space-y-4">
-              <h4 className="text-lg font-bold text-foreground leading-tight">
+            <div className="bg-card p-5 rounded-md border border-border space-y-4">
+              <h4 className="text-base font-semibold text-foreground leading-tight">
                 Trust Score
               </h4>
               <div className="flex items-center gap-2">
-                <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-500 tracking-tight">
+                <span className="text-4xl font-semibold text-foreground tracking-tight">
                   {trustScore.score ? trustScore.score : trustScore.trust_score}
                   %
                 </span>
-                <TrendingUp size={20} className="text-emerald-500 shrink-0" />
+                <TrendingUp
+                  size={20}
+                  className="text-muted-foreground shrink-0"
+                />
               </div>
               <div className="text-[13px] text-muted-foreground font-medium">
                 {getStatusMessage(trustScore.score ?? trustScore.trust_score)}
@@ -1356,7 +1361,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   const structureSidebarContent = (
     <div className="px-6 py-6 space-y-8 h-full overflow-y-auto">
       <div>
-        <h3 className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           Structure
         </h3>
         <nav className="space-y-1">
@@ -1410,7 +1415,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           <aside className="hidden xl:flex w-60 border-r border-border/50 bg-sidebar/20 flex-col shrink-0 overflow-y-auto sticky top-0 max-h-[calc(100vh-85px)] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-3 py-4">
               <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-[10px] font-black text-muted-foreground/35 uppercase tracking-[0.2em]">
+                <span className="text-sm font-semibold text-foreground">
                   Structure
                 </span>
               </div>
@@ -1463,7 +1468,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         className={cn(
                           "text-[9px] font-bold tabular-nums shrink-0 w-5 text-right leading-none transition-colors",
                           sectionWritten
-                            ? "text-primary/50"
+                            ? "text-muted-foreground"
                             : "text-muted-foreground/20",
                         )}
                       >
@@ -1478,7 +1483,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       {sectionWritten && (
                         <CheckCircle2
                           size={10}
-                          className="shrink-0 text-emerald-500/60"
+                          className="shrink-0 text-muted-foreground"
                         />
                       )}
                     </button>
@@ -1538,7 +1543,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
                         {/* Intro Skeleton */}
                         {allContent?.meta_description && (
-                          <div className="border-l-[3px] border-primary/20 pl-6 my-8 space-y-3">
+                          <div className="border-l-2 border-border pl-6 my-8 space-y-3">
                             <Skeleton className="h-4 w-full" />
                             <Skeleton className="h-4 w-5/6" />
                             <Skeleton className="h-4 w-4/6" />
@@ -1560,7 +1565,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                           {tags.map((t) => (
                             <span
                               key={t}
-                              className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800/70 px-3 py-1 rounded-full"
+                              className="text-xs text-foreground bg-muted px-2 py-0.5 rounded-md"
                             >
                               {t}
                             </span>
@@ -1571,7 +1576,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         </h1>
 
                         {allContent?.meta_description && (
-                          <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-[3px] border-primary/40 pl-6 my-8 italic py-1">
+                          <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-2 border-border pl-6 my-8 italic py-1">
                             {typedIntro}
                           </div>
                         )}
@@ -1589,8 +1594,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                     </>
                   )}
                   {!isFinal && isEnhancing && (
-                    <div className="fixed inset-0 grid place-items-center bg-background/40 backdrop-blur-[3px] ml-auto w-full">
-                      <div className="rounded-md border border-border bg-card px-6 py-4 shadow-xl">
+                    <div className="fixed inset-0 grid place-items-center bg-background/70 ml-auto w-full">
+                      <div className="rounded-md border border-border bg-card px-6 py-4">
                         <div className="text-sm font-semibold text-foreground">
                           {enhancingMsg}
                         </div>
@@ -1619,7 +1624,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
               <Button
                 onClick={() => setIsStructureOpen(true)}
-                className="rounded-full shadow-lg h-12 pr-6 pl-4 flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white border border-slate-700/50"
+                className="rounded-md h-11 pr-5 pl-4 flex items-center gap-2 bg-background hover:bg-muted text-foreground border border-border"
               >
                 <List size={18} />
                 <span className="font-bold text-sm">Structure</span>
@@ -1638,7 +1643,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           <Sheet open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
             <Button
               onClick={() => setIsAnalysisOpen(true)}
-              className="rounded-full shadow-lg h-12 pr-6 pl-4 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/50"
+              className="rounded-md h-11 pr-5 pl-4 flex items-center gap-2 bg-background hover:bg-muted text-foreground border border-border"
             >
               <Activity size={18} />
               <span className="font-bold text-sm">Analysis</span>
@@ -1669,18 +1674,16 @@ function ContentEditorInner(props: ContentEditorProps) {
           setStatusModal((prev) => ({ ...prev, isOpen: open }))
         }
       >
-        <DialogContent className="sm:max-w-md bg-card border border-border shadow-2xl rounded-4xl p-8">
+        <DialogContent className="sm:max-w-md bg-card border border-border rounded-md p-8">
           <div className="flex flex-col items-center text-center space-y-6">
             <div
               className={cn(
                 "w-16 h-16 rounded-full flex items-center justify-center",
-                statusModal.type === "success"
-                  ? "bg-emerald-500/10"
-                  : "bg-red-500/10",
+                statusModal.type === "success" ? "bg-muted" : "bg-red-500/10",
               )}
             >
               {statusModal.type === "success" ? (
-                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                <CheckCircle2 className="w-8 h-8 text-foreground" />
               ) : (
                 <AlertCircle className="w-8 h-8 text-red-500" />
               )}

@@ -99,7 +99,7 @@ function MetadataSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50"
+          className="flex items-center gap-4 p-5 rounded-md bg-card border border-border"
         >
           <Skeleton className="w-10 h-10 rounded-md" />
 
@@ -121,7 +121,7 @@ function SectionSkeleton() {
           {/* timeline dot */}
           <Skeleton className="absolute left-0 top-1 w-10 h-10 rounded-full" />
 
-          <div className="p-5 rounded-md border border-border/50 bg-card space-y-4">
+          <div className="p-5 rounded-md border border-border bg-card space-y-4">
             <div className="flex justify-between items-center">
               <Skeleton className="w-40 h-5" />
               <Skeleton className="w-20 h-4" />
@@ -152,14 +152,9 @@ function SectionContent({ section }: { section: ContentSection }) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {section.key_points.map((point: string) => (
-          <div
-            key={point}
-            className="flex items-start gap-3 p-3 rounded-md bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
-          >
-            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            <span className="text-sm font-medium text-muted-foreground">
-              {point}
-            </span>
+          <div key={point} className="flex items-start gap-3 py-1">
+            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-foreground/50 shrink-0" />
+            <span className="text-sm text-foreground/80">{point}</span>
           </div>
         ))}
       </div>
@@ -185,7 +180,7 @@ function SectionContent({ section }: { section: ContentSection }) {
                   {item.context}
                 </p>
               )}
-              <span className="text-[10px] font-bold uppercase text-primary/60">
+              <span className="text-xs text-muted-foreground capitalize">
                 {item.difficulty}
               </span>
             </div>
@@ -255,7 +250,7 @@ function SectionContent({ section }: { section: ContentSection }) {
               </p>
             )}
             {res.category && (
-              <span className="text-[10px] font-bold uppercase text-primary/60">
+              <span className="text-xs text-muted-foreground capitalize">
                 {res.category}
               </span>
             )}
@@ -274,7 +269,7 @@ function SectionContent({ section }: { section: ContentSection }) {
             key={`step-${step.title}`}
             className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
-            <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
+            <span className="text-xs font-medium text-muted-foreground mt-0.5 tabular-nums w-5 shrink-0">
               {i + 1}.
             </span>
             <div>
@@ -302,7 +297,7 @@ function SectionContent({ section }: { section: ContentSection }) {
             key={`howto-${step.title}`}
             className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
-            <span className="text-[11px] font-black text-primary mt-0.5 w-5 shrink-0">
+            <span className="text-xs font-medium text-muted-foreground mt-0.5 tabular-nums w-5 shrink-0">
               {i + 1}.
             </span>
             <div>
@@ -346,9 +341,7 @@ function SectionContent({ section }: { section: ContentSection }) {
               </ul>
             ) : null}
             {f.implication && (
-              <p className="text-xs text-primary/70 mt-1 italic">
-                {f.implication}
-              </p>
+              <p className="text-xs text-foreground/70 mt-1">{f.implication}</p>
             )}
           </div>
         ))}
@@ -367,10 +360,8 @@ function SectionContent({ section }: { section: ContentSection }) {
             key={h}
             className="flex items-start gap-3 p-3 rounded-md bg-muted/50 border border-transparent"
           >
-            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            <span className="text-sm font-medium text-muted-foreground">
-              {h}
-            </span>
+            <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-foreground/50 shrink-0" />
+            <span className="text-sm text-foreground/80">{h}</span>
           </div>
         ))}
         {results.map((r) => (
@@ -381,7 +372,7 @@ function SectionContent({ section }: { section: ContentSection }) {
             <span className="text-sm font-bold text-foreground">
               {r.metric_name}:
             </span>
-            <span className="text-sm text-primary font-semibold">
+            <span className="text-sm text-foreground font-semibold">
               {r.result_value}
             </span>
             {r.context && (
@@ -432,31 +423,31 @@ function RenderBlocks({
         if (!visibleItems.length) return null;
         return (
           <div key={block.heading}>
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-3">
+            <p className="text-sm font-semibold text-foreground mb-3">
               {block.heading}
             </p>
-            <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
+            <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border">
               {visibleItems.map((item, j) => {
                 const section = sectionByHeading.get(item.label);
                 return (
                   <div key={item.label || j} className="relative pl-12 group">
-                    <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
-                      <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                    <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-background border border-border z-10">
+                      <span className="text-xs font-medium text-muted-foreground tabular-nums">
                         {String(start + j + 1).padStart(2, "0")}
                       </span>
                     </div>
-                    <div className="p-5 rounded-md border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                    <div className="p-5 rounded-md border border-border bg-card">
                       {/* Heading row with optional word-count badge */}
                       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                         {item.label && (
-                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                          <h3 className="text-base font-semibold text-foreground">
                             {item.label}
                           </h3>
                         )}
                         {section?.suggested_word_count && (
-                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted">
                             <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-[11px] font-bold text-muted-foreground">
+                            <span className="text-xs text-muted-foreground tabular-nums">
                               ~{section.suggested_word_count} words
                             </span>
                           </div>
@@ -465,7 +456,7 @@ function RenderBlocks({
 
                       {/* Section description */}
                       {section?.description && (
-                        <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                           {section.description}
                         </p>
                       )}
@@ -474,7 +465,7 @@ function RenderBlocks({
                       {section?.questions_to_answer &&
                         section.questions_to_answer.length > 0 && (
                           <div className="mb-4">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                               <HelpCircle className="w-3.5 h-3.5" /> Questions
                               to Answer
                             </p>
@@ -484,7 +475,7 @@ function RenderBlocks({
                                   key={q}
                                   className="flex items-start gap-2 text-sm text-muted-foreground"
                                 >
-                                  <span className="text-primary mt-0.5 shrink-0">
+                                  <span className="text-muted-foreground mt-0.5 shrink-0">
                                     •
                                   </span>
                                   <span>{q}</span>
@@ -500,10 +491,10 @@ function RenderBlocks({
                           {item.points.map((pt) => (
                             <div
                               key={pt}
-                              className="flex items-start gap-3 p-3 rounded-md bg-muted/50 hover:bg-card border border-transparent hover:border-border transition-all duration-200"
+                              className="flex items-start gap-3 py-1"
                             >
-                              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                              <span className="text-sm font-medium text-muted-foreground">
+                              <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-foreground/50 shrink-0" />
+                              <span className="text-sm text-foreground/80">
                                 {pt}
                               </span>
                             </div>
@@ -800,7 +791,7 @@ export function OutlineDisplay({
     <div className="w-full max-w-4xl mx-auto py-3">
       {/* Header */}
       <div className="mb-10 space-y-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight tracking-tight">
+        <h2 className="text-3xl md:text-4xl font-semibold text-foreground leading-tight tracking-tight">
           {effectiveOutline.title}
         </h2>
 
@@ -820,12 +811,12 @@ export function OutlineDisplay({
       {!isDraft && outline && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
           {/* Tone */}
-          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
-            <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border">
+            <div className="p-3 rounded-md bg-muted">
               <Mic2 className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
                 Tone
               </p>
               {editingTone ? (
@@ -838,7 +829,7 @@ export function OutlineDisplay({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="h-7 w-7 text-foreground hover:bg-muted"
                     onClick={handleToneSave}
                   >
                     <Check className="w-4 h-4" />
@@ -846,7 +837,7 @@ export function OutlineDisplay({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
                     onClick={() => {
                       setTone(outline.tone);
                       setEditingTone(false);
@@ -857,14 +848,14 @@ export function OutlineDisplay({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-700 dark:text-white">
+                  <p className="text-sm font-semibold text-foreground">
                     {outline.tone}
                   </p>
                   {canEdit && (
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 text-slate-400 hover:text-blue-500"
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
                       onClick={() => setEditingTone(true)}
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -876,12 +867,12 @@ export function OutlineDisplay({
           </div>
 
           {/* Audience */}
-          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
-            <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+          <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border">
+            <div className="p-3 rounded-md bg-muted">
               <Target className="w-5 h-5 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
                 Audience
               </p>
               {editingAudience ? (
@@ -894,7 +885,7 @@ export function OutlineDisplay({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-primary hover:bg-muted"
+                    className="h-7 w-7 text-foreground hover:bg-muted"
                     onClick={handleAudienceSave}
                   >
                     <Check className="w-4 h-4" />
@@ -923,7 +914,7 @@ export function OutlineDisplay({
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 text-muted-foreground hover:text-primary"
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground"
                       onClick={() => setEditingAudience(true)}
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -936,12 +927,12 @@ export function OutlineDisplay({
 
           {/* Focus Keyphrase */}
           {outline.focus_keyphrase && (
-            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
-              <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border">
+              <div className="p-3 rounded-md bg-muted">
                 <Hash className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                <p className="text-xs font-medium text-muted-foreground mb-0.5">
                   Focus Keyphrase
                 </p>
                 <p className="text-sm font-bold text-foreground">
@@ -953,14 +944,14 @@ export function OutlineDisplay({
 
           {/* Schema Type + Target Word Count */}
           {(outline.schema_type || displayedTargetWordCount) && (
-            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border/50">
-              <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border">
+            <div className="flex items-center gap-4 p-5 rounded-md bg-card border border-border">
+              <div className="p-3 rounded-md bg-muted">
                 <FileText className="w-5 h-5 text-foreground" />
               </div>
               <div className="flex flex-1 min-w-0 flex-wrap gap-x-8 gap-y-2">
                 {outline.schema_type && (
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">
                       Schema
                     </p>
                     <p className="text-sm font-bold text-foreground">
@@ -970,7 +961,7 @@ export function OutlineDisplay({
                 )}
                 {displayedTargetWordCount && (
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">
                       Target Words
                     </p>
 
@@ -987,7 +978,7 @@ export function OutlineDisplay({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7 text-primary hover:bg-muted"
+                          className="h-7 w-7 text-foreground hover:bg-muted"
                           onClick={handleTargetWordsSave}
                         >
                           <Check className="w-4 h-4" />
@@ -1014,14 +1005,14 @@ export function OutlineDisplay({
                         </p>
 
                         {isTargetWordCountPending ? (
-                          <span className="text-[10px] font-semibold text-primary animate-pulse">
+                          <span className="text-[10px] font-semibold text-muted-foreground animate-pulse">
                             Applying feedback…
                           </span>
                         ) : canEdit ? (
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-6 w-6 text-muted-foreground hover:text-primary"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
                             onClick={() => {
                               setTargetWordCount(
                                 outline.target_word_count?.toString() ?? "",
@@ -1043,19 +1034,19 @@ export function OutlineDisplay({
           {/* Keywords to include */}
           {outline.keywords_to_include &&
             outline.keywords_to_include.length > 0 && (
-              <div className="col-span-full flex items-start gap-4 p-5 rounded-md bg-card border border-border/50">
-                <div className="p-3 rounded-md bg-card shadow-sm ring-1 ring-border shrink-0">
+              <div className="col-span-full flex items-start gap-4 p-5 rounded-md bg-card border border-border">
+                <div className="p-3 rounded-md bg-muted shrink-0">
                   <Tag className="w-5 h-5 text-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
                     Keywords to Include
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {outline.keywords_to_include.map((kw) => (
                       <span
                         key={kw}
-                        className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted border border-border text-foreground"
+                        className="text-xs font-medium px-2.5 py-1 rounded-md bg-muted text-foreground"
                       >
                         {kw}
                       </span>
@@ -1082,7 +1073,7 @@ export function OutlineDisplay({
               return (
                 <div
                   key={cluster.cluster_name}
-                  className="flex flex-col p-5 rounded-md bg-card border border-border/50 hover:border-primary/30 transition-all duration-300 shadow-sm"
+                  className="flex flex-col p-5 rounded-md bg-card border border-border hover:border-foreground/40 transition-colors"
                 >
                   {/* Header info */}
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -1091,7 +1082,7 @@ export function OutlineDisplay({
                         {cluster.cluster_name}
                       </h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        <span className="text-xs text-muted-foreground capitalize">
                           {cluster.main_intent}
                         </span>
                         {cluster.confidence_score !== undefined && (
@@ -1101,7 +1092,7 @@ export function OutlineDisplay({
                         )}
                       </div>
                     </div>
-                    <span className="text-xs font-black text-muted-foreground/40 bg-muted px-2 py-1 rounded-md shrink-0">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md shrink-0">
                       {cluster.keywords.length} keywords
                     </span>
                   </div>
@@ -1111,7 +1102,7 @@ export function OutlineDisplay({
                     {cluster.keywords.map((kw) => (
                       <span
                         key={kw.keyword}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted/60 border border-border/40 text-foreground/80"
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-foreground"
                       >
                         {kw.keyword}
                       </span>
@@ -1133,7 +1124,7 @@ export function OutlineDisplay({
           sections={outline?.sections}
         />
       ) : !isDraft && (effectiveOutline.sections?.length ?? 0) > 0 ? (
-        <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border/40">
+        <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-border">
           {(effectiveOutline.sections ?? [])
             .slice(0, visibleSectionCount)
             .map((section, idx) => (
@@ -1141,33 +1132,33 @@ export function OutlineDisplay({
                 key={section.heading || `section-${idx}`}
                 className="relative pl-12 group"
               >
-                <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border/60 group-hover:border-primary/50 transition-colors z-10">
-                  <span className="text-[11px] font-black text-muted-foreground/50 group-hover:text-primary transition-colors">
+                <div className="absolute left-0 top-1 w-10 h-10 flex items-center justify-center rounded-full bg-background border border-border z-10">
+                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
                 </div>
 
-                <div className="p-5 rounded-md border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                <div className="p-5 rounded-md border border-border bg-card">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="text-base font-semibold text-foreground">
                       {section.heading}
                     </h3>
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted">
                       <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-[11px] font-bold text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular-nums">
                         ~{section.suggested_word_count} words
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-[15px] text-muted-foreground leading-relaxed mb-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                     {section.description}
                   </p>
 
                   {section.questions_to_answer &&
                     section.questions_to_answer.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                           <HelpCircle className="w-3.5 h-3.5" /> Questions to
                           Answer
                         </p>
@@ -1177,7 +1168,7 @@ export function OutlineDisplay({
                               key={q}
                               className="flex items-start gap-2 text-sm text-muted-foreground"
                             >
-                              <span className="text-primary mt-0.5 shrink-0">
+                              <span className="text-muted-foreground mt-0.5 shrink-0">
                                 •
                               </span>
                               <span>{q}</span>
@@ -1196,13 +1187,13 @@ export function OutlineDisplay({
 
       {/* Internal Links Panel */}
       {sortedInternalLinks.length > 0 && (
-        <div className="mt-8 p-5 rounded-md border border-border/50 bg-card">
+        <div className="mt-8 p-5 rounded-md border border-border bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+            <div className="p-2 rounded-md bg-muted">
               <Link2 className="w-4 h-4 text-foreground" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground">
                 Internal Links
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1220,8 +1211,8 @@ export function OutlineDisplay({
                   className={cn(
                     "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-all duration-200 border",
                     isChecked
-                      ? "bg-primary/5 border-primary/30"
-                      : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+                      ? "bg-card border-foreground"
+                      : "bg-card border-border hover:border-foreground/40",
                   )}
                 >
                   <input
@@ -1239,12 +1230,12 @@ export function OutlineDisplay({
                     className={cn(
                       "w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-colors",
                       isChecked
-                        ? "bg-primary border-primary"
+                        ? "bg-foreground border-foreground"
                         : "bg-background border-border",
                     )}
                   >
                     {isChecked && (
-                      <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                      <Check className="w-2.5 h-2.5 text-background" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1260,13 +1251,13 @@ export function OutlineDisplay({
                       className={cn(
                         "text-[10px] font-bold px-2 py-0.5 rounded-full",
                         link.status === "published"
-                          ? "bg-green-100 text-green-700"
+                          ? "border border-foreground text-foreground"
                           : "bg-muted text-muted-foreground",
                       )}
                     >
                       {link.status}
                     </span>
-                    <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-muted text-foreground tabular-nums">
                       {Math.round(link.score * 100)}%
                     </span>
                   </div>
@@ -1279,13 +1270,13 @@ export function OutlineDisplay({
 
       {/* Author Persona Panel */}
       {personas.length > 0 && (
-        <div className="mt-8 p-5 rounded-md border border-border/50 bg-card">
+        <div className="mt-8 p-5 rounded-md border border-border bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+            <div className="p-2 rounded-md bg-muted">
               <UserCircle2 className="w-4 h-4 text-foreground" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground">
                 Author Persona
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1305,7 +1296,7 @@ export function OutlineDisplay({
                   variant="outline"
                   role="combobox"
                   aria-expanded={isPersonaSearchOpen}
-                  className="w-full justify-between h-11 rounded-md border-border/60 bg-muted/30 text-left px-3 hover:bg-muted/40"
+                  className="w-full justify-between h-11 rounded-md border-border bg-card text-left px-3 hover:bg-muted/40"
                 >
                   <div className="flex min-w-0 flex-col items-start overflow-hidden">
                     {/* No fallback to personas[0]: showing a persona the user
@@ -1394,7 +1385,7 @@ export function OutlineDisplay({
                             </div>
                             <div className="ml-2 flex shrink-0 items-center gap-1.5">
                               {id === recommendedPersonaId && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground">
                                   Recommended
                                 </span>
                               )}
@@ -1418,13 +1409,13 @@ export function OutlineDisplay({
 
       {/* Brand Voice Promotion Panel */}
       {brandVoicePromotion && (
-        <div className="mt-6 p-5 rounded-md border border-border/50 bg-card">
+        <div className="mt-6 p-5 rounded-md border border-border bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-md bg-card shadow-sm ring-1 ring-border">
+            <div className="p-2 rounded-md bg-muted">
               <Megaphone className="w-4 h-4 text-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              <p className="text-xs font-medium text-muted-foreground">
                 Brand Promotion
               </p>
               <p className="text-xs text-muted-foreground">
@@ -1445,11 +1436,11 @@ export function OutlineDisplay({
               </p>
             </div>
             {brandVoicePromotion.recommended && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground shrink-0">
                 Recommended
               </span>
             )}
-            <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-muted text-foreground tabular-nums shrink-0">
               {Math.round(brandVoicePromotion.score * 100)}% match
             </span>
           </div>
@@ -1480,8 +1471,8 @@ export function OutlineDisplay({
             className={cn(
               "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-all duration-200 border",
               promoteBrand
-                ? "bg-primary/5 border-primary/30"
-                : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-border",
+                ? "bg-card border-foreground"
+                : "bg-card border-border hover:border-foreground/40",
             )}
           >
             <input
@@ -1494,12 +1485,12 @@ export function OutlineDisplay({
               className={cn(
                 "w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-colors",
                 promoteBrand
-                  ? "bg-primary border-primary"
+                  ? "bg-foreground border-foreground"
                   : "bg-background border-border",
               )}
             >
               {promoteBrand && (
-                <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                <Check className="w-2.5 h-2.5 text-background" />
               )}
             </div>
             <p className="text-sm font-medium text-foreground">
@@ -1515,7 +1506,7 @@ export function OutlineDisplay({
           onClick={onReject}
           disabled={isLoading || isDraft}
           variant="outline"
-          className="h-11 px-7 rounded-md border-border/60 text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-all"
+          className="h-11 px-7 rounded-md border-border text-foreground hover:bg-muted transition-colors"
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
         </Button>
@@ -1527,7 +1518,7 @@ export function OutlineDisplay({
             onApprove(selected, promoteBrand, selectedPersonaId);
           }}
           disabled={isLoading || isDraft}
-          className="h-11 px-8 rounded-md font-semibold gap-2 shadow-lg shadow-primary/15"
+          className="h-11 px-8 rounded-md font-semibold gap-2"
         >
           <Check className="w-4 h-4" /> Approve & Generate
         </Button>
@@ -1554,15 +1545,13 @@ export function OutlineRejectSection({
 }) {
   return (
     <div className="w-full max-w-2xl mx-auto py-3">
-      <div className="p-7 rounded-md bg-card border border-border/50">
+      <div className="p-7 rounded-md bg-card border border-border">
         <div className="flex items-center gap-4 mb-7">
           <div className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
             <MessageSquare className="w-4 h-4 text-foreground" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-primary/60 tracking-[0.2em] uppercase mb-0.5">
-              Feedback
-            </p>
+            <p className="text-xs text-muted-foreground mb-0.5">Feedback</p>
             <h3 className="text-[15px] font-bold text-foreground leading-tight">
               {instruction}
             </h3>
@@ -1572,7 +1561,7 @@ export function OutlineRejectSection({
           value={rejectedReason}
           onChange={(e) => onChange(e.target.value)}
           placeholder={instruction}
-          className="w-full min-h-[140px] p-4 rounded-md border-border/50 focus:border-primary/50 text-foreground bg-muted/30 text-[14px] leading-relaxed"
+          className="w-full min-h-[140px] p-4 rounded-md border-border/50 focus:border-foreground/40 text-foreground bg-muted/30 text-[14px] leading-relaxed"
         />
         {wordCountRange && (
           <p className="mt-3 text-xs text-muted-foreground">

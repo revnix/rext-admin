@@ -6,29 +6,29 @@ const INTENT_CONFIG = {
     label: "Commercial",
     description: "Researching options and ready to buy.",
     icon: FileText,
-    color: "var(--color-warning-600)",
-    textColor: "text-warning-600",
+    color: "var(--foreground)",
+    textColor: "text-muted-foreground",
   },
   informational: {
     label: "Informational",
     description: "Seeking knowledge or answers.",
     icon: Lightbulb,
-    color: "var(--color-blue-600)",
-    textColor: "text-blue-600",
+    color: "var(--foreground)",
+    textColor: "text-muted-foreground",
   },
   transactional: {
     label: "Transactional",
     description: "Ready to buy something specific.",
     icon: ShoppingCart,
-    color: "var(--color-success-600)",
-    textColor: "text-success-600",
+    color: "var(--foreground)",
+    textColor: "text-muted-foreground",
   },
   navigational: {
     label: "Navigational",
     description: "Finding a website or location.",
     icon: MapPin,
-    color: "var(--color-warning-500)",
-    textColor: "text-warning-600",
+    color: "var(--foreground)",
+    textColor: "text-muted-foreground",
   },
 } as const;
 
@@ -58,23 +58,19 @@ export function SearchIntentCard({
 
   return (
     <div className="flex flex-col gap-1 min-w-0">
-      {label && (
-        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/50">
-          {label}
-        </span>
-      )}
+      {label && <span className="text-xs text-muted-foreground">{label}</span>}
       <div className="flex items-center gap-2">
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: config.color }}
         >
-          <Icon className="w-3.5 h-3.5 text-white" />
+          <Icon className="w-3.5 h-3.5 text-background" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-bold text-foreground truncate uppercase">
+          <h3 className="text-sm font-semibold text-foreground truncate capitalize">
             {intent}
           </h3>
-          <p className={`text-[9px] leading-tight ${config.textColor}`}>
+          <p className={`text-xs leading-tight ${config.textColor}`}>
             {config.description}
           </p>
         </div>

@@ -212,11 +212,11 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
     return (
       <div
         className={cn(
-          "w-full border border-border/40 rounded-md overflow-hidden bg-card",
+          "w-full border border-border rounded-md overflow-hidden bg-card",
           props.className,
         )}
       >
-        <div className="divide-y divide-border/25">
+        <div className="divide-y divide-border">
           {props.steps.map((step, index) => {
             const isCompleted =
               props.completedStepIds?.includes(step.id) ||
@@ -233,7 +233,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 transition={{ delay: index * 0.04 }}
                 className={cn(
                   "relative flex items-center gap-4 px-5 py-3.5 transition-colors duration-300",
-                  isActive ? "bg-primary/[0.04]" : "",
+                  isActive ? "bg-muted/50" : "",
                   isCompleted ? "opacity-60" : "",
                 )}
               >
@@ -241,7 +241,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 {isActive && (
                   <motion.span
                     layoutId="active-bar"
-                    className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary rounded-full"
+                    className="absolute left-0 top-0 bottom-0 w-[2px] bg-foreground rounded-full"
                     initial={false}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
@@ -252,10 +252,10 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                   className={cn(
                     "shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-all duration-300",
                     isActive
-                      ? "bg-primary border-primary text-primary-foreground"
+                      ? "bg-foreground border-foreground text-background"
                       : isCompleted
-                        ? "bg-primary/15 border-primary/25 text-primary"
-                        : "bg-transparent border-border/40 text-muted-foreground/40",
+                        ? "bg-muted border-border text-foreground"
+                        : "bg-transparent border-border text-muted-foreground",
                   )}
                 >
                   {isCompleted ? (
@@ -263,7 +263,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                   ) : isActive ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    <span className="text-[9px] font-black">
+                    <span className="text-[10px] font-medium tabular-nums">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                   )}
@@ -276,8 +276,8 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                     isActive
                       ? "text-foreground"
                       : isCompleted
-                        ? "text-muted-foreground/50"
-                        : "text-muted-foreground/35",
+                        ? "text-foreground/70"
+                        : "text-muted-foreground",
                     isPending ? "" : "",
                   )}
                 >
@@ -292,7 +292,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="shrink-0 text-[9px] font-bold text-primary/60 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/15"
+                      className="shrink-0 text-[11px] font-medium text-foreground bg-muted px-2 py-0.5 rounded-md border border-border"
                     >
                       Running
                     </motion.span>
@@ -302,7 +302,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                       key="done"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary/40"
+                      className="shrink-0 w-1.5 h-1.5 rounded-full bg-foreground/40"
                     />
                   )}
                 </AnimatePresence>

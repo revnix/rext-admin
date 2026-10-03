@@ -39,7 +39,7 @@ export default function ContentType({
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold text-foreground tracking-tight"
+          className="text-2xl font-semibold text-foreground tracking-tight"
         >
           {instruction}
         </motion.h2>
@@ -65,14 +65,14 @@ export default function ContentType({
               transition={{ delay: index * 0.05 }}
               onClick={() => setSelectedType(type)}
               className={cn(
-                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-md border transition-all duration-300 w-full outline-none h-full",
+                "group cursor-pointer relative flex flex-col items-start text-left p-4 rounded-md border transition-colors w-full outline-none h-full focus-visible:ring-2 focus-visible:ring-foreground/20",
                 isSelected
-                  ? "border-primary bg-primary/5"
-                  : "bg-card border-border hover:border-primary active:scale-[0.98]",
+                  ? "border-foreground bg-card"
+                  : "bg-card border-border hover:border-foreground/40 active:scale-[0.98]",
               )}
             >
               {isRecommended && (
-                <span className="absolute top-3 right-3 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                <span className="absolute top-3 right-3 rounded-md border border-foreground px-2 py-0.5 text-xs font-medium text-foreground">
                   Recommended
                 </span>
               )}
@@ -80,17 +80,13 @@ export default function ContentType({
               <div
                 className={cn(
                   "mb-1 p-3.5 rounded-md transition-colors",
-                  isSelected
-                    ? "bg-foreground/10"
-                    : "bg-muted group-hover:bg-accent",
+                  isSelected ? "bg-foreground" : "bg-muted",
                 )}
               >
                 <Icon
                   className={cn(
                     "w-6 h-6 transition-colors",
-                    isSelected
-                      ? "text-foreground"
-                      : "text-muted-foreground group-hover:text-foreground",
+                    isSelected ? "text-background" : "text-foreground",
                   )}
                 />
               </div>
@@ -98,10 +94,8 @@ export default function ContentType({
               <div className="flex-1 w-full mb-2">
                 <h3
                   className={cn(
-                    "text-md font-bold mb-3 capitalize transition-colors",
-                    isSelected
-                      ? "text-primary"
-                      : "text-foreground group-hover:text-primary",
+                    "text-md font-semibold mb-3 capitalize transition-colors",
+                    isSelected ? "text-foreground" : "text-foreground",
                   )}
                 >
                   {type.replace(/[_-]/g, " ")}
@@ -113,7 +107,7 @@ export default function ContentType({
               </div>
 
               {isSelected && (
-                <div className="absolute inset-0 rounded-md border-2 border-primary pointer-events-none" />
+                <div className="absolute inset-0 rounded-md border border-foreground pointer-events-none" />
               )}
             </motion.button>
           );

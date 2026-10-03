@@ -30,10 +30,10 @@ export function WorkflowStepIndicator({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.25 }}
-            className="flex items-center gap-1.5 text-primary px-1"
+            className="flex items-center gap-1.5 text-muted-foreground px-1"
           >
-            <ListChecks className="w-3.5 h-3.5 dark:text-blue-600" />
-            <span className="text-[10px] font-bold uppercase tracking-wider dark:text-blue-600">
+            <ListChecks className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">
               Step {activeStepIndex + 1} · {activeStep.label}
             </span>
           </motion.div>
