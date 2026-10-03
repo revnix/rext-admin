@@ -2,7 +2,6 @@
 
 import {
   CreditCard,
-  Plug,
   LayoutDashboard,
   Mail,
   Monitor,
@@ -10,13 +9,11 @@ import {
   Shield,
   User,
   UserCog,
-  Users,
   ChevronDown,
   Settings2,
   FolderOpen,
   Sparkles,
   Library,
-  Palette,
   CalendarDays,
   ShieldCheck,
   DollarSign,
@@ -51,7 +48,7 @@ import { workspaceRoutes, settingsRoutes } from "@/lib/routes";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
-import type { NavGroup } from "@/types/navigation";
+import type { NavGroup, NavItem } from "@/types/navigation";
 import {
   Popover,
   PopoverContent,
@@ -88,9 +85,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state: sidebarState } = useSidebar();
   const { isLimitReached } = useResourceLimit("workspaces");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
-  );
+  // undefined = not toggled yet, so the accordion follows the active route.
+  const [expandedAccordion, setExpandedAccordion] = useState<
+    string | null | undefined
+  >(undefined);
 
   // Main navigation groups
   const mainNavigationGroups: NavGroup[] = [
@@ -146,7 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           prefetch: false,
         },
         {
-          title: "Persona",
+          title: "Personas",
           url: currentWorkspace?.slug
             ? workspaceRoutes.personas(currentWorkspace.slug)
             : "/",
@@ -155,40 +153,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           prefetch: false,
         },
         {
-          title: "Brand Voice",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.brand_voice(currentWorkspace.slug)
-            : "/",
-          icon: Palette,
-          permission: "brand_voice.read",
-          prefetch: false,
-        },
-        {
-          title: "Members",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.members(currentWorkspace.slug)
-            : "/",
-          icon: Users,
-          permission: "member.read",
-          prefetch: false,
-        },
-        {
-          title: "Integrations",
-          url: currentWorkspace?.slug
-            ? workspaceRoutes.integrations(currentWorkspace.slug)
-            : "/",
-          icon: Plug,
-          permission: "integration.read",
-          prefetch: false,
-        },
-        {
+          // No parent permission: each child is filtered on its own, and the
+          // dropdown hides only when every child is filtered out.
           title: "Settings",
           url: currentWorkspace?.slug
             ? workspaceRoutes.settings.root(currentWorkspace.slug)
             : "/",
           icon: Settings2,
-          permission: "workspace.update",
-          prefetch: false,
+          items: currentWorkspace?.slug
+            ? [
+                {
+                  title: "General",
+                  url: workspaceRoutes.settings.root(currentWorkspace.slug),
+                  permission: "workspace.update",
+                  prefetch: false,
+                },
+                {
+                  title: "Brand Voice",
+                  url: workspaceRoutes.brand_voice(currentWorkspace.slug),
+                  permission: "brand_voice.read",
+                  prefetch: false,
+                },
+                {
+                  title: "Members",
+                  url: workspaceRoutes.members(currentWorkspace.slug),
+                  permission: "member.read",
+                  prefetch: false,
+                },
+                {
+                  title: "Integrations",
+                  url: workspaceRoutes.integrations(currentWorkspace.slug),
+                  permission: "integration.read",
+                  prefetch: false,
+                },
+              ]
+            : [],
         },
       ],
     },
@@ -309,6 +308,170 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const navButtonClass =
+    "hover:bg-sidebar-accent-foreground/5 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent-foreground/[0.08] data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium";
+
+  // Exact match, or a nested page under the item (e.g. /settings/trash).
+  const isPathActive = (url: string) => {
+    const path = url.split("?")[0];
+    return (
+      pathname === path || (path !== "/" && pathname.startsWith(`${path}/`))
+    );
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon as React.ElementType;
+    const hasChildren = !!item.items && item.items.length > 0;
+    const isChildActive =
+      hasChildren && !!item.items?.some((sub) => isPathActive(sub.url));
+    const isActive = hasChildren
+      ? isChildActive
+      : pathname === item.url.split("?")[0];
+
+    if (item.title === "Create Workspace" && isLimitReached) {
+      return (
+        <SidebarMenuItem key={item.title}>
+          <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
+            <SidebarMenuButton
+              tooltip={"Upgrade your plan to create more workspaces."}
+              isActive={false}
+              className="cursor-not-allowed opacity-60 hover:bg-transparent data-[active=true]:bg-transparent"
+              onClick={(event) => event.preventDefault()}
+              aria-disabled="true"
+            >
+              {Icon && <Icon />}
+              <span className="font-medium">{item.title}</span>
+            </SidebarMenuButton>
+          </LockedFeatureTooltip>
+        </SidebarMenuItem>
+      );
+    }
+
+    // Collapsed sidebar: children open in a popover beside the icon.
+    if (sidebarState === "collapsed" && hasChildren) {
+      return (
+        <SidebarMenuItem key={item.title}>
+          <Popover
+            open={openDropdown === item.title}
+            onOpenChange={(open) => setOpenDropdown(open ? item.title : null)}
+          >
+            <PopoverTrigger asChild>
+              <SidebarMenuButton
+                tooltip={item.title}
+                className="justify-center hover:bg-sidebar-accent-foreground/5 hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent-foreground/[0.08] data-[state=open]:text-sidebar-accent-foreground"
+                isActive={isActive}
+              >
+                {Icon && <Icon />}
+                <span className="sr-only">{item.title}</span>
+              </SidebarMenuButton>
+            </PopoverTrigger>
+            <PopoverContent side="right" align="start" className="w-48 p-2">
+              <div className="mb-2 px-2 text-xs font-medium text-muted-foreground">
+                {item.title}
+              </div>
+              <SidebarMenu>
+                {item.items?.map((subItem) => (
+                  <SidebarMenuItem key={subItem.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isPathActive(subItem.url)}
+                      className={navButtonClass}
+                    >
+                      <Link
+                        href={subItem.url as Route}
+                        prefetch={subItem.prefetch}
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        <span>{subItem.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </PopoverContent>
+          </Popover>
+        </SidebarMenuItem>
+      );
+    }
+
+    // Expanded sidebar: the parent toggles an accordion. It starts open when
+    // one of its pages is active, until the user toggles it.
+    if (hasChildren) {
+      const isOpen =
+        expandedAccordion === undefined
+          ? isChildActive
+          : expandedAccordion === item.title;
+      return (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton
+            tooltip={item.title}
+            className={`group/menu-button flex w-full items-center justify-between ${navButtonClass}`}
+            isActive={isActive}
+            aria-expanded={isOpen}
+            onClick={(e) => {
+              e.preventDefault();
+              setExpandedAccordion(isOpen ? null : item.title);
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {Icon && <Icon />}
+              <span className="font-medium">{item.title}</span>
+            </div>
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </SidebarMenuButton>
+
+          {isOpen && (
+            <SidebarMenu className="mt-1 flex flex-col gap-1">
+              {item.items?.map((subItem) => (
+                <SidebarMenuItem key={subItem.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isPathActive(subItem.url)}
+                    className={`${navButtonClass} pl-9 transition-colors`}
+                  >
+                    <Link
+                      href={subItem.url as Route}
+                      prefetch={subItem.prefetch}
+                    >
+                      {subItem.title}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          )}
+        </SidebarMenuItem>
+      );
+    }
+
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton
+          tooltip={item.title}
+          asChild
+          isActive={isActive}
+          className={navButtonClass}
+        >
+          {/* prefetch passthrough: undefined = framework default (auto);
+              false = skip viewport prefetch */}
+          <Link
+            href={item.url as Route}
+            prefetch={item.prefetch}
+            className="flex items-center gap-2"
+          >
+            {Icon && <Icon />}
+            <span className="font-medium">{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
   const filteredMainNavigation = useFilteredNavigation(mainNavigationGroups);
   const filteredPersonalNavigation = useFilteredNavigation(
     personalNavigationGroups,
@@ -341,49 +504,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon as React.ElementType;
-                  const isActive = pathname === item.url.split("?")[0];
-                  const isCreateWorkspaceLocked =
-                    item.title === "Create Workspace" && isLimitReached;
-
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      {isCreateWorkspaceLocked ? (
-                        <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
-                          <SidebarMenuButton
-                            tooltip={
-                              "Upgrade your plan to create more workspaces."
-                            }
-                            isActive={false}
-                            className="cursor-not-allowed opacity-60 hover:bg-transparent data-[active=true]:bg-transparent"
-                            onClick={(event) => event.preventDefault()}
-                            aria-disabled="true"
-                          >
-                            {Icon && <Icon />}
-                            <span className="font-medium">{item.title}</span>
-                          </SidebarMenuButton>
-                        </LockedFeatureTooltip>
-                      ) : (
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          isActive={isActive}
-                          asChild
-                          className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                        >
-                          {/* prefetch passthrough: undefined = framework
-                              default (auto); false = skip viewport prefetch */}
-                          <Link href={item.url as Route} prefetch={item.prefetch}>
-                            {Icon && <Icon />}
-                            <span className="font-medium">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      )}
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
+              <SidebarMenu>{group.items.map(renderNavItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
@@ -400,148 +521,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarGroupLabel>{group.groupLabel}</SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon as React.ElementType;
-                  const hasChildren = item.items && item.items.length > 0;
-                  const isActive =
-                    pathname === item.url ||
-                    (hasChildren &&
-                      item.items?.some((sub) => pathname === sub.url));
-
-                  //  Fixed Collapsed Sidebar Popover
-                  if (sidebarState === "collapsed" && hasChildren) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <Popover
-                          open={openDropdown === item.title}
-                          onOpenChange={(open) =>
-                            setOpenDropdown(open ? item.title : null)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <SidebarMenuButton
-                              tooltip={item.title}
-                              className="justify-center hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                              isActive={isActive}
-                            >
-                              {Icon && <Icon />}
-                              <span className="sr-only">{item.title}</span>
-                            </SidebarMenuButton>
-                          </PopoverTrigger>
-
-                          {/* Dropdown Popover */}
-                          <PopoverContent
-                            side="right"
-                            align="start"
-                            className="w-48 p-2"
-                          >
-                            <div className="mb-2 px-2 text-xs font-medium text-muted-foreground">
-                              {item.title}
-                            </div>
-                            <SidebarMenu>
-                              {item.items?.map((subItem) => (
-                                <SidebarMenuItem key={subItem.title}>
-                                  <SidebarMenuButton
-                                    asChild
-                                    isActive={pathname === subItem.url}
-                                    className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                                  >
-                                    <Link
-                                      href={subItem.url as Route}
-                                      prefetch={subItem.prefetch}
-                                    >
-                                      <span>{subItem.title}</span>
-                                    </Link>
-                                  </SidebarMenuButton>
-                                </SidebarMenuItem>
-                              ))}
-                            </SidebarMenu>
-                          </PopoverContent>
-                        </Popover>
-                      </SidebarMenuItem>
-                    );
-                  }
-
-                  // Expanded Sidebar → Accordion
-                  // If has children, we make the parent a TOGGLE, not a link.
-                  // This assumes the "Overview" link exists as the first child if navigation is needed.
-                  if (hasChildren) {
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          className="group/menu-button flex w-full items-center justify-between hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                          isActive={isActive}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setExpandedAccordion(
-                              expandedAccordion === item.title
-                                ? null
-                                : item.title,
-                            );
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            {Icon && <Icon />}
-                            <span className="font-medium">{item.title}</span>
-                          </div>
-                          <ChevronDown
-                            size={16}
-                            className={`transition-transform duration-200 ${
-                              expandedAccordion === item.title
-                                ? "rotate-180"
-                                : ""
-                            }`}
-                          />
-                        </SidebarMenuButton>
-
-                        {expandedAccordion === item.title && (
-                          <SidebarMenu className="mt-1 flex flex-col gap-1">
-                            {item.items?.map((subItem) => (
-                              <SidebarMenuItem key={subItem.title}>
-                                <SidebarMenuButton
-                                  asChild
-                                  isActive={pathname === subItem.url}
-                                  className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)] pl-9 transition-colors"
-                                >
-                                  <Link
-                                    href={subItem.url as Route}
-                                    prefetch={subItem.prefetch}
-                                  >
-                                    {subItem.title}
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            ))}
-                          </SidebarMenu>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  }
-
-                  // Standard Item (No Children)
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        asChild
-                        isActive={isActive}
-                        className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
-                      >
-                        <Link
-                          href={item.url as Route}
-                          prefetch={item.prefetch}
-                          className="flex items-center gap-2"
-                        >
-                          {Icon && <Icon />}
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
+              <SidebarMenu>{group.items.map(renderNavItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
@@ -569,7 +549,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         tooltip={item.title}
                         asChild
                         isActive={isActive}
-                        className="hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-700)] dark:hover:bg-[var(--color-brand-900)]/50 dark:hover:text-[var(--color-brand-100)] data-[active=true]:bg-[var(--color-brand-50)] data-[active=true]:text-[var(--color-brand-700)] dark:data-[active=true]:bg-[var(--color-brand-900)]/50 dark:data-[active=true]:text-[var(--color-brand-100)]"
+                        className="hover:bg-sidebar-accent-foreground/5 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent-foreground/[0.08] data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium"
                       >
                         <Link href={item.url as Route} prefetch={item.prefetch}>
                           {Icon && <Icon />}
