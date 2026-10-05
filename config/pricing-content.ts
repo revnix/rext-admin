@@ -55,6 +55,6 @@ export const PRICING_SUPPORT_LINKS: PricingSupportLink[] = [
     href: "/subscription",
     label: "View Subscription Dashboard",
   },
-  { id: "support", href: "mailto:support@wrext.com", label: "Contact Support" },
+  { id: "support", href: "mailto:contact@rext.ai", label: "Contact Support" },
   { id: "docs", href: "/docs/pricing", label: "View Documentation" },
 ];

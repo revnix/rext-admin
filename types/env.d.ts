@@ -11,7 +11,7 @@ declare namespace NodeJS {
      * Backend API base URL for topic generation service
      *
      * @example "http://127.0.0.1:2024" (development)
-     * @example "https://api.wrext.com" (production)
+     * @example "https://api.rext.ai" (production)
      */
     BACKEND_API_URL: string;
 

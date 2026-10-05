@@ -152,7 +152,7 @@ export default function TermsOfServicePage() {
           <h2>11. Contact</h2>
           <p>
             Questions about these Terms? Contact us at{" "}
-            <a href="mailto:legal@wrext.com">legal@wrext.com</a>.
+            <a href="mailto:contact@rext.ai">contact@rext.ai</a>.
           </p>
 
           <div className="mt-8 p-4 border rounded-md bg-muted">

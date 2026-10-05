@@ -263,7 +263,7 @@ export default function PrivacyPolicyPage() {
           <p>
             We do not knowingly collect payment information from anyone under
             16. If you believe a child has provided payment details, contact us
-            immediately at support@wrext.com.
+            immediately at contact@rext.ai.
           </p>
 
           <h2>10. Changes to This Policy</h2>
@@ -282,14 +282,7 @@ export default function PrivacyPolicyPage() {
           <p>For privacy or billing questions:</p>
           <ul>
             <li>
-              Email: <a href="mailto:privacy@wrext.com">privacy@wrext.com</a>
-            </li>
-            <li>
-              Support: <a href="mailto:support@wrext.com">support@wrext.com</a>
-            </li>
-            <li>
-              Data Protection Officer:{" "}
-              <a href="mailto:dpo@wrext.com">dpo@wrext.com</a>
+              Email: <a href="mailto:contact@rext.ai">contact@rext.ai</a>
             </li>
           </ul>
 

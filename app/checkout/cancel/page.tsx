@@ -35,9 +35,8 @@ export default function CheckoutCancelPage() {
   };
 
   const handleContactSupport = () => {
-    // Update with your actual support email
     window.location.href =
-      "mailto:support@wrext.com?subject=Subscription Checkout Issue";
+      "mailto:contact@rext.ai?subject=Subscription Checkout Issue";
   };
 
   return (
