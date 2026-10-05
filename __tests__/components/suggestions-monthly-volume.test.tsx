@@ -47,15 +47,14 @@ describe("SuggestionsSection monthly volume", () => {
     expect(screen.queryByText("Fetching...")).not.toBeInTheDocument();
   });
 
-  it.each([
-    null,
-    undefined,
-    "",
-  ])("completes without a spinner when volume is %p", (volume) => {
-    renderSuggestions(seo(volume));
-    expect(screen.getByText("Volume not available")).toBeInTheDocument();
-    expect(screen.queryByText("Fetching...")).not.toBeInTheDocument();
-  });
+  it.each([null, undefined, ""])(
+    "completes without a spinner when volume is %p",
+    (volume) => {
+      renderSuggestions(seo(volume));
+      expect(screen.getByText("Volume not available")).toBeInTheDocument();
+      expect(screen.queryByText("Fetching...")).not.toBeInTheDocument();
+    },
+  );
 
   it("keeps the spinner only while the analysis result has not arrived", () => {
     renderSuggestions(null);
