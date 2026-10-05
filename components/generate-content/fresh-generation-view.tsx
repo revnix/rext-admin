@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertCircle } from "lucide-react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -70,7 +69,8 @@ import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { Button } from "@/components/ui/button";
+import { RunNotice } from "@/components/generate-content/run-notice";
+import { readRunFailedEvent } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
 import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
@@ -352,6 +352,8 @@ export function FreshGenerationView({
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  // A run the backend ended early (no search results, a failed lookup).
+  const [runError, setRunError] = useState<string | null>(null);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
@@ -1210,6 +1212,18 @@ export function FreshGenerationView({
                 ),
               );
             }
+          } else if (d?.type === "run") {
+            const runFailed = readRunFailedEvent(d);
+            if (runFailed) {
+              setRunError(runFailed.message);
+              if (activeThreadId) {
+                updateBackgroundJob(activeThreadId, {
+                  status: "failed",
+                  stage: "Generation stopped",
+                  error: runFailed.message,
+                });
+              }
+            }
           } else if (d?.type === "credits") {
             const credits = Number(d.current_credits ?? 0);
             const step = String(d.step ?? "credits.updated");
@@ -1522,6 +1536,7 @@ export function FreshGenerationView({
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
 
+      setRunError(null);
       dispatch({ type: "RESET_FOR_REANALYSIS" });
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
@@ -1663,6 +1678,7 @@ export function FreshGenerationView({
       // A resume that dies before `run/created` (aborted fetch, dev-server
       // hiccup, rejected run) leaves no run on the thread and nothing on
       // screen — the click simply vanishes. Retry once before reporting back.
+      setRunError(null);
       for (let attempt = 0; attempt < 2; attempt++) {
         cancelStream();
         const controller = new AbortController();
@@ -2255,27 +2271,27 @@ export function FreshGenerationView({
       </div>
 
       {restoreError && (
-        <div className="mx-auto my-8 flex w-full max-w-2xl items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              We could not restore this article
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">{restoreError}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                setRestoreError(null);
-                onBack();
-              }}
-            >
-              Start a new article
-            </Button>
-          </div>
-        </div>
+        <RunNotice
+          title="We could not restore this article"
+          message={restoreError}
+          actionLabel="Start a new article"
+          onAction={() => {
+            setRestoreError(null);
+            onBack();
+          }}
+        />
+      )}
+
+      {runError && !restoreError && (
+        <RunNotice
+          title="The analysis stopped"
+          message={runError}
+          actionLabel="Start again"
+          onAction={() => {
+            setRunError(null);
+            onBack();
+          }}
+        />
       )}
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}

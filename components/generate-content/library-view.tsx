@@ -33,7 +33,8 @@ import type {
 } from "@/types/generate-content";
 import { getDifficultyLabel } from "../ui/content/chart-radial-stacked";
 import {
-  isMonthlyVolumeAvailable,
+  describeMonthlyVolume,
+  formatCompactVolume,
   type MonthlyVolumeInput,
 } from "@/lib/generate-content/monthly-volume";
 import { useRouter } from "next/navigation";
@@ -50,12 +51,13 @@ const getDifficultyBg = (kd: number | null) => {
   return "bg-emerald-500/10 border-emerald-200";
 };
 
-const formatVolume = (volume: MonthlyVolumeInput) => {
-  if (!isMonthlyVolumeAvailable(volume)) return "N/A";
-  const vol = Number(String(volume).replace(/,/g, ""));
-  if (vol >= 1000000) return `${(vol / 1000000).toFixed(1)}M`;
-  if (vol >= 1000) return `${(vol / 1000).toFixed(1)}k`;
-  return vol.toString();
+// "—" with the reason on hover when there is no number (the design language's
+// unknown value), never "N/A".
+const volumeCell = (volume: MonthlyVolumeInput, status?: string | null) => {
+  const display = describeMonthlyVolume(volume, status);
+  return display.kind === "volume"
+    ? { text: formatCompactVolume(display.volume), title: undefined }
+    : { text: "—", title: display.label };
 };
 
 export function LibraryView() {
@@ -134,6 +136,7 @@ export function LibraryView() {
             difficulty: getDifficultyLabel(kd),
             difficultyScore: kd,
             volume: value.seo_state?.volume,
+            volumeStatus: value.seo_state?.volume_status,
             intent: value.seo_state?.intent || "informational",
             lastUpdated: value.timestamp
               ? formatDistanceToNow(new Date(value.timestamp), {
@@ -288,8 +291,11 @@ export function LibraryView() {
                       <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
                         Est. Volume
                       </span>
-                      <span className="text-lg font-bold text-foreground">
-                        {formatVolume(item.volume)}
+                      <span
+                        className="text-lg font-bold tabular-nums text-foreground"
+                        title={volumeCell(item.volume, item.volumeStatus).title}
+                      >
+                        {volumeCell(item.volume, item.volumeStatus).text}
                       </span>
                     </div>
                     <div className="flex gap-2">

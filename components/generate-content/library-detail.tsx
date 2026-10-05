@@ -13,8 +13,7 @@ import {
 import { useState, useMemo } from "react";
 import type { LibraryItem, StoredKeyword } from "@/types/generate-content";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
-import { isMonthlyVolumeAvailable } from "@/lib/generate-content/monthly-volume";
-import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
+import { MonthlyVolume } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -139,13 +138,10 @@ export default function LibraryDetail({
               </span>
               <TrendingUp className="w-4 h-4 text-foreground" />
             </div>
-            {isMonthlyVolumeAvailable(selectedItem?.volume) ? (
-              <MonthlyVolumeCard volume={String(selectedItem.volume)} />
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Volume not available
-              </p>
-            )}
+            <MonthlyVolume
+              volume={selectedItem?.volume}
+              status={data.seo_state?.volume_status}
+            />
           </Card>
           <Card className="p-4 col-span-2 flex flex-col justify-center bg-white border-border/50 dark:bg-card">
             {data.seo_state?.intent ? (

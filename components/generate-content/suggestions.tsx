@@ -11,9 +11,9 @@ import {
   Layers,
 } from "lucide-react";
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
-import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
+import { MonthlyVolume } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
-import { isMonthlyVolumeAvailable } from "@/lib/generate-content/monthly-volume";
+import { useTimedOut } from "@/hooks/use-timed-out";
 import { useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
@@ -24,6 +24,9 @@ type IntentOption =
   | "navigational";
 
 type IntentOptionItem = { value: IntentOption; label: string };
+
+// No loading state on this step outlives this; then it says what is missing.
+const LOADING_TIMEOUT_MS = 30_000;
 
 const VALID_INTENTS = [
   "informational",
@@ -71,6 +74,14 @@ export function SuggestionsSection({
   onIntentChange: (intent: IntentOption) => void;
   keywordClusters?: KeywordCluster[];
 }) {
+  // The volume arrives with the keyword gate; if it never does, stop spinning
+  // after 30 s and say so rather than show "Fetching" for ever.
+  const volumeTimedOut = useTimedOut(!seoResult, LOADING_TIMEOUT_MS);
+  const suggestionsTimedOut = useTimedOut(
+    suggestedKeywords.length === 0,
+    LOADING_TIMEOUT_MS,
+  );
+
   const difficultyScore = useMemo(() => {
     const value = seoResult?.keyword_difficulty;
     const numberValue = typeof value === "number" ? value : Number(value);
@@ -80,6 +91,11 @@ export function SuggestionsSection({
   const intentOptions = useMemo<IntentOptionItem[]>(
     () => resolveIntentOptions(seoResult?.intent),
     [seoResult?.intent],
+  );
+
+  const intentTimedOut = useTimedOut(
+    !(intentOptions.length > 0 && seoResult?.intent),
+    LOADING_TIMEOUT_MS,
   );
 
   const otherIntents = useMemo(
@@ -207,13 +223,19 @@ export function SuggestionsSection({
               ) : (
                 <motion.div
                   key="intent-loader"
-                  className="flex items-center gap-2 text-xs text-muted-foreground/50"
+                  className="flex items-center gap-2 text-xs text-muted-foreground"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Analyzing...
+                  {intentTimedOut ? (
+                    "Intent not available for this keyword"
+                  ) : (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Analyzing...
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -230,7 +252,7 @@ export function SuggestionsSection({
               <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
             <AnimatePresence mode="wait">
-              {!seoResult ? (
+              {!seoResult && !volumeTimedOut ? (
                 <motion.div
                   key="volume-loader"
                   className="flex items-center gap-2 text-xs text-muted-foreground/50"
@@ -241,25 +263,19 @@ export function SuggestionsSection({
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Fetching...
                 </motion.div>
-              ) : isMonthlyVolumeAvailable(seoResult.volume) ? (
+              ) : (
                 <motion.div
                   key="volume-content"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <MonthlyVolumeCard volume={String(seoResult.volume)} />
+                  <MonthlyVolume
+                    volume={seoResult?.volume}
+                    status={seoResult?.volume_status}
+                    timedOut={volumeTimedOut}
+                  />
                 </motion.div>
-              ) : (
-                <motion.p
-                  key="volume-unavailable"
-                  className="text-xs text-muted-foreground/50"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  Volume not available
-                </motion.p>
               )}
             </AnimatePresence>
           </motion.div>
@@ -307,8 +323,14 @@ export function SuggestionsSection({
               animate={{ opacity: 1 }}
               className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2"
             >
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Generating suggestions...
+              {suggestionsTimedOut ? (
+                "No suggestions for this keyword"
+              ) : (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Generating suggestions...
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,74 +1,65 @@
-import { Area, AreaChart } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
-import React from "react";
-
-const VOLUME_COLOR = "var(--foreground)";
-
-const chartConfig = {
-  volume: {
-    label: "Volume",
-    color: VOLUME_COLOR,
-  },
-};
+import {
+  describeMonthlyVolume,
+  formatCompactVolume,
+  type MonthlyVolumeInput,
+} from "@/lib/generate-content/monthly-volume";
 
 /**
- * Displays monthly search volume text with a lightweight sparkline trend.
+ * A keyword's average monthly search volume. Only the number the analysis
+ * measured: the trend line that used to sit beneath it was drawn from a sine
+ * wave, not from data, so it is gone until a real monthly series exists.
  */
-export function MonthlyVolumeCard({ volume = "0" }) {
-  const numericVolume = React.useMemo(() => {
-    return parseFloat(String(volume).replace(/[^0-9.]/g, "")) || 0;
-  }, [volume]);
-
-  const formattedVolume = React.useMemo(() => {
-    return new Intl.NumberFormat("en-US", {
-      notation: "compact",
-      compactDisplay: "short",
-      maximumFractionDigits: 1,
-    }).format(numericVolume);
-  }, [numericVolume]);
-
-  const sparkData = React.useMemo(() => {
-    const base = numericVolume > 0 ? numericVolume : 1.2;
-
-    // Generate a semi-random but deterministic trend
-    return Array.from({ length: 10 }, (_, i) => ({
-      date: i,
-      volume: base * (0.85 + Math.sin(i * 1.5) * 0.1 + (i / 10) * 0.1),
-    }));
-  }, [numericVolume]);
-
+export function MonthlyVolumeCard({ volume }: { volume: number }) {
   return (
-    <>
-      <div className="flex flex-col">
-        <h3 className="text-3xl font-semibold text-foreground">
-          {formattedVolume}
-        </h3>
-        <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
-          Avg. searches per month
-        </p>
-      </div>
+    <div className="flex flex-col">
+      <p className="text-3xl font-semibold tabular-nums text-foreground">
+        {formatCompactVolume(volume)}
+      </p>
+      <p className="mt-0.5 whitespace-nowrap text-xs text-muted-foreground">
+        Avg. searches per month
+      </p>
+    </div>
+  );
+}
 
-      <div className="h-12 w-full mt-3">
-        <ChartContainer config={chartConfig} className="h-full w-full">
-          <AreaChart data={sparkData}>
-            <defs>
-              <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={VOLUME_COLOR} stopOpacity={0.08} />
-                <stop offset="95%" stopColor={VOLUME_COLOR} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Area
-              dataKey="volume"
-              type="monotone"
-              fill="url(#fillVolume)"
-              stroke={VOLUME_COLOR}
-              strokeWidth={1.5}
-              isAnimationActive={true}
-              dot={false}
-            />
-          </AreaChart>
-        </ChartContainer>
-      </div>
-    </>
+/** The volume, or the words for why there is none (the backend's volume_status). */
+export function MonthlyVolume({
+  volume,
+  status,
+  timedOut = false,
+}: {
+  volume: MonthlyVolumeInput;
+  status?: string | null;
+  /** The analysis never sent a volume within the wait. */
+  timedOut?: boolean;
+}) {
+  if (timedOut && volume === undefined && !status) {
+    return (
+      <MonthlyVolumeMessage
+        label="Not available"
+        detail="The keyword analysis did not return a search volume."
+      />
+    );
+  }
+  const display = describeMonthlyVolume(volume, status);
+  if (display.kind === "volume") {
+    return <MonthlyVolumeCard volume={display.volume} />;
+  }
+  return <MonthlyVolumeMessage label={display.label} detail={display.detail} />;
+}
+
+/** A volume that is not a number: what happened, in a word or two, and why. */
+export function MonthlyVolumeMessage({
+  label,
+  detail,
+}: {
+  label: string;
+  detail: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <p className="text-sm font-medium text-foreground">{label}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+    </div>
   );
 }
