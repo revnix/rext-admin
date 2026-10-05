@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Button } from "@/components/ui/button";
 
 interface RevenueChartProps {
@@ -65,10 +66,11 @@ export function RevenueChart({
           <XAxis dataKey="month" />
           <YAxis tickFormatter={formatCurrency} />
           <Tooltip
+            itemSorter={inSeriesOrder}
             formatter={(value) => [`$${Number(value).toFixed(2)}`, ""]}
             labelFormatter={(label) => `Month: ${label}`}
           />
-          <Legend />
+          <Legend itemSorter={null} />
           <Line
             type="monotone"
             dataKey="mrr"

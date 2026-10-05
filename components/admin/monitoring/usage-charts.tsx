@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -170,8 +171,8 @@ export function UsageCharts({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
-              <Legend />
+              <Tooltip itemSorter={inSeriesOrder} />
+              <Legend itemSorter={null} />
               <Line
                 type="monotone"
                 dataKey="content_created"

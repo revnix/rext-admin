@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TimelineData {
@@ -70,8 +71,8 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
           axisLine={false}
           tickFormatter={(value) => `${value}`}
         />
-        <Tooltip />
-        <Legend />
+        <Tooltip itemSorter={inSeriesOrder} />
+        <Legend itemSorter={null} />
         <Line
           type="monotone"
           dataKey="Sent"
