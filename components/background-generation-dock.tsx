@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
   announceBackgroundGenerationRemoval,
@@ -223,7 +224,7 @@ export function BackgroundGenerationDock() {
             : "";
 
           try {
-            const response = await fetch(
+            const response = await authenticatedFetch(
               `/api/generate/${encodeURIComponent(job.threadId)}/status${runParam}`,
               { cache: "no-store" },
             );
@@ -402,7 +403,7 @@ export function BackgroundGenerationDock() {
 
   const cancelJob = async (target: BackgroundGenerationJob) => {
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `/api/generate/${encodeURIComponent(target.threadId)}/cancel`,
         {
           method: "POST",

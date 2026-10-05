@@ -19,7 +19,7 @@ export async function GET(
   const runId = request.nextUrl.searchParams.get("runId");
   const includeState =
     request.nextUrl.searchParams.get("includeState") === "true";
-  const client = getGenerationClient<WREXT>();
+  const client = getGenerationClient<WREXT>(access.accessToken);
 
   try {
     const [run, threadState] = await Promise.all([

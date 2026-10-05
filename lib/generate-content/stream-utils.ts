@@ -1,5 +1,6 @@
 import type { RunStreamEvent } from "@/types/generate-content";
 import { RunStreamEventSchema } from "@/schemas/sse-schemas";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 
 const sseLogger = log.forComponent("sse-stream");
@@ -16,7 +17,7 @@ export async function* streamFromSSE(
   body: Record<string, unknown>,
   signal?: AbortSignal,
 ): AsyncGenerator<RunStreamEvent> {
-  const res = await fetch(url, {
+  const res = await authenticatedFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
