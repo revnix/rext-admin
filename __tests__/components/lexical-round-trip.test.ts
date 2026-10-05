@@ -14,12 +14,10 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-} from "@lexical/markdown";
+import { $convertToMarkdownString } from "@lexical/markdown";
 import { createEditor, type LexicalEditor } from "lexical";
 import {
+  $importArticleMarkdown,
   CUSTOM_TRANSFORMERS,
   NODES,
   theme,
@@ -45,7 +43,7 @@ function load(markdown: string): { editor: LexicalEditor; root: HTMLElement } {
   editor.setRootElement(root);
   editor.update(
     () => {
-      $convertFromMarkdownString(markdown, CUSTOM_TRANSFORMERS);
+      $importArticleMarkdown(markdown);
     },
     { discrete: true },
   );

@@ -26,9 +26,6 @@ const customJestConfig: Config = {
   // Ignore patterns
   testPathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/utils/"],
 
-  // Transform ESM modules from node_modules
-  transformIgnorePatterns: ["node_modules/(?!(next-auth|@auth|@panva)/)"],
-
   // Coverage configuration
   collectCoverageFrom: [
     "app/**/*.{js,jsx,ts,tsx}",
@@ -117,5 +114,39 @@ const customJestConfig: Config = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
 };
 
+// Lexical ships ES modules only (from 0.51), so Jest has to transform it. next/jest
+// leaves node_modules untransformed except its own list and lets a config only add
+// to what is ignored, so Lexical is added to next/jest's two node_modules patterns
+// (npm's folder layout and pnpm's).
+const TRANSFORMED = {
+  npm: "lexical|@lexical/[^/]+",
+  pnpm: "lexical|@lexical\\+[^@]+",
+};
+const LEXICAL_FILES = [
+  "/app/node_modules/lexical/Lexical.mjs",
+  "/app/node_modules/.pnpm/lexical@0.52.0/node_modules/lexical/Lexical.mjs",
+  "/app/node_modules/.pnpm/@lexical+markdown@0.52.0/node_modules/@lexical/markdown/LexicalMarkdown.mjs",
+];
+
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(customJestConfig);
+export default async () => {
+  const config = await createJestConfig(customJestConfig)();
+  const patterns = (config.transformIgnorePatterns ?? []).map((pattern) =>
+    pattern
+      .replace("(?!.pnpm)(?!(", `(?!.pnpm)(?!(${TRANSFORMED.npm}|`)
+      .replace("\\.pnpm[\\\\/](?!(", `\\.pnpm[\\\\/](?!(${TRANSFORMED.pnpm}|`),
+  );
+  // If a next/jest upgrade changes its patterns, fail here rather than in every
+  // test that loads the editor.
+  for (const file of LEXICAL_FILES) {
+    const ignoredBy = patterns.find((pattern) =>
+      new RegExp(pattern).test(file),
+    );
+    if (ignoredBy) {
+      throw new Error(
+        `jest.config.ts: ${file} would not be transformed (ignored by ${ignoredBy}); update TRANSFORMED for this next/jest`,
+      );
+    }
+  }
+  return { ...config, transformIgnorePatterns: patterns };
+};
