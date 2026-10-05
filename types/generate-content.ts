@@ -1,3 +1,4 @@
+import type { VolumeStatus } from "@/lib/generate-content/monthly-volume";
 import type { Message } from "@langchain/langgraph-sdk";
 import type { LoadingStep } from "@/constants/loading-steps";
 
@@ -775,6 +776,8 @@ export type SEORESULT = {
   seo_strategy?: SEOStrategyState;
   seo_opportunity?: SEOOpportunityState;
   volume?: string | number | null;
+  /** Why `volume` is or is not a number (lib/generate-content/monthly-volume.ts). */
+  volume_status?: VolumeStatus | null;
   seo_health_score: number;
   issue_summary: IssueSummary;
   issues: Issue[];
@@ -949,6 +952,7 @@ export interface StoredKeyword {
     keyword_difficulty: number | null;
     intent: string | string[];
     volume?: number | string | null;
+    volume_status?: VolumeStatus | null;
     backlinks: number | null;
     referring_domains: number | null;
   };
@@ -961,6 +965,7 @@ export interface LibraryItem {
   difficulty: string;
   difficultyScore: number | null;
   volume?: string | number | null;
+  volumeStatus?: VolumeStatus | null;
   intent: string | string[];
   lastUpdated: string;
   rawData: StoredKeyword;

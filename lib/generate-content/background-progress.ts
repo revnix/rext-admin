@@ -26,6 +26,8 @@ type GenerationThreadState = GenerationGraphState & {
   values?: {
     content?: {
       error?: string;
+      /** "no_serp_data": the run ended for want of search results (rext-backend G3). */
+      error_code?: string;
       final_content?: unknown;
       review?: {
         readability_metrics?: unknown;
@@ -154,7 +156,11 @@ export function deriveBackgroundProgress(
   if (contentError) {
     return {
       progress: 100,
-      stage: "Generation failed",
+      // A keyword with no search results is not a failure of the system.
+      stage:
+        content?.error_code === "no_serp_data"
+          ? "Generation stopped"
+          : "Generation failed",
       error: contentError,
     };
   }
