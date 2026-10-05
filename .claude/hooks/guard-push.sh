@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook for Bash: refuses a git push to main, staging or stage (from a session, merges into
 # staging go through rext-control/scripts/app/merge.sh), a bare push from a checkout of one of them, a
-# push of every branch at once, and a forced push other than --force-with-lease (which a session needs
+# push of every branch at once (--all, --mirror, a wildcard refspec, push.default=matching), and a forced push other than --force-with-lease (which a session needs
 # after rebasing its own task branch). Exit 2 blocks the command; stderr is the reason Claude is shown.
 # It reads the hook input (JSON) on stdin and parses the command itself rather than relying on the
 # hook's "if" filter, which misses forms like `git -C . push`.
@@ -13,6 +13,9 @@ if ! command -v python3 > /dev/null 2>&1; then
   # Without python3, a rougher check on the raw text.
   if grep -qE 'push[^|&;]*[[:space:]:+"](main|staging|stage)([[:space:]"]|$)' <<< "$input"; then
     echo "a push to main, staging or stage is not allowed from a session: push your task branch and open a pull request into staging" >&2; exit 2
+  fi
+  if grep -qE 'push[^|&;]*\*' <<< "$input"; then
+    echo "a wildcard refspec can update main or staging: push your task branch by name" >&2; exit 2
   fi
   if grep -qE 'push[^|&;]*[[:space:]](--force([[:space:]"=]|$)|-[a-zA-Z]*f[a-zA-Z]*([[:space:]"]|$)|\+)' <<< "$input"; then
     echo "a forced push is refused: after rebasing your own task branch, use git push --force-with-lease" >&2; exit 2
@@ -75,6 +78,11 @@ def check_push(args, path):
     refspecs = positional[1:]
     targets = []
     if not refspecs:
+        # A push that names no branch follows the configuration, which can select every matching branch.
+        configured = git_out(path, "config", "--get-regexp", r"^remote\..*\.push$")
+        if git_out(path, "config", "push.default") == "matching" or "*" in configured or re.search(r"\s\+?:$", configured, re.M):
+            block("this checkout pushes every matching branch when no branch is named (push.default or a remote push refspec): "
+                  "push your task branch by name")
         targets.append(bare_push_target(path))
     for spec in refspecs:
         if spec.startswith("+"):
@@ -82,6 +90,8 @@ def check_push(args, path):
             spec = spec[1:]
         if spec == ":":
             block("git push with \":\" pushes every matching branch: push your task branch by name")
+        if "*" in spec:
+            block("a wildcard refspec can update main or staging: push your task branch by name")
         src, _, dst = spec.partition(":")
         dst = dst or src
         if dst in ("HEAD", "@"):
