@@ -28,7 +28,8 @@ export function generationIdentity(
   return userId ? { userId, accessToken } : null;
 }
 
-function tokenUserId(accessToken: string): string | null {
+/** The `id` claim of a backend access token, unverified. */
+export function tokenUserId(accessToken: string): string | null {
   const payload = accessToken.split(".")[1];
   if (!payload) return null;
 

@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { Client } from "@langchain/langgraph-sdk";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { getAuthHeaders } from "@/lib/auth-utils";
+import { authenticatedFetch, getAuthHeaders } from "@/lib/auth-utils";
+import { tokenUserId } from "@/lib/generate-content/generation-identity";
 import { formatDistanceToNow } from "date-fns";
 import { log } from "@/lib/logger";
 import { apiClient } from "@/lib/api-client";
@@ -84,16 +85,22 @@ export function LibraryView() {
 
       setIsLoading(true);
       try {
-        // The store answers only a signed-in caller, and only for their own
-        // library namespace.
+        // The store answers only a signed-in caller, and only for the library
+        // of the user their token speaks for: the impersonated user while a
+        // super admin impersonates someone. authenticatedFetch adds the token,
+        // and refreshes it and retries when it has expired.
+        const { Authorization } = await getAuthHeaders();
+        const ownerId =
+          tokenUserId(Authorization?.replace(/^Bearer\s+/i, "") ?? "") ??
+          userId;
         const client = new Client({
           apiUrl: resolveApiBaseUrl({
             explicitBaseUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL,
           }),
-          defaultHeaders: await getAuthHeaders(),
+          callerOptions: { fetch: authenticatedFetch },
         });
 
-        const specificPrefix = ["library", userId, workspaceId];
+        const specificPrefix = ["library", ownerId, workspaceId];
 
         const searchResults = await client.store.searchItems(specificPrefix, {
           query: query,

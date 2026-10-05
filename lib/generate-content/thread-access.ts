@@ -2,7 +2,10 @@ import { Client, type Thread } from "@langchain/langgraph-sdk";
 
 import { auth } from "@/auth";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
-import { generationIdentity } from "@/lib/generate-content/generation-identity";
+import {
+  type GenerationIdentity,
+  generationIdentity,
+} from "@/lib/generate-content/generation-identity";
 
 /**
  * The LangGraph client shared by every `/api/generate/*` proxy route. It sends
@@ -17,11 +20,15 @@ export const getGenerationClient = <TState = unknown>(accessToken: string) =>
     defaultHeaders: { Authorization: `Bearer ${accessToken}` },
   });
 
+type Denied = { ok: false; response: Response };
+
+export type GenerationAccess = ({ ok: true } & GenerationIdentity) | Denied;
+
 export type ThreadAccess =
   | { ok: true; userId: string; accessToken: string; thread: Thread | null }
-  | { ok: false; response: Response };
+  | Denied;
 
-const deny = (error: string, status: number, code?: string): ThreadAccess => ({
+const deny = (error: string, status: number, code?: string): Denied => ({
   ok: false,
   response: Response.json(code ? { error, code } : { error }, { status }),
 });
@@ -31,10 +38,19 @@ const deny = (error: string, status: number, code?: string): ThreadAccess => ({
  * the browser rotates backend tokens, so the routes answer with the code
  * `authenticatedFetch` reads as "refresh the session and try again" — a tab
  * left in the background past the token's lifetime would otherwise fail every
- * status poll until the user came back to it.
+ * call until the user came back to it.
  */
-const isExpiredTokenError = (error: unknown) =>
+export const isExpiredTokenError = (error: unknown) =>
   /token has expired/i.test((error as { message?: string })?.message ?? "");
+
+export const tokenExpired = (): Response =>
+  deny("Authentication token has expired", 401, "TOKEN_EXPIRED").response;
+
+/** The user and token a generate route acts with, or the reply to send. */
+export async function requireGenerationIdentity(): Promise<GenerationAccess> {
+  const identity = generationIdentity(await auth());
+  return identity ? { ok: true, ...identity } : deny("Unauthorized", 401);
+}
 
 /**
  * Session + ownership gate for the `/api/generate/[threadId]/*` routes.
@@ -57,8 +73,8 @@ const isExpiredTokenError = (error: unknown) =>
 export async function requireThreadOwner(
   threadId: string,
 ): Promise<ThreadAccess> {
-  const identity = generationIdentity(await auth());
-  if (!identity) return deny("Unauthorized", 401);
+  const identity = await requireGenerationIdentity();
+  if (!identity.ok) return identity;
   const { userId, accessToken } = identity;
 
   let thread: Thread;
@@ -69,7 +85,7 @@ export async function requireThreadOwner(
       return { ok: true, userId, accessToken, thread: null };
     }
     if (isExpiredTokenError(error)) {
-      return deny("Authentication token has expired", 401, "TOKEN_EXPIRED");
+      return { ok: false, response: tokenExpired() };
     }
 
     return deny("Unable to verify thread ownership", 502);
