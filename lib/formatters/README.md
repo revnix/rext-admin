@@ -352,5 +352,4 @@ numberFormat.integer(stats.count) // Returns "0" if null
 
 ## Related
 
-- [useDeleteHandler Hook](../../hooks/useDeleteHandler.ts) - Centralized delete handling
 - [Knowledge Components](../../components/knowledge/) - Example usage
