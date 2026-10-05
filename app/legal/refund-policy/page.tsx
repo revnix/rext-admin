@@ -171,9 +171,8 @@ export default function RefundPolicyPage() {
           <h3>How to Request a Refund</h3>
           <ol>
             <li>
-              Contact us at{" "}
-              <a href="mailto:support@wrext.com">support@wrext.com</a> within 14
-              days
+              Contact us at <a href="mailto:contact@rext.ai">contact@rext.ai</a>{" "}
+              within 14 days
             </li>
             <li>Include your account email and reason for refund</li>
             <li>We'll review and respond within 2 business days</li>
@@ -224,13 +223,18 @@ export default function RefundPolicyPage() {
           <p>For questions about refunds or cancellations, contact:</p>
           <ul>
             <li>
-              Email: <a href="mailto:support@wrext.com">support@wrext.com</a>
+              Email: <a href="mailto:contact@rext.ai">contact@rext.ai</a>
             </li>
             <li>
               Support Portal:{" "}
-              <Link href={`/help` as Route} className="text-primary underline">
-                wrext.com/help
-              </Link>
+              <a
+                href="https://rext.ai/help"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                rext.ai/help
+              </a>
             </li>
             <li>Response Time: Within 24 hours on business days</li>
           </ul>

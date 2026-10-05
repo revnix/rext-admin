@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import type { Metadata, Route } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -214,13 +214,18 @@ export default function SubscriptionTermsPage() {
           </p>
           <ul>
             <li>
-              Email: <a href="mailto:support@wrext.com">support@wrext.com</a>
+              Email: <a href="mailto:contact@rext.ai">contact@rext.ai</a>
             </li>
             <li>
               Support Portal:{" "}
-              <Link href={`/help` as Route} className="text-primary underline">
-                wrext.com/help
-              </Link>
+              <a
+                href="https://rext.ai/help"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                rext.ai/help
+              </a>
             </li>
           </ul>
 

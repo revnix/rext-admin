@@ -50,11 +50,11 @@ export const metadata: Metadata = {
   authors: [{ name: "Rext AI Team" }],
   creator: "Rext AI",
   publisher: "Rext AI",
-  metadataBase: new URL("https://admin.wrext.com"),
+  metadataBase: new URL("https://app.rext.ai"),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://admin.wrext.com",
+    url: "https://app.rext.ai",
     title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
       "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
