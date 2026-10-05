@@ -51,8 +51,12 @@ describe("PER-003 — display name is required and stands alone", () => {
     );
   });
 
-  it.each(["M", "te", "Mar"])("rejects the too-short name %s", (name) => {
-    expect(validatePersona({ name }).name).toContain("at least 4");
+  it.each(["M", "te"])("rejects the too-short name %s", (name) => {
+    expect(validatePersona({ name }).name).toContain("at least 3");
+  });
+
+  it("accepts a name at the minimum length", () => {
+    expect(validatePersona({ name: "Mar" }).name).toBeUndefined();
   });
 
   it("does not accept full_name in its place", () => {
@@ -267,12 +271,21 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
     expect(
       validatePersona({ name: "Marketing Mary", [field]: value })[field],
     ).toBe(
-      `${field.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase())} must contain at least one letter`,
+      `${field.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase())} entries must each contain at least one letter`,
     );
   });
 
+  it("requires a letter in every entry of a list, not just one", () => {
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        tone_of_voice: "Friendly, 2026",
+      }).tone_of_voice,
+    ).toBe("Tone of voice entries must each contain at least one letter");
+  });
+
   it.each([
-    ["tone_of_voice", "Friendly & direct, 2026"],
+    ["tone_of_voice", "Friendly & direct, upbeat about 2026"],
     ["goals", "Increase sign-ups by 20%"],
     ["pain_points", "Budget: $5k / month"],
     ["behaviors", "Researches online, compares options (2–3 days)"],
