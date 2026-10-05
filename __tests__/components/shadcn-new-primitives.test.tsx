@@ -1,7 +1,8 @@
 /**
  * The shadcn components added for Plan C (Field, Input Group, Empty, Kbd,
- * Spinner) render with this app's own Label, Separator, Button, Input and
- * Textarea, which differ from the registry's (Input wraps its control in a div).
+ * Spinner) render with this app's own Label, Separator, Button and Textarea,
+ * which differ from the registry's. Input Group renders its own bare input,
+ * because the app's Input wraps its control in a div.
  */
 
 import { render, screen } from "@testing-library/react";
@@ -22,6 +23,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
+  InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
@@ -60,7 +62,7 @@ describe("Field", () => {
 });
 
 describe("InputGroup", () => {
-  it("puts the app's Input inside and focuses it when the addon is clicked", async () => {
+  it("holds its input directly and focuses it when the addon is clicked", async () => {
     render(
       <InputGroup>
         <InputGroupInput aria-label="Search" />
@@ -71,8 +73,23 @@ describe("InputGroup", () => {
     );
     const input = screen.getByLabelText("Search");
     expect(input).toHaveAttribute("data-slot", "input-group-control");
+    // The group's [&>input] rules only reach a direct child.
+    expect(input.parentElement).toHaveAttribute("data-slot", "input-group");
     await userEvent.click(screen.getByText("Find"));
     expect(input).toHaveFocus();
+  });
+
+  it("focuses a textarea when the addon is clicked", async () => {
+    render(
+      <InputGroup>
+        <InputGroupTextarea aria-label="Notes" />
+        <InputGroupAddon align="block-end">
+          <span>0 of 280</span>
+        </InputGroupAddon>
+      </InputGroup>,
+    );
+    await userEvent.click(screen.getByText("0 of 280"));
+    expect(screen.getByLabelText("Notes")).toHaveFocus();
   });
 });
 

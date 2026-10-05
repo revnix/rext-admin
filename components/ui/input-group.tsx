@@ -5,7 +5,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
@@ -74,7 +73,9 @@ function InputGroupAddon({
         if ((e.target as HTMLElement).closest("button")) {
           return;
         }
-        e.currentTarget.parentElement?.querySelector("input")?.focus();
+        e.currentTarget.parentElement
+          ?.querySelector<HTMLElement>('[data-slot="input-group-control"]')
+          ?.focus();
       }}
       {...props}
     />
@@ -130,15 +131,20 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+/** A bare input with the registry Input's classes: the app's Input wraps its
+ *  control in a div and is 44 px tall, which the group's [&>input] rules and its
+ *  36 px row cannot take. */
 function InputGroupInput({
   className,
+  type,
   ...props
 }: React.ComponentProps<"input">) {
   return (
-    <Input
+    <input
+      type={type}
       data-slot="input-group-control"
       className={cn(
-        "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0",
+        "h-9 w-full min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 py-1 text-base shadow-none outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
         className,
       )}
       {...props}
