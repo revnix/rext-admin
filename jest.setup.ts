@@ -204,6 +204,23 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }));
 
+// jsdom has no top layer, so no element is ever :modal, :popover-open or :fullscreen.
+// Floating UI, which positions every Radix popover, asks each ancestor for :modal and
+// :popover-open on every position update, and jsdom's selector engine answers :modal by
+// testing :fullscreen across the whole document: one open persona dropdown cost 62
+// million checks and about 18 s per test. Answer false directly, as jsdom would.
+const topLayerPseudoClasses = new Set([
+  ":modal",
+  ":popover-open",
+  ":fullscreen",
+]);
+const nativeMatches = Element.prototype.matches;
+Element.prototype.matches = function matches(this: Element, selector: string) {
+  return topLayerPseudoClasses.has(selector)
+    ? false
+    : nativeMatches.call(this, selector);
+};
+
 // Global test cleanup to prevent memory leaks
 afterEach(() => {
   // Clear all timers
