@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowRight, Building2, Check, User, UserCog, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import { local } from "@/lib/storage";

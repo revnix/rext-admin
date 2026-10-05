@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Building2, Crown, Shield, UserCheck } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import type { RoleCategory } from "@/lib/role-categories";

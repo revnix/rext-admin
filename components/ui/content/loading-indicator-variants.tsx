@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { LoadingStep } from "@/constants/loading-steps";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 /**
  * Props for the multi-step loading indicator variant used in content generation.

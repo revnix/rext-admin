@@ -6,7 +6,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Lightbulb } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { TextInput } from "@/components/ui/typeform/text-input";

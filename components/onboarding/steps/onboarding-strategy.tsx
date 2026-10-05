@@ -2,7 +2,7 @@
 
 import { Globe, UserCircle } from "lucide-react";
 import { useState, useImperativeHandle, forwardRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

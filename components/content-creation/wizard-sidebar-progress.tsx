@@ -7,7 +7,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { AlertCircle, AlertTriangle, Check, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

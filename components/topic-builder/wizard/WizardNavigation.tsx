@@ -7,7 +7,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useCallback } from "react";
 

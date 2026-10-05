@@ -6,7 +6,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { BookOpen, Building2 } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";

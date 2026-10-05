@@ -10,6 +10,7 @@ import { PostHogProvider } from "@/providers/posthog-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { MotionProvider } from "@/providers/motion-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 import { auth } from "@/auth";
@@ -139,12 +140,14 @@ export default async function RootLayout({
                 <UserNotificationsListener />
                 <QueryProvider>
                   <TooltipProvider>
-                    {/* Welcome modal shows first, then invited user onboarding */}
-                    <WorkspaceWelcomeGate>
-                      <InvitedUserOnboardingGate>
-                        {children}
-                      </InvitedUserOnboardingGate>
-                    </WorkspaceWelcomeGate>
+                    <MotionProvider>
+                      {/* Welcome modal shows first, then invited user onboarding */}
+                      <WorkspaceWelcomeGate>
+                        <InvitedUserOnboardingGate>
+                          {children}
+                        </InvitedUserOnboardingGate>
+                      </WorkspaceWelcomeGate>
+                    </MotionProvider>
                   </TooltipProvider>
                 </QueryProvider>
               </SSEProvider>
