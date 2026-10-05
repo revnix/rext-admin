@@ -9,6 +9,7 @@ export const initialState: PageState = {
   step: "keyword",
   userKeyword: "",
   country: "us",
+  analyzedCountry: "",
   primaryKeyword: "",
   suggestedKeywords: [],
   generatedContent: "",
@@ -132,6 +133,28 @@ export function generationReducer(
         userKeyword: state.userKeyword,
         country: state.country,
       };
+    case "RESET_FOR_REANALYSIS":
+      // A keyword + country analysis is self-contained: when either changes,
+      // nothing derived from the previous pair (recommendations, metrics,
+      // clusters, later-step data) may remain visible or be diffed against the
+      // new result. The inputs themselves and the thread are kept.
+      return {
+        ...state,
+        analyzedCountry: "",
+        suggestedKeywords: [],
+        seoResult: null,
+        serp: null,
+        competitors: null,
+        keywordClusters: [],
+        keywordDifficulty: null,
+        interrupt: null,
+        topics: [],
+        contentTypes: [],
+        outline: null,
+        recommendedContentType: null,
+        recommendedTopic: null,
+        selectedContentType: null,
+      };
     case "UPDATE_FROM_STREAM":
       return handleStreamUpdate(state, action.payload);
     default:
@@ -200,6 +223,14 @@ function handleStreamUpdate(
         }
         if (primaryKeyword && state.primaryKeyword !== primaryKeyword) {
           newState.primaryKeyword = primaryKeyword;
+          changed = true;
+        }
+        const analyzedCountry = interruptValue.Country;
+        if (
+          typeof analyzedCountry === "string" &&
+          state.analyzedCountry !== analyzedCountry
+        ) {
+          newState.analyzedCountry = analyzedCountry;
           changed = true;
         }
         if (

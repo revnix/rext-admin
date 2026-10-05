@@ -71,6 +71,7 @@ import { useBackgroundGenerationStore } from "@/stores/background-generation-sto
 import { useWorkspace } from "@/providers/workspace-provider";
 import { Button } from "@/components/ui/button";
 import { workspaceRoutes } from "@/lib/routes";
+import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
 import {
@@ -279,6 +280,7 @@ export function FreshGenerationView({
   const {
     userKeyword,
     country,
+    analyzedCountry,
     primaryKeyword,
     suggestedKeywords,
     generatedContent,
@@ -1519,6 +1521,7 @@ export function FreshGenerationView({
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
 
+      dispatch({ type: "RESET_FOR_REANALYSIS" });
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -1735,13 +1738,20 @@ export function FreshGenerationView({
   const handleWorkflow = (step: WorkflowStep, value: string) => {
     switch (step) {
       case "KEYWORD_SELECT": {
-        // A different keyword sends the SEO subgraph back through `seo_entry`
-        // (keyword_router) and pauses on this same step again with fresh
-        // metrics — so show the analysis steps, not the next step's.
-        const isReanalysis =
-          value.trim().toLowerCase() !== primaryKeyword.trim().toLowerCase();
+        // A different keyword or country sends the run back through the SERP
+        // engine (keyword_router) and pauses on this same step again with a
+        // fresh analysis — so show the analysis steps, not the next step's.
+        const isReanalysis = isKeywordReanalysis({
+          value,
+          primaryKeyword,
+          country,
+          analyzedCountry,
+        });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
+        // Drop everything derived from the previous keyword/country so it can
+        // neither be shown nor reused while the new analysis runs.
+        if (isReanalysis) dispatch({ type: "RESET_FOR_REANALYSIS" });
         dispatch({
           type: "SET_LOADING_STEPS",
           payload: isReanalysis
@@ -1764,6 +1774,7 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: {
             "Primary Keyword": value,
+            country,
             ...(selectedIntent ? { intent: selectedIntent } : {}),
           },
           status: isReanalysis

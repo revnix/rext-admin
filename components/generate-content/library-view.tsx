@@ -30,6 +30,10 @@ import type {
   StoreItem,
 } from "@/types/generate-content";
 import { getDifficultyLabel } from "../ui/content/chart-radial-stacked";
+import {
+  isMonthlyVolumeAvailable,
+  type MonthlyVolumeInput,
+} from "@/lib/generate-content/monthly-volume";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
@@ -44,8 +48,9 @@ const getDifficultyBg = (kd: number | null) => {
   return "bg-emerald-500/10 border-emerald-200";
 };
 
-const formatVolume = (vol: number | null) => {
-  if (vol === null || vol === undefined) return "0";
+const formatVolume = (volume: MonthlyVolumeInput) => {
+  if (!isMonthlyVolumeAvailable(volume)) return "N/A";
+  const vol = Number(String(volume).replace(/,/g, ""));
   if (vol >= 1000000) return `${(vol / 1000000).toFixed(1)}M`;
   if (vol >= 1000) return `${(vol / 1000).toFixed(1)}k`;
   return vol.toString();
@@ -273,7 +278,7 @@ export function LibraryView() {
                         Est. Volume
                       </span>
                       <span className="text-lg font-bold text-foreground">
-                        {formatVolume(Number(item.volume))}
+                        {formatVolume(item.volume)}
                       </span>
                     </div>
                     <div className="flex gap-2">

@@ -56,7 +56,8 @@ import {
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import type { Route } from "next";
 
@@ -77,11 +78,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
   const hasWorkspaces = workspaceList.length > 0;
-  // Workspace permissions are fetched once by WorkspaceProvider (keyed by
-  // the workspace UUID) and consumed via useWorkspacePermission()/the
-  // permission store. Do not add a useWorkspacePermissions() call here — it
-  // duplicated the permissions request under a different cache key and its
-  // result was unused.
+  // The workspace nav items are filtered by workspace permissions, which live
+  // only in memory. WorkspaceProvider loads them on /w/<slug> pages; this loads
+  // them everywhere else (account, settings, /w) so the items survive a reload
+  // there. Keyed by slug — the same key WorkspaceProvider uses — so the two
+  // share one request instead of fetching per identifier form.
+  const { workspaceSlug } = useParams<{ workspaceSlug?: string }>();
+  useWorkspacePermissions(workspaceSlug ?? currentWorkspace?.slug);
   const { state: sidebarState } = useSidebar();
   const { isLimitReached } = useResourceLimit("workspaces");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);

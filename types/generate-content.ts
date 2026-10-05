@@ -53,6 +53,7 @@ export type Interrupt = {
     brand_voice_promotion?: BrandVoicePromotion;
     persona_recommendations?: PersonaRecommendation[];
     "Primary Keyword"?: string;
+    Country?: string;
     "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;
   };
@@ -773,7 +774,7 @@ export type SEORESULT = {
   serp_features?: SERPFeatureImpactState;
   seo_strategy?: SEOStrategyState;
   seo_opportunity?: SEOOpportunityState;
-  volume?: string;
+  volume?: string | number | null;
   seo_health_score: number;
   issue_summary: IssueSummary;
   issues: Issue[];
@@ -836,6 +837,8 @@ export interface PageState {
   step: AppStep;
   userKeyword: string;
   country: string;
+  /** Country of the analysis currently shown (as confirmed by the backend). */
+  analyzedCountry: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   generatedContent: string;
@@ -901,7 +904,8 @@ export type PageAction =
   | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }
   | { type: "SET_OUTLINE"; payload: ContentOutline | null }
-  | { type: "RESET_FOR_THREAD_SWITCH" };
+  | { type: "RESET_FOR_THREAD_SWITCH" }
+  | { type: "RESET_FOR_REANALYSIS" };
 
 export type StreamInput = {
   serp_payload?: {
@@ -944,7 +948,7 @@ export interface StoredKeyword {
   seo_state: {
     keyword_difficulty: number | null;
     intent: string | string[];
-    volume: number | string;
+    volume?: number | string | null;
     backlinks: number | null;
     referring_domains: number | null;
   };
@@ -956,7 +960,7 @@ export interface LibraryItem {
   keyword: string;
   difficulty: string;
   difficultyScore: number | null;
-  volume: string | number;
+  volume?: string | number | null;
   intent: string | string[];
   lastUpdated: string;
   rawData: StoredKeyword;

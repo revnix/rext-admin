@@ -13,6 +13,7 @@ import {
 import { SafeChartRadialStacked } from "../ui/content/safe-chart-radial-stacked";
 import { MonthlyVolumeCard } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
+import { isMonthlyVolumeAvailable } from "@/lib/generate-content/monthly-volume";
 import { useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
@@ -229,16 +230,7 @@ export function SuggestionsSection({
               <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
             <AnimatePresence mode="wait">
-              {seoResult?.volume ? (
-                <motion.div
-                  key="volume-content"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <MonthlyVolumeCard volume={seoResult?.volume} />
-                </motion.div>
-              ) : (
+              {!seoResult ? (
                 <motion.div
                   key="volume-loader"
                   className="flex items-center gap-2 text-xs text-muted-foreground/50"
@@ -249,6 +241,25 @@ export function SuggestionsSection({
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Fetching...
                 </motion.div>
+              ) : isMonthlyVolumeAvailable(seoResult.volume) ? (
+                <motion.div
+                  key="volume-content"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <MonthlyVolumeCard volume={String(seoResult.volume)} />
+                </motion.div>
+              ) : (
+                <motion.p
+                  key="volume-unavailable"
+                  className="text-xs text-muted-foreground/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  Volume not available
+                </motion.p>
               )}
             </AnimatePresence>
           </motion.div>
