@@ -70,7 +70,10 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { RunNotice } from "@/components/generate-content/run-notice";
-import { readRunFailedEvent } from "@/lib/generate-content/run-events";
+import {
+  readRunFailedEvent,
+  readStoppedRun,
+} from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
 import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
@@ -569,6 +572,8 @@ export function FreshGenerationView({
       setIsBackgroundGenerationActive(false);
     }
     setRestoreError(null);
+    // A notice belongs to the run it came from, not to the next one opened.
+    setRunError(null);
 
     const restore = async () => {
       let terminalFailure = false;
@@ -593,6 +598,23 @@ export function FreshGenerationView({
           throw new Error(payload.error || "Unable to restore this article");
         }
         if (disposed) return;
+
+        // A run the backend ended for want of search results is a finished
+        // state, not a failure to restore: show the notice the live stream
+        // shows (its event is not replayed on a restore).
+        const stoppedMessage = readStoppedRun(payload.state?.values);
+        if (stoppedMessage) {
+          setRunError(stoppedMessage);
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "failed",
+            stage: "Generation stopped",
+            error: stoppedMessage,
+          });
+          return;
+        }
 
         if (
           payload.run?.status === "error" ||
