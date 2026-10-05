@@ -65,7 +65,7 @@ export function RevenueChart({
           <XAxis dataKey="month" />
           <YAxis tickFormatter={formatCurrency} />
           <Tooltip
-            formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+            formatter={(value) => [`$${Number(value).toFixed(2)}`, ""]}
             labelFormatter={(label) => `Month: ${label}`}
           />
           <Legend />

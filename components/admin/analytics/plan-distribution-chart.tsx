@@ -62,15 +62,14 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(
-                value: number,
-                _name: string,
-                props: { payload?: { percentage: number; name: string } },
-              ) => {
-                if (!props.payload) return [String(value), ""];
+              formatter={(value, _name, item) => {
+                const slice = item?.payload as
+                  | { percentage: number; name: string }
+                  | undefined;
+                if (!slice) return [String(value), ""];
                 return [
-                  `${value} subscriptions (${props.payload.percentage.toFixed(1)}%)`,
-                  props.payload.name,
+                  `${value} subscriptions (${slice.percentage.toFixed(1)}%)`,
+                  slice.name,
                 ];
               }}
             />
