@@ -148,7 +148,9 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 // ---------------------------------------------------------------------------
 // Theme
 // ---------------------------------------------------------------------------
-const theme = {
+/** The editor's theme, nodes and markdown transformers are exported for the
+ *  round-trip test (__tests__/components/lexical-round-trip.test.ts). */
+export const theme = {
   paragraph: "mb-2",
   heading: {
     h1: "text-3xl font-bold mb-4 scroll-mt-20",
@@ -556,7 +558,7 @@ export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> =
 // ---------------------------------------------------------------------------
 // Nodes list
 // ---------------------------------------------------------------------------
-const NODES = [
+export const NODES = [
   HeadingNode,
   QuoteNode,
   CodeNode,
@@ -770,7 +772,7 @@ const HORIZONTAL_RULE_TRANSFORMER: ElementTransformer = {
   type: "element",
 };
 
-const CUSTOM_TRANSFORMERS = [
+export const CUSTOM_TRANSFORMERS = [
   HORIZONTAL_RULE_TRANSFORMER,
   TABLE_TRANSFORMER,
   UNDERLINE_TRANSFORMER,
