@@ -46,6 +46,14 @@ describe("tightenLooseLists", () => {
   it("leaves fenced code and `1)` lines alone", () => {
     const code = "```\n- not a list\n\n- still code\n```";
     expect(tightenLooseLists(code)).toBe(code);
+    // A longer fence closes only on a run at least as long: the ``` inside is code.
+    const nested = "````md\n```\n- a\n\n- b\n```\n````\n\n- c\n\n- d";
+    expect(tightenLooseLists(nested)).toBe(
+      "````md\n```\n- a\n\n- b\n```\n````\n\n- c\n- d",
+    );
+    expect(tightenLooseLists("~~~\n- a\n\n- b\n~~~")).toBe(
+      "~~~\n- a\n\n- b\n~~~",
+    );
     expect(tightenLooseLists("1) one\n\n2) two")).toBe("1) one\n\n2) two");
   });
 });
