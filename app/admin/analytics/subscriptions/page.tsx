@@ -495,7 +495,7 @@ export default function SubscriptionAnalyticsPage() {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number) => formatCurrency(Number(value))}
+                    formatter={(value) => formatCurrency(Number(value))}
                     labelStyle={{ color: "#000" }}
                   />
                   <Bar
@@ -686,9 +686,9 @@ export default function SubscriptionAnalyticsPage() {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip
-                        formatter={(value: number, name: string) => {
+                        formatter={(value, name) => {
                           if (name === "Churn Rate") {
-                            return formatPercentage(value);
+                            return formatPercentage(Number(value));
                           }
                           return value;
                         }}
