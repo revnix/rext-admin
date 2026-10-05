@@ -27,7 +27,7 @@ app/
   topics/                   no route: the client components and the one server action the /w/[slug]/topics pages use
   api/auth/[...nextauth]    next-auth
   api/generate/**           the generation proxy: threads (start), [threadId]/{stream,join,resume,status,cancel}
-  coming-soon/, maintenance/, examples/permission-ux/                     reachable only by typing the address
+  maintenance/              reachable only by typing the address
 components/
   ui/                       the shadcn-based primitives, plus duplicates the rework retires (see AGENTS.md)
   page-layout.tsx           the shell today: sidebar, header, page header, the dock (46 importers)
@@ -89,7 +89,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 - `typedRoutes` is on: a path built at run time needs `as Route`, and a removed page leaves stale types in `.next/dev/types` that fail the type check until they are deleted (`../rext-control/scripts/app/check.sh` deletes them).
 - `next.config.ts` redirects `/settings/billing` to `/settings/subscription`: the billing page under `app/settings/billing` is unreachable.
 - Import stores from their domain barrel (`@/stores/workspace`) or their own file, never from `@/stores`.
-- `NEXT_PUBLIC_*` values are compiled into the browser bundle wherever client code reads them. `lib/api-middleware.ts` reads the content key as `NEXT_PUBLIC_CONTENT_API_KEY` in a server route; keep every read of it on the server.
+- `NEXT_PUBLIC_*` values are compiled into the browser bundle wherever client code reads them, so a secret never takes that prefix.
 - A merge into `staging` deploys the staging app; a merge into `main` deploys app.rext.ai.
-- pnpm is the package manager and `pnpm-lock.yaml` the only lockfile (Vercel installs from it). The `Dockerfile` still copies `package*.json` and runs `npm ci`, so it no longer builds; nothing in CI or the Vercel deploy uses it.
+- pnpm is the package manager and `pnpm-lock.yaml` the only lockfile (Vercel installs from it); the app is deployed by Vercel only, with no container image.
 - `lucide-react` 1.x is the one icon library. It has no brand icons and sets `aria-hidden` on every icon by default, so an icon-only button needs its own label.
