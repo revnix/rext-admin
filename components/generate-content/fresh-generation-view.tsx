@@ -53,6 +53,7 @@ import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { useCreditGate } from "@/hooks/use-credit-gate";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -570,7 +571,7 @@ export function FreshGenerationView({
     const restore = async () => {
       let terminalFailure = false;
       try {
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `/api/generate/${encodeURIComponent(backgroundThreadId)}/status?includeState=true`,
           { cache: "no-store" },
         );
@@ -1964,11 +1965,14 @@ export function FreshGenerationView({
       .jobs.find((j) => j.threadId === threadId);
     cancelStream();
     try {
-      await fetch(`/api/generate/${encodeURIComponent(threadId)}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runId: job?.runId }),
-      });
+      await authenticatedFetch(
+        `/api/generate/${encodeURIComponent(threadId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId: job?.runId }),
+        },
+      );
     } catch {
       // Best-effort: the run may already be gone. The record cleanup below
       // still stops the UI from tracking work that will never finish.

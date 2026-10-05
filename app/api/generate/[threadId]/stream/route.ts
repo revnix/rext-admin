@@ -27,7 +27,7 @@ export async function POST(
     });
   }
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
   let createdRunId: string | undefined;
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Client } from "@langchain/langgraph-sdk";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { getAuthHeaders } from "@/lib/auth-utils";
 import { formatDistanceToNow } from "date-fns";
 import { log } from "@/lib/logger";
 import { apiClient } from "@/lib/api-client";
@@ -83,10 +84,13 @@ export function LibraryView() {
 
       setIsLoading(true);
       try {
+        // The store answers only a signed-in caller, and only for their own
+        // library namespace.
         const client = new Client({
           apiUrl: resolveApiBaseUrl({
             explicitBaseUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL,
           }),
+          defaultHeaders: await getAuthHeaders(),
         });
 
         const specificPrefix = ["library", userId, workspaceId];

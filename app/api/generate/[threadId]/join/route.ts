@@ -36,7 +36,7 @@ export async function POST(
     });
   }
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
   const { signal } = request;
 
   const stream = client.runs.joinStream(threadId, body.runId, {

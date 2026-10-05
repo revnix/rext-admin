@@ -30,7 +30,7 @@ export async function POST(
     });
   }
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
 
   if (body.background) {
     try {
