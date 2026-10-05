@@ -69,10 +69,6 @@ import {
   useRef,
   type JSX,
 } from "react";
-import {
-  PARAGRAPH_ESCAPE_TRANSFORMER,
-  tightenLooseLists,
-} from "@/lib/editor/markdown-compat";
 import { log } from "@/lib/logger";
 import {
   $getSelection,
@@ -782,14 +778,7 @@ export const CUSTOM_TRANSFORMERS = [
   UNDERLINE_TRANSFORMER,
   IMAGE_TRANSFORMER,
   ...TRANSFORMERS,
-  PARAGRAPH_ESCAPE_TRANSFORMER,
 ];
-
-/** Loads an article's markdown into the editor, the one way the editor and the
- *  round-trip test both import it. */
-export function $importArticleMarkdown(markdown: string) {
-  $convertFromMarkdownString(tightenLooseLists(markdown), CUSTOM_TRANSFORMERS);
-}
 
 // ---------------------------------------------------------------------------
 // ToolbarButton
@@ -1664,7 +1653,7 @@ function MarkdownUpdatePlugin({
   useEffect(() => {
     if (shouldUpdate) {
       editor.update(() => {
-        $importArticleMarkdown(markdown);
+        $convertFromMarkdownString(markdown, CUSTOM_TRANSFORMERS);
       });
       onUpdateComplete();
     }
@@ -1723,7 +1712,7 @@ export default function LexicalEditor({
         (editor as { update: (fn: () => void) => void }).update(() => {
           if (initialValue) {
             try {
-              $importArticleMarkdown(initialValue);
+              $convertFromMarkdownString(initialValue, CUSTOM_TRANSFORMERS);
             } catch (_e) {}
           }
         });
