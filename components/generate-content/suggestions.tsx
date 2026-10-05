@@ -15,7 +15,7 @@ import { MonthlyVolume } from "../ui/content/monthly-volume-card";
 import { SearchIntentCard } from "../ui/content/intent-card";
 import { useTimedOut } from "@/hooks/use-timed-out";
 import { useMemo } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "motion/react";
 
 type IntentOption =
   | "informational"

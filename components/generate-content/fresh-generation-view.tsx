@@ -12,7 +12,7 @@ import {
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";

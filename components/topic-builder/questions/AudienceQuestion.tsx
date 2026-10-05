@@ -6,7 +6,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Plus, Users } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";

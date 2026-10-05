@@ -17,7 +17,7 @@
 
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTopicPrefilling } from "@/hooks/content-creation/use-topic-prefilling";

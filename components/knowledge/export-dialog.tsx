@@ -562,7 +562,7 @@ export function ExportDialog({
                                 date > new Date() ||
                                 date < new Date("1900-01-01")
                               }
-                              initialFocus
+                              autoFocus
                             />
                           </PopoverContent>
                         </Popover>
@@ -605,7 +605,7 @@ export function ExportDialog({
                                 date > new Date() ||
                                 date < new Date("1900-01-01")
                               }
-                              initialFocus
+                              autoFocus
                             />
                           </PopoverContent>
                         </Popover>

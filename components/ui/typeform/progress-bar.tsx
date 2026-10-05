@@ -7,7 +7,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Clock, PartyPopper } from "lucide-react";
 import * as React from "react";
 import { MOTION_DURATION, useReducedMotion } from "@/lib/animations";

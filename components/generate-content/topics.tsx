@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";

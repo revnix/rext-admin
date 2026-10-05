@@ -5,7 +5,7 @@
  * with proper accessibility support and reduced motion preferences.
  */
 
-import type { Transition, Variants } from "framer-motion";
+import type { Transition, Variants } from "motion/react";
 import type { AnimationTiming } from "@/types/typeform";
 
 // ============================================================================

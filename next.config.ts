@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
       "date-fns", // ~50KB savings
 
       // Heavy Animation & Chart Libraries (NOT pre-optimized)
-      "framer-motion", // ~80KB savings
+      "motion", // ~80KB savings
       "recharts", // ~400KB+ library, only load used charts
 
       // Form & UI Libraries

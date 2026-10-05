@@ -7,7 +7,7 @@
 
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { Check, Heart, PartyPopper, Sparkles, Trophy } from "lucide-react";
 import * as React from "react";
 import { MOTION_DURATION, useReducedMotion } from "@/lib/animations";

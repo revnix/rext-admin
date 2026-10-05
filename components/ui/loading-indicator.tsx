@@ -4,7 +4,7 @@ import { Loader2, Check, Shield } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import type { LoadingStep } from "@/constants/loading-steps";
 
 type SpinnerVariant = {
