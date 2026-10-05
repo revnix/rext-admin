@@ -133,7 +133,9 @@ describe("WorkspaceProgressTimeline", () => {
       .closest(".relative");
     const finalizeStep = screen.getByText("Finalize").closest(".relative");
 
-    expect(personaStep?.querySelector("svg.animate-spin")).not.toBeInTheDocument();
+    expect(
+      personaStep?.querySelector("svg.animate-spin"),
+    ).not.toBeInTheDocument();
     expect(finalizeStep?.querySelector("svg.animate-spin")).toBeInTheDocument();
   });
 });

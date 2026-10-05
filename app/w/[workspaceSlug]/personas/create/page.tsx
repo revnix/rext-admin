@@ -564,8 +564,7 @@ export default function CreatePersonaPage() {
                     ) : (
                       <p className="text-xs text-muted-foreground">
                         Include at least one letter; numbers and punctuation are
-                        allowed —{" "}
-                        {PERSONA_LIMITS.professional_title.min}–
+                        allowed — {PERSONA_LIMITS.professional_title.min}–
                         {PERSONA_LIMITS.professional_title.max} characters if
                         provided.
                       </p>

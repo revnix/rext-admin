@@ -62,12 +62,14 @@ describe("JSON-LD exclusion from content-level SEO", () => {
     );
   });
 
-  it.each(["Schema.org", "schema", "Microdata", "RDFa"])(
-    "matches the exact element type %s like the backend does",
-    (type) => {
-      expect(
-        isJsonLdIssue({ type, message: "Missing recommended field" }),
-      ).toBe(true);
-    },
-  );
+  it.each([
+    "Schema.org",
+    "schema",
+    "Microdata",
+    "RDFa",
+  ])("matches the exact element type %s like the backend does", (type) => {
+    expect(isJsonLdIssue({ type, message: "Missing recommended field" })).toBe(
+      true,
+    );
+  });
 });

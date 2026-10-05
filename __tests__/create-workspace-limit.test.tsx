@@ -126,6 +126,8 @@ describe("CreateWorkspacePage", () => {
     );
 
     expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
-    expect(screen.queryByText(/workspace limit reached/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/workspace limit reached/i),
+    ).not.toBeInTheDocument();
   });
 });

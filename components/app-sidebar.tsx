@@ -374,7 +374,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         >
                           {/* prefetch passthrough: undefined = framework
                               default (auto); false = skip viewport prefetch */}
-                          <Link href={item.url as Route} prefetch={item.prefetch}>
+                          <Link
+                            href={item.url as Route}
+                            prefetch={item.prefetch}
+                          >
                             {Icon && <Icon />}
                             <span className="font-medium">{item.title}</span>
                           </Link>
