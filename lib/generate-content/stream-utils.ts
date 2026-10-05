@@ -6,7 +6,9 @@ import { log } from "@/lib/logger";
 const sseLogger = log.forComponent("sse-stream");
 
 export async function createThread(): Promise<string> {
-  const res = await fetch("/api/generate/threads", { method: "POST" });
+  const res = await authenticatedFetch("/api/generate/threads", {
+    method: "POST",
+  });
   if (!res.ok) throw new Error("Failed to create thread");
   const json = await res.json();
   return json.data.thread_id;

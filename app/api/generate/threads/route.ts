@@ -1,30 +1,30 @@
-import { auth } from "@/auth";
 import {
-  AuthenticationError,
-  withApiMiddleware,
-  createSuccessResponse,
-} from "@/lib/api-middleware";
-import { generationIdentity } from "@/lib/generate-content/generation-identity";
-import { getGenerationClient } from "@/lib/generate-content/thread-access";
+  getGenerationClient,
+  isExpiredTokenError,
+  requireGenerationIdentity,
+  tokenExpired,
+} from "@/lib/generate-content/thread-access";
 
-export const POST = withApiMiddleware(
-  async (_request, context) => {
-    const identity = generationIdentity(await auth());
-    if (!identity) throw new AuthenticationError();
+export async function POST() {
+  const access = await requireGenerationIdentity();
+  if (!access.ok) return access.response;
 
-    const client = getGenerationClient(identity.accessToken);
+  try {
     // `metadata.owner` is what every other /api/generate route checks against
     // the user the caller's token speaks for. Nothing else writes it, so a
     // thread created without it is permanently unusable — keep this in step
     // with `requireThreadOwner`.
-    const thread = await client.threads.create({
-      metadata: { owner: identity.userId },
-    });
-
-    return createSuccessResponse(
-      { thread_id: thread.thread_id },
-      context.requestId,
+    const thread = await getGenerationClient(access.accessToken).threads.create(
+      { metadata: { owner: access.userId } },
     );
-  },
-  { enableLogging: true, requestIdPrefix: "gen_thread" },
-);
+
+    return Response.json({ data: { thread_id: thread.thread_id } });
+  } catch (error) {
+    if (isExpiredTokenError(error)) return tokenExpired();
+
+    return Response.json(
+      { error: "Unable to start a generation" },
+      { status: 502 },
+    );
+  }
+}
