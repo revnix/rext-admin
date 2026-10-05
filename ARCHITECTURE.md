@@ -87,7 +87,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 ## Traps
 
 - A new public page must be added to `publicRoutes` in `proxy.ts`, or it redirects to `/login`.
-- `typedRoutes` is on: a path built at run time needs `as Route`, and a removed page leaves stale types in `.next/dev/types` that fail the type check until they are deleted (`rext-control/scripts/app/check.sh` deletes them).
+- `typedRoutes` is on: a path built at run time needs `as Route`, and a removed page leaves stale types in `.next/dev/types` that fail the type check until they are deleted (`../rext-control/scripts/app/check.sh` deletes them).
 - `next.config.ts` redirects `/settings/billing` to `/settings/subscription`: the billing page under `app/settings/billing` is unreachable.
 - Import stores from their domain barrel (`@/stores/workspace`, `@/stores/knowledge`) or their own file, never from `@/stores`.
 - `NEXT_PUBLIC_*` values are compiled into the browser bundle wherever client code reads them. `lib/api-middleware.ts` reads the content key as `NEXT_PUBLIC_CONTENT_API_KEY` in a server route; keep every read of it on the server.

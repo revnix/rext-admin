@@ -12,13 +12,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 The Rext AI dashboard (app.rext.ai): Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, shadcn on Radix, TanStack Query, Zustand, react-hook-form with zod, next-auth 5 (beta), Lexical for the editor. It holds no database: everything comes from the backend (`rextaihq/rext-backend`, FastAPI and LangGraph) over HTTP and server-sent events, so nothing past `/login` renders without it.
 
-Codex and Claude Code both read this file (`CLAUDE.md` imports it). Keep it under 150 lines; procedures live in skills, the map of the code in `ARCHITECTURE.md`. The rework's plan, rules and tasks are in the private repository `revnix/rext-control` (`app/BRIEF.md`, and the design language in `design/app-language.md`); a session working one of its tasks reads the brief before anything else.
+Codex and Claude Code both read this file (`CLAUDE.md` imports it). Keep it under 150 lines; procedures live in skills, the map of the code in `ARCHITECTURE.md`. The rework's plan, rules and tasks are in the private repository `revnix/rext-control` (`app/BRIEF.md`, and the design language in `design/app-language.md`); a session working one of its tasks reads the brief before anything else. Its clone sits beside this one, so from a rework worktree its scripts are `../rext-control/scripts/app/`.
 
 ## Branches
 
 - **`main` is what app.rext.ai runs.** Never branch from it, target it or push to it.
 - **`staging` is the base branch.** Every branch starts from `origin/staging` and every pull request targets `staging`. **A merge is a deploy:** a push to `staging` deploys the staging app (`.github/workflows/ci_cd.yaml`, a Vercel deploy with `--no-wait`), so a broken build shows in the Vercel dashboard, not in Actions.
-- One task, one branch, one pull request, kept small. Rework branches are named `app/<task>-<slug>`, each in a worktree of its own, and are merged by `rext-control/scripts/app/merge.sh` (rebase and merge), never by hand.
+- One task, one branch, one pull request, kept small. Rework branches are named `app/<task>-<slug>`, each in a worktree of its own, and are merged by `../rext-control/scripts/app/merge.sh` (rebase and merge), never by hand.
 - The team merges here daily. Rebase on `origin/staging` before your checks and before your merge, push your own branch with `--force-with-lease`, and never rewrite a commit that is not yours.
 - For Claude Code sessions, `.claude/settings.json` refuses reading `.env` files, every `vercel` command, a push to `main`, `staging` or `stage`, and a forced push other than `--force-with-lease` (`.claude/hooks/guard-push.sh`).
 
@@ -34,7 +34,7 @@ Node 24 and pnpm 12; `pnpm-lock.yaml` is the lockfile.
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm dev                     # needs the backend; rework sessions use rext-control/scripts/app/run.sh admin
+pnpm dev                     # needs the backend; rework sessions use ../rext-control/scripts/app/run.sh admin
 pnpm exec tsc --noEmit       # type check
 pnpm lint                    # biome check; pnpm format writes the fixes
 pnpm lint:imports            # biome, plus the stores import rule in stores/README.md
@@ -62,7 +62,7 @@ Read `ARCHITECTURE.md` before your first change: routes, the shell, the data lay
 
 ## Before a pull request
 
-1. The branch holds the current `origin/staging`, and `rext-control/scripts/app/check.sh` passes (add `--build` for dependencies, `next.config.ts`, `app/globals.css`, the shell or a layout). Outside the rework, the commands above pass, the build included.
+1. The branch holds the current `origin/staging`, and `../rext-control/scripts/app/check.sh` passes (add `--build` for dependencies, `next.config.ts`, `app/globals.css`, the shell or a layout). Outside the rework, the commands above pass, the build included.
 2. You clicked through the pages you changed on the dev server at 390, 820 and 1440 px (rework sessions capture them with the `rext-app-visual-check` skill).
 3. The pull request body says what changed, why, how it was checked and what is not in it, and names the task.
 
