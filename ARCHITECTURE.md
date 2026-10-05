@@ -93,4 +93,4 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 - `NEXT_PUBLIC_*` values are compiled into the browser bundle wherever client code reads them. `lib/api-middleware.ts` reads the content key as `NEXT_PUBLIC_CONTENT_API_KEY` in a server route; keep every read of it on the server.
 - A merge into `staging` deploys the staging app; a merge into `main` deploys app.rext.ai.
 - pnpm is the package manager and `pnpm-lock.yaml` the only lockfile (Vercel installs from it). The `Dockerfile` still copies `package*.json` and runs `npm ci`, so it no longer builds; nothing in CI or the Vercel deploy uses it.
-- Three icon libraries are installed (`lucide-react`, `@heroicons/react`, `@radix-ui/react-icons`); new code uses lucide only.
+- `lucide-react` 1.x is the one icon library. It has no brand icons and sets `aria-hidden` on every icon by default, so an icon-only button needs its own label.

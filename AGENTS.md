@@ -56,7 +56,7 @@ Read `ARCHITECTURE.md` before your first change: routes, the shell, the data lay
 - **Pages:** today every page mounts `components/page-layout.tsx` (the sidebar, the header and the dock) itself. Plan C moves the shell into the route layouts and brings five page layouts (`ListPage`, `DetailPage`, `FormPage`, `SettingsPage`, `WorkingSurface`); `components/layouts/` holds earlier drafts that nothing imports. From then on a page sets no widths, paddings, heading sizes, card, table or field styles of its own.
 - **Data:** server state through TanStack Query (`lib/query-keys.ts`, `lib/query-options/`, `hooks/mutations/`); UI state through Zustand (`stores/`; its README sets the import rule); the API client in `lib/api-client/`. New code never `fetch`es the backend from a component and never imports `@/services` (both older paths are being retired).
 - **Forms:** react-hook-form with a zod schema from `schemas/`; validation on blur, then on change; create and edit on pages, a dialog only for a single-purpose action of four fields or fewer.
-- **Icons:** `lucide-react` only, 16 or 20 px, never inside a coloured square (`@heroicons/react` and `@radix-ui/react-icons` are installed and on their way out).
+- **Icons:** `lucide-react` only, 16 or 20 px, never inside a coloured square. It is the only icon library installed; lucide 1.x has no brand marks, so `app/coming-soon/social-icons.ts` keeps its four with lucide's `createLucideIcon`.
 - **Words:** sentence case in titles, buttons and navigation; no "AI" badges and no sparkle icons.
 - Match the code around your change: its naming, its structure, how much it comments.
 
