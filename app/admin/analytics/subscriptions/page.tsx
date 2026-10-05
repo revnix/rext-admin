@@ -23,6 +23,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/page-layout";
 import { AdminGuard } from "@/components/permission/admin-guard";
@@ -611,8 +612,11 @@ export default function SubscriptionAnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip labelStyle={{ color: "#000" }} />
-                  <Legend />
+                  <Tooltip
+                    itemSorter={inSeriesOrder}
+                    labelStyle={{ color: "#000" }}
+                  />
+                  <Legend itemSorter={null} />
                   <Bar
                     dataKey="trials"
                     fill={COLORS.warning}
@@ -694,7 +698,7 @@ export default function SubscriptionAnalyticsPage() {
                         }}
                         labelStyle={{ color: "#000" }}
                       />
-                      <Legend />
+                      <Legend itemSorter={null} />
                       <Bar
                         dataKey="churnRate"
                         fill={COLORS.danger}

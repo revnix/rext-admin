@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-retention-matrix";
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
@@ -579,8 +580,8 @@ export default function SubscriptionAnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip itemSorter={inSeriesOrder} />
+                        <Legend itemSorter={null} />
                         <Bar
                           dataKey="trials"
                           fill="#f59e0b"
