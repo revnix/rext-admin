@@ -5,15 +5,10 @@ describe("isMonthlyVolumeAvailable", () => {
     expect(isMonthlyVolumeAvailable(value)).toBe(true);
   });
 
-  it.each([
-    null,
-    undefined,
-    "",
-    "   ",
-    "N/A",
-    Number.NaN,
-    Infinity,
-  ])("rejects %p", (value) => {
-    expect(isMonthlyVolumeAvailable(value)).toBe(false);
-  });
+  it.each([null, undefined, "", "   ", "N/A", Number.NaN, Infinity])(
+    "rejects %p",
+    (value) => {
+      expect(isMonthlyVolumeAvailable(value)).toBe(false);
+    },
+  );
 });
