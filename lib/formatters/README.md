@@ -287,9 +287,9 @@ function MyComponent({ item }) {
 }
 ```
 
-### Real-World Example: Knowledge Card
+### Real-World Example: Content Card
 
-See `components/knowledge/web-knowledge-card.tsx` and `components/knowledge/text-knowledge-card.tsx` for complete migration examples.
+See `components/content/content-card.tsx` for a component that uses these formatters.
 
 **Key improvements:**
 - Reduced imports from 2-3 lines to 1-2 lines
