@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BrandLogo } from "@/components/brand-logo";
-import { Facebook, Twitter, Linkedin, Instagram, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter } from "./social-icons";
 import { useEffect, useState } from "react";
 
 export default function ComingSoonPage() {

@@ -19,7 +19,6 @@ const nextConfig: NextConfig = {
       // Radix UI primitives, one package (NOT pre-optimized by default)
       // These are heavily used in the app and can save ~50-100KB
       "radix-ui",
-      "@radix-ui/react-icons",
 
       // Icon & Date Libraries (Already optimized by default, but explicit is better)
       "lucide-react", // ~60KB savings
