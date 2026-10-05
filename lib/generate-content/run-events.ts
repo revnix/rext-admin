@@ -22,3 +22,17 @@ export function readRunFailedEvent(data: unknown): RunFailedEvent | null {
     message,
   };
 }
+
+/**
+ * The same early end read from the thread's state, for a run reopened later
+ * (from the dock, or after a reload), when the stream event is not replayed.
+ * Returns the message to show, or null when the run did not end that way.
+ */
+export function readStoppedRun(values: unknown): string | null {
+  const content = (values as { content?: Record<string, unknown> } | null)
+    ?.content;
+  if (content?.error_code !== "no_serp_data") return null;
+  return typeof content.error === "string" && content.error.trim()
+    ? content.error.trim()
+    : FALLBACK_MESSAGE;
+}
