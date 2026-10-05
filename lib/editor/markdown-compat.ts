@@ -7,23 +7,37 @@ import type { ElementTransformer } from "@lexical/markdown";
  */
 
 const LIST_ITEM = /^\s*(?:[-*+]|\d+\.)\s/; // the list items Lexical reads
-const FENCE = /^\s*(?:```|~~~)/;
+const FENCE = /^\s{0,3}(`{3,}|~{3,})/;
 
 /**
  * Lexical 0.52 reads a loose list (items separated by blank lines) wrongly:
  * the continuation line of an item that follows a blank line leaves the list
  * as a paragraph and splits the list in two. A blank line between two items of
  * one list doesn't change what the list says, so it is dropped before import.
- * Fenced code is left as it is.
+ * Fenced code is left as it is: a fence closes only on a run of its own
+ * character at least as long as the one that opened it, as in CommonMark.
  */
 export function tightenLooseLists(markdown: string): string {
   const lines = markdown.split("\n");
   const out: string[] = [];
   let inList = false;
-  let inFence = false;
+  let fence: string | null = null; // the run of backticks or tildes that opened the code
   lines.forEach((line, i) => {
-    if (FENCE.test(line)) inFence = !inFence;
-    if (inFence) {
+    const run = FENCE.exec(line)?.[1];
+    if (fence !== null) {
+      if (
+        run &&
+        run[0] === fence[0] &&
+        run.length >= fence.length &&
+        line.trim() === run
+      )
+        fence = null;
+      out.push(line);
+      return;
+    }
+    if (run) {
+      fence = run;
+      inList = false;
       out.push(line);
       return;
     }
