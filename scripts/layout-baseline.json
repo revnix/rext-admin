@@ -5,9 +5,6 @@
   "components/generate-content/library-detail.tsx": {
     "table-recipe": 1
   },
-  "components/security/activity-filter.tsx": {
-    "field-recipe": 2
-  },
   "components/subscription/invoice-document.tsx": {
     "table-recipe": 1
   }
