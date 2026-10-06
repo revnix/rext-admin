@@ -1,6 +1,7 @@
 import { OAuthAccounts } from "@/components/account-settings/oauth-accounts";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
-import { UnifiedActivity } from "@/components/security/unified-activity";
+import { ActivityLogTable } from "@/components/security/activity-log-table";
+import { LoginHistoryTable } from "@/components/security/login-history-table";
 import { ActiveSessions } from "@/components/settings/active-sessions";
 import { SettingsGroup } from "@/components/settings/settings-group";
 
@@ -25,10 +26,16 @@ export default function SecuritySettingsPage() {
       </SettingsGroup>
       <ActiveSessions />
       <SettingsGroup
-        title="Activity"
-        description="Your sign-ins, and what changed in your account."
+        title="Sign-in history"
+        description="Every attempt to sign in to your account, and where it came from. A failed one you don't recognise is a reason to change your password."
       >
-        <UnifiedActivity />
+        <LoginHistoryTable />
+      </SettingsGroup>
+      <SettingsGroup
+        title="Activity"
+        description="What changed in your account, newest first."
+      >
+        <ActivityLogTable />
       </SettingsGroup>
     </div>
   );

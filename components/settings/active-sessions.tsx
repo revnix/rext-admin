@@ -1,13 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Monitor, Smartphone, Tablet } from "lucide-react";
-import { useState } from "react";
+import { Loader2, LogOut, Monitor, Smartphone, Tablet } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Notice } from "@/components/ui/notice";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+} from "@/components/ui/data-table";
 import { apiClient } from "@/lib/api-client";
 import { formatSecurityDate } from "@/lib/formatters/security-date";
 import { userSessionsQueryOptions } from "@/lib/query-options/user-sessions";
@@ -20,67 +24,73 @@ type Session = NonNullable<
 function DeviceIcon({ type }: { type: string | null }) {
   const Icon =
     type === "mobile" ? Smartphone : type === "tablet" ? Tablet : Monitor;
-  return <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />;
+  return <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
 }
 
 function lastActive(timestamp: string | null | undefined) {
-  if (!timestamp) return "Activity unknown";
+  if (!timestamp) return "Unknown";
   const date = new Date(timestamp);
   const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
-  if (minutes < 1) return "Active just now";
-  if (minutes < 60) return `Active ${minutes} min ago`;
-  if (minutes < 1440) return `Active ${Math.floor(minutes / 60)} h ago`;
-  return `Active ${formatSecurityDate(date)}`;
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)} h ago`;
+  return formatSecurityDate(date);
 }
 
-function SessionRow({
-  session,
-  action,
-}: {
-  session: Session;
-  action?: React.ReactNode;
-}) {
+function placeOf(session: Session) {
   const place = [session.city, session.country].filter(Boolean).join(", ");
-  const facts = [
-    session.ip_address,
-    place,
-    lastActive(session.last_activity_at),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  return [session.ip_address, place].filter(Boolean).join(" · ");
+}
+
+function DeviceName({ session }: { session: Session }) {
   return (
-    <li className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-start gap-3">
-        <DeviceIcon type={session.device_type} />
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium">
-              {session.device_name ?? "Unknown device"}
-            </p>
-            {session.is_current && <Badge variant="neutral">This device</Badge>}
-          </div>
-          <p className="text-sm text-muted-foreground">{facts}</p>
-        </div>
-      </div>
-      {action}
-    </li>
+    <span className="flex min-w-0 items-center gap-2">
+      <DeviceIcon type={session.device_type} />
+      <span className="truncate font-medium text-foreground">
+        {session.device_name ?? "Unknown device"}
+      </span>
+      {session.is_current && <Badge variant="neutral">This device</Badge>}
+    </span>
   );
 }
 
-/** The other devices shown before "Show all": the most recently active first. */
-const FIRST_SHOWN = 5;
+const column = createDataTableColumnHelper<Session>();
+
+// This device first, then the rest by their last activity: the order is the list's, not a sort.
+const columns = column.columns([
+  column.accessor((session) => session.device_name ?? "", {
+    id: "device",
+    header: "Device",
+    cell: ({ row }) => <DeviceName session={row.original} />,
+    enableSorting: false,
+    enableHiding: false,
+  }),
+  column.accessor((session) => placeOf(session), {
+    id: "where",
+    header: "Where",
+    cell: ({ getValue }) => (
+      <span className="num">{getValue() || UNKNOWN}</span>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor("last_activity_at", {
+    header: "Last active",
+    meta: { align: "end" },
+    cell: ({ getValue }) => lastActive(getValue()),
+    enableSorting: false,
+  }),
+]);
 
 /**
- * The devices signed in to the account, this one first, each of the others signed out on its own or
- * all at once. Refreshed every 30 seconds. An account can hold hundreds, so five show until the
- * person asks for all; D8 puts it on the DataTable.
+ * The devices signed in to the account (D8, plans/app/D-pages.md §2.8), this one first, then by
+ * their last activity, 25 a page: an account can hold hundreds. Each of the others is signed out
+ * from its row's menu, or all of them at once. Refreshed every 30 seconds.
  */
 export function ActiveSessions() {
   const queryClient = useQueryClient();
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
     null,
   );
-  const [showAll, setShowAll] = useState(false);
 
   const {
     data: sessionData,
@@ -119,23 +129,36 @@ export function ActiveSessions() {
     },
   });
 
-  const sessions = sessionData?.sessions || [];
-  const currentSession = sessions.find((s) => s.is_current);
-  const otherSessions = sessions
-    .filter((s) => !s.is_current)
-    .sort((a, b) =>
-      (b.last_activity_at ?? "").localeCompare(a.last_activity_at ?? ""),
-    );
-  const shownSessions = showAll
-    ? otherSessions
-    : otherSessions.slice(0, FIRST_SHOWN);
+  const sessions = useMemo(() => {
+    const all = sessionData?.sessions ?? [];
+    const others = all
+      .filter((session) => !session.is_current)
+      .sort((a, b) =>
+        (b.last_activity_at ?? "").localeCompare(a.last_activity_at ?? ""),
+      );
+    return [...all.filter((session) => session.is_current), ...others];
+  }, [sessionData]);
+  const others = sessions.filter((session) => !session.is_current).length;
+
+  const rowActions = (session: Session): DataTableRowAction[] =>
+    session.is_current
+      ? []
+      : [
+          {
+            label: "Sign out",
+            icon: LogOut,
+            onSelect: () => revokeMutation.mutate(session.id),
+            disabled:
+              revokingSessionId === session.id ? "Signing out…" : undefined,
+          },
+        ];
 
   return (
     <SettingsGroup
       title="Sessions"
       description="The devices signed in to your account. Sign out of one you don't recognise, then change your password."
       action={
-        otherSessions.length > 0 && (
+        others > 0 && (
           <Button
             variant="outline"
             onClick={() => revokeAllMutation.mutate()}
@@ -149,57 +172,48 @@ export function ActiveSessions() {
         )
       }
     >
-      {isLoading ? (
-        <Skeleton className="h-32 w-full" />
-      ) : error ? (
-        <Notice
-          tone="danger"
-          title="Your sessions didn't load"
-          action={
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Try again
-            </Button>
-          }
-        >
-          {error.message}
-        </Notice>
-      ) : sessions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No sessions found.</p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {currentSession && <SessionRow session={currentSession} />}
-          {shownSessions.map((session) => (
-            <SessionRow
-              key={session.id}
-              session={session}
-              action={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => revokeMutation.mutate(session.id)}
-                  disabled={revokingSessionId === session.id}
-                >
-                  {revokingSessionId === session.id && (
-                    <Loader2 className="animate-spin" aria-hidden />
-                  )}
-                  Sign out
-                </Button>
-              }
-            />
-          ))}
-        </ul>
-      )}
-      {otherSessions.length > FIRST_SHOWN && (
-        <Button
-          variant="ghost"
-          className="self-start"
-          onClick={() => setShowAll((all) => !all)}
-        >
-          {showAll
-            ? "Show fewer"
-            : `Show all ${otherSessions.length} other devices`}
-        </Button>
-      )}
+      <DataTable
+        caption="Devices signed in to your account"
+        columns={columns}
+        data={sessions}
+        getRowId={(session) => session.id}
+        getRowLabel={(session) =>
+          session.is_current
+            ? "This device"
+            : (session.device_name ?? "Unknown device")
+        }
+        isLoading={isLoading}
+        skeletonRows={3}
+        error={
+          error ? (
+            <div className="flex flex-col items-center gap-3">
+              <p>Your sessions didn't load.</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Try again
+              </Button>
+            </div>
+          ) : undefined
+        }
+        emptyState={
+          <p className="px-4 py-6 text-sm text-muted-foreground">
+            No sessions found.
+          </p>
+        }
+        rowActions={rowActions}
+        renderCard={(session, { actions }) => (
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <DeviceName session={session} />
+              <p className="text-sm text-muted-foreground">
+                {[placeOf(session), lastActive(session.last_activity_at)]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            {actions}
+          </div>
+        )}
+      />
     </SettingsGroup>
   );
 }
