@@ -54,6 +54,24 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("The chart")).toBeInTheDocument();
     quiet.mockRestore();
   });
+
+  it("puts the Notice in the page's frame around a whole page", () => {
+    const quiet = jest.spyOn(console, "error").mockImplementation(() => {});
+    function Page(): never {
+      throw new Error("The page broke");
+    }
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ErrorBoundary framed>
+          <Page />
+        </ErrorBoundary>
+      </QueryClientProvider>,
+    );
+    expect(container.querySelector('[data-slot="page"]')).toContainElement(
+      screen.getByRole("alert"),
+    );
+    quiet.mockRestore();
+  });
 });
 
 describe("RouteError", () => {

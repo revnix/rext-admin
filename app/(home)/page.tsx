@@ -95,7 +95,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <ErrorBoundary>
+      <ErrorBoundary framed>
         <DetailPage
           title={currentWorkspace?.title || "Dashboard"}
           description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}

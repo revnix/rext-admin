@@ -34,7 +34,7 @@ export default async function WorkspaceLayout({
   // Provide workspace context to all child pages
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
-      <ErrorBoundary>{children}</ErrorBoundary>
+      <ErrorBoundary framed>{children}</ErrorBoundary>
     </WorkspaceProvider>
   );
 }
