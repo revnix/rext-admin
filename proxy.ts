@@ -7,6 +7,9 @@ import { getToken } from "next-auth/jwt";
 import { getCSPHeader } from "@/lib/csp";
 import { ROLES } from "@/lib/permissions";
 
+/** The site's pricing page, where a signed-out visit to /pricing goes. */
+const SITE_PRICING_URL = "https://rext.ai/pricing";
+
 /**
  * Generate a cryptographically secure random nonce using Web Crypto API
  * (Edge Runtime compatible)
@@ -235,6 +238,12 @@ export default async function proxy(request: NextRequest) {
     !isVerifyEmailPage
   ) {
     return NextResponse.redirect(new URL("/", nextUrl.origin));
+  }
+
+  // Pricing is the app's for its accounts; a visitor who isn't signed in gets the site's
+  // (plans/app/F-billing.md §2 item 2).
+  if (!isLoggedIn && nextUrl.pathname === "/pricing") {
+    return NextResponse.redirect(SITE_PRICING_URL);
   }
 
   // Redirect to login if not authenticated and trying to access protected route

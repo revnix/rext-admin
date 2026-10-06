@@ -185,6 +185,13 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
     }),
+  /** The public plan catalogue; it changes with a release, not during a visit. */
+  catalog: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "catalog"] as const,
+      queryFn: () => apiClient.subscriptions.getCatalog(),
+      staleTime: 10 * 60 * 1000,
+    }),
   /** One workspace's credits, which carry its owner's plan (the workspace switcher's plan line). */
   workspaceCredits: (workspaceId: string) =>
     queryOptions({
