@@ -18,18 +18,6 @@
   "app/invitations/accept/page.tsx": {
     "stock-palette": 3
   },
-  "app/legal/privacy/page.tsx": {
-    "dark-class": 1
-  },
-  "app/legal/refund-policy/page.tsx": {
-    "dark-class": 1
-  },
-  "app/legal/subscription-terms/page.tsx": {
-    "dark-class": 1
-  },
-  "app/legal/terms/page.tsx": {
-    "dark-class": 1
-  },
   "app/reset-password/page.tsx": {
     "stock-palette": 11
   },
