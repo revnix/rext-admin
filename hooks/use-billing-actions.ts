@@ -18,16 +18,15 @@
  * @module hooks/use-billing-actions
  */
 
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
+// No query client here: the card dialog that reads the saved card renders above QueryProvider
+// (app/layout.tsx). useBillingAction re-reads the queries after a resume.
 export function useBillingActions() {
-  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const openPaymentMethodDialog = useSubscriptionStore(
     (state) => state.openPaymentMethodDialog,
@@ -141,14 +140,6 @@ export function useBillingActions() {
         // pulls in whatever has landed by now. Forced past the store's freshness
         // guard, so the cards it renders change at once.
         await fetchSubscription({ force: true });
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: subscriptionQueries.billingAction().queryKey,
-          }),
-          queryClient.invalidateQueries({
-            queryKey: subscriptionQueries.current().queryKey,
-          }),
-        ]);
         toast.success(successMessage);
       } catch (error) {
         log.error(failureMessage, error);
@@ -157,7 +148,7 @@ export function useBillingActions() {
         setIsLoading(false);
       }
     },
-    [fetchSubscription, queryClient],
+    [fetchSubscription],
   );
 
   /** Pause billing and access. */
