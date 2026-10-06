@@ -64,6 +64,8 @@ function iconFor(notification: OperationNotification): LucideIcon {
 
 /** "Today", "Yesterday", or the day itself: "Monday, October 5" (with the year when it isn't this one). */
 export function dayLabel(date: Date, now = new Date()) {
+  // A malformed timestamp gets a group of its own rather than a formatting error.
+  if (Number.isNaN(date.getTime())) return "Earlier";
   if (isSameDay(date, now)) return "Today";
   if (isSameDay(date, subDays(now, 1))) return "Yesterday";
   return new Intl.DateTimeFormat("en-US", {
@@ -89,6 +91,20 @@ export function groupByDay(
   return groups;
 }
 
+/** A path inside the app, or null: `//host` and `/\host` lead elsewhere, so the origin is compared. */
+function internalPath(href: unknown) {
+  if (typeof href !== "string" || !href.startsWith("/")) return null;
+  const base = "https://app.invalid";
+  try {
+    const url = new URL(href, base);
+    return url.origin === base
+      ? `${url.pathname}${url.search}${url.hash}`
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Where a notification leads: the link it carries, or a finished article's page in its workspace.
  * Only a path inside the app counts.
@@ -97,8 +113,8 @@ export function notificationHref(
   notification: OperationNotification,
   workspaces: Pick<Workspace, "id" | "slug">[] = [],
 ) {
-  const href = notification.metadata?.href;
-  if (typeof href === "string" && href.startsWith("/")) return href;
+  const href = internalPath(notification.metadata?.href);
+  if (href) return href;
   const { contentId, workspaceId } = notification.metadata ?? {};
   if (typeof contentId !== "string" || typeof workspaceId !== "string") {
     return null;
@@ -202,8 +218,17 @@ export function NotificationsDrawer({
 
   const retry = async () => {
     setFetchState({ isLoading: true, fetchError: null });
-    mergeNotifications(await fetchNotifications({ force: true }));
-    setFetchState({ isLoading: false, fetchError: null });
+    try {
+      mergeNotifications(
+        await fetchNotifications({ force: true, throwOnError: true }),
+      );
+      setFetchState({ isLoading: false, fetchError: null });
+    } catch (error) {
+      setFetchState({
+        isLoading: false,
+        fetchError: error instanceof Error ? error.message : String(error),
+      });
+    }
   };
 
   return (

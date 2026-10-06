@@ -39,6 +39,16 @@ describe("dayLabel", () => {
   });
 });
 
+describe("a malformed timestamp", () => {
+  it("is grouped as Earlier instead of breaking the drawer", () => {
+    expect(dayLabel(new Date("not a date"), now)).toBe("Earlier");
+    const broken = { ...note("x", now), createdAt: "not a date" };
+    expect(groupByDay([broken], now)).toEqual([
+      { label: "Earlier", items: [broken] },
+    ]);
+  });
+});
+
 describe("groupByDay", () => {
   it("keeps the order and starts a group at each new day", () => {
     const groups = groupByDay(
@@ -69,9 +79,13 @@ describe("notificationHref", () => {
   });
 
   it("never follows an address outside the app", () => {
-    expect(
-      notificationHref(note("a", now, { href: "https://example.com" })),
-    ).toBeNull();
+    for (const href of [
+      "https://example.com",
+      "//example.com/path",
+      "/\\example.com/path",
+    ]) {
+      expect(notificationHref(note("a", now, { href }))).toBeNull();
+    }
   });
 
   it("links a finished article in a workspace the person has", () => {
