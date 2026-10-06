@@ -7,6 +7,7 @@ import {
   type RunPhase,
   type RunStage,
   settleStages,
+  stagesAt,
   startStages,
 } from "@/lib/generate-content/run-stages";
 import { recordStageMs } from "@/lib/generate-content/run-timings";
@@ -27,9 +28,18 @@ export function useRunStages() {
   const [run, setRun] = useState<RunStagesState | null>(null);
   const recorded = useRef(new Set<string>());
 
+  // A run picked up mid-way (`joined`) may start at the stage it is in (`at`).
   const start = useCallback(
-    (phase: RunPhase, { joined = false }: { joined?: boolean } = {}) => {
-      setRun({ phase, stages: startStages(phase, Date.now()), learn: !joined });
+    (
+      phase: RunPhase,
+      { joined = false, at }: { joined?: boolean; at?: string } = {},
+    ) => {
+      const now = Date.now();
+      setRun({
+        phase,
+        stages: at ? stagesAt(phase, at, now) : startStages(phase, now),
+        learn: !joined,
+      });
     },
     [],
   );

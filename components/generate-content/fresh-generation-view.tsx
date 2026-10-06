@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
+import type { RunPhase } from "@/lib/generate-content/run-stages";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
@@ -319,8 +320,12 @@ export function FreshGenerationView({
 
   const { start: startRunStages, clear: clearRunStages } = runStages;
   useEffect(() => {
-    if (runState) startRunStages(runState.phase, { joined: runState.joined });
-    else clearRunStages();
+    if (runState) {
+      startRunStages(runState.phase, {
+        joined: runState.joined,
+        at: runState.stageId,
+      });
+    } else clearRunStages();
   }, [runState, startRunStages, clearRunStages]);
 
   const interruptInternalLinks = useMemo(
@@ -601,14 +606,25 @@ export function FreshGenerationView({
       dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
       dispatch({
         type: "SET_RUN_PHASE",
-        payload: { phase: "article", joined: true },
+        payload: {
+          phase: "article",
+          stageId:
+            trackedJob?.runStage?.phase === "article"
+              ? trackedJob.runStage.id
+              : undefined,
+          joined: true,
+        },
       });
       restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
     } else {
       // Research phase — show the plain analysis loader, not the article editor.
       dispatch({
         type: "SET_RUN_PHASE",
-        payload: { phase: "analysis", joined: true },
+        payload: {
+          phase: trackedJob?.runStage?.phase ?? "analysis",
+          stageId: trackedJob?.runStage?.id,
+          joined: true,
+        },
       });
       setIsBackgroundGenerationActive(false);
     }
@@ -633,6 +649,7 @@ export function FreshGenerationView({
           stage?: string;
           error?: string;
           awaitingInput?: boolean;
+          runStage?: { phase: RunPhase; id: string };
         };
 
         if (!response.ok && response.status !== 202) {
@@ -731,14 +748,19 @@ export function FreshGenerationView({
           stage: payload.stage ?? "Generating your article",
           progress: payload.progress ?? 24,
           awaitingInput: false,
-          runStage: undefined,
+          runStage: payload.runStage,
         });
 
+        // The status names the stage the run is in: the stages start there, not
+        // at the phase's first one.
         dispatch({ type: "SET_MANUAL_LOADING", payload: true });
         dispatch({
           type: "SET_RUN_PHASE",
           payload: {
-            phase: inArticlePhase ? "article" : "analysis",
+            phase:
+              payload.runStage?.phase ??
+              (inArticlePhase ? "article" : "analysis"),
+            stageId: payload.runStage?.id,
             joined: true,
           },
         });
@@ -2412,6 +2434,15 @@ export function FreshGenerationView({
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
+          {/* The article's run, while it runs: the same stages as every other phase. */}
+          {runStages.run?.phase === "article" &&
+            runStages.run.stages.some((stage) => stage.state === "active") && (
+              <RunProgress
+                stages={runStages.run.stages}
+                onCancel={_handleCancelGeneration}
+                className="mb-6 max-w-md"
+              />
+            )}
           <ContentEditor
             threadId={threadId ?? undefined}
             allContent={

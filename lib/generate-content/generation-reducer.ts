@@ -118,6 +118,7 @@ export function generationReducer(
           ? {
               phase: action.payload.phase,
               joined: action.payload.joined ?? false,
+              stageId: action.payload.stageId,
               seq: (state.run?.seq ?? 0) + 1,
             }
           : null,
