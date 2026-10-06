@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
  */
 export type PageWidth = "content" | "full";
 
+/** The page's side gutters: 16, 24 and 32 px. */
+const GUTTERS = "px-4 md:px-6 xl:px-8";
+
 export function PageFrame({
   width = "content",
   flush = false,
@@ -24,9 +27,28 @@ export function PageFrame({
       data-slot="page"
       data-width={width}
       className={cn(
-        "mx-auto flex w-full min-w-0 flex-1 flex-col gap-8 px-4 md:px-6 xl:px-8",
+        "mx-auto flex w-full min-w-0 flex-1 flex-col gap-8",
+        GUTTERS,
         width === "content" && "max-w-(--content-max)",
         !flush && "py-6",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A band above the page, in the shell, at the content's width and gutters: the shell's banner (a
+ * failed renewal). The page's own frame keeps its space above, so the band needs none below.
+ */
+export function PageBand({ children }: { children: ReactNode }) {
+  return (
+    <div
+      data-slot="page-band"
+      className={cn(
+        "mx-auto w-full min-w-0 max-w-(--content-max) pt-6",
+        GUTTERS,
       )}
     >
       {children}

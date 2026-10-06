@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { PageBand } from "@/components/layouts/page-frame";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { useSession } from "next-auth/react";
@@ -57,10 +58,11 @@ export function TrialBanner() {
   }, [userId]);
 
   // The stream's credit updates reach the store, not this query: the store's figures win when
-  // they're the person's own.
+  // they're the person's own (no target named means their own, as in the shell's meter).
   const storeCredits = useSubscriptionStore((store) => store.credits);
   const liveCredits =
-    storeCredits && storeCredits.target_user_id === userId
+    storeCredits &&
+    (!storeCredits.target_user_id || storeCredits.target_user_id === userId)
       ? storeCredits
       : credits.data;
   const trialEnd = current.data?.subscription?.trial_end_date;
@@ -100,7 +102,7 @@ export function TrialBanner() {
 
   if (showEnding && hidden !== "ending") {
     return (
-      <div className="px-4 pt-3 md:px-6">
+      <PageBand>
         <Notice
           tone="warning"
           title={trialEndingTitle(state, lowCredits)}
@@ -112,14 +114,14 @@ export function TrialBanner() {
         >
           Choose a plan to keep writing. What you've written stays yours.
         </Notice>
-      </div>
+      </PageBand>
     );
   }
 
   if (showIntro && hidden !== "intro" && catalog.data) {
     const perArticle = catalog.data.credits.per_article;
     return (
-      <div className="px-4 pt-3 md:px-6">
+      <PageBand>
         <Notice
           title={`Your trial: ${state.daysLeft} days and ${state.creditsLeft.toLocaleString()} credits`}
           action={plans}
@@ -129,7 +131,7 @@ export function TrialBanner() {
           {catalog.data.trial?.credits_renew === false &&
             " The trial's credits don't renew; a plan's come back each month."}
         </Notice>
-      </div>
+      </PageBand>
     );
   }
 
