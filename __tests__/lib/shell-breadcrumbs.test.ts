@@ -55,6 +55,19 @@ describe("buildBreadcrumbs", () => {
     ]);
   });
 
+  it("names a keyword in the library Keyword, under Keywords", () => {
+    expect(
+      buildBreadcrumbs(
+        "/w/acme/generate_content/library/library_seo%20tools_2026-10-06T17%3A00%3A00",
+        "Acme",
+      ),
+    ).toEqual([
+      { label: "Acme", href: "/" },
+      { label: "Keywords", href: "/w/acme/generate_content/library" },
+      { label: "Keyword" },
+    ]);
+  });
+
   it("reads account and admin pages", () => {
     expect(buildBreadcrumbs("/settings/security")).toEqual([
       { label: "Account", href: "/settings" },

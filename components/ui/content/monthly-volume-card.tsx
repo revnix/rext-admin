@@ -5,20 +5,16 @@ import {
 } from "@/lib/generate-content/monthly-volume";
 
 /**
- * A keyword's average monthly search volume. Only the number the analysis
- * measured: the trend line that used to sit beneath it was drawn from a sine
- * wave, not from data, so it is gone until a real monthly series exists.
+ * A keyword's average monthly search volume, under a label that says so (the keyword card's
+ * "Monthly searches"). Only the number the analysis measured: the trend line that used to sit
+ * beneath it was drawn from a sine wave, not from data, so it is gone until a real monthly series
+ * exists.
  */
 export function MonthlyVolumeCard({ volume }: { volume: number }) {
   return (
-    <div className="flex flex-col">
-      <p className="text-3xl font-semibold tabular-nums text-foreground">
-        {formatCompactVolume(volume)}
-      </p>
-      <p className="mt-0.5 whitespace-nowrap text-xs text-muted-foreground">
-        Avg. searches per month
-      </p>
-    </div>
+    <p className="num text-section text-foreground">
+      {formatCompactVolume(volume)}
+    </p>
   );
 }
 
@@ -57,9 +53,9 @@ export function MonthlyVolumeMessage({
   detail: string;
 }) {
   return (
-    <div className="flex flex-col">
-      <p className="text-sm font-medium text-foreground">{label}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+    <div className="flex flex-col gap-0.5">
+      <p className="text-body font-medium text-foreground">{label}</p>
+      <p className="text-caption text-muted-foreground">{detail}</p>
     </div>
   );
 }

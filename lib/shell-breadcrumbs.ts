@@ -41,6 +41,11 @@ const OWN_ITEMS: Record<string, string> = {
   "generate_content/library": "Keywords",
 };
 
+/** What a record under one of those items is. */
+const OWN_ITEM_DETAIL: Record<string, string> = {
+  "generate_content/library": "Keyword",
+};
+
 /** Pages outside a workspace: the first segment, then the pages under it. */
 const TOP_LEVEL: Record<
   string,
@@ -127,6 +132,13 @@ function workspaceTrail(
   const own = pages[0] && OWN_ITEMS[`${section}/${pages[0]}`];
   if (own) {
     trail.push({ label: own, path: `${base}/${section}/${pages[0]}` });
+    // One of the item's own records: a keyword in the library.
+    if (pages[1]) {
+      trail.push({
+        label: OWN_ITEM_DETAIL[`${section}/${pages[0]}`] ?? "Details",
+        path: `${base}/${section}/${pages[0]}/${pages[1]}`,
+      });
+    }
     return trail;
   }
 

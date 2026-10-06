@@ -2,9 +2,6 @@
   "components/generate-content/content.tsx": {
     "page-heading": 2
   },
-  "components/generate-content/library-detail.tsx": {
-    "table-recipe": 1
-  },
   "components/subscription/invoice-document.tsx": {
     "table-recipe": 1
   }

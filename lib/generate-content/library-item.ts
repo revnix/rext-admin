@@ -73,6 +73,29 @@ export async function searchLibrary(
   );
 }
 
+/** One item of the caller's own Library, with all its research, or null when it isn't there. */
+export async function readLibraryItem(
+  key: string,
+  userId: string,
+  workspaceId: string,
+): Promise<LibraryEntry | null> {
+  const { client, namespace } = await libraryStore(userId, workspaceId);
+  const item = await client.store.getItem(namespace, key);
+  const value = item?.value as StoredKeyword | undefined;
+  return value?.original_query ? { key, value } : null;
+}
+
+/** Removes one item from the caller's own Library, through the backend. */
+export async function deleteLibraryItem(
+  key: string,
+  userId: string,
+  workspaceId: string,
+): Promise<void> {
+  const { namespace } = await libraryStore(userId, workspaceId);
+  const { apiClient } = await import("@/lib/api-client");
+  await apiClient.keywordLibrary.delete(key, namespace);
+}
+
 /**
  * Reads one item from the caller's own Library, or null when it isn't there
  * (a removed item, another user's key, or text typed into the link). The store

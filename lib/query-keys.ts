@@ -286,6 +286,18 @@ export const libraryQueries = {
       // Research is saved by the run, which knows nothing of this key: ask again on every visit.
       staleTime: 0,
     }),
+  /** One researched keyword, by its store key; null when it isn't in the caller's Library. */
+  item: (workspaceId: string, userId: string, key: string) =>
+    queryOptions({
+      queryKey: ["library", workspaceId, userId, "item", key] as const,
+      queryFn: async () => {
+        const { readLibraryItem } = await import(
+          "@/lib/generate-content/library-item"
+        );
+        return readLibraryItem(key, userId, workspaceId);
+      },
+      enabled: !!workspaceId && !!userId && !!key,
+    }),
 };
 
 // ============================================================================
