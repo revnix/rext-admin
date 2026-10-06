@@ -349,6 +349,7 @@
      code block as a <code> element right under the article). */
   & :is(code) {
     padding: 0.125em 0.375em;
+    font-family: var(--font-mono);
     font-weight: 400;
     background: var(--surface-inset);
     border-radius: var(--radius-sm);
