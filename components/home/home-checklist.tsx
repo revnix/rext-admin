@@ -7,14 +7,15 @@ import type { ChecklistStep, ChecklistStepId } from "./home-data";
 
 /**
  * Getting started (plans/app/D-pages.md §2.1): the five steps to a first published article, each
- * linking to where it's done, until every one is. The page hides it then.
+ * linking to where it's done, until every one is. The page hides it then. A step with no link (one
+ * the person may not do here, such as generating without `content.create`) is listed as text.
  */
 export function HomeChecklist({
   steps,
   hrefs,
 }: {
   steps: ChecklistStep[];
-  hrefs: Record<ChecklistStepId, string>;
+  hrefs: Partial<Record<ChecklistStepId, string>>;
 }) {
   const done = steps.filter((step) => step.done).length;
   return (
@@ -31,12 +32,10 @@ export function HomeChecklist({
         />
       </div>
       <ol className="flex flex-col divide-y divide-border">
-        {steps.map((step) => (
-          <li key={step.id}>
-            <Link
-              href={hrefs[step.id] as Route}
-              className="group flex items-center gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
+        {steps.map((step) => {
+          const href = hrefs[step.id];
+          const row = (
+            <>
               <span
                 aria-hidden
                 className={cn(
@@ -68,13 +67,29 @@ export function HomeChecklist({
                   </span>
                 )}
               </span>
-              <ChevronRight
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-              />
-            </Link>
-          </li>
-        ))}
+              {href && (
+                <ChevronRight
+                  aria-hidden
+                  className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                />
+              )}
+            </>
+          );
+          return (
+            <li key={step.id}>
+              {href ? (
+                <Link
+                  href={href as Route}
+                  className="group flex items-center gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {row}
+                </Link>
+              ) : (
+                <div className="flex items-center gap-3 py-3">{row}</div>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

@@ -213,8 +213,10 @@ export default function HomePage() {
                   hrefs={{
                     site: workspaceRoutes.integrations(slug),
                     "brand-voice": workspaceRoutes.settings.brandVoice(slug),
-                    keyword: generate,
-                    content: generate,
+                    // Generation's steps link only for someone who may generate.
+                    ...(canGenerate
+                      ? { keyword: generate, content: generate }
+                      : {}),
                     publish: `${libraryHref}?status=draft,ready`,
                   }}
                 />

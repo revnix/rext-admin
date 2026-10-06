@@ -4,6 +4,8 @@
  */
 import { render, screen } from "@testing-library/react";
 import { ContinueRow } from "@/components/home/continue-row";
+import { HomeChecklist } from "@/components/home/home-checklist";
+import type { ChecklistStep } from "@/components/home/home-data";
 import { SuggestedKeywords } from "@/components/home/suggested-keywords";
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
 
@@ -63,6 +65,40 @@ describe("Suggested keywords", () => {
     expect(screen.getByText("seo tools")).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /Plan/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("Getting started", () => {
+  const steps: ChecklistStep[] = [
+    { id: "site", label: "Connect a site", description: "", done: false },
+    {
+      id: "keyword",
+      label: "Research a keyword",
+      description: "",
+      done: false,
+    },
+    {
+      id: "content",
+      label: "Write your first article",
+      description: "",
+      done: false,
+    },
+  ];
+
+  it("lists generation's steps without a link when they have none", () => {
+    render(
+      <HomeChecklist steps={steps} hrefs={{ site: "/w/acme/integrations" }} />,
+    );
+    expect(
+      screen.getByRole("link", { name: /Connect a site/ }),
+    ).toHaveAttribute("href", "/w/acme/integrations");
+    expect(screen.getByText("Research a keyword")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Research a keyword/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Write your first article/ }),
     ).not.toBeInTheDocument();
   });
 });
