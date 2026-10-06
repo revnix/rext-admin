@@ -207,6 +207,13 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
     }),
+  /** One workspace's credits, which carry its owner's plan (the workspace switcher's plan line). */
+  workspaceCredits: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "credits", workspaceId] as const,
+      queryFn: () => apiClient.subscriptions.getCredits(workspaceId),
+      staleTime: 60 * 1000,
+    }),
 };
 
 // ============================================================================
