@@ -3,7 +3,7 @@
 import { Copy, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { z } from "zod";
 import { FieldController } from "@/components/forms/field-controller";
 import { FormSection, FormShell } from "@/components/forms/form-shell";
@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Meter } from "@/components/ui/meter";
@@ -56,6 +57,7 @@ import {
 } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup } from "@/components/ui/radio-group";
+import { RouteError } from "@/components/ui/route-error";
 import { ScoreRing } from "@/components/ui/score-ring";
 import {
   Select,
@@ -135,7 +137,7 @@ const NOTICE_TONES = ["info", "warning", "danger", "success"] as const;
 const sampleSchema = z.object({
   name: z.string().trim().min(3, "Name must be at least 3 characters"),
   password: z.string().min(8, "At least 8 characters"),
-  plan: z.string().min(1, "Choose a plan"),
+  choice: z.string().min(1, "Choose an option"),
   note: z.string().max(140, "Keep it under 140 characters").optional(),
   agreed: z.boolean().refine((value) => value, "Tick this to go on"),
   public: z.boolean(),
@@ -147,7 +149,7 @@ function SampleForm() {
     defaultValues: {
       name: "",
       password: "",
-      plan: "",
+      choice: "",
       note: "",
       agreed: false,
       public: true,
@@ -182,8 +184,8 @@ function SampleForm() {
         </FieldController>
         <FieldController
           control={form.control}
-          name="plan"
-          label="Plan"
+          name="choice"
+          label="A select"
           required
         >
           {(field) => (
@@ -195,11 +197,11 @@ function SampleForm() {
                 onBlur={field.onBlur}
                 ref={field.ref}
               >
-                <SelectValue placeholder="Choose a plan" />
+                <SelectValue placeholder="Choose an option" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="starter">Starter</SelectItem>
-                <SelectItem value="growth">Growth</SelectItem>
+                <SelectItem value="one">Option one</SelectItem>
+                <SelectItem value="two">Option two</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -232,6 +234,15 @@ function SampleForm() {
   );
 }
 
+/** Always throws, so the boundary around it shows its fallback (and Try again throws again). */
+function Thrower(): ReactNode {
+  throw new Error("A sample failure for /dev/primitives");
+}
+
+const SAMPLE_ROUTE_ERROR = Object.assign(new Error("A sample route error"), {
+  digest: "1234567890",
+});
+
 interface SampleRow {
   id: string;
   title: string;
@@ -239,26 +250,15 @@ interface SampleRow {
   words: number;
 }
 
-const SAMPLE_ROWS: SampleRow[] = [
-  {
-    id: "1",
-    title: "How to plan a content calendar",
-    status: "published",
-    words: 1840,
-  },
-  {
-    id: "2",
-    title: "Keyword research for small sites",
-    status: "draft",
-    words: 920,
-  },
-  {
-    id: "3",
-    title: "What search intent tells you",
-    status: "failed",
-    words: 0,
-  },
-];
+const SAMPLE_STATUSES: SampleRow["status"][] = ["published", "draft", "failed"];
+
+// Thirty rows, more than a page of 25, so the pagination shows.
+const SAMPLE_ROWS: SampleRow[] = Array.from({ length: 30 }, (_, index) => ({
+  id: String(index + 1),
+  title: `Sample article ${index + 1}`,
+  status: SAMPLE_STATUSES[index % 3],
+  words: index % 3 === 2 ? 0 : 600 + index * 47,
+}));
 
 const STATUS_TINT = {
   draft: "neutral",
@@ -327,6 +327,7 @@ const SAMPLE_STAGES = [
  * its variants and states, on the tokens, at the width the window gives it.
  */
 export function PrimitivesGallery() {
+  const [lens, setLens] = useState("month");
   return (
     <DetailPage
       title="Primitives"
@@ -385,7 +386,8 @@ export function PrimitivesGallery() {
                 { value: "board", label: "Board" },
                 { value: "list", label: "List" },
               ]}
-              value="month"
+              value={lens}
+              onValueChange={setLens}
               orientation="horizontal"
             />
           </Row>
@@ -565,6 +567,26 @@ export function PrimitivesGallery() {
                 action={{ label: "Generate", onClick: () => undefined }}
               />
             </Card>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                ErrorBoundary around a part that throws
+              </p>
+              <ErrorBoundary title="This sample part didn't load">
+                <Thrower />
+              </ErrorBoundary>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                RouteError inside a page layout (an error.tsx)
+              </p>
+              <RouteError
+                error={SAMPLE_ROUTE_ERROR}
+                reset={() => undefined}
+                title="This sample page hit an error"
+                logContext="dev/primitives"
+                layout="inline"
+              />
+            </div>
           </div>
         </Section>
 
@@ -574,8 +596,9 @@ export function PrimitivesGallery() {
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
-              <Meter value={412} max={1000} label="412 of 1,000 credits" />
-              <Meter value={880} max={1000} low label="880 of 1,000 credits" />
+              {/* Fixture numbers: the real meter reads the plan's credits from the backend. */}
+              <Meter value={412} max={1000} label="412 of 1,000 used" />
+              <Meter value={880} max={1000} low label="880 of 1,000 used" />
               <Progress value={60} />
               <div className="flex flex-wrap gap-6">
                 <ScoreRing value={86} label="SEO score" />
