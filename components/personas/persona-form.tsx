@@ -47,11 +47,13 @@ const asText = (value: string | string[] | null | undefined) =>
  * A saved persona as the form's values. The photo link shows only a link someone typed: an uploaded
  * photo comes back as a presigned address, and a Gravatar or drawn initials aren't a link to edit.
  */
+/** An uploaded photo: stored under avatars/personas/<id>/ and served from storage at that path. */
+const isUploadedPhoto = (avatar: string) =>
+  isServerOwnedAvatar(avatar) || avatar.includes("/avatars/personas/");
+
 export function toPersonaFormValues(persona: Persona): PersonaFormValues {
   const avatar = persona.avatar_url ?? "";
-  // An upload is stored under avatars/personas/<id>/ and served from storage at that path.
-  const uploaded =
-    isServerOwnedAvatar(avatar) || avatar.includes("/avatars/personas/");
+  const uploaded = isUploadedPhoto(avatar);
   const typedLink =
     persona.avatar_source === "custom" &&
     /^https?:\/\//.test(avatar) &&
@@ -110,14 +112,11 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /** A saved photo the link field doesn't show (an upload, or one taken from the website) is
-   *  removed here; the save sends the backend's removal signal, an empty `avatar_url`. */
+  /** An uploaded photo has no link to clear, so it's removed here; the save sends the backend's
+   *  removal signal, an empty `avatar_url`. It's told by its address: the persona response carries
+   *  no `avatar_source`. */
   const storedPhoto = Boolean(
-    editing &&
-      persona?.avatar_url &&
-      (persona.avatar_source === "custom" ||
-        persona.avatar_source === "page") &&
-      !toPersonaFormValues(persona).avatar_url,
+    editing && persona?.avatar_url && isUploadedPhoto(persona.avatar_url),
   );
   const [removePhoto, setRemovePhoto] = useState(false);
 
