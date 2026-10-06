@@ -26,7 +26,7 @@ import {
   splitLines,
   toBrandVoiceFormValues,
 } from "@/schemas/brand-voice-schemas";
-import { useWorkspaceStore } from "@/stores/workspace";
+import { brandVoiceRefreshFor, useWorkspaceStore } from "@/stores/workspace";
 import { SettingsGroup } from "@/components/settings/settings-group";
 
 const ONE_PER_LINE = "One per line.";
@@ -45,8 +45,10 @@ export function BrandVoiceSection() {
     useWorkspacePermission(BRAND_VOICE_PERMISSIONS.READ, workspaceId);
   const { hasPermission: canUpdate, isLoading: isUpdateLoading } =
     useWorkspacePermission(BRAND_VOICE_PERMISSIONS.UPDATE, workspaceId);
+  // A failed refresh in another workspace isn't this one's.
   const refreshError = useWorkspaceStore(
-    (state) => state.brandVoiceRefresh.refreshError,
+    (state) =>
+      brandVoiceRefreshFor(state.brandVoiceRefresh, workspace?.id).refreshError,
   );
 
   const { data, isLoading } = useQuery({
