@@ -209,8 +209,10 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        // Workspace invitation reporting (no navigation reached it) is retired with the
+        // other analytics pages; the overview is the nearest page.
         source: "/admin/analytics/invitations",
-        destination: "/admin/platform/invitations",
+        destination: "/admin",
         permanent: false,
       },
       {

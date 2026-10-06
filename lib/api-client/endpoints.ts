@@ -365,13 +365,9 @@ export const ENDPOINTS = {
    */
   ADMIN_ANALYTICS: {
     subscriptions: {
-      overview: "/api/v1/admin/subscriptions/stats/overview",
       revenue: "/api/v1/admin/subscriptions/stats/revenue",
       churn: "/api/v1/admin/subscriptions/stats/churn",
       trialConversion: "/api/v1/admin/subscriptions/stats/trial-conversion",
-    },
-    invitations: {
-      analytics: "/api/v1/admin/analytics/invitations/analytics",
     },
   },
 
