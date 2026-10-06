@@ -1,12 +1,12 @@
 "use client";
 
 import { formatDistanceToNow, parseISO } from "date-fns";
-import { AlertCircle, ExternalLink, RefreshCw, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,18 +16,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DataTable } from "@/components/data-table";
+  createDataTableColumnHelper,
+  DataTable,
+} from "@/components/ui/data-table";
 import { RefundRequestsTable } from "@/components/admin/refunds/refund-requests-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import type { Refund, RefundSummary } from "@/lib/api-client/admin-refunds";
-import type { Column } from "@/types/data-table";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -41,18 +36,126 @@ const formatCurrency = (amount: number): string => {
   }).format(amount / 100); // amounts are in cents
 };
 
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <Badge variant="success">Completed</Badge>;
-    case "failed":
-      return <Badge variant="destructive">Failed</Badge>;
-    case "pending":
-      return <Badge variant="secondary">Pending</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+const REFUND_STATUS: Record<
+  string,
+  { label: string; variant: BadgeProps["variant"] }
+> = {
+  completed: { label: "Completed", variant: "success" },
+  failed: { label: "Failed", variant: "danger" },
+  pending: { label: "Pending", variant: "warning" },
 };
+
+const getStatusBadge = (status: string) => {
+  const known = REFUND_STATUS[status];
+  return (
+    <Badge variant={known?.variant ?? "neutral"}>
+      {known?.label ?? status}
+    </Badge>
+  );
+};
+
+const column = createDataTableColumnHelper<Refund>();
+
+const historyColumns = column.columns([
+  column.accessor((r) => `${r.user_email ?? ""} ${r.user_name ?? ""}`, {
+    id: "customer",
+    header: "Customer",
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">
+          {row.original.user_email || "Unknown customer"}
+        </p>
+        {row.original.user_name && (
+          <p className="truncate text-muted-foreground">
+            {row.original.user_name}
+          </p>
+        )}
+      </div>
+    ),
+  }),
+  column.accessor((r) => `${r.lemonsqueezy_order_id} ${r.plan_name ?? ""}`, {
+    id: "order",
+    header: "Order / plan",
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <p className="num font-mono">#{row.original.lemonsqueezy_order_id}</p>
+        {row.original.plan_name && (
+          <p className="truncate text-muted-foreground">
+            {row.original.plan_name}
+          </p>
+        )}
+      </div>
+    ),
+  }),
+  column.accessor("refund_amount", {
+    header: "Amount",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => (
+      <span className="inline-flex items-center gap-1.5">
+        {row.original.is_partial && <Badge variant="neutral">Partial</Badge>}
+        <span className="font-medium text-foreground">
+          {formatCurrency(row.original.refund_amount)}
+        </span>
+      </span>
+    ),
+    enableGlobalFilter: false,
+  }),
+  column.accessor((r) => r.reason ?? "", {
+    id: "reason",
+    header: "Reason",
+    cell: ({ getValue }) => (
+      <span className="line-clamp-2 text-muted-foreground">
+        {getValue() || "No reason given"}
+      </span>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => getStatusBadge(getValue()),
+    filterFn: "arrHas",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((r) => (r.is_partial ? "partial" : "full"), {
+    id: "type",
+    header: "Type",
+    filterFn: "arrHas",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((r) => Date.parse(r.created_at) || 0, {
+    id: "created_at",
+    header: "Created",
+    meta: { align: "end" },
+    cell: ({ row }) =>
+      formatDistanceToNow(parseISO(row.original.created_at), {
+        addSuffix: true,
+      }),
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+]);
+
+const HISTORY_FACETS = [
+  {
+    column: "status",
+    title: "Status",
+    options: Object.entries(REFUND_STATUS).map(([value, { label }]) => ({
+      value,
+      label,
+    })),
+  },
+  {
+    column: "type",
+    title: "Type",
+    options: [
+      { value: "full", label: "Full refunds" },
+      { value: "partial", label: "Partial refunds" },
+    ],
+  },
+];
+
+// The type is a facet; as a column it would only repeat the amount's "Partial".
+const HISTORY_HIDDEN = ["type"];
 
 // ============================================================================
 // STATS CARDS
@@ -132,8 +235,6 @@ export default function RefundManagementPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Filters for Refund History
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   // Fetch refunds
   const fetchRefunds = useCallback(async () => {
@@ -157,101 +258,6 @@ export default function RefundManagementPage() {
   useEffect(() => {
     fetchRefunds();
   }, [fetchRefunds]);
-
-  // Filtered dataset for DataTable
-  const tableData = useMemo(() => {
-    return refunds
-      .filter((r) => {
-        if (statusFilter !== "all" && r.status !== statusFilter) return false;
-        if (typeFilter === "full" && r.is_partial) return false;
-        if (typeFilter === "partial" && !r.is_partial) return false;
-        return true;
-      })
-      .map((r) => ({ ...r }));
-  }, [refunds, statusFilter, typeFilter]);
-
-  const historyColumns: Column<Refund & Record<string, unknown>>[] = [
-    {
-      key: "user_email",
-      header: "Customer",
-      width: "220px",
-      cell: (_val, row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">
-            {row.user_email || "Unknown Customer"}
-          </p>
-          {row.user_name && (
-            <p className="text-xs text-muted-foreground truncate">
-              {row.user_name}
-            </p>
-          )}
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "lemonsqueezy_order_id",
-      header: "Order / Plan",
-      width: "200px",
-      cell: (_val, row) => (
-        <div className="min-w-0">
-          <p className="text-sm font-medium font-mono">
-            #{row.lemonsqueezy_order_id}
-          </p>
-          {row.plan_name && (
-            <p className="text-xs text-muted-foreground truncate">
-              {row.plan_name}
-            </p>
-          )}
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "refund_amount",
-      header: "Amount",
-      width: "160px",
-      cell: (_val, row) => (
-        <div>
-          <span className="font-semibold text-sm">
-            {formatCurrency(row.refund_amount)}
-          </span>
-          {row.is_partial && (
-            <Badge variant="secondary" className="ml-1.5 font-normal">
-              Partial
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "reason",
-      header: "Reason",
-      width: "220px",
-      cell: (_val, row) => (
-        <span className="text-xs text-muted-foreground truncate block max-w-[200px]">
-          {row.reason || "No reason provided"}
-        </span>
-      ),
-      searchable: true,
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "130px",
-      cell: (_val, row) => getStatusBadge(row.status),
-    },
-    {
-      key: "created_at",
-      header: "Created",
-      width: "140px",
-      cell: (_val, row) => (
-        <span className="text-xs text-muted-foreground">
-          {formatDistanceToNow(parseISO(row.created_at), { addSuffix: true })}
-        </span>
-      ),
-    },
-  ];
 
   return (
     <AdminGuard superAdminOnly={true}>
@@ -342,67 +348,41 @@ export default function RefundManagementPage() {
           </CardHeader>
           <CardContent>
             <DataTable
+              caption="Refund history"
               columns={historyColumns}
-              data={tableData}
-              isLoading={loading}
-              mobileCards
-              searchPlaceholder="Search history by customer email, order ID or reason..."
-              pageSize={10}
-              pageSizeOptions={[10, 25, 50, 100]}
-              tableId="admin-refund-history"
-              emptyTitle="No refunds found"
-              emptyDescription="No refund history matches your search or selected filters."
-              actions={
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Status Filter */}
-                  <div className="w-[150px]">
-                    <Select
-                      value={statusFilter}
-                      onValueChange={setStatusFilter}
-                    >
-                      <SelectTrigger className="h-9 text-xs bg-card">
-                        <SelectValue placeholder="All Statuses" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Type Filter */}
-                  <div className="w-[150px]">
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger className="h-9 text-xs bg-card">
-                        <SelectValue placeholder="All Types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="full">Full Refunds</SelectItem>
-                        <SelectItem value="partial">Partial Refunds</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Reset Filters */}
-                  {(statusFilter !== "all" || typeFilter !== "all") && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setStatusFilter("all");
-                        setTypeFilter("all");
-                      }}
-                      className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5 mr-1" />
-                      Reset
-                    </Button>
-                  )}
-                </div>
+              data={refunds}
+              getRowId={(refund) => refund.id}
+              getRowLabel={(refund) =>
+                refund.user_email || `order ${refund.lemonsqueezy_order_id}`
               }
+              isLoading={loading}
+              surface="plain"
+              search={{ placeholder: "Search by customer, order or reason" }}
+              facets={HISTORY_FACETS}
+              hiddenColumns={HISTORY_HIDDEN}
+              pageSizeOptions={[10, 25, 50, 100]}
+              emptyState={
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No refunds yet.
+                </p>
+              }
+              renderCard={(refund) => (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate font-medium text-foreground">
+                      {refund.user_email || "Unknown customer"}
+                    </p>
+                    <span className="num font-medium text-foreground">
+                      {formatCurrency(refund.refund_amount)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                    {getStatusBadge(refund.status)}
+                    <span className="num">#{refund.lemonsqueezy_order_id}</span>
+                    {refund.is_partial && <span>Partial</span>}
+                  </div>
+                </div>
+              )}
             />
           </CardContent>
         </Card>

@@ -10,9 +10,9 @@
  */
 
 import { Loader2, RotateCcw, CheckCircle2, XCircle, Play } from "lucide-react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,17 +25,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DataTable } from "@/components/data-table";
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+} from "@/components/ui/data-table";
 import { apiClient } from "@/lib/api-client";
 import type { RefundRequestRow } from "@/lib/api-client/admin-refunds";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import { log } from "@/lib/logger";
-import type { Column } from "@/types/data-table";
 
 type Decision = "approve" | "reject" | "process";
 
@@ -46,22 +43,105 @@ function formatAmount(cents: number, currency: string) {
   }).format((cents ?? 0) / 100);
 }
 
-function statusBadge(request: RefundRequestRow) {
+/** Where a request stands: an approval waits for its payout until it is processed. */
+function stageOf(request: RefundRequestRow) {
   if (request.status === "approved") {
-    return request.awaiting_processing ? (
-      <Badge variant="warning">Approved · awaiting payout</Badge>
-    ) : (
-      <Badge variant="success">Refunded</Badge>
-    );
+    return request.awaiting_processing ? "awaiting" : "refunded";
   }
-
-  const map = {
-    pending: { variant: "secondary" as const, label: "Pending" },
-    rejected: { variant: "destructive" as const, label: "Rejected" },
-  } as const;
-  const config = map[request.status as "pending" | "rejected"] ?? map.pending;
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return request.status === "rejected" ? "rejected" : "pending";
 }
+
+const STAGES: Record<
+  string,
+  { label: string; variant: BadgeProps["variant"] }
+> = {
+  pending: { label: "Pending", variant: "warning" },
+  awaiting: { label: "Approved · awaiting payout", variant: "warning" },
+  refunded: { label: "Refunded", variant: "success" },
+  rejected: { label: "Rejected", variant: "neutral" },
+};
+
+function StageBadge({ request }: { request: RefundRequestRow }) {
+  const stage = STAGES[stageOf(request)];
+  return <Badge variant={stage.variant}>{stage.label}</Badge>;
+}
+
+const column = createDataTableColumnHelper<RefundRequestRow>();
+
+const columns = column.columns([
+  column.accessor((r) => `${r.user_email ?? ""} ${r.reason ?? ""}`, {
+    id: "customer",
+    header: "Customer",
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">
+          {row.original.user_email || "Unknown customer"}
+        </p>
+        <p className="line-clamp-2 text-muted-foreground">
+          Reason: {row.original.reason || "none given"}
+        </p>
+      </div>
+    ),
+  }),
+  column.accessor((r) => `${r.product_name ?? ""} ${r.lemonsqueezy_order_id}`, {
+    id: "order",
+    header: "Order / product",
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">
+          {row.original.product_name || "Order"}
+        </p>
+        <p className="num truncate font-mono text-muted-foreground">
+          #{row.original.lemonsqueezy_order_id}
+        </p>
+      </div>
+    ),
+  }),
+  column.accessor("requested_amount", {
+    header: "Amount",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => (
+      <div>
+        <p className="font-medium text-foreground">
+          {formatAmount(row.original.requested_amount, row.original.currency)}
+        </p>
+        {row.original.refunded_amount > 0 && (
+          <p className="text-muted-foreground">
+            {formatAmount(row.original.refunded_amount, row.original.currency)}{" "}
+            refunded
+          </p>
+        )}
+      </div>
+    ),
+    enableGlobalFilter: false,
+  }),
+  column.accessor(stageOf, {
+    id: "stage",
+    header: "Status",
+    cell: ({ row }) => <StageBadge request={row.original} />,
+    filterFn: "arrHas",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((r) => Date.parse(r.created_at) || 0, {
+    id: "created_at",
+    header: "Created",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(row.original.created_at),
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+]);
+
+const STAGE_FACET = [
+  {
+    column: "stage",
+    title: "Status",
+    options: Object.entries(STAGES).map(([value, { label }]) => ({
+      value,
+      label,
+    })),
+  },
+];
 
 interface RefundRequestsTableProps {
   refreshKey?: number;
@@ -79,7 +159,6 @@ export function RefundRequestsTable({
   const [undoing, setUndoing] = useState<string | null>(null);
 
   // Filter state
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,200 +245,87 @@ export function RefundRequestsTable({
     }
   };
 
-  const tableData = useMemo(() => {
-    return requests
-      .filter((req) => {
-        if (statusFilter === "pending") return req.status === "pending";
-        if (statusFilter === "approved")
-          return req.status === "approved" && req.awaiting_processing;
-        if (statusFilter === "refunded")
-          return req.status === "approved" && !req.awaiting_processing;
-        if (statusFilter === "rejected") return req.status === "rejected";
-        return true;
-      })
-      .map((req) => ({
-        ...req,
-      }));
-  }, [requests, statusFilter]);
-
-  const columns: Column<RefundRequestRow & Record<string, unknown>>[] = [
-    {
-      key: "user_email",
-      header: "Customer",
-      width: "220px",
-      cell: (_val, row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">
-            {row.user_email || "Unknown Customer"}
-          </p>
-          <p className="text-xs text-muted-foreground truncate max-w-[220px]">
-            <span className="font-medium text-foreground">Reason:</span>{" "}
-            {row.reason}
-          </p>
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "lemonsqueezy_order_id",
-      header: "Order / Product",
-      width: "200px",
-      cell: (_val, row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">
-            {row.product_name || "Order"}
-          </p>
-          <p className="text-xs text-muted-foreground font-mono truncate">
-            #{row.lemonsqueezy_order_id}
-          </p>
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "requested_amount",
-      header: "Amount",
-      width: "150px",
-      cell: (_val, row) => (
-        <div>
-          <div className="font-semibold text-sm">
-            {formatAmount(row.requested_amount, row.currency)}
-          </div>
-          {row.refunded_amount > 0 && (
-            <p className="text-caption text-muted-foreground">
-              {formatAmount(row.refunded_amount, row.currency)} refunded
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "180px",
-      cell: (_val, row) => statusBadge(row),
-    },
-    {
-      key: "created_at",
-      header: "Created",
-      width: "120px",
-      cell: (_val, row) => (
-        <span className="text-xs text-muted-foreground">
-          {new Date(row.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      width: "220px",
-      cell: (_val, row) => (
-        <div className="flex items-center gap-2">
-          {row.status === "pending" && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs text-destructive hover:bg-destructive/10"
-                onClick={() => openDecision(row, "reject")}
-              >
-                <XCircle className="h-3.5 w-3.5 mr-1" />
-                Reject
-              </Button>
-              <Button
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => openDecision(row, "approve")}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                Approve
-              </Button>
-            </>
-          )}
-          {row.awaiting_processing && (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 text-xs"
-                disabled={undoing === row.id}
-                onClick={() => undoApproval(row)}
-              >
-                {undoing === row.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                ) : (
-                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                )}
-                Undo
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs text-destructive hover:bg-destructive/10"
-                onClick={() => openDecision(row, "reject")}
-              >
-                Reject
-              </Button>
-              <Button
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => openDecision(row, "process")}
-              >
-                <Play className="h-3.5 w-3.5 mr-1 fill-current" />
-                Process
-              </Button>
-            </>
-          )}
-        </div>
-      ),
-    },
-  ];
+  // The queue's next steps: decide a pending request; for an approved one, issue the payout or undo.
+  const rowActions = (request: RefundRequestRow): DataTableRowAction[] => {
+    if (request.status === "pending") {
+      return [
+        {
+          label: "Approve",
+          icon: CheckCircle2,
+          onSelect: () => openDecision(request, "approve"),
+        },
+        {
+          label: "Reject",
+          icon: XCircle,
+          destructive: true,
+          onSelect: () => openDecision(request, "reject"),
+        },
+      ];
+    }
+    if (request.awaiting_processing) {
+      return [
+        {
+          label: "Process refund",
+          icon: Play,
+          onSelect: () => openDecision(request, "process"),
+        },
+        {
+          label: "Undo approval",
+          icon: RotateCcw,
+          disabled: undoing === request.id ? "Undoing…" : false,
+          onSelect: () => void undoApproval(request),
+        },
+        {
+          label: "Reject",
+          icon: XCircle,
+          destructive: true,
+          onSelect: () => openDecision(request, "reject"),
+        },
+      ];
+    }
+    return [];
+  };
 
   return (
     <div className="space-y-4">
       <DataTable
+        caption="Refund requests"
         columns={columns}
-        data={tableData}
-        isLoading={loading}
-        mobileCards
-        searchPlaceholder="Search requests by email, order ID or reason..."
-        pageSize={10}
-        pageSizeOptions={[5, 10, 20, 50]}
-        tableId="admin-refund-requests"
-        emptyTitle="No refund requests found"
-        emptyDescription="No customer-initiated refund requests match your selected filters."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="w-[180px]">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 text-xs bg-card">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Awaiting Payout</SelectItem>
-                  <SelectItem value="refunded">Refunded</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {statusFilter !== "all" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStatusFilter("all")}
-                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                Reset
-              </Button>
-            )}
-          </div>
+        data={requests}
+        getRowId={(request) => request.id}
+        getRowLabel={(request) =>
+          request.user_email || `order ${request.lemonsqueezy_order_id}`
         }
+        isLoading={loading}
+        surface="plain"
+        search={{ placeholder: "Search by email, order or reason" }}
+        facets={STAGE_FACET}
+        rowActions={rowActions}
+        pageSizeOptions={[10, 25, 50]}
+        emptyState={
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No refund requests from customers yet.
+          </p>
+        }
+        renderCard={(request, { actions }) => (
+          <div className="flex items-start gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="truncate font-medium text-foreground">
+                  {request.user_email || "Unknown customer"}
+                </p>
+                <span className="num font-medium text-foreground">
+                  {formatAmount(request.requested_amount, request.currency)}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                <StageBadge request={request} />
+                <span className="num">#{request.lemonsqueezy_order_id}</span>
+              </div>
+            </div>
+            {actions}
+          </div>
+        )}
       />
 
       <Dialog open={active !== null} onOpenChange={() => setActive(null)}>
