@@ -289,7 +289,7 @@ export const ENDPOINTS = {
     BASE: "/api/v1/subscriptions",
     /** The public plan catalogue (F1): plans, the trial, an article's cost, the offer. */
     catalog: "/api/v1/plans",
-    mySubscription: "/api/v1/subscriptions/my-subscription",
+    current: "/api/v1/subscriptions/current",
     plans: "/api/v1/subscriptions/plans",
     checkout: "/api/v1/subscriptions/checkout",
     portal: "/api/v1/subscriptions/portal",

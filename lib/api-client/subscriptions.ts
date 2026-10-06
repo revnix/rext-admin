@@ -37,7 +37,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
       const response = await client.request<UserSubscription>(
-        ENDPOINTS.SUBSCRIPTIONS.mySubscription,
+        ENDPOINTS.SUBSCRIPTIONS.current,
         {
           method: "GET",
         },
