@@ -387,14 +387,18 @@
  * primitives (Plan C) or its page is reworked (Plans D and E).
  */
 
-/* components/ui/button.tsx, popover.tsx, sidebar: buttons are flat, overlays float. */
-.shadow-colored-sm {
-  box-shadow: none;
-}
+/* components/ui/button.tsx, popover.tsx, sidebar: buttons are flat, overlays float. In the components
+   layer, so a utility wins over them: unlayered, `box-shadow: none` hid the buttons' focus-visible ring,
+   which is a box-shadow (WCAG 2.4.7; task C10). */
+@layer components {
+  .shadow-colored-sm {
+    box-shadow: none;
+  }
 
-.shadow-colored,
-.shadow-colored-md {
-  box-shadow: var(--shadow-overlay);
+  .shadow-colored,
+  .shadow-colored-md {
+    box-shadow: var(--shadow-overlay);
+  }
 }
 
 /* A pressed button scales to 0.98, and its colours and focus ring change at the hover speed.
