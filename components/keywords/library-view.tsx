@@ -15,7 +15,10 @@ import { useDataTableUrlState } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { useAwaitingData } from "@/hooks/use-awaiting-data";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -39,7 +42,8 @@ const libraryLogger = log.forComponent("library-view");
  * removes it.
  */
 export function LibraryView() {
-  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
+  const workspaceError = useWorkspaceFailure();
   const { user } = useAuthSession();
   const router = useRouter();
   const queryClient = useQueryClient();

@@ -12,7 +12,10 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { useAwaitingData } from "@/hooks/use-awaiting-data";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useShowAfter } from "@/hooks/use-show-after";
 import { libraryStartQuery } from "@/lib/generate-content/library-item";
@@ -44,7 +47,8 @@ function routeKey(segment: string): string {
 export default function Page() {
   const params = useParams<{ key: string }>();
   const key = routeKey(params.key);
-  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
+  const workspaceError = useWorkspaceFailure();
   const { user } = useAuthSession();
   const workspaceId = workspace?.id ?? "";
   // The research is read only by someone who may read the workspace's content, as on Generate.

@@ -4,6 +4,15 @@ import { useWorkspace } from "@/providers/workspace-provider";
 type WorkspaceState = { id?: string; error: Error | null };
 
 /**
+ * The page's failure when the workspace couldn't be read: only while no workspace is loaded. A
+ * failed background refetch keeps the loaded workspace (TanStack Query keeps the data), so it is
+ * not the page's failure.
+ */
+export function workspaceFailure(workspace: WorkspaceState): Error | null {
+  return workspace.id ? null : workspace.error;
+}
+
+/**
  * Whether a page still waits for a query's data, and so shows its skeleton (D16a).
  * - While the workspace is being read (no id, no error) it waits: the queries need its id.
  * - Once reading the workspace failed it stops: nothing more will come, and the page shows its failure.
@@ -17,8 +26,7 @@ export function awaitingData(
   workspace: WorkspaceState,
   willRun = true,
 ): boolean {
-  if (workspace.error) return false;
-  if (!workspace.id) return true;
+  if (!workspace.id) return !workspace.error;
   return willRun && query.isPending;
 }
 
@@ -29,4 +37,10 @@ export function useAwaitingData(
 ): boolean {
   const { workspace, error } = useWorkspace();
   return awaitingData(query, { id: workspace?.id, error }, willRun);
+}
+
+/** `workspaceFailure` for the current workspace: the error a list or a detail shows, if any. */
+export function useWorkspaceFailure(): Error | null {
+  const { workspace, error } = useWorkspace();
+  return workspaceFailure({ id: workspace?.id, error });
 }

@@ -81,4 +81,14 @@ describe("The content list before its workspace has loaded", () => {
     expect(await screen.findByText("Content didn't load")).toBeInTheDocument();
     expect(screen.queryByText("No content yet")).toBeNull();
   });
+
+  it("keeps the loaded list when a background refetch of the workspace fails", async () => {
+    workspace = { id: "w1", name: "Acme" };
+    workspaceError = new Error("Bad gateway");
+    listContent.mockResolvedValue({ content: [], total_count: 0 });
+    renderPage();
+
+    expect(await screen.findByText("No content yet")).toBeInTheDocument();
+    expect(screen.queryByText("Content didn't load")).toBeNull();
+  });
 });

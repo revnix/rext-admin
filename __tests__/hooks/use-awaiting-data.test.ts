@@ -1,4 +1,4 @@
-import { awaitingData } from "@/hooks/use-awaiting-data";
+import { awaitingData, workspaceFailure } from "@/hooks/use-awaiting-data";
 
 const pending = { isPending: true };
 const settled = { isPending: false };
@@ -21,5 +21,13 @@ describe("awaitingData", () => {
 
   it("doesn't wait for a query that never runs here", () => {
     expect(awaitingData(pending, loaded, false)).toBe(false);
+  });
+
+  it("keeps a loaded workspace when a background refetch fails", () => {
+    const refetchFailed = { id: "w1", error: new Error("502") };
+    expect(awaitingData(pending, refetchFailed)).toBe(true);
+    expect(awaitingData(settled, refetchFailed)).toBe(false);
+    expect(workspaceFailure(refetchFailed)).toBeNull();
+    expect(workspaceFailure({ error: new Error("502") })).not.toBeNull();
   });
 });
