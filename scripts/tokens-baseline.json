@@ -56,20 +56,6 @@
     "stock-palette": 8,
     "dark-class": 1
   },
-  "app/error.tsx": {
-    "stock-palette": 14,
-    "literal-colour": 2,
-    "arbitrary-colour": 4,
-    "arbitrary-size": 1,
-    "off-scale": 1
-  },
-  "app/global-error.tsx": {
-    "stock-palette": 14,
-    "literal-colour": 2,
-    "arbitrary-colour": 4,
-    "arbitrary-size": 1,
-    "off-scale": 1
-  },
   "app/globals.css": {
     "arbitrary-size": 1
   },
@@ -87,19 +73,6 @@
   },
   "app/legal/terms/page.tsx": {
     "dark-class": 1
-  },
-  "app/maintenance/page.tsx": {
-    "stock-palette": 11,
-    "literal-colour": 2,
-    "arbitrary-colour": 4,
-    "off-scale": 2
-  },
-  "app/not-found.tsx": {
-    "stock-palette": 14,
-    "literal-colour": 2,
-    "arbitrary-colour": 4,
-    "arbitrary-size": 1,
-    "off-scale": 1
   },
   "app/reset-password/page.tsx": {
     "stock-palette": 11
