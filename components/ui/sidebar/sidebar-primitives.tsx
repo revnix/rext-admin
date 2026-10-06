@@ -167,7 +167,7 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-8 text-muted-foreground", className)}
+      className={cn("size-8 text-muted-foreground max-lg:size-10", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -226,7 +226,10 @@ function SidebarInput({
     <Input
       data-slot="sidebar-input"
       data-sidebar="input"
-      className={cn("h-8 w-full bg-background shadow-none", className)}
+      className={cn(
+        "h-8 w-full bg-background shadow-none max-lg:h-10",
+        className,
+      )}
       {...props}
     />
   );
@@ -309,7 +312,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center gap-1 rounded-sm px-3 text-caption font-medium tracking-wide text-muted-foreground uppercase outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-3.5 [&>svg]:shrink-0",
+        "flex h-8 shrink-0 items-center gap-1 rounded-sm px-3 max-lg:h-10 text-caption font-medium tracking-wide text-muted-foreground uppercase outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-3.5 [&>svg]:shrink-0",
         COLLAPSED_HIDDEN,
         className,
       )}
@@ -395,8 +398,9 @@ const sidebarMenuButtonVariants = cva(
           "bg-background shadow-hairline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       },
       size: {
-        default: "h-9",
-        sm: "h-8 text-label",
+        // 40 px under 1024 px, where the sidebar is a sheet on a touch screen (§9).
+        default: "h-9 max-lg:h-10",
+        sm: "h-8 text-label max-lg:h-10",
         lg: "h-11",
       },
     },
@@ -472,10 +476,12 @@ function SidebarMenuAction({
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
-        "absolute top-2 right-1 flex aspect-square w-5 cursor-pointer items-center justify-center rounded-sm p-0 text-muted-foreground outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-4 [&>svg]:shrink-0",
-        // A larger hit area on touch screens.
-        "after:absolute after:-inset-2 lg:after:hidden",
-        "peer-data-[size=sm]/menu-button:top-1.5",
+        "absolute top-2 right-1 flex aspect-square w-5 max-lg:top-2.5 cursor-pointer items-center justify-center rounded-sm p-0 text-muted-foreground outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-4 [&>svg]:shrink-0",
+        // A 40 px hit area on touch screens.
+        "after:absolute after:-inset-2.5 lg:after:hidden",
+        // Placed from the row's top (an item can hold a sub-list); under 1024 px every row but the
+        // large one is 40 px.
+        "lg:peer-data-[size=sm]/menu-button:top-1.5",
         "peer-data-[size=lg]/menu-button:top-3",
         COLLAPSED_HIDDEN,
         showOnHover &&
@@ -497,10 +503,10 @@ function SidebarMenuBadge({
       data-slot="sidebar-menu-badge"
       data-sidebar="menu-badge"
       className={cn(
-        "num pointer-events-none absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-caption font-medium text-muted-foreground select-none",
-        "peer-data-[active=true]/menu-button:bg-surface-raised",
-        "peer-data-[size=sm]/menu-button:top-1.5",
+        "num pointer-events-none absolute top-2 right-2 flex h-5 max-lg:top-2.5 min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-caption font-medium text-muted-foreground select-none",
+        "lg:peer-data-[size=sm]/menu-button:top-1.5",
         "peer-data-[size=lg]/menu-button:top-3",
+        "peer-data-[active=true]/menu-button:bg-surface-raised",
         COLLAPSED_HIDDEN,
         className,
       )}
@@ -584,7 +590,7 @@ function SidebarMenuSubButton({
       data-active={isActive}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex h-8 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-2 text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "flex h-8 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-2 max-lg:h-10 text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
         "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
         size === "sm" ? "text-label" : "text-body",
         COLLAPSED_HIDDEN,

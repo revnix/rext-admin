@@ -30,8 +30,9 @@ import { CreditMeter } from "./credit-meter";
 
 const HELP_URL = "https://rext.ai/help";
 
+/** 32 px with a mouse; 40 px under 1024 px, where the shell is on a touch screen (§9). */
 const iconButton =
-  "size-8 rounded-sm text-muted-foreground hover:bg-surface-inset hover:text-foreground";
+  "size-8 rounded-sm text-muted-foreground hover:bg-surface-inset hover:text-foreground max-lg:size-10";
 
 /** Where the page sits; under 640 px only the page itself, so the trail never wraps. */
 function ShellBreadcrumb() {
@@ -58,7 +59,8 @@ function ShellBreadcrumb() {
                 ) : crumb.href ? (
                   <BreadcrumbLink
                     href={crumb.href}
-                    className="max-w-48 truncate"
+                    // 40 px tall to a finger, without moving the header's line.
+                    className="max-w-48 truncate max-lg:-my-2.5 max-lg:py-2.5"
                   >
                     {crumb.label}
                   </BreadcrumbLink>
@@ -137,7 +139,7 @@ export function AppHeader() {
       <Link
         href={"/" as Route}
         aria-label="Rext AI home"
-        className="shrink-0 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
+        className="-ml-2.5 inline-flex size-10 shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
       >
         <Image
           src="/logos/icon_dark.svg"
