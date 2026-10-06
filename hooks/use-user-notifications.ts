@@ -15,7 +15,9 @@ async function refreshNotificationsWithState(): Promise<void> {
   store.setFetchState({ isLoading: true, fetchError: null });
 
   try {
-    const notifications = await fetchNotifications();
+    // The first read reports a failure, so the drawer offers Try again; a refresh after an event
+    // (refreshFeed) keeps the feed it has instead.
+    const notifications = await fetchNotifications({ throwOnError: true });
     store.mergeNotifications(notifications);
     store.setFetchState({ isLoading: false, fetchError: null });
   } catch (error) {
