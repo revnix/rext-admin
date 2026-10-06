@@ -59,6 +59,19 @@ describe("env", () => {
     ).rejects.toThrow("LANGGRAPH_API_URL");
   });
 
+  it("still needs them for the staging deploy on Vercel", async () => {
+    const { AUTH_SECRET: _, ...vars } = production;
+    await expect(
+      loadEnv({ ...vars, VERCEL_TARGET_ENV: "staging" }),
+    ).rejects.toThrow("AUTH_SECRET");
+  });
+
+  it("lets a Vercel preview of a pull request build without them", async () => {
+    await expect(
+      loadEnv({ NODE_ENV: "production", VERCEL_TARGET_ENV: "preview" }),
+    ).resolves.toBeDefined();
+  });
+
   it("lets development run on the code's fallbacks", async () => {
     await expect(loadEnv({ NODE_ENV: "development" })).resolves.toBeDefined();
   });
