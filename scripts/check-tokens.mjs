@@ -12,20 +12,25 @@
 //   literal-colour     a hex, rgb(), hsl(), oklch() or oklab() colour anywhere but a primitive in globals.css. A
 //                      primitive is a custom property declared in `@theme` under a name outside Tailwind's
 //                      namespaces (`--accent-600`, `--neutral-900`); a role points at one with var().
-//   inline-colour      a colour property in a style object given a named colour (`style={{ color: "red" }}`)
+//   inline-colour      a colour property in a style object given one of CSS's named colours
+//                      (`style={{ color: "red" }}`)
 //   unknown-variable   `var(--color-…)` for a colour that globals.css does not declare. It resolves to nothing
 //                      once the palette is off.
 //   dark-class         a `dark:` class: the dashboard is light only, and a dark theme comes back as one block of
 //                      roles, never as classes in components
 //   arbitrary-radius, arbitrary-shadow, arbitrary-size
-//                      a radius, shadow or font size written into a class (`rounded-[7px]`, `shadow-[0_1px_…]`,
-//                      `text-[15px]`); a size under 12 px is reported as small-type instead
+//                      a radius, shadow or font size written by hand: into a class (`rounded-[7px]`,
+//                      `shadow-[0_1px_…]`, `text-[15px]`, `text-[clamp(…)]`, `[font-size:15px]`) or into a
+//                      stylesheet rule (`border-radius: 7px`, `font-size: 0.875rem`). A size that can be under
+//                      12 px is reported as small-type instead. A value made of tokens passes (`var(--radius)`),
+//                      and so does a ring (`box-shadow: 0 0 0 1px var(--ring)`, what Tailwind's ring-1 draws).
 //   off-scale          a radius or shadow class outside the language's three of each (`rounded-xl`, `shadow-lg`):
 //                      use rounded-sm, rounded-md, rounded-full, shadow-hairline, shadow-overlay or shadow-modal
-// In the stylesheets, the values the language allows (§2 and §3):
+// The class rules also read `@apply` in the stylesheets. There, the values the language allows (§2 and §3):
 //   radius-token       a radius token other than 6 px, 10 px or round
 //   shadow-token       a shadow token other than --shadow-hairline, --shadow-overlay and --shadow-modal
 //   small-type         a font-size token that can be under 12 px, or whose smallest size cannot be told
+//   literal-colour     also a named colour in a colour property or a custom property (`color: red`)
 // The ratchet: the tree held about 2,000 findings when the check came in (task B3), so a whole-tree run compares
 // each file's count per rule with scripts/tokens-baseline.json and fails when one goes up. The sweep (task B7)
 // lowers the counts and runs --update; a new file starts at zero. A line that must stay as it is says why, on it
@@ -74,19 +79,46 @@ const ARBITRARY = new RegExp(
 const HEX = /(?<!&)#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![0-9a-zA-Z_-])/g;
 const FUNCTIONAL = /\b(?:rgba?|hsla?|oklch|oklab)\(\s*[\d.]/g;
 const COLOUR_VARIABLE = /var\(\s*(--color-[\w-]+)/g;
-const NAMED_COLOURS =
-  "red|blue|green|black|white|gray|grey|orange|yellow|purple|pink|silver|navy|teal|maroon|olive|lime|aqua|fuchsia";
+// CSS's named colours (CSS Color 4), all 148. Not transparent or currentColor: they carry no colour of their own.
+const NAMED_COLOURS = `aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet
+  brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan
+  darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred
+  darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue
+  dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green
+  greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon
+  lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon
+  lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta
+  maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen
+  mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab
+  orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum
+  powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna
+  silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet
+  wheat white whitesmoke yellow yellowgreen`
+  .split(/\s+/)
+  .join("|");
 const INLINE = new RegExp(
   `\\b(?:color|background|backgroundColor|border(?:Top|Right|Bottom|Left)?Color|fill|stroke|outlineColor)\\s*:\\s*["'\`](?:${NAMED_COLOURS})["'\`]`,
   "gi",
 );
+const NAMED = new RegExp(`(?<![\\w.-])(?:${NAMED_COLOURS})(?![\\w.-])`, "i");
 const DARK = /(?<![\w-])dark:[\w[(-]/g;
 const ARBITRARY_RADIUS = /(?<![\w-])rounded(?:-(?:t|r|b|l|s|e|tl|tr|bl|br|ss|se|es|ee))?-\[(?!var\()[^\]]+\]/g;
 const ARBITRARY_SHADOW = /(?<![\w-])shadow-\[(?!var\()[^\]]+\]/g;
-const ARBITRARY_SIZE = /(?<![\w-])text-\[(-?[\d.]+)(px|rem|em)\]/g;
+// `text-[15px]`, `text-[8pt]`, `text-[clamp(10px,1vw,16px)]`, `text-[length:1rem]`: a size, so not a colour (the
+// colour rules have those) and not a token (`text-[var(--x)]`).
+const ARBITRARY_SIZE =
+  /(?<![\w-])text-\[(?!#|--|var\(|length:var\(|color:|(?:rgba?|hsla?|oklch|oklab|color-mix)\()([^\]]+)\]/g;
+// A declaration written as a class: `[font-size:15px]`, `[border-radius:7px]`, `[box-shadow:0_1px_2px_black]`.
+const ARBITRARY_PROPERTY = /(?<![\w-])\[(font-size|font|border(?:-[a-z]+)*-radius|box-shadow):([^\]]+)\]/g;
 const RADIUS_CLASS = /(?<![\w-])rounded(?:-([\w\-[\]().%+]+))?(?![\w-])/g;
 const SHADOW_CLASS = /(?<![\w-])shadow(?:-([\w\-[\]().%+/]+))?(?![\w-])/g;
-const CLASS_CONTEXT = /className|\bclass=|\b(?:cn|cva|clsx|twMerge)\(/;
+const CLASS_CONTEXT = /className|\bclass=|\b(?:cn|cva|clsx|twMerge)\(|@apply\b/;
+// The CSS properties that take a colour, for a named colour written into a stylesheet rule.
+const COLOUR_PROPERTY =
+  /^(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?(?:-color)?|outline(?:-color)?|fill|stroke|text-decoration(?:-color)?|caret-color|accent-color|column-rule(?:-color)?|stop-color|flood-color|lighting-color|scrollbar-color)$/;
+const KEYWORD = /^(?:inherit|initial|unset|revert|revert-layer|none|0)$/i;
+// A ring, as Tailwind's ring utilities draw one: no offset, no blur, a spread in a token's colour.
+const RING = /^(?:inset\s+)?0(?:px)?\s+0(?:px)?\s+0(?:px)?\s+[\d.]+(?:px|rem)?\s+var\([^()]+\)(?:\s+inset)?$/;
 const RADII = new Set(["sm", "md", "full", "none", "(--card-radius)", "(--control-radius)"]);
 const SHADOWS = new Set(["hairline", "overlay", "modal", "none"]);
 const MARK = /tokens-ok:\s*\S/;
@@ -153,13 +185,18 @@ function scan(text, { stylesheet = false, primitives = false, declared = null, m
         for (const m of literals)
           report("literal-colour", m[0].startsWith("#") ? m[0] : `${m[0].split("(")[0]}(…)`);
     }
-    if (markup) {
+    if (markup || /@apply\b/.test(line)) {
       for (const m of line.matchAll(DARK)) report("dark-class", m[0].slice(0, -1));
       for (const m of line.matchAll(ARBITRARY_RADIUS)) report("arbitrary-radius", m[0]);
       for (const m of line.matchAll(ARBITRARY_SHADOW)) report("arbitrary-shadow", m[0]);
+      // In a class, `_` stands for a space.
       for (const m of line.matchAll(ARBITRARY_SIZE)) {
-        const px = Number(m[1]) * (m[2] === "px" ? 1 : 16);
-        report(px < 12 ? "small-type" : "arbitrary-size", m[0]);
+        const found = literal("font-size", m[1].replace(/^length:/, "").replaceAll("_", " "));
+        if (found) report(found.rule, m[0]);
+      }
+      for (const m of line.matchAll(ARBITRARY_PROPERTY)) {
+        const found = literal(m[1], m[2].replaceAll("_", " "));
+        if (found) report(found.rule, m[0]);
       }
       // The bare words also appear in prose, so `rounded` and `shadow` alone count only where classes are built.
       const classes = CLASS_CONTEXT.test(line);
@@ -187,7 +224,7 @@ function scan(text, { stylesheet = false, primitives = false, declared = null, m
   return found;
 }
 
-/** The custom properties of a stylesheet: name, value, line, and whether it sits inside `@theme`. */
+/** Every declaration of a stylesheet: name, value, line, and whether it sits inside `@theme`. */
 function declarations(sheet) {
   const out = [];
   const stack = [];
@@ -214,7 +251,7 @@ function declarations(sheet) {
       stack.push(text.trim().replace(/\s+/g, " "));
       text = "";
     } else if (ch === "}" || ch === ";") {
-      const m = text.match(/^\s*(--[\w-]+)\s*:\s*([\s\S]*)$/);
+      const m = text.match(/^\s*(--[\w-]+|-?[a-zA-Z][\w-]*)\s*:\s*([\s\S]*)$/);
       if (m) {
         out.push({
           name: m[1],
@@ -262,20 +299,23 @@ function args(inner) {
 
 /**
  * The smallest a length can be, in px, or null when it cannot be told: 0.75rem is 12, a clamp() its first
- * value, a calc() of lengths added and subtracted its sum.
+ * value, a calc() of lengths added and subtracted its sum. `em` is what 1em is taken to be (null: unknown).
  */
-function smallest(value) {
+function smallest(value, em = null) {
   const v = value.trim();
-  const length = v.match(/^(-?[\d.]+)(px|rem|pt)$/);
-  if (length) return Number(length[1]) * { px: 1, rem: 16, pt: 4 / 3 }[length[2]];
+  const length = v.match(/^(-?[\d.]+)(px|rem|pt|em)$/);
+  if (length) {
+    const unit = { px: 1, rem: 16, pt: 4 / 3, em }[length[2]];
+    return unit === null ? null : Number(length[1]) * unit;
+  }
   if (/^-?[\d.]+(vw|vh|vi|vb|vmin|vmax|svw|lvw|dvw|cqw|cqi)$/.test(v)) return 0; // a narrow window takes it to nothing
   const sum = v.match(/^calc\(([^()]*)\)$/);
   if (sum) {
     const terms = sum[1].replace(/\s+/g, " ").match(/^(\S+)((?: [+-] \S+)*)$/);
     if (!terms) return null;
-    let total = smallest(terms[1]);
+    let total = smallest(terms[1], em);
     for (const [, op, term] of terms[2].matchAll(/ ([+-]) (\S+)/g)) {
-      const px = smallest(term);
+      const px = smallest(term, em);
       if (total === null || px === null) return null;
       total += op === "+" ? px : -px;
     }
@@ -283,24 +323,81 @@ function smallest(value) {
   }
   const call = v.match(/^(clamp|max|min)\(([\s\S]*)\)$/);
   if (!call) return null;
-  const parts = args(call[2]).map(smallest);
+  const parts = args(call[2]).map((part) => smallest(part, em));
   if (call[1] === "clamp") return parts[0];
   if (parts.some((p) => p === null)) return null;
   return call[1] === "max" ? Math.max(...parts) : Math.min(...parts);
 }
 
-/** The stylesheet's own rules: the radius, shadow and type tokens the language allows. */
-function sheetFindings(sheet) {
+/** A value with every var() taken out, fallbacks and all: what is left was written by hand. */
+function handWritten(value) {
+  let out = value;
+  for (let before = ""; before !== out; ) {
+    before = out;
+    out = out.replace(/var\([^()]*(?:\([^()]*\)[^()]*)*\)/g, "");
+  }
+  return out;
+}
+
+/** Whether a value holds a number written by hand (a lone 0 does not count). */
+const numbered = (value) => /\d/.test(handWritten(value).replace(/(?<![\w.-])0(?![\w.%])/g, ""));
+
+/**
+ * The finding for a font size, radius or shadow written by hand into a declaration (a stylesheet rule or a
+ * `[property:value]` class), or null when the value comes from the tokens or the property is another one.
+ */
+function literal(property, value) {
+  const name = property.toLowerCase();
+  const v = value.replace(/\s*!important\s*$/, "").trim();
+  const what = `${name}: ${v}`;
+  if (KEYWORD.test(v)) return null;
+  if (name === "box-shadow") {
+    const drawn = args(v).some((layer) => !RING.test(layer) && numbered(layer));
+    return drawn ? { rule: "arbitrary-shadow", what } : null;
+  }
+  if (/^border(?:-[a-z]+)*-radius$/.test(name)) return numbered(v) ? { rule: "arbitrary-radius", what } : null;
+  if (name !== "font-size" && name !== "font") return null;
+  // In the shorthand (`600 0.875rem/1.25rem var(--font-sans)`), the size is the first length.
+  const size = name === "font" ? handWritten(v).match(/(?<![\w.-])-?[\d.]+(?:px|rem|em|pt|%)/)?.[0] : v;
+  if (!size || !numbered(size)) return null;
+  const px = smallest(size, 16);
+  return { rule: px !== null && px < 12 ? "small-type" : "arbitrary-size", what };
+}
+
+/** The named colour in a value, if it holds one: addresses, strings and var() set aside. */
+function namedColour(value) {
+  const plain = handWritten(value)
+    .replace(/url\([^)]*\)/g, "")
+    .replace(/"[^"]*"|'[^']*'/g, "");
+  return plain.match(NAMED)?.[0];
+}
+
+/**
+ * The stylesheet's own rules: the radius, shadow and type tokens the language allows, and the sizes and named
+ * colours written by hand into its rules. `primitives` as in scan().
+ */
+function sheetFindings(sheet, { primitives = false } = {}) {
   const lines = sheet.split("\n");
   const excused = (line) => MARK.test(lines[line - 1] ?? "") || MARK.test(lines[line - 2] ?? "");
   const decls = declarations(sheet).filter((d) => !d.name.includes("*"));
-  const values = new Map(decls.map((d) => [d.name, d.value]));
+  const values = new Map(decls.filter((d) => d.name.startsWith("--")).map((d) => [d.name, d.value]));
   const found = [];
   const report = (d, rule, what) => {
     if (!excused(d.line)) found.push({ line: d.line, rule, what });
   };
   const shadows = new Set(["--shadow-hairline", "--shadow-overlay", "--shadow-modal"]);
   for (const d of decls) {
+    const custom = d.name.startsWith("--");
+    const colour = namedColour(d.value);
+    const primitive = primitives && d.theme && !NAMESPACES.test(d.name);
+    if (colour && (custom ? !primitive : COLOUR_PROPERTY.test(d.name.toLowerCase()))) {
+      report(d, "literal-colour", `${d.name}: ${colour}`);
+    }
+    if (!custom) {
+      const drawn = literal(d.name, d.value);
+      if (drawn) report(d, drawn.rule, drawn.what);
+      continue;
+    }
     const px = () => smallest(expand(values, d.value));
     if (/^--radius-/.test(d.name) || /-radius$/.test(d.name)) {
       if (![6, 10, 9999].includes(px())) report(d, "radius-token", `${d.name}: ${d.value}`);
@@ -327,12 +424,20 @@ function selfTest() {
     ['<p className="text-slate-900 hover:bg-white/10 border-black">', "stock-palette", 3],
     ['<p className="bg-[#0366F8] text-[rgb(2_6_23)]">', "arbitrary-colour", 2],
     ['const ink = "#0A0A0A"; const tint = "rgb(2 6 23 / 0.05)";', "literal-colour", 2],
-    ['<p style={{ color: "red", backgroundColor: "white" }}>', "inline-colour", 2],
+    ['<p style={{ color: "red", backgroundColor: "white", fill: "rebeccapurple" }}>', "inline-colour", 3],
     ['<p className="dark:bg-card md:dark:text-foreground">', "dark-class", 2],
-    ['<p className="rounded-[7px] rounded-t-[3px]">', "arbitrary-radius", 2],
-    ['<p className="shadow-[0_1px_2px_black]">', "arbitrary-shadow", 1],
-    ['<p className="text-[15px] text-[1.1rem]">', "arbitrary-size", 2],
-    ['<p className="text-[10px] text-[0.6rem]">', "small-type", 2],
+    ['<p className="rounded-[7px] rounded-t-[3px] [border-top-left-radius:7px]">', "arbitrary-radius", 3],
+    ['<p className="shadow-[0_1px_2px_black] [box-shadow:0_1px_2px_black]">', "arbitrary-shadow", 2],
+    [
+      '<p className="text-[15px] text-[1.1rem] text-[length:20px] text-[clamp(1rem,2vw,2rem)] [font-size:15px]">',
+      "arbitrary-size",
+      5,
+    ],
+    [
+      '<p className="text-[10px] text-[0.6rem] text-[8pt] text-[clamp(10px,1vw,16px)] [font-size:0.5em]">',
+      "small-type",
+      5,
+    ],
     ['<p className="rounded-xl rounded-lg shadow-lg shadow md:rounded-2xl">', "off-scale", 5],
     ["// a rounded corner, a soft shadow, and rounded-lg", "off-scale", 1],
   ];
@@ -351,6 +456,8 @@ function selfTest() {
     '<a href="#faq">&#039;</a> // text-slate-\\d{3} in a pattern is not a class',
     '<p className="text-slate-900"> {/* tokens-ok: a sample */}',
     '<p style={{ color: "var(--foreground)" }} className="text-[var(--x)]">',
+    '<p className="text-[length:var(--x)] [font-size:var(--text-body)] [box-shadow:0_0_0_1px_var(--ring)]">',
+    '<p style={{ color: "transparent", fill: "currentColor" }}>',
   ];
   for (const sample of right) {
     const hits = scan(sample, markup);
@@ -391,6 +498,36 @@ function selfTest() {
   }
   const at = (rule, name) => findings.find((f) => f.rule === rule && f.what.startsWith(name))?.line;
   if (at("shadow-token", "--shadow-float") !== 8) throw new Error("the rule shadow-token reported the wrong line");
+  const applied = scan(".x { @apply rounded-xl dark:bg-card; }", { stylesheet: true }).map((f) => f.rule);
+  if (applied.sort().join(" ") !== "dark-class off-scale") {
+    throw new Error(`the class rules found "${applied.join(" ")}" in an @apply, not dark-class and off-scale`);
+  }
+  // Rules written by hand: one radius, one shadow, three sizes, two named colours; the rest are tokens or rings.
+  const rules = [
+    ".a { border-radius: 17px; border-top-left-radius: var(--radius); border-radius: var(--radius) 0 0 var(--radius); }",
+    ".b { box-shadow: 0 1px 2px var(--border); }",
+    ".c { box-shadow: 0 0 0 1px var(--ring), var(--shadow-overlay); box-shadow: inset 0 0 0 2px var(--ring); }",
+    ".d { font-size: 10px; }",
+    ".e { font-size: 0.875rem; font: 600 1.5rem/2rem var(--font-sans); }",
+    ".f { font-size: var(--text-body); font: inherit; border-radius: 0; box-shadow: none; }",
+    ".g { color: rebeccapurple; background: url(red.png) var(--surface); }",
+    "@theme static { --neutral-0: white; }",
+    ":root { --surface: white; --hairline: 1px solid var(--border); }",
+  ].join("\n");
+  const expected = {
+    "arbitrary-radius": 1,
+    "arbitrary-shadow": 1,
+    "small-type": 1,
+    "arbitrary-size": 2,
+    "literal-colour": 2,
+  };
+  const drawn = {};
+  for (const f of sheetFindings(rules, { primitives: true })) drawn[f.rule] = (drawn[f.rule] ?? 0) + 1;
+  for (const rule of new Set([...Object.keys(expected), ...Object.keys(drawn)])) {
+    if (drawn[rule] !== expected[rule]) {
+      throw new Error(`the rule ${rule} found ${drawn[rule] ?? 0} of ${expected[rule] ?? 0} in the rules sample`);
+    }
+  }
 }
 
 function files(dir) {
@@ -408,13 +545,9 @@ function files(dir) {
 function check(file, declared) {
   const text = fs.readFileSync(file, "utf8");
   const css = file.endsWith(".css");
-  const found = scan(text, {
-    stylesheet: css,
-    primitives: file === STYLESHEET,
-    declared,
-    markup: !css,
-  });
-  if (css) found.push(...sheetFindings(text));
+  const primitives = file === STYLESHEET;
+  const found = scan(text, { stylesheet: css, primitives, declared, markup: !css });
+  if (css) found.push(...sheetFindings(text, { primitives }));
   return found.sort((a, b) => a.line - b.line);
 }
 
