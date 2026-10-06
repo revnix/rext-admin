@@ -10,6 +10,19 @@ import type { ContentItem } from "@/types/content";
 
 /** A generated article waiting to be read: a draft, or one marked ready by hand. */
 const DRAFT_STATES = new Set(["draft", "ready"]);
+/** An article that was written: not a failed, cancelled or running generation, nor one in the trash. */
+const WRITTEN_STATES = new Set([
+  ...DRAFT_STATES,
+  "review",
+  "scheduled",
+  "published",
+  "archived",
+]);
+
+/** Whether any article was written, as opposed to a run that failed or never finished. */
+export function hasWrittenArticle(content: ContentItem[]): boolean {
+  return content.some((item) => WRITTEN_STATES.has(String(item.status)));
+}
 
 export type PipelineCounts = {
   drafts: number;
@@ -151,6 +164,9 @@ const STEPS: Omit<ChecklistStep, "done">[] = [
     description: "Send a draft to your site, live or as a draft there.",
   },
 ];
+
+/** Every step, known or not: completion means all of them are done. */
+export const CHECKLIST_STEP_COUNT = STEPS.length;
 
 export function checklistSteps(facts: ChecklistFacts): ChecklistStep[] {
   return STEPS.flatMap((step) =>

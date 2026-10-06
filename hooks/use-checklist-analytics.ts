@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { ChecklistStep } from "@/components/home/home-data";
+import {
+  CHECKLIST_STEP_COUNT,
+  type ChecklistStep,
+} from "@/components/home/home-data";
 import { analytics } from "@/lib/analytics";
 import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
@@ -44,14 +47,18 @@ export function useChecklistAnalytics(
         milestone_label: step.label,
         workspace_id: workspaceId,
         user_id: userId,
-        progress_percentage: Math.round((doneCount / steps.length) * 100),
+        progress_percentage: Math.round(
+          (doneCount / CHECKLIST_STEP_COUNT) * 100,
+        ),
       });
     }
 
     const reported =
       tracked.has(COMPLETION_ID) ||
       LEGACY_REQUIRED.every((id) => tracked.has(id));
-    if (doneCount === steps.length && !reported) {
+    // Completion needs every step known and done: a step hidden by a failed request or the role
+    // isn't a done one.
+    if (doneCount === CHECKLIST_STEP_COUNT && !reported) {
       tracked.add(COMPLETION_ID);
       changed = true;
       analytics.track("onboarding_completed", {

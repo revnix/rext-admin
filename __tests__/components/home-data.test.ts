@@ -7,6 +7,7 @@ import {
   articlesToContinue,
   checklistSteps,
   countPipeline,
+  hasWrittenArticle,
   suggestKeywords,
 } from "@/components/home/home-data";
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
@@ -156,6 +157,18 @@ describe("suggestKeywords", () => {
     expect(suggestions.map((item) => item.value.original_query)).toEqual([
       "seo audit",
     ]);
+  });
+});
+
+describe("hasWrittenArticle", () => {
+  it("doesn't count a failed or cancelled generation as a written article", () => {
+    expect(
+      hasWrittenArticle([
+        article({ status: "failed" }),
+        article({ status: "cancelled" }),
+      ]),
+    ).toBe(false);
+    expect(hasWrittenArticle([article({ status: "draft" })])).toBe(true);
   });
 });
 
