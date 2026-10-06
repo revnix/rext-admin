@@ -1,4 +1,5 @@
 import { NODE_STAGES, type RunPhase } from "@/lib/generate-content/run-stages";
+import { isStoppedRunCode } from "@/lib/generate-content/run-events";
 
 export type GenerationRunStatus =
   | "pending"
@@ -28,7 +29,7 @@ type GenerationThreadState = GenerationGraphState & {
   values?: {
     content?: {
       error?: string;
-      /** "no_serp_data": the run ended for want of search results (rext-backend G3). */
+      /** Why the backend ended the run; `STOPPED_RUN_CODES` (run-events.ts) lists those it ended on purpose. */
       error_code?: string;
       final_content?: unknown;
       review?: {
@@ -186,11 +187,11 @@ function deriveProgressAndStage(
   if (contentError) {
     return {
       progress: 100,
-      // A keyword with no search results is not a failure of the system.
-      stage:
-        content?.error_code === "no_serp_data"
-          ? "Generation stopped"
-          : "Generation failed",
+      // A run the backend ended on purpose (no search results, no titles) is
+      // not a failure of the system.
+      stage: isStoppedRunCode(content?.error_code)
+        ? "Generation stopped"
+        : "Generation failed",
       error: contentError,
     };
   }

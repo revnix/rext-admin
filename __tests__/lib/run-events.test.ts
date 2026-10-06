@@ -63,6 +63,16 @@ describe("readStoppedRun", () => {
     );
   });
 
+  it("reads a run whose topic step wrote no titles from its state", () => {
+    const message =
+      "Title ideas could not be written for this keyword just now. Please try again in a few minutes.";
+    expect(
+      readStoppedRun({
+        content: { error: message, error_code: "topic_generation_failed" },
+      }),
+    ).toBe(message);
+  });
+
   it.each([
     undefined,
     null,
@@ -75,6 +85,7 @@ describe("readStoppedRun", () => {
       },
     },
     { content: { error: "Something broke." } },
+    { content: { error: "Something broke.", error_code: "some_other_code" } },
   ])("leaves other states to the restore path: %p", (values) => {
     expect(readStoppedRun(values)).toBeNull();
   });
@@ -102,6 +113,10 @@ describe("settlesRun", () => {
       { event: "updates", data: { insufficient_credits: { content: {} } } },
     ],
     ["an empty search", { event: "updates", data: { no_serp_data: {} } }],
+    [
+      "a topic step without titles",
+      { event: "updates|content_engine:1", data: { topics_failed: {} } },
+    ],
     [
       "a failure the backend reported",
       {

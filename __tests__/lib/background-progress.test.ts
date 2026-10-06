@@ -21,6 +21,25 @@ describe("deriveBackgroundProgress, a run that ended with an error", () => {
     });
   });
 
+  it("calls a run whose topic step wrote no titles stopped, with its message", () => {
+    const message =
+      "Title ideas could not be written for this keyword just now. Please try again in a few minutes.";
+    const progress = deriveBackgroundProgress("success", {
+      values: {
+        content: { error: message, error_code: "topic_generation_failed" },
+      },
+    });
+    expect(progress).toEqual({
+      progress: 100,
+      stage: "Generation stopped",
+      error: message,
+    });
+    expect(describeFailedJob({ title: "seo agency", ...progress })).toEqual({
+      title: "Generation stopped",
+      description: message,
+    });
+  });
+
   it("keeps calling other errors a failure", () => {
     expect(
       deriveBackgroundProgress("success", {
