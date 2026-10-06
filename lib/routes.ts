@@ -13,6 +13,7 @@ import type { Route } from "next";
  */
 export const WORKSPACE_PAGES = [
   "content",
+  "keywords",
   "integrations",
   "personas",
   "persona_create",
@@ -166,6 +167,7 @@ export function buildWorkspacePath(
 ): string {
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
     content: workspaceRoutes.content,
+    keywords: workspaceRoutes.keywordLibrary,
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
