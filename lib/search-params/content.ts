@@ -1,4 +1,4 @@
-import { createLoader } from "nuqs/server";
+import { createLoader, parseAsArrayOf, parseAsString } from "nuqs/server";
 import {
   dataTableParams,
   parseAsFacet,
@@ -41,11 +41,14 @@ export const CONTENT_LIST_STATUS_LABELS: Record<ContentListStatus, string> = {
 
 export const contentListParams = {
   ...dataTableParams,
-  sort: parseAsSort.withDefault({ id: "created_at", desc: true }),
+  sort: parseAsSort.withDefault({ id: "updated_at", desc: true }),
   status: parseAsFacet(CONTENT_LIST_STATUSES),
+  // Open sets: the content types the articles carry, and the workspace's persona ids.
+  type: parseAsArrayOf(parseAsString).withDefault([]),
+  persona: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
 /** The keys of `contentListParams` that are faceted filters on the table's columns. */
-export const CONTENT_LIST_FACETS = ["status"] as const;
+export const CONTENT_LIST_FACETS = ["status", "type", "persona"] as const;
 
 export const loadContentListParams = createLoader(contentListParams);

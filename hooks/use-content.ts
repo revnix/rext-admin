@@ -213,25 +213,43 @@ export function useContentCalendar(
 /**
  * Hook to delete content
  */
-export function useDeleteContent() {
+/**
+ * Moves articles to the trash (the backend's delete is soft: it sets `deleted_at`), one request each,
+ * with one toast for all of them.
+ */
+export function useTrashContent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       workspaceId,
-      contentId,
+      contentIds,
     }: {
       workspaceId: string;
-      contentId: string;
-    }) => apiClient.content.delete(workspaceId, contentId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["content", variables.workspaceId],
-      });
-      toast.success("Content deleted successfully!");
+      contentIds: string[];
+    }) => {
+      const results = await Promise.allSettled(
+        contentIds.map((id) => apiClient.content.delete(workspaceId, id)),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      return { moved: results.length - failed, failed };
+    },
+    onSuccess: ({ moved, failed }, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
+      if (failed === 0) {
+        toast.success(
+          moved === 1
+            ? "Moved 1 article to the trash"
+            : `Moved ${moved} articles to the trash`,
+        );
+      } else {
+        toast.error(
+          `${failed} of ${moved + failed} articles weren't moved to the trash. Try them again.`,
+        );
+      }
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete content");
+      toast.error(error.message || "The articles weren't moved to the trash");
     },
   });
 }

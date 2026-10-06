@@ -236,6 +236,8 @@ export interface ContentItem {
 
   // Relations
   seo_data?: ContentSEODataSchema;
+  /** The author persona chosen in the outline step; null when none was. */
+  persona_id?: string | null;
   content_metadata?: ContentMetadataSchema;
 
   // Flow-generated structured data
