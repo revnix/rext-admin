@@ -308,10 +308,6 @@
   "components/profile/change-password-form.tsx": {
     "stock-palette": 4
   },
-  "components/search-dialog.tsx": {
-    "stock-palette": 1,
-    "dark-class": 1
-  },
   "components/security/security-overview.tsx": {
     "stock-palette": 16,
     "dark-class": 8
