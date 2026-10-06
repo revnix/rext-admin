@@ -9,8 +9,8 @@ import { z } from "zod";
  *
  * Every name is optional on its own, as the code reading it has a fallback.
  * A production build needs two things the fallbacks don't cover: the backend's
- * address and the session secret, each under either of its two names
- * (`createFinalSchema` below). Vercel's previews of pull requests are the
+ * address as NEXT_PUBLIC_API_BASE_URL, and the session secret under either of
+ * its two names (`createFinalSchema` below). Vercel's previews of pull requests are the
  * exception: they are built without the deploys' variables, as they were before
  * this check. Set SKIP_ENV_VALIDATION=1 to build without them.
  *
@@ -88,10 +88,13 @@ export const env = createEnv({
   createFinalSchema: (shape, isServer) =>
     z.object(shape).superRefine((values, ctx) => {
       if (!isServer || !needsDeployNames) return;
+      // Not NEXT_PUBLIC_BACKEND_API_URL instead: the auth pages (forgot and
+      // reset password, account recovery, email verification) and sign-out's
+      // token revocation read NEXT_PUBLIC_API_BASE_URL alone.
       requireOneOf(
         values,
         ctx,
-        ["NEXT_PUBLIC_API_BASE_URL", "NEXT_PUBLIC_BACKEND_API_URL"],
+        ["NEXT_PUBLIC_API_BASE_URL"],
         "The backend's address",
       );
       requireOneOf(
