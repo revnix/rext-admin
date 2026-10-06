@@ -142,7 +142,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           {/* Background Track */}
           <div
             className={cn(
-              "w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden",
+              "w-full h-2 bg-gray-200 rounded-full overflow-hidden",
               "relative",
             )}
           >

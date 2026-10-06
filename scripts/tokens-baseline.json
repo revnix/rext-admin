@@ -420,9 +420,6 @@
     "stock-palette": 25,
     "dark-class": 10
   },
-  "components/theme-toggle.tsx": {
-    "dark-class": 4
-  },
   "components/topic-builder/questions/AudienceQuestion.tsx": {
     "off-scale": 2,
     "stock-palette": 2,
@@ -478,14 +475,12 @@
     "off-scale": 1
   },
   "components/ui/alert.tsx": {
-    "dark-class": 5,
-    "stock-palette": 8
+    "stock-palette": 4
   },
   "components/ui/avatar.tsx": {
     "stock-palette": 4
   },
   "components/ui/button.tsx": {
-    "dark-class": 7,
     "off-scale": 5,
     "stock-palette": 1
   },
@@ -505,18 +500,13 @@
     "off-scale": 1
   },
   "components/ui/detail-card.tsx": {
-    "stock-palette": 4,
-    "dark-class": 2
+    "stock-palette": 2
   },
   "components/ui/detail-page-skeleton.tsx": {
-    "stock-palette": 3,
-    "dark-class": 3
+    "stock-palette": 3
   },
   "components/ui/dialog.tsx": {
     "stock-palette": 1
-  },
-  "components/ui/dropdown-menu.tsx": {
-    "dark-class": 1
   },
   "components/ui/empty.tsx": {
     "off-scale": 2
@@ -532,15 +522,13 @@
     "stock-palette": 2
   },
   "components/ui/info-section.tsx": {
-    "stock-palette": 4,
-    "dark-class": 2
+    "stock-palette": 2
   },
   "components/ui/input-group.tsx": {
     "off-scale": 1,
     "arbitrary-radius": 3
   },
   "components/ui/input.tsx": {
-    "dark-class": 1,
     "stock-palette": 3
   },
   "components/ui/lexical-editor.tsx": {
@@ -562,8 +550,7 @@
     "arbitrary-radius": 1
   },
   "components/ui/security-badge.tsx": {
-    "stock-palette": 26,
-    "dark-class": 13
+    "stock-palette": 13
   },
   "components/ui/sheet.tsx": {
     "stock-palette": 1
@@ -574,24 +561,19 @@
     "arbitrary-shadow": 2
   },
   "components/ui/skeleton.tsx": {
-    "stock-palette": 2,
-    "dark-class": 1
+    "stock-palette": 1
   },
   "components/ui/sonner.tsx": {
     "off-scale": 1,
     "arbitrary-colour": 6
   },
   "components/ui/status-badge.tsx": {
-    "stock-palette": 66,
-    "dark-class": 33,
+    "stock-palette": 33,
     "off-scale": 1,
     "inline-colour": 24
   },
   "components/ui/switch.tsx": {
     "off-scale": 1
-  },
-  "components/ui/textarea.tsx": {
-    "dark-class": 2
   },
   "components/ui/tooltip.tsx": {
     "stock-palette": 4,
@@ -602,19 +584,16 @@
   },
   "components/ui/typeform/celebration.tsx": {
     "literal-colour": 13,
-    "off-scale": 1,
-    "dark-class": 2
+    "off-scale": 1
   },
   "components/ui/typeform/chip-input.tsx": {
-    "stock-palette": 9,
-    "dark-class": 4
+    "stock-palette": 5
   },
   "components/ui/typeform/multi-select-card.tsx": {
     "off-scale": 1
   },
   "components/ui/typeform/progress-bar.tsx": {
-    "stock-palette": 3,
-    "dark-class": 1,
+    "stock-palette": 2,
     "off-scale": 1
   },
   "components/ui/typeform/single-select-card.tsx": {

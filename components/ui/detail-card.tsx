@@ -14,8 +14,7 @@ const detailCardVariants = cva(
         highlight: "bg-card border-border",
         accent: "bg-card border-border",
         warning: "bg-card border-border",
-        success:
-          "bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/50",
+        success: "bg-green-50/50 border-green-200/50",
         info: "bg-card border-border",
       },
       size: {

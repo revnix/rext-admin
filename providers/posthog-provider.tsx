@@ -25,6 +25,13 @@ function PostHogPageView() {
 }
 
 // ── Session → PostHog identity sync ──────────────────────────────────────────
+function systemColourScheme(): "dark" | "light" | undefined {
+  if (typeof window.matchMedia !== "function") return undefined;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 function PostHogAuthSync() {
   const { data: session, status } = useSession();
   const identifiedIdRef = useRef<string | null>(null);
@@ -40,6 +47,8 @@ function PostHogAuthSync() {
         email: session.user.email ?? undefined,
         name: session.user.name ?? undefined,
         role: session.user.role ?? undefined,
+        // The app is light only; the system's preference is kept for a later decision on a dark theme.
+        prefers_color_scheme: systemColourScheme(),
       });
     } else if (status === "unauthenticated" && identifiedIdRef.current) {
       identifiedIdRef.current = null;

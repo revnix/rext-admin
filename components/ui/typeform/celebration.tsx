@@ -278,7 +278,6 @@ const Celebration = React.forwardRef<HTMLDivElement, CelebrationProps>(
                 className={cn(
                   "relative z-10 p-3 rounded-full",
                   `bg-${colors[0]}-100 text-${colors[0]}-600`,
-                  `dark:bg-${colors[0]}-900/30 dark:text-${colors[0]}-400`,
                 )}
                 animate={
                   type === "completion"
