@@ -53,9 +53,6 @@
   "app/w/page.tsx": {
     "small-type": 3
   },
-  "components/admin/roles/permission-badge.tsx": {
-    "stock-palette": 27
-  },
   "components/content/content-card.tsx": {
     "stock-palette": 10
   },
