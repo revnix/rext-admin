@@ -29,14 +29,13 @@ export const initialState: PageState = {
   contentTypes: [],
   loadingStatus: "",
   isManualLoading: false,
-  completedNodes: [],
   readabilityScore: null,
   checklist: null,
   seoScore: null,
   trustScore: null,
   eeatData: null,
   allContent: null,
-  currentLoadingSteps: [],
+  run: null,
   keywordDifficulty: null,
   keywordClusters: [],
   recommendedContentType: null,
@@ -112,20 +111,21 @@ export function generationReducer(
       };
     case "SET_KEYWORD_CLUSTERS":
       return { ...state, keywordClusters: action.payload };
-    case "SET_LOADING_STEPS":
-      return { ...state, currentLoadingSteps: action.payload };
+    case "SET_RUN_PHASE":
+      return {
+        ...state,
+        run: action.payload
+          ? {
+              phase: action.payload.phase,
+              joined: action.payload.joined ?? false,
+              seq: (state.run?.seq ?? 0) + 1,
+            }
+          : null,
+      };
     case "SET_LOADING_STATUS":
       return handleLoadingStatus(state, action.payload);
     case "SET_MANUAL_LOADING":
       return { ...state, isManualLoading: action.payload };
-    case "CLEAR_COMPLETED_NODES":
-      return { ...state, completedNodes: [] };
-    case "ADD_COMPLETED_NODE":
-      if (state.completedNodes.includes(action.payload)) return state;
-      return {
-        ...state,
-        completedNodes: [...state.completedNodes, action.payload],
-      };
     case "RESET_FOR_THREAD_SWITCH":
       // Clear all content-related state so a previously-viewed thread's final
       // article / scores / outline don't bleed into the new thread's view.
@@ -167,19 +167,7 @@ export function generationReducer(
 }
 
 function handleLoadingStatus(state: PageState, nextStatus: string): PageState {
-  const prevStatus = state.loadingStatus;
-  const nextCompleted = [...state.completedNodes];
-  if (prevStatus?.endsWith("...") && prevStatus !== nextStatus) {
-    const finishedNode = prevStatus.slice(0, -3);
-    if (!nextCompleted.includes(finishedNode)) {
-      nextCompleted.push(finishedNode);
-    }
-  }
-  return {
-    ...state,
-    loadingStatus: nextStatus,
-    completedNodes: nextCompleted,
-  };
+  return { ...state, loadingStatus: nextStatus };
 }
 
 function handleStreamUpdate(

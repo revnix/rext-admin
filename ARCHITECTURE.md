@@ -120,6 +120,8 @@ One component each (design/app-language.md §8), in `components/ui/`:
 
 The page component is `components/generate-content/fresh-generation-view.tsx` (about 2,300 lines, a reducer in `lib/generate-content/generation-reducer.ts`); the article is edited again at `/w/[slug]/content/[id]` with the same `ContentEditor` (`components/generate-content/content.tsx`, Lexical). The user can leave: the run continues on the server, the dock (`components/background-generation-dock.tsx`, `stores/background-generation-store.ts`, persisted, synced across tabs through localStorage) polls `status` and shows progress, and a notification arrives when the backend has written the draft to the content library. `BACKGROUND_CONTENT_GENERATION.md` describes the lifecycle in full.
 
+While the page waits on the run, it shows `RunProgress` (`components/generate-content/run-progress.tsx`): the phase's stages in words (`RUN_PHASES` in `lib/generate-content/run-stages.ts`), each waiting, running, done, failed or skipped, with its time against the usual time (`run-timings.ts`: this browser's last five runs of the stage, or a typical time), and "still working" with Cancel past 1.5 times that. The stream only says when a node has finished, so a stage ends when one of its `endsAfter` nodes finishes, and a phase's last stage when the run reaches its gate (`useRunStages`).
+
 Credits are charged by the backend, per pipeline stage. `hooks/use-credit-gate.tsx` is the one gate before a run starts or continues; it asks for a whole article's worth of credits before a start.
 
 ## Styling
