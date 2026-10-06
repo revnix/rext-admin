@@ -41,6 +41,7 @@ import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
 import { TitleStep } from "@/components/generate-content/title-step";
+import { StepColumn } from "@/components/layouts";
 import {
   OutlineDisplay,
   OutlineRejectSection,
@@ -2245,13 +2246,13 @@ export function FreshGenerationView({
 
   return (
     <div className="relative">
-      <div
-        className={cn(
-          "mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
-          // A step with a side pane beside it (the Title step's search results) gets the room for both.
+      <StepColumn
+        // A step with a side pane beside it (the Title step's search results) gets the room for both.
+        withSidePane={
           instructionType === "topic" || instructionType === "topic_selection"
-            ? "max-w-6xl"
-            : "max-w-3xl",
+        }
+        className={cn(
+          "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
           instructionType === "keyword"
             ? "min-h-[70vh]"
             : !showContentStream
@@ -2401,7 +2402,7 @@ export function FreshGenerationView({
         ) : (
           <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
-      </div>
+      </StepColumn>
 
       {restoreError && (
         <RunNotice

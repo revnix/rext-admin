@@ -18,6 +18,8 @@ export {
   type SettingsPageProps,
   type SettingsSection,
 } from "./settings-page";
+/** The Generate flow's step column: a step's width, or the room for a side pane beside it. */
+export { StepColumn } from "./step-column";
 /** A main column with a side pane (a sheet on narrow screens), for a step inside a working surface. */
 export { WithSidePane, type WithSidePaneProps } from "./side-pane";
 export { WorkingSurface, type WorkingSurfaceProps } from "./working-surface";
