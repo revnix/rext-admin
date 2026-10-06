@@ -13,7 +13,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { WorkingSurface } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,7 +132,7 @@ export default function ContentCalendarPage() {
   };
 
   return (
-    <PageLayout
+    <WorkingSurface
       title="Content Calendar"
       description={`Published and scheduled content for ${workspace?.name ?? "this workspace"}.`}
       actions={
@@ -481,6 +481,6 @@ export default function ContentCalendarPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </WorkingSurface>
   );
 }

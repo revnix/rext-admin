@@ -3,7 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { UsageLimitWarning } from "@/components/subscription/usage-limit-warning";
 import { UsageMetrics } from "@/components/subscription/usage-metrics";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,7 @@ export default function UsagePage() {
   };
 
   return (
-    <PageLayout
+    <DetailPage
       title="Usage Dashboard"
       description="Monitor your usage and plan limits"
       actions={
@@ -213,6 +213,6 @@ export default function UsagePage() {
           </CardContent>
         </Card>
       )}
-    </PageLayout>
+    </DetailPage>
   );
 }

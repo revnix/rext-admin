@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Plus } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
@@ -37,20 +37,19 @@ export default function PersonaForgePage() {
 
   if (!workspace?.id || isPermLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <ListPage title="Loading Permissions...">
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="Personas"
       description={`${personas.length} personas created`}
-      fullWidth
       actions={
         canCreate ? (
           <div className="flex gap-2 w-full sm:w-auto">
@@ -89,7 +88,7 @@ export default function PersonaForgePage() {
           </Card>
         }
       >
-        <div className="space-y-8 max-w-[1600px] mx-auto">
+        <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {isLoading ? (
               <div className="col-span-full text-center py-12 text-muted-foreground">
@@ -133,6 +132,6 @@ export default function PersonaForgePage() {
           </div>
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

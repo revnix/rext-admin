@@ -7,7 +7,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -97,7 +97,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <APIErrorBoundary>
-        <PageLayout
+        <DetailPage
           title={currentWorkspace?.title || "Dashboard"}
           description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
         >
@@ -124,7 +124,7 @@ export default function DashboardPage() {
               </aside>
             </div>
           </div>
-        </PageLayout>
+        </DetailPage>
       </APIErrorBoundary>
     </AuthGuard>
   );

@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
@@ -47,17 +47,17 @@ export default function WorkspaceUsersPage() {
   // ✅ Show loader while permissions or workspace data are loading
   if (!workspace?.id || isPermissionLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <ListPage title="Loading Permissions...">
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="Members"
       description={`Manage members and invitations for ${workspace?.name || "this workspace"}.`}
     >
@@ -124,6 +124,6 @@ export default function WorkspaceUsersPage() {
           )}
         </Tabs>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

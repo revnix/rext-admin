@@ -5,7 +5,7 @@ import { Download, FileText, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,7 +103,7 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <PageLayout
+    <ListPage
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
@@ -239,6 +239,6 @@ export default function AuditLogsPage() {
           </CardContent>
         </Card>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

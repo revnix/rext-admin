@@ -103,6 +103,7 @@ export default function MaintenancePage() {
         </div>
 
         {/* Headline */}
+        {/* layout-ok: the maintenance page is outside the shell */}
         <h1 className="text-4xl md:text-5xl font-extrabold text-[#1e293b] mb-6 uppercase tracking-tight">
           Maintenance
         </h1>

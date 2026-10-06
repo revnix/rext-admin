@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ShieldX } from "lucide-react";
 import Link from "next/link";
-import { PageLayout } from "@/components/page-layout";
+import { FormPage } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoader } from "@/components/ui/loading-states";
@@ -51,7 +51,7 @@ export default function CreateWorkspacePage() {
 
   if (initialLimitReached.current) {
     return (
-      <PageLayout
+      <FormPage
         title="Workspace limit reached"
         description="You have already reached the maximum number of workspaces allowed on your current plan."
       >
@@ -79,12 +79,12 @@ export default function CreateWorkspacePage() {
             </div>
           </Card>
         </div>
-      </PageLayout>
+      </FormPage>
     );
   }
 
   return (
-    <PageLayout
+    <FormPage
       title="Create Workspace"
       description="Set up a new workspace with guided configuration"
     >
@@ -100,6 +100,6 @@ export default function CreateWorkspacePage() {
         {/* Multi-Step Wizard */}
         <WorkspaceCreateWizard />
       </div>
-    </PageLayout>
+    </FormPage>
   );
 }

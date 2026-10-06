@@ -286,6 +286,7 @@ export function LoginForm({
 
       <div className="bg-transparent">
         <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          {/* layout-ok: sign-in is outside the shell; its card carries the page's title */}
           <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
             {hasValidInvitation
               ? "Log in to join workspace"

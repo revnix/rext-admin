@@ -4,7 +4,7 @@ import { AlertCircle, FileText, Loader2, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { ContentCard } from "@/components/content/content-card";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -36,10 +36,8 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
 
 /**
- * ✅ Improved version:
- * - Keeps PageLayout always visible (no full-screen loading)
- * - Shows loader / error inline under PageLayout
- * - Handles permission & workspace consistency gracefully
+ * The workspace's content list. The page's header stays while it loads: the loader and the errors
+ * render inside the list layout, and permissions and the workspace are checked before the list.
  */
 export default function WorkspaceContentPage() {
   const { workspace, workspaceSlug } = useWorkspace();
@@ -118,14 +116,14 @@ export default function WorkspaceContentPage() {
   ) : null;
 
   return (
-    <PageLayout
+    <ListPage
       title="Generated Content"
       description={`View, edit, and manage AI-generated content for ${
         workspace?.name || "this workspace"
       }.`}
       actions={headerActions}
     >
-      {/* Inline loader inside PageLayout */}
+      {/* Inline loader inside the layout */}
       {isPermissionLoading ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -263,6 +261,6 @@ export default function WorkspaceContentPage() {
           </div>
         </PermissionGuard>
       )}
-    </PageLayout>
+    </ListPage>
   );
 }

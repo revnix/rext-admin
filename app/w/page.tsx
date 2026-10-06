@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
@@ -301,7 +301,7 @@ export default function WorkspacePage() {
   ];
 
   return (
-    <PageLayout
+    <ListPage
       title="Workspaces"
       description="Manage your workspaces and organize your knowledge base"
     >
@@ -361,6 +361,6 @@ export default function WorkspacePage() {
           }}
         />
       )}
-    </PageLayout>
+    </ListPage>
   );
 }

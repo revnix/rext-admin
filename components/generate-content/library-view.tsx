@@ -212,9 +212,9 @@ export function LibraryView() {
   return (
     <div className="w-full h-full animate-in slide-in-from-bottom-4 duration-500 pb-20">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">
           Keyword Library
-        </h1>
+        </h2>
         <p className="text-muted-foreground">
           Select a keyword to view deep SEO insights and generate content.
         </p>

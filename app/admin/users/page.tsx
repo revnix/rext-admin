@@ -23,7 +23,7 @@ import { DataTable } from "@/components/data-table";
 import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-table";
 import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -596,7 +596,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="User Management"
       description="Manage system users and impersonation"
     >
@@ -874,6 +874,6 @@ export default function AdminUsersPage() {
           />
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

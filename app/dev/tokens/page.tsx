@@ -3,6 +3,7 @@ import path from "node:path";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { CSSProperties, ReactNode } from "react";
+import { DetailPage } from "@/components/layouts";
 import { contrast, type Rgba, toHex, toRgba } from "@/lib/design/colour";
 import { type Measured, measure } from "@/lib/design/contrast";
 import { readTokens, resolve, type Token } from "@/lib/design/tokens";
@@ -177,198 +178,205 @@ export default function TokensPage() {
   const failing = pairs.filter((m) => !m.passes && !m.accepted).length;
 
   return (
-    <main className="mx-auto max-w-(--content-max) space-y-12 px-(--page-gutter) py-8">
-      <header className="space-y-1">
-        <h1 className="font-display text-page-title">Tokens</h1>
-        <p className="text-body text-muted-foreground">
-          Every primitive, role, type role, radius and shadow in{" "}
-          <code className="font-mono">app/globals.css</code>, with its contrast.
-          Ratios follow WCAG 2: text needs 4.5 : 1, a control&apos;s edge and
-          the focus ring 3 : 1. {pairs.length} pairs measured,{" "}
-          {failing ? `${failing} failing` : "none failing"}.
-        </p>
-      </header>
-
-      <Section
-        title="Pairs"
-        description="Every pair the roles make, as the contrast test asserts it (lib/design/contrast.ts)."
+    // Outside the shell (a development page), so it is its own main landmark.
+    <main>
+      <DetailPage
+        title="Tokens"
+        description={
+          <>
+            Every primitive, role, type role, radius and shadow in{" "}
+            <code className="font-mono">app/globals.css</code>, with its
+            contrast. Ratios follow WCAG 2: text needs 4.5 : 1, a control&apos;s
+            edge and the focus ring 3 : 1. {pairs.length} pairs measured,{" "}
+            {failing ? `${failing} failing` : "none failing"}.
+          </>
+        }
       >
-        <div className="rounded-md border border-border bg-surface-raised px-4">
-          <Table>
-            <TableHeader className="bg-transparent">
-              <TableRow className="border-border">
-                <TableHead className="h-10 pr-4 pl-0 text-label">
-                  Sample
-                </TableHead>
-                <TableHead className="h-10 pr-4 pl-0 text-label">
-                  Pair
-                </TableHead>
-                <TableHead className="h-10 pr-4 pl-0 text-label">
-                  Ratio
-                </TableHead>
-                <TableHead className="h-10 px-0 text-label">Result</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pairs.map((m) => (
-                <PairRow
-                  key={`${m.foreground} ${m.background}`}
-                  m={m}
-                  value={value}
+        <div className="space-y-12">
+          <Section
+            title="Pairs"
+            description="Every pair the roles make, as the contrast test asserts it (lib/design/contrast.ts)."
+          >
+            <div className="rounded-md border border-border bg-surface-raised px-4">
+              <Table>
+                <TableHeader className="bg-transparent">
+                  <TableRow className="border-border">
+                    <TableHead className="h-10 pr-4 pl-0 text-label">
+                      Sample
+                    </TableHead>
+                    <TableHead className="h-10 pr-4 pl-0 text-label">
+                      Pair
+                    </TableHead>
+                    <TableHead className="h-10 pr-4 pl-0 text-label">
+                      Ratio
+                    </TableHead>
+                    <TableHead className="h-10 px-0 text-label">
+                      Result
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pairs.map((m) => (
+                    <PairRow
+                      key={`${m.foreground} ${m.background}`}
+                      m={m}
+                      value={value}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Section>
+
+          <Section
+            title="Roles"
+            description="The names components use. “On page” is the role as text or an edge on --surface; “ink on it” is --foreground on the role."
+          >
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+              {roles.map((t) => (
+                <Swatch
+                  key={t.name}
+                  name={t.name}
+                  value={value(t.name)}
+                  colour={toRgba(value(t.name))}
+                  surface={surface}
+                  ink={ink}
                 />
               ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Section>
-
-      <Section
-        title="Roles"
-        description="The names components use. “On page” is the role as text or an edge on --surface; “ink on it” is --foreground on the role."
-      >
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-          {roles.map((t) => (
-            <Swatch
-              key={t.name}
-              name={t.name}
-              value={value(t.name)}
-              colour={toRgba(value(t.name))}
-              surface={surface}
-              ink={ink}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title="Status"
-        description="Each status in four steps: 50 the tint, 200 the border, 600 text and icons, 700 text on the tint."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          {STATUSES.map((status) => (
-            <div
-              key={status}
-              className="space-y-3 rounded-md border border-border bg-surface-raised p-4"
-            >
-              <span
-                className="inline-flex items-center rounded-full border px-2 py-0.5 text-label"
-                style={{
-                  background: value(`--${status}-50`),
-                  borderColor: value(`--${status}-200`),
-                  color: value(`--${status}-700`),
-                }}
-              >
-                {status[0].toUpperCase() + status.slice(1)}
-              </span>
-              <div className="grid grid-cols-4 gap-2">
-                {[50, 200, 600, 700].map((step) => (
-                  <Swatch
-                    key={step}
-                    name={`--${status}-${step}`}
-                    value={value(`--${status}-${step}`)}
-                    colour={toRgba(value(`--${status}-${step}`))}
-                    surface={surface}
-                    ink={ink}
-                  />
-                ))}
-              </div>
             </div>
-          ))}
-        </div>
-      </Section>
+          </Section>
 
-      <Section
-        title="Primitives"
-        description="The scales in @theme static. Components never name these; the roles point at them."
-      >
-        <div className="space-y-6">
-          {[...scales].map(([scale, steps]) => (
-            <div key={scale} className="space-y-2">
-              <h3 className="text-label">{scale}</h3>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-                {steps.map((t) => (
-                  <Swatch
+          <Section
+            title="Status"
+            description="Each status in four steps: 50 the tint, 200 the border, 600 text and icons, 700 text on the tint."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              {STATUSES.map((status) => (
+                <div
+                  key={status}
+                  className="space-y-3 rounded-md border border-border bg-surface-raised p-4"
+                >
+                  <span
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-label"
+                    style={{
+                      background: value(`--${status}-50`),
+                      borderColor: value(`--${status}-200`),
+                      color: value(`--${status}-700`),
+                    }}
+                  >
+                    {status[0].toUpperCase() + status.slice(1)}
+                  </span>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[50, 200, 600, 700].map((step) => (
+                      <Swatch
+                        key={step}
+                        name={`--${status}-${step}`}
+                        value={value(`--${status}-${step}`)}
+                        colour={toRgba(value(`--${status}-${step}`))}
+                        surface={surface}
+                        ink={ink}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section
+            title="Primitives"
+            description="The scales in @theme static. Components never name these; the roles point at them."
+          >
+            <div className="space-y-6">
+              {[...scales].map(([scale, steps]) => (
+                <div key={scale} className="space-y-2">
+                  <h3 className="text-label">{scale}</h3>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+                    {steps.map((t) => (
+                      <Swatch
+                        key={t.name}
+                        name={t.name}
+                        value={t.value}
+                        colour={toRgba(t.value)}
+                        surface={surface}
+                        ink={ink}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section
+            title="Type"
+            description="The type roles: size, line height, tracking and weight set together."
+          >
+            <div className="divide-y divide-border rounded-md border border-border bg-surface-raised">
+              {types.map((t) => {
+                const companion = (key: string) =>
+                  tokens.get(`${t.name}--${key}`)?.value;
+                const display = /display|page-title/.test(t.name);
+                return (
+                  <div
                     key={t.name}
-                    name={t.name}
-                    value={t.value}
-                    colour={toRgba(t.value)}
-                    surface={surface}
-                    ink={ink}
-                  />
-                ))}
-              </div>
+                    className="grid gap-1 p-4 sm:grid-cols-[12rem_1fr]"
+                  >
+                    <div className="space-y-0.5 text-caption text-muted-foreground">
+                      <p className="font-mono text-foreground">{t.name}</p>
+                      <p className="font-mono">
+                        {t.value} / {companion("line-height") ?? "inherit"}
+                        {companion("font-weight")
+                          ? `, ${companion("font-weight")}`
+                          : ""}
+                      </p>
+                    </div>
+                    <p
+                      className={display ? "font-display" : undefined}
+                      style={{
+                        fontSize: t.value,
+                        lineHeight: companion("line-height"),
+                        letterSpacing: companion("letter-spacing"),
+                        fontWeight: companion("font-weight"),
+                      }}
+                    >
+                      Keyword research for 1,284 articles
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </Section>
+          </Section>
 
-      <Section
-        title="Type"
-        description="The type roles: size, line height, tracking and weight set together."
-      >
-        <div className="divide-y divide-border rounded-md border border-border bg-surface-raised">
-          {types.map((t) => {
-            const companion = (key: string) =>
-              tokens.get(`${t.name}--${key}`)?.value;
-            const display = /display|page-title/.test(t.name);
-            return (
-              <div
-                key={t.name}
-                className="grid gap-1 p-4 sm:grid-cols-[12rem_1fr]"
-              >
-                <div className="space-y-0.5 text-caption text-muted-foreground">
-                  <p className="font-mono text-foreground">{t.name}</p>
-                  <p className="font-mono">
-                    {t.value} / {companion("line-height") ?? "inherit"}
-                    {companion("font-weight")
-                      ? `, ${companion("font-weight")}`
-                      : ""}
+          <Section
+            title="Radii and shadows"
+            description="Three of each. Controls take the small radius, containers the medium one."
+          >
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+              {[...RADII, ...SHADOWS].map((name) => (
+                <div key={name} className="space-y-2">
+                  <div
+                    className="h-20 border border-border bg-surface-raised"
+                    style={
+                      name.startsWith("--radius")
+                        ? { borderRadius: value(name) }
+                        : {
+                            borderRadius: value("--radius-md"),
+                            boxShadow: value(name),
+                            borderColor: "transparent",
+                          }
+                    }
+                  />
+                  <p className="font-mono text-caption">{name}</p>
+                  <p className="font-mono text-caption text-muted-foreground">
+                    {tokens.get(name)?.value}
                   </p>
                 </div>
-                <p
-                  className={display ? "font-display" : undefined}
-                  style={{
-                    fontSize: t.value,
-                    lineHeight: companion("line-height"),
-                    letterSpacing: companion("letter-spacing"),
-                    fontWeight: companion("font-weight"),
-                  }}
-                >
-                  Keyword research for 1,284 articles
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </Section>
-
-      <Section
-        title="Radii and shadows"
-        description="Three of each. Controls take the small radius, containers the medium one."
-      >
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-          {[...RADII, ...SHADOWS].map((name) => (
-            <div key={name} className="space-y-2">
-              <div
-                className="h-20 border border-border bg-surface-raised"
-                style={
-                  name.startsWith("--radius")
-                    ? { borderRadius: value(name) }
-                    : {
-                        borderRadius: value("--radius-md"),
-                        boxShadow: value(name),
-                        borderColor: "transparent",
-                      }
-                }
-              />
-              <p className="font-mono text-caption">{name}</p>
-              <p className="font-mono text-caption text-muted-foreground">
-                {tokens.get(name)?.value}
-              </p>
+              ))}
             </div>
-          ))}
+          </Section>
         </div>
-      </Section>
+      </DetailPage>
     </main>
   );
 }

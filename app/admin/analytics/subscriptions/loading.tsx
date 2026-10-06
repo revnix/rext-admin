@@ -1,9 +1,10 @@
+import { PageFrame } from "@/components/layouts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="container mx-auto p-6">
+    <PageFrame>
       <div className="mb-6">
         <Skeleton className="h-10 w-64 mb-2" />
         <Skeleton className="h-5 w-48" />
@@ -53,6 +54,6 @@ export default function Loading() {
           </CardContent>
         </Card>
       ))}
-    </div>
+    </PageFrame>
   );
 }

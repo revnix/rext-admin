@@ -25,7 +25,7 @@ import { PermissionBadge } from "@/components/admin/roles/permission-badge";
 import { PermissionDependencyView } from "@/components/admin/roles/permission-dependency-view";
 import { RoleBadge } from "@/components/admin/roles/role-badge";
 import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -419,7 +419,7 @@ export default function AdminRolesPage() {
     visibleRoles.filter((r) => !isProtectedRole(r)).length || 0;
 
   return (
-    <PageLayout
+    <ListPage
       title="Roles & Permissions"
       description="Configure system roles and assign permissions"
     >
@@ -673,6 +673,6 @@ export default function AdminRolesPage() {
           allPermissions={allPermissions}
         />
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

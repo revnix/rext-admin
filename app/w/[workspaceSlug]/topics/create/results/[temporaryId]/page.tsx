@@ -4,7 +4,7 @@ import { ChevronDown, Loader2, Plus, RotateCcw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { SessionNotifications } from "@/components/session-notifications";
 import { TopicsList } from "@/components/topic-builder/results/TopicsList";
 import { Button } from "@/components/ui/button";
@@ -435,26 +435,24 @@ export default function ResultsPage() {
   // Loading state
   if (state.isLoading) {
     return (
-      <PageLayout
+      <ListPage
         title="Loading Results..."
         description="Retrieving your generated topics"
-        className="p-0"
       >
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="text-muted-foreground">Loading your topic results...</p>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   // Error state
   if (state.error) {
     return (
-      <PageLayout
+      <ListPage
         title="Results Not Found"
         description="Unable to load your topic results"
-        className="p-0"
       >
         <div className="flex flex-col min-h-[400px] space-y-6 p-6">
           {/* Session Notifications with Recovery */}
@@ -498,18 +496,14 @@ export default function ResultsPage() {
             </Button>
           </div>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   // Success state - show results
   if (state.session && state.session.topics.length > 0) {
     return (
-      <PageLayout
-        title={pageTitle}
-        description={pageDescription}
-        className="p-0"
-      >
+      <ListPage title={pageTitle} description={pageDescription}>
         {/* Storage Error Display */}
         {storageError && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full px-4">
@@ -562,17 +556,13 @@ export default function ResultsPage() {
             />
           </div>
         </APIErrorBoundary>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   // Fallback state (should not reach here normally)
   return (
-    <PageLayout
-      title="No Results"
-      description="No topic results found"
-      className="p-0"
-    >
+    <ListPage title="No Results" description="No topic results found">
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <p className="text-muted-foreground">
           No topics found in this session.
@@ -629,6 +619,6 @@ export default function ResultsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PageLayout>
+    </ListPage>
   );
 }

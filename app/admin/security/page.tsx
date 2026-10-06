@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
@@ -108,7 +108,7 @@ export default function AccountAllowlistPage() {
 
   return (
     <AdminGuard>
-      <PageLayout
+      <ListPage
         title="Account Creation Allowlist"
         description="Public egress IPs that may create multiple accounts past the per-device limit."
       >
@@ -276,7 +276,7 @@ export default function AccountAllowlistPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

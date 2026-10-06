@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLayout } from "@/components/page-layout";
+import { FormPage } from "@/components/layouts";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { workspaceRoutes } from "@/lib/routes";
 import { PermissionGuard } from "@/components/permission/permission-guard";
@@ -226,12 +226,12 @@ export default function CreatePersonaPage() {
 
   if (!workspace?.id || isPermLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <FormPage title="Loading Permissions...">
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </FormPage>
     );
   }
 
@@ -252,7 +252,7 @@ export default function CreatePersonaPage() {
   };
 
   return (
-    <PageLayout
+    <FormPage
       title="Create New Persona"
       description="Define a new author persona to enhance your content's EEAT signals"
       actions={
@@ -281,7 +281,6 @@ export default function CreatePersonaPage() {
           </Button>
         </div>
       }
-      fullWidth
     >
       <PermissionGuard
         permission={PERSONA_PERMISSIONS.CREATE}
@@ -308,7 +307,7 @@ export default function CreatePersonaPage() {
         }
       >
         <div className="space-y-6 pb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* Left Column */}
             <div className="space-y-6">
               {/* Profile Details */}
@@ -847,6 +846,6 @@ export default function CreatePersonaPage() {
           </div>
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </FormPage>
   );
 }

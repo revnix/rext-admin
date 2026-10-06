@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
@@ -12,7 +12,7 @@ import {
 
 export default function AdminStatisticsPage() {
   return (
-    <PageLayout
+    <ListPage
       title="System Statistics"
       description="View system metrics and analytics"
     >
@@ -118,6 +118,6 @@ export default function AdminStatisticsPage() {
           </Card>
         </div>
       </AdminGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

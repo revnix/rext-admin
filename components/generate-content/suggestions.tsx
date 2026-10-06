@@ -137,9 +137,9 @@ export function SuggestionsSection({
             <p className="text-xs text-muted-foreground mb-0.5">
               Searched keyword
             </p>
-            <h1 className="text-lg font-semibold leading-snug text-foreground">
+            <h2 className="text-lg font-semibold leading-snug text-foreground">
               {primaryKeyword}
-            </h1>
+            </h2>
           </div>
           <div className="h-8 w-8 rounded-md bg-muted border border-border flex items-center justify-center text-muted-foreground group-hover:bg-foreground group-hover:text-background group-hover:border-foreground transition-colors">
             <ArrowRight className="h-3.5 w-3.5" />

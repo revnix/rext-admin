@@ -18,7 +18,7 @@ import {
 import { useState } from "react";
 
 import { CreateAdminInvitationDialog } from "@/components/admin/create-admin-invitation-dialog";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
@@ -164,7 +164,7 @@ export default function AdminInvitationsPage() {
 
   return (
     <AdminGuard superAdminOnly={true}>
-      <PageLayout
+      <ListPage
         title="Platform Admin Invitations"
         description="Manage invitations for platform-level administrators"
         actions={
@@ -410,7 +410,7 @@ export default function AdminInvitationsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

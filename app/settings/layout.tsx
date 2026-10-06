@@ -1,7 +1,14 @@
-import { PageLayout } from "@/components/page-layout";
-import { SettingsNav } from "@/components/settings/settings-nav";
+import { SettingsPage } from "@/components/layouts";
 import { ShellLayout } from "@/components/shell/shell-layout";
 import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import { settingsRoutes } from "@/lib/routes";
+
+const SECTIONS = [
+  { label: "Account & preferences", href: settingsRoutes.root },
+  { label: "Security", href: settingsRoutes.security },
+  { label: "Trash", href: settingsRoutes.trash },
+  { label: "Billing", href: settingsRoutes.subscription },
+];
 
 export default function SettingsLayout({
   children,
@@ -10,20 +17,13 @@ export default function SettingsLayout({
 }) {
   return (
     <ShellLayout>
-      <PageLayout
+      <SettingsPage
         title="Settings"
         description="Manage your account settings and preferences"
+        sections={SECTIONS}
       >
-        <div className="space-y-6">
-          {/* Top Navigation */}
-          <SettingsNav />
-
-          {/* Main Content */}
-          <div className="w-full">
-            <APIErrorBoundary>{children}</APIErrorBoundary>
-          </div>
-        </div>
-      </PageLayout>
+        <APIErrorBoundary>{children}</APIErrorBoundary>
+      </SettingsPage>
     </ShellLayout>
   );
 }

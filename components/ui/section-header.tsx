@@ -188,40 +188,6 @@ const SectionHeader = React.forwardRef<
 
 SectionHeader.displayName = "SectionHeader";
 
-// Specialized variants for common use cases
-export const PageHeader = React.forwardRef<
-  HTMLDivElement,
-  Omit<SectionHeaderComponentProps, "level"> & { subtitle?: string }
->(({ subtitle, children, ...props }, ref) => (
-  <SectionHeader
-    ref={ref}
-    level={1}
-    variant="spacious"
-    description={subtitle}
-    {...props}
-  >
-    {children}
-  </SectionHeader>
-));
-
-PageHeader.displayName = "PageHeader";
-
-export const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  Omit<SectionHeaderComponentProps, "level">
->(({ ...props }, ref) => (
-  <SectionHeader ref={ref} level={3} variant="compact" {...props} />
-));
-
-CardHeader.displayName = "CardHeader";
-
-export const SubsectionHeader = React.forwardRef<
-  HTMLDivElement,
-  Omit<SectionHeaderComponentProps, "level">
->(({ ...props }, ref) => (
-  <SectionHeader ref={ref} level={4} variant="compact" {...props} />
-));
-
-SubsectionHeader.displayName = "SubsectionHeader";
+// A page's header is the page layouts' (components/layouts); this one titles a section inside a page.
 
 export { SectionHeader, sectionHeaderVariants, sectionTitleVariants };

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +77,7 @@ export default function WorkspaceKnowledgePage() {
   ).length;
 
   return (
-    <PageLayout
+    <ListPage
       title="Knowledge Bases"
       description="Upload documents, brand guidelines, and target audience profiles to train AI generators."
       actions={
@@ -231,6 +231,6 @@ export default function WorkspaceKnowledgePage() {
           </div>
         </PermissionGuard>
       )}
-    </PageLayout>
+    </ListPage>
   );
 }

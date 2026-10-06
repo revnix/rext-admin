@@ -3,7 +3,7 @@
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -189,14 +189,14 @@ export default function WorkspaceContentDetailPage({
 
   if (isContentLoading) {
     return (
-      <PageLayout title="Loading..." description="Loading content details">
+      <WorkingSurface title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-foreground" />
             <p className="text-muted-foreground">Loading content...</p>
           </div>
         </div>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
@@ -210,7 +210,7 @@ export default function WorkspaceContentDetailPage({
 
     if (isNotFound) {
       return (
-        <PageLayout
+        <WorkingSurface
           title="Content Not Found"
           description="The requested content could not be found"
         >
@@ -232,12 +232,12 @@ export default function WorkspaceContentDetailPage({
               Back to Content
             </Button>
           </div>
-        </PageLayout>
+        </WorkingSurface>
       );
     }
 
     return (
-      <PageLayout
+      <WorkingSurface
         title="Error Loading Content"
         description="There was an error fetching the content"
       >
@@ -254,13 +254,13 @@ export default function WorkspaceContentDetailPage({
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
   if (!content) {
     return (
-      <PageLayout
+      <WorkingSurface
         title="Content Not Found"
         description="The requested content could not be found"
       >
@@ -284,7 +284,7 @@ export default function WorkspaceContentDetailPage({
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
@@ -292,7 +292,7 @@ export default function WorkspaceContentDetailPage({
     <PermissionGuard
       permission={CONTENT_PERMISSIONS.READ}
       fallback={
-        <PageLayout title="Access Denied">
+        <WorkingSurface title="Access Denied">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
@@ -309,16 +309,11 @@ export default function WorkspaceContentDetailPage({
               </p>
             </CardContent>
           </Card>
-        </PageLayout>
+        </WorkingSurface>
       }
     >
-      <PageLayout
-        title={content.title}
-        description="Review and edit generated content"
-        fullWidth
-        className="!py-0"
-        hideTitle
-      >
+      {/* The editor draws the article's title as the page's h1. */}
+      <WorkingSurface title={content.title} flush ownHeading>
         {content.publishing_results &&
           content.publishing_results.length > 0 && (
             <div className="px-6 pt-4">
@@ -393,7 +388,7 @@ export default function WorkspaceContentDetailPage({
             onContentChange={setContentMarkdown}
           />
         )}
-      </PageLayout>
+      </WorkingSurface>
     </PermissionGuard>
   );
 }

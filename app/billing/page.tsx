@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Footer } from "@/components/layout/footer";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { InvoiceList } from "@/components/subscription/invoice-list";
 import { PurchaseHistory } from "@/components/subscription/purchase-history";
@@ -106,7 +106,7 @@ export default function BillingHistoryPage() {
 
   if (loading) {
     return (
-      <PageLayout
+      <DetailPage
         title="Billing & Invoices"
         description="Manage your billing information and view invoice history"
       >
@@ -118,14 +118,14 @@ export default function BillingHistoryPage() {
             </p>
           </div>
         </div>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   const subDetail = subscription?.subscription;
 
   return (
-    <PageLayout
+    <DetailPage
       title="Billing & Invoices"
       description="Manage your billing information and view invoice history"
       actions={
@@ -387,6 +387,6 @@ export default function BillingHistoryPage() {
 
       {/* Footer with Policy Links */}
       <Footer variant="minimal" className="mt-12" />
-    </PageLayout>
+    </DetailPage>
   );
 }

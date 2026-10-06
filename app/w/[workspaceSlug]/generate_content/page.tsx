@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 import { SelectionView } from "@/components/generate-content/selection-view";
-import { PageLayout } from "@/components/page-layout";
+import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
@@ -130,23 +130,17 @@ export default function Page() {
 
   if (!workspace?.id || isPermLoading || isResolvingActiveGeneration) {
     return (
-      <PageLayout title="Generate Content">
+      <WorkingSurface title="Generate" hidden>
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
   return (
-    <PageLayout
-      title="Generate Content"
-      hideTitle={true}
-      description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
-      fullWidth
-      className="!py-0"
-    >
+    <WorkingSurface title="Generate" hidden flush>
       <PermissionGuard
         permission={CONTENT_PERMISSIONS.READ}
         showLoading={false}
@@ -189,6 +183,6 @@ export default function Page() {
           )}
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </WorkingSurface>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
   Card,
@@ -162,17 +162,17 @@ export default function IntegrationsPage() {
 
   if (!workspace?.id || isPermLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <ListPage title="Loading Permissions...">
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="Integrations"
       description="Connect your workspace with third-party platforms."
       actions={
@@ -303,6 +303,6 @@ export default function IntegrationsPage() {
         onUpdate={handleIntegrationUpdated}
         onDelete={handleIntegrationDeleted}
       />
-    </PageLayout>
+    </ListPage>
   );
 }

@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { TopicsClientWrapper } from "@/app/topics/topics-client-wrapper";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,14 +77,14 @@ export default function WorkspaceTopicsPage() {
   // 🧩 Wait for all permission states before showing layout
   if (!workspace?.id || isCreatePermissionLoading || isReadPermissionLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <ListPage title="Loading Permissions...">
         <div className="flex h-screen items-center justify-center">
           <div className="space-y-4 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
@@ -109,7 +109,7 @@ export default function WorkspaceTopicsPage() {
   ) : null;
 
   return (
-    <PageLayout
+    <ListPage
       title="Topic Library"
       description={`Browse AI-generated topics for ${
         workspace?.name || "this workspace"
@@ -164,6 +164,6 @@ export default function WorkspaceTopicsPage() {
           />
         )}
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

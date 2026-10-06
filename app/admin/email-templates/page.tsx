@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
@@ -164,7 +164,7 @@ export default function AdminEmailTemplatesPage() {
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="System Email Templates"
       description="Manage system-wide email templates used across all workspaces"
       actions={
@@ -373,6 +373,6 @@ export default function AdminEmailTemplatesPage() {
           </AlertDialog>
         </div>
       </AdminGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

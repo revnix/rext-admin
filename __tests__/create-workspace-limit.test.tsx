@@ -2,22 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CreateWorkspacePage from "@/app/w/create/page";
 
-interface PageLayoutProps {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}
-
-jest.mock("@/components/page-layout", () => ({
-  PageLayout: ({ title, description, children }: PageLayoutProps) => (
-    <div>
-      <h1>{title}</h1>
-      <p>{description}</p>
-      {children}
-    </div>
-  ),
-}));
-
 jest.mock("@/components/workspace", () => ({
   WorkspaceCreateWizard: () => <div>Workspace details</div>,
 }));
