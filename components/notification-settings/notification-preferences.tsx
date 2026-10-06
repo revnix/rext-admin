@@ -53,8 +53,6 @@ export function transformApiToFormData(
     billing_trial_ending: apiData.billing.trial_ending,
     billing_usage_limit_warning: apiData.billing.usage_limit_warning,
     billing_usage_limit_exceeded: apiData.billing.usage_limit_exceeded,
-    kb_processing_completed: apiData.knowledge_base.processing_completed,
-    kb_processing_failed: apiData.knowledge_base.processing_failed,
     digest_enabled: apiData.email_digest.enabled,
     digest_frequency: apiData.email_digest.frequency,
     marketing_updates: apiData.marketing.marketing_updates,
@@ -406,57 +404,6 @@ export function NotificationPreferencesForm({
       </div>
 
       <Separator />
-
-      {/* Knowledge Base Notifications */}
-      {/* <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <BookOpen
-            className="h-5 w-5 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <h3 className="text-lg font-semibold">Knowledge Base</h3>
-        </div>
-
-        <div className="space-y-4 pl-7">
-          <div className="flex items-center justify-between gap-2">
-            <div className="space-y-0.5">
-              <Label htmlFor="kb_processing_completed">
-                Processing Completed
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                When knowledge base processing is complete
-              </p>
-            </div>
-            <Switch
-              id="kb_processing_completed"
-              checked={watch("kb_processing_completed")}
-              onCheckedChange={(checked) =>
-                setValue("kb_processing_completed", checked, {
-                  shouldDirty: true,
-                })
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-2">
-            <div className="space-y-0.5">
-              <Label htmlFor="kb_processing_failed">Processing Failed</Label>
-              <p className="text-sm text-muted-foreground">
-                When knowledge base processing fails
-              </p>
-            </div>
-            <Switch
-              id="kb_processing_failed"
-              checked={watch("kb_processing_failed")}
-              onCheckedChange={(checked) =>
-                setValue("kb_processing_failed", checked, { shouldDirty: true })
-              }
-            />
-          </div>
-        </div>
-      </div> */}
-
-      {/* <Separator /> */}
 
       {/* Digest Settings */}
       <div className="space-y-4">

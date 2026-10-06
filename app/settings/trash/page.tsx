@@ -243,8 +243,8 @@ export default function TrashSettingsPage() {
             <AlertDialogTitle>Delete this workspace forever?</AlertDialogTitle>
             <AlertDialogDescription>
               This removes &ldquo;{purgeTarget?.name}&rdquo; and everything in
-              it — content, knowledge, personas, brand voices and integrations.
-              It cannot be restored afterwards.
+              it — content, personas, brand voices and integrations. It cannot
+              be restored afterwards.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

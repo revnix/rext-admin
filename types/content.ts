@@ -178,7 +178,6 @@ export interface CreateContentRequest {
   status?: ContentStatus;
   content_language?: string;
   content_format?: string;
-  topic_id?: string;
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
   images_data?: Record<string, unknown>;
@@ -200,7 +199,6 @@ export interface UpdateContentRequest {
   status?: ContentStatus;
   content_language?: string;
   assigned_to_user_id?: string;
-  topic_id?: string;
   langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
@@ -237,7 +235,6 @@ export interface ContentItem {
   category?: string;
 
   // Relations
-  topic_id?: string;
   seo_data?: ContentSEODataSchema;
   content_metadata?: ContentMetadataSchema;
 

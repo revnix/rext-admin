@@ -20,21 +20,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { BaseKnowledgeItem, KnowledgeCardConfig } from "./types";
+import type { BaseCardItem, CardConfig } from "./base-card-types";
 
-interface BaseKnowledgeCardProps<T extends BaseKnowledgeItem> {
+interface BaseCardProps<T extends BaseCardItem> {
   item: T;
-  config: KnowledgeCardConfig<T>;
+  config: CardConfig<T>;
   onSelect?: (id: string) => void;
   isSelected?: boolean;
 }
 
-export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
+export function BaseCard<T extends BaseCardItem>({
   item,
   config,
   onSelect,
   isSelected = false,
-}: BaseKnowledgeCardProps<T>) {
+}: BaseCardProps<T>) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const statusConfig = config.getStatusConfig?.(item);
@@ -71,7 +71,7 @@ export function BaseKnowledgeCard<T extends BaseKnowledgeItem>({
 
   return (
     <Card
-      className={`h-full transition-all hover:shadow-md ${
+      className={`h-full transition-colors hover:border-border-strong ${
         isSelected ? "ring-2 ring-primary" : ""
       } ${onSelect ? "cursor-pointer" : ""} ${config.className || ""}`}
       onClick={handleCardClick}

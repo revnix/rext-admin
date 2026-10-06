@@ -394,7 +394,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Get current user's permissions in a specific workspace
      *
-     * Returns workspace-scoped permissions using dot notation (e.g., "topic.create")
+     * Returns workspace-scoped permissions using dot notation (e.g., "content.create")
      * Note: Response format updated to match Phase 1 backend changes
      */
     getPermissions: async (workspaceId: string) => {
@@ -402,7 +402,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         workspace_id: string;
         workspace_slug: string;
         user_role: string; // Simplified: single role name instead of array
-        permissions: string[]; // Dot notation: "topic.create", "content.read", etc.
+        permissions: string[]; // Dot notation: "content.create", "content.read", etc.
       }>(ENDPOINTS.WORKSPACES.permissions.me(workspaceId), {
         method: "GET",
       });
@@ -481,7 +481,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Get workspace statistics for onboarding tracking
      *
-     * Returns real-time counts of topics, content, knowledge items, and members
+     * Returns real-time counts of content and members
      * Used for tracking onboarding progress on dashboard
      */
     getStats: async (workspaceId: string) => {

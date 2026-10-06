@@ -7,7 +7,7 @@
  * Usage:
  *   import { apiClient } from '@/lib/api-client';
  *
- *   const topics = await apiClient.topics.list(workspaceId);
+ *   const content = await apiClient.content.list(workspaceId);
  *   const workspace = await apiClient.workspaces.get(workspaceId);
  */
 
@@ -17,10 +17,10 @@
  * The backend uses two patterns for workspace-scoped endpoints:
  *
  * 1. Path parameter: /api/v1/workspaces/{workspaceId}/...
- *    Used by: workspaces, members, knowledge, personas
+ *    Used by: workspaces, members, personas
  *
  * 2. Query parameter: ?workspace_id={workspaceId}
- *    Used by: content, topics, users (list), admin-analytics
+ *    Used by: content, users (list), admin-analytics
  *
  * Convention for NEW endpoints: Prefer path parameters for workspace scoping
  * (Pattern 1) as it follows REST resource hierarchy best practices.
@@ -44,7 +44,6 @@ import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createDashboardNamespace } from "./dashboard";
 import { createKeywordLibraryNamespace } from "./keyword-library";
-import { createKnowledgeNamespace } from "./knowledge";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createPersonasNamespace } from "./personas";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
@@ -56,7 +55,6 @@ import {
   createSessionsNamespace,
 } from "./settings";
 import { createSubscriptionsNamespace } from "./subscriptions";
-import { createTopicsNamespace } from "./topics";
 import { createUsersNamespace } from "./users";
 import { createWorkspacesNamespace } from "./workspaces";
 import { createOAuthNamespace } from "./oauth";
@@ -77,11 +75,9 @@ function createApiClient() {
     requestRaw: client.requestRaw.bind(client),
 
     // Feature namespaces
-    topics: createTopicsNamespace(client),
     content: createContentNamespace(client),
     dashboard: createDashboardNamespace(client),
     workspaces: createWorkspacesNamespace(client),
-    knowledge: createKnowledgeNamespace(client),
     keywordLibrary: createKeywordLibraryNamespace(client),
     members: createMembersNamespace(client),
     invitations: createInvitationsNamespace(client),
@@ -124,10 +120,6 @@ function createApiClient() {
  *
  * @example
  * ```typescript
- * // Topics
- * const topics = await apiClient.topics.list(workspaceId);
- * await apiClient.topics.generate(formData);
- *
  * // Content
  * const content = await apiClient.content.list(workspaceId);
  * await apiClient.content.create(workspaceId, data);
@@ -135,10 +127,6 @@ function createApiClient() {
  * // Workspaces
  * const workspaces = await apiClient.workspaces.list();
  * await apiClient.workspaces.update(workspaceId, data);
- *
- * // Knowledge
- * const webKnowledge = await apiClient.knowledge.listWeb(workspaceId);
- * await apiClient.knowledge.addFile(data);
  *
  * // Members & Invitations
  * const members = await apiClient.members.list(workspaceId);

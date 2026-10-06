@@ -123,7 +123,7 @@ export function useOnboardingProgress(
       {
         id: "content",
         label: "Create Content",
-        description: "Publish your first piece of content",
+        description: "Generate your first article from a keyword",
         completed: contentCount > 0,
         weight: 50,
       },

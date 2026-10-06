@@ -71,8 +71,6 @@ export interface SubscriptionPlan extends Record<string, unknown> {
   features: PlanFeatures;
   max_workspaces: number;
   max_members_per_workspace: number;
-  max_topics: number;
-  max_knowledge_items: number;
   max_api_calls_per_month: number;
   credits_per_month: number | null;
   is_active: boolean;
@@ -141,8 +139,6 @@ export interface UserSubscriptionDetail {
   plan_limits?: {
     max_workspaces: number;
     max_members_per_workspace: number;
-    max_topics: number;
-    max_knowledge_items: number;
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
@@ -199,12 +195,6 @@ export interface UsageStats {
     percentage: number;
   };
 
-  knowledge_items: {
-    used: number;
-    limit: number;
-    percentage: number;
-  };
-
   api_calls: {
     used: number;
     limit: number;
@@ -219,22 +209,16 @@ export interface UsageStats {
 
   // Current usage
   current_workspaces: number;
-  current_topics: number;
-  current_knowledge_items: number;
   current_api_calls: number;
   current_members?: number;
 
   // Limits
   max_workspaces: number;
-  max_topics: number;
-  max_knowledge_items: number;
   max_api_calls_per_month: number;
   max_members?: number;
 
   // Usage percentages
   workspaces_usage_percent: number;
-  topics_usage_percent: number;
-  knowledge_items_usage_percent: number;
   api_calls_usage_percent: number;
   members_usage_percent?: number;
 

@@ -14,20 +14,6 @@ export { BrandVoiceRefreshControl } from "./brand-voice-refresh-control";
 export { EditableBrandVoiceCard } from "./editable-brand-voice-card";
 export { WorkspaceBrandVoiceForm } from "./workspace-brand-voice-form";
 
-// Knowledge Management
-export { WorkspaceAddKnowledgeDialog } from "./workspace-add-knowledge-dialog";
-export { WorkspaceCreateKnowledgeBaseDialog } from "./workspace-create-knowledge-base-dialog";
-export { WorkspaceDeleteKnowledgeBaseDialog } from "./workspace-delete-knowledge-base-dialog";
-export { WorkspaceDeleteKnowledgeDialog } from "./workspace-delete-knowledge-dialog";
-export { WorkspaceEditKnowledgeBaseDialog } from "./workspace-edit-knowledge-base-dialog";
-export { WorkspaceEditKnowledgeDialog } from "./workspace-edit-knowledge-dialog";
-export { WorkspaceKnowledgeBasesTable } from "./workspace-knowledge-bases-table";
-export { WorkspaceKnowledgeSummaryCard } from "./workspace-knowledge-summary-card";
-export {
-  WorkspaceKnowledgeTable,
-  convertToKnowledgeItems,
-} from "./workspace-knowledge-table";
-export type { KnowledgeItem } from "./workspace-knowledge-table";
 
 // Members & Invitations
 export { WorkspaceChangeRoleDialog } from "./workspace-change-role-dialog";

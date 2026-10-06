@@ -210,12 +210,6 @@ export interface WorkspaceData extends BaseTableRow {
     name: string;
     email: string;
   };
-  knowledge_stats?: {
-    web_knowledge: number;
-    files: number;
-    text_knowledge: number;
-    total: number;
-  };
   brand_voice?: BrandVoice;
   status: string;
 }

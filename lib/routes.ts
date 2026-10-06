@@ -11,10 +11,8 @@ import type { Route } from "next";
  * Valid workspace page segments
  */
 export const WORKSPACE_PAGES = [
-  "topics",
   "content",
   "members",
-  "knowledge",
   "integrations",
   "personas",
   "persona_create",
@@ -47,10 +45,9 @@ export const workspaceRoutes = {
   /**
    * Topics routes
    */
+  // Topics and knowledge are removed (E16); /topics and /knowledge redirect (next.config.ts).
+  // These two stay only until the sidebar drops its links to them.
   topics: (workspaceSlug: string) => `/w/${workspaceSlug}/topics`,
-  topicDetail: (workspaceSlug: string, topicId: string) =>
-    `/w/${workspaceSlug}/topics/${topicId}`,
-  topicCreate: (workspaceSlug: string) => `/w/${workspaceSlug}/topics/create`,
 
   /**
    * Content routes
@@ -72,8 +69,6 @@ export const workspaceRoutes = {
    * Knowledge routes
    */
   knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
-  knowledgeDetail: (workspaceSlug: string, kbId: string) =>
-    `/w/${workspaceSlug}/knowledge/${kbId}`,
 
   /**
    * Integrations route
@@ -107,7 +102,7 @@ export const workspaceRoutes = {
  * @returns The workspace ID if found, null otherwise
  *
  * @example
- * extractWorkspaceId('/w/ws-123/topics') // 'ws-123'
+ * extractWorkspaceId('/w/ws-123/content') // 'ws-123'
  * extractWorkspaceId('/w/550e8400-e29b-41d4-a716-446655440000/content') // '550e8400-e29b-41d4-a716-446655440000'
  * extractWorkspaceId('/workspaces') // null
  */
@@ -123,7 +118,7 @@ export function extractWorkspaceId(pathname: string): string | null {
  * @returns True if the pathname starts with /w/
  *
  * @example
- * isWorkspacePath('/w/ws-123/topics') // true
+ * isWorkspacePath('/w/ws-123/content') // true
  * isWorkspacePath('/workspaces') // false
  */
 export function isWorkspacePath(pathname: string): boolean {
@@ -137,7 +132,7 @@ export function isWorkspacePath(pathname: string): boolean {
  * @returns The page segment if found and valid, null otherwise
  *
  * @example
- * extractWorkspacePageSegment('/w/ws-123/topics') // 'topics'
+ * extractWorkspacePageSegment('/w/ws-123/content') // 'content'
  * extractWorkspacePageSegment('/w/ws-123/content/123') // 'content'
  * extractWorkspacePageSegment('/w/ws-123') // null
  * extractWorkspacePageSegment('/workspaces') // null
@@ -156,11 +151,10 @@ export function extractWorkspacePageSegment(
  * Build workspace path for a given page segment
  *
  * @param workspaceSlug - The workspace slug
- * @param pageSegment - The page segment (topics, content, etc.)
+ * @param pageSegment - The page segment (content, members, etc.)
  * @returns The full workspace path
  *
  * @example
- * buildWorkspacePath('my-workspace', 'topics') // '/w/my-workspace/topics'
  * buildWorkspacePath('my-workspace', 'content') // '/w/my-workspace/content'
  */
 export function buildWorkspacePath(
@@ -168,10 +162,8 @@ export function buildWorkspacePath(
   pageSegment: WorkspacePageSegment,
 ): string {
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
-    topics: workspaceRoutes.topics,
     content: workspaceRoutes.content,
     members: workspaceRoutes.members,
-    knowledge: workspaceRoutes.knowledge,
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
@@ -181,5 +173,5 @@ export function buildWorkspacePath(
   const routeFn = routeMap[pageSegment];
   return routeFn
     ? routeFn(workspaceSlug)
-    : workspaceRoutes.topics(workspaceSlug);
+    : workspaceRoutes.content(workspaceSlug);
 }

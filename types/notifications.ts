@@ -12,8 +12,6 @@ export interface ApiNotification {
 export const NOTIFICATION_TYPE_VALUES = [
   "workspace",
   "billing",
-  "knowledge",
-  "kb",
   "content",
   "generation",
   "system",

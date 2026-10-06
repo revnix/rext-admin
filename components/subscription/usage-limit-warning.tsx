@@ -24,10 +24,9 @@ import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscrip
  */
 
 /**
- * The resources a limit hook can check. Topics and knowledge items stay until E16 removes their last
- * callers (the topic creation page, the add-knowledge dialog); then only workspaces remain.
+ * The resources a limit hook can check: workspaces, the one resource a plan caps.
  */
-export type LimitedResource = "workspaces" | "topics" | "knowledge_items";
+export type LimitedResource = "workspaces";
 
 interface UsageLimitWarningProps {
   /**
@@ -372,37 +371,6 @@ export function useResourceLimit(resource: LimitedResource) {
           planLimits?.max_workspaces ??
             (usageData.workspaces as { limit?: number } | undefined)?.limit ??
             (usageData as { max_workspaces?: number }).max_workspaces ??
-            -1,
-        );
-        break;
-      }
-      case "topics": {
-        current = getNumber(
-          (usageData.topics as { used?: number } | undefined)?.used ??
-            (usageData as { current_topics?: number }).current_topics ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_topics ??
-            (usageData.topics as { limit?: number } | undefined)?.limit ??
-            (usageData as { max_topics?: number }).max_topics ??
-            -1,
-        );
-        break;
-      }
-      case "knowledge_items": {
-        current = getNumber(
-          (usageData.knowledge_items as { used?: number } | undefined)?.used ??
-            (usageData as { current_knowledge_items?: number })
-              .current_knowledge_items ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_knowledge_items ??
-            (usageData.knowledge_items as { limit?: number } | undefined)
-              ?.limit ??
-            (usageData as { max_knowledge_items?: number })
-              .max_knowledge_items ??
             -1,
         );
         break;

@@ -25,10 +25,6 @@ const normalizedNotificationPreferencesApiSchema = z
       usage_limit_warning: z.boolean(),
       usage_limit_exceeded: z.boolean(),
     }),
-    knowledge_base: z.object({
-      processing_completed: z.boolean(),
-      processing_failed: z.boolean(),
-    }),
     email_digest: z.object({
       enabled: z.boolean(),
       frequency: digestFrequencySchema,
@@ -72,12 +68,6 @@ const wireNotificationPreferencesSchema = z
         usage_limit_exceeded: z.boolean(),
       })
       .optional(),
-    knowledge_base: z
-      .object({
-        processing_completed: z.boolean(),
-        processing_failed: z.boolean(),
-      })
-      .optional(),
     email_digest: z
       .object({
         enabled: z.boolean(),
@@ -113,7 +103,6 @@ export function parseNotificationPreferencesApi(
     workspace_notifications: source.workspace_notifications,
     content_generation: source.content_generation,
     billing: source.billing,
-    knowledge_base: source.knowledge_base,
     email_digest: source.email_digest ?? {
       enabled: source.digest_enabled,
       frequency: source.digest_frequency,
@@ -145,10 +134,6 @@ export const notificationPreferencesSchema = z.object({
   billing_trial_ending: z.boolean(),
   billing_usage_limit_warning: z.boolean(),
   billing_usage_limit_exceeded: z.boolean(),
-
-  // Knowledge Base
-  kb_processing_completed: z.boolean(),
-  kb_processing_failed: z.boolean(),
 
   // Digest
   digest_enabled: z.boolean(),
@@ -184,10 +169,6 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   billing_trial_ending: true,
   billing_usage_limit_warning: true,
   billing_usage_limit_exceeded: true,
-
-  // Knowledge Base
-  kb_processing_completed: true,
-  kb_processing_failed: true,
 
   // Digest
   digest_enabled: false,
@@ -225,13 +206,6 @@ export const notificationPreferencesApiSchema = z.object({
       trial_ending: z.boolean().optional(),
       usage_limit_warning: z.boolean().optional(),
       usage_limit_exceeded: z.boolean().optional(),
-    })
-    .optional(),
-
-  knowledge_base: z
-    .object({
-      processing_completed: z.boolean().optional(),
-      processing_failed: z.boolean().optional(),
     })
     .optional(),
 
@@ -282,10 +256,6 @@ export function transformToApiResponse(
       trial_ending: merged.billing_trial_ending,
       usage_limit_warning: merged.billing_usage_limit_warning,
       usage_limit_exceeded: merged.billing_usage_limit_exceeded,
-    },
-    knowledge_base: {
-      processing_completed: merged.kb_processing_completed,
-      processing_failed: merged.kb_processing_failed,
     },
     email_digest: {
       enabled: merged.digest_enabled,

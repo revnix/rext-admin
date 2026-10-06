@@ -137,24 +137,6 @@ export type UpdateWorkspaceRequest = z.infer<
  * Workspace analytics schema (nested under 'analytics' key)
  */
 export const workspaceAnalyticsSchema = z.object({
-  knowledge_counts: z
-    .object({
-      web_knowledge: z.number(),
-      files: z.number(),
-      text_knowledge: z.number(),
-      total_knowledge_items: z.number(),
-    })
-    .optional(),
-  content_metrics: z
-    .object({
-      total_words: z.number(),
-      web_content_words: z.number(),
-      file_content_words: z.number(),
-      avg_web_article_words: z.number(),
-      avg_file_words: z.number(),
-      estimated_reading_time_minutes: z.number(),
-    })
-    .optional(),
   team_metrics: z
     .object({
       total_members: z.number(),
@@ -279,11 +261,8 @@ export const availableRolesResponseSchema = z.object({
 
 export const workspaceStatsSchema = z.object({
   workspace_exists: z.boolean(),
-  topics_count: z.number(),
   content_count: z.number(),
-  knowledge_items_count: z.number(),
   members_count: z.number(),
-  has_topic_builder: z.boolean(),
   has_content_builder: z.boolean(),
 });
 

@@ -13,7 +13,6 @@ import { useBrandVoiceRefreshStore } from "./use-brand-voice-refresh-store";
 import { useWorkspaceContextStore } from "./use-workspace-context-store";
 import { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 import { useWorkspaceFormStore } from "./use-workspace-form-store";
-import { useWorkspaceKnowledgeStore } from "./use-workspace-knowledge-store";
 
 // ============================================================================
 // WORKSPACE CONTEXT STORE
@@ -46,15 +45,6 @@ export {
 } from "./use-workspace-form-store";
 
 // ============================================================================
-// WORKSPACE KNOWLEDGE STORE
-// ============================================================================
-
-export {
-  useKnowledgeState,
-  useWorkspaceKnowledgeStore,
-} from "./use-workspace-knowledge-store";
-
-// ============================================================================
 // BRAND VOICE REFRESH STORE
 // ============================================================================
 
@@ -84,7 +74,6 @@ export function useWorkspaceStore<T = WorkspaceState>(
   const contextStore = useWorkspaceContextStore();
   const crudStore = useWorkspaceCrudStore();
   const formStore = useWorkspaceFormStore();
-  const knowledgeStore = useWorkspaceKnowledgeStore();
   const brandVoiceStore = useBrandVoiceRefreshStore();
 
   const combinedState = useMemo<WorkspaceState>(
@@ -102,9 +91,6 @@ export function useWorkspaceStore<T = WorkspaceState>(
 
       // Form state
       workspaceForm: formStore.workspaceForm,
-
-      // Knowledge state
-      knowledge: knowledgeStore.knowledge,
 
       // Brand voice state
       brandVoiceRefresh: brandVoiceStore.brandVoiceRefresh,
@@ -142,16 +128,6 @@ export function useWorkspaceStore<T = WorkspaceState>(
       setWorkspaceFormErrors: formStore.setWorkspaceFormErrors,
       resetWorkspaceForm: formStore.resetWorkspaceForm,
 
-      // Knowledge actions
-      setSelectedKnowledgeType: knowledgeStore.setSelectedKnowledgeType,
-      toggleKnowledgeSelection: knowledgeStore.toggleKnowledgeSelection,
-      selectAllKnowledge: knowledgeStore.selectAllKnowledge,
-      deselectAllKnowledge: knowledgeStore.deselectAllKnowledge,
-      openUploadModal: knowledgeStore.openUploadModal,
-      closeUploadModal: knowledgeStore.closeUploadModal,
-      setUploadProgress: knowledgeStore.setUploadProgress,
-      removeUploadProgress: knowledgeStore.removeUploadProgress,
-
       // Brand voice actions
       refreshBrandVoice: brandVoiceStore.refreshBrandVoice,
       setBrandVoiceRefreshState: brandVoiceStore.setBrandVoiceRefreshState,
@@ -163,11 +139,9 @@ export function useWorkspaceStore<T = WorkspaceState>(
         contextStore.clearRecentWorkspaces();
         contextStore.setLastWorkspacePath(null);
         formStore.resetWorkspaceForm();
-        knowledgeStore.deselectAllKnowledge();
-        knowledgeStore.closeUploadModal();
       },
     }),
-    [contextStore, crudStore, formStore, knowledgeStore, brandVoiceStore],
+    [contextStore, crudStore, formStore, brandVoiceStore],
   );
 
   if (selector) {

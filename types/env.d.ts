@@ -8,7 +8,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
-     * Backend API base URL for topic generation service
+     * Backend API base URL
      *
      * @example "http://127.0.0.1:2024" (development)
      * @example "https://api.rext.ai" (production)

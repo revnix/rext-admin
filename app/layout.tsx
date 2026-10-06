@@ -24,14 +24,13 @@ export const metadata: Metadata = {
     default: "Rext AI Admin - AI-Powered Content Management Platform",
   },
   description:
-    "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows. Create, organize, and optimize your content strategy with intelligent insights.",
+    "Research a keyword, choose a title and an outline, and get an article written in your brand voice, ready to edit and publish.",
   keywords: [
+    "keyword research",
+    "content generation",
     "content management",
-    "AI content generation",
-    "topic management",
-    "content flows",
-    "automation",
-    "admin dashboard",
+    "content calendar",
+    "WordPress publishing",
   ],
   authors: [{ name: "Rext AI Team" }],
   creator: "Rext AI",
@@ -43,14 +42,14 @@ export const metadata: Metadata = {
     url: "https://app.rext.ai",
     title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
-      "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
+      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
     siteName: "Rext AI Admin",
   },
   twitter: {
     card: "summary_large_image",
     title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
-      "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
+      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
     creator: "@RextAI",
   },
   icons: {
