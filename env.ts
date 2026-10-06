@@ -10,7 +10,9 @@ import { z } from "zod";
  * Every name is optional on its own, as the code reading it has a fallback.
  * A production build needs two things the fallbacks don't cover: the backend's
  * address and the session secret, each under either of its two names
- * (`createFinalSchema` below). Set SKIP_ENV_VALIDATION=1 to build without them.
+ * (`createFinalSchema` below). Vercel's previews of pull requests are the
+ * exception: they are built without the deploys' variables, as they were before
+ * this check. Set SKIP_ENV_VALIDATION=1 to build without them.
  *
  * Server names are readable on the server only; NEXT_PUBLIC_ names are compiled
  * into the browser's code, so a secret never takes that prefix.
@@ -49,6 +51,13 @@ const client = {
   NEXT_PUBLIC_ANALYTICS_ENABLED: optional,
 };
 
+// Production builds, the staging and production deploys among them; not a
+// Vercel preview of a pull request (VERCEL_TARGET_ENV is "staging" for the
+// staging deploy, "preview" only for those).
+const needsDeployNames =
+  process.env.NODE_ENV === "production" &&
+  process.env.VERCEL_TARGET_ENV !== "preview";
+
 /** At least one of `names` is set: the code reads them as one value. */
 const requireOneOf = (
   env: Record<string, unknown>,
@@ -78,7 +87,7 @@ export const env = createEnv({
   },
   createFinalSchema: (shape, isServer) =>
     z.object(shape).superRefine((values, ctx) => {
-      if (!isServer || process.env.NODE_ENV !== "production") return;
+      if (!isServer || !needsDeployNames) return;
       requireOneOf(
         values,
         ctx,
