@@ -1,7 +1,8 @@
 name: pr-checks
 
 # The checks a pull request into staging runs. On every push: the route types, the type check, Biome, and the
-# token and layout checks once they exist; and Jest and the production build, while the repository is public.
+# token and layout checks once they exist; and Jest, the production build, and the accessibility checks and the
+# performance budgets against that build, while the repository is public.
 #
 # Actions minutes cost nothing on a public repository. On a private one the organisation's Free plan shares 2,000
 # minutes a month with the deploy workflows, so there Jest and the build run only when the pull request has the label
@@ -87,16 +88,57 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
+      - name: The build's environment
+        # Dummy values for the build and the checks that start it: they need the names, never a real address
+        # or key. Nothing answers at the backend's address, so those checks open only pages that need none.
+        # REXT_DEV_PAGES serves /dev/primitives from this build, for the accessibility checks
+        # (lib/dev-pages.ts); the deploys never set it.
+        if: env.FULL == 'true'
+        run: |
+          {
+            echo "NEXT_TELEMETRY_DISABLED=1"
+            echo "NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:2024"
+            echo "NEXT_PUBLIC_BACKEND_API_URL=http://127.0.0.1:2024"
+            echo "BACKEND_API_URL=http://127.0.0.1:2024"
+            echo "LANGGRAPH_API_URL=http://127.0.0.1:2024"
+            echo "AUTH_SECRET=ci-build-only-not-a-secret"
+            echo "AUTH_URL=http://localhost:3000"
+            echo "AUTH_TRUST_HOST=true"
+            echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"
+            echo "REXT_DEV_PAGES=1"
+          } >> "$GITHUB_ENV"
+
       - name: Build
+        id: build
         if: env.FULL == 'true'
         run: pnpm build
-        env:
-          # Dummy values: the build needs the names, never a real address or key.
-          NEXT_TELEMETRY_DISABLED: "1"
-          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:2024
-          NEXT_PUBLIC_BACKEND_API_URL: http://127.0.0.1:2024
-          BACKEND_API_URL: http://127.0.0.1:2024
-          LANGGRAPH_API_URL: http://127.0.0.1:2024
-          AUTH_SECRET: ci-build-only-not-a-secret
-          AUTH_URL: http://localhost:3000
-          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: The browser for the accessibility checks
+        if: env.FULL == 'true'
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: Accessibility
+        # Task C10 (design/app-language.md §11 and §12), on the build above: axe at WCAG 2.2 AA (target size
+        # included), the tab order (every focused element visible, ringed and not covered), and no moving
+        # animation with reduced motion. The pages are those that render without a backend: the signed-out
+        # pages and /dev/primitives (e2e/a11y/routes.ts).
+        if: env.FULL == 'true'
+        run: pnpm a11y
+
+      - name: Performance budgets
+        # Lighthouse CI on five of those pages (lighthouserc.json): LCP 2.5 s, CLS 0.1, and TBT 200 ms, the
+        # lab's stand-in for INP. It reports whether or not the accessibility checks passed.
+        if: env.FULL == 'true' && !cancelled() && steps.build.outcome == 'success'
+        run: pnpm perf
+
+      - name: Keep the reports of a failed check
+        if: failure() && env.FULL == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: a11y-and-performance-reports
+          path: |
+            playwright-report/
+            test-results/
+            lighthouse-reports/
+          retention-days: 7
+          if-no-files-found: ignore

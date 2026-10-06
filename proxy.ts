@@ -5,6 +5,7 @@ import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import { getToken } from "next-auth/jwt";
 import { getCSPHeader } from "@/lib/csp";
+import { devPagesOn } from "@/lib/dev-pages";
 import { ROLES } from "@/lib/permissions";
 
 /** The site's pricing page, where a signed-out visit to /pricing goes. */
@@ -216,6 +217,9 @@ export default async function proxy(request: NextRequest) {
     // link must open without one. Kept out of AUTH_PAGE_PATHS so that someone
     // signed in as another account isn't bounced away from the link.
     "/account-recovery",
+    // The development pages read no data. They open signed out wherever they're on
+    // (lib/dev-pages.ts), so pr-checks' accessibility checks reach them.
+    ...(devPagesOn() ? ["/dev/"] : []),
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>

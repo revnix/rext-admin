@@ -39,6 +39,8 @@ const server = {
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .optional(),
+  // "1" serves the /dev pages in a production build: pr-checks only (lib/dev-pages.ts).
+  REXT_DEV_PAGES: z.enum(["1"]).optional(),
 };
 
 const client = {
