@@ -2,7 +2,9 @@ import {
   addRow,
   buildOutlineApproval,
   canRemoveRow,
+  groupRows,
   moveRow,
+  readOnlyBlocks,
   readOutlineGate,
   removeRow,
   renameRow,
@@ -165,14 +167,66 @@ describe("the section edits", () => {
     expect(renameRow(rows, "structure.sections:1", "   ")).toBe(rows);
   });
 
-  it("removes a row and puts it back where it was", () => {
+  it("hides a removed row in its place, never sent, and Undo shows it again", () => {
     const { rows: after, removed } = removeRow(rows, "structure.sections:1");
-    expect(ids(after)).not.toContain("structure.sections:1");
-    expect(removed?.index).toBe(1);
-    if (!removed) throw new Error("not removed");
-    expect(ids(restoreRow(after, removed.row, removed.index))).toEqual(
-      ids(rows),
+    expect(removed?.key).toBe("structure.sections:1");
+    expect(groupRows(after)[0].rows.map((row) => row.key)).not.toContain(
+      "structure.sections:1",
     );
+    expect(
+      sectionEdits(after).map((edit) => ("id" in edit ? edit.id : null)),
+    ).not.toContain("structure.sections:1");
+    expect(restoreRow(after, "structure.sections:1")).toEqual(rows);
+  });
+
+  it("puts rows back where they were after other removals, in any undo order", () => {
+    const remove = (current: typeof rows, key: string) =>
+      removeRow(current, key).rows;
+    const shownIds = (current: typeof rows) =>
+      groupRows(current).flatMap((group) => group.rows.map((row) => row.id));
+    const [a, b, c] = ids(rows) as string[];
+    // Codex's case on #569: remove B, then A; undo B, then A.
+    const both = remove(remove(rows, b), a);
+    expect(shownIds(restoreRow(both, b))).toEqual(ids(rows).slice(1));
+    expect(restoreRow(restoreRow(both, b), a)).toEqual(rows);
+    // Remove B, then C; undo B first (the older toast), then C.
+    const bc = remove(remove(rows, b), c);
+    expect(restoreRow(restoreRow(bc, b), c)).toEqual(rows);
+  });
+
+  it("keeps a removed row after the section it followed when others move", () => {
+    const [a, b, c] = ids(rows) as string[];
+    const removedB = removeRow(rows, b).rows;
+    // One Move up takes C past the hidden row and above A.
+    const moved = moveRow(removedB, c, -1);
+    expect(
+      groupRows(moved)[0]
+        .rows.map((row) => row.id)
+        .slice(0, 2),
+    ).toEqual([c, a]);
+    expect(
+      restoreRow(moved, b)
+        .map((row) => row.id)
+        .slice(0, 3),
+    ).toEqual([c, a, b]);
+  });
+
+  it("puts a row back in its own list after an edit in another", () => {
+    const mixed = [
+      ...rows,
+      { key: "tools:0", id: "tools:0", list: "tools", heading: "A tool" },
+      { key: "tools:1", id: "tools:1", list: "tools", heading: "B tool" },
+    ];
+    const removed = removeRow(mixed, "tools:1").rows;
+    const edited = moveRow(
+      removeRow(removed, "structure.sections:0").rows,
+      "structure.sections:2",
+      -1,
+    );
+    expect(ids(restoreRow(edited, "tools:1")).slice(-2)).toEqual([
+      "tools:0",
+      "tools:1",
+    ]);
   });
 
   it("never removes a list's last section", () => {
@@ -306,6 +360,29 @@ describe("buildOutlineApproval", () => {
 });
 
 describe("reading the outline", () => {
+  it("shows an outline without editable rows read-only, from _render or its sections", () => {
+    const blocks = [{ heading: "Body", items: [{ label: "One", points: [] }] }];
+    expect(readOnlyBlocks({ _render: { blocks } })).toEqual(blocks);
+    expect(
+      readOnlyBlocks({
+        sections: [
+          { heading: " Why it matters ", key_points: ["A point", ""] },
+          { heading: "" },
+          "not a section",
+        ],
+      }),
+    ).toEqual([
+      {
+        heading: "Sections",
+        items: [{ label: "Why it matters", points: ["A point"] }],
+      },
+    ]);
+    expect(readOnlyBlocks({ _render: { blocks: [] }, sections: [] })).toEqual(
+      [],
+    );
+    expect(readOnlyBlocks(null)).toEqual([]);
+  });
+
   it("finds a row's plan in the outline by its id", () => {
     expect(sectionPlan(outline, "structure.sections:0")).toEqual({
       description: "What the right shoe changes.",

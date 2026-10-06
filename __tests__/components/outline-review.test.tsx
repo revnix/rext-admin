@@ -288,6 +288,33 @@ describe("OutlineReview, the outline tree", () => {
     });
   });
 
+  it("shows an older gate's outline read-only, from its own sections", () => {
+    renderReview({
+      gate: { type: "outline_review" },
+      current: {
+        ...outline,
+        sections: [
+          {
+            heading: "Why the right shoe matters",
+            description: "",
+            key_points: ["Fit first"],
+          },
+          { heading: "How to get fitted", description: "", key_points: [] },
+        ],
+      } as Outline,
+    });
+
+    const list = screen.getByRole("region", { name: "Sections" });
+    expect(
+      within(list).getByText("Why the right shoe matters"),
+    ).toBeInTheDocument();
+    expect(within(list).getByText("Fit first")).toBeInTheDocument();
+    expect(within(list).getByText("How to get fitted")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /reorder|move/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("lists the sections as they stream, with approval held", () => {
     renderReview({
       current: null,
