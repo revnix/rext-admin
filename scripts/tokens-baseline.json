@@ -112,9 +112,6 @@
     "stock-palette": 9,
     "dark-class": 4
   },
-  "app/styles/wizards.css": {
-    "arbitrary-size": 3
-  },
   "app/verify-email/page.tsx": {
     "stock-palette": 11
   },
@@ -207,45 +204,6 @@
   },
   "components/admin/users/user-status-dialog.tsx": {
     "stock-palette": 1
-  },
-  "components/content-creation/fields/content-length-selector.tsx": {
-    "stock-palette": 2
-  },
-  "components/content-creation/fields/keyword-tag-input.tsx": {
-    "stock-palette": 2
-  },
-  "components/content-creation/fields/multi-select-checkbox-grid.tsx": {
-    "stock-palette": 1
-  },
-  "components/content-creation/fields/reviewer-selector.tsx": {
-    "stock-palette": 4
-  },
-  "components/content-creation/fields/selected-topic-display.tsx": {
-    "stock-palette": 1
-  },
-  "components/content-creation/fields/toggle-field-group.tsx": {
-    "stock-palette": 2
-  },
-  "components/content-creation/fields/tone-selector.tsx": {
-    "stock-palette": 10,
-    "off-scale": 1
-  },
-  "components/content-creation/layouts/question-answer-layout.tsx": {
-    "small-type": 1
-  },
-  "components/content-creation/steps/audience-goals-step.tsx": {
-    "stock-palette": 2
-  },
-  "components/content-creation/steps/voice-style-step.tsx": {
-    "stock-palette": 1,
-    "small-type": 1
-  },
-  "components/content-creation/wizard-navigation.tsx": {
-    "stock-palette": 1
-  },
-  "components/content-creation/wizard-sidebar-progress.tsx": {
-    "stock-palette": 17,
-    "small-type": 4
   },
   "components/content/content-card.tsx": {
     "stock-palette": 10

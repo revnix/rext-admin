@@ -18,7 +18,7 @@ app/
   fonts.ts, fonts/          the three faces, self-hosted through next/font/local (licences in public/fonts/licenses)
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
-  w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar, create),
+  w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar),
                             personas (+ [personaId], create), brand_voice, members, integrations, knowledge (+ [kbId]),
                             topics (+ [id], create, create/results), settings (+ trash); page.tsx redirects to /
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
@@ -105,6 +105,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 
 ## Traps
 
+- Articles start from keyword research only (`/w/<slug>/generate_content`). The old topic-based wizard is retired: `/w/<slug>/content/create` redirects to the keyword flow (`next.config.ts`), and no page starts an article from a topic or a title.
 - A new public page must be added to `publicRoutes` in `proxy.ts`, or it redirects to `/login`.
 - `typedRoutes` is on: a path built at run time needs `as Route`, and a removed page leaves stale types in `.next/dev/types` that fail the type check until they are deleted (`../rext-control/scripts/app/check.sh` deletes them).
 - `next.config.ts` redirects `/settings/billing` to `/settings/subscription`: the billing page under `app/settings/billing` is unreachable.

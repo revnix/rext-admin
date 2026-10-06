@@ -6,7 +6,6 @@
  */
 
 import type * as React from "react";
-import type { ContentLengthOption } from "./content-creation";
 
 /**
  * Standard props for icon components (Lucide React icons)
@@ -166,7 +165,6 @@ export type FormFieldValue =
   | number[]
   | Date
   | Record<string, unknown> // For complex objects
-  | ContentLengthOption // Specific complex object type
   | null
   | undefined;
 

@@ -89,11 +89,7 @@ describe("tokens:check", () => {
 
   it("finds in the stylesheets only the font sizes written by hand", () => {
     // The tokens pass; the sizes in rules wait for B6 (prose) and B7 (the sweep), in the baseline until then.
-    const { out } = run(
-      "app/globals.css",
-      "app/styles/wizards.css",
-      "app/styles/article.css",
-    );
+    const { out } = run("app/globals.css", "app/styles/article.css");
     const rules = out
       .split("\n")
       .filter((line) => /^\S+:\d+ {2}/.test(line))
