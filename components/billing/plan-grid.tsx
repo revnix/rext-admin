@@ -176,7 +176,7 @@ function PlanCard({
           </Button>
         ) : hasPaidPlan ? (
           <Button asChild variant="outline" className="w-full">
-            <Link href={settingsRoutes.subscription as Route}>
+            <Link href={settingsRoutes.plan as Route}>
               Switch to {plan.display_name}
             </Link>
           </Button>

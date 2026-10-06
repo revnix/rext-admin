@@ -56,9 +56,9 @@ function avatarUrl(path?: string | null): string | undefined {
  */
 const ACCOUNT_PAGES = [
   { title: "Account", url: settingsRoutes.root, icon: UserRound },
-  { title: "Subscription", url: "/subscription", icon: CreditCard },
-  { title: "Billing", url: "/billing", icon: Receipt },
-  { title: "Usage", url: "/usage", icon: Gauge },
+  { title: "Plan", url: settingsRoutes.plan, icon: CreditCard },
+  { title: "Usage", url: settingsRoutes.usage, icon: Gauge },
+  { title: "Invoices", url: settingsRoutes.invoices, icon: Receipt },
 ] as const;
 
 /** The user menu at the sidebar's foot (design/app-language.md §5). */

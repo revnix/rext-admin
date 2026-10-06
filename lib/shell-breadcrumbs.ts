@@ -52,13 +52,12 @@ const TOP_LEVEL: Record<
     pages: {
       security: "Security and sessions",
       notifications: "Notifications",
-      subscription: "Billing",
+      plan: "Plan",
+      usage: "Usage",
+      invoices: "Invoices",
       data: "Data and trash",
     },
   },
-  subscription: { label: "Subscription" },
-  billing: { label: "Billing" },
-  usage: { label: "Usage" },
   pricing: { label: "Pricing" },
   legal: {
     label: "Legal",

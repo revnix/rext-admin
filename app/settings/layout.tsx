@@ -4,14 +4,16 @@ import { APIErrorBoundary } from "@/components/ui/error-boundary";
 import { settingsRoutes } from "@/lib/routes";
 
 /**
- * Account settings (plans/app/D-pages.md §2.7): one SettingsPage, a route per section. Billing stays
- * one section until plan F splits it into Plan, Usage and Invoices (F5).
+ * Account settings (plans/app/D-pages.md §2.7): one SettingsPage, a route per section. Billing is
+ * Plan, Usage and Invoices (plans/app/F-billing.md F5).
  */
 const SECTIONS = [
   { label: "Profile", href: settingsRoutes.root },
   { label: "Security and sessions", href: settingsRoutes.security },
   { label: "Notifications", href: settingsRoutes.notifications },
-  { label: "Billing", href: settingsRoutes.subscription },
+  { label: "Plan", href: settingsRoutes.plan },
+  { label: "Usage", href: settingsRoutes.usage },
+  { label: "Invoices", href: settingsRoutes.invoices },
   { label: "Data and trash", href: settingsRoutes.data },
 ];
 

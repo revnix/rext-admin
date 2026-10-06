@@ -50,7 +50,7 @@ export default function CreateWorkspacePage() {
               ? `Your plan includes ${max} ${max === 1 ? "workspace" : "workspaces"}, and all of them are in use. A bigger plan adds more.`
               : "Your plan's workspaces are all in use. A bigger plan adds more."
           }
-          action={{ label: "View plans", href: "/subscription" }}
+          action={{ label: "View plans", href: "/pricing" }}
         />
       </FormPage>
     );

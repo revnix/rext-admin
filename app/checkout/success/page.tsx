@@ -165,7 +165,7 @@ export default function CheckoutSuccessPage() {
       actions={
         <>
           <Button asChild variant="outline">
-            <Link href={settingsRoutes.subscription as Route}>Billing</Link>
+            <Link href={settingsRoutes.plan as Route}>Plan</Link>
           </Button>
           <Button asChild>
             <Link href={"/" as Route}>Go to home</Link>

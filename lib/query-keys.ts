@@ -13,6 +13,7 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import type { UsageReport } from "@/types/subscription";
 
 // ============================================================================
 // WORKSPACE QUERIES
@@ -206,6 +207,19 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "catalog"] as const,
       queryFn: () => apiClient.subscriptions.getCatalog(),
       staleTime: 10 * 60 * 1000,
+    }),
+  /** The person's usage against their plan's limits (workspaces, members). */
+  usage: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "usage"] as const,
+      queryFn: async () =>
+        (await apiClient.subscriptions.getUsageStats()) as unknown as UsageReport,
+    }),
+  /** The person's purchases, newest first, with each one's refund state. */
+  orders: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "orders"] as const,
+      queryFn: () => apiClient.subscriptions.getOrders(),
     }),
   /** The signed-in person's own credits and plan. */
   myCredits: () =>

@@ -226,6 +226,41 @@ export interface UsageStats {
   usage_reset_date: string;
 }
 
+/** A bonus grant's summary (rext-backend credit_grants.bonus_summary). */
+export interface CreditBonus {
+  label: string;
+  promotion: string | null;
+  /** Bonus credits left. */
+  credits: number;
+  /** Bonus credits granted. */
+  granted: number;
+  expires_at: string | null;
+}
+
+/** One limit in GET /subscriptions/usage; `limit` is null when unlimited. */
+export interface UsageMetric {
+  used: number;
+  limit: number | null;
+  percentage: number;
+  unlimited: boolean;
+}
+
+/**
+ * GET /subscriptions/usage as the backend sends it (usage_tracking_service.get_usage_stats). The
+ * older `UsageStats` above describes fields it doesn't send; the account settings' Usage reads this.
+ * `members` counts across all of the person's workspaces against a per-workspace limit, so only
+ * its limit is shown.
+ */
+export interface UsageReport {
+  workspaces: UsageMetric;
+  members: UsageMetric;
+  meta?: {
+    plan_name?: string | null;
+    billing_period?: string | null;
+    credit_bonus?: CreditBonus | null;
+  };
+}
+
 export interface TrialStatus {
   is_in_trial: boolean;
   trial_end_date: string | null;
@@ -243,6 +278,10 @@ export interface CreditBalance {
   credits_reset_date: string | null;
   articles_remaining: number | null;
   plan_name: string | null;
+  /** The plan's monthly credits left, without the bonus. */
+  monthly_credits?: number;
+  /** An unexpired bonus (the launch offer's): what's left of it and when it ends. */
+  bonus?: CreditBonus | null;
   /** Whose credits these are: the workspace owner's when a workspace was asked for. */
   target_user_id?: string;
   is_workspace_credits?: boolean;

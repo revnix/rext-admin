@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { CreditBalance } from "@/types/subscription";
+import { settingsRoutes } from "@/lib/routes";
 
 /** Under a fifth of the month's credits left, the bar takes the warning colour. */
 const LOW_SHARE = 0.2;
@@ -76,7 +77,7 @@ export function CreditMeter({
   if (variant === "header") {
     return (
       <Link
-        href="/usage"
+        href={settingsRoutes.usage}
         aria-label={`${label}. Open usage`}
         className={cn(
           "h-8 items-center gap-2 rounded-sm px-2 max-lg:h-(--control-height-lg) text-label text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
@@ -107,7 +108,7 @@ export function CreditMeter({
 
   return (
     <Link
-      href="/usage"
+      href={settingsRoutes.usage}
       aria-label={`${label}. Open usage`}
       data-collapse="hide"
       className={cn(
