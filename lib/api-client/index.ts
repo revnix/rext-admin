@@ -43,6 +43,7 @@ import { createAccountRecoveryNamespace } from "./account-recovery";
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createDashboardNamespace } from "./dashboard";
+import { createIntegrationsNamespace } from "./integrations";
 import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createPersonasNamespace } from "./personas";
@@ -86,6 +87,7 @@ function createApiClient() {
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
     personas: createPersonasNamespace(client),
+    integrations: createIntegrationsNamespace(client),
 
     // Admin namespaces
     users: createUsersNamespace(client),

@@ -242,3 +242,18 @@ export const personaQueries = {
       staleTime: 5 * 60 * 1000,
     }),
 };
+
+// ============================================================================
+// INTEGRATION QUERIES
+// ============================================================================
+
+export const integrationQueries = {
+  all: (workspaceId: string) =>
+    [...workspaceQueries.all(), workspaceId, "integrations"] as const,
+  list: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...integrationQueries.all(workspaceId), "list"] as const,
+      queryFn: () => apiClient.integrations.list(workspaceId),
+      enabled: !!workspaceId,
+    }),
+};

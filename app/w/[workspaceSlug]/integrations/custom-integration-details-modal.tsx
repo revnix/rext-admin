@@ -5,12 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CustomIntegrationConfiguration } from "./custom-integration-configuration";
 import {
-  integrationsApiService,
-  type Integration,
-} from "@/services/integrations-api";
-import { toast } from "sonner"; // Assuming sonner
+  CustomIntegrationConfiguration,
+  type WordPressSiteChanges,
+} from "./custom-integration-configuration";
+import type { Integration } from "@/lib/api-client/integrations";
+import {
+  useDisconnectWordPress,
+  useUpdateWordPress,
+} from "@/hooks/use-integrations";
+import { toast } from "sonner";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { log } from "@/lib/logger";
 
@@ -18,8 +22,6 @@ interface CustomIntegrationDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   integration: Integration | null;
-  onUpdate: (updatedIntegration: Partial<Integration>) => void;
-  onDelete?: () => void;
   canUpdate: boolean;
   canDelete: boolean;
 }
@@ -28,61 +30,33 @@ export function CustomIntegrationDetailsModal({
   isOpen,
   onClose,
   integration,
-  onUpdate,
-  onDelete,
   canUpdate,
   canDelete,
 }: CustomIntegrationDetailsModalProps) {
-  const { workspace } = useWorkspace(); // Hook to get workspace ID
+  const { workspace } = useWorkspace();
+  const updateSite = useUpdateWordPress(workspace?.id ?? "");
+  const disconnectSite = useDisconnectWordPress(workspace?.id ?? "");
 
   if (!integration) return null;
 
-  const handleConfigurationUpdate = async (
-    updatedData: Partial<Integration>,
-  ) => {
+  const handleConfigurationUpdate = async (changes: WordPressSiteChanges) => {
     if (!workspace?.id) {
       toast.error("Workspace ID missing");
       return;
     }
-
-    // Detect what changed.
     try {
-      // 1. General update for fields
-      const apiPayload = {
-        site_url: updatedData.site_url,
-        api_endpoint: updatedData.api_endpoint,
-        api_key: updatedData.api_key,
-        // We still send is_active in patch as backup or if supported,
-        // but we'll use specific APIs next to be sure.
-        is_active: updatedData.is_active,
-      };
-
-      await integrationsApiService.updateIntegration(
-        integration.site?.id || integration.id,
-        workspace.id,
-        apiPayload,
-      );
-
-      // 2. Handle specific Activation/Deactivation if status changed
-      const oldActive = integration.site?.is_active ?? integration.is_active;
-      const newActive = updatedData.is_active;
-
-      if (newActive !== oldActive) {
-        if (newActive) {
-          await integrationsApiService.activateIntegration(
-            integration.site?.id || integration.id,
-            workspace.id,
-          );
-        } else {
-          await integrationsApiService.deactivateIntegration(
-            integration.site?.id || integration.id,
-            workspace.id,
-          );
-        }
-      }
-
+      // One PATCH: the address, the endpoint, the state, and the key only when
+      // a new one was typed (left out, the stored key stays).
+      await updateSite.mutateAsync({
+        siteId: integration.id,
+        data: {
+          site_url: changes.site_url,
+          api_endpoint: changes.api_endpoint,
+          is_active: changes.is_active,
+          ...(changes.api_key ? { api_key: changes.api_key } : {}),
+        },
+      });
       toast.success("Integration updated successfully");
-      onUpdate(updatedData);
       onClose();
     } catch (e) {
       log.error("Failed to update", e);
@@ -98,13 +72,9 @@ export function CustomIntegrationDetailsModal({
       return;
     }
     try {
-      await integrationsApiService.deleteIntegration(
-        integration.site?.id || integration.id,
-        workspace.id,
-      );
+      await disconnectSite.mutateAsync(integration.id);
       toast.success("Integration deleted");
-      if (onDelete) onDelete();
-      // onClose(); // onDelete usually handles view clearing
+      onClose();
     } catch (e) {
       log.error("Failed to delete", e);
       toast.error(
@@ -117,11 +87,9 @@ export function CustomIntegrationDetailsModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {integration.name || integration.integration_type} Configuration
-          </DialogTitle>
+          <DialogTitle>WordPress Configuration</DialogTitle>
           <DialogDescription>
-            Configure your {integration.name} connection settings.
+            Configure your WordPress connection settings.
           </DialogDescription>
         </DialogHeader>
         <CustomIntegrationConfiguration

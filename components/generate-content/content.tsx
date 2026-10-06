@@ -41,7 +41,7 @@ import { deriveImagesData } from "@/lib/content/image-data";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { profileQueries } from "@/lib/query-keys";
+import { integrationQueries, profileQueries } from "@/lib/query-keys";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import {
@@ -65,7 +65,6 @@ import { Label } from "../ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { apiClient } from "@/lib/api-client";
 import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
-import { integrationsApiService } from "@/services/integrations-api";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
@@ -581,8 +580,12 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
       await delay(1200);
 
-      const integrationsData =
-        await integrationsApiService.listIntegrations(workspaceId);
+      // Fresh at every publish: a site may have been connected or switched
+      // off in another tab since the list was last read.
+      const integrationsData = await queryClient.fetchQuery({
+        ...integrationQueries.list(workspaceId),
+        staleTime: 0,
+      });
       const activeIntegrations = integrationsData.filter(
         (integration) => integration.is_active !== false,
       );
@@ -740,17 +743,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  const fetchIntegrations = useCallback(async () => {
-    if (!workspaceId) return;
-    try {
-      await integrationsApiService.listIntegrations(workspaceId);
-    } catch (error) {
-      log.error("Failed to fetch integrations", error);
-    }
-  }, [workspaceId]);
-
-  const handleIntegrationAdded = async () => {
-    await fetchIntegrations();
+  const handleIntegrationAdded = () => {
     publishContent(pendingPublishStatus);
     setIntegrationModalOpen(false);
   };
