@@ -6,7 +6,7 @@ import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,11 +85,9 @@ export function OAuthAccounts() {
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Failed to load connected accounts. Please try again.
-        </AlertDescription>
-      </Alert>
+      <Notice tone="danger" title="Connected accounts didn't load">
+        Reload the page to try again.
+      </Notice>
     );
   }
 
@@ -201,12 +199,10 @@ export function OAuthAccounts() {
       )}
 
       {accounts?.length === 0 && (
-        <Alert>
-          <AlertDescription>
-            You haven't linked any OAuth accounts yet. Link accounts for easier
-            sign-in.
-          </AlertDescription>
-        </Alert>
+        <Notice>
+          You haven't linked any OAuth accounts yet. Link accounts for easier
+          sign-in.
+        </Notice>
       )}
 
       {/* Unlink Confirmation Dialog */}

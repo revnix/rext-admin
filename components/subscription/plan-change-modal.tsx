@@ -1,16 +1,10 @@
 "use client";
 
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
-import {
-  AlertCircle,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -304,45 +298,34 @@ export function PlanChangeModal({
             </RadioGroupPrimitive.Root>
 
             {isBusy && (
-              <Alert>
-                <Loader2 className="h-4 w-4 animate-spin text-foreground" />
-                <AlertDescription>
-                  {phase === "submitting"
-                    ? "Submitting plan change..."
-                    : "Refreshing subscription details..."}
-                </AlertDescription>
-              </Alert>
+              <p
+                role="status"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                {phase === "submitting"
+                  ? "Submitting plan change..."
+                  : "Refreshing subscription details..."}
+              </p>
             )}
 
             {/* Change Type Info */}
             {isUpgrade && (
-              <Alert>
-                <ArrowUpCircle className="h-4 w-4 text-success-600" />
-                <AlertDescription>
-                  Your account will be upgraded immediately and you'll be
-                  charged a prorated amount for the remainder of your billing
-                  period.
-                </AlertDescription>
-              </Alert>
+              <Notice>
+                Your account will be upgraded immediately and you'll be charged
+                a prorated amount for the remainder of your billing period.
+              </Notice>
             )}
 
             {isDowngrade && (
-              <Alert>
-                <ArrowDownCircle className="h-4 w-4 text-warning-600" />
-                <AlertDescription>
-                  Your plan will be downgraded at the end of your current
-                  billing cycle. Review limit changes before you confirm.
-                </AlertDescription>
-              </Alert>
+              <Notice tone="warning">
+                Your plan will be downgraded at the end of your current billing
+                cycle. Review limit changes before you confirm.
+              </Notice>
             )}
 
             {/* Error Message */}
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            {error && <Notice tone="danger">{error}</Notice>}
           </div>
 
           <DialogFooter>

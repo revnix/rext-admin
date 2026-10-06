@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AlertCircle,
-  CreditCard,
-  ExternalLink,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { CreditCard, ExternalLink, FileText, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +10,7 @@ import { CustomerPortalButton } from "@/components/subscription/customer-portal-
 import { InvoiceList } from "@/components/subscription/invoice-list";
 import { PurchaseHistory } from "@/components/subscription/purchase-history";
 import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -298,14 +292,11 @@ export default function BillingHistoryPage() {
             )}
 
             {/* Invoice Information */}
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Note:</strong> All invoices are automatically sent to
-                your email address. You can also download them from the billing
-                portal or directly from the invoice links above.
-              </AlertDescription>
-            </Alert>
+            <Notice>
+              All invoices are automatically sent to your email address. You can
+              also download them from the billing portal or directly from the
+              invoice links above.
+            </Notice>
           </TabsContent>
 
           {/* Payment Method Tab */}

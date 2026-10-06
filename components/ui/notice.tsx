@@ -4,9 +4,11 @@ import {
   CheckCircle2,
   Info,
   type LucideIcon,
+  X,
   XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export type NoticeTone = "info" | "warning" | "danger" | "success";
@@ -37,12 +39,15 @@ const ICON: Record<NoticeTone, LucideIcon> = {
  * The one box for something the person should know (design/app-language.md §6 and §8): what
  * happened and what to do. A tone, its icon, a title, a sentence or two, and at most one action.
  * Danger and warning are announced at once (`role="alert"`); info and success wait their turn.
+ * `onDismiss` adds a close button for a notice the person may put away.
  */
 export function Notice({
   tone = "info",
   title,
   children,
   action,
+  onDismiss,
+  dismissLabel = "Dismiss",
   className,
 }: {
   tone?: NoticeTone;
@@ -50,6 +55,9 @@ export function Notice({
   children?: ReactNode;
   /** One button or link, at the end. */
   action?: ReactNode;
+  onDismiss?: () => void;
+  /** The close button's name for assistive technology. */
+  dismissLabel?: string;
   className?: string;
 }) {
   const Icon = ICON[tone];
@@ -66,6 +74,18 @@ export function Notice({
         {children && <div className="text-foreground/80">{children}</div>}
       </div>
       {action && <div className="shrink-0 self-center">{action}</div>}
+      {onDismiss && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onDismiss}
+          aria-label={dismissLabel}
+          className="-my-1 -mr-2 size-7 shrink-0 text-current"
+        >
+          <X className="size-4" aria-hidden />
+        </Button>
+      )}
     </div>
   );
 }
