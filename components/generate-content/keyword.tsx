@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Search } from "lucide-react";
 import { CountryDropdown } from "../ui/country-dropdown";
+import { RunCostLabel, RunCostTooltip } from "./run-cost";
 import { useEffect, useState } from "react";
 
 export function KeywordForm({
   userKeyword,
   country,
   disabled = false,
+  run = "analyze",
   onSubmit,
   onKeywordChange,
   onCountryChange,
@@ -16,6 +18,8 @@ export function KeywordForm({
   country: string;
   /** Blocks re-submission while a generation is already running */
   disabled?: boolean;
+  /** The run the button starts: a new analysis, or a new keyword on a paused run. */
+  run?: "analyze" | "change_keyword";
   onSubmit: () => void;
   onKeywordChange: (val: string) => void;
   onCountryChange: (val: string) => void;
@@ -62,15 +66,18 @@ export function KeywordForm({
             />
           </div>
 
-          <Button
-            type="submit"
-            size="sm"
-            disabled={disabled}
-            className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0 w-[70%] sm:w-auto"
-          >
-            Analyze
-            <ArrowRight className="w-3 h-3" />
-          </Button>
+          <RunCostTooltip run={run}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={disabled}
+              className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0 w-[70%] sm:w-auto"
+            >
+              Analyze
+              <RunCostLabel run={run} />
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+          </RunCostTooltip>
         </div>
       </form>
     </div>
