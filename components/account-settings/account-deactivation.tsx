@@ -53,11 +53,13 @@ export function AccountDeactivation() {
     retry: false,
   });
 
-  // Check if user has an active subscription
+  // A plan that renews counts, a past-due one too: Lemon Squeezy is still retrying
+  // its payment, and closing the account stops that.
   const hasActiveSubscriptions =
     subscription &&
     (subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
-      subscription?.subscription?.status === SubscriptionStatus.TRIAL);
+      subscription?.subscription?.status === SubscriptionStatus.TRIAL ||
+      subscription?.subscription?.status === SubscriptionStatus.PAST_DUE);
 
   // Convert single subscription to array format for easier rendering
   const subscriptions = hasActiveSubscriptions ? [subscription] : [];
@@ -331,9 +333,9 @@ export function AccountDeactivation() {
                               {subscriptions.length > 1 ? "s" : ""}
                             </FormLabel>
                             <p className="text-xs text-muted-foreground">
-                              All active subscriptions will be canceled
-                              immediately. You&apos;ll retain access until the
-                              end of your current billing period.
+                              Renewals stop now. Your plan stays active until
+                              the end of the period you&apos;ve paid for, and
+                              the confirmation says until when.
                             </p>
                           </div>
                         </div>
