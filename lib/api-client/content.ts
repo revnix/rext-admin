@@ -246,8 +246,28 @@ export function createContentNamespace(client: ApiClient) {
         status: string;
         cancelled_records: number;
       }>(
-        `${ENDPOINTS.CONTENT.cancel_schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         { method: "DELETE" },
+      );
+    },
+
+    /**
+     * Move a pending scheduled publish to another day (`YYYY-MM-DD`, in the account's timezone).
+     * Every scheduled site keeps its time of day; nothing else about the content changes.
+     */
+    reschedule: async (workspaceId: string, contentId: string, day: string) => {
+      return client.request<{
+        content_id: string;
+        status: string;
+        scheduled_at: string;
+        rescheduled_records: number;
+      }>(
+        `${ENDPOINTS.CONTENT.schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ day }),
+        },
       );
     },
 

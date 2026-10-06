@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type {
+  CalendarResponse,
   ContentItem,
   ContentListResponse,
   CreateContentRequest,
@@ -191,6 +192,81 @@ export function useCancelSchedule() {
       toast.error(error.message || "Failed to cancel schedule");
     },
   });
+}
+
+/**
+ * Moves a scheduled publish to another day. The month on screen moves the item at once and puts it
+ * back if the backend refuses; the caller says what happened (its toast carries the undo).
+ */
+export function useRescheduleContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      contentId,
+      toDay,
+    }: {
+      workspaceId: string;
+      contentId: string;
+      /** The day it sits on now, `YYYY-MM-DD`. */
+      fromDay: string;
+      /** The day it moves to, `YYYY-MM-DD`. */
+      toDay: string;
+    }) => apiClient.content.reschedule(workspaceId, contentId, toDay),
+    onMutate: async ({ workspaceId, contentId, fromDay, toDay }) => {
+      const key = ["content-calendar", workspaceId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const before = queryClient.getQueriesData<CalendarResponse>({
+        queryKey: key,
+      });
+      queryClient.setQueriesData<CalendarResponse>({ queryKey: key }, (data) =>
+        data ? moveCalendarEntry(data, contentId, fromDay, toDay) : data,
+      );
+      return { before };
+    },
+    onError: (error: Error, _variables, context) => {
+      for (const [key, data] of context?.before ?? []) {
+        queryClient.setQueryData(key, data);
+      }
+      toast.error(error.message || "The article couldn't move to that day");
+    },
+    onSettled: (_data, _error, { workspaceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["content-calendar", workspaceId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
+    },
+  });
+}
+
+/**
+ * A calendar month with one content item's scheduled entries moved from one day to another. The
+ * new day may be outside the month: the entries then leave it.
+ */
+export function moveCalendarEntry(
+  data: CalendarResponse,
+  contentId: string,
+  fromDay: string,
+  toDay: string,
+): CalendarResponse {
+  const moving = (data.calendar[fromDay] ?? []).filter(
+    (entry) => entry.id === contentId && entry.status === "scheduled",
+  );
+  if (moving.length === 0 || fromDay === toDay) return data;
+  const calendar = { ...data.calendar };
+  const staying = (calendar[fromDay] ?? []).filter(
+    (entry) => !moving.includes(entry),
+  );
+  if (staying.length > 0) calendar[fromDay] = staying;
+  else delete calendar[fromDay];
+  const inMonth = toDay.slice(0, 7) === fromDay.slice(0, 7);
+  if (inMonth) calendar[toDay] = [...(calendar[toDay] ?? []), ...moving];
+  return {
+    ...data,
+    calendar,
+    total_items: inMonth ? data.total_items : data.total_items - moving.length,
+  };
 }
 
 /**

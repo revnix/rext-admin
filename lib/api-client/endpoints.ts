@@ -142,7 +142,8 @@ export const ENDPOINTS = {
     save_publish: "/api/v1/content/publish",
     publish: (id: string) => `/api/v1/content/${id}/publish` as const,
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
-    cancel_schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
+    // DELETE cancels a scheduled publish, PATCH moves it to another day.
+    schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
     calendar: "/api/v1/content/calendar",
     uploadBlogImage: (workspaceId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,

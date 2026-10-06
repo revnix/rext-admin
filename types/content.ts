@@ -304,4 +304,6 @@ export interface CalendarEntry {
 export interface CalendarResponse {
   calendar: Record<string, CalendarEntry[]>;
   total_items: number;
+  /** The account's timezone, the one the days are counted in (UTC from a backend before D9). */
+  timezone?: string;
 }
