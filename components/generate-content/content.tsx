@@ -1010,7 +1010,9 @@ function ContentEditorInner(props: ContentEditorProps) {
 
       <section className="flex-1 min-h-0 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── The run's stages, while the article is written ── */}
-        {!isFinal && runProgress}
+        {/* Its own life: the page passes it while a stage runs, which can outlast the scores
+            (the save after them). */}
+        {runProgress}
         {/* ── The research, while the article is written: the searches it ran ── */}
         {!isFinal && toolCalls.length > 0 && (
           <div className="space-y-3 pb-2">
@@ -1273,8 +1275,8 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {/* Over the article only: the side panel beside it (the run's stages, their
                     Cancel, the research) stays in reach while the article is written. */}
                 {!isFinal && isEnhancing && (
-                  <div className="not-prose absolute inset-0 flex justify-center bg-background/70 pt-24">
-                    <div className="sticky top-24 h-fit rounded-md border border-border bg-card px-6 py-4">
+                  <div className="not-prose absolute inset-0 flex justify-center bg-background/70 pt-12">
+                    <div className="sticky top-12 h-fit rounded-md border border-border bg-card px-6 py-4">
                       <div className="text-sm font-semibold text-foreground">
                         {enhancingMsg}
                       </div>
