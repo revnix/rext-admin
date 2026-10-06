@@ -3,6 +3,9 @@
     "page-container": 3,
     "page-heading": 1
   },
+  "app/w/[workspaceSlug]/content/create/page.tsx": {
+    "no-layout": 1
+  },
   "components/dashboard/revamp/recent-content.tsx": {
     "table-recipe": 1
   },
@@ -11,6 +14,12 @@
   },
   "components/generate-content/library-detail.tsx": {
     "table-recipe": 1
+  },
+  "components/page-header.tsx": {
+    "page-heading": 1
+  },
+  "components/page-layout.tsx": {
+    "page-container": 1
   },
   "components/pricing/pricing-table.tsx": {
     "page-container": 1

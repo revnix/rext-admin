@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { use, useState } from "react";
 import { toast } from "sonner";
 import { ContentCreationWizard } from "@/components/content-creation/content-creation-wizard";
-import { WorkingSurface } from "@/components/layouts";
+import { PageLayout } from "@/components/page-layout";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
@@ -151,7 +151,7 @@ export default function WorkspaceContentCreatePage({
   };
 
   return (
-    <WorkingSurface
+    <PageLayout
       title="Create Content"
       description={`Create new content for ${workspace?.name || "workspace"}`}
     >
@@ -188,6 +188,6 @@ export default function WorkspaceContentCreatePage({
           errorDetail={creditsError?.detail}
         />
       </PermissionGuard>
-    </WorkingSurface>
+    </PageLayout>
   );
 }
