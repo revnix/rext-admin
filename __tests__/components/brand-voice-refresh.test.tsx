@@ -1,7 +1,7 @@
 /**
- * Reading a workspace's website again (D5a): the refresh's state is kept once for the whole app, so
- * it carries the workspace it belongs to. A run or a failure in one workspace doesn't lock the
- * button, open the progress dialog or show "The website couldn't be read" in another.
+ * Reading a workspace's website again (D5a): each workspace keeps its own refresh state, so a run or
+ * a failure in one workspace, even one that finishes after another workspace's run began, doesn't
+ * lock the button, open the progress dialog or show "The website couldn't be read" in another.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ const idle = { isRefreshing: false };
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useBrandVoiceRefreshStore.setState({ brandVoiceRefresh: idle });
+  useBrandVoiceRefreshStore.setState({ brandVoiceRefresh: {} });
 });
 
 describe("the brand voice refresh state", () => {
@@ -52,7 +52,6 @@ describe("the brand voice refresh state", () => {
 
     const refresh = useBrandVoiceRefreshStore.getState().brandVoiceRefresh;
     expect(brandVoiceRefreshFor(refresh, "ws-a")).toMatchObject({
-      workspaceId: "ws-a",
       isRefreshing: false,
       refreshError: "The site didn't answer.",
     });
@@ -63,9 +62,10 @@ describe("the brand voice refresh state", () => {
   it("starts a run for one workspace, clearing that workspace's earlier failure", async () => {
     useBrandVoiceRefreshStore.setState({
       brandVoiceRefresh: {
-        workspaceId: "ws-a",
-        isRefreshing: false,
-        refreshError: "The site didn't answer.",
+        "ws-a": {
+          isRefreshing: false,
+          refreshError: "The site didn't answer.",
+        },
       },
     });
     api.workspaces.refreshBrandVoice.mockResolvedValue({
@@ -75,12 +75,39 @@ describe("the brand voice refresh state", () => {
     await useBrandVoiceRefreshStore.getState().refreshBrandVoice("ws-a");
 
     expect(
-      useBrandVoiceRefreshStore.getState().brandVoiceRefresh,
-    ).toMatchObject({
-      workspaceId: "ws-a",
+      useBrandVoiceRefreshStore.getState().brandVoiceRefresh["ws-a"],
+    ).toEqual({
       isRefreshing: true,
       operationId: "op-1",
       refreshError: undefined,
+    });
+  });
+
+  it("leaves another workspace's run alone when an earlier start fails late", async () => {
+    let failA!: (error: Error) => void;
+    api.workspaces.refreshBrandVoice
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          failA = reject;
+        }),
+      )
+      .mockResolvedValueOnce({ operation_id: "op-b" });
+    const store = useBrandVoiceRefreshStore.getState();
+
+    const startA = store.refreshBrandVoice("ws-a");
+    await store.refreshBrandVoice("ws-b");
+    failA(new Error("The site didn't answer."));
+    await expect(startA).rejects.toThrow();
+
+    const refresh = useBrandVoiceRefreshStore.getState().brandVoiceRefresh;
+    expect(brandVoiceRefreshFor(refresh, "ws-b")).toEqual({
+      isRefreshing: true,
+      operationId: "op-b",
+      refreshError: undefined,
+    });
+    expect(brandVoiceRefreshFor(refresh, "ws-a")).toMatchObject({
+      isRefreshing: false,
+      refreshError: "The site didn't answer.",
     });
   });
 });
@@ -101,9 +128,7 @@ describe("the refresh button", () => {
     act(() => {
       useBrandVoiceRefreshStore.setState({
         brandVoiceRefresh: {
-          workspaceId: "ws-a",
-          isRefreshing: true,
-          operationId: "op-1",
+          "ws-a": { isRefreshing: true, operationId: "op-1" },
         },
       });
     });
@@ -122,9 +147,7 @@ describe("the refresh button", () => {
     act(() => {
       useBrandVoiceRefreshStore.setState({
         brandVoiceRefresh: {
-          workspaceId: "ws-a",
-          isRefreshing: true,
-          operationId: "op-1",
+          "ws-a": { isRefreshing: true, operationId: "op-1" },
         },
       });
     });

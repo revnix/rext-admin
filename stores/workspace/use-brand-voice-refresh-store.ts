@@ -7,39 +7,49 @@ import type {
 } from "@/types/workspace";
 import { useWorkspaceCrudStore } from "./use-workspace-crud-store";
 
+const IDLE: BrandVoiceRefreshState = { isRefreshing: false };
+
 /**
- * The refresh as one workspace sees it. The state is kept once for the whole app, so a run or a
- * failure in another workspace shows as nothing here.
+ * One workspace's refresh. Each workspace keeps its own, so a run or a failure in another
+ * workspace, even one that finishes late, shows as nothing here.
  */
 export function brandVoiceRefreshFor(
-  refresh: BrandVoiceRefreshState,
+  refreshes: Record<string, BrandVoiceRefreshState>,
   workspaceId: string | undefined,
 ): BrandVoiceRefreshState {
-  return workspaceId && refresh.workspaceId === workspaceId
-    ? refresh
-    : { isRefreshing: false };
+  return (workspaceId && refreshes[workspaceId]) || IDLE;
+}
+
+function withRefresh(
+  refreshes: Record<string, BrandVoiceRefreshState>,
+  workspaceId: string,
+  change: Partial<BrandVoiceRefreshState>,
+) {
+  return {
+    brandVoiceRefresh: {
+      ...refreshes,
+      [workspaceId]: {
+        ...brandVoiceRefreshFor(refreshes, workspaceId),
+        ...change,
+      },
+    },
+  };
 }
 
 export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
   devtools(
     (set) => ({
-      brandVoiceRefresh: {
-        isRefreshing: false,
-        operationId: undefined,
-        refreshError: undefined,
-      },
+      brandVoiceRefresh: {},
 
       refreshBrandVoice: async (workspaceId) => {
         try {
-          set((state) => ({
-            brandVoiceRefresh: {
-              ...state.brandVoiceRefresh,
-              workspaceId,
+          set((state) =>
+            withRefresh(state.brandVoiceRefresh, workspaceId, {
               isRefreshing: true,
               operationId: undefined,
               refreshError: undefined,
-            },
-          }));
+            }),
+          );
 
           const response =
             await apiClient.workspaces.refreshBrandVoice(workspaceId);
@@ -50,39 +60,34 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
             .getState()
             .setCurrentOperation({ operationId, workspaceId });
 
-          set((state) => ({
-            brandVoiceRefresh: {
-              ...state.brandVoiceRefresh,
+          set((state) =>
+            withRefresh(state.brandVoiceRefresh, workspaceId, {
               isRefreshing: true,
               operationId,
-            },
-          }));
+            }),
+          );
 
           // Return operationId so the caller can set it on the CRUD store
           return operationId;
         } catch (error) {
-          set((state) => ({
-            brandVoiceRefresh: {
-              ...state.brandVoiceRefresh,
+          set((state) =>
+            withRefresh(state.brandVoiceRefresh, workspaceId, {
               isRefreshing: false,
               operationId: undefined,
               refreshError:
                 error instanceof Error
                   ? error.message
                   : "Failed to refresh brand voice",
-            },
-          }));
+            }),
+          );
           throw error;
         }
       },
 
-      setBrandVoiceRefreshState: (newState) => {
-        set((state) => ({
-          brandVoiceRefresh: {
-            ...state.brandVoiceRefresh,
-            ...newState,
-          },
-        }));
+      setBrandVoiceRefreshState: (workspaceId, newState) => {
+        set((state) =>
+          withRefresh(state.brandVoiceRefresh, workspaceId, newState),
+        );
       },
     }),
     {

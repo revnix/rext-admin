@@ -298,8 +298,6 @@ export interface RefreshBrandVoiceResponse {
  * UI state for brand voice refresh operations
  */
 export interface BrandVoiceRefreshState {
-  /** The workspace the run and its error belong to; another workspace sees neither. */
-  workspaceId?: string;
   isRefreshing: boolean;
   operationId?: string;
   refreshError?: string;
@@ -403,11 +401,15 @@ export interface WorkspaceFormStoreState {
  * Manages brand voice refresh operations
  */
 export interface BrandVoiceRefreshStoreState {
-  brandVoiceRefresh: BrandVoiceRefreshState;
+  /** Each workspace's refresh by its id, so one workspace's run or failure never shows in another. */
+  brandVoiceRefresh: Record<string, BrandVoiceRefreshState>;
 
   // Actions
   refreshBrandVoice: (workspaceId: string) => Promise<string>;
-  setBrandVoiceRefreshState: (state: Partial<BrandVoiceRefreshState>) => void;
+  setBrandVoiceRefreshState: (
+    workspaceId: string,
+    state: Partial<BrandVoiceRefreshState>,
+  ) => void;
 }
 
 /**

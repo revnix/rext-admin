@@ -81,12 +81,12 @@ export function BrandVoiceRefreshControl({
   const closeDialog = useCallback(() => {
     setIsDialogOpen(false);
     setOperationId(null);
-    setBrandVoiceRefreshState({
+    setBrandVoiceRefreshState(workspaceId, {
       isRefreshing: false,
       operationId: undefined,
     });
     clearCurrentOperation();
-  }, [clearCurrentOperation, setBrandVoiceRefreshState]);
+  }, [clearCurrentOperation, setBrandVoiceRefreshState, workspaceId]);
 
   const { events, status, disconnect, isConnected } = useSSEChannel(
     operationId,
@@ -110,8 +110,7 @@ export function BrandVoiceRefreshControl({
       },
       onError: (errorMessage) => {
         toast.error(errorMessage || "The website couldn't be read");
-        setBrandVoiceRefreshState({
-          workspaceId,
+        setBrandVoiceRefreshState(workspaceId, {
           refreshError: errorMessage,
         });
         closeDialog();
@@ -146,8 +145,7 @@ export function BrandVoiceRefreshControl({
     try {
       const operationId = await refreshBrandVoice(workspaceId);
       setCurrentOperation({ operationId, workspaceId });
-      setBrandVoiceRefreshState({
-        workspaceId,
+      setBrandVoiceRefreshState(workspaceId, {
         isRefreshing: true,
         operationId: operationId,
         refreshError: undefined,
