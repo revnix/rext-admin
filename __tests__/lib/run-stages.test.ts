@@ -1,4 +1,5 @@
 import {
+  FIRST_ARTICLE_TOKEN,
   failStages,
   finishNode,
   RUN_PHASES,
@@ -68,10 +69,61 @@ describe("the keyword analysis's stages", () => {
   });
 });
 
+describe("the article's stages (rext-control #260)", () => {
+  it("are Research, Draft, Style pass and Checks", () => {
+    expect(startStages("article", 0).map((stage) => stage.label)).toEqual([
+      "Research",
+      "Draft",
+      "Style pass",
+      "Checks",
+    ]);
+  });
+
+  it("move from Research to Draft on the first token the agent writes", () => {
+    let stages = startStages("article", 0);
+    stages = finishNode("article", stages, FIRST_ARTICLE_TOKEN, 30_000);
+    expect(states(stages)).toEqual([
+      "complete",
+      "active",
+      "pending",
+      "pending",
+    ]);
+    stages = finishNode("article", stages, "generate_content", 120_000);
+    expect(states(stages)).toEqual([
+      "complete",
+      "complete",
+      "active",
+      "pending",
+    ]);
+    stages = finishNode("article", stages, "humanize_content", 160_000);
+    expect(states(stages)).toEqual([
+      "complete",
+      "complete",
+      "complete",
+      "active",
+    ]);
+  });
+
+  it("close Research and Draft together when the agent's node ends without the token", () => {
+    const stages = finishNode(
+      "article",
+      startStages("article", 0),
+      "generate_content",
+      90_000,
+    );
+    expect(states(stages)).toEqual([
+      "complete",
+      "complete",
+      "active",
+      "pending",
+    ]);
+  });
+});
+
 describe("a run that stops", () => {
   it("fails the active stage and skips the ones that never ran", () => {
     let stages = startStages("article", 0);
-    stages = finishNode("article", stages, "generate_content", 1000);
+    stages = finishNode("article", stages, FIRST_ARTICLE_TOKEN, 1000);
     stages = failStages(stages, 2000);
     expect(states(stages)).toEqual([
       "complete",
@@ -85,7 +137,7 @@ describe("a run that stops", () => {
 
 describe("stagesAt, a run seen from the dock's poll", () => {
   it("has the stages before done, the given one running since its start, the rest waiting", () => {
-    const stages = stagesAt("article", "polish", 5000);
+    const stages = stagesAt("article", "draft", 5000);
     expect(states(stages)).toEqual([
       "complete",
       "active",

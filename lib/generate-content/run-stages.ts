@@ -7,6 +7,12 @@
  * The node names are rext-backend's (`src/flow/engines/`): the serp, seo and content subgraphs.
  */
 
+/**
+ * Not a graph node: the page passes it to `finishNode` when the article's first token arrives
+ * (a `custom` token event), which is when the article agent stops searching and starts writing.
+ */
+export const FIRST_ARTICLE_TOKEN = "first_article_token";
+
 export type RunStageState =
   | "pending"
   | "active"
@@ -64,15 +70,19 @@ export const RUN_PHASES: Record<RunPhase, RunStageDef[]> = {
     },
     { id: "outline", label: "Outlining", endsAfter: [] },
   ],
+  // rext-control #260: each name says what its nodes do. The article agent searches first and then
+  // writes, inside one node: the first token it writes ends Research (FIRST_ARTICLE_TOKEN).
   article: [
-    { id: "draft", label: "Drafting", endsAfter: ["generate_content"] },
-    { id: "polish", label: "Polishing", endsAfter: ["humanize_content"] },
     {
-      id: "checks",
-      label: "Running the quality checks",
-      endsAfter: ["review_content"],
+      id: "research",
+      label: "Research",
+      endsAfter: [FIRST_ARTICLE_TOKEN, "generate_content"],
     },
-    { id: "save", label: "Saving the article", endsAfter: [] },
+    { id: "draft", label: "Draft", endsAfter: ["generate_content"] },
+    // validate, repair when a check fails, and humanize: the wording and the flow.
+    { id: "style", label: "Style pass", endsAfter: ["humanize_content"] },
+    // The final validation, readability, on-page SEO and trust, then the save.
+    { id: "checks", label: "Checks", endsAfter: [] },
   ],
 };
 
@@ -88,7 +98,8 @@ export function startStages(phase: RunPhase, now: number): RunStage[] {
 
 /**
  * A node finished. If it ends a stage still open, that stage and every one before it are complete
- * and the next is active from `now`. A node no stage ends on changes nothing.
+ * and the next is active from `now` (the last such stage, when it ends more than one). A node no
+ * stage ends on changes nothing.
  */
 export function finishNode(
   phase: RunPhase,
@@ -97,9 +108,14 @@ export function finishNode(
   now: number,
 ): RunStage[] {
   const defs = RUN_PHASES[phase];
-  const index = defs.findIndex(
-    (def, i) => def.endsAfter.includes(node) && stages[i]?.state !== "complete",
-  );
+  // The last open stage the node ends: a node that ends two stages (the article agent's node ends
+  // Research and Draft) closes both when the signal between them never came.
+  let index = -1;
+  defs.forEach((def, i) => {
+    if (def.endsAfter.includes(node) && stages[i]?.state !== "complete") {
+      index = i;
+    }
+  });
   if (index === -1) return stages;
   return stages.map((stage, i) => {
     if (i <= index && stage.state !== "complete") {
@@ -163,16 +179,17 @@ export const NODE_STAGES: Record<string, { phase: RunPhase; id: string }> = {
   map_keyword_clusters: { phase: "outline", id: "keyword-groups" },
   generate_outline: { phase: "outline", id: "outline" },
   review_outline: { phase: "outline", id: "outline" },
+  // The poll can't tell the agent's searching from its writing: the node reads as the longer part.
   generate_content: { phase: "article", id: "draft" },
-  validate_content: { phase: "article", id: "polish" },
-  repair_content: { phase: "article", id: "polish" },
-  humanize_content: { phase: "article", id: "polish" },
-  final_validate_content: { phase: "article", id: "polish" },
+  validate_content: { phase: "article", id: "style" },
+  repair_content: { phase: "article", id: "style" },
+  humanize_content: { phase: "article", id: "style" },
+  final_validate_content: { phase: "article", id: "checks" },
   review_content: { phase: "article", id: "checks" },
   calculate_readability: { phase: "article", id: "checks" },
   calculate_on_page_seo: { phase: "article", id: "checks" },
   calculate_eeat_trust: { phase: "article", id: "checks" },
-  persist_content: { phase: "article", id: "save" },
+  persist_content: { phase: "article", id: "checks" },
 };
 
 /**

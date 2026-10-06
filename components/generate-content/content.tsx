@@ -7,7 +7,7 @@ import type {
   SEORESULT,
   TrustScore,
 } from "@/types/generate-content";
-import type { ToolCall } from "@/components/generate-content/agent-feed";
+import type { ToolCall } from "@/types/generate-content";
 import { ArticleChecklist } from "@/components/generate-content/article-checklist";
 import { Button } from "../ui/button";
 import {
@@ -246,8 +246,6 @@ const slugify = (text: string) => {
     .trim();
 };
 
-type PipelineStep = { label: string; status: "pending" | "active" | "done" };
-
 type ContentEditorProps = {
   contentId?: string;
   /** LangGraph thread id — lets a manual Save reconcile to the row the
@@ -270,7 +268,6 @@ type ContentEditorProps = {
   onContentChange: (val: string) => void;
   // Agent activity (shown in right sidebar while generating)
   toolCalls?: ToolCall[];
-  pipelineSteps?: PipelineStep[];
   /** When true, shows the content blurred with a humanizing overlay */
 };
 
@@ -293,7 +290,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     onEditToggle,
     onContentChange,
     toolCalls = [],
-    pipelineSteps = [],
   } = props;
 
   // JSON-LD is not part of content-level on-page SEO: hide those findings and
@@ -1010,85 +1006,9 @@ function ContentEditorInner(props: ContentEditorProps) {
       </div>
 
       <section className="flex-1 min-h-0 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-        {/* ── Agent Activity Feed (shown while generating) ───────────── */}
-        {!isFinal && (pipelineSteps.length > 0 || toolCalls.length > 0) && (
+        {/* ── The research, while the article is written: the searches it ran ── */}
+        {!isFinal && toolCalls.length > 0 && (
           <div className="space-y-3 pb-2">
-            {/* Header */}
-            <div className="flex items-center gap-2 pt-0.5 pb-0.5">
-              <h4 className="text-sm font-semibold text-foreground flex-1">
-                Agent Activity
-              </h4>
-            </div>
-
-            {/* Pipeline steps with connecting lines */}
-            {pipelineSteps.length > 0 && (
-              <div className="bg-card p-5 rounded-md border border-border space-y-4">
-                <h4 className="text-base font-semibold text-foreground">
-                  Pipeline
-                </h4>
-                <div className="space-y-0 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-                  {pipelineSteps.map((step, idx) => (
-                    <div
-                      key={step.label}
-                      className="flex items-stretch gap-2.5"
-                    >
-                      {/* Left timeline */}
-                      <div className="flex flex-col items-center w-3 shrink-0">
-                        <div
-                          className={cn(
-                            "w-2.5 h-2.5 rounded-full border-2 shrink-0 mt-0.5 z-10 transition-all duration-300",
-                            step.status === "done"
-                              ? "bg-foreground border-foreground"
-                              : step.status === "active"
-                                ? "bg-background border-foreground"
-                                : "bg-transparent border-border/60",
-                          )}
-                        ></div>
-                        {idx < pipelineSteps.length - 1 && (
-                          <div
-                            className={cn(
-                              "w-px flex-1 mt-0.5 mb-0.5 min-h-2 transition-colors duration-500",
-                              step.status === "done"
-                                ? "bg-foreground/30"
-                                : "bg-border/40",
-                            )}
-                          />
-                        )}
-                      </div>
-                      {/* Label */}
-                      <div
-                        className={cn(
-                          "flex-1 pb-2.5",
-                          idx === pipelineSteps.length - 1 && "pb-0",
-                        )}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          {step.status === "active" && (
-                            <Loader2
-                              size={9}
-                              className="text-foreground animate-spin shrink-0"
-                            />
-                          )}
-                          <span
-                            className={cn(
-                              "text-xs leading-tight transition-all duration-200",
-                              step.status === "done"
-                                ? "text-muted-foreground/40 line-through"
-                                : step.status === "active"
-                                  ? "text-foreground font-semibold"
-                                  : "text-muted-foreground/30",
-                            )}
-                          >
-                            {step.label}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Tool call research feed */}
             {toolCalls.length > 0 && (
               <div className="bg-card p-5 rounded-md border border-border space-y-4">

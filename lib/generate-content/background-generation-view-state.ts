@@ -1,77 +1,60 @@
-export type GenerationPipelineStep = {
-  label: string;
-  status: "pending" | "active" | "done";
-};
-
 type ActiveGenerationViewState = {
   message: string;
   description: string;
-  pipelineSteps: GenerationPipelineStep[];
 };
 
-const PIPELINE_LABELS = [
-  "Generating Content",
-  "Humanizing",
-  "Reviewing Content",
-] as const;
-
+/**
+ * What the article view says while it waits on a run it picked up mid-way (a reload, the dock):
+ * the stage the run is in, named as the run component names it (rext-control #260), from the
+ * job's stage words and its progress.
+ */
 export const deriveActiveGenerationViewState = (
   progress = 24,
   stage = "",
 ): ActiveGenerationViewState => {
-  const normalizedStage = stage.toLowerCase();
-  const isFinishing = progress >= 96;
-  const isReviewing =
-    progress >= 74 ||
-    normalizedStage.includes("review") ||
-    normalizedStage.includes("quality") ||
-    normalizedStage.includes("seo") ||
-    normalizedStage.includes("readability") ||
-    normalizedStage.includes("finaliz");
-  const isHumanizing =
-    progress >= 58 ||
-    normalizedStage.includes("human") ||
-    normalizedStage.includes("refining");
+  const words = stage.toLowerCase();
+  // Today's names first; the older ones a saved job may still hold after them.
+  const isChecks =
+    words.includes("check") ||
+    words.includes("review") ||
+    words.includes("quality") ||
+    words.includes("finaliz") ||
+    (!stage && progress >= 78);
+  const isStylePass =
+    !isChecks &&
+    (words.includes("style") ||
+      words.includes("human") ||
+      words.includes("refining") ||
+      (!stage && progress >= 58));
 
-  const activeIndex = isReviewing ? 2 : isHumanizing ? 1 : 0;
-  const pipelineSteps = PIPELINE_LABELS.map((label, index) => ({
-    label,
-    status: isFinishing
-      ? ("done" as const)
-      : index < activeIndex
-        ? ("done" as const)
-        : index === activeIndex
-          ? ("active" as const)
-          : ("pending" as const),
-  }));
-
-  if (isFinishing) {
+  if (progress >= 96) {
     return {
-      message: "Preparing Your Article...",
-      description: "Finishing the article and preparing the final result...",
-      pipelineSteps,
+      message: "Preparing your article",
+      description: "Finishing the article and its results.",
     };
   }
-
-  if (isReviewing) {
+  if (isChecks) {
     return {
-      message: "Reviewing Content...",
-      description: "Checking SEO, readability, and trust signals...",
-      pipelineSteps,
+      message: "Checks",
+      description: "Validation, readability, on-page SEO and trust.",
     };
   }
-
-  if (isHumanizing) {
+  if (isStylePass) {
     return {
-      message: "Humanizing Content...",
-      description: "Improving the article's tone, clarity, and structure...",
-      pipelineSteps,
+      message: "Style pass",
+      description:
+        "Checking the draft against the outline and smoothing its wording and flow.",
     };
   }
-
+  if (words.includes("research")) {
+    return {
+      message: "Research",
+      description: "Searching for sources for the approved outline.",
+    };
+  }
   return {
-    message: "Generating Content...",
-    description: "Creating the first draft based on the approved outline...",
-    pipelineSteps,
+    message: "Draft",
+    description:
+      "Writing the article from the approved outline and its sources.",
   };
 };

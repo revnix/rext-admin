@@ -20,7 +20,7 @@ describe("useRunStages", () => {
 
   it("starts a run picked up mid-way at the stage the status names", () => {
     const { result } = renderHook(() => useRunStages());
-    act(() => result.current.start("article", { joined: true, at: "checks" }));
+    act(() => result.current.start("article", { joined: true, at: "style" }));
     expect(states(result.current.run)).toEqual([
       "complete",
       "complete",

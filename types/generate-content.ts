@@ -1066,3 +1066,13 @@ export interface NodeOutput {
   persist_content?: { content?: CommonOutput };
   content_engine?: { content?: CommonOutput };
 }
+
+/** A search the article agent ran, from its `tool_start` / `tool_end` events (the editor's research feed). */
+export interface ToolCall {
+  id: string;
+  name: string;
+  query: string;
+  status: "running" | "done";
+  resultCount?: number;
+  output?: string;
+}

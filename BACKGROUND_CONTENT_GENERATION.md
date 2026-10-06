@@ -123,7 +123,7 @@ can track it the moment the user leaves:
 upsertBackgroundJob({
   threadId, workspaceId, workspaceSlug,
   title, keyword: primaryKeyword,
-  status: "running", stage: "Drafting your article", progress: 12,
+  status: "running", stage: "Research", progress: 42,
   createdAt: now, updatedAt: now, resultUrl, completionNotified: false,
 });
 ```
@@ -295,18 +295,21 @@ review results, and persisted errors.
 | 26 | Planning your article | inside `content_engine`, node unknown |
 | 28 | Preparing your topics | `content_type` / `topic_generation` active |
 | 34 | Building your outline | `generate_outline` / cluster mapping active |
-| 42 | Drafting your article | `generate_content` active |
-| 74 | Reviewing SEO and readability | final content exists or a review node active |
-| 84 | Running quality checks | 1 review result persisted |
-| 90 | Running quality checks | 2 review results persisted |
-| 96 | Running quality checks | all 3 review results persisted, run finishing |
+| 42 | Draft | `generate_content` active (the agent's searching and writing are one node, so the poll says Draft; the page's stream tells Research from Draft by the first token) |
+| 74 | Checks | a review node (or `final_validate_content`) active |
+| 74 | Style pass | final content exists and no check runs yet |
+| 84 | Checks | 1 review result persisted |
+| 90 | Checks | 2 review results persisted |
+| 96 | Checks | all 3 review results persisted, run finishing |
+
+The article's stage names are the run component's (rext-control #260): Research, Draft, Style pass (the humanize node, with the validation and repair before it), Checks (the final validation, readability, on-page SEO, trust). The page's stream says Research while the agent searches and Draft from its first token.
 | 100 | Article ready | run status `success` |
 
 `content_engine` and `seo_engine` are **subgraph containers**: at the top level
 they stay "active" for their entire phase, so the status route reads thread
 state with `subgraphs: true` and the derivation walks `tasks[].state` for the
 real node names. Without that, the whole content phase — topic selection,
-outline generation, outline review — reported "Drafting your article" at 42%,
+outline generation, outline review — reported the article stage at 42%,
 which put the outline steps in the article band and made the restore path join
 the stream as *content*, skipping outline approve/reject.
 
@@ -518,7 +521,7 @@ returns an SSE stream; early in the stream you should see a
 
 ```json
 { "threadId": "…", "run": { "id": "…", "status": "running" },
-  "progress": 42, "stage": "Drafting your article" }
+  "progress": 42, "stage": "Draft" }
 ```
 
 **Re-join (return to a running run):**

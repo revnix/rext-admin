@@ -51,6 +51,7 @@ export type BackgroundProgress = {
 };
 
 const REVIEW_STAGE_NAMES = new Set([
+  "final_validate_content",
   "review_content",
   "calculate_readability",
   "calculate_on_page_seo",
@@ -237,17 +238,12 @@ function deriveProgressAndStage(
     review?.trust_score,
   ].filter(Boolean).length;
 
+  // The article's stages by the run component's names (rext-control #260): Research and Draft
+  // (one node, so the poll says Draft), Style pass, Checks.
   if (completedReviews > 0) {
     return {
       progress: Math.min(96, 78 + completedReviews * 6),
-      stage: "Running quality checks",
-    };
-  }
-
-  if (content?.final_content) {
-    return {
-      progress: 74,
-      stage: "Reviewing SEO and readability",
+      stage: "Checks",
     };
   }
 
@@ -256,14 +252,22 @@ function deriveProgressAndStage(
   if (activeNodes.some((node) => REVIEW_STAGE_NAMES.has(node))) {
     return {
       progress: 74,
-      stage: "Reviewing SEO and readability",
+      stage: "Checks",
+    };
+  }
+
+  // The draft exists and no check has run yet: the style pass.
+  if (content?.final_content) {
+    return {
+      progress: 74,
+      stage: "Style pass",
     };
   }
 
   if (activeNodes.includes("generate_content")) {
     return {
       progress: 42,
-      stage: "Drafting your article",
+      stage: "Draft",
     };
   }
 
