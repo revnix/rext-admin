@@ -30,11 +30,22 @@ export async function POST(
   const client = getGenerationClient(access.accessToken);
   let createdRunId: string | undefined;
 
+  // The run works in the thread's own workspace, whatever the body names: the
+  // backend checks content.create there (rext-backend E17), so the input must
+  // not point the work at another one.
+  const workspaceId = access.thread?.metadata?.workspace_id;
+  const serpPayload = body.input?.serp_payload;
+  const input =
+    serpPayload && typeof serpPayload === "object"
+      ? {
+          ...body.input,
+          serp_payload: { ...serpPayload, workspace_id: workspaceId },
+        }
+      : body.input;
+
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
-    input: body.input,
-    // The backend checks content.create in the thread's workspace for every
-    // run (rext-backend E17); a new run also names it in its input.
-    metadata: { workspace_id: access.thread?.metadata?.workspace_id },
+    input,
+    metadata: { workspace_id: workspaceId },
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
     streamResumable: true,

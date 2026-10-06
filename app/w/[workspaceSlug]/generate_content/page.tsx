@@ -66,8 +66,12 @@ export default function Page() {
   >(libraryKeyword ?? undefined);
 
   useEffect(() => {
-    if (!libraryKey || !user?.id || !workspaceId) {
+    if (libraryKey === null || !user?.id || !workspaceId) {
       setLibraryStart(null);
+      return;
+    }
+    if (!libraryKey.trim()) {
+      setLibraryStart("missing");
       return;
     }
     let cancelled = false;

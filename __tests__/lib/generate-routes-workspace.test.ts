@@ -8,11 +8,12 @@
 
 const threadsCreate = jest.fn();
 const runsCreate = jest.fn();
+const runsStream = jest.fn();
 
 jest.mock("@/lib/generate-content/thread-access", () => ({
   getGenerationClient: jest.fn(() => ({
     threads: { create: threadsCreate },
-    runs: { create: runsCreate },
+    runs: { create: runsCreate, stream: runsStream },
   })),
   isExpiredTokenError: jest.fn(() => false),
   requireGenerationIdentity: jest.fn(async () => ({
@@ -33,6 +34,7 @@ jest.mock("@/lib/generate-content/run-webhook", () => ({
 }));
 
 import { POST as resume } from "@/app/api/generate/[threadId]/resume/route";
+import { POST as stream } from "@/app/api/generate/[threadId]/stream/route";
 import { POST as createThread } from "@/app/api/generate/threads/route";
 
 const json = (body: unknown) =>
@@ -46,6 +48,7 @@ describe("starting a generation names its workspace", () => {
   beforeEach(() => {
     threadsCreate.mockReset();
     runsCreate.mockReset();
+    runsStream.mockReset();
   });
 
   it("stamps the new thread with its owner and workspace", async () => {
@@ -98,6 +101,28 @@ describe("starting a generation names its workspace", () => {
       "t1",
       "agent",
       expect.objectContaining({ metadata: { workspace_id: "w1" } }),
+    );
+  });
+
+  it("runs a new analysis in the thread's workspace, whatever the body names", async () => {
+    runsStream.mockReturnValueOnce((async function* () {})());
+
+    // jest.setup.ts stubs Response with a JSON-only object, so the route's
+    // streaming reply can't be built here; the run's options are what count.
+    await stream(
+      json({
+        input: { serp_payload: { query: "q", workspace_id: "elsewhere" } },
+      }) as never,
+      { params: Promise.resolve({ threadId: "t1" }) },
+    ).catch(() => undefined);
+
+    expect(runsStream).toHaveBeenCalledWith(
+      "t1",
+      "agent",
+      expect.objectContaining({
+        input: { serp_payload: { query: "q", workspace_id: "w1" } },
+        metadata: { workspace_id: "w1" },
+      }),
     );
   });
 });
