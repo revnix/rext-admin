@@ -1,14 +1,18 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { PaywallDialog } from "@/components/billing/paywall-dialog";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { shortfall } from "@/lib/billing/credits";
+import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import type { BilledRun } from "@/types/subscription";
 
 const OUT_OF_CREDITS_MESSAGE = "Your credits have run out.";
+const TRIAL_ENDED_MESSAGE = "A trial's credits can't be spent once it ends.";
 
 /**
  * The credits this page spends: the workspace owner's on a workspace page, the person's own
@@ -45,12 +49,25 @@ export function useWorkspaceCredits() {
  *   exhausted balance stops an article whose earlier stages are already paid for.
  *
  * Both open the paywall (PaywallDialog: why, what an article costs, the plan grid inline), and
- * return false when they block, so the caller bails before anything is sent.
+ * return false when they block, so the caller bails before anything is sent. A trial that ended
+ * with nothing bought since blocks both, whatever it has left: the backend stops spending its
+ * credits only when the daily expiry job runs.
  */
 export function useCreditGate() {
   const credits = useWorkspaceCredits();
+  const { user } = useAuthSession();
   const [showModal, setShowModal] = useState(false);
   const [modalDetail, setModalDetail] = useState(OUT_OF_CREDITS_MESSAGE);
+
+  // The trial is the person's own: on a workspace they don't own, the credits are the owner's.
+  const ownCredits =
+    Boolean(credits) &&
+    (!credits?.target_user_id || credits.target_user_id === user?.id);
+  const trial = useQuery({
+    ...subscriptionQueries.trialStatus(),
+    enabled: ownCredits,
+  });
+  const trialEnded = ownCredits && Boolean(trial.data?.trial_expired);
 
   // A null articles_remaining means an unlimited plan; an unloaded balance is not a block.
   const isUnlimited = !credits || credits.articles_remaining === null;
@@ -58,6 +75,7 @@ export function useCreditGate() {
   /** Why `run` can't start now, or null when it can. */
   const blockFor = useCallback(
     (run: BilledRun): string | null => {
+      if (trialEnded) return TRIAL_ENDED_MESSAGE;
       if (isUnlimited || !credits) return null;
       if (credits.runs) return shortfall(run, credits);
       // A backend without the cost table: a whole article to start, anything to go on.
@@ -67,7 +85,7 @@ export function useCreditGate() {
           : credits.current_credits <= 0;
       return short ? OUT_OF_CREDITS_MESSAGE : null;
     },
-    [credits, isUnlimited],
+    [credits, isUnlimited, trialEnded],
   );
 
   // Cannot afford a complete article — starting would burn credits for nothing.
@@ -96,13 +114,13 @@ export function useCreditGate() {
   );
 
   const ensureCreditsToContinue = useCallback(() => {
-    if (isExhausted) {
-      setModalDetail(OUT_OF_CREDITS_MESSAGE);
+    if (trialEnded || isExhausted) {
+      setModalDetail(trialEnded ? TRIAL_ENDED_MESSAGE : OUT_OF_CREDITS_MESSAGE);
       setShowModal(true);
       return false;
     }
     return true;
-  }, [isExhausted]);
+  }, [isExhausted, trialEnded]);
 
   const creditsModal = (
     <PaywallDialog
