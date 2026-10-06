@@ -205,11 +205,11 @@ function getRoleFirstTasks(
         },
         {
           icon: <FileText className="h-6 w-6" />,
-          title: "Create Your First Content",
+          title: "Generate Your First Article",
           description:
-            "Try creating a piece of content to get hands-on experience with the tools.",
-          action: "Create content",
-          href: `/w/${workspaceSlug}/content/create`,
+            "Start from a keyword: research it, pick a title and an outline, and get a draft.",
+          action: "Generate",
+          href: `/w/${workspaceSlug}/generate_content`,
           priority: "medium",
         },
         {

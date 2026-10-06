@@ -223,9 +223,9 @@ function getSuggestedActions(
         },
         {
           icon: <FileText className="h-6 w-6" />,
-          title: "Create Content",
-          description: "Start creating your first piece of content",
-          href: `/w/${workspaceSlug}/content/create`,
+          title: "Generate Content",
+          description: "Start from a keyword and get your first article",
+          href: `/w/${workspaceSlug}/generate_content`,
           variant: "default",
           show: true,
         },
@@ -244,9 +244,9 @@ function getSuggestedActions(
       return [
         {
           icon: <FileText className="h-6 w-6" />,
-          title: "Create Your First Content",
-          description: "Start contributing by creating a piece of content",
-          href: `/w/${workspaceSlug}/content/create`,
+          title: "Generate Your First Article",
+          description: "Start from a keyword and get a draft to edit",
+          href: `/w/${workspaceSlug}/generate_content`,
           variant: "default",
           show: true,
         },

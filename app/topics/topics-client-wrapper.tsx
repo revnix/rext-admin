@@ -232,11 +232,9 @@ export function TopicsClientWrapper({
           topic_name: row.name,
         });
 
-        // Navigate to content creation with topic prefilled
+        // Articles start from keyword research: open the keyword flow
         if (workspaceSlug && row.id) {
-          router.push(
-            `/w/${workspaceSlug}/content/create?topicId=${row.id}` as Route,
-          );
+          router.push(`/w/${workspaceSlug}/generate_content` as Route);
         } else {
           topicsLogger.error(
             "Cannot navigate: Missing workspace slug or topic ID",

@@ -165,6 +165,13 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        // The topic-based content wizard is retired (articles start from
+        // keyword research): an old bookmark opens the keyword flow.
+        source: "/w/:workspaceSlug/content/create",
+        destination: "/w/:workspaceSlug/generate_content",
+        permanent: false,
+      },
+      {
         // Customer management was folded into User Management. Redirect rather
         // than 404 so existing bookmarks and links keep working.
         source: "/admin/customers",

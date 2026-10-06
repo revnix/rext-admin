@@ -61,10 +61,6 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/generate_content`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/${contentId}`,
-  contentCreate: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/content/create`,
-  contentProgress: (workspaceSlug: string, contentId: string) =>
-    `/w/${workspaceSlug}/content/progress/${contentId}`,
   content_calendar: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/content/calendar`,
 
