@@ -107,7 +107,7 @@ export function LimitCheckWrapper({
             <Button
               size="sm"
               variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-              onClick={() => router.push(settingsRoutes.plan as Route)}
+              onClick={() => router.push(settingsRoutes.usage as Route)}
             >
               View usage
             </Button>

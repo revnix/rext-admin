@@ -42,6 +42,8 @@ import {
   setCheckoutEventHandler,
 } from "@/lib/lemonsqueezy/get-client";
 import type { Route } from "next";
+import { getQueryClient } from "@/lib/query-client";
+import { subscriptionQueries } from "@/lib/query-keys";
 
 export function LemonSqueezyProvider() {
   const router = useRouter();
@@ -101,6 +103,11 @@ export function LemonSqueezyProvider() {
         .then((synced) => {
           if (controller.signal.aborted) return;
           if (synced) {
+            // The settings sections and the home read the subscription through the queries; this
+            // provider sits outside QueryProvider, so it reaches the one browser client directly.
+            void getQueryClient().invalidateQueries({
+              queryKey: subscriptionQueries.all(),
+            });
             const latest =
               useSubscriptionStore.getState().subscription?.subscription;
             analytics.track("subscription_purchased", {
