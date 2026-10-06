@@ -15,7 +15,7 @@ export default function NotFound() {
         <EmptyHeader>
           <p className="num font-mono text-label text-muted-foreground">404</p>
           <EmptyTitle className="font-display text-page-title text-foreground">
-            Page not found
+            <h1>Page not found</h1>
           </EmptyTitle>
           <EmptyDescription>
             We can&apos;t find the page you&apos;re looking for.
