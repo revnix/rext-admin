@@ -1,0 +1,24 @@
+{
+  "app/pricing/page.tsx": {
+    "page-container": 3,
+    "page-heading": 1
+  },
+  "components/dashboard/revamp/recent-content.tsx": {
+    "table-recipe": 1
+  },
+  "components/generate-content/content.tsx": {
+    "page-heading": 2
+  },
+  "components/generate-content/library-detail.tsx": {
+    "table-recipe": 1
+  },
+  "components/pricing/pricing-table.tsx": {
+    "page-container": 1
+  },
+  "components/security/activity-filter.tsx": {
+    "field-recipe": 2
+  },
+  "components/subscription/invoice-document.tsx": {
+    "table-recipe": 1
+  }
+}
