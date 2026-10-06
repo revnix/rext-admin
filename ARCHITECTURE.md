@@ -101,7 +101,7 @@ One component each (design/app-language.md §8), in `components/ui/`:
 - `Badge` is a word: `neutral` by default, or one of the four status tints, text only. shadcn's variant names draw the same quiet badges;
 - `ConfirmationDialog` and `useConfirmation` ask before an action, with buttons that name it and its opposite ("Delete article", "Keep article"); a `Dialog` takes the whole screen under 640 px.
 
-`alert.tsx` and `error-states.tsx` stay only for the files the team still has open, and `loading-indicator.tsx` for the old table; each goes when its last user moves.
+`alert.tsx`, `error-states.tsx`, `section-header.tsx` and the name `APIErrorBoundary` stay only for the pages other tasks are rewriting (D5, D6, D14, D17, #371, #416), and `loading-indicator.tsx` for the old table; each goes when its last user moves.
 
 ## Data
 
