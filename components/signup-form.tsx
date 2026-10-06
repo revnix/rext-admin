@@ -213,9 +213,12 @@ export function SignupForm({
           router.push("/" as Route);
         }
       } else {
-        // The account exists but the login was refused: most likely its email still needs
-        // verifying. The same page says so and leads to the login form either way.
-        setVerifyEmail(data.email);
+        // The account exists and is verified, but the login after sign-up was refused: say so
+        // and take the user to the login form with the address filled in.
+        toast.error(
+          "Your account is ready, but logging in didn't work. Log in to continue.",
+        );
+        router.push(`/login?email=${encodeURIComponent(data.email)}` as Route);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
