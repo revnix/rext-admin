@@ -294,9 +294,10 @@ export function CustomIntegrationConfiguration({
           {/* Actions */}
           <div className="pt-6 border-t col-span-1 md:col-span-2 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
             <ConfirmationDialog
-              title="Delete Integration"
+              title="Delete integration"
               description="Are you sure you want to delete this integration?"
-              confirmText="Delete"
+              confirmText="Delete integration"
+              cancelText="Keep integration"
               variant="destructive"
               onConfirm={onDelete || (() => {})}
             >
