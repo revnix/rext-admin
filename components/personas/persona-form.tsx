@@ -110,6 +110,17 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /** A saved photo the link field doesn't show (an upload, or one taken from the website) is
+   *  removed here; the save sends the backend's removal signal, an empty `avatar_url`. */
+  const storedPhoto = Boolean(
+    editing &&
+      persona?.avatar_url &&
+      (persona.avatar_source === "custom" ||
+        persona.avatar_source === "page") &&
+      !toPersonaFormValues(persona).avatar_url,
+  );
+  const [removePhoto, setRemovePhoto] = useState(false);
+
   useEffect(() => {
     if (!avatarPreview) return;
     return () => URL.revokeObjectURL(avatarPreview);
@@ -130,6 +141,8 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
     }
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
+    // A new photo replaces the saved one; there's nothing left to remove.
+    setRemovePhoto(false);
     // An uploaded file and a pasted link are the same slot; keeping both would
     // leave the persona showing one and storing the other.
     form.setValue("avatar_url", "", { shouldDirty: true });
@@ -201,9 +214,13 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
             linkedin_url: values.linkedin_url.trim() || null,
             demographics: values.demographics.trim(),
             tone_of_voice: values.tone_of_voice.trim(),
-            ...(form.formState.dirtyFields.avatar_url && !avatarFile
-              ? { avatar_url: values.avatar_url.trim() }
-              : {}),
+            ...(avatarFile
+              ? {}
+              : form.formState.dirtyFields.avatar_url
+                ? { avatar_url: values.avatar_url.trim() }
+                : removePhoto
+                  ? { avatar_url: "" }
+                  : {}),
           },
         });
       } else {
@@ -230,6 +247,7 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
       // Saved: the form is clean, so leaving it doesn't ask.
       form.reset(values);
       setAvatarFile(null);
+      setRemovePhoto(false);
       router.push(
         (personaId
           ? workspaceRoutes.persona(workspaceSlug, personaId)
@@ -244,7 +262,10 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
   const displayName = form.watch("name") || persona?.name || "New persona";
   const avatarLink = form.watch("avatar_url");
   const avatarShown =
-    avatarPreview || avatarLink || (editing ? persona?.avatar_url : "") || "";
+    avatarPreview ||
+    avatarLink ||
+    (editing && !removePhoto ? persona?.avatar_url : "") ||
+    "";
 
   return (
     <FormShell
@@ -254,8 +275,8 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
       submitLabel={editing ? "Save persona" : "Create persona"}
       cancel={{ onCancel: () => router.back() }}
       sticky
-      // A chosen photo lives outside the form's values; leaving would drop it.
-      dirty={Boolean(avatarFile)}
+      // A chosen or removed photo lives outside the form's values; leaving would drop it.
+      dirty={Boolean(avatarFile) || removePhoto}
     >
       <FormSection title="Profile">
         <FieldController
@@ -363,6 +384,32 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
                 <Upload />
                 {avatarFile ? "Choose another" : "Upload from device"}
               </Button>
+              {storedPhoto &&
+                !avatarFile &&
+                (removePhoto ? (
+                  <>
+                    <span className="text-xs text-muted-foreground">
+                      Removed when you save
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRemovePhoto(false)}
+                    >
+                      Keep photo
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRemovePhoto(true)}
+                  >
+                    Remove photo
+                  </Button>
+                ))}
               {avatarFile && (
                 <>
                   <span className="max-w-40 truncate text-xs text-muted-foreground">

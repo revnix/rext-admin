@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { refreshPersonaCounts } from "@/hooks/use-personas";
 import { apiClient } from "@/lib/api-client";
 import type {
   CalendarResponse,
@@ -96,6 +97,7 @@ export function useCreateContent() {
       queryClient.invalidateQueries({
         queryKey: ["content", variables.workspaceId],
       });
+      refreshPersonaCounts(queryClient, variables.workspaceId);
       toast.success("Content created successfully!");
     },
     onError: (error: Error) => {
@@ -312,6 +314,7 @@ export function useTrashContent() {
     },
     onSuccess: ({ moved, failed }, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
+      refreshPersonaCounts(queryClient, workspaceId);
       if (failed === 0) {
         toast.success(
           moved === 1
