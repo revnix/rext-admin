@@ -13,6 +13,10 @@ import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 
+/** "1 workspace", "3 workspaces". */
+const workspaces = (count: number) =>
+  `${count.toLocaleString()} ${count === 1 ? "workspace" : "workspaces"}`;
+
 /** At 80 % of the period's credits used, the meter warns and a notice says what to do. */
 const WARN_USED_SHARE = 0.8;
 
@@ -68,8 +72,8 @@ export function UsageSection() {
                 <p className="num text-sm text-foreground">
                   {usage.data.workspaces.unlimited ||
                   usage.data.workspaces.limit === null
-                    ? `${usage.data.workspaces.used.toLocaleString()} workspaces, no limit`
-                    : `${usage.data.workspaces.used.toLocaleString()} of ${usage.data.workspaces.limit.toLocaleString()} workspaces`}
+                    ? `${workspaces(usage.data.workspaces.used)}, no limit`
+                    : `${usage.data.workspaces.used.toLocaleString()} of ${workspaces(usage.data.workspaces.limit)}`}
                 </p>
                 {!usage.data.workspaces.unlimited &&
                   usage.data.workspaces.limit !== null &&
