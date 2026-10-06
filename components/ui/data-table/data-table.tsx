@@ -254,7 +254,7 @@ export function DataTable<TData extends object>({
         <Button
           variant="ghost"
           size="sm"
-          className="h-9"
+          className="h-9 max-lg:h-10"
           onClick={state.resetFilters}
         >
           Clear filters
@@ -465,7 +465,7 @@ export function DataTable<TData extends object>({
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto h-8"
+            className="ml-auto h-8 max-lg:h-10"
             onClick={clearSelection}
           >
             Clear selection
