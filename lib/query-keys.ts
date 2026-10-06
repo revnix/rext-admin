@@ -220,6 +220,9 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "billing-action"] as const,
       queryFn: () => apiClient.subscriptions.getBillingAction(),
       staleTime: 60 * 1000,
+      // A failed read is retried by Try again or on focus, not by each component that mounts:
+      // the plan grid mounts more readers once it knows, which would reset it to pending again.
+      retryOnMount: false,
     }),
   /** The public plan catalogue; it changes with a release, not during a visit. */
   catalog: () =>

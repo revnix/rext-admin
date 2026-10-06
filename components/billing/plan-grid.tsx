@@ -117,6 +117,7 @@ function PlanCard({
   isCurrent,
   hasPaidPlan,
   settle,
+  held,
 }: {
   plan: CatalogPlan;
   period: BillingPeriod;
@@ -127,6 +128,8 @@ function PlanCard({
   hasPaidPlan: boolean;
   /** A subscription that isn't finished: the backend refuses a checkout, so its action is offered. */
   settle: Settle | null;
+  /** The billing action couldn't be read: no checkout until it is, since it might be refused. */
+  held: boolean;
 }) {
   const yearly = period === BillingPeriod.YEARLY;
   const perMonth = yearly
@@ -189,6 +192,10 @@ function PlanCard({
           >
             {settle.label}
           </Button>
+        ) : held ? (
+          <Button variant="outline" className="w-full" disabled>
+            Choose {plan.display_name}
+          </Button>
         ) : isCurrent ? (
           <Button variant="outline" className="w-full" disabled>
             Your plan
@@ -228,10 +235,12 @@ export function PlanGrid() {
   const catalog = useQuery(subscriptionQueries.catalog());
   const checkoutPlans = useQuery(subscriptionQueries.plans());
   const current = useQuery(subscriptionQueries.current());
-  const action = useBillingAction();
+  const billing = useBillingAction();
+  const action = billing.action;
   const now = useOfferClock(catalog.data?.offer);
 
-  if (catalog.isLoading) {
+  // Until the backend says whether a subscription is unfinished, a checkout might be refused.
+  if (catalog.isLoading || (!billing.settled && !billing.failed)) {
     return <Skeleton className="h-96 w-full" />;
   }
   if (catalog.error || !catalog.data) {
@@ -291,6 +300,19 @@ export function PlanGrid() {
       </div>
       {/* A failed renewal's notice is the shell's banner, on every page. */}
       <BillingActionNotice kinds={["resume"]} />
+      {billing.failed && (
+        <Notice
+          tone="danger"
+          title="Your billing status didn't load"
+          action={
+            <Button variant="outline" size="sm" onClick={billing.retry}>
+              Try again
+            </Button>
+          }
+        >
+          A plan can be chosen once it loads.
+        </Notice>
+      )}
       {offer && !action && (
         <Notice tone="success" title={`${offer.label}: ${offerWords(offer)}`}>
           On any plan started before {offerEnd(offer)}.
@@ -311,6 +333,7 @@ export function PlanGrid() {
               )}
               hasPaidPlan={hasPaidPlan}
               settle={settle}
+              held={billing.failed}
             />
           );
         })}

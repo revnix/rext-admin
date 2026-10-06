@@ -138,8 +138,9 @@ export function useBillingActions() {
       try {
         await action();
         // The webhook is what actually updates our record; this refresh just
-        // pulls in whatever has landed by now.
-        await fetchSubscription();
+        // pulls in whatever has landed by now. Forced past the store's freshness
+        // guard, so the cards it renders change at once.
+        await fetchSubscription({ force: true });
         await Promise.all([
           queryClient.invalidateQueries({
             queryKey: subscriptionQueries.billingAction().queryKey,
