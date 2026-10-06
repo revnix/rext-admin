@@ -58,7 +58,11 @@ describe("buildBreadcrumbs", () => {
   it("reads account and admin pages", () => {
     expect(buildBreadcrumbs("/settings/security")).toEqual([
       { label: "Account", href: "/settings" },
-      { label: "Security" },
+      { label: "Security and sessions" },
+    ]);
+    expect(buildBreadcrumbs("/settings/data")).toEqual([
+      { label: "Account", href: "/settings" },
+      { label: "Data and trash" },
     ]);
     expect(buildBreadcrumbs("/w/create")).toEqual([
       { label: "Workspaces", href: "/w" },

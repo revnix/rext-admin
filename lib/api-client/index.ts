@@ -51,7 +51,6 @@ import { createAccountNamespace, createProfileNamespace } from "./profile";
 import { createRolesNamespace } from "./roles";
 import {
   createNotificationsNamespace,
-  createPreferencesNamespace,
   createSecurityNamespace,
   createSessionsNamespace,
 } from "./settings";
@@ -104,7 +103,6 @@ function createApiClient() {
     notifications: createNotificationsNamespace(client),
     sessions: createSessionsNamespace(client),
     security: createSecurityNamespace(client),
-    preferences: createPreferencesNamespace(client),
     oauth: createOAuthNamespace(client),
 
     // Utility methods
@@ -145,7 +143,6 @@ function createApiClient() {
  * // Settings
  * const prefs = await apiClient.notifications.getPreferences();
  * const sessions = await apiClient.sessions.list();
- * const stats = await apiClient.security.getStats();
  * ```
  */
 export const apiClient = createApiClient();

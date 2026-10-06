@@ -266,13 +266,8 @@ export const ENDPOINTS = {
       revokeAll: "/api/v1/user/sessions",
     },
     security: {
-      stats: "/api/v1/security/stats",
       loginHistory: "/api/v1/user/security/login-history",
       activeSessionsCount: "/api/v1/user/security/active-sessions-count",
-    },
-    preferences: {
-      get: "/api/v1/user/preferences",
-      update: "/api/v1/user/preferences",
     },
   },
 

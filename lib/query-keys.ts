@@ -152,28 +152,6 @@ export const sessionQueries = {
     }),
 };
 
-export const securityQueries = {
-  all: () => ["security"] as const,
-  stats: () =>
-    queryOptions({
-      queryKey: [...securityQueries.all(), "stats"] as const,
-      queryFn: () => apiClient.security.getStats(),
-    }),
-};
-
-// ============================================================================
-// PREFERENCES QUERIES
-// ============================================================================
-
-export const preferencesQueries = {
-  all: () => ["preferences"] as const,
-  detail: () =>
-    queryOptions({
-      queryKey: preferencesQueries.all(),
-      queryFn: () => apiClient.preferences.get(),
-    }),
-};
-
 // ============================================================================
 // IMPERSONATION QUERIES
 // ============================================================================

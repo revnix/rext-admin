@@ -50,10 +50,10 @@ const TOP_LEVEL: Record<
   settings: {
     label: "Account",
     pages: {
-      security: "Security",
-      subscription: "Subscription",
-      billing: "Billing",
-      trash: "Trash",
+      security: "Security and sessions",
+      notifications: "Notifications",
+      subscription: "Billing",
+      data: "Data and trash",
     },
   },
   subscription: { label: "Subscription" },
