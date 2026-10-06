@@ -128,28 +128,28 @@ export function TrialStatusBanner({
   const getBannerColors = () => {
     if (isUrgent) {
       return {
-        bg: "bg-red-50 dark:bg-red-950/20",
-        border: "border-red-200 dark:border-red-800",
-        text: "text-red-900 dark:text-red-100",
-        icon: "text-red-600 dark:text-red-400",
-        button: "bg-red-600 hover:bg-red-700 text-white",
+        bg: "bg-danger-50",
+        border: "border-danger-200",
+        text: "text-danger-700",
+        icon: "text-danger-600",
+        button: "bg-primary hover:bg-primary-hover text-primary-foreground",
       };
     }
     if (isExpiringSoon) {
       return {
-        bg: "bg-yellow-50 dark:bg-yellow-950/20",
-        border: "border-yellow-200 dark:border-yellow-800",
-        text: "text-yellow-900 dark:text-yellow-100",
-        icon: "text-yellow-600 dark:text-yellow-400",
-        button: "bg-yellow-600 hover:bg-yellow-700 text-white",
+        bg: "bg-warning-50",
+        border: "border-warning-200",
+        text: "text-warning-700",
+        icon: "text-warning-600",
+        button: "bg-primary hover:bg-primary-hover text-primary-foreground",
       };
     }
     return {
-      bg: "bg-blue-50 dark:bg-blue-950/20",
-      border: "border-blue-200 dark:border-blue-800",
-      text: "text-blue-900 dark:text-blue-100",
-      icon: "text-blue-600 dark:text-blue-400",
-      button: "bg-blue-600 hover:bg-blue-700 text-white",
+      bg: "bg-info-50",
+      border: "border-info-200",
+      text: "text-info-700",
+      icon: "text-info-600",
+      button: "bg-primary hover:bg-primary-hover text-primary-foreground",
     };
   };
 
@@ -241,7 +241,7 @@ export function TrialStatusBanner({
                   onClick={handleDismiss}
                   variant="ghost"
                   size="sm"
-                  className={`${colors.text} hover:bg-black/5 dark:hover:bg-white/5`}
+                  className={`${colors.text} hover:bg-foreground/5`}
                 >
                   Dismiss
                 </Button>

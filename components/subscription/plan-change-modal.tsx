@@ -268,10 +268,10 @@ export function PlanChangeModal({
                             </Badge>
                           )}
                           {planIsUpgrade && !isCurrent && (
-                            <ArrowUpCircle className="inline ml-2 h-4 w-4 text-green-600" />
+                            <ArrowUpCircle className="inline ml-2 h-4 w-4 text-success-600" />
                           )}
                           {planIsDowngrade && !isCurrent && (
-                            <ArrowDownCircle className="inline ml-2 h-4 w-4 text-orange-600" />
+                            <ArrowDownCircle className="inline ml-2 h-4 w-4 text-warning-600" />
                           )}
                         </Label>
                         <span className="font-semibold">
@@ -287,23 +287,23 @@ export function PlanChangeModal({
                       {/* Key features */}
                       <ul className="mt-2 space-y-1">
                         <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-green-600" />
+                          <Check className="h-3 w-3 text-success-600" />
                           {plan.max_workspaces === -1
                             ? "Unlimited workspaces"
                             : `${plan.max_workspaces} workspaces`}
                         </li>
                         <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-green-600" />
+                          <Check className="h-3 w-3 text-success-600" />
                           {`${plan.credits_per_month} credits/month`}
                         </li>
                         {/* <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-green-600" />
+                          <Check className="h-3 w-3 text-success-600" />
                           {plan.max_topics === -1
                             ? "Unlimited topics"
                             : `${plan.max_topics} topics`}
                         </li>
                         <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-green-600" />
+                          <Check className="h-3 w-3 text-success-600" />
                           {plan.max_api_calls_per_month === -1
                             ? "Unlimited API requests"
                             : `${plan.max_api_calls_per_month} API requests/month`}
@@ -329,7 +329,7 @@ export function PlanChangeModal({
             {/* Change Type Info */}
             {isUpgrade && (
               <Alert>
-                <ArrowUpCircle className="h-4 w-4 text-green-600" />
+                <ArrowUpCircle className="h-4 w-4 text-success-600" />
                 <AlertDescription>
                   Your account will be upgraded immediately and you'll be
                   charged a prorated amount for the remainder of your billing
@@ -340,7 +340,7 @@ export function PlanChangeModal({
 
             {isDowngrade && (
               <Alert>
-                <ArrowDownCircle className="h-4 w-4 text-orange-600" />
+                <ArrowDownCircle className="h-4 w-4 text-warning-600" />
                 <AlertDescription>
                   Your plan will be downgraded at the end of your current
                   billing cycle. Review limit changes before you confirm.

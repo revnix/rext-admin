@@ -42,11 +42,7 @@ export const getStatusBadge = (status: InvoiceStatus | string) => {
   const normalized = (status || "").toLowerCase();
   switch (normalized) {
     case "paid":
-      return (
-        <Badge variant="default" className="bg-green-500 text-white">
-          Paid
-        </Badge>
-      );
+      return <Badge variant="success">Paid</Badge>;
     case "pending":
       return <Badge variant="secondary">Pending</Badge>;
     case "failed":

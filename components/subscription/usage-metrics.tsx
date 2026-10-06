@@ -55,16 +55,16 @@ export function UsageMetrics({
 
   // Get color based on usage percentage
   const getUsageColor = (percentage: number): string => {
-    if (percentage >= 90) return "text-red-600 dark:text-red-400";
-    if (percentage >= 75) return "text-yellow-600 dark:text-yellow-400";
-    return "text-green-600 dark:text-green-400";
+    if (percentage >= 90) return "text-danger-600";
+    if (percentage >= 75) return "text-warning-600";
+    return "text-foreground";
   };
 
   // Get progress bar color
   const getProgressColor = (percentage: number): string => {
-    if (percentage >= 90) return "bg-red-500";
-    if (percentage >= 75) return "bg-yellow-500";
-    return "bg-green-500";
+    if (percentage >= 90) return "bg-danger-600";
+    if (percentage >= 75) return "bg-warning-600";
+    return "bg-foreground";
   };
 
   // Get status badge
@@ -79,23 +79,13 @@ export function UsageMetrics({
     }
     if (percentage >= 75) {
       return (
-        <Badge
-          variant="outline"
-          className="border-yellow-500 text-yellow-700 dark:text-yellow-400 gap-1"
-        >
+        <Badge variant="warning" className="gap-1">
           <TrendingUp className="h-3 w-3" />
           Moderate
         </Badge>
       );
     }
-    return (
-      <Badge
-        variant="outline"
-        className="border-green-500 text-green-700 dark:text-green-400"
-      >
-        Healthy
-      </Badge>
-    );
+    return <Badge variant="neutral">Healthy</Badge>;
   };
 
   // Format number
@@ -331,14 +321,14 @@ export function UsageMetrics({
 
                 {/* Warning for high usage */}
                 {!isUnlimited && percentage >= 90 && (
-                  <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <p className="text-xs text-danger-600 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     You're approaching your {metric.label.toLowerCase()} limit
                   </p>
                 )}
 
                 {!isUnlimited && percentage >= 75 && percentage < 90 && (
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  <p className="text-xs text-warning-600">
                     Consider upgrading if you need more{" "}
                     {metric.label.toLowerCase()}
                   </p>
@@ -351,14 +341,14 @@ export function UsageMetrics({
         {/* Upgrade CTA */}
         {overallPercentage >= 75 && (
           <div className="pt-4 border-t">
-            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-4">
-              <p className="text-sm text-blue-900 dark:text-blue-100 mb-3">
+            <div className="bg-info-50 rounded-md p-4">
+              <p className="text-sm text-info-700 mb-3">
                 Need more resources? Upgrade your plan to get higher limits and
                 more features.
               </p>
               <a
                 href="/pricing"
-                className="inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                className="inline-flex items-center text-sm font-medium text-primary hover:underline"
               >
                 View upgrade options →
               </a>

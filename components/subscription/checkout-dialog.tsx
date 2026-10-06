@@ -78,7 +78,7 @@ export function CheckoutDialog() {
                   </span>
                 ) : null}
                 <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  <ShieldCheck className="h-3.5 w-3.5 text-success-600" />
                   Secured by Lemon Squeezy
                 </span>
               </DialogDescription>

@@ -67,11 +67,7 @@ export function SubscriptionStatusCard({
   const getStatusBadge = (status: SubscriptionStatus) => {
     switch (status) {
       case SubscriptionStatus.ACTIVE:
-        return (
-          <Badge variant="default" className="bg-green-500">
-            Active
-          </Badge>
-        );
+        return <Badge variant="success">Active</Badge>;
       case SubscriptionStatus.TRIAL:
         return <Badge variant="secondary">Trial</Badge>;
       case SubscriptionStatus.PAST_DUE:
@@ -272,8 +268,8 @@ export function SubscriptionStatusCard({
         {/* Cancelled Subscription Warning */}
         {subscription?.subscription?.status ===
           SubscriptionStatus.CANCELLED && (
-          <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md p-4 space-y-3">
-            <p className="text-sm text-orange-900 dark:text-orange-100">
+          <div className="bg-warning-50 border border-warning-200 rounded-md p-4 space-y-3">
+            <p className="text-sm text-warning-700">
               Your subscription has been cancelled and will remain active until{" "}
               {subscription?.subscription?.end_date &&
                 formatDate(subscription?.subscription?.end_date)}

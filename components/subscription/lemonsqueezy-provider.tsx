@@ -157,7 +157,7 @@ export function LemonSqueezyProvider() {
               {purchaseStatus === "confirming" ? (
                 <Loader2 className="h-5 w-5 animate-spin text-foreground" />
               ) : purchaseStatus === "active" ? (
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <CheckCircle2 className="h-5 w-5 text-success-600" />
               ) : null}
               {purchaseStatus === "confirming"
                 ? "Confirming your subscription"
