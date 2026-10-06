@@ -46,7 +46,7 @@ export function KeywordForm({
           <Input
             type="text"
             placeholder="Enter a keyword or topic..."
-            className="flex-1 h-10 border-none shadow-none text-[15px] placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-4 font-medium"
+            className="flex-1 h-10 border-none shadow-none text-section placeholder:text-muted-foreground/30 focus-visible:ring-0 bg-transparent px-4 font-medium"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
             required

@@ -44,7 +44,7 @@ export function SelectionView({
         </CardDescription>
       </CardHeader>
       <CardFooter className="px-8 pb-8 pt-4">
-        <span className="text-primary dark:text-blue-500 font-medium flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+        <span className="text-primary font-medium flex items-center gap-2 group-hover:translate-x-1 transition-transform">
           Begin Research <ArrowRight className="w-4 h-4" />
         </span>
       </CardFooter>
@@ -70,7 +70,7 @@ export function SelectionView({
         </CardDescription>
       </CardHeader>
       <CardFooter className="px-8 pb-8 pt-4">
-        <span className="text-primary dark:text-blue-500 font-medium flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+        <span className="text-primary font-medium flex items-center gap-2 group-hover:translate-x-1 transition-transform">
           Browse saved keywords <ArrowRight className="w-4 h-4" />
         </span>
       </CardFooter>

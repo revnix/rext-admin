@@ -115,7 +115,7 @@ export function TopicsSection({
                     {topic}
 
                     {isRecommended && (
-                      <span className="inline-block m-1 rounded-md border border-foreground px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+                      <span className="inline-block m-1 rounded-md border border-foreground px-1.5 py-0.5 text-caption font-medium text-foreground">
                         Recommended
                       </span>
                     )}
@@ -124,17 +124,17 @@ export function TopicsSection({
                   {(keyword || intent || contentContext) && (
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                       {keyword && (
-                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                        <span className="text-caption font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
                           <span className="text-foreground/70">{keyword}</span>
                         </span>
                       )}
                       {intent && (
-                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
+                        <span className="text-caption font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
                           <span className="text-foreground/70">{intent}</span>
                         </span>
                       )}
                       {contentContext && (
-                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
+                        <span className="text-caption font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md capitalize">
                           <span className="text-foreground/70">
                             {contentContext}
                           </span>

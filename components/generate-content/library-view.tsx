@@ -44,11 +44,10 @@ import type { Route } from "next";
 const libraryLogger = log.forComponent("library-view");
 
 const getDifficultyBg = (kd: number | null) => {
-  if (kd === null || kd === undefined) return "bg-gray-500/10";
-  if (kd >= 70) return "bg-red-500/10 border-red-200";
-  if (kd >= 50) return "bg-orange-500/10 border-orange-200";
-  if (kd >= 30) return "bg-amber-500/10 border-amber-200";
-  return "bg-emerald-500/10 border-emerald-200";
+  if (kd === null || kd === undefined) return "bg-surface-inset";
+  if (kd >= 70) return "bg-danger-50 border-danger-200";
+  if (kd >= 30) return "bg-warning-50 border-warning-200";
+  return "bg-success-50 border-success-200";
 };
 
 // "—" with the reason on hover when there is no number (the design language's
@@ -226,7 +225,7 @@ export function LibraryView() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
           <Input
             placeholder="Search saved keywords..."
-            className="pl-10 bg-white text-foreground shadow-none h-11 border-border/50 focus-visible:ring-primary/20"
+            className="pl-10 bg-card text-foreground shadow-none h-11 border-border/50 focus-visible:ring-primary/20"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
@@ -266,14 +265,14 @@ export function LibraryView() {
                   <Badge
                     variant="secondary"
                     className={cn(
-                      "font-bold text-[10px] uppercase tracking-wider px-2 py-0.5",
+                      "font-bold text-caption uppercase tracking-wider px-2 py-0.5",
                       getDifficultyBg(item.difficultyScore),
                     )}
                   >
                     {item.difficulty}
                   </Badge>
                   <div className="text-right">
-                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
+                    <div className="text-caption text-muted-foreground font-medium uppercase tracking-tighter">
                       Updated
                     </div>
                     <div className="text-xs font-semibold text-foreground/80">
@@ -288,7 +287,7 @@ export function LibraryView() {
                   </h3>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                      <span className="text-caption text-muted-foreground uppercase font-bold tracking-widest">
                         Est. Volume
                       </span>
                       <span

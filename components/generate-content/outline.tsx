@@ -310,7 +310,7 @@ function SectionContent({ section }: { section: ContentSection }) {
                 </p>
               )}
               {step.tools_needed?.length ? (
-                <p className="text-[10px] text-muted-foreground mt-0.5">
+                <p className="text-caption text-muted-foreground mt-0.5">
                   Tools: {step.tools_needed.join(", ")}
                 </p>
               ) : null}
@@ -795,7 +795,7 @@ export function OutlineDisplay({
           {effectiveOutline.title}
         </h2>
 
-        <p className="text-[15px] text-muted-foreground leading-relaxed max-w-3xl">
+        <p className="text-body text-muted-foreground max-w-3xl">
           {effectiveOutline.brief}
         </p>
       </div>
@@ -1005,7 +1005,7 @@ export function OutlineDisplay({
                         </p>
 
                         {isTargetWordCountPending ? (
-                          <span className="text-[10px] font-semibold text-muted-foreground animate-pulse">
+                          <span className="text-caption font-semibold text-muted-foreground animate-pulse">
                             Applying feedback…
                           </span>
                         ) : canEdit ? (
@@ -1086,7 +1086,7 @@ export function OutlineDisplay({
                           {cluster.main_intent}
                         </span>
                         {cluster.confidence_score !== undefined && (
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-caption text-muted-foreground">
                             Conf: {Math.round(cluster.confidence_score * 100)}%
                           </span>
                         )}
@@ -1102,7 +1102,7 @@ export function OutlineDisplay({
                     {cluster.keywords.map((kw) => (
                       <span
                         key={kw.keyword}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-foreground"
+                        className="text-caption font-medium px-2 py-0.5 rounded-md bg-muted text-foreground"
                       >
                         {kw.keyword}
                       </span>
@@ -1249,7 +1249,7 @@ export function OutlineDisplay({
                   <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                        "text-caption font-bold px-2 py-0.5 rounded-full",
                         link.status === "published"
                           ? "border border-foreground text-foreground"
                           : "bg-muted text-muted-foreground",
@@ -1385,12 +1385,12 @@ export function OutlineDisplay({
                             </div>
                             <div className="ml-2 flex shrink-0 items-center gap-1.5">
                               {id === recommendedPersonaId && (
-                                <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground">
+                                <span className="text-caption font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground">
                                   Recommended
                                 </span>
                               )}
                               {score !== undefined && (
-                                <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">
+                                <span className="text-caption font-semibold text-muted-foreground tabular-nums">
                                   {Math.round(score)}% fit
                                 </span>
                               )}
@@ -1436,7 +1436,7 @@ export function OutlineDisplay({
               </p>
             </div>
             {brandVoicePromotion.recommended && (
-              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground shrink-0">
+              <span className="text-caption font-medium px-1.5 py-0.5 rounded-md border border-foreground text-foreground shrink-0">
                 Recommended
               </span>
             )}
@@ -1552,16 +1552,14 @@ export function OutlineRejectSection({
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">Feedback</p>
-            <h3 className="text-[15px] font-bold text-foreground leading-tight">
-              {instruction}
-            </h3>
+            <h3 className="text-section text-foreground">{instruction}</h3>
           </div>
         </div>
         <Textarea
           value={rejectedReason}
           onChange={(e) => onChange(e.target.value)}
           placeholder={instruction}
-          className="w-full min-h-[140px] p-4 rounded-md border-border/50 focus:border-foreground/40 text-foreground bg-muted/30 text-[14px] leading-relaxed"
+          className="w-full min-h-[140px] p-4 rounded-md border-border/50 focus:border-foreground/40 text-foreground bg-muted/30 text-body leading-relaxed"
         />
         {wordCountRange && (
           <p className="mt-3 text-xs text-muted-foreground">
