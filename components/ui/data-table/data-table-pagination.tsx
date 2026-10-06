@@ -65,7 +65,10 @@ export function DataTablePagination({
             value={String(pageSize)}
             onValueChange={(value) => onPageSizeChange(Number(value))}
           >
-            <SelectTrigger className="h-8 w-20" aria-labelledby={sizeLabel}>
+            <SelectTrigger
+              className="h-8 w-20 max-lg:h-10"
+              aria-labelledby={sizeLabel}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +137,7 @@ function PageButton({
     <Button
       variant="outline"
       size="icon"
-      className="size-8"
+      className="size-8 max-lg:size-10"
       aria-label={label}
       disabled={disabled}
       onClick={onClick}

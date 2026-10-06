@@ -45,7 +45,7 @@ export function DataTableSearch({
   placeholder: string;
 }) {
   return (
-    <InputGroup className="h-9 w-full sm:max-w-xs">
+    <InputGroup className="h-9 w-full sm:max-w-xs max-lg:h-10">
       <InputGroupAddon>
         <Search />
       </InputGroupAddon>
@@ -104,7 +104,7 @@ export function DataTableFacetFilter<TData extends object>({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9">
+        <Button variant="outline" size="sm" className="h-9 max-lg:h-10">
           {facet.title}
           {selected.size > 0 && (
             <span className="num rounded-sm bg-(--table-row-selected) px-1.5 text-xs">
@@ -170,7 +170,7 @@ export function DataTableViewOptions<TData extends object>({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9">
+        <Button variant="outline" size="sm" className="h-9 max-lg:h-10">
           <Settings2 />
           View
         </Button>

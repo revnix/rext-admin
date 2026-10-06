@@ -28,7 +28,8 @@ export interface DataTableRowAction {
 
 /**
  * A row's actions in a `…` menu at the row's end (design/app-language.md §5): always rendered, not on
- * hover, so the keyboard reaches it; a 32 px target; destructive items last, after a separator.
+ * hover, so the keyboard reaches it; a 32 px target (40 px under 1024 px, for a finger); destructive
+ * items last, after a separator.
  */
 export function DataTableRowActions({
   actions,
@@ -48,7 +49,7 @@ export function DataTableRowActions({
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 text-muted-foreground data-[state=open]:bg-(--table-row-selected)"
+          className="size-8 text-muted-foreground data-[state=open]:bg-(--table-row-selected) max-lg:size-10"
           aria-label={`Actions for ${label}`}
         >
           <MoreHorizontal className="size-4" />
