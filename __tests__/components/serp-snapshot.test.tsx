@@ -42,9 +42,14 @@ describe("SerpSnapshot", () => {
 
   it("says so when the run recorded no results", () => {
     render(<SerpSnapshot results={[]} />);
+    // The shared empty state, a level under the section's own heading.
     expect(
-      screen.getByText("No search results were recorded for this keyword."),
+      screen.getByRole("heading", {
+        level: 3,
+        name: "No search results recorded",
+      }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
 

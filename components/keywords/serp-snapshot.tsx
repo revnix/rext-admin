@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatLabel, type SerpResult } from "@/lib/keywords/serp-results";
 import { cn } from "@/lib/utils";
 
@@ -27,9 +28,12 @@ export function SerpSnapshot({
         <h2 className="text-sm font-medium text-foreground">{heading}</h2>
       )}
       {results.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No search results were recorded for this keyword.
-        </p>
+        <EmptyState
+          as={heading ? "h3" : "h2"}
+          title="No search results recorded"
+          description="The analysis kept no top results for this keyword."
+          className="px-4 py-6"
+        />
       ) : (
         <ol className="flex flex-col divide-y divide-border">
           {results.map((result) => {
