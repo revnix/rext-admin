@@ -1530,7 +1530,15 @@ export function FreshGenerationView({
       }
     } catch (_e) {
       const isAbort = _e instanceof DOMException && _e.name === "AbortError";
-      if (!isAbort) {
+      if (!isAbort && runCreatedRef.current) {
+        // The stream broke, not the run: it was started with onDisconnect
+        // "continue" and goes on on the server (leaving the page mid-run, a
+        // dropped connection). Keep the job running so the dock's status poll
+        // reports how it really ends, instead of a "network error" failure.
+        if (activeThreadId) {
+          updateBackgroundJob(activeThreadId, { status: "running" });
+        }
+      } else if (!isAbort) {
         analytics.track("content_generation_failed", {
           keyword: userKeyword,
           workspace_id: workspaceId ?? undefined,
