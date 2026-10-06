@@ -80,7 +80,7 @@ export function SuggestionsSection({
   );
 
   return (
-    <div className="flex w-full flex-col gap-6 pb-4">
+    <div className="flex w-full flex-col gap-6 pt-4 pb-4">
       {seoResult ? (
         <KeywordCard
           keyword={primaryKeyword}

@@ -11,6 +11,8 @@ export interface WorkingSurfaceProps extends PageHeaderProps {
   side?: ReactNode;
   /** Names the side pane: its button and its sheet's title. */
   sideTitle?: string;
+  /** Shows that name above the pane on wide screens too, for a pane with no heading of its own. */
+  showSideTitle?: boolean;
   /** No room above and below the surface. */
   flush?: boolean;
   /**
@@ -29,6 +31,7 @@ export interface WorkingSurfaceProps extends PageHeaderProps {
 export function WorkingSurface({
   side,
   sideTitle = "Details",
+  showSideTitle = false,
   flush = false,
   ownHeading = false,
   children,
@@ -39,7 +42,11 @@ export function WorkingSurface({
       {!ownHeading && <PageHeader {...header} />}
       {side ? (
         <PageBody>
-          <WithSidePane side={side} sideTitle={sideTitle}>
+          <WithSidePane
+            side={side}
+            sideTitle={sideTitle}
+            showTitle={showSideTitle}
+          >
             {children}
           </WithSidePane>
         </PageBody>

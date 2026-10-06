@@ -120,9 +120,11 @@ export default function Page() {
       side={
         <SerpSnapshot
           results={serpResultsFromOrganic(value.top_organic_results)}
+          heading={null}
         />
       }
       sideTitle="Top search results"
+      showSideTitle
     >
       <LibraryKeywordDetail
         entry={item.data}

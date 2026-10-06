@@ -34,6 +34,7 @@ export function LibraryKeywordDetail({
     <div className="flex flex-col gap-6">
       <KeywordCard
         keyword={value.original_query}
+        showKeyword={false}
         metrics={keywordMetrics(value.seo_state)}
         intent={intent}
         onIntentChange={onIntentChange}

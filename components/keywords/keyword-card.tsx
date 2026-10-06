@@ -116,9 +116,17 @@ function Intent({
   );
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function Fact({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className={cn("flex min-w-0 flex-col gap-1", className)}>
       <dt className="text-label text-muted-foreground">{label}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>
@@ -145,6 +153,8 @@ export interface KeywordCardProps {
   intent?: SearchIntent | "";
   /** Lets the user override the consensus (expanded size). */
   onIntentChange?: (intent: SearchIntent) => void;
+  /** False where the page's title already is the keyword (the library's keyword page). */
+  showKeyword?: boolean;
   /** Above the keyword: what it is ("Searched keyword", "Researched 2 hours ago"). */
   eyebrow?: ReactNode;
   /** Beside the keyword: what to do with it ("Use this keyword"). */
@@ -162,6 +172,7 @@ export function KeywordCard({
   keyword,
   metrics,
   size = "expanded",
+  showKeyword = true,
   intent = "",
   onIntentChange,
   eyebrow,
@@ -225,18 +236,24 @@ export function KeywordCard({
         className,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          {eyebrow && (
-            <span className="text-caption text-muted-foreground">
-              {eyebrow}
-            </span>
-          )}
-          <p className="text-section break-words text-foreground">{keyword}</p>
+      {(showKeyword || eyebrow || action) && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            {eyebrow && (
+              <span className="text-caption text-muted-foreground">
+                {eyebrow}
+              </span>
+            )}
+            {showKeyword && (
+              <p className="text-section break-words text-foreground">
+                {keyword}
+              </p>
+            )}
+          </div>
+          {action}
         </div>
-        {action}
-      </div>
-      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      )}
+      <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Fact label="Monthly searches">
           <MonthlyVolume
             volume={metrics.volume}
@@ -246,7 +263,7 @@ export function KeywordCard({
         <Fact label="Difficulty">
           <KeywordDifficulty score={metrics.difficulty} />
         </Fact>
-        <Fact label="Search intent">
+        <Fact label="Search intent" className="col-span-2 sm:col-span-1">
           <Intent
             intents={metrics.intents}
             intent={intent}
