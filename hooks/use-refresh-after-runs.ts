@@ -16,18 +16,21 @@ function stateOf(job: BackgroundGenerationJob): string {
 
 /**
  * Keeps what a run changes current in this tab (D1a): when a run pauses at a gate it has spent
- * credits, and when it fails it may have been refunded, so its workspace's balance is fetched again;
- * when it finishes its article, the workspace's article list is too (the home's Continue, counts,
- * checklist and suggestions read it). The dock mounts it, so every workspace page sees the jobs
- * change. The runs already paused or finished when the jobs first load are in what those queries
- * fetch anyway. The article list is refreshed once per finished run, never on a timer: each fetch
- * of it syncs every connected site.
+ * credits, and when it fails it may have been refunded, so its workspace's balance is fetched again.
+ * At its first gate, the keyword's, a run has saved its research to the Library, which the home's
+ * checklist and suggestions read. When it finishes its article, the workspace's article list is
+ * fetched again too (the home's Continue, counts, checklist and suggestions read it). The dock
+ * mounts it, so every workspace page sees the jobs change. The runs already paused or finished when
+ * the jobs first load are in what those queries fetch anyway. The article list is refreshed once per
+ * finished run, never on a timer: each fetch of it syncs every connected site; and the Library, which
+ * is read page by page, once per run.
  */
 export function useRefreshAfterRuns() {
   const queryClient = useQueryClient();
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
   const loaded = useBackgroundGenerationStore((state) => state.hasHydrated);
   const seen = useRef<Map<string, string> | null>(null);
+  const libraryRefreshed = useRef(new Set<string>());
 
   useEffect(() => {
     if (!loaded) return;
@@ -44,6 +47,12 @@ export function useRefreshAfterRuns() {
         queryClient.invalidateQueries({
           queryKey: subscriptionQueries.workspaceCredits(job.workspaceId)
             .queryKey,
+        });
+      }
+      if (state === "paused" && !libraryRefreshed.current.has(job.threadId)) {
+        libraryRefreshed.current.add(job.threadId);
+        queryClient.invalidateQueries({
+          queryKey: ["library", job.workspaceId],
         });
       }
       if (state === "finished") {
