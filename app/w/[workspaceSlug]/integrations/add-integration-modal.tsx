@@ -59,6 +59,7 @@ function WordPressLogo({ className }: { className?: string }) {
       <title>WordPress Logo</title>
       <path
         d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
+        // tokens-ok: the brand's own logo colour
         fill="#21759B"
       />
       <path
@@ -84,10 +85,12 @@ function ShopifyLogo({ className }: { className?: string }) {
       <title>Shopify Logo</title>
       <path
         d="M74.7 14.8s-.3.1-.7.2c-.4-1.2-1-2.6-1.8-4-2.6-4.9-6.4-7.5-11-7.5-.3 0-.6 0-.9.1-.1-.2-.3-.3-.4-.5-2.1-2.3-4.8-3.3-8-3.2-6.2.2-12.4 4.7-17.4 12.7-3.5 5.6-6.2 12.6-6.9 18.1l-11.9 3.7c-3.5 1.1-3.6 1.2-4.1 4.5C11.2 41.5 0 124.5 0 124.5l80.6 13.9V14.2c-.7.2-5.9 0-5.9.6zm-13.7 4.2c-2.9.9-6.1 1.9-9.3 2.9.9-3.4 2.6-6.9 4.7-9.1 .8-.8 1.9-1.7 3.2-2.2 1.3 2.6 1.6 6.3 1.4 8.4zm-5.8-11.5c1 0 1.9.2 2.7.7-1.2.6-2.4 1.6-3.4 2.7-2.8 3-4.9 7.6-5.8 12-2.7.8-5.3 1.6-7.8 2.4 1.5-8.1 7.4-17.5 14.3-17.8z"
+        // tokens-ok: the brand's own logo colour
         fill="#95BF47"
       />
       <path
         d="M73.4 14.7c-.4 0-.7.1-1.1.1-3.2 8.5-9.8 19.8-13.5 23.5l-9.7 3c5.4-14.2 9.8-22.5 9.8-22.5s-1.5-4.2-4.5-7.2c-2.1-2-4.9-3.2-8.4-3.4L27.6 30.5l-14.8 4.6 80.4 13.8L74.7 14.8l-1.3-.1z"
+        // tokens-ok: the brand's own logo colour
         fill="#5E8E3E"
       />
       <path
@@ -215,7 +218,7 @@ function WordPressForm({
                   {...field}
                 />
               </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Must start with https:// and include a valid domain (e.g.
                 wordpress.org)
               </p>
@@ -235,7 +238,7 @@ function WordPressForm({
                   {...field}
                 />
               </FormControl>
-              <p className="text-[0.8rem] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Get this from the Rext AI WordPress plugin settings.{" "}
                 <a
                   href={WORDPRESS_GUIDE_URL}
@@ -452,10 +455,10 @@ export function AddIntegrationModal({
               >
                 <opt.Logo className="h-8 w-auto object-contain" />
                 <div>
-                  <p className="text-[13px] font-semibold text-foreground text-center">
+                  <p className="text-label font-semibold text-foreground text-center">
                     {opt.label}
                   </p>
-                  <p className="text-[11px] text-muted-foreground/60 text-center mt-0.5 leading-snug">
+                  <p className="text-caption text-muted-foreground text-center mt-0.5 leading-snug">
                     {opt.description}
                   </p>
                 </div>
@@ -469,7 +472,7 @@ export function AddIntegrationModal({
           <button
             type="button"
             onClick={() => setSelectedType(null)}
-            className="text-[12px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -mt-1 mb-1 cursor-pointer"
+            className="text-caption text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -mt-1 mb-1 cursor-pointer"
           >
             ← Back to integrations
           </button>

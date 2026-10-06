@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Inbox, Loader2 } from "lucide-react";
 import type { Workspace } from "@/types/workspace";
 import { useQuery } from "@tanstack/react-query";
@@ -57,20 +58,17 @@ export function RecentContent({ workspace }: RecentContentProps) {
     }
   }
 
-  // Keep some helper for color selection
-
-  const getStatusColor = (status: string) => {
-    // Also handle "draft" lowercase
-    const normalizedStatus = status.toLowerCase();
-    switch (normalizedStatus) {
+  // A status gets a tint only when it says something: published is done, under review waits.
+  const getStatusVariant = (
+    status: string,
+  ): "success" | "warning" | "neutral" => {
+    switch (status.toLowerCase()) {
       case "published":
-        return "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400";
-      case "draft":
-        return "text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-400";
+        return "success";
       case "under review":
-        return "text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400";
+        return "warning";
       default:
-        return "text-slate-600 bg-slate-100";
+        return "neutral";
     }
   };
 
@@ -143,7 +141,7 @@ export function RecentContent({ workspace }: RecentContentProps) {
                               ""
                             }
                           />
-                          <AvatarFallback className="text-[10px] bg-muted text-foreground">
+                          <AvatarFallback className="text-caption bg-muted text-foreground">
                             {typeof item.author === "string"
                               ? item.author.charAt(0).toUpperCase()
                               : item.author?.initials ||
@@ -164,13 +162,14 @@ export function RecentContent({ workspace }: RecentContentProps) {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`text-xs font-medium px-2.5 py-0.5 rounded-full capitalize ${getStatusColor(
+                      <Badge
+                        variant={getStatusVariant(
                           item.content_status || item.status || "Unknown",
-                        )}`}
+                        )}
+                        className="capitalize"
                       >
                         {item.content_status || item.status || "Unknown"}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 ))
