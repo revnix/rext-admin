@@ -3,13 +3,21 @@
  * popup uses the same numbers: nothing about credits is typed in the dashboard.
  */
 
-import { act, render, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import {
   RunBalance,
   RunCostLabel,
 } from "@/components/generate-content/run-cost";
 import { useCreditGate } from "@/hooks/use-credit-gate";
+import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { CreditBalance, RunCost } from "@/types/subscription";
 
@@ -51,6 +59,16 @@ const balance = (current: number, perMonth: number | null = 5000) =>
       generate: run(12, 12, current),
     },
   }) satisfies CreditBalance;
+
+// One query client per test, shared by the gate and its paywall as on a page.
+const withQueries = () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+};
 
 const useBalance = (credits: CreditBalance | null) =>
   act(() =>
@@ -106,21 +124,14 @@ describe("RunCostLabel", () => {
 describe("useCreditGate", () => {
   it("blocks Approve below the article's cost, with the numbers in the popup", () => {
     useBalance(balance(5));
-    const { result } = renderHook(() => useCreditGate());
+    const wrapper = withQueries();
+    const { result } = renderHook(() => useCreditGate(), { wrapper });
     let allowed = true;
     act(() => {
       allowed = result.current.ensureCredits("generate");
     });
     expect(allowed).toBe(false);
-    render(
-      <QueryClientProvider
-        client={
-          new QueryClient({ defaultOptions: { queries: { retry: false } } })
-        }
-      >
-        {result.current.creditsModal}
-      </QueryClientProvider>,
-    );
+    render(result.current.creditsModal, { wrapper });
     // The paywall: the backend's numbers, then the plan grid inline.
     expect(
       screen.getByText(
@@ -132,12 +143,54 @@ describe("useCreditGate", () => {
 
   it("lets Approve run with the cost in hand, and Analyze only with a whole article", () => {
     useBalance(balance(12));
-    const { result } = renderHook(() => useCreditGate());
+    const { result } = renderHook(() => useCreditGate(), {
+      wrapper: withQueries(),
+    });
     expect(result.current.isBlocked).toBe(true);
     let allowed = false;
     act(() => {
       allowed = result.current.ensureCredits("generate");
     });
     expect(allowed).toBe(true);
+  });
+
+  it("blocks every billed button once the person's trial ended, whatever is left", async () => {
+    jest.mocked(apiClient.subscriptions.getTrialStatus).mockResolvedValueOnce({
+      is_in_trial: false,
+      trial_end_date: "2026-10-05T12:00:00Z",
+      days_remaining: 0,
+      trial_expired: true,
+    });
+    useBalance(balance(60));
+    const wrapper = withQueries();
+    const { result } = renderHook(() => useCreditGate(), { wrapper });
+    await waitFor(() => expect(result.current.isBlocked).toBe(true));
+    let allowed = true;
+    act(() => {
+      allowed = result.current.ensureCredits("change_keyword");
+    });
+    expect(allowed).toBe(false);
+    act(() => {
+      allowed = result.current.ensureCreditsToContinue();
+    });
+    expect(allowed).toBe(false);
+    render(result.current.creditsModal, { wrapper });
+    expect(
+      screen.getByText(/A trial's credits can't be spent once it ends\./),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^Your trial ended on October 5/),
+    ).toBeInTheDocument();
+  });
+
+  it("goes by the owner's balance on someone else's workspace, not the person's trial", () => {
+    const getTrialStatus = jest.mocked(apiClient.subscriptions.getTrialStatus);
+    getTrialStatus.mockClear();
+    useBalance({ ...balance(60), target_user_id: "owner" });
+    const { result } = renderHook(() => useCreditGate(), {
+      wrapper: withQueries(),
+    });
+    expect(result.current.isBlocked).toBe(false);
+    expect(getTrialStatus).not.toHaveBeenCalled();
   });
 });
