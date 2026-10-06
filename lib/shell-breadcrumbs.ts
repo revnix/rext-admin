@@ -15,14 +15,9 @@ const WORKSPACE_SECTIONS: Record<
   string,
   { label: string; parent?: "settings"; pages?: Record<string, string> }
 > = {
-  generate_content: { label: "Generate", pages: { library: "Library" } },
+  generate_content: { label: "Generate" },
   content: { label: "Content", pages: { create: "New article" } },
-  topics: {
-    label: "Keywords & topics",
-    pages: { create: "New topics", results: "Results" },
-  },
   personas: { label: "Personas", pages: { create: "New persona" } },
-  knowledge: { label: "Knowledge" },
   integrations: { label: "Integrations" },
   settings: { label: "Settings", pages: { trash: "Trash" } },
   brand_voice: { label: "Brand voice", parent: "settings" },
@@ -32,9 +27,13 @@ const WORKSPACE_SECTIONS: Record<
 /** What an id stands for under each workspace section. */
 const WORKSPACE_DETAIL: Record<string, string> = {
   content: "Article",
-  topics: "Topic",
   personas: "Persona",
-  knowledge: "Knowledge base",
+};
+
+/** Pages that live under another section in the URL but are items of their own in the sidebar. */
+const OWN_ITEMS: Record<string, string> = {
+  "content/calendar": "Calendar",
+  "generate_content/library": "Keywords",
 };
 
 /** Pages outside a workspace: the first segment, then the pages under it. */
@@ -56,7 +55,6 @@ const TOP_LEVEL: Record<
   subscription: { label: "Subscription" },
   billing: { label: "Billing" },
   usage: { label: "Usage" },
-  licenses: { label: "Licenses" },
   pricing: { label: "Pricing" },
   legal: {
     label: "Legal",
@@ -126,9 +124,9 @@ function workspaceTrail(
   const [section, ...pages] = rest;
   if (!section) return trail;
 
-  // The calendar lives under content in the URL but is its own item in the sidebar.
-  if (section === "content" && pages[0] === "calendar") {
-    trail.push({ label: "Calendar", path: `${base}/content/calendar` });
+  const own = pages[0] && OWN_ITEMS[`${section}/${pages[0]}`];
+  if (own) {
+    trail.push({ label: own, path: `${base}/${section}/${pages[0]}` });
     return trail;
   }
 
@@ -150,9 +148,6 @@ function workspaceTrail(
       (ID.test(page)
         ? (WORKSPACE_DETAIL[section] ?? "Details")
         : humanize(page));
-    // The topic builder's results sit under a temporary id; the id adds nothing to the trail.
-    if (section === "topics" && pages.includes("results") && ID.test(page))
-      continue;
     trail.push({ label, path });
   }
   return trail;

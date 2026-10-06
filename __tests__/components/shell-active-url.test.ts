@@ -3,7 +3,8 @@ import { findActiveUrl } from "@/components/shell/use-shell-navigation";
 const URLS = [
   "/",
   "/w/acme/content",
-  "/w/acme/topics",
+  "/w/acme/generate_content",
+  "/w/acme/generate_content/library",
   "/w/acme/content/calendar",
   "/w/acme/settings",
   "/w/acme/members",
@@ -22,6 +23,15 @@ describe("findActiveUrl", () => {
   it("gives the calendar to Calendar, not to Content, though its path is under content", () => {
     expect(findActiveUrl("/w/acme/content/calendar", URLS)).toBe(
       "/w/acme/content/calendar",
+    );
+  });
+
+  it("gives the keyword library to Keywords and the flow to Generate", () => {
+    expect(findActiveUrl("/w/acme/generate_content/library", URLS)).toBe(
+      "/w/acme/generate_content/library",
+    );
+    expect(findActiveUrl("/w/acme/generate_content", URLS)).toBe(
+      "/w/acme/generate_content",
     );
   });
 

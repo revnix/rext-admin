@@ -40,14 +40,13 @@ describe("buildBreadcrumbs", () => {
     ]);
   });
 
-  it("leaves the topic builder's temporary id out of the trail", () => {
+  it("names the keyword library Keywords, as the sidebar does, though its path is under Generate", () => {
     expect(
-      buildBreadcrumbs(`/w/acme/topics/create/results/${ID}`, "Acme"),
-    ).toEqual([
+      buildBreadcrumbs("/w/acme/generate_content/library", "Acme"),
+    ).toEqual([{ label: "Acme", href: "/" }, { label: "Keywords" }]);
+    expect(buildBreadcrumbs("/w/acme/generate_content", "Acme")).toEqual([
       { label: "Acme", href: "/" },
-      { label: "Keywords & topics", href: "/w/acme/topics" },
-      { label: "New topics", href: "/w/acme/topics/create" },
-      { label: "Results" },
+      { label: "Generate" },
     ]);
   });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BookOpen,
   CalendarDays,
   Contact,
   CreditCard,
@@ -100,8 +99,9 @@ function workspaceGroups(slug: string): NavGroup[] {
           permission: "content.read",
         },
         {
-          title: "Keywords & topics",
-          url: workspaceRoutes.topics(slug),
+          // The keyword library lives under Generate in the URL; the longer url marks it current.
+          title: "Keywords",
+          url: `${workspaceRoutes.generate_content(slug)}/library`,
           icon: Hash,
           permission: "content.read",
           prefetch: false,
@@ -123,13 +123,6 @@ function workspaceGroups(slug: string): NavGroup[] {
           url: workspaceRoutes.personas(slug),
           icon: Contact,
           permission: "persona.read",
-          prefetch: false,
-        },
-        {
-          title: "Knowledge",
-          url: workspaceRoutes.knowledge(slug),
-          icon: BookOpen,
-          permission: "workspace.read",
           prefetch: false,
         },
         {
@@ -288,7 +281,7 @@ export function useShellNavigation(): ShellNavigation {
     const settings = group("settings")[0] ?? null;
     const admin = group("admin");
     const generate = group("generate")[0] ?? null;
-    // Generate's pages (the flow and its library) are its own, so they mark it current.
+    // Generate's url is a candidate too, so its flow marks it current (its library is Keywords').
     const urls = [
       ...(generate ? [generate] : []),
       ...main,
