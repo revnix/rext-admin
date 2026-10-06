@@ -118,14 +118,19 @@ export function BrandVoiceSection() {
     <div className="flex flex-col gap-8">
       <SettingsGroup
         title="Brand voice"
-        description="How every article sounds and who it's written for. It was read from your website when the workspace was created; reading the website again replaces the fields below."
+        description={
+          form.formState.isDirty && canUpdate
+            ? "How every article sounds and who it's written for. Save or undo your changes before reading the website again: it replaces the fields below."
+            : "How every article sounds and who it's written for. It was read from your website when the workspace was created; reading the website again replaces the fields below."
+        }
         action={
           canUpdate && (
             <BrandVoiceRefreshControl
               workspaceId={workspace.id}
               buttonVariant="outline"
               buttonSize="default"
-              disabled={form.formState.isSubmitting}
+              // A refresh replaces the saved voice, and unsaved edits would then be saved over it.
+              disabled={form.formState.isSubmitting || form.formState.isDirty}
             >
               <RefreshCw aria-hidden />
               Read the website again
