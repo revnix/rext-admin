@@ -140,6 +140,17 @@ describe("suggestKeywords", () => {
     );
     expect(suggestions).toEqual([]);
   });
+  it("leaves out a keyword an open run is working on", () => {
+    const suggestions = suggestKeywords(
+      [entry("content calendar template", 2900), entry("seo audit", 10)],
+      [],
+      5,
+      ["Content calendar template"],
+    );
+    expect(suggestions.map((item) => item.value.original_query)).toEqual([
+      "seo audit",
+    ]);
+  });
 });
 
 describe("checklistSteps", () => {
