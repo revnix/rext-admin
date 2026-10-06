@@ -96,7 +96,7 @@ function RailTooltip({
 
 /** The one primary action at the top of the sidebar (language §5), with its shortcut, C. */
 function GenerateButton({ navigation }: { navigation: ShellNavigation }) {
-  const { generate, workspaceSlug } = navigation;
+  const { generate, workspaceSlug, activeUrl } = navigation;
   const { setOpenMobile } = useSidebar();
   if (!workspaceSlug) return null;
 
@@ -131,6 +131,7 @@ function GenerateButton({ navigation }: { navigation: ShellNavigation }) {
         href={generate.url as Route}
         prefetch={generate.prefetch}
         aria-keyshortcuts="c"
+        aria-current={generate.url === activeUrl ? "page" : undefined}
         onClick={() => setOpenMobile(false)}
         className={className}
       >

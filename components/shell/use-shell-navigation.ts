@@ -287,13 +287,19 @@ export function useShellNavigation(): ShellNavigation {
     const setup = group("setup");
     const settings = group("settings")[0] ?? null;
     const admin = group("admin");
-    const urls = [...main, ...setup, ...admin, ...(settings?.items ?? [])].map(
-      (item) => item.url,
-    );
+    const generate = group("generate")[0] ?? null;
+    // Generate's pages (the flow and its library) are its own, so they mark it current.
+    const urls = [
+      ...(generate ? [generate] : []),
+      ...main,
+      ...setup,
+      ...admin,
+      ...(settings?.items ?? []),
+    ].map((item) => item.url);
 
     return {
       workspaceSlug,
-      generate: group("generate")[0] ?? null,
+      generate,
       main,
       setup,
       settings,
