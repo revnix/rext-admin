@@ -78,6 +78,9 @@ describe("Meter", () => {
     const meter = screen.getByRole("meter", { name: "Credits left" });
     expect(meter).toHaveAttribute("aria-valuenow", "412");
     expect(meter).toHaveAttribute("aria-valuemax", "1000");
+    // Over the maximum, the reading stops at full, as the bar does.
+    rerender(<Meter value={2000} max={1000} label="Credits left" />);
+    expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "1000");
     rerender(<Meter value={2000} max={1000} />);
     expect(screen.queryByRole("meter")).not.toBeInTheDocument();
     // Over the maximum, the bar stops at full.
