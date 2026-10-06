@@ -108,7 +108,9 @@ export function DataTableFacetFilter<TData extends object>({
           <DropdownMenuCheckboxItem
             key={option.value}
             checked={selected.has(option.value)}
-            onCheckedChange={(checked) => toggle(option.value, checked)}
+            onCheckedChange={(checked) =>
+              toggle(option.value, checked === true)
+            }
             onSelect={(event) => event.preventDefault()}
           >
             <span className="flex-1">{option.label}</span>
@@ -165,7 +167,9 @@ export function DataTableViewOptions<TData extends object>({
           <DropdownMenuCheckboxItem
             key={column.id}
             checked={column.getIsVisible()}
-            onCheckedChange={(checked) => column.toggleVisibility(checked)}
+            onCheckedChange={(checked) =>
+              column.toggleVisibility(checked === true)
+            }
             onSelect={(event) => event.preventDefault()}
           >
             {columnLabel(column)}
