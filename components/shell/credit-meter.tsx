@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
@@ -11,7 +12,7 @@ import {
   trialState,
 } from "@/components/billing/trial-state";
 import { Meter } from "@/components/ui/meter";
-import { useAuthSession } from "@/hooks/use-auth-session";
+import { useNow } from "@/hooks/use-now";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -51,16 +52,19 @@ function useShellCredits(): CreditBalance | null {
  * credits are the owner's, and the trial isn't theirs to state).
  */
 function useShellTrial(credits: CreditBalance | null): TrialState | null {
-  const { user } = useAuthSession();
+  // The plain session: useAuthSession tracks activity, which would re-render the shell on every move.
+  const { data: authSession } = useSession();
+  const userId = authSession?.user?.id;
+  const now = useNow();
   const current = useQuery({
     ...subscriptionQueries.current(),
-    enabled: Boolean(user?.id),
+    enabled: Boolean(userId),
   });
   const catalog = useQuery(subscriptionQueries.catalog());
   const subscription = current.data?.subscription;
   const own =
     credits !== null &&
-    (!credits.target_user_id || credits.target_user_id === user?.id);
+    (!credits.target_user_id || credits.target_user_id === userId);
   if (
     !credits ||
     !own ||
@@ -75,7 +79,7 @@ function useShellTrial(credits: CreditBalance | null): TrialState | null {
       creditsLeft: monthlyCreditsLeft(credits),
       lowCredits: catalog.data.credits.low_balance_threshold,
     },
-    new Date(),
+    now,
   );
 }
 
