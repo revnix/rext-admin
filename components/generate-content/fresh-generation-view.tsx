@@ -39,6 +39,7 @@ import type {
 } from "@/types/generate-content";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
+import { RecentKeywords } from "@/components/generate-content/recent-keywords";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
 import { TitleStep } from "@/components/generate-content/title-step";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
@@ -2163,6 +2164,8 @@ export function FreshGenerationView({
     instructionType === "keyword" || instructionType === "keyword Selection";
 
   const instructionViewMap: Record<string, React.ReactNode> = {
+    // The start screen: the recent keywords under the search (E4). Not while a run is restored.
+    keyword: isLibrary || backgroundThreadId ? null : <RecentKeywords />,
     "keyword Selection": isLibrary ? null : (
       <SuggestionsSection
         primaryKeyword={primaryKeyword}
@@ -2307,6 +2310,7 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               disabled={isManualLoading}
+              restoreCountry={!backgroundThreadId}
               // On the keyword step only a new keyword or country is billed.
               run={
                 instructionType !== "keyword Selection"
