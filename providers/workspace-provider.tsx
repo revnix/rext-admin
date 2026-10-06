@@ -210,7 +210,7 @@ export function WorkspaceProvider({
  *
  *   // ✅ workspaceSlug is IMMEDIATELY available (from URL)
  *   // Use for navigation without waiting for API
- *   const topicsUrl = workspaceRoutes.topicCreate(workspaceSlug);
+ *   const contentUrl = workspaceRoutes.content(workspaceSlug);
  *
  *   // ⏳ workspaceId (UUID) only available after isLoading = false
  *   if (isLoading) return <div>Loading workspace details...</div>;

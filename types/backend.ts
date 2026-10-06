@@ -1,5 +1,4 @@
 import type { ZodIssue } from "zod";
-import type { SaveTopicItem } from "./api";
 import type {
   BackendErrorCode,
   ConsistentApiResponse,
@@ -7,7 +6,6 @@ import type {
   ConsistentSuccessResponse,
   ErrorSeverity,
 } from "./consistent-response";
-import type { GeneratedTopic } from "./topic-builder";
 
 /**
  * Backend API Type Definitions
@@ -15,40 +13,7 @@ import type { GeneratedTopic } from "./topic-builder";
  * This module defines interfaces for communication with the backend API,
  * including request/response structures and error handling.
  *
- * @see /types/schemas.ts for validation schemas and field mappings
- * @see /types/topic-builder.ts for frontend data structures
  */
-
-/**
- * Backend API payload structure for topic generation request - matches Pydantic schema exactly
- */
-export interface BackendTopicGenerationPayload {
-  wizardMode: string;
-  industry: string;
-  industry_other?: string | null;
-  audience: string[];
-  purpose: string[];
-  purpose_other?: string | null;
-  num_topics: number;
-  subject?: string | null;
-  timestamp: string;
-}
-
-/**
- * Backend API response structure for topic generation
- */
-export interface BackendTopicGenerationResponse {
-  /** Generated topics */
-  topics: GeneratedTopic[];
-  /** Total number of topics generated */
-  total_count?: number;
-  /** Unique request identifier */
-  request_id?: string;
-  /** Model used for generation */
-  model_used?: string;
-  /** Generation time in milliseconds */
-  generation_time_ms?: number | null;
-}
 
 /**
  * Backend API configuration
@@ -184,189 +149,6 @@ export interface BackendValidationConfig {
   /** Include validation performance metrics (default: false) */
   includeMetrics?: boolean;
 }
-
-/**
- * Request payload for saving generated topics to the backend.
- *
- * NOTE: The backend expects SaveTopicItem format, not GeneratedTopic.
- * Use transformTopicForSaving() from /types/schemas.ts to convert.
- *
- * @example
- * ```typescript
- * import { transformTopicsForSaving } from '/types/schemas';
- *
- * const frontendTopics: GeneratedTopic[] = [...];
- * const saveRequest: SaveTopicRequest = {
- *   topics: transformTopicsForSaving(frontendTopics)
- * };
- * ```
- *
- * @see SaveTopicItem for the expected backend structure
- * @see transformTopicsForSaving in /types/schemas.ts for transformation helper
- */
-export interface SaveTopicRequest {
-  topics: SaveTopicItem[];
-}
-
-/**
- * Payload format for the Python backend SaveTopicRequestList
- *
- * This interface matches the exact format expected by the Python backend's
- * SaveTopicRequestList schema with individual SaveTopicRequest items.
- */
-export interface BackendSaveTopicRequestList {
-  topics: Array<{
-    id: string;
-    workspace_id: string; // Required for workspace-scoped topics
-    title: string;
-    angle: string;
-    description: string; // Required by backend validation
-    channel_fit: string[];
-    audience_fit: string[];
-    why_it_works: string;
-    tags: string[];
-    scores: {
-      relevance: number;
-      seo_potential: number;
-      trend_level: number;
-      uniqueness: number;
-      reader_interest: number;
-      actionable_potential: number;
-      brand_alignment: number;
-      controversy: number;
-    };
-    suggested_defaults: Record<string, unknown>;
-    input_params?: Record<string, unknown>;
-  }>;
-}
-
-/**
- * Response from the backend after attempting to save topics.
- *
- * @property success - Whether the save operation completed successfully
- * @property saved_count - Number of topics that were successfully saved
- * @property message - Human-readable status message from the backend
- */
-export interface SaveTopicResponse {
-  success: boolean;
-  saved_count: number;
-  message: string;
-}
-
-/**
- * Response from updating a topic in the backend.
- *
- * @property success - Whether the update operation succeeded
- * @property updated_count - Number of topics updated (typically 1)
- * @property topic_id - ID of the updated topic
- * @property topic_title - Title of the updated topic
- * @property updated_fields - Array of field names that were updated
- * @property approved - Current approval status of the topic
- * @property message - Human-readable status message from the backend
- *
- * @example
- * ```typescript
- * const response: UpdateTopicResponse = {
- *   success: true,
- *   updated_count: 1,
- *   topic_id: "abc-123",
- *   topic_title: "AI in Healthcare",
- *   updated_fields: ["approved", "updated_at"],
- *   approved: true,
- *   message: "Topic updated successfully"
- * };
- * ```
- */
-export interface UpdateTopicResponse {
-  success: boolean;
-  updated_count: number;
-  topic_id: string;
-  topic_title: string;
-  updated_fields: string[];
-  approved?: boolean;
-  message: string;
-}
-
-/**
- * Response from deleting topics from the backend.
- *
- * @property success - Whether the delete operation succeeded
- * @property deleted_count - Number of topics deleted
- * @property message - Human-readable status message from the backend
- * @property topic_ids - Array of deleted topic IDs
- *
- * @example
- * ```typescript
- * const response: DeleteTopicResponse = {
- *   success: true,
- *   deleted_count: 2,
- *   message: "Successfully deleted 2 topics",
- *   topic_ids: ["abc-123", "def-456"]
- * };
- * ```
- */
-export interface DeleteTopicResponse {
-  success: boolean;
-  deleted_count: number;
-  message: string;
-  topic_ids: string[];
-}
-
-/**
- * Response containing all saved topics retrieved from the backend.
- *
- * @property topics - Array of all saved topics with complete metadata
- * @property total_count - Total number of topics available in the backend
- *
- * @example
- * ```typescript
- * const response: GetTopicsResponse = {
- *   topics: [{ id: "1", title: "Topic", ... }],
- *   total_count: 1
- * };
- * ```
- */
-export interface GetTopicsResponse {
-  topics: GeneratedTopic[];
-  total_count: number;
-}
-
-// ============================================================================
-// CONSISTENT RESPONSE FORMAT INTEGRATION
-// ============================================================================
-
-/**
- * Backend service responses in consistent format
- */
-export type ConsistentBackendTopicGenerationResponse =
-  ConsistentApiResponse<BackendTopicGenerationResponse>;
-/**
- * Response from backend for topic deletion
- */
-export interface BackendDeleteTopicsResponse {
-  deleted_count: number;
-  failed_deletions?: Array<{
-    topic_id: string;
-    error: string;
-  }>;
-  deleted_topic_ids: string[];
-}
-
-/**
- * Response from backend for topic saving
- */
-export interface BackendSaveTopicsResponse {
-  success: boolean;
-  saved_count: number;
-  message: string;
-}
-
-export type ConsistentBackendDeleteTopicsResponse =
-  ConsistentApiResponse<BackendDeleteTopicsResponse>;
-export type ConsistentBackendSaveTopicsResponse =
-  ConsistentApiResponse<BackendSaveTopicsResponse>;
-export type ConsistentBackendGetTopicsResponse =
-  ConsistentApiResponse<GetTopicsResponse>;
 
 /**
  * Enhanced backend service configuration with consistent response support

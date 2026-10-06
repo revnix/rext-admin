@@ -2,7 +2,6 @@
  * User Session Types
  *
  * Types for managing user authentication sessions across devices.
- * Separate from topic generation sessions (types/session.ts).
  */
 
 export type DeviceType = "desktop" | "mobile" | "tablet";

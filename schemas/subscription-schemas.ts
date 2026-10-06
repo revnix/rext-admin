@@ -102,8 +102,6 @@ export const UserSubscriptionSchema = z.object({
     .object({
       max_workspaces: z.number().int(),
       max_members_per_workspace: z.number().int(),
-      max_topics: z.number().int(),
-      max_knowledge_items: z.number().int(),
       max_api_calls_per_month: z.number().int(),
     })
     .optional(),
@@ -201,18 +199,6 @@ export const SubscriptionPlanSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val ?? 0),
-  max_topics: z
-    .number()
-    .int()
-    .optional()
-    .nullable()
-    .transform((val) => val ?? 0),
-  max_knowledge_items: z
-    .number()
-    .int()
-    .optional()
-    .nullable()
-    .transform((val) => val ?? 0),
   max_api_calls_per_month: z
     .number()
     .int()
@@ -268,18 +254,12 @@ export const UsageStatsSchema = z.object({
   billing_period: BillingPeriodSchema,
   // Current usage
   current_workspaces: z.number().int().nonnegative(),
-  current_topics: z.number().int().nonnegative(),
-  current_knowledge_items: z.number().int().nonnegative(),
   current_api_calls: z.number().int().nonnegative(),
   // Limits
   max_workspaces: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
   max_api_calls_per_month: z.number().int(),
   // Usage percentages
   workspaces_usage_percent: z.number().min(0).max(100),
-  topics_usage_percent: z.number().min(0).max(100),
-  knowledge_items_usage_percent: z.number().min(0).max(100),
   api_calls_usage_percent: z.number().min(0).max(100),
   // Reset date
   usage_reset_date: z.string(),
@@ -419,8 +399,6 @@ export const SubscriptionPlanCreateSchema = z.object({
   features: z.record(z.string(), z.unknown()).optional(),
   max_workspaces: z.number().int().optional(),
   max_members_per_workspace: z.number().int().optional(),
-  max_topics: z.number().int().optional(),
-  max_knowledge_items: z.number().int().optional(),
   max_api_calls_per_month: z.number().int().optional(),
   is_active: z.boolean().optional(),
   is_public: z.boolean().optional(),

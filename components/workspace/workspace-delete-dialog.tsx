@@ -193,12 +193,6 @@ export function WorkspaceDeleteDialog({
     </Button>
   );
 
-  const knowledgeCount =
-    workspace.knowledge_stats?.total ||
-    ((workspace as Workspace).websites?.length || 0) +
-      ((workspace as Workspace).knowledge_files?.length || 0) +
-      ((workspace as Workspace).text_knowledge?.length || 0);
-
   return (
     <AlertDialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {!open && (
@@ -218,18 +212,7 @@ export function WorkspaceDeleteDialog({
             <span className="font-semibold text-foreground">
               "{workspaceName}"
             </span>
-            .
-            {knowledgeCount > 0 && (
-              <>
-                {" "}
-                <span className="text-warning-600 font-medium">
-                  ⚠️ This includes {knowledgeCount} knowledge item
-                  {knowledgeCount === 1 ? "" : "s"}
-                  (websites, files, and text notes) associated with this
-                  workspace.
-                </span>
-              </>
-            )}{" "}
+            .{" "}
             <span className="font-medium">
               The workspace will be moved to trash and become inaccessible
               immediately. You'll have 30 days to restore it before it's

@@ -49,7 +49,7 @@ export default function WorkspacePage() {
   // Update page title
   usePageTitle(
     "Workspaces",
-    "Manage your workspaces, organize knowledge, and configure brand voice settings for AI-powered content creation.",
+    "Manage your workspaces and configure their brand voice for content creation.",
   );
 
   // Query workspaces from API
@@ -73,7 +73,6 @@ export default function WorkspacePage() {
     url: workspace.url,
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
-    knowledge_stats: workspace.knowledge_stats,
     brand_voice: workspace.brand_voice,
     status: "active", // Default status
     // Flatten some fields for easier global search
@@ -177,21 +176,6 @@ export default function WorkspacePage() {
         </div>
       ),
     },
-    // {
-    //   key: "knowledge_stats",
-    //   header: "Knowledge",
-    //   width: "100px",
-    //   cell: (_value: unknown, row: WorkspaceData) => {
-    //     const stats = row.knowledge_stats;
-    //     const total = stats?.total || 0;
-    //     return (
-    //       <div className="flex items-center gap-1 text-sm whitespace-nowrap">
-    //         <FileText className="h-4 w-4 text-muted-foreground" />
-    //         <span>{total} items</span>
-    //       </div>
-    //     );
-    //   },
-    // },
     // {
     //   key: "status",
     //   header: "Status",
@@ -301,16 +285,13 @@ export default function WorkspacePage() {
   ];
 
   return (
-    <ListPage
-      title="Workspaces"
-      description="Manage your workspaces and organize your knowledge base"
-    >
+    <ListPage title="Workspaces" description="Manage your workspaces">
       <div className="w-full lg:w-[68vw] xl:w-auto overflow-x-auto xl:overflow-hidden">
         <DataTable<WorkspaceData>
           columns={columns}
           data={transformedWorkspaces}
           emptyTitle="No workspaces yet"
-          emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
+          emptyDescription="Create your first workspace to set up its brand voice and start writing."
           emptyActions={emptyActions}
           emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
           searchPlaceholder="Search workspaces by name, URL ..."

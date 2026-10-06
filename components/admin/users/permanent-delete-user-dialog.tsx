@@ -83,9 +83,9 @@ export function PermanentDeleteUserDialog({
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>This cannot be undone</AlertTitle>
             <AlertDescription className="text-xs">
-              Every workspace this user owns and its content, knowledge,
-              personas and media are permanently deleted. The account's personal
-              data is erased and it can never be recovered.
+              Every workspace this user owns and its content, personas and media
+              are permanently deleted. The account's personal data is erased and
+              it can never be recovered.
             </AlertDescription>
           </Alert>
 

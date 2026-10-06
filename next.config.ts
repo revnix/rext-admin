@@ -172,6 +172,18 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        // The Topic Builder is removed (E16): its pages open the keyword library.
+        source: "/w/:workspaceSlug/topics/:path*",
+        destination: "/w/:workspaceSlug/generate_content/library",
+        permanent: false,
+      },
+      {
+        // Knowledge bases are removed (E16): their pages open the workspace's settings.
+        source: "/w/:workspaceSlug/knowledge/:path*",
+        destination: "/w/:workspaceSlug/settings",
+        permanent: false,
+      },
+      {
         // Customer management was folded into User Management. Redirect rather
         // than 404 so existing bookmarks and links keep working.
         source: "/admin/customers",

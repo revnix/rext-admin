@@ -268,14 +268,6 @@ export function WorkspaceOverviewForm({
               </div>
             )}
             <div>
-              <span className="text-muted-foreground">Knowledge Items</span>
-              <p className="font-medium">
-                {(workspace.websites?.length || 0) +
-                  (workspace.knowledge_files?.length || 0) +
-                  (workspace.text_knowledge?.length || 0)}
-              </p>
-            </div>
-            <div>
               <span className="text-muted-foreground">Workspace ID</span>
               <p className="font-medium truncate" title={workspace.id}>
                 {workspace.id}

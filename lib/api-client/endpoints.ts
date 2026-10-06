@@ -9,7 +9,7 @@
  * 1. **Workspace-Scoped Resources**
  *    - Standard: `/api/v1/workspaces/{workspace_id}/{resource}`
  *    - Legacy (Query): `/api/v1/{resource}?workspace_id={id}`
- *      @see TOPICS, CONTENT
+ *      @see CONTENT
  *
  * 2. **User-Scoped Resources**
  *    - Standard: `/api/v1/user/{resource}`
@@ -127,22 +127,6 @@ export const ENDPOINTS = {
     // User-scoped invitations (uses singular "workspace" - inconsistent)
     listReceived: "/api/v1/workspace/invitations/received",
     pending: "/api/v1/user/invitations/pending",
-  },
-
-  /**
-   * Topic Endpoints
-   * @note Uses singular `topic` namespace (Inconsistent)
-   * @note Uses verb-based paths like `get-topics`, `save-topic` (RPC-style)
-   * @note Uses query parameter for workspace scoping
-   */
-  TOPICS: {
-    BASE: "/api/v1/topic",
-    list: "/api/v1/topic/get-topics",
-    get: (id: string) => `/api/v1/topic/get-topic/${id}` as const,
-    generate: "/api/v1/topic/generate-topic",
-    save: "/api/v1/topic/save-topic",
-    update: "/api/v1/topic/update-topic",
-    delete: "/api/v1/topic/delete-topic",
   },
 
   /**

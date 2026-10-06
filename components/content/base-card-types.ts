@@ -2,9 +2,9 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 /**
- * Base interface for all knowledge items
+ * Base interface for the items a card shows
  */
-export interface BaseKnowledgeItem {
+export interface BaseCardItem {
   id: string;
   workspace_id: string;
   created_at: string;
@@ -52,18 +52,18 @@ export interface MetadataSection {
 }
 
 /**
- * Base props for knowledge card components
+ * Base props for card components
  */
-export interface BaseKnowledgeCardProps<T extends BaseKnowledgeItem> {
+export interface BaseCardProps<T extends BaseCardItem> {
   item: T;
   onSelect?: (id: string) => void;
   isSelected?: boolean;
 }
 
 /**
- * Configuration for customizing BaseKnowledgeCard behavior
+ * Configuration for customizing BaseCard behavior
  */
-export interface KnowledgeCardConfig<T extends BaseKnowledgeItem> {
+export interface CardConfig<T extends BaseCardItem> {
   // Primary icon for the card
   primaryIcon: LucideIcon;
 
@@ -96,8 +96,7 @@ export interface KnowledgeCardConfig<T extends BaseKnowledgeItem> {
 /**
  * Configuration for list item variant
  */
-export interface KnowledgeListItemConfig<T extends BaseKnowledgeItem>
-  extends KnowledgeCardConfig<T> {
+export interface ListItemConfig<T extends BaseCardItem> extends CardConfig<T> {
   // Additional inline actions for list view
   getInlineActions?: (item: T) => CardAction[];
 

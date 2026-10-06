@@ -9,7 +9,7 @@ export interface DetailPageProps extends Omit<PageHeaderProps, "hidden"> {
 }
 
 /**
- * One thing: an article, a persona, a topic (design/app-language.md §6). The header carries its title,
+ * One thing: an article, a persona, a keyword (design/app-language.md §6). The header carries its title,
  * its status and its actions; the body is the main column, with an aside of facts when there is one.
  * Tabs, where the thing has facets, go in the main column.
  */
