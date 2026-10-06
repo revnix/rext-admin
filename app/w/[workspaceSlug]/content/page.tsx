@@ -181,7 +181,7 @@ export default function WorkspaceContentPage() {
                   }
                 >
                   <SelectTrigger
-                    className="w-full sm:w-44"
+                    className="w-full gap-2 sm:w-auto"
                     aria-label="Filter by status"
                   >
                     <SelectValue />
