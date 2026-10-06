@@ -28,12 +28,12 @@ import {
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import { Notice } from "@/components/ui/notice";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useAllContent, useTrashContent } from "@/hooks/use-content";
 import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { dateFormat } from "@/lib/formatters/date-formatters";
-import { awaitingData } from "@/lib/query-state";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import {
@@ -207,7 +207,7 @@ function ContentRowCard({
  * render inside the list layout, and permissions and the workspace are checked before the list.
  */
 export default function WorkspaceContentPage() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
   // The search, the statuses, the sort and the page live in the URL (?q=…&status=draft&page=2).
   const tableState = useDataTableUrlState(contentListParams, {
     facets: CONTENT_LIST_FACETS,
@@ -240,10 +240,11 @@ export default function WorkspaceContentPage() {
   );
 
   // Every item: the table searches, filters and sorts them in the browser. The query waits for the
-  // workspace, so the list waits on `awaitingData`, not `isLoading` (D16a).
+  // workspace, so the list waits on `useAwaitingData`, not `isLoading` (D16a).
   const contentQuery = useAllContent(workspaceId);
   const content = contentQuery.data ?? NO_CONTENT;
-  const { error } = contentQuery;
+  const isWaiting = useAwaitingData(contentQuery);
+  const error = contentQuery.error ?? workspaceError;
 
   const { data: personaList, isSuccess: personasLoaded } = usePersonas(
     workspaceId || null,
@@ -382,7 +383,7 @@ export default function WorkspaceContentPage() {
               getRowId={(item) => item.id}
               getRowLabel={(item) => item.title || "Untitled"}
               state={tableState}
-              isLoading={awaitingData(contentQuery)}
+              isLoading={isWaiting}
               error={
                 error ? (
                   <Notice tone="danger" title="Content didn't load">
