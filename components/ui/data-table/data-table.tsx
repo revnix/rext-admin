@@ -135,16 +135,21 @@ export interface DataTableProps<TData extends object> {
     parts: { actions: ReactNode; select: ReactNode },
   ) => ReactNode;
   /**
-   * Where the cards give way to the table: 640 px, or 1024 px for a table in a page's narrower
-   * column (a settings section beside its list of sections), which has under 560 px from 768 px.
+   * When the rows are cards: "phone", under 640 px of screen; or "narrow", while the table's own
+   * box is under 36 rem (576 px), for a table in a page's narrower column (a settings section
+   * beside its list of sections), whatever the sidebar takes.
    */
-  cardsBelow?: "sm" | "lg";
+  cardsWhen?: "phone" | "narrow";
 }
 
-/** The table and the cards, each shown on its side of `cardsBelow`. */
-const CARDS_BELOW = {
-  sm: { table: "hidden sm:block", cards: "sm:hidden" },
-  lg: { table: "hidden lg:block", cards: "lg:hidden" },
+/** The table and the cards, each shown on its side of `cardsWhen`'s width. */
+const CARDS_WHEN = {
+  phone: { root: "", table: "hidden sm:block", cards: "sm:hidden" },
+  narrow: {
+    root: "@container",
+    table: "hidden @xl:block",
+    cards: "@xl:hidden",
+  },
 } as const;
 
 /**
@@ -179,7 +184,7 @@ export function DataTable<TData extends object>({
   onRowClick,
   pageSizeOptions = DATA_TABLE_PAGE_SIZES,
   renderCard,
-  cardsBelow = "sm",
+  cardsWhen = "phone",
 }: DataTableProps<TData>) {
   const localState = useDataTableLocalState();
   const state = givenState ?? localState;
@@ -336,7 +341,7 @@ export function DataTable<TData extends object>({
   } else {
     body = (
       <>
-        <div className={cn(frame, renderCard && CARDS_BELOW[cardsBelow].table)}>
+        <div className={cn(frame, renderCard && CARDS_WHEN[cardsWhen].table)}>
           <ScrollingTable
             caption={caption}
             maxHeight={stickyHeader ? maxHeight : undefined}
@@ -438,7 +443,7 @@ export function DataTable<TData extends object>({
         </div>
         {renderCard && (
           <ul
-            className={cn("flex flex-col gap-2", CARDS_BELOW[cardsBelow].cards)}
+            className={cn("flex flex-col gap-2", CARDS_WHEN[cardsWhen].cards)}
             aria-label={caption}
           >
             {isLoading
@@ -483,7 +488,13 @@ export function DataTable<TData extends object>({
   }
 
   return (
-    <div data-slot="data-table" className="flex flex-col gap-3">
+    <div
+      data-slot="data-table"
+      className={cn(
+        "flex flex-col gap-3",
+        renderCard && CARDS_WHEN[cardsWhen].root,
+      )}
+    >
       {hasToolbar && <DataTableToolbar start={toolbarStart} end={toolbarEnd} />}
       {bulkActions && selected.length > 0 && (
         <section

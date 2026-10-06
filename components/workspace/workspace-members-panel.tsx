@@ -317,8 +317,9 @@ export function WorkspaceMembersPanel({
         }
         rowActions={rowActions}
         pageSizeOptions={[10, 25, 50]}
-        // A settings section: beside the list of sections from 768 px, too narrow for the table.
-        cardsBelow="lg"
+        // A settings section, beside the list of sections from 768 px: cards while it's too narrow
+        // for the table, at any sidebar width.
+        cardsWhen="narrow"
         renderCard={(row, { actions }) => (
           <div className="flex items-start gap-3">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
