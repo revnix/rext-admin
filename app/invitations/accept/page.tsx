@@ -414,25 +414,21 @@ export default function AcceptInvitationPage() {
           {/* Action Buttons */}
           {!session ? (
             <div className="space-y-3">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Sign in required</AlertTitle>
-                <AlertDescription>
-                  {accountExists ? (
-                    <>
-                      An account already exists for{" "}
-                      <span className="font-semibold">{invitation.email}</span>.
-                      Sign in to accept this invitation.
-                    </>
-                  ) : (
-                    <>
-                      To accept this invitation, you need to either sign in to
-                      your existing account or create a new account with{" "}
-                      <span className="font-semibold">{invitation.email}</span>
-                    </>
-                  )}
-                </AlertDescription>
-              </Alert>
+              <Notice tone="info" title="Sign in required">
+                {accountExists ? (
+                  <>
+                    An account already exists for{" "}
+                    <span className="font-semibold">{invitation.email}</span>.
+                    Sign in to accept this invitation.
+                  </>
+                ) : (
+                  <>
+                    To accept this invitation, you need to either sign in to
+                    your existing account or create a new account with{" "}
+                    <span className="font-semibold">{invitation.email}</span>
+                  </>
+                )}
+              </Notice>
 
               <div className="space-y-2">
                 <Button className="w-full" onClick={handleLogin}>
