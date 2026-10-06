@@ -41,6 +41,7 @@ import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
 import { TitleStep } from "@/components/generate-content/title-step";
+import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import { StepColumn } from "@/components/layouts";
 import {
   OutlineDisplay,
@@ -2167,6 +2168,7 @@ export function FreshGenerationView({
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
         keywordClusters={keywordClusters}
+        gate={state.interrupt?.[0]?.value}
       />
     ),
     topic: (
@@ -2249,9 +2251,13 @@ export function FreshGenerationView({
   return (
     <div className="relative">
       <StepColumn
-        // A step with a side pane beside it (the Title step's search results) gets the room for both.
+        // A step with a side pane beside it (the search results, on the Select keyword and Title
+        // steps) gets the room for both.
         withSidePane={
-          instructionType === "topic" || instructionType === "topic_selection"
+          instructionType === "topic" ||
+          instructionType === "topic_selection" ||
+          (instructionType === "keyword Selection" &&
+            serpResultsFromGate(state.interrupt?.[0]?.value).length > 0)
         }
         className={cn(
           "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",

@@ -29,11 +29,13 @@ const renderSuggestions = ({
   suggestedKeywords = ["seo tools", "seo tools for agencies"],
   keywordClusters = [],
   onSelect = jest.fn(),
+  gate,
 }: {
   seoResult?: SEORESULT | null;
   suggestedKeywords?: string[];
   keywordClusters?: KeywordCluster[];
   onSelect?: jest.Mock;
+  gate?: unknown;
 } = {}) =>
   render(
     <SuggestionsSection
@@ -44,6 +46,7 @@ const renderSuggestions = ({
       selectedIntent=""
       onIntentChange={jest.fn()}
       keywordClusters={keywordClusters}
+      gate={gate}
     />,
   );
 
@@ -104,6 +107,39 @@ describe("SuggestionsSection", () => {
       within(table).getByRole("button", { name: "Analyze: white label seo" }),
     );
     expect(onSelect).toHaveBeenLastCalledWith("white label seo");
+  });
+
+  it("puts the gate's top ten in the side pane, and leaves it out without one", () => {
+    const { unmount } = renderSuggestions({
+      gate: {
+        type: "keyword Selection",
+        serp_titles: [
+          {
+            position: 1,
+            title: "Best SEO tools for 2026",
+            domain: "example.com",
+            url: "https://example.com/best",
+            format: "list",
+          },
+          { position: 2, title: 42 },
+        ],
+      },
+    });
+    const pane = screen.getAllByRole("complementary", {
+      name: "Top search results",
+    })[0];
+    expect(
+      within(pane).getByRole("link", { name: "Best SEO tools for 2026" }),
+    ).toBeInTheDocument();
+    expect(
+      within(pane).getByText("example.com · List post"),
+    ).toBeInTheDocument();
+    // A malformed result is left out.
+    expect(within(pane).getAllByRole("listitem")).toHaveLength(1);
+    unmount();
+
+    renderSuggestions({ gate: { type: "keyword Selection" } });
+    expect(screen.queryByRole("complementary")).toBeNull();
   });
 
   it("says so when there is nothing to suggest", () => {

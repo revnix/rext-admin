@@ -62,3 +62,20 @@ export function serpResultsFromOrganic(
     .sort((a, b) => a.position - b.position)
     .slice(0, 10);
 }
+
+/**
+ * The top ten a gate's payload carries (`serp_titles`, sent by the keyword and title gates), with
+ * anything missing or malformed left out; none when the gate sent none (an older run).
+ */
+export function serpResultsFromGate(gate: unknown): SerpResult[] {
+  const value =
+    gate && typeof gate === "object"
+      ? (gate as Record<string, unknown>).serp_titles
+      : undefined;
+  return (Array.isArray(value) ? value : []).filter(
+    (result): result is SerpResult =>
+      !!result &&
+      typeof result === "object" &&
+      typeof (result as { title?: unknown }).title === "string",
+  );
+}
