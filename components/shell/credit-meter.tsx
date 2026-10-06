@@ -79,7 +79,7 @@ export function CreditMeter({
         href="/usage"
         aria-label={`${label}. Open usage`}
         className={cn(
-          "h-8 items-center gap-2 rounded-sm px-2 max-lg:h-10 text-label text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          "h-8 items-center gap-2 rounded-sm px-2 max-lg:h-(--control-height-lg) text-label text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           className,
         )}
       >

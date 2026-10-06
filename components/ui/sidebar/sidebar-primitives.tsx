@@ -167,7 +167,10 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-8 text-muted-foreground max-lg:size-10", className)}
+      className={cn(
+        "size-8 text-muted-foreground max-lg:size-(--control-height-lg)",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -227,7 +230,7 @@ function SidebarInput({
       data-slot="sidebar-input"
       data-sidebar="input"
       className={cn(
-        "h-8 w-full bg-background shadow-none max-lg:h-10",
+        "h-8 w-full bg-background shadow-none max-lg:h-(--control-height-lg)",
         className,
       )}
       {...props}
@@ -312,7 +315,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "flex h-8 shrink-0 items-center gap-1 rounded-sm px-3 max-lg:h-10 text-caption font-medium tracking-wide text-muted-foreground uppercase outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-3.5 [&>svg]:shrink-0",
+        "flex h-8 shrink-0 items-center gap-1 rounded-sm px-3 max-lg:h-(--control-height-lg) text-caption font-medium tracking-wide text-muted-foreground uppercase outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring [&>svg]:size-3.5 [&>svg]:shrink-0",
         COLLAPSED_HIDDEN,
         className,
       )}
@@ -398,9 +401,9 @@ const sidebarMenuButtonVariants = cva(
           "bg-background shadow-hairline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       },
       size: {
-        // 40 px under 1024 px, where the sidebar is a sheet on a touch screen (§9).
-        default: "h-9 max-lg:h-10",
-        sm: "h-8 text-label max-lg:h-10",
+        // --control-height-lg (40 px) under 1024 px, where the sidebar is a sheet on a touch screen (§9).
+        default: "h-9 max-lg:h-(--control-height-lg)",
+        sm: "h-8 text-label max-lg:h-(--control-height-lg)",
         lg: "h-11",
       },
     },
@@ -590,7 +593,7 @@ function SidebarMenuSubButton({
       data-active={isActive}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex h-8 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-2 max-lg:h-10 text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "flex h-8 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-2 max-lg:h-(--control-height-lg) text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
         "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
         size === "sm" ? "text-label" : "text-body",
         COLLAPSED_HIDDEN,
