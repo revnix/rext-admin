@@ -74,6 +74,11 @@ export function workspaceRunStages(events: SSEEvent[]): RunStage[] {
     } else if (outcome === "failed") {
       stage.state = "failed";
       stage.endedAt = time;
+      // The client stops listening at a failed step, so the pipeline's own failure may never
+      // arrive to say the later stages won't run.
+      for (const later of stages.slice(index + 1)) {
+        if (later.state === "pending") later.state = "skipped";
+      }
     }
   }
   return stages;

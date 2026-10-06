@@ -69,6 +69,22 @@ describe("workspaceRunStages", () => {
     expect(findFailedEvent(events)?.message).toBe("The website didn't answer.");
   });
 
+  it("skips the later stages at a failed step, without waiting for the pipeline's failure", () => {
+    expect(
+      states([
+        event("scrape.started", "started", 0),
+        event("scrape.completed", "completed", 10),
+        event("brand_voice.started", "started", 11),
+        event(
+          "brand_voice.failed",
+          "failed",
+          20,
+          "The brand voice couldn't be read.",
+        ),
+      ]),
+    ).toEqual(["complete", "failed", "skipped"]);
+  });
+
   it("closes earlier stages that never reported, once a later one completes", () => {
     expect(states([event("brand_voice.completed", "completed", 60)])).toEqual([
       "complete",
