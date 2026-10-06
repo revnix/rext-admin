@@ -333,9 +333,8 @@ export function AccountDeactivation() {
                               {subscriptions.length > 1 ? "s" : ""}
                             </FormLabel>
                             <p className="text-xs text-muted-foreground">
-                              Renewals stop now. Your plan stays active until
-                              the end of the period you&apos;ve paid for, and
-                              the confirmation says until when.
+                              Renewals stop now. The confirmation shows whether
+                              your plan stays active, and until when.
                             </p>
                           </div>
                         </div>
