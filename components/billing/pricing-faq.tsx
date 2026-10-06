@@ -4,23 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { formatCount as count, stageName } from "@/lib/billing/credits";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
 import type { PlanCatalog } from "@/types/plan-catalog";
-
-/** The pipeline's billed stages, by the catalogue's keys (`credit_manager.py`). */
-const STAGE_NAMES: Record<string, string> = {
-  serp_seo: "Search and SEO analysis",
-  title_generation: "Title",
-  generate_outline: "Outline",
-  deep_research: "Research",
-  content_drafting: "Draft",
-  featured_image: "Featured image",
-  humanization: "Rewrite for a natural voice",
-  eeat_optimization: "Experience and trust signals",
-};
-
-const count = (n: number) => n.toLocaleString("en-US");
 
 function answers(catalog: PlanCatalog) {
   const { credits, trial } = catalog;
@@ -36,9 +23,7 @@ function answers(catalog: PlanCatalog) {
           <span className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
             {credits.stages.map((stage) => (
               <span key={stage.key} className="contents">
-                <span>
-                  {STAGE_NAMES[stage.key] ?? stage.key.replaceAll("_", " ")}
-                </span>
+                <span>{stageName(stage.key)}</span>
                 <span className="num text-right">{count(stage.credits)}</span>
               </span>
             ))}

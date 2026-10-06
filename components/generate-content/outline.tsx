@@ -45,6 +45,7 @@ import {
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
+import { RunBalance, RunCostLabel, RunCostTooltip } from "./run-cost";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -1501,7 +1502,7 @@ export function OutlineDisplay({
       )}
 
       {/* Action Bar */}
-      <div className="mt-10 flex items-center justify-end gap-3">
+      <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
         <Button
           onClick={onReject}
           disabled={isLoading || isDraft}
@@ -1510,19 +1511,23 @@ export function OutlineDisplay({
         >
           <RefreshCw className="w-4 h-4 mr-2" /> Regenerate
         </Button>
-        <Button
-          onClick={() => {
-            const selected = sortedInternalLinks.filter((l) =>
-              checkedUrls.has(l.url),
-            );
-            onApprove(selected, promoteBrand, selectedPersonaId);
-          }}
-          disabled={isLoading || isDraft}
-          className="h-11 px-8 rounded-md font-semibold gap-2"
-        >
-          <Check className="w-4 h-4" /> Approve & Generate
-        </Button>
+        <RunCostTooltip run="generate">
+          <Button
+            onClick={() => {
+              const selected = sortedInternalLinks.filter((l) =>
+                checkedUrls.has(l.url),
+              );
+              onApprove(selected, promoteBrand, selectedPersonaId);
+            }}
+            disabled={isLoading || isDraft}
+            className="h-11 px-8 rounded-md font-semibold gap-2"
+          >
+            <Check className="w-4 h-4" /> Approve & Generate
+            <RunCostLabel run="generate" showBalance />
+          </Button>
+        </RunCostTooltip>
       </div>
+      <RunBalance run="generate" />
     </div>
   );
 }

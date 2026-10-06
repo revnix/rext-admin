@@ -27,6 +27,7 @@ import {
   InvoiceSchema,
   SubscriptionListResponseSchema,
 } from "@/schemas/subscription-schemas";
+import { withBalance } from "@/lib/billing/credits";
 import { ensureLemonSqueezy } from "@/lib/lemonsqueezy/get-client";
 import {
   getPurchaseState,
@@ -499,17 +500,8 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
       patchCredits: (currentCredits: number) => {
         const prev = useSubscriptionStore.getState().credits;
         if (!prev) return;
-        const articlesRemaining =
-          prev.credits_per_month !== null
-            ? Math.floor(currentCredits / 15)
-            : null;
-        set({
-          credits: {
-            ...prev,
-            current_credits: currentCredits,
-            articles_remaining: articlesRemaining,
-          },
-        });
+        // The buttons' balance-after and the gate follow the live balance, on the backend's costs.
+        set({ credits: withBalance(prev, currentCredits) });
       },
 
       fetchPlans: async () => {

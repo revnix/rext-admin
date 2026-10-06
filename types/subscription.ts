@@ -272,6 +272,25 @@ export interface TrialStatus {
 // CREDITS
 // ============================================================================
 
+/** The buttons that start a billed run, by the backend's keys (`plan_catalog.RUN_STAGES`). */
+export type BilledRun =
+  | "analyze"
+  | "change_keyword"
+  | "regenerate_outline"
+  | "generate";
+
+/** What a billed button costs against the balance: the backend's figures, none computed here. */
+export interface RunCost {
+  cost: number;
+  /** The balance the run needs before it starts (a whole article's worth for a new run). */
+  minimum_balance: number;
+  can_run: boolean;
+  /** null when the balance is short of `minimum_balance`. */
+  balance_after: number | null;
+  /** The stages the run bills, each with its credits. */
+  stages: { key: string; credits: number }[];
+}
+
 export interface CreditBalance {
   current_credits: number;
   credits_per_month: number | null;
@@ -285,6 +304,8 @@ export interface CreditBalance {
   /** Whose credits these are: the workspace owner's when a workspace was asked for. */
   target_user_id?: string;
   is_workspace_credits?: boolean;
+  /** Each billed button's cost and the balance it leaves (`GET /subscriptions/credits`). */
+  runs?: Record<BilledRun, RunCost>;
 }
 
 // ============================================================================

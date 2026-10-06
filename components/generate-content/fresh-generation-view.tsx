@@ -1835,7 +1835,8 @@ export function FreshGenerationView({
     payload,
     status: statusMsg,
   }: ResumeOptions) => {
-    if (!threadId || !ensureCreditsToContinue()) return;
+    // Approving the outline starts the article's billed stages: their whole cost up front.
+    if (!threadId || !ensureCredits("generate")) return;
 
     const now = new Date().toISOString();
     const resultUrl = `${workspaceRoutes.generate_content(
@@ -2295,6 +2296,11 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               disabled={isManualLoading}
+              run={
+                instructionType === "keyword Selection"
+                  ? "change_keyword"
+                  : "analyze"
+              }
               // Step 2 already owns a thread paused on the keyword interrupt.
               // Re-analysing there must resume that thread — starting a new one
               // trips the "article already in progress" guard on its own job.
