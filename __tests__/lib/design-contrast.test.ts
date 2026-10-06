@@ -25,7 +25,7 @@ describe("the colour maths", () => {
     expect(toHex(toRgba("oklch(1 0 0)"))).toBe("#ffffff");
     expect(toHex(toRgba("oklch(0% 0 none)"))).toBe("#000000");
     expect(toHex(toRgba("#abc"))).toBe("#aabbcc");
-    // As lightningcss converts them: the brand blue (--accent-500), --accent-600 and --neutral-400.
+    // As lightningcss converts them: the brand blue (--accent-ring), --accent-fill and --neutral-400.
     expect(toHex(toRgba("oklch(56.8% 0.237 270)"))).toBe("#465fff");
     expect(toHex(toRgba("oklch(50.5% 0.26 270)"))).toBe("#3641f5");
     expect(toHex(toRgba("oklch(64% 0 0)"))).toBe("#8c8c8c");
@@ -90,8 +90,8 @@ describe("the tokens' contrast", () => {
 
   it("fails a mid-tone accent", () => {
     const wrong = CSS.replace(
-      /--accent-600:[^;]+;/,
-      "--accent-600: oklch(70% 0.15 270);",
+      /--accent-fill:[^;]+;/,
+      "--accent-fill: oklch(70% 0.15 270);",
     );
     expect(wrong).not.toBe(CSS);
     const failing = measure(wrong)
@@ -104,6 +104,39 @@ describe("the tokens' contrast", () => {
       ]),
     );
   });
+
+  // The schemes task B5 showed the founder (rext-control looks/app/B5): a swap edits the four accent
+  // lines and nothing else, and every role pair still clears its minimum.
+  const SCHEMES = {
+    "lime on obsidian": {
+      "--accent-fill": "oklch(20.8% 0.015 172.4)",
+      "--accent-fill-hover": "oklch(27.6% 0.026 157.8)",
+      "--accent-ring": "oklch(59.3% 0.139 127.9)",
+      "--accent-on-fill": "oklch(92.6% 0.144 125.8)",
+    },
+    "neutral near-black": {
+      "--accent-fill": "var(--neutral-900)",
+      "--accent-fill-hover": "var(--neutral-800)",
+      "--accent-ring": "var(--neutral-500)",
+      "--accent-on-fill": "var(--neutral-0)",
+    },
+  };
+
+  it.each(Object.entries(SCHEMES))(
+    "swaps to %s by the accent lines alone",
+    (_name, lines) => {
+      let swapped = CSS;
+      for (const [name, value] of Object.entries(lines)) {
+        const line = new RegExp(`${name}:[^;]+;`);
+        expect(swapped).toMatch(line);
+        swapped = swapped.replace(line, `${name}: ${value};`);
+      }
+      const failing = measure(swapped)
+        .filter((m) => !m.passes && !m.accepted)
+        .map(label);
+      expect(failing).toEqual([]);
+    },
+  );
 
   it("covers each kind", () => {
     for (const kind of Object.keys(MINIMUM)) {
