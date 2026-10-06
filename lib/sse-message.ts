@@ -11,9 +11,9 @@ export type ParsedSSEMessage =
   | { event: SSEEvent; nested: boolean }
   | { error: string };
 
-// The backend before rextaihq/rext-backend G28 (#338 in rext-control) sent each event
-// as a whole frame inside a data: field, so the outer frame has no event name and
-// the JSON sits on the inner data: line. Remove once that backend is on main.
+// The backend before rext-backend task G28 sent each event as a whole frame inside
+// a data: field, so the outer frame has no event name and the JSON sits on the
+// inner data: line. Remove once that backend is on main.
 const NESTED_DATA_LINE = /(?:^|\n)data: (.+)/;
 
 function eventJson(message: SSEMessage): { json: string; nested: boolean } {
