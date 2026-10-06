@@ -29,13 +29,10 @@ describe("env", () => {
     await expect(loadEnv(production)).resolves.toBeDefined();
   });
 
-  it("accepts either name of each", async () => {
+  it("accepts either name of the session secret", async () => {
+    const { AUTH_SECRET: _, ...vars } = production;
     await expect(
-      loadEnv({
-        NODE_ENV: "production",
-        NEXT_PUBLIC_BACKEND_API_URL: "http://127.0.0.1:2024",
-        NEXTAUTH_SECRET: "test-secret",
-      }),
+      loadEnv({ ...vars, NEXTAUTH_SECRET: "test-secret" }),
     ).resolves.toBeDefined();
   });
 
@@ -46,10 +43,15 @@ describe("env", () => {
     );
   });
 
-  it("names the backend's address when a production build has neither name", async () => {
+  it("needs NEXT_PUBLIC_API_BASE_URL itself, which the auth pages read alone", async () => {
     const { NEXT_PUBLIC_API_BASE_URL: _, ...vars } = production;
-    await expect(loadEnv(vars)).rejects.toThrow(
-      "set NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_BACKEND_API_URL",
+    await expect(
+      loadEnv({
+        ...vars,
+        NEXT_PUBLIC_BACKEND_API_URL: "http://127.0.0.1:2024",
+      }),
+    ).rejects.toThrow(
+      "NEXT_PUBLIC_API_BASE_URL: The backend's address is missing: set NEXT_PUBLIC_API_BASE_URL",
     );
   });
 
