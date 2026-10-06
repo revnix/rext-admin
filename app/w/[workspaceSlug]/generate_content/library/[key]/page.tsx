@@ -24,13 +24,25 @@ import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
+ * The Library key a link names. Next hands the segment over decoded, but an escape left in it is
+ * decoded once; a key with a literal "%" (a keyword such as "10% off") is kept as it is.
+ */
+function routeKey(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
  * One researched keyword from the library: its card and related keywords, the search results' top
  * ten beside them (a sheet on narrow screens), and "Use this keyword", which starts an article from
  * the saved research with the intent chosen here.
  */
 export default function Page() {
   const params = useParams<{ key: string }>();
-  const key = decodeURIComponent(params.key);
+  const key = routeKey(params.key);
   const { workspace, workspaceSlug } = useWorkspace();
   const { user } = useAuthSession();
   const workspaceId = workspace?.id ?? "";
