@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
 import {
   getGenerationClient,
   requireThreadOwner,
@@ -40,7 +41,7 @@ export async function POST(
   const { signal } = request;
 
   const stream = client.runs.joinStream(threadId, body.runId, {
-    streamMode: ["updates", "messages", "custom"],
+    streamMode: GENERATION_STREAM_MODES,
     cancelOnDisconnect: false,
     signal,
   });

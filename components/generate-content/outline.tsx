@@ -577,7 +577,7 @@ function deriveOutlineFromTokens(rawTokens: string): Outline {
 
 export function OutlineDisplay({
   outline,
-  rawTokens, // ← NEW: the accumulating raw JSON string from messages/partial
+  rawTokens, // the outline model's JSON so far, one token per stream event
   isLoading,
   internalLinks,
   brandVoicePromotion,

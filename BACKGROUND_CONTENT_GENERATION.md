@@ -136,7 +136,7 @@ pipeline and research sidebar updating:
 
 ```ts
 streamFromSSE(`/api/generate/${threadId}/resume`, {
-  payload, streamMode: ["updates","messages","custom"], streamSubgraphs: true,
+  payload, streamMode: GENERATION_STREAM_MODES, streamSubgraphs: true,
   onDisconnect: "continue",   // ← run survives navigation
 }, signal);
 ```

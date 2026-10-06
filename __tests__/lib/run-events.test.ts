@@ -1,9 +1,18 @@
 import {
+  isOutlineToken,
+  readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
   runIsGoing,
   settlesRun,
 } from "@/lib/generate-content/run-events";
+
+// Recorded from LangGraph's own stream in messages-tuple mode (langgraph
+// 1.2.12, langgraph-api 0.12.6): the content subgraph's topic step, then its
+// outline step, each model streaming its JSON token by token. The model was a
+// fake one, so the run cost nothing; the fields the dashboard does not read
+// were dropped.
+import recorded from "../fixtures/generation-stream/messages-tuple.json";
 
 describe("readRunFailedEvent", () => {
   it("reads the backend's run.failed event", () => {
@@ -113,7 +122,13 @@ describe("settlesRun", () => {
         data: { generate_content: { content: {} } },
       },
     ],
-    ["a token", { event: "messages/partial", data: [{ content: "Hello" }] }],
+    [
+      "a token",
+      {
+        event: "messages|content_engine:1",
+        data: [{ content: "Hello" }, { langgraph_node: "generate_outline" }],
+      },
+    ],
     [
       "a progress event",
       { event: "custom", data: { type: "tool_start", name: "web_search" } },
@@ -136,4 +151,85 @@ describe("runIsGoing", () => {
       expect(runIsGoing(status)).toBe(false);
     },
   );
+});
+
+describe("readMessageToken", () => {
+  it("reads one token and the node that wrote it", () => {
+    expect(
+      readMessageToken({
+        event: "messages|content_engine:1",
+        data: [
+          { content: "Cold", type: "AIMessageChunk" },
+          { langgraph_node: "generate_outline" },
+        ],
+      }),
+    ).toEqual({ token: "Cold", node: "generate_outline" });
+  });
+
+  it("joins the text parts of a list of content blocks", () => {
+    expect(
+      readMessageToken({
+        event: "messages",
+        data: [
+          {
+            content: [
+              { type: "text", text: "Cold " },
+              { type: "tool_use", input: "{}" },
+              "brew",
+            ],
+          },
+          {},
+        ],
+      }),
+    ).toEqual({ token: "Cold brew", node: null });
+  });
+
+  it("reads a chunk with no text as an empty token", () => {
+    expect(
+      readMessageToken({
+        event: "messages",
+        data: [
+          { content: "", tool_call_chunks: [{ args: '{"body' }] },
+          { langgraph_node: "generate_content" },
+        ],
+      }),
+    ).toEqual({ token: "", node: "generate_content" });
+  });
+
+  it.each([
+    ["the older whole-message event", "messages/partial"],
+    ["its metadata event", "messages/metadata"],
+    ["an update", "updates|content_engine:1"],
+    ["a custom event", "custom"],
+  ])("ignores %s", (_label, event) => {
+    expect(readMessageToken({ event, data: [{ content: "x" }, {}] })).toBe(
+      null,
+    );
+  });
+});
+
+describe("the live outline from a recorded stream", () => {
+  const outlineText = (events: Array<{ event: string; data: unknown }>) =>
+    events
+      .map(readMessageToken)
+      .filter((message) => message !== null && isOutlineToken(message))
+      .map((message) => message?.token)
+      .join("");
+
+  it("gets the outline's text once, as written", () => {
+    const text = outlineText(recorded);
+    expect(JSON.parse(text)).toMatchObject({
+      title: "Cold brew at home",
+      sections: [{ heading: "What you need" }],
+      tone: "Friendly",
+    });
+    expect(text.match(/"title"/g)).toHaveLength(1);
+  });
+
+  it("leaves out the topic step's tokens", () => {
+    expect(
+      recorded.some((e) => readMessageToken(e)?.node === "topic_generation"),
+    ).toBe(true);
+    expect(outlineText(recorded)).not.toContain("topics");
+  });
 });
