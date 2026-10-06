@@ -18,4 +18,6 @@ export {
   type SettingsPageProps,
   type SettingsSection,
 } from "./settings-page";
+/** A main column with a side pane (a sheet on narrow screens), for a step inside a working surface. */
+export { WithSidePane, type WithSidePaneProps } from "./side-pane";
 export { WorkingSurface, type WorkingSurfaceProps } from "./working-surface";
