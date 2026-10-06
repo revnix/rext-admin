@@ -43,6 +43,7 @@ pnpm test                    # jest; pnpm test:ci adds coverage
 pnpm build                   # production build; about 2 GB of memory
 pnpm tokens:check            # design values outside the tokens; a per-file ratchet (scripts/tokens-baseline.json)
 pnpm layout:check            # pages outside the five layouts, hand-written page widths, headings, tables, fields; a ratchet
+pnpm api:types               # lib/api-client/schema.d.ts from api/openapi.json, the backend's spec (ARCHITECTURE.md, the API client)
 ```
 
 - The Husky pre-commit hook runs Biome on the staged files only (their fixes are staged with them); never skip it with `--no-verify`. The type check, the full lint and the tests run in CI (`pr-checks.yaml`) and in `check.sh`, not on commit.
