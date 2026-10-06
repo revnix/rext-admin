@@ -117,19 +117,8 @@
     "stock-palette": 6,
     "small-type": 1
   },
-  "components/admin/roles/bulk-assign-permissions-dialog.tsx": {
-    "small-type": 3,
-    "stock-palette": 2
-  },
-  "components/admin/roles/edit-permission-dialog.tsx": {
-    "small-type": 2
-  },
   "components/admin/roles/permission-badge.tsx": {
     "stock-palette": 27
-  },
-  "components/admin/roles/permission-dependency-view.tsx": {
-    "stock-palette": 27,
-    "dark-class": 13
   },
   "components/admin/users/account-recovery-table.tsx": {
     "small-type": 2
@@ -161,15 +150,6 @@
   },
   "components/oauth-buttons.tsx": {
     "literal-colour": 4
-  },
-  "components/onboarding/steps/invited-user-first-tasks.tsx": {
-    "off-scale": 1,
-    "stock-palette": 10,
-    "dark-class": 5
-  },
-  "components/onboarding/steps/invited-user-permissions.tsx": {
-    "stock-palette": 20,
-    "dark-class": 10
   },
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
@@ -317,8 +297,5 @@
   "components/workspace/workspace-welcome-modal.tsx": {
     "stock-palette": 6,
     "arbitrary-radius": 1
-  },
-  "providers/tooltip-provider.tsx": {
-    "off-scale": 1
   }
 }
