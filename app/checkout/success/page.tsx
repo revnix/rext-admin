@@ -90,7 +90,12 @@ export default function CheckoutSuccessPage() {
     };
 
     (async () => {
-      if (await waitForPurchaseSettled(baseline, controller.signal)) {
+      // A failed request is a reason to keep looking, never to stop: the payment went through.
+      const first = await waitForPurchaseSettled(
+        baseline,
+        controller.signal,
+      ).catch(() => false);
+      if (first) {
         confirm();
         return;
       }
@@ -100,15 +105,17 @@ export default function CheckoutSuccessPage() {
       while (!controller.signal.aborted && Date.now() < until) {
         await new Promise((resolve) => setTimeout(resolve, SLOW_POLL_MS));
         if (controller.signal.aborted) return;
-        await fetchSubscription({ force: true });
+        try {
+          await fetchSubscription({ force: true });
+        } catch {
+          continue;
+        }
         if (settled()) {
           confirm();
           return;
         }
       }
-    })().catch(() => {
-      if (!controller.signal.aborted) setPhase("slow");
-    });
+    })();
     return () => controller.abort();
   }, [waitForPurchaseSettled, fetchSubscription]);
 
