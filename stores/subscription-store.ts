@@ -33,6 +33,8 @@ import {
   type PurchaseState,
 } from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
+import { session } from "@/lib/storage";
+import { CHECKOUT_BASELINE_KEY } from "@/lib/storage-keys";
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 
 /**
@@ -723,9 +725,13 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         // Ensure lemon.js script state setup
         ensureLemonSqueezy();
 
-        // Snapshot current subscription so post-payment sync can verify purchase
+        // Snapshot current subscription so post-payment sync can verify purchase.
+        // Kept for the tab too: Lemon Squeezy may return to /checkout/success with
+        // a full page load, which starts the store afresh.
+        const checkoutBaseline = getPurchaseState(get().subscription);
+        session.setJSON(CHECKOUT_BASELINE_KEY, checkoutBaseline);
         set({
-          checkoutBaseline: getPurchaseState(get().subscription),
+          checkoutBaseline,
           checkoutDialogOpen: true,
           checkoutUrl: checkoutUrl,
         });

@@ -23,3 +23,9 @@ export const ONBOARDING_STORAGE_KEYS = {
   /** Serialized WelcomeData in sessionStorage. Scoped per workspace. */
   welcomeData: (workspaceId: string) => `workspace_welcome_${workspaceId}`,
 } as const;
+
+/**
+ * The subscription as it was when a checkout opened, in sessionStorage, so /checkout/success can
+ * tell the new purchase from the plan the person already had after a full page load.
+ */
+export const CHECKOUT_BASELINE_KEY = "rext-checkout-baseline";
