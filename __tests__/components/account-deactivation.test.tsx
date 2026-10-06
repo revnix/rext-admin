@@ -28,7 +28,7 @@ describe("AccountDeactivation", () => {
     renderWithPlan("past_due");
 
     expect(
-      await screen.findByText("Active Subscriptions Detected"),
+      await screen.findByText("Active subscriptions detected"),
     ).toBeInTheDocument();
   });
 
@@ -39,7 +39,7 @@ describe("AccountDeactivation", () => {
     // Let the plan's answer render before looking for what it would show.
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
     expect(
-      screen.queryByText("Active Subscriptions Detected"),
+      screen.queryByText("Active subscriptions detected"),
     ).not.toBeInTheDocument();
   });
 });
