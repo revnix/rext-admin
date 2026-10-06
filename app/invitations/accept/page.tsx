@@ -193,7 +193,7 @@ export default function AcceptInvitationPage() {
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-6 w-6" />
-              <CardTitle>Invalid Invitation</CardTitle>
+              <CardTitle>Invalid invitation</CardTitle>
             </div>
             <CardDescription>
               This invitation link is invalid or has expired.
@@ -228,11 +228,11 @@ export default function AcceptInvitationPage() {
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-warning-600">
               <Clock className="h-6 w-6" />
               <CardTitle>
                 Invitation{" "}
-                {invitation.status === "accepted" ? "Already Used" : "Expired"}
+                {invitation.status === "accepted" ? "Already used" : "Expired"}
               </CardTitle>
             </div>
             <CardDescription>
@@ -283,9 +283,9 @@ export default function AcceptInvitationPage() {
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-warning-600">
               <AlertCircle className="h-6 w-6" />
-              <CardTitle>Wrong Account</CardTitle>
+              <CardTitle>Wrong account</CardTitle>
             </div>
             <CardDescription>
               This invitation is for a different email address.
@@ -330,7 +330,7 @@ export default function AcceptInvitationPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-600 animate-pulse" />
+              <CheckCircle className="h-6 w-6 text-success-600 animate-pulse" />
               Accepting Invitation...
             </CardTitle>
             <CardDescription>
@@ -355,7 +355,7 @@ export default function AcceptInvitationPage() {
         <CardHeader>
           <div className="flex items-center gap-2 text-primary">
             <Mail className="h-6 w-6" />
-            <CardTitle>Workspace Invitation</CardTitle>
+            <CardTitle>Workspace invitation</CardTitle>
           </div>
           <CardDescription>
             You've been invited to join a workspace
@@ -425,7 +425,7 @@ export default function AcceptInvitationPage() {
             <div className="space-y-3">
               <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Authentication Required</AlertTitle>
+                <AlertTitle>Sign in required</AlertTitle>
                 <AlertDescription>
                   {accountExists ? (
                     <>

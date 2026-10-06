@@ -92,12 +92,12 @@ export function ForgotPasswordForm({
         <div className="px-0">
           <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+              <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md">
+              <div className="mb-4 p-3 bg-success-50 border border-success-200 text-success-700 rounded-md">
                 Password reset email sent! Check your inbox for the reset link.
               </div>
             )}
@@ -126,7 +126,7 @@ export function ForgotPasswordForm({
                     ? "Sending..."
                     : success
                       ? "Email Sent!"
-                      : "Send Reset Link"}
+                      : "Send reset link"}
                 </Button>
               </div>
             </div>

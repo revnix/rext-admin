@@ -2,9 +2,6 @@
   "app/accept-admin-invitation/page.tsx": {
     "stock-palette": 16
   },
-  "app/account-recovery/page.tsx": {
-    "stock-palette": 1
-  },
   "app/checkout/cancel/page.tsx": {
     "stock-palette": 9
   },
@@ -14,15 +11,6 @@
   },
   "app/globals.css": {
     "arbitrary-size": 1
-  },
-  "app/invitations/accept/page.tsx": {
-    "stock-palette": 3
-  },
-  "app/reset-password/page.tsx": {
-    "stock-palette": 11
-  },
-  "app/verify-email/page.tsx": {
-    "stock-palette": 11
   },
   "app/w/[workspaceSlug]/content/[id]/page.tsx": {
     "stock-palette": 5,
@@ -46,9 +34,6 @@
   },
   "components/data-table.tsx": {
     "arbitrary-size": 2
-  },
-  "components/forgot-password-form.tsx": {
-    "stock-palette": 6
   },
   "components/notifications-drawer.tsx": {
     "stock-palette": 24,
