@@ -333,8 +333,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     requestRefund: async (data: {
       lemonsqueezy_order_id: string;
       reason: string;
-      /** Cents. Omit for the whole remaining refundable balance. */
-      requested_amount?: number;
+      // No amount: a request is always the whole remaining payment (the refund rule).
     }): Promise<unknown> => {
       return client.request(ENDPOINTS.SUBSCRIPTIONS.refundRequests, {
         method: "POST",
