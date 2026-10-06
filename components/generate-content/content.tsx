@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
+import { Badge } from "../ui/badge";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { deriveImagesData } from "@/lib/content/image-data";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
@@ -1421,120 +1422,99 @@ function ContentEditorInner(props: ContentEditorProps) {
           </aside>
         )}
 
-        {/* Main Content Area: a div, since the shell's main element is the page's landmark */}
+        {/* Main Content Area: a div, since the shell's main element is the page's landmark;
+            the article on the raised surface, with the page gutter. */}
         <div
           ref={scrollRef}
-          className="w-full min-w-0 flex-1 bg-background px-2 py-4 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
+          className="w-full min-w-0 flex-1 bg-card px-4 md:px-6 xl:px-8 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
         >
-          {/* overflow-clip (not overflow-hidden): still contains wide tables
-              and images, but unlike `hidden` it does not create a scroll
-              container — so the editor toolbar's `sticky top-0` keeps working
-              against the real page scroller. */}
-          <article className="overflow-clip w-full sm:mx-auto sm:max-w-3xl sm:px-4 pb-16">
-            <div>
-              {isEditing ? (
-                <div className="space-y-4">
-                  <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
-                    {displayTitle}
-                  </h1>
-                  <div className="min-h-[600px]">
+          {/* The article is one prose container (design/app-language.md §7): the title,
+              the intro and the body share its measure and its type, in the preview and
+              in the editor. overflow-clip (not overflow-hidden) still contains wide
+              tables and images, but unlike `hidden` it does not create a scroll
+              container, so the editor toolbar's `sticky top-0` keeps working against
+              the real page scroller. The top space is the article's, not the column's
+              padding, so that toolbar sticks flush to the column's top edge. */}
+          <article className="prose lg:prose-lg prose-app mx-auto w-full overflow-clip pt-6 pb-16 md:pt-8">
+            {isEditing ? (
+              <>
+                <h1>{displayTitle}</h1>
+                <div className="min-h-[600px]">
+                  <SafeLexicalEditor
+                    readOnly={false}
+                    key={`editor-${contentId ?? "new"}-${isEditing}`}
+                    initialValue={body}
+                    onChange={onContentChange}
+                    toolbarClass="not-prose top-0 z-50"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="relative">
+                {!body?.trim() ? (
+                  <div className="not-prose space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {TAG_SKELETON_KEYS.map((key) => (
+                        <Skeleton key={key} className="h-6 w-16 rounded-full" />
+                      ))}
+                    </div>
+                    <div className="space-y-3 pb-4">
+                      <Skeleton className="h-10 w-4/5 rounded-md" />
+                      <Skeleton className="h-10 w-2/3 rounded-md" />
+                    </div>
+                    {allContent?.meta_description && (
+                      <div className="space-y-3 pb-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                      </div>
+                    )}
+                    {CONTENT_SKELETON_KEYS.map((key) => (
+                      <Skeleton key={key} className="h-4 rounded-md" />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <header>
+                      {tags.length > 0 && (
+                        <div className="not-prose mb-4 flex flex-wrap gap-2">
+                          {tags.map((t) => (
+                            <Badge key={t} variant="neutral">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <h1>{typedTitle}</h1>
+                      {allContent?.meta_description && (
+                        <p className="lead">{typedIntro}</p>
+                      )}
+                    </header>
                     <SafeLexicalEditor
-                      readOnly={false}
+                      readOnly={true}
                       key={`editor-${contentId ?? "new"}-${isEditing}`}
                       initialValue={body}
                       onChange={onContentChange}
-                      toolbarClass="top-0 z-50"
+                      toolbarClass="not-prose top-0 z-50"
+                      onRequestEdit={
+                        canUpdate && isFinal ? onEditToggle : undefined
+                      }
                     />
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full relative">
-                  {!body?.trim() ? (
-                    <>
-                      <div className="space-y-4 mb-8">
-                        {/* Tags Skeleton */}
-                        <div className="flex flex-wrap gap-2">
-                          {TAG_SKELETON_KEYS.map((key) => (
-                            <Skeleton
-                              key={key}
-                              className="h-6 w-16 rounded-full"
-                            />
-                          ))}
-                        </div>
-
-                        {/* Title Skeleton */}
-                        <div className="space-y-3">
-                          <Skeleton className="h-10 w-4/5 rounded-md" />
-                          <Skeleton className="h-10 w-2/3 rounded-md" />
-                        </div>
-
-                        {/* Intro Skeleton */}
-                        {allContent?.meta_description && (
-                          <div className="border-l-2 border-border pl-6 my-8 space-y-3">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-5/6" />
-                            <Skeleton className="h-4 w-4/6" />
-                          </div>
-                        )}
+                  </>
+                )}
+                {!isFinal && isEnhancing && (
+                  <div className="not-prose fixed inset-0 grid place-items-center bg-background/70 ml-auto w-full">
+                    <div className="rounded-md border border-border bg-card px-6 py-4">
+                      <div className="text-sm font-semibold text-foreground">
+                        {enhancingMsg}
                       </div>
-
-                      {/* Content Skeleton */}
-                      <div className="max-w-prose space-y-4">
-                        {CONTENT_SKELETON_KEYS.map((key) => (
-                          <Skeleton key={key} className="h-4 rounded-md" />
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="space-y-4 mb-8">
-                        <div className="flex flex-wrap gap-2">
-                          {tags.map((t) => (
-                            <span
-                              key={t}
-                              className="text-xs text-foreground bg-muted px-2 py-0.5 rounded-md"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                        <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight">
-                          {typedTitle}
-                        </h1>
-
-                        {allContent?.meta_description && (
-                          <div className="text-base text-foreground/70 leading-[1.85] font-normal border-l-2 border-border pl-6 my-8 italic py-1">
-                            {typedIntro}
-                          </div>
-                        )}
-                      </div>
-                      <SafeLexicalEditor
-                        readOnly={true}
-                        key={`editor-${contentId ?? "new"}-${isEditing}`}
-                        initialValue={body}
-                        onChange={onContentChange}
-                        toolbarClass="top-0 z-50"
-                        onRequestEdit={
-                          canUpdate && isFinal ? onEditToggle : undefined
-                        }
-                      />
-                    </>
-                  )}
-                  {!isFinal && isEnhancing && (
-                    <div className="fixed inset-0 grid place-items-center bg-background/70 ml-auto w-full">
-                      <div className="rounded-md border border-border bg-card px-6 py-4">
-                        <div className="text-sm font-semibold text-foreground">
-                          {enhancingMsg}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {enhancingDescription}
-                        </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {enhancingDescription}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
           </article>
         </div>
 

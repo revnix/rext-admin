@@ -1841,10 +1841,8 @@ export default function LexicalEditor({
           />
           <div
             className={cn(
-              "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
-              readOnly
-                ? "border-none shadow-none bg-transparent"
-                : "border-border shadow-sm",
+              "border rounded-md relative min-h-[200px] bg-card text-foreground flex flex-col",
+              readOnly ? "border-none bg-transparent" : "border-border",
             )}
           >
             {!readOnly && <ToolbarPlugin className={toolbarClass} />}
