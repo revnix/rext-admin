@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useRefreshAfterRuns } from "@/hooks/use-refresh-after-runs";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
@@ -101,6 +102,9 @@ export function BackgroundGenerationDock() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // A run's pause, failure or article refreshes the balance and the article list it changed (D1a).
+  useRefreshAfterRuns();
 
   const visibleJobs = useMemo(
     () =>

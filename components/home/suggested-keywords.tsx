@@ -17,9 +17,12 @@ import { workspaceRoutes } from "@/lib/routes";
 export function SuggestedKeywords({
   slug,
   entries,
+  canGenerate,
 }: {
   slug: string;
   entries: LibraryEntry[];
+  /** "Plan" starts a run, so it shows only to someone who may (`content.create`). */
+  canGenerate: boolean;
 }) {
   return (
     <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
@@ -31,19 +34,21 @@ export function SuggestedKeywords({
             metrics={keywordMetrics(entry.value.seo_state)}
             className="min-w-0 flex-1"
             action={
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  href={
-                    `${workspaceRoutes.generate_content(slug)}?${libraryStartQuery(entry.key)}` as Route
-                  }
-                >
-                  Plan
-                  <span className="sr-only">
-                    {" "}
-                    an article on {entry.value.original_query}
-                  </span>
-                </Link>
-              </Button>
+              canGenerate && (
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    href={
+                      `${workspaceRoutes.generate_content(slug)}?${libraryStartQuery(entry.key)}` as Route
+                    }
+                  >
+                    Plan
+                    <span className="sr-only">
+                      {" "}
+                      an article on {entry.value.original_query}
+                    </span>
+                  </Link>
+                </Button>
+              )
             }
           />
         </li>
