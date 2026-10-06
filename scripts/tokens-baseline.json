@@ -9,10 +9,6 @@
     "stock-palette": 5,
     "small-type": 2
   },
-  "app/w/[workspaceSlug]/content/calendar/page.tsx": {
-    "stock-palette": 9,
-    "small-type": 9
-  },
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },
