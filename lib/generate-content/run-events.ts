@@ -63,3 +63,8 @@ export function settlesRun(chunk: { event?: string; data?: unknown }): boolean {
     "__interrupt__" in updates || LAST_NODES.some((node) => node in updates)
   );
 }
+
+/** Whether a run, as LangGraph reports its status, is still going on the server. */
+export function runIsGoing(status: string | undefined): boolean {
+  return status === "pending" || status === "running";
+}

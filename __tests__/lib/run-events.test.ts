@@ -1,6 +1,7 @@
 import {
   readRunFailedEvent,
   readStoppedRun,
+  runIsGoing,
   settlesRun,
 } from "@/lib/generate-content/run-events";
 
@@ -122,4 +123,17 @@ describe("settlesRun", () => {
   ])("leaves the run open on %s", (_label, chunk) => {
     expect(settlesRun(chunk)).toBe(false);
   });
+});
+
+describe("runIsGoing", () => {
+  it.each(["pending", "running"])("is going while %s", (status) => {
+    expect(runIsGoing(status)).toBe(true);
+  });
+
+  it.each(["success", "error", "timeout", "interrupted", undefined])(
+    "is over when %p",
+    (status) => {
+      expect(runIsGoing(status)).toBe(false);
+    },
+  );
 });
