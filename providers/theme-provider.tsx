@@ -1,12 +1,10 @@
 "use client";
 
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useEffect } from "react";
+
+// The dashboard is light only (design/app-language.md §3, decision D4). This keeps useTheme()'s shape for
+// the header's old theme menu until the new shell (task C1) replaces it; task B4's second pull request then
+// deletes this file. Nothing here adds a `dark` class, so a system set to dark gets the light app.
 
 type Theme = "light" | "dark" | "system";
 
@@ -16,84 +14,31 @@ interface ThemeContextType {
   resolvedTheme: "light" | "dark";
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const LIGHT: ThemeContextType = {
+  theme: "light",
+  setTheme: () => {},
+  resolvedTheme: "light",
+};
 
-export const THEME_STORAGE_KEY = "wrext-theme";
+const ThemeContext = createContext<ThemeContextType>(LIGHT);
 
-interface ThemeProviderProps {
-  children: ReactNode;
-  defaultTheme?: Theme;
-}
+/** Where the old theme choice was saved; cleared so a stale "dark" is not read by anything later. */
+const THEME_STORAGE_KEY = "wrext-theme";
 
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-}: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem(
-        THEME_STORAGE_KEY,
-      ) as Theme | null;
-      if (savedTheme) return savedTheme;
-    }
-    return defaultTheme;
-  });
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      if (document.documentElement.classList.contains("dark")) {
-        return "dark";
-      }
-      if (document.documentElement.classList.contains("light")) {
-        return "light";
-      }
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    return "light";
-  });
-
-  // Update resolved theme based on system preference
+export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const updateResolvedTheme = () => {
-      if (theme === "system") {
-        setResolvedTheme(mediaQuery.matches ? "dark" : "light");
-      } else {
-        setResolvedTheme(theme);
-      }
-    };
-
-    updateResolvedTheme();
-    mediaQuery.addEventListener("change", updateResolvedTheme);
-
-    return () => mediaQuery.removeEventListener("change", updateResolvedTheme);
-  }, [theme]);
-
-  // Apply theme class to document
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(resolvedTheme);
-  }, [resolvedTheme]);
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-  };
+    try {
+      localStorage.removeItem(THEME_STORAGE_KEY);
+    } catch {
+      // Storage blocked: nothing was saved there either.
+    }
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={LIGHT}>{children}</ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  return useContext(ThemeContext);
 }

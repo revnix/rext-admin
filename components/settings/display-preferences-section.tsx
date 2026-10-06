@@ -6,7 +6,6 @@ import { Loader2, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ThemeSelector } from "@/components/settings/theme-selector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { UserPreferences } from "@/lib/api-client/settings";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import { preferencesQueries } from "@/lib/query-keys";
@@ -181,11 +179,6 @@ function DisplayPreferencesForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Theme Selector - Saves directly to localStorage/theme provider */}
-        <ThemeSelector />
-
-        <Separator />
-
         {/* Backend Preferences Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

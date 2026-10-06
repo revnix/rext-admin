@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { fontVariables } from "./fonts";
 import { Toaster } from "@/components/ui/sonner";
@@ -14,6 +14,11 @@ import { MotionProvider } from "@/providers/motion-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 import { auth } from "@/auth";
+
+// Light only (design/app-language.md §3): native controls and scrollbars stay light on a system set to dark.
+export const viewport: Viewport = {
+  colorScheme: "light",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -83,28 +88,6 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var key = 'wrext-theme';
-                  var theme = localStorage.getItem(key);
-                  var isDark = theme === 'dark' || ((!theme || theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                  if (isDark) {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
-                  } else {
-                    document.documentElement.classList.add('light');
-                    document.documentElement.classList.remove('dark');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
       <body className="antialiased" suppressHydrationWarning>
         {/*
           Loads lemon.js and owns the checkout overlay lifecycle, so a purchase
@@ -112,7 +95,7 @@ export default async function RootLayout({
         */}
         <LemonSqueezyProvider />
 
-        <ThemeProvider defaultTheme="system">
+        <ThemeProvider>
           <AuthProvider session={session}>
             <PostHogProvider>
               <SSEProvider>

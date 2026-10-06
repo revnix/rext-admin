@@ -105,7 +105,7 @@ const InfoSection = React.forwardRef<HTMLDivElement, InfoSectionComponentProps>(
                     href={item.href as Route}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-2 decoration-1"
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-1"
                   >
                     <span className="truncate">{item.value}</span>
                     <ExternalLink className="h-3 w-3 shrink-0" />
