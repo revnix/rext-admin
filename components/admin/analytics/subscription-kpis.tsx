@@ -109,7 +109,8 @@ export function SubscriptionKPIs({
       value: formatPercent(churnRate),
       icon: Percent,
       description: "Last 30 days",
-      color: stats.churn_rate_monthly > 5 ? "text-red-600" : "text-foreground",
+      color:
+        stats.churn_rate_monthly > 5 ? "text-danger-600" : "text-foreground",
       trend: "down",
     },
     {
@@ -156,7 +157,9 @@ export function SubscriptionKPIs({
                   {TrendIcon && (
                     <TrendIcon
                       className={`h-3 w-3 ${
-                        kpi.trend === "up" ? "text-green-600" : "text-red-600"
+                        kpi.trend === "up"
+                          ? "text-success-600"
+                          : "text-danger-600"
                       }`}
                     />
                   )}

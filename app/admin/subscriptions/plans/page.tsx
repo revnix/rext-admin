@@ -8,6 +8,7 @@ import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subs
 import { DataTable } from "@/components/data-table";
 import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -97,7 +98,7 @@ export default function SubscriptionPlansPage() {
             ${Number(row.price_yearly).toFixed(2)}
           </span>
           {row.price_monthly > 0 && (
-            <div className="text-xs text-green-600">
+            <div className="text-xs text-muted-foreground">
               Save{" "}
               {Math.round(
                 ((row.price_monthly * 12 - row.price_yearly) /
@@ -133,20 +134,10 @@ export default function SubscriptionPlansPage() {
       header: "Status",
       cell: (_value: unknown, row: SubscriptionPlan) => (
         <div className="flex flex-col gap-1">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-              row.is_active
-                ? "bg-green-50 text-green-700"
-                : "bg-gray-50 text-gray-600"
-            }`}
-          >
+          <Badge variant={row.is_active ? "success" : "neutral"}>
             {row.is_active ? "Active" : "Inactive"}
-          </span>
-          {!row.is_public && (
-            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
-              Private
-            </span>
-          )}
+          </Badge>
+          {!row.is_public && <Badge variant="neutral">Private</Badge>}
         </div>
       ),
     },

@@ -49,13 +49,9 @@ function formatAmount(cents: number, currency: string) {
 function statusBadge(request: RefundRequestRow) {
   if (request.status === "approved") {
     return request.awaiting_processing ? (
-      <Badge variant="outline" className="text-amber-600 border-amber-600">
-        Approved · awaiting payout
-      </Badge>
+      <Badge variant="warning">Approved · awaiting payout</Badge>
     ) : (
-      <Badge variant="default" className="bg-green-600">
-        Refunded
-      </Badge>
+      <Badge variant="success">Refunded</Badge>
     );
   }
 
@@ -230,7 +226,7 @@ export function RefundRequestsTable({
             {formatAmount(row.requested_amount, row.currency)}
           </div>
           {row.refunded_amount > 0 && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {formatAmount(row.refunded_amount, row.currency)} refunded
             </p>
           )}
@@ -310,7 +306,7 @@ export function RefundRequestsTable({
               </Button>
               <Button
                 size="sm"
-                className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+                className="h-8 text-xs"
                 onClick={() => openDecision(row, "process")}
               >
                 <Play className="h-3.5 w-3.5 mr-1 fill-current" />

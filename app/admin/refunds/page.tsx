@@ -44,11 +44,7 @@ const formatCurrency = (amount: number): string => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "completed":
-      return (
-        <Badge variant="default" className="bg-green-600">
-          Completed
-        </Badge>
-      );
+      return <Badge variant="success">Completed</Badge>;
     case "failed":
       return <Badge variant="destructive">Failed</Badge>;
     case "pending":
@@ -102,7 +98,7 @@ function StatsCards({ summary, loading }: StatsCardsProps) {
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-2xl font-bold">
             {formatCurrency(summary.total_amount)}
           </div>
           <p className="text-sm text-muted-foreground">Total Refunded</p>
@@ -110,9 +106,7 @@ function StatsCards({ summary, loading }: StatsCardsProps) {
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-green-600">
-            {summary.completed_refunds}
-          </div>
+          <div className="text-2xl font-bold">{summary.completed_refunds}</div>
           <p className="text-sm text-muted-foreground">Completed</p>
         </CardContent>
       </Card>
@@ -223,10 +217,7 @@ export default function RefundManagementPage() {
             {formatCurrency(row.refund_amount)}
           </span>
           {row.is_partial && (
-            <Badge
-              variant="secondary"
-              className="text-[10px] ml-1.5 font-normal"
-            >
+            <Badge variant="secondary" className="ml-1.5 font-normal">
               Partial
             </Badge>
           )}
