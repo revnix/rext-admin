@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CreateWorkspacePage from "@/app/w/create/page";
-import { ThemeProvider } from "@/providers/theme-provider";
 
 interface PageLayoutProps {
   title: string;
@@ -55,9 +54,7 @@ describe("CreateWorkspacePage", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <CreateWorkspacePage />
-        </ThemeProvider>
+        <CreateWorkspacePage />
       </QueryClientProvider>,
     );
 
@@ -79,9 +76,7 @@ describe("CreateWorkspacePage", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <CreateWorkspacePage />
-        </ThemeProvider>
+        <CreateWorkspacePage />
       </QueryClientProvider>,
     );
 
@@ -104,9 +99,7 @@ describe("CreateWorkspacePage", () => {
 
     const { rerender } = render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <CreateWorkspacePage />
-        </ThemeProvider>
+        <CreateWorkspacePage />
       </QueryClientProvider>,
     );
 
@@ -119,9 +112,7 @@ describe("CreateWorkspacePage", () => {
 
     rerender(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <CreateWorkspacePage />
-        </ThemeProvider>
+        <CreateWorkspacePage />
       </QueryClientProvider>,
     );
 

@@ -10,7 +10,6 @@ import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-p
 import { PostHogProvider } from "@/providers/posthog-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
 import { MotionProvider } from "@/providers/motion-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
@@ -96,29 +95,27 @@ export default async function RootLayout({
         */}
         <LemonSqueezyProvider />
 
-        <ThemeProvider>
-          <AuthProvider session={session}>
-            <PostHogProvider>
-              <SSEProvider>
-                <UserNotificationsListener />
-                <QueryProvider>
-                  <TooltipProvider>
-                    <MotionProvider>
-                      {/* Welcome modal shows first, then invited user onboarding */}
-                      <WorkspaceWelcomeGate>
-                        <InvitedUserOnboardingGate>
-                          {/* URL search params as state (nuqs): filters survive a reload */}
-                          <NuqsAdapter>{children}</NuqsAdapter>
-                        </InvitedUserOnboardingGate>
-                      </WorkspaceWelcomeGate>
-                    </MotionProvider>
-                  </TooltipProvider>
-                </QueryProvider>
-              </SSEProvider>
-            </PostHogProvider>
-          </AuthProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AuthProvider session={session}>
+          <PostHogProvider>
+            <SSEProvider>
+              <UserNotificationsListener />
+              <QueryProvider>
+                <TooltipProvider>
+                  <MotionProvider>
+                    {/* Welcome modal shows first, then invited user onboarding */}
+                    <WorkspaceWelcomeGate>
+                      <InvitedUserOnboardingGate>
+                        {/* URL search params as state (nuqs): filters survive a reload */}
+                        <NuqsAdapter>{children}</NuqsAdapter>
+                      </InvitedUserOnboardingGate>
+                    </WorkspaceWelcomeGate>
+                  </MotionProvider>
+                </TooltipProvider>
+              </QueryProvider>
+            </SSEProvider>
+          </PostHogProvider>
+        </AuthProvider>
+        <Toaster />
       </body>
     </html>
   );
