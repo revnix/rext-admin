@@ -139,6 +139,9 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
   const clearAvatarFile = () => {
     setAvatarFile(null);
     setAvatarPreview("");
+    // Choosing the file emptied the photo link; dropping the file gives back the link it had (or
+    // none), and the field is no longer an edit, so a save doesn't clear the current photo.
+    form.resetField("avatar_url");
   };
 
   const onSubmit = async (values: PersonaFormValues) => {

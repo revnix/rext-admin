@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ListPage } from "@/components/layouts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import {
   createDataTableColumnHelper,
   DataTable,
@@ -116,6 +117,8 @@ export default function PersonasPage() {
   const tableState = useDataTableUrlState(personaListParams);
   const { data, isLoading, error } = usePersonas(workspace?.id || null);
   const deletePersona = useDeletePersona(workspace?.id || "");
+  // The row menu calls onSelect at once; a persona is deleted for good, so it asks first.
+  const { confirm, ConfirmationComponent } = useConfirmation();
   const { hasPermission: canRead, isLoading: isPermissionLoading } =
     useWorkspacePermission(PERSONA_PERMISSIONS.READ, workspaceId);
   const { hasPermission: canCreate } = useWorkspacePermission(
@@ -156,7 +159,16 @@ export default function PersonasPage() {
             label: "Delete persona",
             icon: Trash2,
             destructive: true,
-            onSelect: () => deletePersona.mutate(row.id),
+            onSelect: async () => {
+              const confirmed = await confirm({
+                title: `Delete ${row.name}?`,
+                description: `It's deleted for good: a persona can't be restored. Articles written as ${row.name} keep their text and lose their author persona.`,
+                confirmText: "Delete persona",
+                cancelText: "Keep persona",
+                variant: "destructive",
+              });
+              if (confirmed) deletePersona.mutate(row.id);
+            },
           },
         ]
       : []),
@@ -185,6 +197,7 @@ export default function PersonasPage() {
       description="The authors your articles are written as: their experience, their voice, who they write for."
       actions={newPersona}
     >
+      {ConfirmationComponent}
       {canRead ? (
         <DataTable
           caption="Personas"
@@ -220,7 +233,11 @@ export default function PersonasPage() {
           pageSizeOptions={[25, 50]}
           renderCard={(row, { actions }) => (
             <div className="flex items-start gap-3">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              {/* A card is the row on a phone: tapping it opens the persona, as a row's click does. */}
+              <Link
+                href={workspaceRoutes.persona(workspaceSlug, row.id) as Route}
+                className="flex min-w-0 flex-1 flex-col gap-1"
+              >
                 <PersonaCell persona={row} />
                 <p className="text-muted-foreground">
                   {[
@@ -232,7 +249,7 @@ export default function PersonasPage() {
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
-              </div>
+              </Link>
               {actions}
             </div>
           )}
