@@ -16,11 +16,11 @@ app/
                             tooltip), the toaster
   fonts.ts, fonts/          the three faces, self-hosted through next/font/local (licences in public/fonts/licenses)
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
-  page.tsx                  the dashboard (/), inside the shell
+  (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
   w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar, create),
                             personas (+ [personaId], create), brand_voice, members, integrations, knowledge (+ [kbId]),
                             topics (+ [id], create, create/results), settings (+ trash); page.tsx redirects to /
-  w/, w/create              all workspaces; create a workspace
+  w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
   settings/                 the account hub, security, sessions, subscription, trash (billing redirects to subscription)
   subscription/, billing/, usage/, licenses/, pricing/, checkout/{success,cancel}, profile/ (redirects to /settings)
   login/, signup/, forgot-password/, reset-password/, verify-email/, account-recovery/,
@@ -33,8 +33,9 @@ app/
   maintenance/              reachable only by typing the address
 components/
   ui/                       the shadcn-based primitives, plus duplicates the rework retires (see AGENTS.md)
-  page-layout.tsx           the shell today: sidebar, header, page header, the dock (46 importers)
-  app-sidebar.tsx, workspace-switcher.tsx, page-header.tsx, background-generation-dock.tsx, data-table.tsx
+  shell/                    the shell: the frame, sidebar, switcher, header, credits meter, user menu, phone bottom bar
+  page-layout.tsx           a page's container and header until the five page layouts (46 importers)
+  page-header.tsx, background-generation-dock.tsx, data-table.tsx
   <feature>/                one folder per area: generate-content, content, personas, integrations, knowledge, …
 lib/                        api-client/ (the typed client), query-keys.ts, query-options/, routes.ts (workspaceRoutes,
                             settingsRoutes), permissions.ts, generate-content/, analytics.ts (PostHog), logger.ts (pino), utils.ts (cn)
@@ -48,11 +49,14 @@ types/                      the API types, written by hand (no generated client)
 
 ## The shell
 
-There is no shell layout yet. `app/w/[workspaceSlug]/layout.tsx` checks the session and mounts `WorkspaceProvider` and an error boundary, with no chrome; every page mounts `components/page-layout.tsx` itself, so each page decides its title, width (`fullWidth`, `max-w-[1600px]` otherwise) and whether the header shows (`hideTitle`). `PageLayout` composes shadcn's sidebar (`components/app-sidebar.tsx`, nav groups written in the component and filtered by `useFilteredNavigation`), a sticky header (sidebar trigger, the credit widget, notifications, the settings, help, theme and profile menus; the search is switched off), `PageHeader`, the page, and the background-generation dock. `app/settings/layout.tsx`, `app/legal/layout.tsx` and the workspace settings layout mount `PageLayout` for their pages.
+The route layouts mount the shell, so it stays mounted while pages change: `app/w/layout.tsx` (every /w page), `app/(home)/layout.tsx` (/), and the layouts of settings, subscription, billing, usage, licenses, legal and admin each render `ShellLayout` (`components/shell/shell-layout.tsx`). It reads the sidebar's saved state from the `sidebar_state` cookie on the server and renders `AppShell`: shadcn's sidebar (`components/ui/sidebar/`), the header, the impersonation banner, the page in `main#main-content`, the background-generation dock, and under 1024 px a bottom bar. A page never mounts the shell; going from one of these areas to another mounts it again, which loses nothing (the sidebar state is in the cookie, the data in the query cache).
 
-The workspace comes from the slug in the URL (`WorkspaceProvider`, `stores/workspace`); the switcher lists the user's workspaces and keeps the current page when switching (`lib/routes.ts`). Under 1024 px (`hooks/use-mobile.ts`) the sidebar becomes a sheet.
+- **The sidebar** (`app-sidebar.tsx`) follows `design/app-language.md` §5: the wordmark, the switcher (`workspace-switcher.tsx`), Generate (shortcut C, `use-generate-shortcut.ts`), Home, Content with a drafts badge, Keywords & topics, Calendar, the Setup group, Settings, and the admin group for the roles that hold it; the credits meter and the user menu at its foot. The items, their permissions and the current page come from `use-shell-navigation.ts`, which the bottom bar reads too; a new page under a workspace is marked by the longest item URL its path starts with.
+- **Widths:** one cutoff, 1024 px (`hooks/use-mobile.ts`, Tailwind's `lg`): below it the sidebar is a sheet. From 1024 to 1279 px it shows icons only until the person clicks the trigger; the choice ("expanded" or "collapsed") then holds at every width. In the sidebar, `data-collapse="hide"` removes an element in the icon rail and `data-collapse="label"` keeps it for screen readers only.
+- **The header** (`app-header.tsx`): the breadcrumb (`lib/shell-breadcrumbs.ts` derives it from the path), the credits meter, notifications and help. There is no search and no theme toggle.
+- The workspace comes from the slug in the URL (`WorkspaceProvider`, `stores/workspace`); the shell sits above the provider, so it reads the slug with `useParams` and the workspace from the store. The switcher lists the user's workspaces and keeps the current page when switching (`lib/routes.ts`).
 
-The rework's plan C (tasks C1 and C2) moves the sidebar, the header and the dock into the workspace and account layouts and gives every page one of five layouts (`ListPage`, `DetailPage`, `FormPage`, `SettingsPage`, `WorkingSurface`).
+`components/page-layout.tsx` is a page's container (gutters 16, 24 and 32 px, `--content-max` unless `fullWidth`) and its `PageHeader`. The rework's task C2 replaces it with the five page layouts (`ListPage`, `DetailPage`, `FormPage`, `SettingsPage`, `WorkingSurface`).
 
 ## Data
 

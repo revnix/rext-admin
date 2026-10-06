@@ -371,6 +371,10 @@ export function useResourceLimit(
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [isLoadingLimit, setIsLoadingLimit] = useState(true);
   const [usagePercentage, setUsagePercentage] = useState(0);
+  // The count and the plan's cap (-1 for none), for "2 of 3" beside a create action.
+  const [counts, setCounts] = useState<{ used: number; max: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     // Both store actions single-flight their requests, so multiple mounted
@@ -472,6 +476,8 @@ export function useResourceLimit(
         break;
     }
 
+    setCounts({ used: current, max });
+
     if (max === -1) {
       setIsLimitReached(false);
       setUsagePercentage(0);
@@ -486,6 +492,8 @@ export function useResourceLimit(
     isLimitReached,
     isLoading: isLoadingLimit,
     usagePercentage,
+    used: counts?.used ?? null,
+    max: counts && counts.max >= 0 ? counts.max : null,
     canCreate: !isLimitReached && !isLoadingLimit,
   };
 }

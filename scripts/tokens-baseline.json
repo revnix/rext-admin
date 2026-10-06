@@ -214,9 +214,6 @@
   "components/auth/auth-layout.tsx": {
     "stock-palette": 51
   },
-  "components/background-generation-dock.tsx": {
-    "stock-palette": 6
-  },
   "components/content-creation/fields/content-length-selector.tsx": {
     "stock-palette": 2
   },
@@ -296,11 +293,6 @@
     "stock-palette": 20,
     "dark-class": 10
   },
-  "components/page-layout.tsx": {
-    "stock-palette": 23,
-    "dark-class": 27,
-    "small-type": 1
-  },
   "components/permission/access-denied.tsx": {
     "stock-palette": 1
   },
@@ -342,11 +334,6 @@
   },
   "components/subscription/checkout-dialog.tsx": {
     "stock-palette": 1
-  },
-  "components/subscription/credit-balance-widget.tsx": {
-    "arbitrary-colour": 3,
-    "dark-class": 1,
-    "small-type": 1
   },
   "components/subscription/invoice-document.tsx": {
     "stock-palette": 2
@@ -510,11 +497,6 @@
   },
   "components/ui/sheet.tsx": {
     "stock-palette": 1
-  },
-  "components/ui/sidebar/sidebar-primitives.tsx": {
-    "off-scale": 2,
-    "stock-palette": 1,
-    "arbitrary-shadow": 2
   },
   "components/ui/skeleton.tsx": {
     "stock-palette": 1

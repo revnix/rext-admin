@@ -8,7 +8,8 @@ import type { Route } from "next";
  * Workspace Layout
  *
  * Wraps all workspace-scoped pages with authentication check and workspace context.
- * Each page uses PageLayout component for consistent admin layout with sidebar.
+ * The shell (sidebar, header, dock) comes from app/w/layout.tsx, so it stays mounted
+ * while the workspace's pages change.
  *
  * Features:
  * - Authentication check
