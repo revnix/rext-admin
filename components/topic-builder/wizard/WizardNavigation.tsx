@@ -259,14 +259,7 @@ export function WizardNavigation({
         <Button
           onClick={handleNext}
           disabled={isNextDisabled}
-          className={cn(
-            "gap-2 px-6 h-11 min-w-[120px] font-medium",
-            isLastQuestion && [
-              "bg-gradient-to-r from-primary via-primary to-primary/80",
-              "hover:from-primary/90 hover:via-primary/90 hover:to-primary/70",
-              "shadow-lg hover:shadow-xl",
-            ],
-          )}
+          className={cn("gap-2 px-6 h-11 min-w-[120px] font-medium")}
         >
           {isSubmitting ? (
             <>

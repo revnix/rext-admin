@@ -177,7 +177,7 @@ export const TopicsTable = memo(function TopicsTable({
               e.stopPropagation();
               onTopicSelect(row.id, e.target.checked);
             }}
-            className="h-4 w-4 rounded-md border-gray-300 text-primary focus:ring-primary"
+            className="h-4 w-4 rounded-md border-border-strong text-primary focus:ring-primary"
             aria-label={`Select topic: ${row.title}`}
           />
         </div>
@@ -316,7 +316,7 @@ export const TopicsTable = memo(function TopicsTable({
             !savingTopicIds.includes(row.id) && (
               <Tooltip>
                 <TooltipTrigger>
-                  <div className="inline-flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm bg-green-500">
+                  <div className="inline-flex h-6 w-6 items-center justify-center rounded-full text-primary-foreground text-xs font-medium bg-success-600">
                     ✓
                   </div>
                 </TooltipTrigger>
@@ -363,7 +363,7 @@ export const TopicsTable = memo(function TopicsTable({
       (isBulkSaving && selectedTopicIds.includes(row.id));
 
     if (saveErrors.includes(row.id)) {
-      return <Save className="h-4 w-4 text-red-500" />;
+      return <Save className="h-4 w-4 text-danger-600" />;
     }
 
     return isSaving ? (
@@ -415,7 +415,7 @@ export const TopicsTable = memo(function TopicsTable({
     const baseClasses = "transition-colors hover:bg-muted/50";
     const selectedClasses = row.selected ? "bg-muted" : "";
     const highlightedClasses = row.highlighted
-      ? "bg-green-50/50 dark:bg-green-950/20 border-l-4 border-l-green-500"
+      ? "bg-success-50 border-l-4 border-l-success-600"
       : "";
 
     return cn(baseClasses, selectedClasses, highlightedClasses);
@@ -469,7 +469,7 @@ export const TopicsTable = memo(function TopicsTable({
                                   "border-primary text-primary hover:bg-primary/10 hover:text-primary",
                                 action.label === "Save" &&
                                   getActionLabel(row.id) === "Retry" &&
-                                  "border-red-500 text-red-500 hover:bg-red-50 hover:text-red-500",
+                                  "border-danger-500 text-danger-600 hover:bg-danger-50 hover:text-danger-600",
                               )}
                               onClick={(e) => {
                                 e.stopPropagation();

@@ -43,10 +43,10 @@ export function getScoreColorClass(score: number | undefined): string {
   if (score === undefined || score === null || Number.isNaN(score))
     return "text-muted-foreground";
 
-  if (score >= 80) return "text-green-600 font-semibold";
-  if (score >= 60) return "text-blue-600 font-medium";
-  if (score >= 40) return "text-yellow-600";
-  return "text-red-600";
+  if (score >= 80) return "text-success-600 font-semibold";
+  if (score >= 60) return "text-info-600 font-medium";
+  if (score >= 40) return "text-warning-600";
+  return "text-danger-600";
 }
 
 /**
@@ -93,19 +93,21 @@ export function getPriorityVariant(
   }
 }
 
+/** A quiet badge: an attribute reads as a word, not a colour (design/app-language.md §2). */
+const NEUTRAL_BADGE = "bg-surface-inset text-foreground border-border";
+
 /**
- * Get priority color class
+ * Get priority color class: high priority asks for a second look, the rest are words.
  */
 export function getPriorityColorClass(priority: string): string {
   const normalizedPriority = priority.toLowerCase();
 
   switch (normalizedPriority) {
     case "high":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-warning-50 text-warning-700 border-warning-200";
     case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
     case "low":
-      return "bg-green-100 text-green-800 border-green-200";
+      return NEUTRAL_BADGE;
     default:
       return "";
   }
@@ -127,22 +129,8 @@ export function getContentTypeColorClass(
 ): string {
   if (!contentType) return "";
 
-  const normalized = contentType.toLowerCase();
-
-  if (normalized.includes("blog"))
-    return "bg-blue-100 text-blue-800 border-blue-200";
-  if (normalized.includes("social"))
-    return "bg-purple-100 text-purple-800 border-purple-200";
-  if (normalized.includes("video"))
-    return "bg-pink-100 text-pink-800 border-pink-200";
-  if (normalized.includes("email"))
-    return "bg-green-100 text-green-800 border-green-200";
-  if (normalized.includes("newsletter"))
-    return "bg-cyan-100 text-cyan-800 border-cyan-200";
-  if (normalized.includes("podcast"))
-    return "bg-orange-100 text-orange-800 border-orange-200";
-
-  return "bg-gray-100 text-gray-800 border-gray-200";
+  // A content type is a word, not a colour: the type's name tells blog from video.
+  return NEUTRAL_BADGE;
 }
 
 /**
@@ -193,18 +181,8 @@ export function getDisplayText(value: unknown): string {
 export function getEffortColorClass(effort: string | undefined): string {
   if (!effort) return "";
 
-  const normalized = effort.toLowerCase();
-
-  switch (normalized) {
-    case "high":
-      return "bg-red-100 text-red-800 border-red-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "low":
-      return "bg-green-100 text-green-800 border-green-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
+  // Effort is an attribute of the topic, not a status: the word says high, medium or low.
+  return NEUTRAL_BADGE;
 }
 
 /**

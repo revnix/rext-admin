@@ -294,7 +294,7 @@ export const TopicsList = memo(function TopicsList({
       {/* Topic Detail Drawer */}
       <Suspense
         fallback={
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-scrim flex items-center justify-center">
             Loading...
           </div>
         }

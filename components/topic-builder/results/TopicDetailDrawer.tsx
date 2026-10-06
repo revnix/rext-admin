@@ -141,7 +141,7 @@ export function TopicDetailDrawer({
         >
           <div className="flex flex-col h-full">
             {/* Header */}
-            <SheetHeader className="px-6 py-5 border-b bg-gradient-to-r from-background/98 to-muted/30 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+            <SheetHeader className="px-6 py-5 border-b bg-surface-raised">
               <div className="flex items-center justify-between gap-6">
                 <div className="flex items-center gap-5 min-w-0 flex-1">
                   {/* Circular Progress Score */}
@@ -163,10 +163,10 @@ export function TopicDetailDrawer({
                       <div className="flex items-center gap-2 mt-2">
                         <div
                           className={cn(
-                            "inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-xs font-medium shadow-sm",
+                            "inline-flex h-5 w-5 items-center justify-center rounded-full text-primary-foreground text-xs font-medium",
                             topic._optimisticSaved && !topic.is_saved
-                              ? "bg-amber-500"
-                              : "bg-green-500",
+                              ? "bg-warning-600"
+                              : "bg-success-600",
                           )}
                         >
                           <Check className="h-3 w-3" />
@@ -197,7 +197,7 @@ export function TopicDetailDrawer({
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
               {/* Topic Information */}
-              <div className="bg-muted/20 dark:bg-muted/10 rounded-md p-6">
+              <div className="bg-muted/20 rounded-md p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-foreground" />
                   Topic Information
@@ -205,7 +205,7 @@ export function TopicDetailDrawer({
 
                 <div className="space-y-4">
                   {/* Overview - Most Prominent */}
-                  <div className="bg-background rounded-md p-4 border-2 border-muted/40 shadow-sm">
+                  <div className="bg-background rounded-md p-4 border-2 border-muted/40">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-1">
                         <FileText className="w-3.5 h-3.5 text-foreground" />
@@ -225,7 +225,7 @@ export function TopicDetailDrawer({
                   {topic.angle &&
                     topic.description &&
                     topic.angle !== topic.description && (
-                      <div className="bg-background rounded-md p-4 border-2 border-muted/50 shadow-sm">
+                      <div className="bg-background rounded-md p-4 border-2 border-muted/50">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-0.5">
                             <Sparkles className="w-3.5 h-3.5 text-foreground" />
@@ -244,7 +244,7 @@ export function TopicDetailDrawer({
 
                   {/* Why This Works */}
                   {topic.why_it_works && (
-                    <div className="bg-background rounded-md p-4 border-2 border-muted/50 shadow-sm">
+                    <div className="bg-background rounded-md p-4 border-2 border-muted/50">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-7 h-7 bg-muted rounded-md flex items-center justify-center mt-0.5">
                           <Target className="w-3.5 h-3.5 text-foreground" />
@@ -264,7 +264,7 @@ export function TopicDetailDrawer({
               </div>
 
               {/* Performance Scores - Minimal Design */}
-              <div className="bg-muted/20 dark:bg-muted/10 rounded-md p-6 border border-muted/30 dark:border-muted/20">
+              <div className="bg-muted/20 rounded-md p-6 border border-muted/30">
                 <div className="flex items-start justify-between mb-6">
                   <h3 className="text-xl font-semibold text-foreground flex items-center gap-3">
                     <TrendingUp className="w-5 h-5 text-muted-foreground" />
@@ -321,19 +321,16 @@ export function TopicDetailDrawer({
                   ].map((score) => {
                     const IconComponent = score.icon;
                     const getScoreColor = (value: number) => {
-                      if (value >= 80)
-                        return "text-green-600 dark:text-green-400";
-                      if (value >= 60)
-                        return "text-blue-600 dark:text-blue-400";
-                      if (value >= 40)
-                        return "text-yellow-600 dark:text-yellow-400";
-                      return "text-red-600 dark:text-red-400";
+                      if (value >= 80) return "text-success-600";
+                      if (value >= 60) return "text-info-600";
+                      if (value >= 40) return "text-warning-600";
+                      return "text-danger-600";
                     };
                     const getProgressColor = (value: number) => {
-                      if (value >= 80) return "bg-green-500";
-                      if (value >= 60) return "bg-blue-500";
-                      if (value >= 40) return "bg-yellow-500";
-                      return "bg-red-500";
+                      if (value >= 80) return "bg-success-600";
+                      if (value >= 60) return "bg-info-600";
+                      if (value >= 40) return "bg-warning-600";
+                      return "bg-danger-600";
                     };
 
                     return (
@@ -368,7 +365,7 @@ export function TopicDetailDrawer({
 
               {/* Tags/Keywords */}
               {topic.tags && topic.tags.length > 0 && (
-                <div className="bg-purple-50/30 dark:bg-purple-950/20 rounded-md p-6 border border-purple-200/50 dark:border-purple-800/50">
+                <div className="bg-surface-inset rounded-md p-6 border border-border">
                   <h3 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-3">
                     <Hash className="w-5 h-5 text-foreground" />
                     Keywords & Tags
@@ -378,7 +375,7 @@ export function TopicDetailDrawer({
                       <Badge
                         key={keyword}
                         variant="secondary"
-                        className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-colors font-medium"
+                        className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 transition-colors font-medium"
                       >
                         <Hash className="w-3 h-3 mr-1.5 text-foreground" />
                         {keyword}

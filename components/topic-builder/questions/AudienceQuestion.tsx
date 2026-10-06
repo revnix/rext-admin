@@ -129,7 +129,7 @@ export function AudienceQuestion({
                   }
                   className={cn(
                     "px-3 py-2 text-sm rounded-md transition-colors cursor-pointer",
-                    "border hover:border-primary/50 shadow-sm hover:shadow-md",
+                    "border hover:border-primary/50",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
                     isSelected
@@ -163,9 +163,7 @@ export function AudienceQuestion({
           {currentAudiences.length} audience
           {currentAudiences.length !== 1 ? "s" : ""} selected
           {currentAudiences.length >= 5 && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">
-              (Maximum reached)
-            </span>
+            <span className="ml-2 text-warning-600">(Maximum reached)</span>
           )}
         </div>
       )}
