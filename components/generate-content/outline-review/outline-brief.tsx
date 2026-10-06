@@ -1,7 +1,7 @@
 "use client";
 
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
-import { useEffect, useId, useState } from "react";
+import { useId, useLayoutEffect, useState } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -346,10 +346,15 @@ function TextSetting({
   onCommit: (value: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
+  // Before paint, so an accepted edit never shows the old value for a frame.
+  useLayoutEffect(() => setDraft(value), [value]);
   const commit = () => {
-    if (draft.trim() && draft.trim() !== value) onCommit(draft.trim());
-    else setDraft(value);
+    const next = draft.trim();
+    if (next && next !== value) onCommit(next);
+    // An accepted edit comes back as the new value; a rejected one (not a
+    // number, outside the type's range) leaves the field as it was, so it never
+    // shows a value approval won't send.
+    setDraft(value);
   };
   return (
     <div className="space-y-1.5">

@@ -288,6 +288,40 @@ describe("OutlineReview, the outline tree", () => {
     });
   });
 
+  it("rebuilds the tree when a regenerated outline changes only a level", async () => {
+    const user = userEvent.setup();
+    const onApprove = jest.fn<void, [OutlineApproval]>();
+    const view = (gate: Record<string, unknown>) => (
+      <OutlineReview
+        outline={outline}
+        rawTokens=""
+        isLoading={false}
+        gate={gate}
+        onApprove={onApprove}
+        onReject={jest.fn()}
+      />
+    );
+    const { rerender } = render(view(baseGate));
+    rerender(
+      view({
+        ...baseGate,
+        editable_sections: rows.map((row, index) =>
+          index === 2 ? { ...row, heading_level: "H3" } : row,
+        ),
+      }),
+    );
+
+    await chooseFromMenu(user, "How to get fitted", "Move up");
+    await user.click(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    );
+    expect(
+      onApprove.mock.calls[0][0].sections?.find(
+        (edit) => "id" in edit && edit.id === "structure.sections:2",
+      ),
+    ).toMatchObject({ heading_level: "H3" });
+  });
+
   it("shows an older gate's outline read-only, from its own sections", () => {
     renderReview({
       gate: { type: "outline_review" },
@@ -363,6 +397,38 @@ describe("OutlineReview, the brief", () => {
       "https://acme.test/fit",
       "https://acme.test/old",
     ]);
+  });
+});
+
+describe("OutlineReview, the brief's settings", () => {
+  it("puts a target the step won't take back, so the field shows what approval sends", async () => {
+    const user = userEvent.setup();
+    // The view refuses a count outside the type's range and keeps the outline.
+    const onUpdate = jest.fn();
+    render(
+      <OutlineReview
+        outline={outline}
+        rawTokens=""
+        isLoading={false}
+        gate={baseGate}
+        onUpdate={onUpdate}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+      />,
+    );
+    const words = screen.getByLabelText("Target words");
+
+    await user.clear(words);
+    await user.type(words, "lots{Enter}");
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(words).toHaveValue("1800");
+
+    await user.clear(words);
+    await user.type(words, "99999{Enter}");
+    expect(onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ target_word_count: 99999 }),
+    );
+    expect(words).toHaveValue("1800");
   });
 });
 

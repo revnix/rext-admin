@@ -80,10 +80,9 @@ export function OutlineReview({
   const editable = !isDraft && !isLoading;
 
   // The tree starts from what the gate offers, and again when it offers a new
-  // outline (after a regeneration).
-  const offeredKey = gate.sections
-    .map((row) => `${row.id}=${row.heading}`)
-    .join("|");
+  // outline (after a regeneration): any change to a row's id, list, heading or
+  // level, so a regenerated hierarchy is never sent back stale.
+  const offeredKey = JSON.stringify(gate.sections);
   const [rows, setRows] = useState<TreeRow[]>(() =>
     rowsFromGate(gate.sections),
   );
