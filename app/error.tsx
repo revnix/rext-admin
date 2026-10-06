@@ -25,7 +25,7 @@ export default function RootError({
             Error
           </p>
           <EmptyTitle className="font-display text-page-title text-foreground">
-            Something went wrong
+            <h1>Something went wrong</h1>
           </EmptyTitle>
           <EmptyDescription>
             This page hit an error. Go back to the home page and try again.

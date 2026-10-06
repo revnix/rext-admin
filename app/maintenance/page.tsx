@@ -17,7 +17,7 @@ export default function MaintenancePage() {
             Maintenance
           </p>
           <EmptyTitle className="font-display text-page-title text-foreground">
-            Down for maintenance
+            <h1>Down for maintenance</h1>
           </EmptyTitle>
           <EmptyDescription>
             Rext AI is being updated. We&apos;ll be back shortly; thank you for
