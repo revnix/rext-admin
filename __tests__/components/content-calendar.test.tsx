@@ -8,6 +8,7 @@ import { act, render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import {
+  dateIn,
   gridDays,
   knownTimeZone,
   shiftMonth,
@@ -71,6 +72,12 @@ describe("the calendar's days", () => {
     const late = new Date("2026-10-31T21:00:00Z");
     expect(todayIn("Asia/Karachi", late)).toBe("2026-11-01");
     expect(todayIn("UTC", late)).toBe("2026-10-31");
+  });
+
+  it("names an instant's day on the account's calendar, as the board does", () => {
+    // 20:00 UTC on 30 September is already 1 October in Karachi.
+    expect(dateIn("2026-09-30T20:00:00Z", "Asia/Karachi")).toMatch(/Oct 1/);
+    expect(dateIn("2026-09-30T20:00:00Z", "UTC")).toMatch(/Sep 30/);
   });
 
   it("reads an unknown timezone as UTC, as the backend does", () => {

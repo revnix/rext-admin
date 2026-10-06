@@ -77,6 +77,16 @@ export function longDayName(day: string): string {
   return format(parseISO(day), "EEEE d MMMM");
 }
 
+/** The day of an instant in the account's timezone: "Oct 8, 2026". */
+export function dateIn(instant: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    timeZone,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(instant));
+}
+
 /** The time of day an entry publishes at, in the account's timezone: "9:00 AM". */
 export function timeIn(instant: string, timeZone: string): string {
   return new Intl.DateTimeFormat(undefined, {

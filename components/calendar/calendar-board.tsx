@@ -8,13 +8,13 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAllContent } from "@/hooks/use-content";
 import { useShowAfter } from "@/hooks/use-show-after";
-import { dateFormat } from "@/lib/formatters/date-formatters";
 import { workspaceRoutes } from "@/lib/routes";
 import {
   CONTENT_LIST_STATUS_LABELS,
   type ContentListStatus,
 } from "@/lib/search-params/content";
 import type { ContentItem } from "@/types/content";
+import { dateIn } from "./calendar-dates";
 
 /**
  * The pipeline's columns: the backend's content states in the order an article moves through them
@@ -35,14 +35,15 @@ type BoardStatus = (typeof BOARD_STATUSES)[number];
 /** Cards a column shows before "View all". */
 const CARDS_PER_COLUMN = 8;
 
-function whenOf(item: ContentItem, status: BoardStatus): string {
+/** The card's date, on the account's calendar like the month and the list. */
+function whenOf(item: ContentItem, status: BoardStatus, timeZone: string) {
   if (status === "scheduled" && item.wordpress_published_at) {
-    return `Publishes ${dateFormat.short(item.wordpress_published_at)}`;
+    return `Publishes ${dateIn(item.wordpress_published_at, timeZone)}`;
   }
   if (status === "published" && item.wordpress_published_at) {
-    return `Published ${dateFormat.short(item.wordpress_published_at)}`;
+    return `Published ${dateIn(item.wordpress_published_at, timeZone)}`;
   }
-  return `Updated ${dateFormat.short(item.updated_at || item.created_at)}`;
+  return `Updated ${dateIn(item.updated_at || item.created_at, timeZone)}`;
 }
 
 function columnOrder(status: BoardStatus) {
@@ -62,9 +63,12 @@ function columnOrder(status: BoardStatus) {
 export function CalendarBoard({
   workspaceId,
   workspaceSlug,
+  timeZone,
 }: {
   workspaceId: string;
   workspaceSlug: string;
+  /** The account's timezone, the one the month and the list count days in. */
+  timeZone: string;
 }) {
   const { data, isLoading, error, refetch } = useAllContent(workspaceId);
   const showSkeleton = useShowAfter(isLoading);
@@ -149,7 +153,7 @@ export function CalendarBoard({
                       {item.title || "Untitled"}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {whenOf(item, status)}
+                      {whenOf(item, status, timeZone)}
                     </span>
                   </Link>
                 </li>
