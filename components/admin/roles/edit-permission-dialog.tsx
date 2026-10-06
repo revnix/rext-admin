@@ -123,7 +123,7 @@ export function EditPermissionDialog({
                 disabled
                 className="bg-muted opacity-80 cursor-not-allowed"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Resource identifier is immutable after creation.
               </p>
             </div>
@@ -137,7 +137,7 @@ export function EditPermissionDialog({
                 disabled
                 className="bg-muted opacity-80 cursor-not-allowed"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Action identifier is immutable after creation.
               </p>
             </div>
