@@ -501,7 +501,26 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         const prev = useSubscriptionStore.getState().credits;
         if (!prev) return;
         // The buttons' balance-after and the gate follow the live balance, on the backend's costs.
-        set({ credits: withBalance(prev, currentCredits) });
+        const next = withBalance(prev, currentCredits);
+        // The backend spends a bonus before the plan's credits, and puts a refund back into
+        // the plan's: split the change the same way, so the meters that set the plan's own
+        // credits against its allowance stay right between fetches.
+        const spent = prev.current_credits - currentCredits;
+        const bonusLeft = prev.bonus?.credits ?? 0;
+        const fromBonus = spent > 0 ? Math.min(bonusLeft, spent) : 0;
+        const monthly =
+          prev.monthly_credits === undefined
+            ? undefined
+            : Math.max(0, prev.monthly_credits - (spent - fromBonus));
+        set({
+          credits: {
+            ...next,
+            monthly_credits: monthly,
+            bonus: prev.bonus
+              ? { ...prev.bonus, credits: bonusLeft - fromBonus }
+              : prev.bonus,
+          },
+        });
       },
 
       fetchPlans: async () => {

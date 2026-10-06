@@ -1,13 +1,22 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { monthlyCreditsLeft } from "@/components/billing/billing-format";
+import {
+  type TrialState,
+  trialPillWords,
+  trialState,
+} from "@/components/billing/trial-state";
 import { Meter } from "@/components/ui/meter";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { subscriptionQueries } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
-import type { CreditBalance } from "@/types/subscription";
+import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 import { settingsRoutes } from "@/lib/routes";
 
 /** Under a fifth of the month's credits left, the bar takes the warning colour. */
@@ -37,8 +46,42 @@ function useShellCredits(): CreditBalance | null {
   return credits;
 }
 
+/**
+ * The person's own trial, when the credits shown are theirs (on a workspace they don't own, the
+ * credits are the owner's, and the trial isn't theirs to state).
+ */
+function useShellTrial(credits: CreditBalance | null): TrialState | null {
+  const { user } = useAuthSession();
+  const current = useQuery({
+    ...subscriptionQueries.current(),
+    enabled: Boolean(user?.id),
+  });
+  const catalog = useQuery(subscriptionQueries.catalog());
+  const subscription = current.data?.subscription;
+  const own =
+    credits !== null &&
+    (!credits.target_user_id || credits.target_user_id === user?.id);
+  if (
+    !credits ||
+    !own ||
+    subscription?.status !== SubscriptionStatus.TRIAL ||
+    !subscription.trial_end_date ||
+    !catalog.data
+  )
+    return null;
+  return trialState(
+    {
+      trialEnd: subscription.trial_end_date,
+      creditsLeft: monthlyCreditsLeft(credits),
+      lowCredits: catalog.data.credits.low_balance_threshold,
+    },
+    new Date(),
+  );
+}
+
 function describe(credits: CreditBalance) {
-  const left = credits.current_credits;
+  // The plan's own credits against its allowance; a bonus is Usage's to show.
+  const left = monthlyCreditsLeft(credits);
   const total = credits.credits_per_month;
   const share =
     total && total > 0 ? Math.min(1, Math.max(0, left / total)) : null;
@@ -71,8 +114,12 @@ export function CreditMeter({
   className?: string;
 }) {
   const credits = useShellCredits();
+  const trial = useShellTrial(credits);
   if (!credits) return null;
-  const { left, total, share, low, label } = describe(credits);
+  const described = describe(credits);
+  const { left, total, share } = described;
+  const low = trial ? trial.ending : described.low;
+  const label = trial ? trialPillWords(trial) : described.label;
 
   if (variant === "header") {
     return (
@@ -87,13 +134,17 @@ export function CreditMeter({
         {share !== null && total !== null && (
           <Meter value={left} max={total} low={low} className="w-10" />
         )}
-        <span>
-          <span className="num font-medium text-foreground">
-            {left.toLocaleString()}
-          </span>{" "}
-          credits
-        </span>
-        {credits.articles_remaining !== null && (
+        {trial ? (
+          <span className="num">{trialPillWords(trial)}</span>
+        ) : (
+          <span>
+            <span className="num font-medium text-foreground">
+              {left.toLocaleString()}
+            </span>{" "}
+            credits
+          </span>
+        )}
+        {!trial && credits.articles_remaining !== null && (
           <span className="hidden xl:inline">
             ·{" "}
             <span className="num">

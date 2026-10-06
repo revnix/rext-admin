@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { BackgroundGenerationDock } from "@/components/background-generation-dock";
+import { TrialBanner } from "@/components/billing/trial-banner";
 import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
 import { FirstLoginQuestions } from "@/components/onboarding/first-login-questions";
@@ -83,6 +84,7 @@ export function AppShell({
       <SidebarInset className="pb-(--bottom-bar-height) lg:pb-0">
         <AppHeader />
         <ImpersonationBanner />
+        <TrialBanner />
         <main
           id="main-content"
           tabIndex={-1}
