@@ -127,14 +127,30 @@ const NAMESPACES =
   /^--(color|font|text|font-weight|tracking|leading|breakpoint|container|spacing|radius|shadow|inset-shadow|drop-shadow|blur|perspective|aspect|ease|animate)(-|$)/;
 
 /**
- * A line of code without its comment: nothing for a comment line (`//`, `/*`, ` *`, `{/*`), and without an
- * inline `/* … *\/` or a trailing `// …` (after a space, so the `//` of a URL stays).
+ * A line of code without its comments: a block comment (`/* … *\/`, JSX's `{/* … *\/}`) may run over several
+ * lines, so `state.inBlock` carries it from one line to the next; a `//` comment starts at the line's start or
+ * after a space (so the `//` of a URL stays code).
  */
-function withoutComment(line) {
-  if (/^\s*(?:\/\/|\/\*|\*|\{\/\*)/.test(line)) return "";
-  const code = line.replace(/\/\*.*?\*\//g, "");
-  const at = code.search(/(?<=\s)\/\//);
-  return at < 0 ? code : code.slice(0, at);
+function withoutComment(line, state) {
+  let out = "";
+  let rest = line;
+  while (rest) {
+    if (state.inBlock) {
+      const end = rest.indexOf("*/");
+      if (end < 0) return out;
+      state.inBlock = false;
+      rest = rest.slice(end + 2);
+      continue;
+    }
+    const open = rest.indexOf("/*");
+    const slashes = rest.search(/(?:^|(?<=\s))\/\//);
+    if (slashes >= 0 && (open < 0 || slashes < open)) return out + rest.slice(0, slashes);
+    if (open < 0) return out + rest;
+    out += rest.slice(0, open);
+    state.inBlock = true;
+    rest = rest.slice(open + 2);
+  }
+  return out;
 }
 
 /** The colours globals.css declares: `--color-primary`, `--color-success-600`. */
@@ -154,6 +170,7 @@ function scan(text, { stylesheet = false, primitives = false, declared = null, m
   let depth = 0;
   let themeDepth = 0; // the brace depth at which the current `@theme` block opened, or 0
   let inComment = false;
+  const comment = { inBlock: false }; // the same, for a code file's block comments
   lines.forEach((raw, i) => {
     const allowed = MARK.test(raw) || (i > 0 && MARK.test(lines[i - 1]));
     let line = raw;
@@ -185,7 +202,7 @@ function scan(text, { stylesheet = false, primitives = false, declared = null, m
 
     // A comment does not render, so `#338` there is an issue number, not a colour (stylesheet comments are
     // already gone).
-    const code = stylesheet ? line : withoutComment(line);
+    const code = stylesheet ? line : withoutComment(line, comment);
     const literals = [...code.matchAll(HEX), ...code.matchAll(FUNCTIONAL)]
       // A colour inside an arbitrary class is reported once, by the rule above.
       .filter((m) => !new RegExp(`-\\[[^\\]]*${escape(m[0])}`).test(code));
@@ -470,8 +487,9 @@ function selfTest() {
     '<p className="rounded-sm rounded-full rounded-(--card-radius) shadow-hairline shadow-none text-body rounded-[var(--x)]">',
     '<a href="#faq">&#039;</a> // text-slate-\\d{3} in a pattern is not a class',
     "// rext-backend G28 (#338 in rext-control) sent each event as a whole frame",
-    ' * Fixed in #123; see https://example.com/#456 for the background.',
+    "/**\n * Fixed in #123; see https://example.com/#456 for the background.\n */",
     'const step = 1; // after #338 {/* and #339 */}',
+    "/*\n Fixed by issue #338, which\n reported #339 as well\n*/ const after = 1;",
     '<p className="text-slate-900"> {/* tokens-ok: a sample */}',
     '<p style={{ color: "var(--foreground)" }} className="text-[var(--x)]">',
     '<p className="text-[length:var(--x)] [font-size:var(--text-body)] [box-shadow:0_0_0_1px_var(--ring)]">',
