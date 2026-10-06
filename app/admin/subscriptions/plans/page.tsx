@@ -5,7 +5,6 @@ import { Edit, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
-import { DataTable } from "@/components/data-table";
 import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+} from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiClient } from "@/lib/api-client";
 import { BILLING_PERMISSIONS } from "@/lib/permissions";
 import type { SubscriptionPlan } from "@/types/subscription";
@@ -32,6 +39,98 @@ interface PlansResponse {
   plans: SubscriptionPlan[];
   count: number;
 }
+
+const money = (amount: number) => `$${Number(amount).toFixed(2)}`;
+const limit = (value: number | null | undefined) =>
+  value === -1 ? "∞" : (value ?? UNKNOWN);
+
+function PlanName({ plan }: { plan: SubscriptionPlan }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate font-medium text-foreground">
+        {plan.display_name}
+      </p>
+      <p className="truncate text-muted-foreground">{plan.name}</p>
+    </div>
+  );
+}
+
+function PlanStatus({ plan }: { plan: SubscriptionPlan }) {
+  return (
+    <span className="inline-flex flex-wrap gap-1">
+      <Badge variant={plan.is_active ? "success" : "neutral"}>
+        {plan.is_active ? "Active" : "Inactive"}
+      </Badge>
+      {!plan.is_public && <Badge variant="neutral">Private</Badge>}
+    </span>
+  );
+}
+
+const column = createDataTableColumnHelper<SubscriptionPlan>();
+
+const columns = column.columns([
+  column.accessor((plan) => `${plan.display_name} ${plan.name}`, {
+    id: "name",
+    header: "Name",
+    cell: ({ row }) => <PlanName plan={row.original} />,
+  }),
+  column.accessor((plan) => plan.description ?? "", {
+    id: "description",
+    header: "Description",
+  }),
+  column.accessor("price_monthly", {
+    header: "Monthly price",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => money(getValue()),
+    enableGlobalFilter: false,
+  }),
+  column.accessor("price_yearly", {
+    header: "Yearly price",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => {
+      const plan = row.original;
+      const yearOfMonths = plan.price_monthly * 12;
+      return (
+        <div>
+          <p>{money(plan.price_yearly)}</p>
+          {plan.price_monthly > 0 && (
+            <p className="text-muted-foreground">
+              saves{" "}
+              {Math.round(
+                ((yearOfMonths - plan.price_yearly) / yearOfMonths) * 100,
+              )}
+              %
+            </p>
+          )}
+        </div>
+      );
+    },
+    enableGlobalFilter: false,
+  }),
+  column.display({
+    id: "limits",
+    header: "Limits",
+    cell: ({ row }) => {
+      const plan = row.original;
+      return (
+        <div className="num space-y-0.5 text-muted-foreground">
+          <p>Workspaces: {limit(plan.max_workspaces)}</p>
+          <p>Members: {limit(plan.max_members_per_workspace)}</p>
+          <p>Credits: {plan.credits_per_month ?? UNKNOWN} a month</p>
+        </div>
+      );
+    },
+  }),
+  column.accessor((plan) => (plan.is_active ? "active" : "inactive"), {
+    id: "status",
+    header: "Status",
+    cell: ({ row }) => <PlanStatus plan={row.original} />,
+    enableGlobalFilter: false,
+  }),
+]);
+
+// The description is searched but not shown: the name says enough in a row.
+const HIDDEN_COLUMNS = ["description"];
 
 export default function SubscriptionPlansPage() {
   const queryClient = useQueryClient();
@@ -69,77 +168,31 @@ export default function SubscriptionPlansPage() {
 
   const plans = plansResponse?.plans || [];
 
-  const columns = [
+  const { confirm, ConfirmationComponent } = useConfirmation();
+  const deletePlan = async (plan: SubscriptionPlan) => {
+    const confirmed = await confirm({
+      title: "Delete this plan?",
+      description: `"${plan.display_name}" is deleted. This can't be undone.`,
+      confirmText: "Delete plan",
+      variant: "destructive",
+    });
+    if (confirmed) deleteMutation.mutate(plan.id);
+  };
+
+  const rowActions = (plan: SubscriptionPlan): DataTableRowAction[] => [
     {
-      key: "display_name",
-      header: "Name",
-      cell: (_value: unknown, row: SubscriptionPlan) => (
-        <div>
-          <div className="font-medium">{row.display_name}</div>
-          <div className="text-xs text-muted-foreground">{row.name}</div>
-        </div>
-      ),
+      label: "Edit",
+      icon: Edit,
+      onSelect: () => {
+        setEditingPlan(plan);
+        setEditDialogOpen(true);
+      },
     },
     {
-      key: "price_monthly",
-      header: "Monthly Price",
-      cell: (_value: unknown, row: SubscriptionPlan) => (
-        <span className="font-mono">
-          ${Number(row.price_monthly).toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      key: "price_yearly",
-      header: "Yearly Price",
-      cell: (_value: unknown, row: SubscriptionPlan) => (
-        <div>
-          <span className="font-mono">
-            ${Number(row.price_yearly).toFixed(2)}
-          </span>
-          {row.price_monthly > 0 && (
-            <div className="text-xs text-muted-foreground">
-              Save{" "}
-              {Math.round(
-                ((row.price_monthly * 12 - row.price_yearly) /
-                  (row.price_monthly * 12)) *
-                  100,
-              )}
-              %
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "max_workspaces",
-      header: "Limits",
-      cell: (_value: unknown, row: SubscriptionPlan) => (
-        <div className="text-xs space-y-0.5">
-          <div>
-            Workspaces: {row.max_workspaces === -1 ? "∞" : row.max_workspaces}
-          </div>
-          <div>
-            Members:{" "}
-            {row.max_members_per_workspace === -1
-              ? "∞"
-              : row.max_members_per_workspace}
-          </div>
-          <div>Credits: {row.credits_per_month ?? "-"}/month</div>
-        </div>
-      ),
-    },
-    {
-      key: "is_active",
-      header: "Status",
-      cell: (_value: unknown, row: SubscriptionPlan) => (
-        <div className="flex flex-col gap-1">
-          <Badge variant={row.is_active ? "success" : "neutral"}>
-            {row.is_active ? "Active" : "Inactive"}
-          </Badge>
-          {!row.is_public && <Badge variant="neutral">Private</Badge>}
-        </div>
-      ),
+      label: "Delete",
+      icon: Trash2,
+      destructive: true,
+      onSelect: () => void deletePlan(plan),
     },
   ];
 
@@ -188,42 +241,42 @@ export default function SubscriptionPlansPage() {
           </CardHeader>
           <CardContent>
             <DataTable
-              data={plans}
+              caption="Subscription plans"
               columns={columns}
-              searchFields={["display_name", "name", "description"]}
-              searchPlaceholder="Search plans..."
+              data={plans}
+              getRowId={(plan) => plan.id}
+              getRowLabel={(plan) => plan.display_name}
               isLoading={isLoading}
-              emptyTitle="No plans found"
-              emptyDescription="Get started by creating your first subscription plan."
-              emptyActions={[
-                {
-                  label: "Create Plan",
-                  onClick: () => setCreateDialogOpen(true),
-                },
-              ]}
-              rowActions={[
-                {
-                  label: "Edit",
-                  icon: <Edit className="h-4 w-4" />,
-                  onClick: (plan) => {
-                    setEditingPlan(plan);
-                    setEditDialogOpen(true);
-                  },
-                },
-                {
-                  label: "Delete",
-                  icon: <Trash2 className="h-4 w-4" />,
-                  requiresConfirmation: true,
-                  confirmationTitle: "Delete Subscription Plan",
-                  confirmationDescription: (plan: SubscriptionPlan) =>
-                    `Are you sure you want to delete "${plan.display_name}"? This action cannot be undone.`,
-                  onClick: (plan) => {
-                    deleteMutation.mutate(plan.id);
-                  },
-                  variant: "destructive",
-                },
-              ]}
+              surface="plain"
+              search={{ placeholder: "Search plans" }}
+              hiddenColumns={HIDDEN_COLUMNS}
+              rowActions={rowActions}
+              emptyState={
+                <EmptyState
+                  title="No plans yet"
+                  description="Create the first subscription plan."
+                  action={{
+                    label: "Create plan",
+                    onClick: () => setCreateDialogOpen(true),
+                  }}
+                />
+              }
+              renderCard={(plan, { actions }) => (
+                <div className="flex items-start gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <PlanName plan={plan} />
+                    <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                      <PlanStatus plan={plan} />
+                      <span className="num">
+                        {money(plan.price_monthly)} a month
+                      </span>
+                    </div>
+                  </div>
+                  {actions}
+                </div>
+              )}
             />
+            {ConfirmationComponent}
           </CardContent>
         </Card>
 
