@@ -4,7 +4,9 @@
  * in localStorage); until a stage has run here, a typical time measured on the local stack.
  */
 
-const STORAGE_KEY = "rext-run-stage-times";
+// Versioned with the stages' boundaries: #260 moved research out of "draft" and the save into
+// "checks", so samples kept under the first key describe other stages.
+const STORAGE_KEY = "rext-run-stage-times:2";
 const SAMPLES = 5;
 
 const TYPICAL_MS: Record<string, number> = {
