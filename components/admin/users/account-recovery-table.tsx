@@ -61,6 +61,7 @@ const requesterName = (r: AccountRecoveryRequest) =>
 
 const column = createDataTableColumnHelper<AccountRecoveryRequest>();
 
+// The backend pages these requests and sorts them itself (newest first), so no column sorts.
 const columns = column.columns([
   column.accessor(requesterName, {
     id: "name",
@@ -71,6 +72,7 @@ const columns = column.columns([
         <p className="truncate text-muted-foreground">{row.original.email}</p>
       </div>
     ),
+    enableSorting: false,
   }),
   column.accessor("status", {
     header: "Status",
@@ -78,11 +80,13 @@ const columns = column.columns([
       const status = STATUS[getValue()];
       return <Badge variant={status.variant}>{status.text}</Badge>;
     },
+    enableSorting: false,
   }),
   column.accessor("created_at", {
     header: "Requested",
     meta: { align: "end", numeric: true },
     cell: ({ getValue }) => dateFormat.short(getValue()) || UNKNOWN,
+    enableSorting: false,
   }),
   column.accessor("reviewed_at", {
     header: "Reviewed",
@@ -103,6 +107,7 @@ const columns = column.columns([
         </div>
       );
     },
+    enableSorting: false,
   }),
 ]);
 
