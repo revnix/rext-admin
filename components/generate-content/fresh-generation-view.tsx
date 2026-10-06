@@ -1213,6 +1213,8 @@ export function FreshGenerationView({
     // `run/created` confirm it.
     let activeThreadId = threadId ?? backgroundThreadId ?? null;
     let settled = false;
+    // The backend ended the run early (run.failed): its stages fail, they don't complete.
+    let stopped = false;
 
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
@@ -1298,6 +1300,8 @@ export function FreshGenerationView({
           } else if (d?.type === "run") {
             const runFailed = readRunFailedEvent(d);
             if (runFailed) {
+              stopped = true;
+              runStages.fail();
               setRunError(runFailed.message);
               if (activeThreadId) {
                 updateBackgroundJob(activeThreadId, {
@@ -1587,7 +1591,7 @@ export function FreshGenerationView({
         streamingThreadRef.current !== null &&
         streamingThreadRef.current !== activeThreadId;
       if (!superseded) {
-        if (settled) runStages.settle();
+        if (settled && !stopped) runStages.settle();
         await new Promise((r) => setTimeout(r, 1500));
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         dispatch({ type: "SET_LOADING_STATUS", payload: "" });
