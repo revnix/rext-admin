@@ -2417,16 +2417,18 @@ export function FreshGenerationView({
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {showContentStream && !restoreError && (
         <div className={!isContentFinal ? "relative" : undefined}>
-          {/* The article's run, while it runs: the same stages as every other phase. */}
-          {runStages.run?.phase === "article" &&
-            runStages.run.stages.some((stage) => stage.state === "active") && (
-              <RunProgress
-                stages={runStages.run.stages}
-                onCancel={_handleCancelGeneration}
-                className="mb-6 max-w-md"
-              />
-            )}
           <ContentEditor
+            // The article's run, while it runs: the same stages as every other
+            // phase, in the editor's side panel (the editor fills the page).
+            runProgress={
+              runStages.run?.phase === "article" &&
+              runStages.run.stages.some((stage) => stage.state === "active") ? (
+                <RunProgress
+                  stages={runStages.run.stages}
+                  onCancel={_handleCancelGeneration}
+                />
+              ) : null
+            }
             threadId={threadId ?? undefined}
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
