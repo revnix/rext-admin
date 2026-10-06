@@ -38,6 +38,7 @@ import {
   REFUND_REASON_MAX,
   refundRequestSchema,
 } from "@/schemas/refund-schemas";
+import type { CatalogRefund } from "@/types/plan-catalog";
 import type { OrderRow } from "@/types/subscription";
 
 interface RefundRequestButtonProps {
@@ -58,6 +59,10 @@ export function RefundRequestButton({
   onSubmitted,
 }: RefundRequestButtonProps) {
   const [open, setOpen] = useState(false);
+  // The rule the request follows, from the plan catalogue (rext-backend#824). A backend without it
+  // still applies the old rule, whose refusals contradict the refund page, so no button until then.
+  const { data: catalog } = useQuery(subscriptionQueries.catalog());
+  const rule = catalog?.refund;
 
   // Eligibility is the server's answer, and it is checked before any status
   // badge. Deciding by status first hid the button whenever an earlier request
@@ -109,6 +114,8 @@ export function RefundRequestButton({
     return null;
   }
 
+  if (!rule) return null;
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -123,6 +130,7 @@ export function RefundRequestButton({
       </div>
       <RefundRequestDialog
         order={order}
+        rule={rule}
         open={open}
         onOpenChange={setOpen}
         onSubmitted={onSubmitted}
@@ -137,17 +145,17 @@ export function RefundRequestButton({
  */
 function RefundRequestDialog({
   order,
+  rule,
   open,
   onOpenChange,
   onSubmitted,
 }: {
   order: OrderRow;
+  rule: CatalogRefund;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmitted?: () => void;
 }) {
-  const { data: catalog } = useQuery(subscriptionQueries.catalog());
-  const rule = catalog?.refund;
   const remaining = order.refundable_amount ?? order.total ?? 0;
   const form = useZodForm(refundRequestSchema, {
     defaultValues: { reason: "" },
@@ -187,9 +195,7 @@ function RefundRequestDialog({
         <DialogHeader>
           <DialogTitle>Request a refund</DialogTitle>
           <DialogDescription>
-            {rule
-              ? `Within ${rule.window_days} days of a payment, the whole payment comes back if fewer than ${rule.credit_limit} credits were used since it.`
-              : "The whole payment comes back under the refund rule."}{" "}
+            {`Within ${rule.window_days} days of a payment, the whole payment comes back if fewer than ${rule.credit_limit} credits were used since it.`}{" "}
             Our team reviews the request; nothing is refunded before that.
           </DialogDescription>
         </DialogHeader>
