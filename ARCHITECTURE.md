@@ -83,7 +83,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 - **Tests:** Jest 30 through `next/jest` with jsdom (`jest.config.ts`, `jest.setup.ts` mocks the router, `matchMedia`, the observers, the query client and `next-auth/react`); 14 test files in `__tests__/`.
 - **Lint and format:** Biome 2 (`biome.json`); `lint:imports` adds the stores import rule (it needs `rg`); `lint:ui-comments` refuses TODO, FIXME, XXX and HACK comments in `components/ui` and `lib`.
 - **Pre-commit:** Husky runs format, lint, `lint:ui-comments` and `tsc --noEmit` on every commit.
-- **CI:** `.github/workflows/ci_cd.yaml` deploys on pushes to `main` (production) and `staging` (the staging target) through the Vercel CLI, and runs no checks on pull requests yet (rework task 0.4 adds them).
+- **CI:** `.github/workflows/ci_cd.yaml` deploys on pushes to `main` (production) and `staging` (the staging target) through the Vercel CLI. `.github/workflows/pr-checks.yaml` checks pull requests into `staging`: `next typegen`, `tsc --noEmit` and `pnpm lint` on every push, Jest and `pnpm build` (with dummy env values) when the pull request has the label `build`.
 - **TypeScript:** strict, `typedRoutes: true` in `next.config.ts`, the `@/*` path alias.
 
 ## Traps
