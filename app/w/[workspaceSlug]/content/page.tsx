@@ -85,7 +85,12 @@ function typeLabel(type: string): string {
 /** The sites an article went out to: each publishing result's site, else WordPress for an older row. */
 function publishedTo(item: ContentItem): string[] {
   const sites = (item.publishing_results ?? [])
-    .filter((result) => result.external_url || result.status === "published")
+    .filter(
+      (result) =>
+        result.external_url ||
+        result.status === "published" ||
+        result.status === "synced",
+    )
     .map((result) => result.site_name || "A connected site");
   if (sites.length === 0 && item.wordpress_url) sites.push("WordPress");
   return [...new Set(sites)];
@@ -207,9 +212,11 @@ const HIDDEN_COLUMNS = ["platform", "words", "seo", "created_at"];
 function ContentRowCard({
   item,
   actions,
+  select,
 }: {
   item: ContentItem;
   actions: ReactNode;
+  select: ReactNode;
 }) {
   const type = item.content_metadata?.content_type;
   const details = [
@@ -218,6 +225,7 @@ function ContentRowCard({
   ].filter(Boolean);
   return (
     <div className="flex items-start gap-3">
+      {select}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <ContentTitle item={item} />
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
@@ -330,11 +338,12 @@ export default function WorkspaceContentPage() {
       variant: "destructive",
     });
     if (!confirmed) return;
-    await trashContentMutation.mutateAsync({
+    const { failed } = await trashContentMutation.mutateAsync({
       workspaceId,
       contentIds: items.map((item) => item.id),
     });
-    done?.();
+    // Keep the selection when some failed, so the toast's "try them again" is one click away.
+    if (failed === 0) done?.();
   };
 
   const rowActions = (item: ContentItem): DataTableRowAction[] => [
@@ -448,8 +457,8 @@ export default function WorkspaceContentPage() {
               hiddenColumns={HIDDEN_COLUMNS}
               rowActions={rowActions}
               bulkActions={bulkActions}
-              renderCard={(item, { actions }) => (
-                <ContentRowCard item={item} actions={actions} />
+              renderCard={(item, { actions, select }) => (
+                <ContentRowCard item={item} actions={actions} select={select} />
               )}
             />
           </PersonaNames.Provider>

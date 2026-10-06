@@ -127,9 +127,13 @@ export interface DataTableProps<TData extends object> {
   pageSizeOptions?: readonly number[];
   /**
    * Under 640 px the rows become a list of cards drawn by this (design/app-language.md §5); without it
-   * the table scrolls sideways. `actions` is the row's `…` menu, for the card to place.
+   * the table scrolls sideways. `actions` is the row's `…` menu and `select` its checkbox when the
+   * table has bulk actions, for the card to place.
    */
-  renderCard?: (row: TData, parts: { actions: ReactNode }) => ReactNode;
+  renderCard?: (
+    row: TData,
+    parts: { actions: ReactNode; select: ReactNode },
+  ) => ReactNode;
 }
 
 /**
@@ -441,6 +445,17 @@ export function DataTable<TData extends object>({
                         <DataTableRowActions
                           actions={rowActions(row.original)}
                           label={getRowLabel(row.original)}
+                        />
+                      ) : null,
+                      select: bulkActions ? (
+                        <Checkbox
+                          aria-label={`Select ${getRowLabel(row.original)}`}
+                          checked={row.getIsSelected()}
+                          disabled={!row.getCanSelect()}
+                          onCheckedChange={(checked) =>
+                            row.toggleSelected(checked === true)
+                          }
+                          className="mt-0.5"
                         />
                       ) : null,
                     })}
