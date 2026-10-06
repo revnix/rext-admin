@@ -154,38 +154,40 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 // ---------------------------------------------------------------------------
 /** The editor's theme, nodes and markdown transformers are exported for the
  *  round-trip test (__tests__/components/lexical-round-trip.test.ts). */
+// The article's typography comes from `prose prose-app` on the content area (globals.css,
+// design/app-language.md §7), the same stylesheet for the preview and the editor; the theme
+// keeps only what the editor itself needs.
 export const theme = {
-  paragraph: "mb-2",
+  paragraph: "",
   heading: {
-    h1: "text-3xl font-bold mb-4 scroll-mt-20",
-    h2: "text-2xl font-bold mb-3 scroll-mt-20",
-    h3: "text-xl font-bold mb-2 scroll-mt-20",
+    h1: "scroll-mt-20",
+    h2: "scroll-mt-20",
+    h3: "scroll-mt-20",
   },
   list: {
-    ul: "list-disc ml-4 mb-2",
-    // Ordered lists must render their numeric markers — otherwise the
-    // "Numbered List" toolbar button appears to do nothing (the list node is
-    // created but looks unchanged).
-    ol: "list-decimal ml-4 mb-2",
-    listitem: "ml-1",
+    // prose draws the markers: discs and numbers, in the muted colour.
+    ul: "",
+    ol: "",
+    listitem: "",
+    // Lexical wraps a nested list in an item of its own, which must not show a marker.
+    nested: { listitem: "list-none" },
   },
-  quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
-  code: "bg-muted p-1 rounded-md font-mono text-sm",
-  link: "text-primary hover:underline cursor-pointer",
+  quote: "",
+  code: "",
+  link: "cursor-pointer",
   text: {
-    bold: "font-bold",
+    bold: "",
     italic: "italic",
     underline: "underline",
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
   },
-  hr: "my-4 border-0 h-px bg-border",
-  table: "border-collapse w-full my-4",
+  hr: "",
+  table: "",
   tableRow: "",
-  tableCell:
-    "border border-border px-2 py-2 !pb-0 align-top min-w-0 w-auto relative outline-none text-sm",
-  tableCellHeader: "!pb-0 font-semibold",
-  tableScrollableWrapper: "overflow-x-auto my-4 w-full",
+  tableCell: "relative min-w-0 w-auto align-top outline-none",
+  tableCellHeader: "",
+  tableScrollableWrapper: "overflow-x-auto w-full",
 };
 
 const lexicalLog = log.forComponent("LexicalEditor");
@@ -394,13 +396,13 @@ function ImageNodeComponent({
   }
 
   return (
-    <span className="relative inline-block group my-2">
+    <span className="relative inline-block max-w-full group my-2">
       <Image
         src={src}
         alt={altText}
         width={width || 500}
         height={height || 300}
-        className="max-w-full rounded-md block"
+        className="max-w-full h-auto rounded-md block"
         style={{ maxHeight: 480 }}
         unoptimized
       />
@@ -483,6 +485,9 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   createDOM(_config: EditorConfig): HTMLElement {
     const span = document.createElement("span");
     span.style.display = "inline-block";
+    // An inline-block shrinks to its image, so without a cap a wide image runs past
+    // the article on a phone.
+    span.style.maxWidth = "100%";
     return span;
   }
 
@@ -1848,7 +1853,7 @@ export default function LexicalEditor({
                 contentEditable={
                   <ContentEditable
                     className={cn(
-                      "min-h-[150px] outline-none",
+                      "prose lg:prose-lg prose-app max-w-prose min-h-[150px] outline-none",
                       readOnly ? "p-0 cursor-default" : "p-6",
                     )}
                   />
