@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice, type NoticeTone } from "@/components/ui/notice";
 import { useBillingActions } from "@/hooks/use-billing-actions";
@@ -59,26 +60,40 @@ function words(action: BillingAction): {
   };
 }
 
+/** The action, its words and the button that does it. */
+export type ResolvedBillingAction = BillingAction &
+  ReturnType<typeof words> & { label: string; run: () => void; busy: boolean };
+
 /**
  * The person's billing action, with the button that does it: "Update card" opens Lemon Squeezy's
  * card form in the on-site overlay, "Resume" resumes or un-cancels the same subscription. While
  * one is set the backend refuses a new checkout, so every place that would offer one offers this.
+ * `settled` is true only once the backend has answered: until then, or when the request failed
+ * (`failed`), no one can tell whether a checkout would be refused.
  */
 export function useBillingAction() {
-  const { data } = useQuery(subscriptionQueries.billingAction());
+  const query = useQuery(subscriptionQueries.billingAction());
   const { isLoading, updatePaymentMethod, resumeSubscription } =
     useBillingActions();
-  const action = data?.billing_action ?? null;
-  if (!action) return null;
+  const raw = query.data?.billing_action ?? null;
+  const action: ResolvedBillingAction | null = raw
+    ? {
+        ...raw,
+        ...words(raw),
+        label:
+          raw.action === "update_payment_method" ? "Update card" : "Resume",
+        run:
+          raw.action === "update_payment_method"
+            ? updatePaymentMethod
+            : resumeSubscription,
+        busy: isLoading,
+      }
+    : null;
   return {
-    ...action,
-    ...words(action),
-    label: action.action === "update_payment_method" ? "Update card" : "Resume",
-    run:
-      action.action === "update_payment_method"
-        ? updatePaymentMethod
-        : resumeSubscription,
-    busy: isLoading,
+    action,
+    settled: query.isSuccess,
+    failed: query.isError,
+    retry: () => void query.refetch(),
   };
 }
 
@@ -86,7 +101,7 @@ function ActionNotice({
   action,
   className,
 }: {
-  action: NonNullable<ReturnType<typeof useBillingAction>>;
+  action: ResolvedBillingAction;
   className?: string;
 }) {
   return (
@@ -118,7 +133,7 @@ export function BillingActionNotice({
   kinds: BillingAction["action"][];
   className?: string;
 }) {
-  const action = useBillingAction();
+  const { action } = useBillingAction();
   if (!action || !kinds.includes(action.action)) return null;
   return <ActionNotice action={action} className={className} />;
 }
@@ -128,12 +143,11 @@ export function BillingActionNotice({
  * waits in Billing and on the plan grid: a cancelled plan still runs, so it needs no banner.
  */
 export function ShellBillingBanner() {
-  const action = useBillingAction();
+  const { action } = useBillingAction();
   if (action?.action !== "update_payment_method") return null;
   return (
-    // layout-ok: the shell's banner above every page, at the content's width and gutters
-    <div className="mx-auto w-full max-w-(--content-max) px-4 pt-6 md:px-6 xl:px-8">
+    <PageBand>
       <ActionNotice action={action} />
-    </div>
+    </PageBand>
   );
 }
