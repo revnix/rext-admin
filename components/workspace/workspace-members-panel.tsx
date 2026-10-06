@@ -14,6 +14,7 @@ import {
   UNKNOWN,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Notice } from "@/components/ui/notice";
 import {
   WorkspaceChangeRoleDialog,
   WorkspaceInviteMembersDialog,
@@ -279,9 +280,9 @@ export function WorkspaceMembersPanel({
         isLoading={isLoading}
         error={
           error ? (
-            <p className="rounded-(--card-radius) border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-              Failed to load members. Please try again.
-            </p>
+            <Notice tone="danger" title="Members didn't load">
+              Refresh the list to try again.
+            </Notice>
           ) : undefined
         }
         emptyState={
