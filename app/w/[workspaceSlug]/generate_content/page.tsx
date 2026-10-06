@@ -65,8 +65,10 @@ export default function Page() {
     string | undefined
   >(libraryKeyword ?? undefined);
 
+  // The Library is kept under the workspace's id; `workspaceId` above is the address's slug.
+  const libraryWorkspaceId = workspace?.id;
   useEffect(() => {
-    if (libraryKey === null || !user?.id || !workspaceId) {
+    if (libraryKey === null || !user?.id || !libraryWorkspaceId) {
       setLibraryStart(null);
       return;
     }
@@ -75,13 +77,15 @@ export default function Page() {
       return;
     }
     let cancelled = false;
-    void findLibraryItem(libraryKey, user.id, workspaceId).then((item) => {
-      if (!cancelled) setLibraryStart(item ?? "missing");
-    });
+    void findLibraryItem(libraryKey, user.id, libraryWorkspaceId).then(
+      (item) => {
+        if (!cancelled) setLibraryStart(item ?? "missing");
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [libraryKey, user?.id, workspaceId]);
+  }, [libraryKey, user?.id, libraryWorkspaceId]);
 
   useEffect(() => {
     if (libraryKeyword) {
