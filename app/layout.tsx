@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 import { fontVariables } from "./fonts";
 import { Toaster } from "@/components/ui/sonner";
@@ -106,7 +107,8 @@ export default async function RootLayout({
                       {/* Welcome modal shows first, then invited user onboarding */}
                       <WorkspaceWelcomeGate>
                         <InvitedUserOnboardingGate>
-                          {children}
+                          {/* URL search params as state (nuqs): filters survive a reload */}
+                          <NuqsAdapter>{children}</NuqsAdapter>
                         </InvitedUserOnboardingGate>
                       </WorkspaceWelcomeGate>
                     </MotionProvider>
