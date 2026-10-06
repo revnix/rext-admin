@@ -208,9 +208,6 @@
   "components/admin/users/user-status-dialog.tsx": {
     "stock-palette": 1
   },
-  "components/auth/auth-layout.tsx": {
-    "stock-palette": 51
-  },
   "components/content-creation/fields/content-length-selector.tsx": {
     "stock-palette": 2
   },
