@@ -1,7 +1,4 @@
 {
-  "components/dashboard/revamp/recent-content.tsx": {
-    "table-recipe": 1
-  },
   "components/generate-content/content.tsx": {
     "page-heading": 2
   },
