@@ -77,10 +77,6 @@
   "app/reset-password/page.tsx": {
     "stock-palette": 11
   },
-  "app/settings/security/page.tsx": {
-    "stock-palette": 4,
-    "dark-class": 1
-  },
   "app/settings/sessions/page.tsx": {
     "stock-palette": 9,
     "dark-class": 4
@@ -195,10 +191,6 @@
   "components/forgot-password-form.tsx": {
     "stock-palette": 6
   },
-  "components/impersonation/impersonation-banner.tsx": {
-    "stock-palette": 21,
-    "dark-class": 10
-  },
   "components/knowledge/shared/BaseKnowledgeCard.tsx": {
     "off-scale": 1
   },
@@ -238,14 +230,6 @@
   },
   "components/profile/change-password-form.tsx": {
     "stock-palette": 4
-  },
-  "components/security/security-overview.tsx": {
-    "stock-palette": 16,
-    "dark-class": 8
-  },
-  "components/security/unified-activity.tsx": {
-    "stock-palette": 6,
-    "dark-class": 2
   },
   "components/session-notifications.tsx": {
     "stock-palette": 5

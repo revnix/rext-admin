@@ -178,10 +178,10 @@ export default function SecuritySettingsPage() {
             </CardContent>
           </Card>
         ) : securityStats ? (
-          <Card className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20 overflow-hidden">
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-orange-600" />
+                <ShieldAlert className="h-5 w-5 text-muted-foreground" />
                 Security Dashboard (Admin)
               </CardTitle>
               <CardDescription>

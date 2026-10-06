@@ -457,17 +457,11 @@ export function UnifiedActivity() {
                           className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                            <div
-                              className={`rounded-full p-2 ${
-                                event.success
-                                  ? "bg-green-100 dark:bg-green-950"
-                                  : "bg-red-100 dark:bg-red-950"
-                              }`}
-                            >
+                            <div className="p-2">
                               {event.success ? (
-                                <TrendingUp className="h-4 w-4 text-green-600" />
+                                <TrendingUp className="h-4 w-4 text-success-600" />
                               ) : (
-                                <TrendingDown className="h-4 w-4 text-red-600" />
+                                <TrendingDown className="h-4 w-4 text-danger-600" />
                               )}
                             </div>
                             <div>

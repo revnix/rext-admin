@@ -127,31 +127,31 @@ export function ImpersonationBanner() {
   }
 
   return (
-    <div className="w-full border-b border-amber-600 dark:border-amber-500 bg-amber-200 dark:bg-amber-950/20 px-4 py-3">
+    <div className="w-full border-b border-warning-200 bg-warning-50 px-4 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-start gap-3 min-w-0">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
+          <AlertTriangle className="h-4 w-4 text-warning-600 mt-0.5 shrink-0" />
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-6 min-w-0">
-            <span className="text-sm font-semibold text-yellow-900 dark:text-yellow-100 shrink-0">
+            <span className="text-sm font-semibold text-warning-700 shrink-0">
               Impersonating User
             </span>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">
-                <User className="h-4 w-4 text-yellow-700 dark:text-yellow-300 shrink-0" />
-                <span className="font-medium text-yellow-900 dark:text-yellow-100 truncate">
+                <User className="h-4 w-4 text-warning-600 shrink-0" />
+                <span className="font-medium text-warning-700 truncate">
                   {status.impersonated_user_name ||
                     status.impersonated_user_email}
                 </span>
                 {status.impersonated_user_name && (
-                  <span className="text-yellow-700 dark:text-yellow-300 truncate">
+                  <span className="text-warning-700 truncate">
                     ({status.impersonated_user_email})
                   </span>
                 )}
               </div>
 
               {status.started_at && (
-                <span className="text-yellow-700 dark:text-yellow-300 shrink-0">
+                <span className="text-warning-700 shrink-0">
                   Since {new Date(status.started_at).toLocaleTimeString()}
                 </span>
               )}
@@ -164,7 +164,7 @@ export function ImpersonationBanner() {
           size="sm"
           onClick={handleStopImpersonation}
           disabled={stopImpersonationMutation.isPending || isPendingRoute}
-          className="w-full sm:w-auto shrink-0 border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
+          className="w-full sm:w-auto shrink-0"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {stopImpersonationMutation.isPending || isPendingRoute
