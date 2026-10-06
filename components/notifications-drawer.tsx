@@ -364,28 +364,21 @@ function NotificationRow({
     </>
   );
 
+  // A row with a link opens it; an unread row without one is marked read when chosen.
+  const onChoose = href ? onOpen : notification.read ? null : onMarkRead;
   return (
-    <li className="flex items-start gap-2">
-      {href ? (
+    <li className="flex">
+      {onChoose ? (
         <button
           type="button"
-          onClick={onOpen}
+          onClick={onChoose}
           className="-mx-2 flex min-w-0 flex-1 items-start gap-3 rounded-sm px-2 py-2 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
         >
           {body}
+          {!href && <span className="sr-only">, mark as read</span>}
         </button>
       ) : (
         <div className="flex min-w-0 flex-1 items-start gap-3 py-2">{body}</div>
-      )}
-      {!href && !notification.read && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-1 shrink-0"
-          onClick={onMarkRead}
-        >
-          Mark read
-        </Button>
       )}
     </li>
   );
