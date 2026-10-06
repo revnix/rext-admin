@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { LibraryView } from "@/components/generate-content/library-view";
+import { LibraryView } from "@/components/keywords/library-view";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),

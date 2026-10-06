@@ -45,10 +45,11 @@ describe("buildBreadcrumbs", () => {
     ]);
   });
 
-  it("names the keyword library Keywords, as the sidebar does, though its path is under Generate", () => {
-    expect(
-      buildBreadcrumbs("/w/acme/generate_content/library", "Acme"),
-    ).toEqual([{ label: "Acme", href: "/" }, { label: "Keywords" }]);
+  it("names the keyword library Keywords, as the sidebar does", () => {
+    expect(buildBreadcrumbs("/w/acme/keywords", "Acme")).toEqual([
+      { label: "Acme", href: "/" },
+      { label: "Keywords" },
+    ]);
     expect(buildBreadcrumbs("/w/acme/generate_content", "Acme")).toEqual([
       { label: "Acme", href: "/" },
       { label: "Generate" },
@@ -58,12 +59,12 @@ describe("buildBreadcrumbs", () => {
   it("names a keyword in the library Keyword, under Keywords", () => {
     expect(
       buildBreadcrumbs(
-        "/w/acme/generate_content/library/library_seo%20tools_2026-10-06T17%3A00%3A00",
+        "/w/acme/keywords/library_seo%20tools_2026-10-06T17%3A00%3A00",
         "Acme",
       ),
     ).toEqual([
       { label: "Acme", href: "/" },
-      { label: "Keywords", href: "/w/acme/generate_content/library" },
+      { label: "Keywords", href: "/w/acme/keywords" },
       { label: "Keyword" },
     ]);
   });

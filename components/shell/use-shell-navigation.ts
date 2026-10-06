@@ -99,10 +99,10 @@ function workspaceGroups(slug: string): NavGroup[] {
           permission: "content.read",
         },
         {
-          // The keyword library lives under Generate in the URL; the longer url marks it current.
-          // Its keywords start a generation and can be deleted, so it needs Generate's permission.
+          // The keyword library. Its keywords start a generation and can be deleted, so it needs
+          // Generate's permission.
           title: "Keywords",
-          url: `${workspaceRoutes.generate_content(slug)}/library`,
+          url: workspaceRoutes.keywordLibrary(slug),
           icon: Hash,
           permission: "content.create",
           prefetch: false,
@@ -282,7 +282,7 @@ export function useShellNavigation(): ShellNavigation {
     const settings = group("settings")[0] ?? null;
     const admin = group("admin");
     const generate = group("generate")[0] ?? null;
-    // Generate's url is a candidate too, so its flow marks it current (its library is Keywords').
+    // Generate's url is a candidate too, so its flow marks it current.
     const urls = [
       ...(generate ? [generate] : []),
       ...main,

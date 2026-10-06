@@ -196,7 +196,14 @@ const nextConfig: NextConfig = {
       {
         // The Topic Builder is removed (E16): its pages open the keyword library.
         source: "/w/:workspaceSlug/topics/:path*",
-        destination: "/w/:workspaceSlug/generate_content/library",
+        destination: "/w/:workspaceSlug/keywords",
+        permanent: false,
+      },
+      {
+        // The keyword library moved out of Generate to Keywords (D15): the list and each
+        // keyword's page keep their old addresses working.
+        source: "/w/:workspaceSlug/generate_content/library/:path*",
+        destination: "/w/:workspaceSlug/keywords/:path*",
         permanent: false,
       },
       {
