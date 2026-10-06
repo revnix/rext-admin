@@ -113,6 +113,8 @@ export interface DataTableProps<TData extends object> {
   facets?: readonly DataTableFacet[];
   /** A menu to hide and show the columns that allow it. */
   viewOptions?: boolean;
+  /** Columns hidden at first: still searched, and shown again from the View menu. */
+  hiddenColumns?: readonly string[];
   /** At the toolbar's end: the list's own buttons. */
   actions?: ReactNode;
   /** The row's `…` menu. */
@@ -154,6 +156,7 @@ export function DataTable<TData extends object>({
   search,
   facets = [],
   viewOptions = false,
+  hiddenColumns,
   actions,
   rowActions,
   bulkActions,
@@ -165,7 +168,9 @@ export function DataTable<TData extends object>({
   const state = givenState ?? localState;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] =
-    useState<ColumnVisibilityState>({});
+    useState<ColumnVisibilityState>(() =>
+      Object.fromEntries((hiddenColumns ?? []).map((id) => [id, false])),
+    );
 
   const table = useTable({
     features: dataTableFeatures,

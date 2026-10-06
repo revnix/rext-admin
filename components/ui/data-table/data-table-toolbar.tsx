@@ -26,12 +26,11 @@ export interface DataTableFacet {
   column: string;
   title: string;
   /**
-   * The values offered, in this order, with their labels. Without it the values come from the rows
-   * themselves, so only the ones present are offered.
+   * The values the filter accepts, in this order, with their labels; give it whenever the URL holds
+   * the filter, so the menu offers only what a reload keeps. Of these, it shows the ones some row
+   * holds and the ones chosen. Without it the values come from the rows themselves.
    */
   options?: readonly { value: string; label: string }[];
-  /** Words for the values found in the rows, when `options` isn't given. */
-  labels?: Readonly<Record<string, string>>;
 }
 
 export function DataTableSearch({
@@ -72,13 +71,15 @@ export function DataTableFacetFilter<TData extends object>({
       ? (column.getFilterValue() as string[])
       : [],
   );
-  const options =
-    facet.options ??
-    // The values in the rows, and any chosen one no row holds now, so it can still be unticked.
-    [...new Set([...counts.keys(), ...selected])]
-      .filter((value): value is string => typeof value === "string")
-      .sort()
-      .map((value) => ({ value, label: facet.labels?.[value] ?? value }));
+  // The values some row holds, and any chosen one no row holds now, so it can still be unticked.
+  const options = facet.options
+    ? facet.options.filter(
+        (option) => counts.has(option.value) || selected.has(option.value),
+      )
+    : [...new Set([...counts.keys(), ...selected])]
+        .filter((value): value is string => typeof value === "string")
+        .sort()
+        .map((value) => ({ value, label: value }));
 
   const toggle = (value: string, checked: boolean) => {
     const next = new Set(selected);

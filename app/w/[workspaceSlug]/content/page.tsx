@@ -34,6 +34,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import {
   CONTENT_LIST_FACETS,
   CONTENT_LIST_STATUS_LABELS,
+  CONTENT_LIST_STATUSES,
   contentListParams,
 } from "@/lib/search-params/content";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -82,6 +83,7 @@ const columns = column.columns([
     cell: ({ row }) => <ContentTitle item={row.original} />,
     sortFn: "text",
     enableHiding: false,
+    enableGlobalFilter: true,
   }),
   column.accessor("status", {
     header: "Status",
@@ -92,6 +94,13 @@ const columns = column.columns([
   column.accessor((item) => item.content_metadata?.content_type ?? "", {
     id: "type",
     header: "Type",
+    enableGlobalFilter: true,
+  }),
+  // Hidden at first, and searched: the old library found an article by its platform.
+  column.accessor((item) => item.content_metadata?.target_platform ?? "", {
+    id: "platform",
+    header: "Platform",
+    enableGlobalFilter: true,
   }),
   column.accessor((item) => item.content_metadata?.content_word_count, {
     id: "words",
@@ -125,9 +134,19 @@ const columns = column.columns([
 // A stable empty list while the content loads: a new [] on each render would rebuild the rows.
 const NO_CONTENT: ContentItem[] = [];
 
+// The facet offers only the statuses the URL accepts, so a chosen one survives a reload.
 const STATUS_FACET = [
-  { column: "status", title: "Status", labels: STATUS_LABELS },
-] as const;
+  {
+    column: "status",
+    title: "Status",
+    options: CONTENT_LIST_STATUSES.map((value) => ({
+      value,
+      label: STATUS_LABELS[value],
+    })),
+  },
+];
+
+const HIDDEN_COLUMNS = ["platform"];
 
 /** A row as a card under 640 px: the title, its status, then what it is and when it was made. */
 function ContentRowCard({
@@ -317,6 +336,7 @@ export default function WorkspaceContentPage() {
             search={{ placeholder: "Search content" }}
             facets={STATUS_FACET}
             viewOptions
+            hiddenColumns={HIDDEN_COLUMNS}
             rowActions={rowActions}
             renderCard={(item, { actions }) => (
               <ContentRowCard item={item} actions={actions} />
