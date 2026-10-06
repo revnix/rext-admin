@@ -78,9 +78,10 @@ A list is a `DataTable` (`components/ui/data-table/`), on TanStack Table v9 with
 A form is built from `components/forms/`. Its schema lives in `schemas/` (the persona form's runs the shared rules in `lib/validation/persona-validation.ts`).
 - `useZodForm(schema)` sets the timing: `mode: "onTouched"` and `reValidateMode: "onChange"`, so a field is checked when it loses focus and then on each change; `shouldFocusError` moves focus to the first error on a failed submit.
 - `FieldController` is one field on shadcn's Field: the label above (a leading asterisk when required), the control, and the help text beneath, which the error replaces; it wires `id`, `aria-invalid` and `aria-describedby`. `maxLength` adds a character count.
+- `PasswordInput` is the control of a password field: the Input with a show/hide button at its end.
 - `FormShell` owns the rhythm: sections (`FormSection`) 32 px apart, fields 16 px apart, and the submit row, where Save stays enabled until the submission starts and then shows a spinner. The row can be sticky on long forms, and a `status` slot shows the inline "Saved". It guards against leaving with unsaved changes: the browser's prompt on reload or close, and a dialog for a link inside the app or the form's Cancel (`use-leave-guard.ts`; the App Router has no navigation events, so the guard watches link clicks).
 
-The persona form and workspace settings (General) are on it; the forms on the older `components/ui/form.tsx` move later.
+The persona form, workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button); the forms on the older `components/ui/form.tsx` move later.
 
 ## Data
 
