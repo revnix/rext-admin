@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBillingActions } from "@/hooks/use-billing-actions";
+import { useBillingAction } from "./billing-action-notice";
 import { HOLDS_A_PAID_PLAN, nextDate } from "./billing-format";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -44,6 +45,7 @@ export function PlanSection() {
   const current = useQuery(subscriptionQueries.current());
   const credits = useQuery(subscriptionQueries.myCredits());
   const billing = useBillingActions();
+  const { action: billingAction } = useBillingAction();
   const fetchSubscription = useSubscriptionStore(
     (state) => state.fetchSubscription,
   );
@@ -97,13 +99,8 @@ export function PlanSection() {
 
   return (
     <div className="flex flex-col gap-10">
+      {/* A failed renewal (past due, unpaid) is the shell's banner, above this page and every other. */}
       <SettingsGroup title="Your plan">
-        {status === SubscriptionStatus.PAST_DUE && (
-          <Notice tone="warning" title="Your last payment didn't go through">
-            Lemon Squeezy tries again over the next days. Update your payment
-            method below to keep your plan.
-          </Notice>
-        )}
         <Card>
           <CardContent className="flex flex-col gap-4 pt-6">
             {subscription ? (
@@ -154,9 +151,20 @@ export function PlanSection() {
                     )}
                   </div>
                 ) : status === SubscriptionStatus.CANCELLED ? (
-                  <Button asChild className="self-start">
-                    <Link href={"/pricing" as Route}>See the plans</Link>
-                  </Button>
+                  // Before its end, a cancelled plan is resumed: the backend refuses a second one.
+                  billingAction?.action === "resume" ? (
+                    <Button
+                      className="self-start"
+                      onClick={billingAction.run}
+                      disabled={billingAction.busy}
+                    >
+                      {billingAction.label}
+                    </Button>
+                  ) : (
+                    <Button asChild className="self-start">
+                      <Link href={"/pricing" as Route}>See the plans</Link>
+                    </Button>
+                  )
                 ) : null}
               </>
             ) : (
