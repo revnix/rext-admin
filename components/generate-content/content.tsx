@@ -64,7 +64,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { apiClient } from "@/lib/api-client";
-import { AddIntegrationModal } from "@/app/w/[workspaceSlug]/integrations/add-integration-modal";
+import { ConnectWordPressDialog } from "@/components/integrations/connect-wordpress-dialog";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
@@ -1409,14 +1409,18 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
       </div>
 
-      <AddIntegrationModal
-        isOpen={integrationModalOpen}
-        onClose={() => {
-          setIntegrationModalOpen(false);
-          setStatusModal((prev) => ({ ...prev, isOpen: false }));
-        }}
-        onAdd={handleIntegrationAdded}
-      />
+      {workspaceId && (
+        <ConnectWordPressDialog
+          workspaceId={workspaceId}
+          open={integrationModalOpen}
+          onOpenChange={(open) => {
+            if (open) return;
+            setIntegrationModalOpen(false);
+            setStatusModal((prev) => ({ ...prev, isOpen: false }));
+          }}
+          onConnected={handleIntegrationAdded}
+        />
+      )}
 
       {/* Status Modal (Unified Success/Error) */}
       <Dialog
