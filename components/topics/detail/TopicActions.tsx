@@ -57,9 +57,9 @@ export function TopicActions({
         </PermissionGuard>
       )}
 
-      {/* Write Content - Only show when approved */}
+      {/* Write Content - Only show when approved; it opens Generate, so it needs content.create */}
       {isApproved && (
-        <PermissionGuard permission={CONTENT_PERMISSIONS.READ} showTooltip>
+        <PermissionGuard permission={CONTENT_PERMISSIONS.CREATE} showTooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button onClick={onUse} className="gap-2">

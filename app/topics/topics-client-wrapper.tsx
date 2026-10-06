@@ -64,6 +64,11 @@ export function TopicsClientWrapper({
     "content.delete",
     workspaceSlug,
   );
+  // Write Content opens Generate, which starts a run: it needs content.create
+  const { hasPermission: canCreate } = useWorkspacePermission(
+    "content.create",
+    workspaceSlug,
+  );
 
   // Handle topic deletion using server actions
   const handleTopicDelete = async (topicId: string, _topicName: string) => {
@@ -222,34 +227,38 @@ export function TopicsClientWrapper({
         row.status?.toLowerCase() === "saved" ||
         (row && "approved" in row && row.approved === true),
     },
-    // Write Content button - only shown for approved topics
-    {
-      label: "Write Content",
-      icon: <PenTool className="h-4 w-4" />,
-      onClick: (row: TopicData) => {
-        topicsLogger.info("Create content clicked", {
-          topic_id: row.id,
-          topic_name: row.name,
-        });
+    // Write Content button - only shown for approved topics, to members who may create content
+    ...(canCreate
+      ? [
+          {
+            label: "Write Content",
+            icon: <PenTool className="h-4 w-4" />,
+            onClick: (row: TopicData) => {
+              topicsLogger.info("Create content clicked", {
+                topic_id: row.id,
+                topic_name: row.name,
+              });
 
-        // Articles start from keyword research: open the keyword flow
-        if (workspaceSlug && row.id) {
-          router.push(`/w/${workspaceSlug}/generate_content` as Route);
-        } else {
-          topicsLogger.error(
-            "Cannot navigate: Missing workspace slug or topic ID",
-          );
-        }
-      },
-      tooltip: "Create content from this topic",
-      variant: "default" as const,
-      showLabel: true,
-      primary: true,
-      disabled: (row: TopicData) =>
-        row.status?.toLowerCase() !== "approved" &&
-        row.status?.toLowerCase() !== "saved" &&
-        !(row && "approved" in row && row.approved === true),
-    },
+              // Articles start from keyword research: open the keyword flow
+              if (workspaceSlug && row.id) {
+                router.push(`/w/${workspaceSlug}/generate_content` as Route);
+              } else {
+                topicsLogger.error(
+                  "Cannot navigate: Missing workspace slug or topic ID",
+                );
+              }
+            },
+            tooltip: "Create content from this topic",
+            variant: "default" as const,
+            showLabel: true,
+            primary: true,
+            disabled: (row: TopicData) =>
+              row.status?.toLowerCase() !== "approved" &&
+              row.status?.toLowerCase() !== "saved" &&
+              !(row && "approved" in row && row.approved === true),
+          },
+        ]
+      : []),
     //  Conditionally include Remove only if permission granted
     ...(canDelete
       ? [
