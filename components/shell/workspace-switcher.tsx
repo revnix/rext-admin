@@ -151,6 +151,11 @@ export function WorkspaceSwitcher({
   };
 
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
+  // The list carries each workspace's favicon (G9); the stored current workspace may
+  // predate it, so the list's copy wins.
+  const displayFavicon =
+    workspaces.find((workspace) => workspace.id === displayWorkspace?.id)
+      ?.favicon_url ?? displayWorkspace?.favicon_url;
   // The plan is the workspace owner's, so it is read for the workspace shown: the shell's credits
   // are the signed-in person's own on account pages, which differ for a collaborator.
   const { data: workspaceCredits, isError: planFailed } = useQuery({
@@ -177,7 +182,10 @@ export function WorkspaceSwitcher({
               className="px-2.5 text-foreground data-[state=open]:bg-sidebar-accent"
               tooltip={name}
             >
-              <WorkspaceFavicon name={name} />
+              <WorkspaceFavicon
+                name={name}
+                src={isLoading ? null : displayFavicon}
+              />
               <span className="grid min-w-0 flex-1 text-left">
                 <span className="truncate text-body font-medium">{name}</span>
                 {detail && (
@@ -220,7 +228,10 @@ export function WorkspaceSwitcher({
                     onSelect={() => handleWorkspaceSelect(workspace)}
                     className="gap-2"
                   >
-                    <WorkspaceFavicon name={title} />
+                    <WorkspaceFavicon
+                      name={title}
+                      src={workspace.favicon_url}
+                    />
                     <span className="grid min-w-0 flex-1">
                       <span className="truncate text-body">{title}</span>
                       {siteHost(workspace.url) && (
