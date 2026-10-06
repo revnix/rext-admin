@@ -5,26 +5,6 @@
   "app/account-recovery/page.tsx": {
     "stock-palette": 1
   },
-  "app/admin/email-analytics/page.tsx": {
-    "stock-palette": 3
-  },
-  "app/admin/monitoring/page.tsx": {
-    "stock-palette": 6
-  },
-  "app/admin/page.tsx": {
-    "stock-palette": 2
-  },
-  "app/admin/platform/invitations/page.tsx": {
-    "stock-palette": 19
-  },
-  "app/admin/users/page.tsx": {
-    "small-type": 7,
-    "stock-palette": 4
-  },
-  "app/admin/webhooks/page.tsx": {
-    "stock-palette": 15,
-    "dark-class": 4
-  },
   "app/checkout/cancel/page.tsx": {
     "stock-palette": 9
   },
@@ -73,39 +53,8 @@
   "app/w/page.tsx": {
     "small-type": 3
   },
-  "components/admin/email/email-failures-table.tsx": {
-    "stock-palette": 4
-  },
-  "components/admin/email/email-overview-kpis.tsx": {
-    "stock-palette": 3
-  },
-  "components/admin/email/email-volume-chart.tsx": {
-    "literal-colour": 7
-  },
-  "components/admin/monitoring/error-logs-table.tsx": {
-    "stock-palette": 3
-  },
-  "components/admin/monitoring/usage-charts.tsx": {
-    "literal-colour": 4,
-    "stock-palette": 4
-  },
   "components/admin/roles/permission-badge.tsx": {
     "stock-palette": 27
-  },
-  "components/admin/users/account-recovery-table.tsx": {
-    "small-type": 2
-  },
-  "components/admin/users/deleted-users-table.tsx": {
-    "small-type": 2
-  },
-  "components/admin/users/manage-user-roles-dialog.tsx": {
-    "small-type": 4
-  },
-  "components/admin/users/recovery-review-dialog.tsx": {
-    "stock-palette": 1
-  },
-  "components/admin/users/user-status-dialog.tsx": {
-    "stock-palette": 1
   },
   "components/content/content-card.tsx": {
     "stock-palette": 10

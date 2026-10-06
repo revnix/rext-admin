@@ -100,11 +100,7 @@ export function EmailFailuresTable({
     }
 
     if (status === "bounced") {
-      return (
-        <Badge variant="outline" className="border-orange-500 text-orange-500">
-          Bounced
-        </Badge>
-      );
+      return <Badge variant="warning">Bounced</Badge>;
     }
 
     return <Badge variant="secondary">{status}</Badge>;
@@ -114,7 +110,7 @@ export function EmailFailuresTable({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertTriangle className="h-5 w-5 text-danger-600" />
           Recent Email Failures
         </CardTitle>
 
@@ -206,7 +202,7 @@ export function EmailFailuresTable({
           </>
         ) : (
           <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
-            <AlertTriangle className="mb-2 h-8 w-8 text-green-500" />
+            <AlertTriangle className="mb-2 h-8 w-8 text-success-600" />
             <p>No failures found - all emails delivered successfully!</p>
           </div>
         )}

@@ -220,7 +220,7 @@ export function ErrorLogsTable({
       <div className="rounded-md border w-full overflow-x-auto">
         {logs.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-600 opacity-50" />
+            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success-600" />
             <p>No errors found</p>
             <p className="text-sm">System is running smoothly</p>
           </div>
@@ -253,7 +253,7 @@ export function ErrorLogsTable({
                     {log.resolved ? (
                       <Badge
                         variant="outline"
-                        className="gap-1 text-green-600 border-green-600"
+                        className="gap-1 border-success-200 bg-success-50 text-success-700"
                       >
                         <CheckCircle className="h-3 w-3" />
                         Resolved

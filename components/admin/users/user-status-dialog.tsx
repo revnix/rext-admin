@@ -156,7 +156,7 @@ export function UserStatusDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Icon
-                className={`h-5 w-5 ${copy.destructive ? "text-destructive" : "text-green-600"}`}
+                className={`h-5 w-5 ${copy.destructive ? "text-destructive" : "text-success-600"}`}
               />
               {copy.title}
             </DialogTitle>

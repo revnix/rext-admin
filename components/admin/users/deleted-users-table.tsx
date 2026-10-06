@@ -90,7 +90,7 @@ export function DeletedUsersTable({
       cell: (value, row) => (
         <div className="min-w-0">
           <p className="font-medium text-sm truncate">{value as string}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-caption text-muted-foreground truncate">
             {row.email}
           </p>
         </div>
@@ -100,11 +100,7 @@ export function DeletedUsersTable({
       key: "display_role",
       header: "Role",
       width: "140px",
-      cell: (value) => (
-        <Badge variant="outline" className="text-[11px]">
-          {value as string}
-        </Badge>
-      ),
+      cell: (value) => <Badge variant="outline">{value as string}</Badge>,
     },
     {
       key: "deleted_at",

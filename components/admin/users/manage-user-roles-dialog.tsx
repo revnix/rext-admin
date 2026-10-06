@@ -291,24 +291,21 @@ export function ManageUserRolesDialog({
                           {assignment.role_display_name}
                         </span>
                         {assignment.is_primary && (
-                          <Badge variant="default" className="text-[10px] h-5">
+                          <Badge variant="default" className="h-5">
                             <Star className="h-2.5 w-2.5 mr-1" />
                             Primary
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px] h-5">
+                        <Badge variant="outline" className="h-5">
                           {assignment.workspace_id
                             ? `Workspace: ${assignment.workspace_name ?? "Unknown"}`
                             : "Platform-wide"}
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-5 font-mono"
-                        >
+                        <Badge variant="secondary" className="h-5 font-mono">
                           L{assignment.hierarchy_level}
                         </Badge>
                       </div>
-                      <code className="text-[11px] text-muted-foreground">
+                      <code className="text-caption text-muted-foreground">
                         {assignment.role_name}
                       </code>
                     </div>

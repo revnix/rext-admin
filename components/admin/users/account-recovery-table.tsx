@@ -123,7 +123,7 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
       cell: (value, row) => (
         <div className="min-w-0">
           <p className="font-medium text-sm truncate">{value as string}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-caption text-muted-foreground truncate">
             {row.email}
           </p>
         </div>
@@ -155,7 +155,7 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
             {formatDate(value as string | null)}
           </span>
           {row.reviewer && (
-            <span className="text-[10px] text-muted-foreground/70 block truncate">
+            <span className="text-caption text-muted-foreground block truncate">
               by {row.reviewer}
             </span>
           )}

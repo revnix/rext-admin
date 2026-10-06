@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
             {row.avatar_url && (
               <AvatarImage src={row.avatar_url} alt={row.name} />
             )}
-            <AvatarFallback className="bg-muted text-foreground text-[11px] font-semibold">
+            <AvatarFallback className="bg-muted text-foreground text-caption font-semibold">
               {row.initials}
             </AvatarFallback>
           </Avatar>
@@ -306,7 +306,7 @@ export default function AdminUsersPage() {
             {row.full_name &&
               row.display_name &&
               row.full_name !== row.display_name && (
-                <p className="text-[10px] text-muted-foreground truncate">
+                <p className="text-caption text-muted-foreground truncate">
                   {row.full_name}
                 </p>
               )}
@@ -376,7 +376,7 @@ export default function AdminUsersPage() {
                 <TooltipTrigger asChild>
                   <Badge
                     variant="secondary"
-                    className="text-[11px] font-medium px-1.5 py-0.5 cursor-default"
+                    className="font-medium px-1.5 py-0.5 cursor-default"
                   >
                     {r.display_name}
                   </Badge>
@@ -390,7 +390,7 @@ export default function AdminUsersPage() {
                   <TooltipTrigger asChild>
                     <Badge
                       variant="secondary"
-                      className={`text-[11px] font-medium px-1.5 py-0.5`}
+                      className="font-medium px-1.5 py-0.5"
                     >
                       {r.display_name}
                       {workspaces.length > 1
@@ -428,18 +428,12 @@ export default function AdminUsersPage() {
       cell: (value) => {
         const verified = value as boolean;
         return verified ? (
-          <Badge
-            variant="outline"
-            className="text-[10px] text-green-600 border-green-600 px-1 py-0 h-5"
-          >
+          <Badge variant="success" className="px-1 py-0 h-5">
             <ShieldCheck className="h-2.5 w-2.5 mr-1" />
             Yes
           </Badge>
         ) : (
-          <Badge
-            variant="outline"
-            className="text-[10px] text-amber-600 border-amber-600 px-1 py-0 h-5"
-          >
+          <Badge variant="warning" className="px-1 py-0 h-5">
             No
           </Badge>
         );
@@ -455,7 +449,7 @@ export default function AdminUsersPage() {
             {formatDate(value as string | null)}
           </span>
           {row.login_count > 0 && (
-            <span className="text-[10px] text-muted-foreground/70 block truncate">
+            <span className="text-caption text-muted-foreground block truncate">
               {row.login_count} {row.login_count === 1 ? "login" : "logins"}
             </span>
           )}

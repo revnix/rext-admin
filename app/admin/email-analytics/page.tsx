@@ -286,10 +286,10 @@ export default function EmailAnalyticsPage() {
                           <div
                             className={`h-full transition-all ${
                               calculateHealthScore(overviewData) >= 90
-                                ? "bg-green-500"
+                                ? "bg-success-600"
                                 : calculateHealthScore(overviewData) >= 70
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
+                                  ? "bg-warning-600"
+                                  : "bg-danger-600"
                             }`}
                             style={{
                               width: `${calculateHealthScore(overviewData)}%`,

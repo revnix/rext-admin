@@ -273,8 +273,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.database?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.database?.status || "Unknown"}
@@ -351,8 +351,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.database?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.cache?.status || "Unknown"}
@@ -438,8 +438,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.api?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.api?.status || "Unknown"}
