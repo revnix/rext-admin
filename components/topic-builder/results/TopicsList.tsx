@@ -143,10 +143,9 @@ export const TopicsList = memo(function TopicsList({
         if (!workspaceSlug) {
           throw new Error("No workspace selected");
         }
-        router.push(
-          `${workspaceRoutes.contentCreate(workspaceSlug)}?topicId=${topicId}` as Route,
-        );
-        toast.success("Navigating to content creation...");
+        // Articles start from keyword research: the topic opens the keyword flow.
+        router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
+        toast.success("Opening Generate...");
       } catch (error) {
         log.error(
           `Failed to navigate to content creation for topic ${topicId}:`,

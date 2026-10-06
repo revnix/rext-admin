@@ -72,11 +72,9 @@ export function TopicDetailClient({ topic }: TopicDetailClientProps) {
       title: generatedTopic?.title,
     });
 
-    // Navigate to content creation with topic prefilled
+    // Articles start from keyword research: open the keyword flow
     if (currentWorkspace?.slug && generatedTopic?.id) {
-      router.push(
-        `/w/${currentWorkspace.slug}/content/create?topicId=${generatedTopic.id}` as Route,
-      );
+      router.push(`/w/${currentWorkspace.slug}/generate_content` as Route);
     } else {
       detailLogger.error("Cannot navigate: Missing workspace slug or topic ID");
     }
