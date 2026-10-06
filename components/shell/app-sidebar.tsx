@@ -140,7 +140,7 @@ function GenerateButton({ navigation }: { navigation: ShellNavigation }) {
         </span>
         <kbd
           data-collapse="hide"
-          className="rounded-sm border border-primary-foreground/30 px-1.5 font-mono text-caption"
+          className="hidden rounded-sm border border-primary-foreground/30 px-1.5 font-mono text-caption lg:inline"
         >
           C
         </kbd>
@@ -245,7 +245,11 @@ function SettingsRow({
     <Collapsible open={open} onOpenChange={setOpen} asChild>
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton isActive={Boolean(current) && !open}>
+          {/* An open group is not a selection: the fill stays for menus that are open. */}
+          <SidebarMenuButton
+            isActive={Boolean(current) && !open}
+            className="data-[state=open]:bg-transparent data-[state=open]:hover:bg-sidebar-accent"
+          >
             {Icon && <Icon />}
             <span className="flex-1">{item.title}</span>
             <ChevronDown
@@ -356,7 +360,6 @@ export function AppSidebar({ navigation }: { navigation: ShellNavigation }) {
             height={20}
             loading="eager"
             data-collapse="hide"
-            className="h-5 w-auto"
           />
           <Image
             src="/logos/icon_dark.svg"
