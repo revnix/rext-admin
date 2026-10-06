@@ -1,18 +1,13 @@
 /**
- * The shadcn components added for Plan C (Field, Input Group, Empty, Kbd,
- * Spinner) render with this app's own Label, Separator, Button and Textarea,
+ * The shadcn components added for Plan C (Field, Input Group, Kbd, Spinner)
+ * and the app's EmptyState render with this app's own Label, Separator, Button and Textarea,
  * which differ from the registry's. Input Group renders its own bare input,
  * because the app's Input wraps its control in a div.
  */
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Field,
   FieldDescription,
@@ -93,21 +88,21 @@ describe("InputGroup", () => {
   });
 });
 
-describe("Empty, Kbd and Spinner", () => {
+describe("EmptyState, Kbd and Spinner", () => {
   it("render their content with an accessible spinner", () => {
     render(
       <>
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No articles yet</EmptyTitle>
-            <EmptyDescription>Generate your first one.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          title="No articles yet"
+          description="Generate your first one."
+        />
         <Kbd>C</Kbd>
         <Spinner />
       </>,
     );
-    expect(screen.getByText("No articles yet")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "No articles yet" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("C").tagName).toBe("KBD");
     expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Loading");
   });

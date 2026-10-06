@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { EmptyState, SearchEmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Input } from "@/components/ui/input";
 import {
@@ -85,7 +85,6 @@ export function DataTable<
   emptyTitle,
   emptyDescription,
   emptyActions = [],
-  emptyIcon,
   searchPlaceholder = "Search...",
   showSearch = true,
   actions,
@@ -766,35 +765,32 @@ export function DataTable<
           ) : (
             // No search results
             <div className="rounded-md border bg-card">
-              <SearchEmptyState onClear={() => handleSearchChange("")} />
+              <EmptyState
+                title="No results"
+                description="Nothing matches this search."
+                action={{
+                  label: "Clear search",
+                  onClick: () => handleSearchChange(""),
+                  variant: "outline",
+                }}
+              />
             </div>
           )
         ) : displayEmptyActions.length > 0 ? (
           // Empty State with actions
           <div className="rounded-md border bg-card">
             <EmptyState
-              icon={emptyIcon}
               title={emptyTitle || "No data available"}
               description={
                 emptyDescription || "Get started by adding your first item."
               }
-              action={
-                displayEmptyActions[0]
-                  ? {
-                      label: displayEmptyActions[0].label,
-                      href: displayEmptyActions[0].href,
-                      onClick: displayEmptyActions[0].onClick,
-                      variant: displayEmptyActions[0].variant,
-                    }
-                  : undefined
-              }
+              action={emptyAction(displayEmptyActions[0])}
             />
           </div>
         ) : (
           // Empty State without actions
           <div className="rounded-md border bg-card">
             <EmptyState
-              icon={emptyIcon}
               title={emptyTitle || "No data available"}
               description={
                 emptyDescription || "Get started by adding your first item."
@@ -805,4 +801,14 @@ export function DataTable<
       </CardContent>
     </Card>
   );
+}
+
+/** The first empty-state action in the shape EmptyState takes: a link, or a button. */
+function emptyAction(
+  action: { label: string; href?: string; onClick?: () => void } | undefined,
+) {
+  if (!action) return undefined;
+  if (action.href) return { label: action.label, href: action.href };
+  if (action.onClick) return { label: action.label, onClick: action.onClick };
+  return undefined;
 }

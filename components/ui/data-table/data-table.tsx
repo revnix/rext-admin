@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useShowAfter } from "@/hooks/use-show-after";
 import {
   Table,
   TableBody,
@@ -640,18 +641,4 @@ function useScrolls(tableRef: RefObject<HTMLTableElement | null>) {
     return () => observer.disconnect();
   }, [tableRef]);
   return scrolls;
-}
-
-/** True once `active` has held for `delay` ms, so a fast load never flashes a skeleton. */
-function useShowAfter(active: boolean, delay = 200) {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    if (!active) {
-      setShown(false);
-      return;
-    }
-    const timer = setTimeout(() => setShown(true), delay);
-    return () => clearTimeout(timer);
-  }, [active, delay]);
-  return active && shown;
 }

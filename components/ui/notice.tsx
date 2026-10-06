@@ -1,0 +1,71 @@
+import { cva } from "class-variance-authority";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  type LucideIcon,
+  XCircle,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+
+export type NoticeTone = "info" | "warning" | "danger" | "success";
+
+const noticeVariants = cva(
+  "flex w-full items-start gap-3 rounded-(--card-radius) border px-4 py-3 text-sm",
+  {
+    variants: {
+      tone: {
+        info: "border-info-200 bg-info-50 text-info-700",
+        warning: "border-warning-200 bg-warning-50 text-warning-700",
+        danger: "border-danger-200 bg-danger-50 text-danger-700",
+        success: "border-success-200 bg-success-50 text-success-700",
+      },
+    },
+    defaultVariants: { tone: "info" },
+  },
+);
+
+const ICON: Record<NoticeTone, LucideIcon> = {
+  info: Info,
+  warning: AlertTriangle,
+  danger: XCircle,
+  success: CheckCircle2,
+};
+
+/**
+ * The one box for something the person should know (design/app-language.md §6 and §8): what
+ * happened and what to do. A tone, its icon, a title, a sentence or two, and at most one action.
+ * Danger and warning are announced at once (`role="alert"`); info and success wait their turn.
+ */
+export function Notice({
+  tone = "info",
+  title,
+  children,
+  action,
+  className,
+}: {
+  tone?: NoticeTone;
+  title?: ReactNode;
+  children?: ReactNode;
+  /** One button or link, at the end. */
+  action?: ReactNode;
+  className?: string;
+}) {
+  const Icon = ICON[tone];
+  return (
+    <div
+      data-slot="notice"
+      data-tone={tone}
+      role={tone === "danger" || tone === "warning" ? "alert" : "status"}
+      className={cn(noticeVariants({ tone }), className)}
+    >
+      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {title && <p className="font-medium">{title}</p>}
+        {children && <div className="text-foreground/80">{children}</div>}
+      </div>
+      {action && <div className="shrink-0 self-center">{action}</div>}
+    </div>
+  );
+}

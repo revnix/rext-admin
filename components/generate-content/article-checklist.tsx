@@ -8,6 +8,7 @@ import type {
   SEORESULT,
   TrustScore,
 } from "@/types/generate-content";
+import { ScoreRing } from "@/components/ui/score-ring";
 
 type ArticleChecklistProps = {
   seoScore: SEORESULT | null;
@@ -34,43 +35,6 @@ const DENSITY_STATUS: Record<
 
 const percent = (value: number) =>
   `${value.toLocaleString("en", { maximumFractionDigits: 2 })}%`;
-
-/** The one 0 to 100 score: one colour, the track on the inset surface. */
-function ScoreRing({ value }: { value: number }) {
-  const circumference = 2 * Math.PI * 28;
-  return (
-    <div className="relative grid size-16 shrink-0 place-items-center">
-      <svg
-        viewBox="0 0 64 64"
-        className="absolute inset-0 size-full -rotate-90"
-      >
-        <title>On-page score: {value} out of 100</title>
-        <circle
-          cx="32"
-          cy="32"
-          r="28"
-          strokeWidth="6"
-          fill="none"
-          stroke="currentColor"
-          className="text-surface-inset"
-        />
-        <circle
-          cx="32"
-          cy="32"
-          r="28"
-          strokeWidth="6"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - value / 100)}
-          className="text-foreground"
-        />
-      </svg>
-      <span className="num text-section text-foreground">{value}</span>
-    </div>
-  );
-}
 
 function Row({
   label,
@@ -158,7 +122,9 @@ export function ArticleChecklist({
       className="rounded-md border border-border bg-card"
     >
       <header className="flex items-center gap-4 border-b border-border p-4">
-        {score != null ? <ScoreRing value={score} /> : null}
+        {score != null ? (
+          <ScoreRing value={score} label="On-page score" />
+        ) : null}
         <div>
           <h3 id="article-checklist-title" className="text-section">
             Checklist

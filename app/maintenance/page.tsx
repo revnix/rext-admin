@@ -1,36 +1,19 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function MaintenancePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-(--page-gutter)">
-      <Empty>
-        <EmptyHeader>
-          <p className="num font-mono text-label text-muted-foreground">
-            Maintenance
-          </p>
-          <EmptyTitle className="font-display text-page-title text-foreground">
-            {/* layout-ok: a page outside the shell, with no layout header to hold its title */}
-            <h1>Down for maintenance</h1>
-          </EmptyTitle>
-          <EmptyDescription>
-            Rext AI is being updated. We&apos;ll be back shortly; thank you for
-            your patience.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild variant="outline">
-            <Link href="/">Back to the home page</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <EmptyState
+        as="h1"
+        eyebrow="Maintenance"
+        title="Down for maintenance"
+        description="Rext AI is being updated. We’ll be back shortly; thank you for your patience."
+        action={{
+          label: "Back to the home page",
+          href: "/",
+          variant: "outline",
+        }}
+      />
     </main>
   );
 }
