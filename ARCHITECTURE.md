@@ -26,7 +26,9 @@ app/
   settings/                 account settings: Profile, security (and sessions), notifications, subscription (Billing),
                             data (export, the trash, closing the account); /profile, /settings/sessions and
                             /settings/trash redirect to their sections, billing to subscription
-  subscription/, billing/, usage/, pricing/, checkout/{success,cancel}
+  pricing/                  the plan grid and its questions in the shell (components/billing/), every number from
+                            the public catalogue GET /api/v1/plans; signed out, proxy.ts sends the site's pricing page
+  subscription/, billing/, usage/, checkout/{success,cancel}
   login/, signup/, forgot-password/, reset-password/, verify-email/, account-recovery/,
   invitations/accept/, accept-invitation/, accept-admin-invitation/      the auth pages, outside the shell
   legal/                    terms, privacy, refund policy, subscription terms
@@ -53,7 +55,7 @@ types/                      the API types, written by hand (no generated client)
 
 ## The shell
 
-The route layouts mount the shell, so it stays mounted while pages change: `app/w/layout.tsx` (every /w page), `app/(home)/layout.tsx` (/), and the layouts of settings, subscription, billing, usage, legal and admin each render `ShellLayout` (`components/shell/shell-layout.tsx`). It reads the sidebar's saved state from the `sidebar_state` cookie on the server and renders `AppShell`: shadcn's sidebar (`components/ui/sidebar/`), the header, the impersonation banner, the page in `main#main-content`, the background-generation dock, and under 1024 px a bottom bar. A page never mounts the shell; going from one of these areas to another mounts it again, which loses nothing (the sidebar state is in the cookie, the data in the query cache).
+The route layouts mount the shell, so it stays mounted while pages change: `app/w/layout.tsx` (every /w page), `app/(home)/layout.tsx` (/), and the layouts of settings, pricing, subscription, billing, usage, legal and admin each render `ShellLayout` (`components/shell/shell-layout.tsx`). It reads the sidebar's saved state from the `sidebar_state` cookie on the server and renders `AppShell`: shadcn's sidebar (`components/ui/sidebar/`), the header, the impersonation banner, the page in `main#main-content`, the background-generation dock, and under 1024 px a bottom bar. A page never mounts the shell; going from one of these areas to another mounts it again, which loses nothing (the sidebar state is in the cookie, the data in the query cache).
 
 - **The sidebar** (`app-sidebar.tsx`) follows `design/app-language.md` §5: the wordmark, the switcher (`workspace-switcher.tsx`), Generate (shortcut C, `use-generate-shortcut.ts`), Home, Content with a drafts badge, Keywords (the keyword library, which sits under Generate in the URL), Calendar, the Setup group, Settings, and the admin group for the roles that hold it; the credits meter and the user menu at its foot. The items, their permissions and the current page come from `use-shell-navigation.ts`, which the bottom bar reads too; a new page under a workspace is marked by the longest item URL its path starts with.
 - **Widths:** one cutoff, 1024 px (`hooks/use-mobile.ts`, Tailwind's `lg`): below it the sidebar is a sheet. From 1024 to 1279 px it shows icons only until the person clicks the trigger; the choice ("expanded" or "collapsed") then holds at every width. In the sidebar, `data-collapse="hide"` removes an element in the icon rail and `data-collapse="label"` keeps it for screen readers only.

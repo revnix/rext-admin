@@ -27,10 +27,6 @@
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },
-  "components/pricing/pricing-table.tsx": {
-    "stock-palette": 9,
-    "dark-class": 4
-  },
   "components/profile/change-password-form.tsx": {
     "stock-palette": 4
   },

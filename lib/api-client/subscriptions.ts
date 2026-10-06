@@ -20,6 +20,7 @@ import type {
   UserSubscription,
   CreditBalance,
 } from "@/types/subscription";
+import type { PlanCatalog } from "@/types/plan-catalog";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
@@ -42,6 +43,16 @@ export function createSubscriptionsNamespace(client: ApiClient) {
         },
       );
       return response;
+    },
+
+    /**
+     * The public plan catalogue (`GET /api/v1/plans`, no sign-in): what the pricing page and the
+     * paywall show. Checkout still takes a plan's id from `getPlans`.
+     */
+    getCatalog: async (): Promise<PlanCatalog> => {
+      return client.request<PlanCatalog>(ENDPOINTS.SUBSCRIPTIONS.catalog, {
+        method: "GET",
+      });
     },
 
     /**
