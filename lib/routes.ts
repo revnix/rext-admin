@@ -8,7 +8,8 @@ import type { Route } from "next";
  */
 
 /**
- * Valid workspace page segments
+ * Valid workspace page segments: the pages the workspace switcher keeps open when it changes
+ * workspace. A settings section is a page of its own, so switching from Members opens Members.
  */
 export const WORKSPACE_PAGES = [
   "content",
@@ -16,6 +17,9 @@ export const WORKSPACE_PAGES = [
   "personas",
   "persona_create",
   "settings",
+  "settings/brand-voice",
+  "settings/members",
+  "settings/danger-zone",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -116,17 +120,23 @@ export function isWorkspacePath(pathname: string): boolean {
  * @example
  * extractWorkspacePageSegment('/w/ws-123/content') // 'content'
  * extractWorkspacePageSegment('/w/ws-123/content/123') // 'content'
+ * extractWorkspacePageSegment('/w/ws-123/settings/members') // 'settings/members'
  * extractWorkspacePageSegment('/w/ws-123') // null
  * extractWorkspacePageSegment('/workspaces') // null
  */
 export function extractWorkspacePageSegment(
   pathname: string,
 ): WorkspacePageSegment | null {
-  const match = pathname.match(/^\/w\/[^/]+\/([^/?]+)/);
-  const segment = match ? match[1] : null;
-  return segment && WORKSPACE_PAGES.includes(segment as WorkspacePageSegment)
-    ? (segment as WorkspacePageSegment)
-    : null;
+  const match = pathname.match(/^\/w\/[^/]+\/([^?#]+)/);
+  if (!match) return null;
+  const path = match[1].replace(/\/+$/, "");
+  // The longest page the path is in, so a settings section wins over settings.
+  let found: WorkspacePageSegment | null = null;
+  for (const page of WORKSPACE_PAGES) {
+    const inside = path === page || path.startsWith(`${page}/`);
+    if (inside && (!found || page.length > found.length)) found = page;
+  }
+  return found;
 }
 
 /**
@@ -149,6 +159,9 @@ export function buildWorkspacePath(
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
     settings: workspaceRoutes.settings.root,
+    "settings/brand-voice": workspaceRoutes.settings.brandVoice,
+    "settings/members": workspaceRoutes.settings.members,
+    "settings/danger-zone": workspaceRoutes.settings.dangerZone,
   };
 
   const routeFn = routeMap[pageSegment];

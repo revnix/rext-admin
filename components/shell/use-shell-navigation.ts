@@ -145,9 +145,9 @@ function workspaceGroups(slug: string): NavGroup[] {
           icon: Settings,
           items: [
             {
+              // Every member may open General (read-only without workspace.update).
               title: "General",
               url: workspaceRoutes.settings.root(slug),
-              permission: "workspace.update",
               prefetch: false,
             },
             {
