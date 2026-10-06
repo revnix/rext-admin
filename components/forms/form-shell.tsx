@@ -40,6 +40,7 @@ export function FormShell<
   cancel,
   sticky = false,
   status,
+  dirty = false,
   children,
   className,
 }: {
@@ -53,12 +54,14 @@ export function FormShell<
   sticky?: boolean;
   /** Beside Save, announced to screen readers: the inline "Saved" after a section saves. */
   status?: ReactNode;
+  /** Unsaved changes the form's own state doesn't hold (a chosen file), for the leave guard. */
+  dirty?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   // Not "submitted successfully": that holds even when the page catches its own save error.
   const { isDirty, isSubmitting } = form.formState;
-  const guard = useLeaveGuard(isDirty && !isSubmitting);
+  const guard = useLeaveGuard((isDirty || dirty) && !isSubmitting);
 
   return (
     <form
