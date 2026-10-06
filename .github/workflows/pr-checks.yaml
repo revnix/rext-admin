@@ -1,0 +1,94 @@
+name: pr-checks
+
+# The checks a pull request into staging runs. On every push: the route types, the type check, Biome, and the
+# token and layout checks once they exist.
+# With the label "build" on the pull request: Jest and the production build as well.
+#
+# The founder's decision (2026-10-06): GitHub's own runners, within the Free plan's 2,000 minutes a month that the
+# organisation's private repositories share with the deploy workflows. So the quick checks run on every push and
+# the slow ones on request; rext-control/scripts/app/check.sh still runs the tests locally before every merge, and
+# the build too when the change touches what the build depends on. One job, one install; a newer push cancels the
+# run before it.
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    paths-ignore:
+      - "**/*.md"
+      - ".claude/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  # A label other than "build" gets a group of its own, so adding it cancels nothing.
+  group: pr-checks-${{ github.event.pull_request.number }}-${{ (github.event.action == 'labeled' && github.event.label.name != 'build') && github.run_id || 'push' }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    # Adding a label other than "build" changes no code: nothing to run.
+    if: github.event.action != 'labeled' || github.event.label.name == 'build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FULL: ${{ contains(github.event.pull_request.labels.*.name, 'build') }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12
+          cache: true
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Route types
+        run: pnpm exec next typegen
+
+      - name: Types
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tokens and layout
+        # The design-token and layout checks (tasks B3 and C2) run as soon as package.json has them, as check.sh does.
+        run: |
+          for script in tokens:check layout:check; do
+            if grep -q "\"$script\":" package.json; then pnpm run "$script"; else echo "$script: not in package.json yet"; fi
+          done
+
+      - name: Tests (label "build")
+        if: env.FULL == 'true'
+        run: pnpm exec jest --ci --silent
+        env:
+          CI: "true"
+
+      - name: Restore the build cache (label "build")
+        if: env.FULL == 'true'
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'lib/**', 'hooks/**', 'stores/**', 'providers/**', 'services/**', 'schemas/**', 'types/**', 'next.config.ts', 'proxy.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build (label "build")
+        if: env.FULL == 'true'
+        run: pnpm build
+        env:
+          # Dummy values: the build needs the names, never a real address or key.
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:2024
+          NEXT_PUBLIC_BACKEND_API_URL: http://127.0.0.1:2024
+          BACKEND_API_URL: http://127.0.0.1:2024
+          LANGGRAPH_API_URL: http://127.0.0.1:2024
+          AUTH_SECRET: ci-build-only-not-a-secret
+          AUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000

@@ -66,6 +66,7 @@ Read `ARCHITECTURE.md` before your first change: routes, the shell, the data lay
 1. The branch holds the current `origin/staging`, and `../rext-control/scripts/app/check.sh` passes (add `--build` for dependencies, `next.config.ts`, `app/globals.css`, the shell or a layout). Outside the rework, the commands above pass, the build included.
 2. You clicked through the pages you changed on the dev server at 390, 820 and 1440 px (rework sessions capture them with the `rext-app-visual-check` skill).
 3. The pull request body says what changed, why, how it was checked and what is not in it, and names the task.
+4. On GitHub, `pr-checks` (`.github/workflows/pr-checks.yaml`) runs the route types, the type check, Biome and `tokens:check` / `layout:check` (once they exist) on every push. The label `build` adds Jest and the production build; use it when the change needs them, since the Free plan's Actions minutes are shared with the deploys.
 
 ## Code Review Rules
 
