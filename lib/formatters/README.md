@@ -287,9 +287,9 @@ function MyComponent({ item }) {
 }
 ```
 
-### Real-World Example: Content Card
+### Real-World Example: The Content Library
 
-See `components/content/content-card.tsx` for a component that uses these formatters.
+See `app/w/[workspaceSlug]/content/page.tsx`, whose table and phone cards use `dateFormat.short`.
 
 **Key improvements:**
 - Reduced imports from 2-3 lines to 1-2 lines
