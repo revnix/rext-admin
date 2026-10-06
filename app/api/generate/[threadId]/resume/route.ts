@@ -31,11 +31,16 @@ export async function POST(
   }
 
   const client = getGenerationClient(access.accessToken);
+  // A resume carries no input, so the run names its workspace in its metadata:
+  // the thread's own, stamped when it was created. The backend refuses the run
+  // unless the caller may still create content there (rext-backend E17).
+  const runMetadata = { workspace_id: access.thread?.metadata?.workspace_id };
 
   if (body.background) {
     try {
       const run = await client.runs.create(threadId, ASSISTANT_ID, {
         command: { resume: body.payload },
+        metadata: runMetadata,
         streamMode: ["updates", "messages", "custom"],
         streamSubgraphs: true,
         streamResumable: true,
@@ -67,6 +72,7 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     command: { resume: body.payload },
+    metadata: runMetadata,
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
     streamResumable: true,

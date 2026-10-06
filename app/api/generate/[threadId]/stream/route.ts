@@ -32,6 +32,9 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     input: body.input,
+    // The backend checks content.create in the thread's workspace for every
+    // run (rext-backend E17); a new run also names it in its input.
+    metadata: { workspace_id: access.thread?.metadata?.workspace_id },
     streamMode: ["updates", "messages", "custom"],
     streamSubgraphs: true,
     streamResumable: true,

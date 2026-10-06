@@ -5,11 +5,22 @@ import { log } from "@/lib/logger";
 
 const sseLogger = log.forComponent("sse-stream");
 
-export async function createThread(): Promise<string> {
+/**
+ * A new generation thread in the workspace. The backend refuses it unless the
+ * user may create content there; the error carries the server's words.
+ */
+export async function createThread(workspaceId: string): Promise<string> {
   const res = await authenticatedFetch("/api/generate/threads", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ workspace_id: workspaceId }),
   });
-  if (!res.ok) throw new Error("Failed to create thread");
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(body?.error || "Failed to create thread");
+  }
   const json = await res.json();
   return json.data.thread_id;
 }

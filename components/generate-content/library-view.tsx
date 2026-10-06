@@ -40,6 +40,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
+import { libraryStartQuery } from "@/lib/generate-content/library-item";
 
 const libraryLogger = log.forComponent("library-view");
 
@@ -305,7 +306,7 @@ export function LibraryView() {
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(
-                            `/w/${workspace?.slug}/generate_content?library=${item.keyword}` as Route,
+                            `/w/${workspace?.slug}/generate_content?${libraryStartQuery(item.id)}` as Route,
                           );
                         }}
                       >

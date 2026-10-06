@@ -18,6 +18,7 @@ import { SearchIntentCard } from "../ui/content/intent-card";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Route } from "next";
+import { libraryStartQuery } from "@/lib/generate-content/library-item";
 
 type IntentOption =
   | "informational"
@@ -84,9 +85,8 @@ export default function LibraryDetail({
   );
 
   const handleContinue = () => {
-    const intentParam = selectedIntent ? `&intent=${selectedIntent}` : "";
     router.push(
-      `/w/${workspace?.slug}/generate_content?library=${selectedItem.keyword}${intentParam}` as Route,
+      `/w/${workspace?.slug}/generate_content?${libraryStartQuery(selectedItem.id, selectedIntent || undefined)}` as Route,
     );
   };
 
