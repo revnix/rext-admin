@@ -36,6 +36,18 @@ describe("the content library's table state in the URL", () => {
     expect(params).not.toHaveProperty("type");
   });
 
+  it("sorts an older link by a removed column the default way (D2b #466)", () => {
+    for (const sort of ["type.asc", "words.desc", "platform.asc"]) {
+      expect(loadContentListParams(`?sort=${sort}`).sort).toEqual(
+        DEFAULTS.sort,
+      );
+    }
+    expect(loadContentListParams("?sort=seo.desc").sort).toEqual({
+      id: "seo",
+      desc: true,
+    });
+  });
+
   it("keeps a link with one status working", () => {
     expect(loadContentListParams("?status=draft").status).toEqual(["draft"]);
   });

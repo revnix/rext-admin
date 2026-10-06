@@ -34,6 +34,21 @@ export const parseAsSort = createParser<DataTableSort>({
   eq: (a, b) => a.id === b.id && a.desc === b.desc,
 });
 
+/**
+ * `?sort=…` for a list whose columns are known: a sort by any other column (a removed one, in an old
+ * link) reads as no sort, so the list's default applies instead of no order at all.
+ */
+export function parseAsSortOf(columns: readonly string[]) {
+  return createParser<DataTableSort>({
+    parse: (value) => {
+      const sort = parseAsSort.parse(value);
+      return sort && columns.includes(sort.id) ? sort : null;
+    },
+    serialize: parseAsSort.serialize,
+    eq: parseAsSort.eq,
+  });
+}
+
 /** A faceted filter, `?status=draft,review`: only the values the list knows survive a hand-edited URL. */
 export function parseAsFacet<const T extends string>(values: readonly T[]) {
   return parseAsArrayOf(parseAsStringLiteral(values)).withDefault([]);
