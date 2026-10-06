@@ -9,6 +9,8 @@ describe("extractWorkspacePageSegment", () => {
   it.each([
     ["/w/acme/content", "content"],
     ["/w/acme/content/42", "content"],
+    ["/w/acme/keywords", "keywords"],
+    ["/w/acme/keywords/library_seo%20tools", "keywords"],
     ["/w/acme/settings", "settings"],
     ["/w/acme/settings/", "settings"],
     ["/w/acme/settings/brand-voice", "settings/brand-voice"],
@@ -40,5 +42,10 @@ describe("buildWorkspacePath", () => {
       "/w/globex/settings/brand-voice",
     );
     expect(buildWorkspacePath("globex", "settings")).toBe("/w/globex/settings");
+  });
+
+  it("opens the other workspace's keywords from Keywords or a keyword's page", () => {
+    // A keyword's page names a record of one workspace's library: the other workspace opens its list.
+    expect(buildWorkspacePath("globex", "keywords")).toBe("/w/globex/keywords");
   });
 });
