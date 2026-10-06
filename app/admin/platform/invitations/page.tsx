@@ -219,15 +219,20 @@ export default function AdminInvitationsPage() {
         {/* Invitations Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            {/* Stacked below md: the five tabs are wider than a phone. */}
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Admin Invitations</CardTitle>
                 <CardDescription>
                   View and manage platform administrator invitations
                 </CardDescription>
               </div>
-              <Tabs value={selectedStatus} onValueChange={setSelectedStatus}>
-                <TabsList>
+              <Tabs
+                value={selectedStatus}
+                onValueChange={setSelectedStatus}
+                className="min-w-0"
+              >
+                <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:w-auto">
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="pending">Pending</TabsTrigger>
                   <TabsTrigger value="accepted">Accepted</TabsTrigger>
