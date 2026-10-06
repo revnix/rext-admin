@@ -22,6 +22,10 @@ import { analytics } from "@/lib/analytics";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
+import {
+  bonusWords,
+  monthlyCreditsLeft,
+} from "@/components/billing/billing-format";
 import { session } from "@/lib/storage";
 import { CHECKOUT_BASELINE_KEY } from "@/lib/storage-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -145,7 +149,8 @@ export default function CheckoutSuccessPage() {
   const planName =
     credits.data?.plan_name ?? subscription?.plan_display_name ?? null;
   const renews = subscription?.renews_at ?? subscription?.current_period_end;
-  const left = credits.data?.current_credits;
+  const left = credits.data ? monthlyCreditsLeft(credits.data) : undefined;
+  const bonus = credits.data ? bonusWords(credits.data) : null;
   const total = credits.data?.credits_per_month ?? null;
 
   return (
@@ -222,9 +227,14 @@ export default function CheckoutSuccessPage() {
                     {left !== undefined && total !== null && total > 0 && (
                       <Meter value={left} max={total} label="Credits" />
                     )}
-                    {renews && (
+                    {(renews || bonus) && (
                       <p className="text-sm text-muted-foreground">
-                        Renews {dateFormat.short(renews)}.
+                        {[
+                          renews ? `Renews ${dateFormat.short(renews)}.` : null,
+                          bonus,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                       </p>
                     )}
                   </div>

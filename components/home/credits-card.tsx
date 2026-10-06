@@ -11,6 +11,10 @@ import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
 import { SubscriptionStatus } from "@/types/subscription";
+import {
+  bonusWords,
+  monthlyCreditsLeft,
+} from "@/components/billing/billing-format";
 
 /** Under a fifth of the month's credits left, the bar takes the warning colour, as in the shell. */
 const LOW_SHARE = 0.2;
@@ -42,8 +46,8 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
     );
   }
 
+  const left = monthlyCreditsLeft(credits.data);
   const {
-    current_credits: left,
     credits_per_month: total,
     credits_reset_date: resetDate,
     plan_name: planName,
@@ -95,6 +99,7 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
               : total === null
                 ? "No monthly limit"
                 : null,
+            bonusWords(credits.data)?.replace(/\.$/, ""),
             perArticle ? `One article is ${perArticle} credits` : null,
           ]
             .filter(Boolean)

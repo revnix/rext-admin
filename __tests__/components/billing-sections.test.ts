@@ -3,7 +3,12 @@
  * state, and amounts are the order's cents in its currency.
  */
 
-import { formatAmount, nextDate } from "@/components/billing/billing-format";
+import {
+  bonusWords,
+  formatAmount,
+  monthlyCreditsLeft,
+  nextDate,
+} from "@/components/billing/billing-format";
 import {
   BillingPeriod,
   SubscriptionStatus,
@@ -79,5 +84,30 @@ describe("formatAmount", () => {
   it("reads cents in the order's currency", () => {
     expect(formatAmount(8900, "USD")).toBe("$89.00");
     expect(formatAmount(3900, "EUR")).toBe("€39.00");
+  });
+});
+
+describe("monthlyCreditsLeft and bonusWords", () => {
+  it("sets the plan's own credits against its allowance, and the bonus apart", () => {
+    const credits = {
+      current_credits: 1500,
+      monthly_credits: 500,
+      bonus: {
+        label: "Launch bonus",
+        promotion: "launch",
+        credits: 1000,
+        granted: 1000,
+        expires_at: "2026-10-14T06:59:00Z",
+      },
+    };
+    expect(monthlyCreditsLeft(credits)).toBe(500);
+    expect(bonusWords(credits)).toBe(
+      "Plus 1,000 launch bonus credits, until Oct 14, 2026.",
+    );
+  });
+
+  it("reads the total when the backend sends no monthly figure, and no bonus", () => {
+    expect(monthlyCreditsLeft({ current_credits: 300 })).toBe(300);
+    expect(bonusWords({ bonus: null })).toBeNull();
   });
 });

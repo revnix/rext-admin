@@ -1,5 +1,6 @@
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import {
+  type CreditBalance,
   SubscriptionStatus,
   type UserSubscriptionDetail,
 } from "@/types/subscription";
@@ -33,4 +34,25 @@ export function formatAmount(cents: number, currency: string) {
     style: "currency",
     currency: currency || "USD",
   }).format((cents ?? 0) / 100);
+}
+
+/**
+ * The plan's credits left this period, without a bonus, to set against the plan's allowance; a
+ * bonus is shown apart. A backend that doesn't send `monthly_credits` sends no bonus either.
+ */
+export function monthlyCreditsLeft(
+  credits: Pick<CreditBalance, "current_credits" | "monthly_credits">,
+): number {
+  return credits.monthly_credits ?? credits.current_credits;
+}
+
+/** "Plus 1,000 launch bonus credits, until Oct 14, 2026." or null. */
+export function bonusWords(
+  credits: Pick<CreditBalance, "bonus">,
+): string | null {
+  const bonus = credits.bonus;
+  if (!bonus || bonus.credits <= 0) return null;
+  return `Plus ${bonus.credits.toLocaleString()} ${bonus.label.toLowerCase()} credits${
+    bonus.expires_at ? `, until ${dateFormat.short(bonus.expires_at)}` : ""
+  }.`;
 }

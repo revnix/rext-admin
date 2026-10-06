@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlanGrid } from "@/components/billing/plan-grid";
 import { SettingsGroup } from "@/components/settings/settings-group";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBillingActions } from "@/hooks/use-billing-actions";
 import { HOLDS_A_PAID_PLAN, nextDate } from "./billing-format";
 import { subscriptionQueries } from "@/lib/query-keys";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
 /** The subscription's status in words, and whether it's worth a tint. */
@@ -43,6 +44,14 @@ export function PlanSection() {
   const current = useQuery(subscriptionQueries.current());
   const credits = useQuery(subscriptionQueries.myCredits());
   const billing = useBillingActions();
+  const fetchSubscription = useSubscriptionStore(
+    (state) => state.fetchSubscription,
+  );
+  // The change dialog, the checkout baseline and the payment actions still read the subscription
+  // store (#460 moves them to the queries): load it here too, so a fresh visit has them.
+  useEffect(() => {
+    void fetchSubscription();
+  }, [fetchSubscription]);
   const [changing, setChanging] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const heldStatus = current.data?.subscription?.status;
