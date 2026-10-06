@@ -72,7 +72,7 @@ Every page inside the shell renders one of the five layouts of `design/app-langu
 - **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`: Profile, Security and sessions, Notifications, Billing, Data and trash) and workspace settings (`app/w/[workspaceSlug]/settings`: General, Brand voice, Members, Danger zone, each listed only for the people who may open it).
 - **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
 
-`loading.tsx` files render their skeleton in `PageFrame`, the same frame. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
+`loading.tsx` files render `PageSkeleton` (`layout` list, detail or form; `rows`, `stats`), which draws its layout's shapes in `PageFrame`, the same frame; under `SettingsPage` they render `SectionSkeleton`. Both appear only after 200 ms, by a CSS delay, so it works on the server. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
 
 ## Tables
 
@@ -91,13 +91,17 @@ The persona form (create and edit), workspace settings (General), and the login 
 ## States
 
 One component each (design/app-language.md §8), in `components/ui/`:
-- `Notice` is the one box for info, warning, danger and success (icon, title, text, one action), with `role="alert"` for danger and warning;
+- `Notice` is the one box for info, warning, danger and success (icon, title, text, one action, an optional `onDismiss`), with `role="alert"` for danger and warning: a failed load says what happened and what to do, in place of what failed;
 - `EmptyState` is a title, one sentence and one action, with no picture, and `as="h1"` on pages outside the shell;
-- `Skeleton` shows through `useShowAfter` (`hooks/use-show-after.ts`, 200 ms), so a fast load shows nothing;
+- `Skeleton` shows through `useShowAfter` (`hooks/use-show-after.ts`, 200 ms) in client code, or through `PageSkeleton` and `SectionSkeleton` (`components/layouts`) for a page, so a fast load shows nothing;
+- `ErrorBoundary` (`error-boundary.tsx`, on `react-error-boundary`) puts a danger Notice with Try again in place of a part that throws, and retries its failed queries; `title` names what failed;
+- `RouteError` is every `error.tsx`: `layout="container"` in the shell (a Notice in the page's frame), `"inline"` under a layout.tsx that draws a page layout (settings), `"fullscreen"` outside the shell (an EmptyState page). It logs the error and shows only its digest;
 - `Meter` shows credits and limits, in the warning colour when low;
-- `ScoreRing` is the one 0 to 100 score.
+- `ScoreRing` is the one 0 to 100 score;
+- `Badge` is a word: `neutral` by default, or one of the four status tints, text only. shadcn's variant names draw the same quiet badges;
+- `ConfirmationDialog` and `useConfirmation` ask before an action, with buttons that name it and its opposite ("Delete article", "Keep article"); a `Dialog` takes the whole screen under 640 px.
 
-The older `alert.tsx`, loading and error components move to these and go.
+`alert.tsx` and `error-states.tsx` stay only for the files the team still has open, and `loading-indicator.tsx` for the old table; each goes when its last user moves.
 
 ## Data
 
