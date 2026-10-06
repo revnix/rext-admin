@@ -3,11 +3,10 @@
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 import { RunNotice } from "@/components/generate-content/run-notice";
-import { SelectionView } from "@/components/generate-content/selection-view";
 import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
@@ -30,7 +29,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 
-type PageView = "selection" | "fresh" | "library";
+type PageView = "fresh" | "library";
 
 export default function Page() {
   const { workspace, workspaceId, workspaceSlug } = useWorkspace();
@@ -39,8 +38,6 @@ export default function Page() {
     CONTENT_PERMISSIONS.READ,
     workspaceId,
   );
-  const { hasPermission: canCreate, isLoading: isCreatePermLoading } =
-    useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
   const { user } = useAuthSession();
   const urlParams = useSearchParams();
   // `?library=` names a Library item by its store key (E17). The page reads the
@@ -58,9 +55,12 @@ export default function Page() {
   const backgroundJobsHydrated = useBackgroundGenerationStore(
     (state) => state.hasHydrated,
   );
-  const [view, setView] = useState<PageView>(() =>
-    libraryKeyword || backgroundThreadId ? "fresh" : "selection",
-  );
+  // The page opens on the search, with the recent keywords beneath it (E4): no screen before it.
+  const [view, setView] = useState<PageView>("fresh");
+  // Bumped to start a new article: the generation view mounts afresh, with nothing of the last run.
+  const [startKey, setStartKey] = useState(0);
+  // Whether the address named a run, so that its going away (a cancel) starts a new article.
+  const hadThread = useRef(Boolean(backgroundThreadId));
   const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
     string | undefined
   >(libraryKeyword ?? undefined);
@@ -94,15 +94,23 @@ export default function Page() {
     }
   }, [libraryKeyword]);
 
+  const startOver = () => {
+    hadThread.current = false;
+    setSelectedLibraryKeyword(undefined);
+    setView("fresh");
+    setStartKey((key) => key + 1);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: startOver only sets state
   useEffect(() => {
     if (backgroundThreadId) {
+      hadThread.current = true;
       setView("fresh");
-    } else if (!libraryKeyword) {
+    } else if (!libraryKeyword && hadThread.current) {
       // Cancelling replaces `?thread=...` with the blank generation route.
-      // Reset the mounted workflow as well so its loading/editor state cannot
+      // Start a new article as well so the run's loading/editor state cannot
       // remain visible after the URL changes.
-      setSelectedLibraryKeyword(undefined);
-      setView("selection");
+      startOver();
     }
   }, [backgroundThreadId, libraryKeyword]);
 
@@ -117,11 +125,6 @@ export default function Page() {
   // one generation at a time. Generations are independent LangGraph threads, so
   // there is no reason to block a second one: the dock keeps every running job
   // visible and is the way back into any of them.
-
-  const handleStartFresh = () => {
-    setSelectedLibraryKeyword(undefined);
-    setView("fresh");
-  };
 
   const handlePickFromLibrary = () => {
     setView("library");
@@ -148,8 +151,7 @@ export default function Page() {
       announceBackgroundGenerationRemoval(discardedThreadIds);
     }
 
-    setView("selection");
-    setSelectedLibraryKeyword(undefined);
+    startOver();
     if (backgroundThreadId && workspace?.slug) {
       router.replace(workspaceRoutes.generate_content(workspace.slug) as Route);
     }
@@ -218,30 +220,21 @@ export default function Page() {
               onAction={handlePickFromLibrary}
             />
           ) : (
-            <>
-              {view === "selection" && (
-                <SelectionView
-                  onStartFresh={handleStartFresh}
-                  onPickFromLibrary={handlePickFromLibrary}
-                  canCreate={canCreate}
-                  isPermLoading={isCreatePermLoading}
-                />
-              )}
-              {view === "fresh" && (
-                <FreshGenerationView
-                  onBack={handleBackToSelection}
-                  initialKeyword={selectedLibraryKeyword}
-                  initialIntent={libraryIntent ?? undefined}
-                  isLibrary={isLibrary}
-                  libraryKey={
-                    libraryStart && libraryStart !== "missing"
-                      ? libraryStart.key
-                      : undefined
-                  }
-                  backgroundThreadId={backgroundThreadId ?? undefined}
-                />
-              )}
-            </>
+            view === "fresh" && (
+              <FreshGenerationView
+                key={startKey}
+                onBack={handleBackToSelection}
+                initialKeyword={selectedLibraryKeyword}
+                initialIntent={libraryIntent ?? undefined}
+                isLibrary={isLibrary}
+                libraryKey={
+                  libraryStart && libraryStart !== "missing"
+                    ? libraryStart.key
+                    : undefined
+                }
+                backgroundThreadId={backgroundThreadId ?? undefined}
+              />
+            )
           )}
         </div>
       </PermissionGuard>
