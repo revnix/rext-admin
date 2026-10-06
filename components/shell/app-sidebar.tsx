@@ -101,7 +101,7 @@ function GenerateButton({ navigation }: { navigation: ShellNavigation }) {
   if (!workspaceSlug) return null;
 
   const className =
-    "flex h-9 w-full items-center gap-2 rounded-sm bg-primary px-3 max-lg:h-10 text-body font-medium text-primary-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&>svg]:size-4 [&>svg]:shrink-0";
+    "flex h-9 w-full items-center gap-2 rounded-sm bg-primary px-3 max-lg:h-(--control-height-lg) text-body font-medium text-primary-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&>svg]:size-4 [&>svg]:shrink-0";
 
   if (!generate) {
     // Locked, not hidden (language §8): the role can read the workspace but not write in it.
@@ -352,7 +352,7 @@ export function AppSidebar({ navigation }: { navigation: ShellNavigation }) {
         <Link
           href="/"
           aria-label="Rext AI home"
-          className="flex h-8 items-center rounded-sm px-3 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none max-lg:h-10"
+          className="flex h-8 items-center rounded-sm px-3 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none max-lg:h-(--control-height-lg)"
         >
           <Image
             src="/logos/rext_logo_light.svg"
