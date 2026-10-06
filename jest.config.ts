@@ -115,18 +115,20 @@ const customJestConfig: Config = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
 };
 
-// Lexical ships ES modules only (from 0.51), so Jest has to transform it. next/jest
-// leaves node_modules untransformed except its own list and lets a config only add
-// to what is ignored, so Lexical is added to next/jest's two node_modules patterns
-// (npm's folder layout and pnpm's).
+// Lexical (from 0.51), nuqs and @t3-oss/env-nextjs ship ES modules only, so Jest has
+// to transform them. next/jest leaves node_modules untransformed except its own list
+// and lets a config only add to what is ignored, so they are added to next/jest's two
+// node_modules patterns (npm's folder layout and pnpm's).
 const TRANSFORMED = {
-  npm: "lexical|@lexical/[^/]+",
-  pnpm: "lexical|@lexical\\+[^@]+",
+  npm: "lexical|@lexical/[^/]+|nuqs|@t3-oss/[^/]+",
+  pnpm: "lexical|@lexical\\+[^@]+|nuqs|@t3-oss\\+[^@]+",
 };
-const LEXICAL_FILES = [
+const ESM_ONLY_FILES = [
   "/app/node_modules/lexical/Lexical.mjs",
   "/app/node_modules/.pnpm/lexical@0.52.0/node_modules/lexical/Lexical.mjs",
   "/app/node_modules/.pnpm/@lexical+markdown@0.52.0/node_modules/@lexical/markdown/LexicalMarkdown.mjs",
+  "/app/node_modules/.pnpm/nuqs@2.10.1_next@16.3.8/node_modules/nuqs/dist/server.js",
+  "/app/node_modules/.pnpm/@t3-oss+env-core@0.13.11_zod@4.6.5/node_modules/@t3-oss/env-core/dist/index.js",
 ];
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
@@ -141,8 +143,8 @@ export default async () => {
       .replace("\\.pnpm[\\\\/](?!(", `\\.pnpm[\\\\/](?!(${TRANSFORMED.pnpm}|`),
   );
   // If a next/jest upgrade changes its patterns, fail here rather than in every
-  // test that loads the editor.
-  for (const file of LEXICAL_FILES) {
+  // test that loads one of them.
+  for (const file of ESM_ONLY_FILES) {
     const ignoredBy = patterns.find((pattern) =>
       new RegExp(pattern).test(file),
     );

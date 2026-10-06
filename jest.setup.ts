@@ -60,20 +60,23 @@ jest.mock("next/navigation", () => ({
 
 // Global test utilities - no suppression to show real issues
 
-// Mock window.matchMedia for components using media queries
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+// Mock window.matchMedia for components using media queries (a test that runs in
+// the node environment, for server code, has no window)
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
 
 // Mock localStorage for Zustand persist tests
 const localStorageMock = {
@@ -214,12 +217,17 @@ const topLayerPseudoClasses = new Set([
   ":popover-open",
   ":fullscreen",
 ]);
-const nativeMatches = Element.prototype.matches;
-Element.prototype.matches = function matches(this: Element, selector: string) {
-  return topLayerPseudoClasses.has(selector)
-    ? false
-    : nativeMatches.call(this, selector);
-};
+if (typeof Element !== "undefined") {
+  const nativeMatches = Element.prototype.matches;
+  Element.prototype.matches = function matches(
+    this: Element,
+    selector: string,
+  ) {
+    return topLayerPseudoClasses.has(selector)
+      ? false
+      : nativeMatches.call(this, selector);
+  };
+}
 
 // Global test cleanup to prevent memory leaks
 afterEach(() => {
