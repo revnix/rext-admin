@@ -31,6 +31,7 @@ export const initialState: PageState = {
   isManualLoading: false,
   completedNodes: [],
   readabilityScore: null,
+  checklist: null,
   seoScore: null,
   trustScore: null,
   eeatData: null,
@@ -74,6 +75,9 @@ export function generationReducer(
     case "SET_READABILITY_SCORE":
       if (state.readabilityScore === action.payload) return state;
       return { ...state, readabilityScore: action.payload };
+    case "SET_CHECKLIST":
+      if (state.checklist === action.payload) return state;
+      return { ...state, checklist: action.payload };
     case "SET_TRUST_SCORE":
       if (state.trustScore === action.payload) return state;
       return { ...state, trustScore: action.payload };
