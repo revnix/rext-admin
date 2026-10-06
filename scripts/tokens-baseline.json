@@ -23,12 +23,6 @@
   "app/w/[workspaceSlug]/personas/[personaId]/page.tsx": {
     "stock-palette": 1
   },
-  "app/w/page.tsx": {
-    "small-type": 3
-  },
-  "components/data-table.tsx": {
-    "arbitrary-size": 2
-  },
   "components/notifications-drawer.tsx": {
     "stock-palette": 24,
     "dark-class": 2
