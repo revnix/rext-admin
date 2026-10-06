@@ -75,7 +75,8 @@ export function FormShell<
         className={cn(
           "flex flex-wrap items-center gap-2",
           sticky &&
-            "sticky bottom-0 z-(--z-sticky) -mx-1 border-t bg-background px-1 py-3",
+            // Above the phone's bottom bar, as the generation dock sits (app-shell.tsx).
+            "sticky bottom-(--bottom-bar-height) z-(--z-sticky) -mx-1 border-t bg-background px-1 py-3 lg:bottom-0",
         )}
       >
         <Button type="submit" disabled={isSubmitting}>

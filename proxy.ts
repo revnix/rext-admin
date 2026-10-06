@@ -130,8 +130,8 @@ function matchesRoute(pathname: string, routePattern: string): boolean {
  * so they're checked at the page level, not in middleware.
  *
  * Examples:
- * - /w/[workspaceSlug]/settings - requires workspace.update for THAT workspace
- * - /w/[workspaceSlug]/members - requires member.read for THAT workspace
+ * - /w/[workspaceSlug]/settings/brand-voice - requires brand_voice.read for THAT workspace
+ * - /w/[workspaceSlug]/settings/members - requires member.read for THAT workspace
  * - /w/[workspaceSlug]/content - requires content.read for THAT workspace
  *
  * Middleware only verifies user is authenticated for workspace routes.

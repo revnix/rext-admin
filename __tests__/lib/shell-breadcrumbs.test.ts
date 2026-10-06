@@ -32,8 +32,13 @@ describe("buildBreadcrumbs", () => {
     ]);
   });
 
-  it("puts brand voice and members under settings", () => {
-    expect(buildBreadcrumbs("/w/acme/members", "Acme")).toEqual([
+  it("puts the settings sections under Settings", () => {
+    expect(buildBreadcrumbs("/w/acme/settings/brand-voice", "Acme")).toEqual([
+      { label: "Acme", href: "/" },
+      { label: "Settings", href: "/w/acme/settings" },
+      { label: "Brand voice" },
+    ]);
+    expect(buildBreadcrumbs("/w/acme/settings/members", "Acme")).toEqual([
       { label: "Acme", href: "/" },
       { label: "Settings", href: "/w/acme/settings" },
       { label: "Members" },

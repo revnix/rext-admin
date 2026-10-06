@@ -152,13 +152,13 @@ function workspaceGroups(slug: string): NavGroup[] {
             },
             {
               title: "Brand voice",
-              url: workspaceRoutes.brand_voice(slug),
+              url: workspaceRoutes.settings.brandVoice(slug),
               permission: "brand_voice.read",
               prefetch: false,
             },
             {
               title: "Members",
-              url: workspaceRoutes.members(slug),
+              url: workspaceRoutes.settings.members(slug),
               permission: "member.read",
               prefetch: false,
             },

@@ -11,7 +11,6 @@
 
 // Brand Voice
 export { BrandVoiceRefreshControl } from "./brand-voice-refresh-control";
-export { EditableBrandVoiceCard } from "./editable-brand-voice-card";
 export { WorkspaceBrandVoiceForm } from "./workspace-brand-voice-form";
 
 // Members & Invitations
@@ -28,7 +27,6 @@ export { PersonaSelection } from "./persona-selection";
 // Workspace Core
 export { WorkspaceCreateWizard } from "./workspace-create-wizard";
 export { WorkspaceDeleteDialog } from "./workspace-delete-dialog";
-export { WorkspaceOverviewForm } from "./workspace-overview-form";
 export { WorkspaceProgressTimeline } from "./workspace-progress-timeline";
 export {
   WorkspaceWelcomeModal,

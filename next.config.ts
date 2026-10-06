@@ -210,6 +210,17 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        // Brand voice and members are sections of workspace settings.
+        source: "/w/:workspaceSlug/brand_voice",
+        destination: "/w/:workspaceSlug/settings/brand-voice",
+        permanent: false,
+      },
+      {
+        source: "/w/:workspaceSlug/members",
+        destination: "/w/:workspaceSlug/settings/members",
+        permanent: false,
+      },
+      {
         // Deleted workspaces are restored from the account's trash.
         source: "/w/:workspaceSlug/settings/trash",
         destination: "/settings/trash",
