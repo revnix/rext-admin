@@ -200,7 +200,7 @@ export default function IntegrationsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : integrations.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground bg-slate-100 dark:bg-accent rounded-md border border-dashed">
+          <div className="text-center py-12 text-muted-foreground bg-surface-inset rounded-md border border-dashed">
             No integrations connected yet. Click "Add Integration" to start.
           </div>
         ) : (
@@ -212,7 +212,7 @@ export default function IntegrationsPage() {
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border bg-white">
+                    <Avatar className="h-10 w-10 border bg-card">
                       <AvatarImage
                         src={
                           integration.logo ||
@@ -241,7 +241,7 @@ export default function IntegrationsPage() {
                       `Connect ${integration.name || integration.integration_type} to sync your content automatically.`}
                   </CardDescription>
                 </CardContent>
-                <CardFooter className="flex items-center justify-between p-6 border-t border-slate-100">
+                <CardFooter className="flex items-center justify-between p-6 border-t border-border">
                   <div className="flex gap-2">
                     {canUpdate || canDelete ? (
                       <Button

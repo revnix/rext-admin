@@ -110,7 +110,7 @@ export function CustomIntegrationConfiguration({
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 items-start">
           {/* Enable Integration */}
           <div>
-            <FormLabel className="text-base font-medium text-slate-700">
+            <FormLabel className="text-base font-medium">
               Enable Integration
             </FormLabel>
           </div>
@@ -135,7 +135,7 @@ export function CustomIntegrationConfiguration({
 
           {/* Site URL */}
           <div className="pt-2">
-            <FormLabel className="text-base font-medium text-slate-700">
+            <FormLabel className="text-base font-medium">
               {isShopify ? "Shopify Store URL" : "Site URL"}
             </FormLabel>
           </div>
@@ -153,7 +153,7 @@ export function CustomIntegrationConfiguration({
                           ? "https://yourstore.myshopify.com"
                           : "https://example.com"
                       }
-                      className="bg-white font-mono text-sm"
+                      className="font-mono text-sm"
                     />
                   </FormControl>
                   <Button
@@ -165,7 +165,7 @@ export function CustomIntegrationConfiguration({
                     type="button"
                   >
                     {copiedField === "url" ? (
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4 text-success-600" />
                     ) : (
                       "Copy"
                     )}
@@ -183,7 +183,7 @@ export function CustomIntegrationConfiguration({
 
           {/* API Key */}
           <div className="pt-2">
-            <FormLabel className="text-base font-medium text-slate-700">
+            <FormLabel className="text-base font-medium">
               {isShopify ? "Admin API Access Token" : "API Key"}
             </FormLabel>
           </div>
@@ -198,7 +198,7 @@ export function CustomIntegrationConfiguration({
                       type={showApiKey ? "text" : "password"}
                       {...field}
                       placeholder={isShopify ? "shpat_..." : "rext_..."}
-                      className="bg-white font-mono text-sm mb-2"
+                      className="font-mono text-sm mb-2"
                     />
                   </FormControl>
                   <div className="flex gap-2">
@@ -206,7 +206,6 @@ export function CustomIntegrationConfiguration({
                       variant="outline"
                       size="sm"
                       onClick={() => setShowApiKey(!showApiKey)}
-                      className="text-slate-600"
                       type="button"
                     >
                       {showApiKey ? "Hide" : "Show"}
@@ -217,11 +216,10 @@ export function CustomIntegrationConfiguration({
                       onClick={() =>
                         field.value && copyToClipboard(field.value, "key")
                       }
-                      className="text-slate-600"
                       type="button"
                     >
                       {copiedField === "key" ? (
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-success-600" />
                       ) : (
                         "Copy"
                       )}
@@ -242,7 +240,7 @@ export function CustomIntegrationConfiguration({
           {!isShopify && (
             <>
               <div className="pt-2">
-                <FormLabel className="text-base font-medium text-slate-700">
+                <FormLabel className="text-base font-medium">
                   API Endpoint
                 </FormLabel>
               </div>
@@ -256,7 +254,7 @@ export function CustomIntegrationConfiguration({
                         <Input
                           {...field}
                           placeholder="https://example.com/wp-json/rext-ai/v1/"
-                          className="bg-white font-mono text-sm"
+                          className="font-mono text-sm"
                         />
                       </FormControl>
                       <Button
@@ -269,7 +267,7 @@ export function CustomIntegrationConfiguration({
                         type="button"
                       >
                         {copiedField === "endpoint" ? (
-                          <Check className="h-4 w-4 text-green-600" />
+                          <Check className="h-4 w-4 text-success-600" />
                         ) : (
                           "Copy"
                         )}

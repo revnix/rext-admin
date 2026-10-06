@@ -92,18 +92,6 @@
     "stock-palette": 9,
     "small-type": 9
   },
-  "app/w/[workspaceSlug]/integrations/add-integration-modal.tsx": {
-    "literal-colour": 3,
-    "arbitrary-size": 4,
-    "small-type": 1
-  },
-  "app/w/[workspaceSlug]/integrations/custom-integration-configuration.tsx": {
-    "stock-palette": 12
-  },
-  "app/w/[workspaceSlug]/integrations/page.tsx": {
-    "stock-palette": 3,
-    "dark-class": 1
-  },
   "app/w/[workspaceSlug]/personas/[personaId]/page.tsx": {
     "stock-palette": 1
   },
@@ -176,11 +164,6 @@
   },
   "components/content/content-card.tsx": {
     "stock-palette": 10
-  },
-  "components/dashboard/revamp/recent-content.tsx": {
-    "stock-palette": 14,
-    "dark-class": 6,
-    "small-type": 1
   },
   "components/data-table.tsx": {
     "arbitrary-size": 2
