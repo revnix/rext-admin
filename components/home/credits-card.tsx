@@ -13,6 +13,7 @@ import { settingsRoutes } from "@/lib/routes";
 import { SubscriptionStatus } from "@/types/subscription";
 import {
   bonusWords,
+  creditsPlan,
   monthlyCreditsLeft,
 } from "@/components/billing/billing-format";
 
@@ -23,7 +24,8 @@ const LOW_SHARE = 0.2;
  * The workspace's credits (plans/app/D-pages.md §2.1): its owner's plan, the balance on the meter,
  * when the credits renew or the trial ends, and what one article costs. Every number is the
  * backend's: the balance and the month's allowance from the credits endpoint (a trial's allowance
- * is the trial plan's), the article's cost from the public catalogue.
+ * is the trial plan's), the article's cost from the public catalogue. An account with nothing that
+ * grants access has no plan, which is not the unlimited plan's "no monthly limit".
  */
 export function CreditsCard({ workspaceId }: { workspaceId: string }) {
   const { user } = useAuthSession();
@@ -58,6 +60,8 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
   const ownCredits = !ownerId || ownerId === user?.id;
   const onTrial =
     ownCredits && mine.data?.subscription?.status === SubscriptionStatus.TRIAL;
+  const plan = creditsPlan(credits.data);
+  const choosePlan = onTrial || (plan === "none" && ownCredits);
   const perArticle = catalog.data?.credits.per_article;
 
   return (
@@ -92,13 +96,17 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
         )}
         <p className="text-sm text-muted-foreground">
           {[
-            resetDate
-              ? onTrial
-                ? `Trial ends ${dateFormat.short(resetDate)}`
-                : `Credits renew ${dateFormat.short(resetDate)}`
-              : total === null
-                ? "No monthly limit"
-                : null,
+            plan === "none"
+              ? ownCredits
+                ? "No plan: choose one to keep writing"
+                : "The workspace's owner has no plan, so it can't write"
+              : resetDate
+                ? onTrial
+                  ? `Trial ends ${dateFormat.short(resetDate)}`
+                  : `Credits renew ${dateFormat.short(resetDate)}`
+                : plan === "unlimited"
+                  ? "No monthly limit"
+                  : null,
             bonusWords(credits.data)?.replace(/\.$/, ""),
             perArticle ? `One article is ${perArticle} credits` : null,
           ]
@@ -107,11 +115,13 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
             .join(" ")}
         </p>
       </div>
-      <Button asChild variant="outline" className="self-start">
-        <Link href={(onTrial ? "/pricing" : settingsRoutes.plan) as Route}>
-          {onTrial ? "Choose a plan" : "Plan and billing"}
-        </Link>
-      </Button>
+      {(ownCredits || plan !== "none") && (
+        <Button asChild variant="outline" className="self-start">
+          <Link href={(choosePlan ? "/pricing" : settingsRoutes.plan) as Route}>
+            {choosePlan ? "Choose a plan" : "Plan and billing"}
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }

@@ -56,3 +56,16 @@ export function bonusWords(
     bonus.expires_at ? `, until ${dateFormat.short(bonus.expires_at)}` : ""
   }.`;
 }
+
+/**
+ * What the credits answer says about the plan behind them. The backend sends `articles_remaining`
+ * null only for a plan with no monthly allowance ("unlimited"); with nothing that grants access it
+ * sends no allowance and 0 articles ("none"). Any allowance is "metered".
+ */
+export function creditsPlan(
+  credits: Pick<CreditBalance, "credits_per_month" | "articles_remaining">,
+): "metered" | "unlimited" | "none" {
+  if (credits.articles_remaining === null) return "unlimited";
+  if (credits.credits_per_month === null) return "none";
+  return "metered";
+}
