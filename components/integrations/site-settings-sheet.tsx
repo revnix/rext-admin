@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -67,11 +67,16 @@ export function SiteSettingsSheet({
     defaultValues: site ? valuesOf(site) : undefined,
   });
   const { isSubmitting, isDirty } = form.formState;
+  // Counts the openings. A save or a test that finishes after the sheet was opened again (on
+  // another site, or on this one afresh) belongs to an earlier opening: it doesn't close the
+  // sheet or show its result here.
+  const opening = useRef(0);
 
   // Each opening starts from the site's saved values, with no earlier result.
   useEffect(() => {
     if (open && site) form.reset(valuesOf(site));
     if (open) {
+      opening.current += 1;
       setResult(null);
       setRefusal(null);
     }
@@ -79,6 +84,8 @@ export function SiteSettingsSheet({
 
   const onSubmit = form.handleSubmit(async (data) => {
     if (!site) return;
+    const started = opening.current;
+    const stillShown = () => opening.current === started;
     setRefusal(null);
     try {
       await update.mutateAsync({
@@ -89,17 +96,28 @@ export function SiteSettingsSheet({
           ...(data.api_key ? { api_key: data.api_key } : {}),
         },
       });
-      toast.success("Saved");
-      onOpenChange(false);
+      if (stillShown()) {
+        toast.success("Saved");
+        onOpenChange(false);
+      } else {
+        toast.success(`${siteHost(site)}: saved`);
+      }
     } catch (error) {
       log.error("Saving a WordPress site failed", error);
-      setRefusal(
+      const reason =
         error instanceof Error && error.message
           ? error.message
-          : "The changes weren't saved. Try again in a moment.",
-      );
+          : "The changes weren't saved. Try again in a moment.";
+      if (stillShown()) setRefusal(reason);
+      else toast.error(`${siteHost(site)}: not saved. ${reason}`);
     }
   });
+
+  const runTest = async (forSite: Integration) => {
+    const started = opening.current;
+    const outcome = await test.run(forSite);
+    if (opening.current === started) setResult(outcome);
+  };
 
   return (
     <Sheet open={open && Boolean(site)} onOpenChange={onOpenChange}>
@@ -181,7 +199,7 @@ export function SiteSettingsSheet({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={async () => setResult(await test.run(site))}
+                  onClick={() => runTest(site)}
                   disabled={test.isPending}
                 >
                   {test.isPending ? "Testing…" : "Test connection"}
