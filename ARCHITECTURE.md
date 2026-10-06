@@ -19,7 +19,7 @@ app/
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
   w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar),
-                            personas (+ [personaId], create), integrations, settings (General, brand-voice, members,
+                            personas (+ create, [personaId], [personaId]/edit), integrations, settings (General, brand-voice, members,
                             danger-zone); page.tsx redirects to /; /brand_voice and /members redirect to their settings
                             sections; /topics and /knowledge redirect (both features are removed)
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
@@ -66,7 +66,7 @@ Every page inside the shell renders one of the five layouts of `design/app-langu
 
 - **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, the keyword library, integrations, all workspaces.
 - **`DetailPage`**: one thing; an optional `aside` of facts beside the main column from 1024 px. Home, a persona, billing, subscription, usage, legal.
-- **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace or a persona. Task C4 brings the field set and the sticky submit row.
+- **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace; creating and editing a persona (one `PersonaForm`, `components/personas/persona-form.tsx`).
 - **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`: Profile, Security and sessions, Notifications, Billing, Data and trash) and workspace settings (`app/w/[workspaceSlug]/settings`: General, Brand voice, Members, Danger zone, each listed only for the people who may open it).
 - **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
 
@@ -84,7 +84,7 @@ A form is built from `components/forms/`. Its schema lives in `schemas/` (the pe
 - `PasswordInput` is the control of a password field: the Input with a show/hide button at its end.
 - `FormShell` owns the rhythm: sections (`FormSection`) 32 px apart, fields 16 px apart, and the submit row, where Save stays enabled until the submission starts and then shows a spinner. The row can be sticky on long forms, and a `status` slot shows the inline "Saved". It guards against leaving with unsaved changes: the browser's prompt on reload or close, and a dialog for a link inside the app or the form's Cancel (`use-leave-guard.ts`; the App Router has no navigation events, so the guard watches link clicks).
 
-The persona form, workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button); the forms on the older `components/ui/form.tsx` move later.
+The persona form (create and edit), workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button); the forms on the older `components/ui/form.tsx` move later.
 
 ## States
 

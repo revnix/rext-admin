@@ -69,6 +69,10 @@ export const workspaceRoutes = {
   personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,
   persona_create: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/personas/create`,
+  persona: (workspaceSlug: string, personaId: string) =>
+    `/w/${workspaceSlug}/personas/${personaId}`,
+  persona_edit: (workspaceSlug: string, personaId: string) =>
+    `/w/${workspaceSlug}/personas/${personaId}/edit`,
 
   /**
    * Workspace settings: one SettingsPage, a route per section (General is the root).
