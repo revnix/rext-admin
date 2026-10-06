@@ -37,7 +37,7 @@ components/
   shell/                    the shell: the frame, sidebar, switcher, header, credits meter, user menu, phone bottom bar
   layouts/                  the five page layouts (ListPage, DetailPage, FormPage, SettingsPage, WorkingSurface), their
                             shared header and frame
-  background-generation-dock.tsx, data-table.tsx
+  background-generation-dock.tsx, data-table.tsx (the older table, until its lists move to ui/data-table)
   <feature>/                one folder per area: generate-content, content, personas, integrations, knowledge, …
 lib/                        api-client/ (the typed client), query-keys.ts, query-options/, routes.ts (workspaceRoutes,
                             settingsRoutes), permissions.ts, generate-content/, analytics.ts (PostHog), logger.ts (pino), utils.ts (cn)
@@ -69,6 +69,10 @@ Every page inside the shell renders one of the five layouts of `design/app-langu
 - **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar, creating topics. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
 
 `loading.tsx` files render their skeleton in `PageFrame`, the same frame. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
+
+## Tables
+
+A list is a `DataTable` (`components/ui/data-table/`), on TanStack Table v9 with one set of features (`features.ts`). Its columns come from `createDataTableColumnHelper<T>()` at module scope, and their `meta` gives `align` and `numeric`. It brings a toolbar (search, faceted filters, the view menu), headers that sort and carry `aria-sort`, a `…` menu per row, selection with bulk actions, and pagination. It also brings the states: a skeleton after 200 ms, an error, the empty state outside the table, and a no-results state with Clear filters. Under 640 px the rows become cards through `renderCard`. The state is local, or in the URL through `useDataTableUrlState(parsers)`; a list's parsers live in `lib/search-params/`, built from `dataTableParams` (`url-state.ts`, safe for server code). `manual` is for lists the server pages. The content library loads every item (`useAllContent`) and filters in the browser, because the backend's list has neither search nor sort. The older `components/data-table.tsx` still serves the other lists until they move to it.
 
 ## Data
 
