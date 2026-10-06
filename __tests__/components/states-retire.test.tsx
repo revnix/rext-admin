@@ -74,6 +74,13 @@ describe("ErrorBoundary", () => {
   });
 });
 
+describe("The retired names", () => {
+  it("leave no second name for the error boundary (C5b #449)", async () => {
+    const boundary = await import("@/components/ui/error-boundary");
+    expect(Object.keys(boundary)).toEqual(["ErrorBoundary"]);
+  });
+});
+
 describe("RouteError", () => {
   const error = Object.assign(
     new Error("Cannot read properties of undefined"),

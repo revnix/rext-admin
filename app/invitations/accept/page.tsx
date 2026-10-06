@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -200,15 +200,11 @@ export default function AcceptInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Unable to load invitation</AlertTitle>
-              <AlertDescription>
-                The invitation token is invalid, has expired, or has already
-                been used. Please request a new invitation from your workspace
-                administrator.
-              </AlertDescription>
-            </Alert>
+            <Notice tone="danger" title="Unable to load invitation">
+              The invitation token is invalid, has expired, or has already been
+              used. Please request a new invitation from your workspace
+              administrator.
+            </Notice>
             <Button
               className="w-full"
               variant="outline"
@@ -242,19 +238,18 @@ export default function AcceptInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>
-                {invitation.status === "accepted"
+            <Notice
+              tone="info"
+              title={
+                invitation.status === "accepted"
                   ? "Already a member"
-                  : "Expired"}
-              </AlertTitle>
-              <AlertDescription>
-                {invitation.status === "accepted"
-                  ? `You are already a member of ${invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
-                  : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
-              </AlertDescription>
-            </Alert>
+                  : "Expired"
+              }
+            >
+              {invitation.status === "accepted"
+                ? `You are already a member of ${invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
+                : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
+            </Notice>
             {invitation.status === "accepted" && session ? (
               <Button
                 className="w-full"
@@ -292,16 +287,12 @@ export default function AcceptInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Switch accounts to continue</AlertTitle>
-              <AlertDescription>
-                This invitation was sent to{" "}
-                <span className="font-semibold">{invitation.email}</span>, but
-                you're currently signed in as{" "}
-                <span className="font-semibold">{session?.user?.email}</span>.
-              </AlertDescription>
-            </Alert>
+            <Notice tone="warning" title="Switch accounts to continue">
+              This invitation was sent to{" "}
+              <span className="font-semibold">{invitation.email}</span>, but
+              you're currently signed in as{" "}
+              <span className="font-semibold">{session?.user?.email}</span>.
+            </Notice>
             <div className="space-y-2">
               <Button
                 className="w-full"
