@@ -188,7 +188,7 @@ export function DangerZoneSection() {
           <>
             Everyone loses access to the workspace at once. It waits in{" "}
             <Link
-              href={settingsRoutes.trash}
+              href={settingsRoutes.data}
               className="font-medium text-foreground underline underline-offset-4"
             >
               your account's trash

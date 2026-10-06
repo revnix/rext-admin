@@ -204,9 +204,21 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        // Sessions are a tab of Security.
+        // Sessions are part of Security and sessions.
         source: "/settings/sessions",
         destination: "/settings/security",
+        permanent: false,
+      },
+      {
+        // The profile is account settings' first section.
+        source: "/profile",
+        destination: "/settings",
+        permanent: false,
+      },
+      {
+        // The account's trash is part of Data and trash.
+        source: "/settings/trash",
+        destination: "/settings/data",
         permanent: false,
       },
       {
@@ -221,9 +233,9 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        // Deleted workspaces are restored from the account's trash.
+        // Deleted workspaces are restored from the account's trash (Data and trash).
         source: "/w/:workspaceSlug/settings/trash",
-        destination: "/settings/trash",
+        destination: "/settings/data",
         permanent: false,
       },
       {

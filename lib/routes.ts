@@ -24,11 +24,13 @@ export const WORKSPACE_PAGES = [
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
 
+/** Account settings: one SettingsPage, a route per section (Profile is the root). */
 export const settingsRoutes = {
   root: "/settings",
   security: "/settings/security",
-  trash: "/settings/trash",
+  notifications: "/settings/notifications",
   subscription: "/settings/subscription",
+  data: "/settings/data",
 } as const satisfies Record<string, Route>;
 
 export type SettingsRoute =

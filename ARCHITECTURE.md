@@ -23,8 +23,10 @@ app/
                             danger-zone); page.tsx redirects to /; /brand_voice and /members redirect to their settings
                             sections; /topics and /knowledge redirect (both features are removed)
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
-  settings/                 the account hub, security (with sessions), subscription, trash (billing redirects to subscription)
-  subscription/, billing/, usage/, pricing/, checkout/{success,cancel}, profile/ (redirects to /settings)
+  settings/                 account settings: Profile, security (and sessions), notifications, subscription (Billing),
+                            data (export, the trash, closing the account); /profile, /settings/sessions and
+                            /settings/trash redirect to their sections, billing to subscription
+  subscription/, billing/, usage/, pricing/, checkout/{success,cancel}
   login/, signup/, forgot-password/, reset-password/, verify-email/, account-recovery/,
   invitations/accept/, accept-invitation/, accept-admin-invitation/      the auth pages, outside the shell
   legal/                    terms, privacy, refund policy, subscription terms
@@ -65,7 +67,7 @@ Every page inside the shell renders one of the five layouts of `design/app-langu
 - **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, the keyword library, integrations, all workspaces.
 - **`DetailPage`**: one thing; an optional `aside` of facts beside the main column from 1024 px. Home, a persona, billing, subscription, usage, legal.
 - **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace or a persona. Task C4 brings the field set and the sticky submit row.
-- **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`) and workspace settings (`app/w/[workspaceSlug]/settings`: General, Brand voice, Members, Danger zone, each listed only for the people who may open it).
+- **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`: Profile, Security and sessions, Notifications, Billing, Data and trash) and workspace settings (`app/w/[workspaceSlug]/settings`: General, Brand voice, Members, Danger zone, each listed only for the people who may open it).
 - **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
 
 `loading.tsx` files render their skeleton in `PageFrame`, the same frame. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
