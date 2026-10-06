@@ -6,7 +6,6 @@ import {
   ChevronsUpDown,
   CreditCard,
   Gauge,
-  KeyRound,
   LogOut,
   Receipt,
   UserRound,
@@ -60,7 +59,6 @@ const ACCOUNT_PAGES = [
   { title: "Subscription", url: "/subscription", icon: CreditCard },
   { title: "Billing", url: "/billing", icon: Receipt },
   { title: "Usage", url: "/usage", icon: Gauge },
-  { title: "Licenses", url: "/licenses", icon: KeyRound },
 ] as const;
 
 /** The user menu at the sidebar's foot (design/app-language.md §5). */

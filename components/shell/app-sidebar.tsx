@@ -338,7 +338,7 @@ function FoldingGroup({
 
 /**
  * The sidebar (design/app-language.md §5, DECISIONS D9): the wordmark, the workspace switcher,
- * Generate, then Home, Content, Keywords & topics, Calendar, the Setup group, Settings; the admin
+ * Generate, then Home, Content, Keywords, Calendar, the Setup group, Settings; the admin
  * group last, for the roles that hold it; the credits meter and the user menu at the foot.
  */
 export function AppSidebar({ navigation }: { navigation: ShellNavigation }) {
