@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,30 @@ export function offerWords(offer: CatalogOffer) {
     return `${count(offer.bonus_credits)} extra credits in your first month`;
   }
   return offer.label;
+}
+
+/**
+ * The subscription states in which the backend refuses another checkout (subscription_service:
+ * a paid plan that's running, or a renewal still unpaid): the person changes plan in Billing.
+ * Expired and cancelled ones may check out again.
+ */
+const HOLDS_A_PLAN = new Set(["active", "past_due", "suspended", "unpaid"]);
+
+/** The current time, moved on at the offer's next start or end, so the page follows its window. */
+function useOfferClock(offer: CatalogOffer | null | undefined) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!offer) return;
+    const next = [Date.parse(offer.starts_at), Date.parse(offer.ends_at)]
+      .filter((t) => t > now.getTime())
+      .sort((a, b) => a - b)[0];
+    if (next === undefined) return;
+    // setTimeout holds at most about 24 days; a later boundary is reached in steps.
+    const wait = Math.min(next - now.getTime() + 1000, 2_000_000_000);
+    const timer = setTimeout(() => setNow(new Date()), wait);
+    return () => clearTimeout(timer);
+  }, [offer, now]);
+  return now;
 }
 
 /** The offer's end, as the site shows it: in Pacific time, the launch's clock. */
@@ -185,6 +209,7 @@ export function PlanGrid() {
   const catalog = useQuery(subscriptionQueries.catalog());
   const checkoutPlans = useQuery(subscriptionQueries.plans());
   const current = useQuery(subscriptionQueries.current());
+  const now = useOfferClock(catalog.data?.offer);
 
   if (catalog.isLoading) {
     return <Skeleton className="h-96 w-full" />;
@@ -206,14 +231,19 @@ export function PlanGrid() {
   }
 
   const { plans, currency } = catalog.data;
-  const offer = activeOffer(catalog.data);
+  const offer = activeOffer(catalog.data, now);
   const byName = new Map(
     (checkoutPlans.data?.plans ?? [])
       .filter((p) => p.is_active && p.is_public)
       .map((p) => [p.name, p]),
   );
-  const currentPlanId = current.data?.subscription?.plan_id;
-  // The backend refuses a checkout while a paid plan is active; a trial isn't one of these plans.
+  // A plan of the grid that the person holds now; a trial isn't one of these plans, and an expired
+  // or cancelled subscription no longer holds one.
+  const subscription = current.data?.subscription;
+  const currentPlanId =
+    subscription && HOLDS_A_PLAN.has(subscription.status)
+      ? subscription.plan_id
+      : undefined;
   const hasPaidPlan = Boolean(
     currentPlanId && [...byName.values()].some((p) => p.id === currentPlanId),
   );
