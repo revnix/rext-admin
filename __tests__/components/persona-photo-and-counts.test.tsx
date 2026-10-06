@@ -52,12 +52,13 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
   content: { create: jest.Mock; delete: jest.Mock };
 };
 
+// As the backend returns it: a presigned storage address, and no avatar_source (PersonaResponse has none).
 const uploaded: Persona = {
   id: "p1",
   name: "Marketing Mary",
   description: "Writes about growth",
-  avatar_url: "avatars/personas/p1/avatar_1.png",
-  avatar_source: "custom",
+  avatar_url:
+    "https://storage.example.com/rext/avatars/personas/p1/avatar_1.png?X-Amz-Signature=abc",
 };
 
 function newClient() {
@@ -123,7 +124,6 @@ describe("removing a persona's photo", () => {
     renderForm({
       ...uploaded,
       avatar_url: "https://www.gravatar.com/avatar/abc",
-      avatar_source: "gravatar",
     });
 
     expect(
