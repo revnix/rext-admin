@@ -35,6 +35,7 @@ import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { libraryQueries, workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
+import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 
 /** The Continue row shows this many runs and articles at most. */
@@ -114,9 +115,14 @@ export default function HomePage() {
   const suggestions = useMemo(
     () =>
       library.data && articles
-        ? suggestKeywords(library.data, articles, SUGGESTION_LIMIT)
+        ? suggestKeywords(
+            library.data,
+            articles,
+            SUGGESTION_LIMIT,
+            runs.map((job) => job.keyword),
+          )
         : [],
-    [library.data, articles],
+    [library.data, articles, runs],
   );
 
   // A step whose data didn't come (still loading, or hidden from the person's role) is left out.
@@ -147,7 +153,7 @@ export default function HomePage() {
   useChecklistAnalytics(workspaceId || undefined, user?.id, steps, settled);
 
   usePageTitle(
-    workspace?.title ? `${workspace.title} - Home` : "Home",
+    workspace ? `${getWorkspaceDisplayTitle(workspace)} - Home` : "Home",
     "What to do next in this workspace.",
   );
 
@@ -166,7 +172,7 @@ export default function HomePage() {
     <AuthGuard>
       <ErrorBoundary framed>
         <DetailPage
-          title={workspace.title || "Home"}
+          title={getWorkspaceDisplayTitle(workspace, "Home")}
           description="What to do next in this workspace."
           actions={
             <Button asChild>

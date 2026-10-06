@@ -78,15 +78,16 @@ export function searchVolume(entry: LibraryEntry): number | null {
 
 /**
  * Researched keywords no article is written on yet (no article has it as its focus keyphrase or
- * its title), the most searched first. The Library keeps no clusters, so these come from the
- * caller's own research.
+ * its title) and no open run is working on, the most searched first. The Library keeps no
+ * clusters, so these come from the caller's own research.
  */
 export function suggestKeywords(
   library: LibraryEntry[],
   content: Content[],
   limit: number,
+  inProgress: string[] = [],
 ): LibraryEntry[] {
-  const written = new Set<string>();
+  const written = new Set<string>(inProgress.map(normalise));
   for (const item of content) {
     if (item.seo_data?.focus_keyphrase)
       written.add(normalise(item.seo_data.focus_keyphrase));
