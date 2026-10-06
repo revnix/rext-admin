@@ -4,14 +4,18 @@ import Link from "next/link";
 import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
+import { FieldController } from "@/components/forms/field-controller";
+import { PasswordInput } from "@/components/forms/password-input";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
@@ -21,26 +25,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
 import { classifyError } from "@/lib/error-utils";
-import { loginSchema } from "@/schemas/auth-schemas";
+import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
-    useState(false);
-  const [validationErrors, setValidationErrors] = useState<{
-    email?: string;
-    password?: string;
-  }>({});
-  const [showPassword, setShowPassword] = useState(false);
+  const form = useZodForm(loginSchema, {
+    defaultValues: { email: "", password: "" },
+  });
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -59,8 +55,8 @@ export function LoginForm({
   // because the account already exists).
   useEffect(() => {
     const prefill = searchParams.get("email");
-    if (prefill) setEmail(prefill);
-  }, [searchParams]);
+    if (prefill) form.setValue("email", prefill);
+  }, [searchParams, form]);
 
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
@@ -99,7 +95,7 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const attemptSignIn = async () => {
+  const attemptSignIn = async ({ email, password }: LoginData) => {
     // Backend validated successfully, now use NextAuth for session creation.
     // There is deliberately no "confirm reactivation" flag here — a deactivated
     // account is only reactivated by opening the emailed link.
@@ -164,9 +160,15 @@ export function LoginForm({
         .toLowerCase()
         .includes("invalid email or password");
 
+      // Wrong details are the field's error, beside the field; anything else
+      // (the server, the network, a locked account) is a toast.
       if (isInvalidCredentials) {
-        setHasInvalidCredentialsError(true);
-        emailInputRef.current?.focus();
+        form.setError(
+          "password",
+          { type: "server", message: displayErrorMessage },
+          { shouldFocus: true },
+        );
+        return;
       }
 
       toast.error(displayErrorMessage);
@@ -203,30 +205,7 @@ export function LoginForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setHasInvalidCredentialsError(false);
-
-    const validationResult = loginSchema.safeParse({ email, password });
-    if (!validationResult.success) {
-      const nextValidationErrors: typeof validationErrors = {};
-      for (const issue of validationResult.error.issues) {
-        const field = issue.path[0];
-        if (field === "email" || field === "password") {
-          nextValidationErrors[field] ??= issue.message;
-        }
-      }
-      setValidationErrors(nextValidationErrors);
-      if (nextValidationErrors.email) {
-        emailInputRef.current?.focus();
-      } else {
-        passwordInputRef.current?.focus();
-      }
-      return;
-    }
-
-    setValidationErrors({});
-
+  const onSubmit = async (values: LoginData) => {
     setIsLoading(true);
 
     // Clear any previous session invalidity flag
@@ -235,7 +214,7 @@ export function LoginForm({
     }
 
     try {
-      await attemptSignIn();
+      await attemptSignIn(values);
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       const classifiedError = classifyError(error);
@@ -271,172 +250,102 @@ export function LoginForm({
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
-        <div className="p-4 bg-muted/40 border border-border text-foreground rounded-md">
-          <p className="font-medium">Invitation Link Issue</p>
-          <p className="text-sm mt-1">
+        <div className="space-y-1 rounded-md border border-border bg-surface-inset p-4 text-body text-foreground">
+          <p className="font-medium">Invitation link issue</p>
+          <p>
             {invitationError ||
               "This invitation link is invalid or has expired."}
           </p>
-          <p className="text-sm mt-2">
+          <p>
             You can still log in, but you won't be automatically added to the
             workspace.
           </p>
         </div>
       )}
 
-      <div className="bg-transparent">
-        <div className="flex flex-col space-y-1.5 px-0 mb-6">
-          {/* layout-ok: sign-in is outside the shell; its card carries the page's title */}
-          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
-            {hasValidInvitation
-              ? "Log in to join workspace"
-              : "Login to your account"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {hasValidInvitation
-              ? "Log in to accept your workspace invitation"
-              : "Enter your email below to login to your account"}
-          </p>
-        </div>
-        <div className="px-0">
-          <form onSubmit={handleSubmit}>
-            <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
-
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">
-                  Email
-                </Label>
-                <Input
-                  ref={emailInputRef}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setValidationErrors((current) => ({
-                      ...current,
-                      email: undefined,
-                    }));
-                    if (hasInvalidCredentialsError) {
-                      setHasInvalidCredentialsError(false);
-                    }
-                  }}
-                  className={cn(
-                    "!shadow-none",
-                    hasInvalidCredentialsError &&
-                      "border-destructive focus-visible:ring-destructive/30",
-                  )}
-                />
-                {validationErrors.email && (
-                  <p className="text-sm text-destructive">
-                    {validationErrors.email}
-                  </p>
-                )}
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password" className="ml-1">
-                    Password
-                  </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    ref={passwordInputRef}
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setValidationErrors((current) => ({
-                        ...current,
-                        password: undefined,
-                      }));
-                      if (hasInvalidCredentialsError) {
-                        setHasInvalidCredentialsError(false);
-                      }
-                    }}
-                    className={cn(
-                      "!shadow-none pr-10",
-                      hasInvalidCredentialsError &&
-                        "border-destructive focus-visible:ring-destructive/30",
-                    )}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {validationErrors.password && (
-                  <p className="text-sm text-destructive">
-                    {validationErrors.password}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me for 30 days
-                </label>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="submit"
-                  className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
-                  disabled={isLoading || isLoadingInvitation}
-                >
-                  {isLoading
-                    ? hasValidInvitation
-                      ? "Logging in & joining workspace..."
-                      : "Logging in..."
-                    : hasValidInvitation
-                      ? "Login & Join Workspace"
-                      : "Login"}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href={
-                  invitationToken
-                    ? `/signup?token=${invitationToken}`
-                    : ("/signup" as Route)
-                }
-                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </div>
+      <div className="space-y-1">
+        {/* layout-ok: sign-in is outside the shell; its column carries the page's title */}
+        <h1 className="font-display text-page-title text-foreground">
+          {hasValidInvitation
+            ? "Log in to join the workspace"
+            : "Log in to your account"}
+        </h1>
+        <p className="text-body text-muted-foreground">
+          {hasValidInvitation
+            ? "Log in to accept your workspace invitation"
+            : "Enter your email below to log in to your account"}
+        </p>
       </div>
+
+      <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
+
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          <FieldController
+            control={form.control}
+            name="email"
+            label="Email"
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="email"
+                autoComplete="email"
+                placeholder="m@example.com"
+              />
+            )}
+          </FieldController>
+          <div className="space-y-2">
+            <FieldController
+              control={form.control}
+              name="password"
+              label="Password"
+              required
+            >
+              {(field) => (
+                <PasswordInput {...field} autoComplete="current-password" />
+              )}
+            </FieldController>
+            <Link
+              href="/forgot-password"
+              className="inline-block text-body text-primary underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked === true)}
+            />
+            <Label htmlFor="remember">Remember me for 30 days</Label>
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading || isLoadingInvitation}
+          >
+            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {hasValidInvitation ? "Log in and join the workspace" : "Log in"}
+          </Button>
+        </FieldGroup>
+      </form>
+
+      <p className="text-center text-body text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={
+            invitationToken
+              ? `/signup?token=${invitationToken}`
+              : ("/signup" as Route)
+          }
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Sign up
+        </Link>
+      </p>
     </div>
   );
 }

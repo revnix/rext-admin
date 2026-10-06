@@ -66,9 +66,6 @@
     "stock-palette": 24,
     "dark-class": 2
   },
-  "components/oauth-buttons.tsx": {
-    "literal-colour": 4
-  },
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },
@@ -86,9 +83,6 @@
   },
   "components/profile/change-password-form.tsx": {
     "stock-palette": 4
-  },
-  "components/signup-form.tsx": {
-    "stock-palette": 3
   },
   "components/ui/alert-dialog.tsx": {
     "stock-palette": 1,
