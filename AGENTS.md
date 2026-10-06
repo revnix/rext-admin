@@ -43,7 +43,7 @@ pnpm build                   # production build; about 2 GB of memory
 pnpm tokens:check            # design values outside the tokens; a per-file ratchet (scripts/tokens-baseline.json)
 ```
 
-- The Husky pre-commit hook formats, lints and type-checks every commit; never skip it with `--no-verify`.
+- The Husky pre-commit hook runs Biome on the staged files only (their fixes are staged with them); never skip it with `--no-verify`. The type check, the full lint and the tests run in CI (`pr-checks.yaml`) and in `check.sh`, not on commit.
 - `pnpm tokens:check` fails when a file gains a stock palette class, a colour literal, a `dark:` class or an off-scale radius, shadow or font size; mark a line that must stay with `tokens-ok: the reason`. After lowering a file's count, run `pnpm tokens:check --update` (it only ever lowers the baseline). `pnpm layout:check` (task C2) joins these once it exists.
 - A dev server takes over 1 GB of memory: stop it when you are done.
 
