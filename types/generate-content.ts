@@ -425,8 +425,60 @@ export type ReadabilityMetrics = {
   dale_chall_score: number;
 };
 
+/**
+ * The checklist beside a finished article, as the backend builds it
+ * (`ContentChecklist` in rextaihq/rext-backend's src/api/schema/content_schema.py).
+ * The saved article sends it as `content.checklist`, a generation run as
+ * `content.review.checklist`. Articles saved before the validator's findings
+ * were kept have `validation: null` and no claims.
+ */
+export type ChecklistReadability = {
+  score: number;
+  /** very_easy, easy, fairly_easy, standard, fairly_difficult, difficult or very_difficult */
+  band: string;
+  label: string;
+};
+
+export type ChecklistDensity = {
+  value?: number | null;
+  /** ok, too_low, too_high or not_applicable */
+  status?: string | null;
+  occurrences?: number | null;
+  detail?: string | null;
+};
+
+export type ChecklistIssue = {
+  name: string;
+  severity?: string | null;
+  detail: string;
+};
+
+export type ChecklistValidation = {
+  passed: boolean;
+  /** True when the article was saved with checks still failing. */
+  gave_up: boolean;
+  stage?: string | null;
+  issues: ChecklistIssue[];
+  warnings: ChecklistIssue[];
+};
+
+export type ChecklistClaim = {
+  category: string;
+  sentence: string;
+  /** The part of the sentence no source supports. */
+  unsupported: string;
+};
+
+export type ContentChecklist = {
+  readability?: ChecklistReadability | null;
+  keyphrase_density?: ChecklistDensity | null;
+  validation?: ChecklistValidation | null;
+  claims_to_verify: ChecklistClaim[];
+};
+
 export type ContentReview = {
   seo_score: number;
+  checklist?: ContentChecklist | null;
   trust_score?: TrustScore;
   readability_metrics: ReadabilityMetrics;
   eeat_score?: number;
@@ -863,6 +915,7 @@ export interface PageState {
   isManualLoading: boolean;
   completedNodes: string[];
   readabilityScore: ReadabilityMetrics | null;
+  checklist: ContentChecklist | null;
   seoScore: SEORESULT | null;
   trustScore: TrustScore | null;
   eeatData: EEATData | null;
@@ -887,6 +940,7 @@ export type PageAction =
   | { type: "SET_GENERATED_CONTENT"; payload: string }
   | { type: "SET_ALL_CONTENT"; payload: FinalContent | null }
   | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
+  | { type: "SET_CHECKLIST"; payload: ContentChecklist }
   | { type: "SET_TRUST_SCORE"; payload: TrustScore }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
@@ -985,6 +1039,7 @@ export interface CommonOutput {
     on_page_metrics?: SEORESULT;
     trust_score?: TrustScore;
     readability_metrics?: ReadabilityMetrics;
+    checklist?: ContentChecklist | null;
   };
 }
 export interface NodeOutput {
@@ -1001,5 +1056,7 @@ export interface NodeOutput {
   calculate_readability?: { content?: CommonOutput };
   calculate_on_page_seo?: { content?: CommonOutput };
   calculate_eeat_trust?: { content?: CommonOutput };
+  /** Saves the article and returns its checklist (content.review.checklist). */
+  persist_content?: { content?: CommonOutput };
   content_engine?: { content?: CommonOutput };
 }

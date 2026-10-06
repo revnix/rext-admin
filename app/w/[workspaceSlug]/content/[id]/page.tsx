@@ -382,6 +382,7 @@ export default function WorkspaceContentDetailPage({
             readabilityScore={
               advancedContent.review?.readability_metrics || null
             }
+            checklist={content.checklist ?? null}
             trustScore={advancedContent.review?.trust_score || null}
             generatedContent={contentMarkdown}
             seoScore={seoResult}

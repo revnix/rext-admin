@@ -1,5 +1,5 @@
 // Content management types
-import type { SchemaMarkup } from "./generate-content";
+import type { ContentChecklist, SchemaMarkup } from "./generate-content";
 
 export type ContentStatus =
   | "draft"
@@ -256,6 +256,9 @@ export interface ContentItem {
 
   // CMS sync results per site
   publishing_results?: PublishingResult[];
+
+  // What the dashboard's checklist shows beside the article (detail responses only)
+  checklist?: ContentChecklist | null;
 
   // Timestamps
   created_at: string;

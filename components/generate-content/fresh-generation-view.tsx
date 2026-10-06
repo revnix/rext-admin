@@ -302,6 +302,7 @@ export function FreshGenerationView({
     completedNodes,
     isLoading,
     readabilityScore,
+    checklist,
     seoScore,
     trustScore,
     allContent,
@@ -461,6 +462,9 @@ export function FreshGenerationView({
           type: "SET_READABILITY_SCORE",
           payload: review.readability_metrics,
         });
+      }
+      if (review?.checklist) {
+        dispatch({ type: "SET_CHECKLIST", payload: review.checklist });
       }
       if (review?.trust_score) {
         dispatch({
@@ -1380,6 +1384,7 @@ export function FreshGenerationView({
           u.calculate_readability?.content,
           u.calculate_on_page_seo?.content,
           u.calculate_eeat_trust?.content,
+          u.persist_content?.content,
         ].filter((o): o is CommonOutput => !!o);
 
         for (const out of nodeOutputs) {
@@ -1423,6 +1428,8 @@ export function FreshGenerationView({
                 type: "SET_READABILITY_SCORE",
                 payload: review.readability_metrics,
               });
+            if (review.checklist)
+              dispatch({ type: "SET_CHECKLIST", payload: review.checklist });
           }
         }
 
@@ -2328,6 +2335,7 @@ export function FreshGenerationView({
             enhancingMsg={enhancingMsg}
             enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}
+            checklist={checklist}
             seoScore={seoScore}
             trustScore={trustScore}
             generatedContent={
