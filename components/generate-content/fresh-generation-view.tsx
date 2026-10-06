@@ -630,9 +630,9 @@ export function FreshGenerationView({
         }
         if (disposed) return;
 
-        // A run the backend ended for want of search results is a finished
-        // state, not a failure to restore: show the notice the live stream
-        // shows (its event is not replayed on a restore).
+        // A run the backend ended on purpose (no search results, no titles) is
+        // a finished state, not a failure to restore: show the notice the live
+        // stream shows (its event is not replayed on a restore).
         const stoppedMessage = readStoppedRun(payload.state?.values);
         if (stoppedMessage) {
           setRunError(stoppedMessage);

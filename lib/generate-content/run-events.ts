@@ -15,14 +15,29 @@ export const GENERATION_STREAM_MODES: StreamMode[] = [
 
 /**
  * A run the backend ended early, as the custom stream event it sends then:
- * `{type: "run", step: "run.failed", error_code, message}`. Today that is a
- * keyword with no search results, or a search lookup that failed
- * (error_code "no_serp_data"); the thread state carries the same message in
- * `content.error`, which the dock's status poll reads.
+ * `{type: "run", step: "run.failed", error_code, message}`. The thread state
+ * carries the same message in `content.error`, which the dock's status poll
+ * reads.
  */
 export type RunFailedEvent = { errorCode: string | null; message: string };
 
 const FALLBACK_MESSAGE = "This run stopped before it finished.";
+
+/**
+ * The `content.error_code`s of a run the backend ended on purpose, with a message
+ * for the user (rext-backend): a keyword with no search results or a failed
+ * search lookup (`no_serp_data`, `rext.py`), and a topic step that wrote no
+ * titles (`topic_generation_failed`, `topic_generation.py`). A run short of
+ * credits (`insufficient_credits`) has its own popup and isn't one of these.
+ */
+export const STOPPED_RUN_CODES: readonly string[] = [
+  "no_serp_data",
+  "topic_generation_failed",
+];
+
+export function isStoppedRunCode(code: unknown): boolean {
+  return typeof code === "string" && STOPPED_RUN_CODES.includes(code);
+}
 
 export function readRunFailedEvent(data: unknown): RunFailedEvent | null {
   if (!data || typeof data !== "object") return null;
@@ -46,18 +61,24 @@ export function readRunFailedEvent(data: unknown): RunFailedEvent | null {
 export function readStoppedRun(values: unknown): string | null {
   const content = (values as { content?: Record<string, unknown> } | null)
     ?.content;
-  if (content?.error_code !== "no_serp_data") return null;
+  if (!isStoppedRunCode(content?.error_code)) return null;
   return typeof content.error === "string" && content.error.trim()
     ? content.error.trim()
     : FALLBACK_MESSAGE;
 }
 
 /**
- * The graph's last nodes (rext-backend's `src/flow/engines/rext.py`): the
- * article written, or a run the credit gate or an empty search ended. An
- * update from one of them means the run is over.
+ * The graph's last nodes (rext-backend's `src/flow/engines/rext.py` and
+ * `topic_generation.py`): the article written, or a run the credit gate, an
+ * empty search or a topic step without titles ended. An update from one of them
+ * means the run is over.
  */
-const LAST_NODES = ["content_engine", "insufficient_credits", "no_serp_data"];
+const LAST_NODES = [
+  "content_engine",
+  "insufficient_credits",
+  "no_serp_data",
+  "topics_failed",
+];
 
 /**
  * Whether a stream event shows the run reaching a point the page can show: a
