@@ -68,9 +68,9 @@ export function AuditLogsTable({
 
   const getStatusBadge = (status?: string | null) => {
     if (!status) status = "unknown";
-    // The outcome as a word in its status tint; an outcome the table does not know reads as neutral.
-    const variants: Record<string, "success" | "danger" | "warning"> = {
-      success: "success",
+    // The outcome as a word. Success is the norm and stays neutral; only an outcome that needs a second look
+    // takes a status tint.
+    const variants: Record<string, "danger" | "warning"> = {
       failed: "danger",
       partial: "warning",
     };

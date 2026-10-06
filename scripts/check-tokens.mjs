@@ -126,6 +126,17 @@ const MARK = /tokens-ok:\s*\S/;
 const NAMESPACES =
   /^--(color|font|text|font-weight|tracking|leading|breakpoint|container|spacing|radius|shadow|inset-shadow|drop-shadow|blur|perspective|aspect|ease|animate)(-|$)/;
 
+/**
+ * A line of code without its comment: nothing for a comment line (`//`, `/*`, ` *`, `{/*`), and without an
+ * inline `/* … *\/` or a trailing `// …` (after a space, so the `//` of a URL stays).
+ */
+function withoutComment(line) {
+  if (/^\s*(?:\/\/|\/\*|\*|\{\/\*)/.test(line)) return "";
+  const code = line.replace(/\/\*.*?\*\//g, "");
+  const at = code.search(/(?<=\s)\/\//);
+  return at < 0 ? code : code.slice(0, at);
+}
+
 /** The colours globals.css declares: `--color-primary`, `--color-success-600`. */
 function declaredColours(sheet) {
   return new Set([...sheet.matchAll(/^\s*(--color-[\w-]+)\s*:/gm)].map((m) => m[1]));
@@ -172,9 +183,12 @@ function scan(text, { stylesheet = false, primitives = false, declared = null, m
       for (const m of line.matchAll(COLOUR_VARIABLE))
         if (!declared.has(m[1])) report("unknown-variable", `var(${m[1]})`);
 
-    const literals = [...line.matchAll(HEX), ...line.matchAll(FUNCTIONAL)]
+    // A comment does not render, so `#338` there is an issue number, not a colour (stylesheet comments are
+    // already gone).
+    const code = stylesheet ? line : withoutComment(line);
+    const literals = [...code.matchAll(HEX), ...code.matchAll(FUNCTIONAL)]
       // A colour inside an arbitrary class is reported once, by the rule above.
-      .filter((m) => !new RegExp(`-\\[[^\\]]*${escape(m[0])}`).test(line));
+      .filter((m) => !new RegExp(`-\\[[^\\]]*${escape(m[0])}`).test(code));
     if (literals.length) {
       let primitive = false;
       if (primitives && themeDepth > 0) {
@@ -424,6 +438,7 @@ function selfTest() {
     ['<p className="text-slate-900 hover:bg-white/10 border-black">', "stock-palette", 3],
     ['<p className="bg-[#0366F8] text-[rgb(2_6_23)]">', "arbitrary-colour", 2],
     ['const ink = "#0A0A0A"; const tint = "rgb(2 6 23 / 0.05)";', "literal-colour", 2],
+    ['const ink = "#0A0A0A"; // was #333 before B1', "literal-colour", 1],
     ['<p style={{ color: "red", backgroundColor: "white", fill: "rebeccapurple" }}>', "inline-colour", 3],
     ['<p className="dark:bg-card md:dark:text-foreground">', "dark-class", 2],
     ['<p className="rounded-[7px] rounded-t-[3px] [border-top-left-radius:7px]">', "arbitrary-radius", 3],
@@ -454,6 +469,9 @@ function selfTest() {
     '<p className="text-foreground bg-surface-raised border-border text-success-600 bg-primary/10 rounded-md shadow-overlay">',
     '<p className="rounded-sm rounded-full rounded-(--card-radius) shadow-hairline shadow-none text-body rounded-[var(--x)]">',
     '<a href="#faq">&#039;</a> // text-slate-\\d{3} in a pattern is not a class',
+    "// rext-backend G28 (#338 in rext-control) sent each event as a whole frame",
+    ' * Fixed in #123; see https://example.com/#456 for the background.',
+    'const step = 1; // after #338 {/* and #339 */}',
     '<p className="text-slate-900"> {/* tokens-ok: a sample */}',
     '<p style={{ color: "var(--foreground)" }} className="text-[var(--x)]">',
     '<p className="text-[length:var(--x)] [font-size:var(--text-body)] [box-shadow:0_0_0_1px_var(--ring)]">',
