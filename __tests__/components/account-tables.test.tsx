@@ -20,6 +20,11 @@ jest.mock("@/lib/api-client", () => ({
   },
 }));
 
+let signedIn: { id: string } | null = { id: "user-1" };
+jest.mock("@/hooks/use-permission", () => ({
+  usePermissionUser: () => signedIn,
+}));
+
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
@@ -51,6 +56,7 @@ async function bodyRows(text: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  signedIn = { id: "user-1" };
 });
 
 describe("the activity log", () => {
@@ -112,6 +118,24 @@ describe("the activity log", () => {
   });
 });
 
+describe("whose history", () => {
+  it("asks for nothing until it knows who is signed in", async () => {
+    signedIn = null;
+    renderWithQuery(
+      <>
+        <ActivityLogTable />
+        <LoginHistoryTable />
+      </>,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(api.auditLogs.getMyLogs).not.toHaveBeenCalled();
+    expect(api.security.getLoginHistory).not.toHaveBeenCalled();
+    // Loading, not empty: nobody's history is known yet.
+    expect(screen.queryByText("No activity yet")).toBe(null);
+    expect(screen.queryByText("No sign-ins yet")).toBe(null);
+  });
+});
+
 describe("the sign-in history", () => {
   it("shows each attempt and its result, 25 a page from the backend", async () => {
     api.security.getLoginHistory.mockResolvedValue({
@@ -122,6 +146,7 @@ describe("the sign-in history", () => {
           success: true,
           ip_address: "203.0.113.7",
           location: "Lahore, PK",
+          device: "Chrome on macOS",
           browser: "Chrome",
         },
         {

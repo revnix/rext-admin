@@ -13,6 +13,7 @@ import {
   useDataTableLocalState,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { AuditActions, getActionDisplayName } from "@/types/audit-log";
@@ -127,6 +128,7 @@ const columns = column.columns([
  * rows a page, newest first. The backend pages it and narrows it to one kind of event.
  */
 export function ActivityLogTable() {
+  const user = usePermissionUser();
   const state = useDataTableLocalState({ pageSize: PAGE_SIZE });
   const { pageIndex, pageSize } = state.pagination;
   const chosen = state.columnFilters.find((filter) => filter.id === "action")
@@ -134,13 +136,22 @@ export function ActivityLogTable() {
   const action = chosen?.[0];
 
   const query = useQuery({
-    queryKey: ["audit-logs", "mine", action ?? null, pageIndex, pageSize],
+    // Keyed by the person: after an impersonation starts, another account's rows never show.
+    queryKey: [
+      "audit-logs",
+      "mine",
+      user?.id ?? null,
+      action ?? null,
+      pageIndex,
+      pageSize,
+    ],
     queryFn: () =>
       apiClient.auditLogs.getMyLogs({
         action,
         limit: pageSize,
         offset: pageIndex * pageSize,
       }),
+    enabled: Boolean(user?.id),
     placeholderData: keepPreviousData,
     refetchInterval: 60000,
   });
@@ -161,7 +172,7 @@ export function ActivityLogTable() {
       }
       state={state}
       manual={{ rowCount: query.data?.total ?? 0 }}
-      isLoading={query.isLoading}
+      isLoading={query.isLoading || !user}
       error={
         query.error ? (
           <div className="flex flex-col items-center gap-3">
@@ -195,6 +206,12 @@ export function ActivityLogTable() {
               </>
             )}
           </p>
+          {/* The phone has no View menu's columns: the browser shows here. */}
+          {row.user_agent && (
+            <p className="line-clamp-2 break-all text-xs text-muted-foreground">
+              {row.user_agent}
+            </p>
+          )}
         </div>
       )}
     />
