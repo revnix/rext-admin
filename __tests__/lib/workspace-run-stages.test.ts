@@ -93,6 +93,28 @@ describe("workspaceRunStages", () => {
     ]);
   });
 
+  it("closes a running stage when the next one starts, though its completion was missed", () => {
+    const stages = workspaceRunStages([
+      event("scrape.started", "started", 0),
+      event("brand_voice.started", "started", 20),
+    ]);
+    expect(stages.map((stage) => stage.state)).toEqual([
+      "complete",
+      "active",
+      "pending",
+    ]);
+    expect(stages[0].endedAt).toBe(Date.parse(at(20)));
+  });
+
+  it("ends a stage closed by a later completion at that completion's time", () => {
+    const [scrape] = workspaceRunStages([
+      event("scrape.started", "started", 0),
+      event("competitor_discovery.completed", "completed", 90),
+    ]);
+    expect(scrape.state).toBe("complete");
+    expect(scrape.endedAt).toBe(Date.parse(at(90)));
+  });
+
   it("has no failed event for a run that is going well", () => {
     expect(
       findFailedEvent([event("scrape.started", "started", 0)]),
