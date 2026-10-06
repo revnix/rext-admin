@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { OutlineDisplay } from "@/components/generate-content/outline";
+import { OutlineReview } from "@/components/generate-content/outline-review";
 import { usePersonas } from "@/hooks/use-personas";
 import type { Outline } from "@/types/generate-content";
 
@@ -42,20 +42,22 @@ function renderOutline(
   onApprove = jest.fn(),
 ) {
   const view = render(
-    <OutlineDisplay
+    <OutlineReview
       outline={{ ...baseOutline, ...overrides } as Outline}
       rawTokens='{"title":"Test Outline"}'
       isLoading={false}
+      gate={{}}
       onApprove={onApprove}
       onReject={jest.fn()}
     />,
   );
   const rerenderWith = (next: Partial<Outline>) =>
     view.rerender(
-      <OutlineDisplay
+      <OutlineReview
         outline={{ ...baseOutline, ...overrides, ...next } as Outline}
         rawTokens='{"title":"Test Outline"}'
         isLoading={false}
+        gate={{}}
         onApprove={onApprove}
         onReject={jest.fn()}
       />,
@@ -63,7 +65,7 @@ function renderOutline(
   return { onApprove, rerenderWith };
 }
 
-describe("OutlineDisplay author persona selection", () => {
+describe("OutlineReview author persona selection", () => {
   beforeEach(() => {
     (usePersonas as jest.Mock).mockReturnValue({
       data: {
@@ -135,9 +137,13 @@ describe("OutlineDisplay author persona selection", () => {
 
     fireEvent.click(screen.getByRole("combobox"));
     fireEvent.click(option("Alpha Persona"));
-    fireEvent.click(screen.getByText(/Approve & Generate/i));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Approve and generate/i }),
+    );
 
-    expect(onApprove).toHaveBeenCalledWith(expect.anything(), false, null);
+    expect(onApprove).toHaveBeenCalledWith(
+      expect.objectContaining({ selected_persona_id: null }),
+    );
   });
 
   it("approves with the persona the user picked", () => {
@@ -145,12 +151,12 @@ describe("OutlineDisplay author persona selection", () => {
 
     fireEvent.click(screen.getByRole("combobox"));
     fireEvent.click(option("Bravo Persona"));
-    fireEvent.click(screen.getByText(/Approve & Generate/i));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Approve and generate/i }),
+    );
 
     expect(onApprove).toHaveBeenCalledWith(
-      expect.anything(),
-      false,
-      "persona-2",
+      expect.objectContaining({ selected_persona_id: "persona-2" }),
     );
   });
 

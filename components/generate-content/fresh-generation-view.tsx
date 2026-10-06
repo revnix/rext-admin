@@ -1,14 +1,7 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -24,10 +17,8 @@ import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
   CommonOutput,
   ContentOutline,
-  BrandVoicePromotion,
   ContentSection,
   FinalContent,
-  InternalLinkSuggestion,
   Interrupt,
   NodeOutput,
   ResumeOptions,
@@ -45,9 +36,9 @@ import { TitleStep } from "@/components/generate-content/title-step";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import { StepColumn } from "@/components/layouts";
 import {
-  OutlineDisplay,
   OutlineRejectSection,
-} from "@/components/generate-content/outline";
+  OutlineReview,
+} from "@/components/generate-content/outline-review";
 import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
@@ -330,22 +321,6 @@ export function FreshGenerationView({
       });
     } else clearRunStages();
   }, [runState, startRunStages, clearRunStages]);
-
-  const interruptInternalLinks = useMemo(
-    () =>
-      state.interrupt?.[0]?.value?.internal_links as
-        | InternalLinkSuggestion[]
-        | undefined,
-    [state.interrupt],
-  );
-
-  const interruptBrandVoicePromotion = useMemo(
-    () =>
-      state.interrupt?.[0]?.value?.brand_voice_promotion as
-        | BrandVoicePromotion
-        | undefined,
-    [state.interrupt],
-  );
 
   const isEditingRef = useRef(isEditing);
   useEffect(() => {
@@ -2259,8 +2234,9 @@ export function FreshGenerationView({
     <div className="relative">
       <StepColumn
         // A step with a side pane beside it (the search results, on the Select keyword and Title
-        // steps) gets the room for both.
+        // steps; the brief, on the outline step) gets the room for both.
         withSidePane={
+          showOutlineReview ||
           instructionType === "topic" ||
           instructionType === "topic_selection" ||
           (instructionType === "keyword Selection" &&
@@ -2344,15 +2320,15 @@ export function FreshGenerationView({
 
         {showOutlineReview ? (
           <div className="w-full mt-0">
-            <OutlineDisplay
+            <OutlineReview
               outline={parsedOutline}
               rawTokens={outline.streamedText}
               isLoading={isManualLoading || isStreamingOutline}
+              gate={state.interrupt?.[0]?.value}
               pendingTargetWordCount={pendingTargetWordCount}
-              internalLinks={interruptInternalLinks}
-              brandVoicePromotion={interruptBrandVoicePromotion}
+              wordCountRange={outlineWordCountRange}
               workspaceId={workspaceId}
-              onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
+              onApprove={(approval) => {
                 if (!ensureCredits("generate")) return;
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
@@ -2370,28 +2346,7 @@ export function FreshGenerationView({
                   thread_id: threadId ?? undefined,
                 });
                 void startBackgroundWorkflow({
-                  payload: {
-                    action: "approve",
-                    ...(parsedOutline?.tone
-                      ? { tone: parsedOutline.tone }
-                      : {}),
-                    ...(parsedOutline?.target_audience?.length
-                      ? { target_audience: parsedOutline.target_audience }
-                      : {}),
-                    ...(parsedOutline?.target_word_count && {
-                      target_word_count: parsedOutline.target_word_count,
-                    }),
-                    ...(interruptInternalLinks?.length
-                      ? { selected_internal_links: selectedLinks }
-                      : {}),
-                    ...(interruptBrandVoicePromotion
-                      ? { promote_brand: promoteBrand }
-                      : {}),
-                    // Always sent, null included: the backend reads the key's
-                    // presence as the user's decision, so omitting it on a
-                    // cleared persona would restore the recommended one.
-                    selected_persona_id: selectedPersonaId,
-                  },
+                  payload: { action: "approve", ...approval },
                   status: "Approving and generating content...",
                 });
               }}
