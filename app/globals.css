@@ -32,18 +32,13 @@
   --neutral-900: oklch(20.5% 0 0);
   --neutral-950: oklch(14.5% 0 0);
 
-  /* Accent: the brand blue #465fff at 500, the other steps at Tailwind blue's lightness. */
-  --accent-50: oklch(97% 0.014 270);
-  --accent-100: oklch(93.2% 0.032 270);
-  --accent-200: oklch(88.2% 0.057 270);
-  --accent-300: oklch(80.9% 0.095 270);
-  --accent-400: oklch(70.7% 0.152 270);
-  --accent-500: oklch(56.8% 0.237 270);
-  --accent-600: oklch(50.5% 0.26 270);
-  --accent-700: oklch(44.8% 0.244 270);
-  --accent-800: oklch(39% 0.199 270);
-  --accent-900: oklch(33% 0.146 270);
-  --accent-950: oklch(25% 0.091 270);
+  /* Accent: the one colour (design/app-language.md §2.1), as the four lines a colour swap edits and
+     nothing else. A near-black fill takes a lighter hover and its own text colour, so both are part
+     of the scheme; the accent has no tints, since selection and the active item use the surfaces. */
+  --accent-fill: oklch(50.5% 0.26 270);
+  --accent-fill-hover: oklch(44.8% 0.244 270);
+  --accent-ring: oklch(56.8% 0.237 270); /* the brand blue #465fff */
+  --accent-on-fill: var(--neutral-0);
 
   /* Status: Tailwind's green, amber, red and sky, only the steps the roles use. */
   --positive-50: oklch(98.2% 0.018 155.826);
@@ -79,10 +74,10 @@
   --muted-foreground: var(--neutral-600);
   --border: color-mix(in oklch, var(--foreground) 8%, transparent);
   --border-strong: var(--neutral-400);
-  --primary: var(--accent-600);
-  --primary-foreground: var(--neutral-0);
-  --primary-hover: var(--accent-700);
-  --ring: var(--accent-500);
+  --primary: var(--accent-fill);
+  --primary-foreground: var(--accent-on-fill);
+  --primary-hover: var(--accent-fill-hover);
+  --ring: var(--accent-ring);
   --scrim: color-mix(in oklch, var(--neutral-950) 40%, transparent);
 
   /* Status roles: 50 the tint, 200 the border, 600 text and icons, 700 text on the tint. */
