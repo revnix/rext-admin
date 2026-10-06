@@ -76,5 +76,5 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <ErrorBoundary>{children}</ErrorBoundary>;
+  return <ErrorBoundary framed>{children}</ErrorBoundary>;
 }

@@ -3,6 +3,7 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import type { ErrorInfo, ReactNode } from "react";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
+import { PageFrame } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { log } from "@/lib/logger";
@@ -18,6 +19,7 @@ export function ErrorBoundary({
   onRetry,
   onError,
   resetKeys,
+  framed = false,
 }: {
   children: ReactNode;
   /** What failed, in the Notice's title: "The editor didn't load". */
@@ -27,6 +29,8 @@ export function ErrorBoundary({
   onError?: (error: unknown, info: ErrorInfo) => void;
   /** The boundary resets itself when one of these changes. */
   resetKeys?: unknown[];
+  /** Around a whole page in the shell: the Notice sits in the page's frame, with its gutters. */
+  framed?: boolean;
 }) {
   return (
     <QueryErrorResetBoundary>
@@ -44,23 +48,26 @@ export function ErrorBoundary({
             });
             onError?.(error, info);
           }}
-          fallbackRender={({ resetErrorBoundary }) => (
-            <Notice
-              tone="danger"
-              title={title}
-              action={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={resetErrorBoundary}
-                >
-                  Try again
-                </Button>
-              }
-            >
-              Try again, or reload the page if it keeps happening.
-            </Notice>
-          )}
+          fallbackRender={({ resetErrorBoundary }) => {
+            const notice = (
+              <Notice
+                tone="danger"
+                title={title}
+                action={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={resetErrorBoundary}
+                  >
+                    Try again
+                  </Button>
+                }
+              >
+                Try again, or reload the page if it keeps happening.
+              </Notice>
+            );
+            return framed ? <PageFrame>{notice}</PageFrame> : notice;
+          }}
         >
           {children}
         </ReactErrorBoundary>
