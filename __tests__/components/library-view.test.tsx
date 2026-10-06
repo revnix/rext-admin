@@ -1,13 +1,20 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { LibraryView } from "@/components/keywords/library-view";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
+// The workspace as the provider has it: its record, or nothing yet, or the error reading it ended in.
+let workspace: { id: string } | undefined = { id: "w1" };
+let workspaceError: Error | null = null;
 jest.mock("@/providers/workspace-provider", () => ({
-  useWorkspace: () => ({ workspace: { id: "w1" }, workspaceSlug: "acme" }),
+  useWorkspace: () => ({
+    workspace,
+    workspaceSlug: "acme",
+    error: workspaceError,
+  }),
 }));
 jest.mock("@/hooks/use-auth-session", () => ({
   useAuthSession: () => ({ user: { id: "u1" } }),
@@ -47,6 +54,8 @@ const renderLibrary = () =>
 beforeEach(() => {
   jest.clearAllMocks();
   granted.clear();
+  workspace = { id: "w1" };
+  workspaceError = null;
 });
 
 describe("LibraryView", () => {
@@ -113,5 +122,28 @@ describe("LibraryView", () => {
     });
     expect(await within(table).findByText("crm")).toBeInTheDocument();
     expect(within(table).queryByRole("button", { name: /^Use/ })).toBeNull();
+  });
+
+  it("waits for the workspace before it says anything", async () => {
+    // A member's rights come with the workspace: before it, the global check refuses.
+    workspace = undefined;
+    const { container } = renderLibrary();
+    await waitFor(() =>
+      expect(
+        container.querySelector('[data-slot="skeleton"]'),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("No keywords yet")).toBeNull();
+    expect(searchLibrary).not.toHaveBeenCalled();
+  });
+
+  it("says the keywords didn't load when the workspace couldn't be read", async () => {
+    workspace = undefined;
+    workspaceError = new Error("Bad gateway");
+    renderLibrary();
+    expect(
+      await screen.findByText("Your keywords didn't load"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No keywords yet")).toBeNull();
   });
 });

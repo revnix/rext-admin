@@ -5,8 +5,13 @@ import WorkspaceContentPage from "@/app/w/[workspaceSlug]/content/page";
 
 // The workspace as the provider has it: null until its record has loaded.
 let workspace: { id: string; name: string } | null = null;
+let workspaceError: Error | null = null;
 jest.mock("@/providers/workspace-provider", () => ({
-  useWorkspace: () => ({ workspace, workspaceSlug: "acme" }),
+  useWorkspace: () => ({
+    workspace,
+    workspaceSlug: "acme",
+    error: workspaceError,
+  }),
 }));
 jest.mock("@/hooks/use-permission", () => ({
   useWorkspacePermission: () => ({ hasPermission: true, isLoading: false }),
@@ -43,6 +48,7 @@ const renderPage = () =>
 beforeEach(() => {
   listContent.mockReset();
   workspace = null;
+  workspaceError = null;
 });
 
 describe("The content list before its workspace has loaded", () => {
@@ -66,5 +72,13 @@ describe("The content list before its workspace has loaded", () => {
 
     expect(await screen.findByText("No content yet")).toBeInTheDocument();
     expect(listContent).toHaveBeenCalledWith("w1", expect.anything());
+  });
+
+  it("says the content didn't load when the workspace couldn't be read, not an endless skeleton", async () => {
+    workspaceError = new Error("Bad gateway");
+    renderPage();
+
+    expect(await screen.findByText("Content didn't load")).toBeInTheDocument();
+    expect(screen.queryByText("No content yet")).toBeNull();
   });
 });

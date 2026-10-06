@@ -15,6 +15,7 @@ import { useDataTableUrlState } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -27,7 +28,6 @@ import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { libraryQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 import { keywordLibraryParams } from "@/lib/search-params/keyword-library";
-import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 const libraryLogger = log.forComponent("library-view");
@@ -39,7 +39,7 @@ const libraryLogger = log.forComponent("library-view");
  * removes it.
  */
 export function LibraryView() {
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
   const { user } = useAuthSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -58,6 +58,9 @@ export function LibraryView() {
 
   const query = libraryQueries.list(workspaceId, userId);
   const library = useQuery({ ...query, enabled: query.enabled && canRead });
+  // The list waits for the workspace and the signed-in user (D16a); without the right to read it
+  // never runs.
+  const isWaiting = useAwaitingData(library, canRead);
 
   const rows = useMemo<KeywordRow[]>(
     () =>
@@ -131,10 +134,9 @@ export function LibraryView() {
         rows={rows}
         state={tableState}
         search={{ placeholder: "Search keywords" }}
-        // The list waits for the signed-in user (D16a); without the right to read it never runs.
-        isLoading={isPermissionLoading || awaitingData(library, canRead)}
+        isLoading={isPermissionLoading || isWaiting}
         error={
-          library.error ? (
+          library.error || workspaceError ? (
             <Notice tone="danger" title="Your keywords didn't load">
               Refresh the page to try again.
             </Notice>

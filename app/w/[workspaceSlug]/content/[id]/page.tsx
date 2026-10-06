@@ -16,8 +16,8 @@ import {
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
-import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
+import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
@@ -36,7 +36,7 @@ export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
   const { id } = use(params);
-  const { workspace } = useWorkspace();
+  const { workspace, error: workspaceError } = useWorkspace();
   const router = useRouter();
 
   // Canonical workspace UUID — keeps the detail query key in the same cache
@@ -44,13 +44,12 @@ export default function WorkspaceContentDetailPage({
   const workspaceId = workspace?.id || "";
 
   // Fetch content details using hook. Until the workspace is known the query waits, so the page
-  // waits on `awaitingData`, not `isLoading`, or it would say "Content not found" (D16a).
+  // waits on `useAwaitingData`, not `isLoading`, or it would say "Content not found" (D16a).
   const contentQuery = useContentDetail(workspaceId, id);
-  const {
-    data: contentResponse,
-    error: fetchError,
-    refetch: refetchContent,
-  } = contentQuery;
+  const isWaiting = useAwaitingData(contentQuery);
+  const { data: contentResponse, refetch: refetchContent } = contentQuery;
+  // A workspace that couldn't be read is this page's failure too: its query never runs.
+  const fetchError = contentQuery.error ?? workspaceError;
 
   const content = contentResponse?.content;
   const [isEditing, setIsEditing] = useState(false);
@@ -189,7 +188,7 @@ export default function WorkspaceContentDetailPage({
 
   const finalContent = advancedContent?.final_content;
 
-  if (awaitingData(contentQuery)) {
+  if (isWaiting) {
     return (
       <WorkingSurface title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">
@@ -252,7 +251,13 @@ export default function WorkspaceContentDetailPage({
                 We encountered an error while trying to fetch the content
                 details. Please try again or contact support.
               </p>
-              <Button onClick={() => refetchContent()}>Retry Load</Button>
+              <Button
+                onClick={() =>
+                  workspaceError ? window.location.reload() : refetchContent()
+                }
+              >
+                Retry Load
+              </Button>
             </div>
           </CardContent>
         </Card>

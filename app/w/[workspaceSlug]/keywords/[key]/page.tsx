@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useShowAfter } from "@/hooks/use-show-after";
 import { libraryStartQuery } from "@/lib/generate-content/library-item";
@@ -21,7 +22,6 @@ import { serpResultsFromOrganic } from "@/lib/keywords/serp-results";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { libraryQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
-import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
@@ -44,7 +44,7 @@ function routeKey(segment: string): string {
 export default function Page() {
   const params = useParams<{ key: string }>();
   const key = routeKey(params.key);
-  const { workspace, workspaceSlug } = useWorkspace();
+  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
   const { user } = useAuthSession();
   const workspaceId = workspace?.id ?? "";
   // The research is read only by someone who may read the workspace's content, as on Generate.
@@ -57,9 +57,11 @@ export default function Page() {
   const query = libraryQueries.item(workspaceId, user?.id ?? "", key);
   const item = useQuery({ ...query, enabled: query.enabled && canRead });
   const [intent, setIntent] = useState<SearchIntent | "">("");
-  // The item waits for the signed-in user too (D16a); without the right to read it never runs.
-  const loading =
-    !workspaceId || isPermissionLoading || awaitingData(item, canRead);
+  // The item waits for the workspace and the signed-in user (D16a); without the right to read it
+  // never runs.
+  const isWaiting = useAwaitingData(item, canRead);
+  const loading = isPermissionLoading || isWaiting;
+  const failed = item.error ?? workspaceError;
   const showSkeleton = useShowAfter(loading);
 
   if (loading) {
@@ -71,7 +73,7 @@ export default function Page() {
   }
 
   const libraryHref = workspaceRoutes.keywordLibrary(workspaceSlug) as Route;
-  if (!canRead) {
+  if (!canRead && !workspaceError) {
     return (
       <DetailPage title="Keyword">
         <EmptyState
@@ -86,12 +88,12 @@ export default function Page() {
       <DetailPage title="Keyword">
         <EmptyState
           title={
-            item.error
+            failed
               ? "This keyword didn't load"
               : "This keyword isn't in your library"
           }
           description={
-            item.error
+            failed
               ? "Refresh the page to try again."
               : "It may have been removed, or the link is from someone else's library."
           }
