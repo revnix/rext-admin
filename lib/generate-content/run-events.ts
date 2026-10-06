@@ -1,3 +1,18 @@
+import type { StreamMode } from "@langchain/langgraph-sdk";
+
+/**
+ * The stream modes every generation stream asks LangGraph for. In
+ * `messages-tuple` mode each model token arrives once, as `[chunk, metadata]`
+ * under the event `messages` (`messages|<namespace>` from a subgraph). The
+ * older `messages` mode resent the whole message so far with every token, so
+ * a streamed text grew with the square of its length.
+ */
+export const GENERATION_STREAM_MODES: StreamMode[] = [
+  "updates",
+  "messages-tuple",
+  "custom",
+];
+
 /**
  * A run the backend ended early, as the custom stream event it sends then:
  * `{type: "run", step: "run.failed", error_code, message}`. Today that is a
@@ -67,4 +82,51 @@ export function settlesRun(chunk: { event?: string; data?: unknown }): boolean {
 /** Whether a run, as LangGraph reports its status, is still going on the server. */
 export function runIsGoing(status: string | undefined): boolean {
   return status === "pending" || status === "running";
+}
+
+/** One model token from the stream, and the graph node whose model wrote it. */
+export type MessageToken = { token: string; node: string | null };
+
+function textOf(part: unknown): string {
+  if (typeof part === "string") return part;
+  if (!part || typeof part !== "object") return "";
+  const block = part as { type?: unknown; text?: unknown };
+  return block.type === "text" && typeof block.text === "string"
+    ? block.text
+    : "";
+}
+
+/**
+ * The token a `messages-tuple` event carries; null for any other event. A
+ * chunk's content is a string, or a list of content blocks whose text parts
+ * are joined. The token is empty for a chunk that carries no text (a tool
+ * call's arguments).
+ */
+export function readMessageToken(chunk: {
+  event?: string;
+  data?: unknown;
+}): MessageToken | null {
+  const name = chunk.event ?? "";
+  if (name !== "messages" && !name.startsWith("messages|")) return null;
+  if (!Array.isArray(chunk.data)) return null;
+  const [message, metadata] = chunk.data as [unknown, unknown];
+  const content = (message as { content?: unknown } | null)?.content;
+  const token =
+    typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content.map(textOf).join("")
+        : "";
+  const node = (metadata as { langgraph_node?: unknown } | null)
+    ?.langgraph_node;
+  return { token, node: typeof node === "string" ? node : null };
+}
+
+/**
+ * Whether a token belongs to the live outline. Only `generate_outline`'s model
+ * writes it (rext-backend's content subgraph); the topic step's model streams
+ * too, while the outline is already the target.
+ */
+export function isOutlineToken(message: MessageToken): boolean {
+  return message.node === "generate_outline";
 }

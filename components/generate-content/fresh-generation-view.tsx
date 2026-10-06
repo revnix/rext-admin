@@ -71,6 +71,9 @@ import { useBackgroundGenerationStore } from "@/stores/background-generation-sto
 import { useWorkspace } from "@/providers/workspace-provider";
 import { RunNotice } from "@/components/generate-content/run-notice";
 import {
+  GENERATION_STREAM_MODES,
+  isOutlineToken,
+  readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
   runIsGoing,
@@ -150,7 +153,7 @@ const extractJsonStringFieldPartial = (raw: string, field: string) => {
 };
 
 const normalizeEscapedJsonish = (raw: string) => {
-  // Sometimes `messages/partial` streams a JSON string with quotes escaped:
+  // Sometimes the streamed article is a JSON string with quotes escaped:
   // {\"title\":\"...\",\"body_markdown\":\"...\"}
   // Normalize it so field extraction works.
   return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
@@ -282,7 +285,7 @@ export function FreshGenerationView({
   const outline = useStreamingText(); // { streamedText, appendToken, resetStream }
   const content = useStreamingText();
 
-  // Which buffer should receive `messages/partial` tokens right now?
+  // Which buffer should receive streamed tokens right now?
   const tokenTargetRef = useRef<"none" | "outline" | "content">("none");
   const [tokenTarget, setTokenTarget] = useState<
     "none" | "outline" | "content"
@@ -1205,30 +1208,18 @@ export function FreshGenerationView({
           continue;
         }
 
-        // ── messages/partial — raw LLM tokens ─────────────────────────────────
-        // Your SSE sends these token-by-token as the LLM writes text/JSON.
-        if (
-          chunk.event === "messages/partial" ||
-          chunk.event?.startsWith("messages/partial|")
-        ) {
-          // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
-          const msgData = (chunk.data as any)?.[0];
-          const raw = msgData?.content;
-          const token =
-            typeof raw === "string"
-              ? raw
-              : Array.isArray(raw)
-                ? raw.filter((p: unknown) => typeof p === "string").join("")
-                : "";
-
-          if (token) {
-            if (tokenTargetRef.current === "outline")
-              outline.appendToken(token);
-            else if (tokenTargetRef.current === "content") {
-              content.appendToken(token);
-            }
+        // ── messages — one model token per event (messages-tuple) ────────────
+        // Only the outline's model feeds a buffer here. The article's text
+        // arrives as `custom` token events, which generate_content writes.
+        const message = readMessageToken(chunk);
+        if (message) {
+          if (
+            message.token &&
+            tokenTargetRef.current === "outline" &&
+            isOutlineToken(message)
+          ) {
+            outline.appendToken(message.token);
           }
-
           continue;
         }
 
@@ -1699,7 +1690,7 @@ export function FreshGenerationView({
               ? { final_intent_type: selectedIntent || _initialIntent }
               : {}),
           },
-          streamMode: ["updates", "messages", "custom"],
+          streamMode: GENERATION_STREAM_MODES,
           streamSubgraphs: true,
           onDisconnect: "continue",
         },
@@ -1788,7 +1779,7 @@ export function FreshGenerationView({
           `/api/generate/${threadId}/resume`,
           {
             payload,
-            streamMode: ["updates", "messages", "custom"],
+            streamMode: GENERATION_STREAM_MODES,
             streamSubgraphs: true,
             onDisconnect: "continue",
           },

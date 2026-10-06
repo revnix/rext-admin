@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
 import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
   getGenerationClient,
@@ -41,7 +42,7 @@ export async function POST(
       const run = await client.runs.create(threadId, ASSISTANT_ID, {
         command: { resume: body.payload },
         metadata: runMetadata,
-        streamMode: ["updates", "messages", "custom"],
+        streamMode: GENERATION_STREAM_MODES,
         streamSubgraphs: true,
         streamResumable: true,
         ...runWebhookOption,
@@ -73,7 +74,7 @@ export async function POST(
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     command: { resume: body.payload },
     metadata: runMetadata,
-    streamMode: ["updates", "messages", "custom"],
+    streamMode: GENERATION_STREAM_MODES,
     streamSubgraphs: true,
     streamResumable: true,
     onDisconnect: "continue",
