@@ -65,10 +65,6 @@
   "components/ui/dialog.tsx": {
     "stock-palette": 1
   },
-  "components/ui/error-states.tsx": {
-    "off-scale": 1,
-    "stock-palette": 2
-  },
   "components/ui/input-group.tsx": {
     "off-scale": 1,
     "arbitrary-radius": 3
@@ -80,10 +76,6 @@
     "stock-palette": 9,
     "off-scale": 1,
     "small-type": 1
-  },
-  "components/ui/loading-indicator.tsx": {
-    "small-type": 2,
-    "arbitrary-size": 1
   },
   "components/ui/popover.tsx": {
     "off-scale": 1

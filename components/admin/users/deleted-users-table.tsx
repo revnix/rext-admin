@@ -20,7 +20,8 @@ import {
   UNKNOWN,
   useDataTableLocalState,
 } from "@/components/ui/data-table";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
@@ -122,11 +123,17 @@ export function DeletedUsersTable({
 
   if (error) {
     return (
-      <ErrorPage
+      <Notice
+        tone="danger"
         title="Failed to load deleted users"
-        message="There was an error loading soft-deleted users. Please try again."
-        retry={() => refetch()}
-      />
+        action={
+          <Button size="sm" variant="outline" onClick={() => void refetch()}>
+            Try again
+          </Button>
+        }
+      >
+        There was an error loading soft-deleted users. Please try again.
+      </Notice>
     );
   }
 

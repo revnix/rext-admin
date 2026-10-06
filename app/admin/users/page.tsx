@@ -42,7 +42,7 @@ import {
   type DataTableRowAction,
   useDataTableUrlState,
 } from "@/components/ui/data-table";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 import { useIsSuperAdmin, usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type {
@@ -505,11 +505,22 @@ export default function AdminUsersPage() {
   // isRecovering).
   if (error && !isFetching) {
     return (
-      <ErrorPage
-        title="Failed to load users"
-        message="There was an error loading the user list. Please try again."
-        retry={() => refetch()}
-      />
+      <ListPage
+        title="User Management"
+        description="Manage system users and impersonation"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load users"
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          There was an error loading the user list. Please try again.
+        </Notice>
+      </ListPage>
     );
   }
 

@@ -40,7 +40,7 @@ import {
   DataTable,
   type DataTableRowAction,
 } from "@/components/ui/data-table";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { usePermission } from "@/hooks/use-permission";
@@ -240,14 +240,29 @@ export default function AdminRolesPage() {
 
   if (rolesError || permissionsError) {
     return (
-      <ErrorPage
-        title="Failed to load roles and permissions"
-        message="We could not load role and permission data. Please retry."
-        retry={() => {
-          void refetchRoles();
-          void refetchPermissions();
-        }}
-      />
+      <ListPage
+        title="Roles & Permissions"
+        description="Configure system roles and assign permissions"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load roles and permissions"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void refetchRoles();
+                void refetchPermissions();
+              }}
+            >
+              Try again
+            </Button>
+          }
+        >
+          We could not load role and permission data. Please retry.
+        </Notice>
+      </ListPage>
     );
   }
 
