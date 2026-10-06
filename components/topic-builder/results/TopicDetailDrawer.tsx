@@ -339,7 +339,7 @@ export function TopicDetailDrawer({
                     return (
                       <div
                         key={score.label}
-                        className="bg-background/50 rounded-md p-3 border border-muted/40 hover:border-muted/60 transition-all duration-200"
+                        className="bg-background/50 rounded-md p-3 border border-muted/40 hover:border-muted/60 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <IconComponent
@@ -353,7 +353,7 @@ export function TopicDetailDrawer({
                         </div>
                         <div className="w-full bg-muted/30 rounded-full h-1.5 mb-2 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ease-out ${getProgressColor(score.value)}`}
+                            className={`h-full rounded-full ${getProgressColor(score.value)}`}
                             style={{ width: `${score.value}%` }}
                           />
                         </div>
@@ -378,7 +378,7 @@ export function TopicDetailDrawer({
                       <Badge
                         key={keyword}
                         variant="secondary"
-                        className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-all duration-200 font-medium"
+                        className="text-sm px-4 py-2 bg-background border border-border hover:border-foreground/30 hover:shadow-sm transition-colors font-medium"
                       >
                         <Hash className="w-3 h-3 mr-1.5 text-foreground" />
                         {keyword}
@@ -403,7 +403,7 @@ export function TopicDetailDrawer({
                           {topic.channel_fit.map((channel) => (
                             <div
                               key={channel}
-                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
+                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-colors font-medium text-foreground"
                             >
                               {channel}
                             </div>
@@ -422,7 +422,7 @@ export function TopicDetailDrawer({
                           {topic.audience_fit.map((audience) => (
                             <div
                               key={audience}
-                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all duration-200 font-medium text-foreground"
+                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-colors font-medium text-foreground"
                             >
                               {audience}
                             </div>

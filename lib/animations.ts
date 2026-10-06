@@ -1,12 +1,20 @@
 /**
- * Framer Motion animation variants and utilities for TypeForm-style components
- *
- * Provides consistent animation patterns across the TypeForm-like experience
- * with proper accessibility support and reduced motion preferences.
+ * Motion presets (design/app-language.md §10): only state changes move, at
+ * 120 ms for hover and focus, 200 ms to open and close and 320 ms for a sheet,
+ * with ease-out, and only transforms and opacity. `DURATION` and `EASE_OUT`
+ * are the CSS tokens `--duration-*` and `--ease-out` in app/globals.css.
  */
 
-import type { Transition, Variants } from "motion/react";
+import type { Variants } from "motion/react";
 import type { AnimationTiming } from "@/types/typeform";
+
+export const DURATION = {
+  fast: 0.12,
+  base: 0.2,
+  slow: 0.32,
+} as const;
+
+export const EASE_OUT = [0.2, 0, 0, 1] as const;
 
 // ============================================================================
 // ANIMATION TIMING CONSTANTS
@@ -119,107 +127,42 @@ export const selectionIndicatorVariants: Variants = {
 };
 
 // ============================================================================
-// QUESTION TRANSITION ANIMATIONS
-// ============================================================================
-
-export const questionTransitionVariants: Variants = {
-  enter: () => ({
-    opacity: 0,
-  }),
-
-  center: {
-    zIndex: 1,
-    opacity: 1,
-  },
-
-  exit: () => ({
-    zIndex: 0,
-    opacity: 0,
-  }),
-};
-
-// ============================================================================
-// STEP SLIDE ANIMATIONS (Directional)
+// STEP CHANGE
 // ============================================================================
 
 /**
- * Horizontal slide variants for multi-step wizard flows.
- * Accepts a custom direction parameter ("forward" | "backward")
- * to control slide direction via AnimatePresence.
+ * A wizard's step change, for a keyed child of `<AnimatePresence mode="wait"
+ * initial={false}>`: the new step fades in over 200 ms and the old one leaves
+ * at once. `initial={false}` keeps the first step still on the first render.
  */
-export const slideStepVariants: Variants = {
-  enter: (direction: "forward" | "backward") => ({
-    x: direction === "forward" ? 300 : -300,
-    opacity: 0,
-  }),
+export const stepChangeVariants: Variants = {
+  enter: { opacity: 0 },
   center: {
-    x: 0,
     opacity: 1,
+    transition: { duration: DURATION.base, ease: EASE_OUT },
   },
-  exit: (direction: "forward" | "backward") => ({
-    x: direction === "forward" ? -300 : 300,
-    opacity: 0,
-  }),
-};
-
-export const slideStepTransition: Transition = {
-  x: EASING.spring,
-  opacity: { duration: 0.2 },
-};
-
-export const questionTransition: Transition = {
-  opacity: {
-    duration: ANIMATION_TIMING.normal,
-    ease: EASING.easeInOut,
-  },
+  exit: { opacity: 0, transition: { duration: 0 } },
 };
 
 // ============================================================================
-// QUESTION CONTENT STAGGERED ANIMATIONS
+// QUESTION CONTENT
 // ============================================================================
 
+/**
+ * A question's content and its items. Only the step changes, so every state is
+ * the resting state: nothing enters, rises or staggers on its own. The names
+ * stay because the typeform components still ask for them.
+ */
 export const questionContentVariants: Variants = {
-  hidden: { opacity: 0 },
-
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-
-  exit: {
-    opacity: 0,
-    transition: {
-      staggerChildren: 0.05,
-      staggerDirection: -1,
-    },
-  },
+  hidden: {},
+  visible: {},
+  exit: {},
 };
 
 export const questionItemVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    scale: 0.95,
-  },
-
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: SPRING_PRESETS.interactive,
-  },
-
-  exit: {
-    opacity: 0,
-    y: -10,
-    scale: 0.95,
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-    },
-  },
+  hidden: {},
+  visible: {},
+  exit: {},
 };
 
 // ============================================================================
@@ -299,46 +242,12 @@ export const celebrationVariants: Variants = {
 };
 
 // ============================================================================
-// BUTTON ANIMATIONS
-// ============================================================================
-
-export const buttonVariants: Variants = {
-  idle: {
-    scale: 1,
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-  },
-
-  hover: {
-    scale: 1.05,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-      ease: EASING.easeOut,
-    },
-  },
-
-  tap: {
-    scale: 0.95,
-    transition: {
-      duration: MOTION_DURATION.veryFast,
-    },
-  },
-
-  disabled: {
-    opacity: 0.6,
-    scale: 1,
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-    },
-  },
-};
-
-// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
 /**
- * Creates reduced motion variants for accessibility
+ * Reduced motion shows every finished state at once (design/app-language.md
+ * §10): no movement and no duration.
  */
 export const createReducedMotionVariants = (variants: Variants): Variants => {
   const reduced: Variants = {};
@@ -348,13 +257,11 @@ export const createReducedMotionVariants = (variants: Variants): Variants => {
     if (typeof original === "object" && original !== null) {
       reduced[key] = {
         ...original,
-        scale: 1, // Remove scaling
-        x: 0, // Remove horizontal movement
-        y: 0, // Remove vertical movement
-        rotate: 0, // Remove rotation
-        transition: {
-          duration: 0.1, // Very fast transitions
-        },
+        scale: 1,
+        x: 0,
+        y: 0,
+        rotate: 0,
+        transition: { duration: 0 },
       };
     } else {
       reduced[key] = original;

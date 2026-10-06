@@ -6,7 +6,6 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import {
   Building,
   Code,
@@ -17,11 +16,6 @@ import {
 } from "lucide-react";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import type { Industry, TopicBuilderFormData } from "@/types/topic-builder";
 import { INDUSTRY_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -44,9 +38,6 @@ export function IndustryQuestion({
   error: _error,
   isLoading = false,
 }: IndustryQuestionProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   const handleSelect = (value: Industry) => {
     updateFormData("industry", value);
     // Clear the custom industry when switching away from "other"
@@ -79,14 +70,9 @@ export function IndustryQuestion({
   };
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {INDUSTRY_OPTIONS.map((option, index) => (
+        {INDUSTRY_OPTIONS.map((option) => (
           <SingleSelectCard
             key={`industry-${option.value}`}
             label={option.label}
@@ -94,20 +80,14 @@ export function IndustryQuestion({
             onSelect={() => handleSelect(option.value as Industry)}
             icon={getIcon(option.value)}
             disabled={isLoading}
-            className="transition-all duration-150 h-auto"
-            delay={index * 0.05}
+            className="h-auto"
           />
         ))}
       </div>
 
       {/* Custom Industry Input */}
       {formData.industry === "other" && (
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-6"
-        >
+        <div className="mt-6">
           <TextInput
             value={formData.industry_other || ""}
             onChange={handleCustomIndustryChange}
@@ -117,8 +97,8 @@ export function IndustryQuestion({
             className="w-full"
             autoFocus
           />
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

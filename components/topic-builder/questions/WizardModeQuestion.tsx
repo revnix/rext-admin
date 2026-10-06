@@ -6,15 +6,9 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { BookOpen, Building2 } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { SingleSelectCard } from "@/components/ui/typeform/single-select-card";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import type { TopicBuilderFormData, WizardMode } from "@/types/topic-builder";
 import { WIZARD_MODE_OPTIONS } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -39,9 +33,6 @@ export function WizardModeQuestion({
   error: _error,
   isLoading = false,
 }: WizardModeQuestionProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   const getIcon = (value: string) => {
     switch (value) {
       case "subject-first":
@@ -65,12 +56,7 @@ export function WizardModeQuestion({
   };
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       <Controller
         name="wizardMode"
         control={form.control}
@@ -81,7 +67,7 @@ export function WizardModeQuestion({
                 {fieldState.error.message}
               </div>
             )}
-            {WIZARD_MODE_OPTIONS.map((option, index) => {
+            {WIZARD_MODE_OPTIONS.map((option) => {
               const isRecommended = option.value === "industry-first";
               return (
                 <SingleSelectCard
@@ -95,16 +81,13 @@ export function WizardModeQuestion({
                   }}
                   icon={getIcon(option.value)}
                   disabled={isLoading}
-                  className={`transition-all duration-200 ${
-                    isRecommended ? "border-foreground" : ""
-                  }`}
-                  delay={index * 0.1}
+                  className={isRecommended ? "border-foreground" : undefined}
                 />
               );
             })}
           </div>
         )}
       />
-    </motion.div>
+    </div>
   );
 }

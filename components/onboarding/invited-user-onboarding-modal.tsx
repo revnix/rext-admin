@@ -6,7 +6,11 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { slideStepVariants, slideStepTransition } from "@/lib/animations";
+import {
+  getMotionVariants,
+  stepChangeVariants,
+  useReducedMotion,
+} from "@/lib/animations";
 import {
   Dialog,
   DialogContent,
@@ -62,12 +66,14 @@ export function InvitedUserOnboardingModal({
   roleDescription,
 }: InvitedUserOnboardingModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+  const stepVariants = getMotionVariants(
+    stepChangeVariants,
+    useReducedMotion(),
+  );
 
   const handleNext = () => {
-    setDirection("forward");
     if (currentStep < STEPS.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -198,17 +204,15 @@ export function InvitedUserOnboardingModal({
           <Progress value={progressPercentage} className="h-2" />
         </div>
 
-        {/* Animated step content with overflow scroll */}
+        {/* Step content with overflow scroll */}
         <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
-          <AnimatePresence mode="wait" custom={direction}>
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentStep}
-              custom={direction}
-              variants={slideStepVariants}
+              variants={stepVariants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={slideStepTransition}
               className="p-6"
             >
               {renderStepContent()}

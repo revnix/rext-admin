@@ -7,13 +7,10 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import { buttonVariants, useReducedMotion } from "@/lib/animations";
-import { useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 
 export interface WizardNavigationProps {
@@ -84,9 +81,6 @@ export function WizardNavigation({
   isInEditMode = false,
   onSaveAndReturn,
 }: WizardNavigationProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const motionVariants = useTypeformMotionVariants(buttonVariants);
-
   const defaultNextLabel = isLastQuestion ? "Generate Topics" : "Next";
   const finalNextLabel = nextLabel || defaultNextLabel;
 
@@ -119,14 +113,11 @@ export function WizardNavigation({
 
   if (compact) {
     return (
-      <motion.div
+      <div
         className={cn(
           "flex items-center justify-between gap-3 p-4 bg-card border-t border-border",
           className,
         )}
-        variants={motionVariants}
-        initial="hidden"
-        animate="visible"
       >
         {/* Previous Button */}
         <Button
@@ -186,19 +177,16 @@ export function WizardNavigation({
             Save
           </Button>
         )}
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
+    <div
       className={cn(
         "flex items-center justify-between gap-4 p-6 bg-card border-t border-border",
         className,
       )}
-      variants={motionVariants}
-      initial="hidden"
-      animate="visible"
     >
       <div className="flex items-center gap-3">
         {/* Previous Button */}
@@ -276,7 +264,7 @@ export function WizardNavigation({
             isLastQuestion && [
               "bg-gradient-to-r from-primary via-primary to-primary/80",
               "hover:from-primary/90 hover:via-primary/90 hover:to-primary/70",
-              "shadow-lg hover:shadow-xl transition-all duration-200",
+              "shadow-lg hover:shadow-xl",
             ],
           )}
         >
@@ -311,6 +299,6 @@ export function WizardNavigation({
           </Button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

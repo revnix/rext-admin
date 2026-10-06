@@ -6,7 +6,6 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import {
   Award,
   Lightbulb,
@@ -18,11 +17,6 @@ import {
 } from "lucide-react";
 import { MultiSelectCard } from "@/components/ui/typeform/multi-select-card";
 import { TextInput } from "@/components/ui/typeform/text-input";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { PurposeType, TopicBuilderFormData } from "@/types/topic-builder";
 import { PURPOSE_OPTIONS } from "@/types/topic-builder";
@@ -46,9 +40,6 @@ export function PurposeQuestion({
   error: _error,
   isLoading = false,
 }: PurposeQuestionProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   const handleToggle = (value: PurposeType) => {
     const currentPurposes = formData.purpose || [];
     const isSelected = currentPurposes.includes(value);
@@ -118,14 +109,9 @@ export function PurposeQuestion({
   const hasOtherSelected = currentPurposes.includes("other");
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {PURPOSE_OPTIONS.map((option, index) => {
+        {PURPOSE_OPTIONS.map((option) => {
           const isRecommended = option.value === "educate-inform";
           const isSelected = currentPurposes.includes(
             option.value as PurposeType,
@@ -140,13 +126,12 @@ export function PurposeQuestion({
               icon={getIcon(option.value)}
               disabled={isLoading}
               className={cn(
-                "transition-all duration-150 h-auto",
+                "h-auto",
                 isSelected && "shadow-lg",
                 isRecommended &&
                   !isSelected &&
                   "ring-1 ring-primary/30 bg-primary/5 border-primary/20",
               )}
-              delay={index * 0.1}
             />
           );
         })}
@@ -154,12 +139,7 @@ export function PurposeQuestion({
 
       {/* Custom Purpose Input */}
       {hasOtherSelected && (
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-6"
-        >
+        <div className="mt-6">
           <TextInput
             value={formData.purpose_other || ""}
             onChange={handleCustomPurposeChange}
@@ -169,15 +149,12 @@ export function PurposeQuestion({
             className="w-full"
             autoFocus
           />
-        </motion.div>
+        </div>
       )}
 
       {/* Selection Count */}
       {currentPurposes.length > 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="text-sm text-muted-foreground"
-        >
+        <div className="text-sm text-muted-foreground">
           {currentPurposes.length} purpose
           {currentPurposes.length !== 1 ? "s" : ""} selected
           {currentPurposes.length >= 3 && (
@@ -185,8 +162,8 @@ export function PurposeQuestion({
               (Consider focusing on 1-2 main purposes for better results)
             </span>
           )}
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

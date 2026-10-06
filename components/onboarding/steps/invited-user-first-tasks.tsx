@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import {
   ArrowRight,
   BookOpen,
@@ -47,14 +46,7 @@ export function InvitedUserFirstTasks({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-5xl mb-4"
-        >
-          🚀
-        </motion.div>
+        <div className="text-5xl mb-4">🚀</div>
         <h2 className="text-2xl font-bold">Ready to Get Started?</h2>
         <p className="text-muted-foreground">
           Here are some suggested first steps to help you dive in
@@ -63,16 +55,11 @@ export function InvitedUserFirstTasks({
 
       {/* Task Cards */}
       <div className="space-y-3">
-        {firstTasks.map((task, index) => (
-          <motion.div
-            key={task.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
+        {firstTasks.map((task) => (
+          <div key={task.title}>
             <Link href={task.href as Route}>
               <Card
-                className={`group hover:shadow-lg transition-all cursor-pointer ${
+                className={`group hover:shadow-lg transition-colors cursor-pointer ${
                   task.priority === "high"
                     ? "border-primary/50 bg-gradient-to-r from-primary/5 to-transparent"
                     : ""
@@ -108,17 +95,12 @@ export function InvitedUserFirstTasks({
                 </CardContent>
               </Card>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Completion Message */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-        className="text-center space-y-4 pt-4"
-      >
+      <div className="text-center space-y-4 pt-4">
         <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-900">
           <CardContent className="p-6">
             <div className="flex items-center justify-center gap-3 mb-3">
@@ -146,7 +128,7 @@ export function InvitedUserFirstTasks({
         <p className="text-xs text-muted-foreground">
           Need help? Use the help menu (?) or ask your workspace admin
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }

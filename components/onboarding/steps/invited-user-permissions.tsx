@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { Check, FileText, Settings, Shield, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,14 +40,9 @@ export function InvitedUserPermissions({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-muted mb-4"
-        >
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-muted mb-4">
           <Shield className="h-8 w-8 text-foreground" />
-        </motion.div>
+        </div>
         <h2 className="text-2xl font-bold">Your Role: {roleName}</h2>
         <p className="text-muted-foreground">
           Here's what you can do in this workspace
@@ -57,13 +51,8 @@ export function InvitedUserPermissions({
 
       {/* Permissions Grid */}
       <div className="grid gap-3 sm:grid-cols-2">
-        {permissions.map((permission, index) => (
-          <motion.div
-            key={permission.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
+        {permissions.map((permission) => (
+          <div key={permission.name}>
             <Card
               className={`h-full transition-colors ${
                 permission.allowed
@@ -98,16 +87,12 @@ export function InvitedUserPermissions({
                 </div>
               </CardHeader>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Info Banner */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-      >
+      <div>
         <Card className="bg-muted/40 border-border">
           <CardContent className="p-4">
             <p className="text-sm text-foreground">
@@ -116,7 +101,7 @@ export function InvitedUserPermissions({
             </p>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3 justify-center pt-4">
