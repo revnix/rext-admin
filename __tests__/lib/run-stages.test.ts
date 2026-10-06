@@ -4,6 +4,7 @@ import {
   RUN_PHASES,
   type RunStage,
   settleStages,
+  stagesAt,
   startStages,
 } from "@/lib/generate-content/run-stages";
 import {
@@ -79,6 +80,24 @@ describe("a run that stops", () => {
       "skipped",
     ]);
     expect(stages[1].endedAt).toBe(2000);
+  });
+});
+
+describe("stagesAt, a run seen from the dock's poll", () => {
+  it("has the stages before done, the given one running since its start, the rest waiting", () => {
+    const stages = stagesAt("article", "polish", 5000);
+    expect(states(stages)).toEqual([
+      "complete",
+      "active",
+      "pending",
+      "pending",
+    ]);
+    expect(stages[1].startedAt).toBe(5000);
+    expect(stages[0].startedAt).toBeUndefined();
+  });
+
+  it("has every stage waiting for a stage it doesn't know", () => {
+    expect(states(stagesAt("outline", "nope"))).toEqual(["pending", "pending"]);
   });
 });
 

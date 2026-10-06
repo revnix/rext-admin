@@ -731,6 +731,7 @@ export function FreshGenerationView({
           stage: payload.stage ?? "Generating your article",
           progress: payload.progress ?? 24,
           awaitingInput: false,
+          runStage: undefined,
         });
 
         dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -1210,6 +1211,7 @@ export function FreshGenerationView({
               runId: runData.run_id,
               status: "running",
               awaitingInput: false,
+              runStage: undefined,
               completionNotified: false,
             });
           }
@@ -1662,6 +1664,7 @@ export function FreshGenerationView({
         )}?thread=${encodeURIComponent(newThreadId)}`,
         completionNotified: false,
         awaitingInput: false,
+        runStage: undefined,
       });
 
       toast.info("Analyzing your keyword", {
@@ -1761,6 +1764,7 @@ export function FreshGenerationView({
         runId: undefined,
         status: "running",
         awaitingInput: false,
+        runStage: undefined,
         completionNotified: false,
         ...(statusMsg ? { stage: statusMsg.replace(/\.+$/, "") } : {}),
       });
@@ -1843,6 +1847,7 @@ export function FreshGenerationView({
       resultUrl,
       completionNotified: false,
       awaitingInput: false,
+      runStage: undefined,
     });
 
     toast.info("Generating your article", {
