@@ -29,18 +29,21 @@ export async function axeIssues(page: Page): Promise<Issue[]> {
 interface Stop {
   id: string;
   label: string;
-  /** Too small to see, or transparent. */
+  /** Too small to see, or transparent: a control drawn by its wrapper or its label. */
   hidden: boolean;
+  /** `next dev`'s overlay or the query devtools (against the local stack): not the dashboard's. */
+  devTool: boolean;
   /** What covers its centre, if something else does (2.4.11). */
   coveredBy: string | null;
-  /** The element's and its two nearest ancestors' outline and box-shadow while it has focus. */
+  /** The outline and box-shadow, while it has focus, of the element, its two nearest ancestors and its labels. */
   rings: string[];
 }
 
 /**
- * Tabs through the page from its top (2.4.7 and 2.4.11): every focused element can be seen, nothing
- * covers it, and it shows an outline or a ring (the `ring` token) it doesn't have unfocused, on itself or
- * on a wrapper drawn around it. A colour change alone isn't a focus indicator here.
+ * Tabs through the page from its top (2.4.7 and 2.4.11): nothing covers a focused element, and it shows
+ * an outline or a ring (the `ring` token) it doesn't have unfocused, on itself, on a wrapper drawn around
+ * it, or on its label (a visually hidden control drawn by its label, as a switch or a radio card is). A
+ * colour change alone isn't a focus indicator here.
  */
 export async function focusIssues(
   page: Page,
@@ -59,14 +62,9 @@ export async function focusIssues(
     // Focus left the page (for the browser's own controls), or came round to an element again.
     if (!stop || seen.has(stop.id)) break;
     seen.add(stop.id);
+    if (stop.devTool) continue;
     stops.push(stop);
-    if (stop.hidden) {
-      issues.push({
-        check: "focus visible",
-        target: stop.label,
-        detail: "focus lands on an element that can't be seen",
-      });
-    } else if (stop.coveredBy) {
+    if (!stop.hidden && stop.coveredBy) {
       issues.push({
         check: "focus not obscured",
         target: stop.label,
@@ -79,7 +77,6 @@ export async function focusIssues(
     (document.activeElement as HTMLElement | null)?.blur(),
   );
   for (const stop of stops) {
-    if (stop.hidden) continue;
     const unfocused = await page.evaluate(readRings, stop.id);
     if (!unfocused) continue;
     const shown = stop.rings.some(
@@ -89,7 +86,9 @@ export async function focusIssues(
       issues.push({
         check: "focus visible",
         target: stop.label,
-        detail: "no outline or ring when focused",
+        detail: stop.hidden
+          ? "focus lands on a hidden control, and nothing around it or its label shows a ring"
+          : "no outline or ring when focused",
       });
     }
   }
@@ -183,6 +182,9 @@ function readFocus(): Stop | null {
     el.getAttribute("role") ? `[role=${el.getAttribute("role")}]` : ""
   }${name ? ` "${name}"` : ""}`;
 
+  const isDevTool = (node: Element) =>
+    node.tagName === "NEXTJS-PORTAL" ||
+    node.closest(".tsqd-parent-container") !== null;
   const rect = el.getBoundingClientRect();
   const style = getComputedStyle(el);
   const hidden =
@@ -205,7 +207,7 @@ function readFocus(): Stop | null {
         (left + right) / 2,
         (top + bottom) / 2,
       );
-      if (hit && !el.contains(hit) && !hit.contains(el)) {
+      if (hit && !el.contains(hit) && !hit.contains(el) && !isDevTool(hit)) {
         coveredBy = `${hit.tagName.toLowerCase()}${
           hit.getAttribute("data-slot")
             ? `[data-slot=${hit.getAttribute("data-slot")}]`
@@ -215,9 +217,13 @@ function readFocus(): Stop | null {
     }
   }
 
-  const rings: string[] = [];
-  let node: Element | null = el;
-  for (let level = 0; level < 3 && node; level++) {
+  const candidates: Element[] = [el];
+  for (let up = el.parentElement, level = 0; up && level < 2; level++) {
+    candidates.push(up);
+    up = up.parentElement;
+  }
+  candidates.push(...Array.from((el as HTMLInputElement).labels ?? []));
+  const rings = candidates.map((node) => {
     const s = getComputedStyle(node);
     const outline =
       s.outlineStyle !== "none" &&
@@ -227,19 +233,19 @@ function readFocus(): Stop | null {
         ? `outline ${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor}`
         : "";
     const shadow = s.boxShadow !== "none" ? `shadow ${s.boxShadow}` : "";
-    rings.push([outline, shadow].filter(Boolean).join(" "));
-    node = node.parentElement;
-  }
+    return [outline, shadow].filter(Boolean).join(" ");
+  });
   return {
     id: el.dataset[marker] as string,
     label,
     hidden,
+    devTool: isDevTool(el),
     coveredBy,
     rings,
   };
 }
 
-/** Runs in the page: the same three levels' outline and box-shadow for a marked element, unfocused. */
+/** Runs in the page: the same elements' outline and box-shadow for a marked element, unfocused. */
 function readRings(id: string): string[] | null {
   const el = document.querySelector(`[data-a11y-stop="${id}"]`);
   if (!el) return null;
@@ -247,9 +253,13 @@ function readRings(id: string): string[] | null {
   for (const animation of document.getAnimations()) {
     if (animation instanceof CSSTransition) animation.finish();
   }
-  const rings: string[] = [];
-  let node: Element | null = el;
-  for (let level = 0; level < 3 && node; level++) {
+  const candidates: Element[] = [el];
+  for (let up = el.parentElement, level = 0; up && level < 2; level++) {
+    candidates.push(up);
+    up = up.parentElement;
+  }
+  candidates.push(...Array.from((el as HTMLInputElement).labels ?? []));
+  const rings = candidates.map((node) => {
     const s = getComputedStyle(node);
     const outline =
       s.outlineStyle !== "none" &&
@@ -259,8 +269,7 @@ function readRings(id: string): string[] | null {
         ? `outline ${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor}`
         : "";
     const shadow = s.boxShadow !== "none" ? `shadow ${s.boxShadow}` : "";
-    rings.push([outline, shadow].filter(Boolean).join(" "));
-    node = node.parentElement;
-  }
+    return [outline, shadow].filter(Boolean).join(" ");
+  });
   return rings;
 }
