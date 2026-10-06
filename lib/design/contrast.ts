@@ -19,8 +19,17 @@ export interface Pair {
   background: string;
 }
 
-/** The page, a card or panel, and a hover, table header or field: everything sits on one of the three. */
-export const SURFACES = ["--surface", "--surface-raised", "--surface-inset"];
+/**
+ * The page, a card or panel, and a hover, table header or field: everything sits on one of the three.
+ * `--background` is the page under its shadcn name (the body is `bg-background`), tested in its own right
+ * in case it is ever pointed somewhere else.
+ */
+export const SURFACES = [
+  "--surface",
+  "--surface-raised",
+  "--surface-inset",
+  "--background",
+];
 
 const onSurfaces = (kind: PairKind, foregrounds: string[]): Pair[] =>
   foregrounds.flatMap((foreground) =>
