@@ -4,11 +4,29 @@
  * React Query hook for fetching and managing personas
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type { Persona } from "@/types/workspace";
 import { toast } from "sonner";
 import { personaQueries } from "@/lib/query-keys";
+
+/**
+ * The persona list carries each persona's article count (rext-backend#818) and stays fresh for five
+ * minutes, so whatever adds or removes an article refreshes it: the count and its sort follow.
+ */
+export function refreshPersonaCounts(
+  queryClient: QueryClient,
+  workspaceId: string,
+) {
+  return queryClient.invalidateQueries({
+    queryKey: personaQueries.lists(workspaceId),
+  });
+}
 
 /**
  * Hook to fetch all personas for a workspace
