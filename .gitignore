@@ -63,3 +63,10 @@ node_modules/
 *.old
 *.tmp
 *~ 
+
+# The accessibility and performance checks (pnpm a11y, pnpm perf)
+/test-results/
+/playwright-report/
+/e2e/.auth/
+/.lighthouseci/
+/lighthouse-reports/
