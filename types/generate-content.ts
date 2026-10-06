@@ -920,7 +920,13 @@ export interface PageState {
   eeatData: EEATData | null;
   allContent: FinalContent | null;
   /** The run the page is waiting on, if any: its phase, whether it was picked up mid-way, and a counter that changes with each start. */
-  run: { phase: RunPhase; joined: boolean; seq: number } | null;
+  run: {
+    phase: RunPhase;
+    joined: boolean;
+    /** For a run picked up mid-way: the stage it is in (the status route's `runStage`). */
+    stageId?: string;
+    seq: number;
+  } | null;
   keywordDifficulty: number | null;
   keywordClusters: KeywordCluster[];
   recommendedContentType: string | null;
@@ -954,7 +960,7 @@ export type PageAction =
   | { type: "SET_LOADING_STATUS"; payload: string }
   | {
       type: "SET_RUN_PHASE";
-      payload: { phase: RunPhase; joined?: boolean } | null;
+      payload: { phase: RunPhase; joined?: boolean; stageId?: string } | null;
     }
   | { type: "SET_MANUAL_LOADING"; payload: boolean }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
