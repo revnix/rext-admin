@@ -11,12 +11,8 @@ import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  QuestionCard,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform";
-import { questionItemVariants } from "@/components/ui/typeform/motion";
+import { QuestionCard } from "@/components/ui/typeform";
+import { DURATION, EASE_OUT } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig, WizardProgress } from "@/types/wizard";
@@ -123,9 +119,6 @@ export function QuestionStep({
   questions,
   onStepAdvance,
 }: QuestionStepProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   // Render the appropriate question component based on type
   const questionComponent = useMemo(() => {
     const baseProps = {
@@ -204,8 +197,7 @@ export function QuestionStep({
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          variants={itemVariants}
+          transition={{ duration: DURATION.base, ease: EASE_OUT }}
         >
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -224,7 +216,7 @@ export function QuestionStep({
         questionId={question.id}
         progress={progress}
         className={cn(
-          "transition-all duration-200",
+          "transition-opacity",
           isLoading ? "opacity-75 pointer-events-none" : "opacity-100",
         )}
       >

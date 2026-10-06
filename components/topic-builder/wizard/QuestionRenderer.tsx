@@ -2,11 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback } from "react";
-import {
-  questionTransition,
-  questionTransitionVariants,
-  useReducedMotion,
-} from "@/lib/animations";
+import { stepChangeVariants } from "@/lib/animations";
 import { useTypeformMotionVariants } from "@/components/ui/typeform/motion";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionRendererProps } from "@/types/topic-builder-components";
@@ -18,7 +14,6 @@ export const QuestionRenderer = memo(function QuestionRenderer({
   questions,
   currentQuestionIndex,
   currentQuestion,
-  direction,
   formData,
   updateFormData,
   form,
@@ -39,8 +34,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
   isInEditMode = false,
   saveAndReturnToReview,
 }: QuestionRendererProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const motionVariants = useTypeformMotionVariants(questionTransitionVariants);
+  const motionVariants = useTypeformMotionVariants(stepChangeVariants);
 
   // Handle auto-advance for single-select questions
   const handleQuestionChange = useCallback(
@@ -85,15 +79,13 @@ export const QuestionRenderer = memo(function QuestionRenderer({
       {/* Question Container */}
       <div className="flex-1 flex items-start justify-center pt-24 px-4 pb-4">
         <div className="w-full max-w-6xl">
-          <AnimatePresence mode="wait" custom={direction}>
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentQuestionIndex}
-              custom={direction}
               variants={motionVariants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={questionTransition}
               className="w-full"
             >
               <QuestionStep

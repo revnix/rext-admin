@@ -6,15 +6,9 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { Lightbulb } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { TextInput } from "@/components/ui/typeform/text-input";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -37,8 +31,6 @@ export function SubjectQuestion({
   error,
   isLoading = false,
 }: SubjectQuestionProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus the input when component mounts
@@ -63,12 +55,7 @@ export function SubjectQuestion({
   ];
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <TextInput
         ref={inputRef}
         value={formData.subject || ""}
@@ -84,7 +71,7 @@ export function SubjectQuestion({
 
       {/* Suggestions */}
       {!formData.subject && (
-        <motion.div variants={itemVariants} className="space-y-3">
+        <div className="space-y-3">
           <div className="text-sm font-medium text-muted-foreground">
             Popular topics (click to use):
           </div>
@@ -96,7 +83,7 @@ export function SubjectQuestion({
                 onClick={() => handleChange(suggestion)}
                 disabled={isLoading}
                 className={cn(
-                  "px-3 py-2 text-sm rounded-md border transition-all duration-200",
+                  "px-3 py-2 text-sm rounded-md border transition-colors",
                   "border-border hover:border-primary/50 cursor-pointer",
                   "bg-background hover:bg-primary/5 text-foreground",
                   "hover:text-primary shadow-sm hover:shadow-md",
@@ -111,8 +98,8 @@ export function SubjectQuestion({
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

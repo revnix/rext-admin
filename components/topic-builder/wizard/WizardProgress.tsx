@@ -7,14 +7,8 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { useCallback } from "react";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  progressBarVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { QuestionConfig } from "@/types/wizard";
 
@@ -54,9 +48,6 @@ export function WizardProgress({
   showStepNumbers = false,
   compact = false,
 }: WizardProgressProps) {
-  const prefersReducedMotion = useReducedMotion();
-  const motionVariants = useTypeformMotionVariants(progressBarVariants);
-
   const handleStepClick = useCallback(
     (stepIndex: number) => {
       if (onStepClick && stepIndex <= current) {
@@ -99,12 +90,7 @@ export function WizardProgress({
 
   if (compact) {
     return (
-      <motion.div
-        className={cn("px-4 py-3 bg-card", className)}
-        variants={motionVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className={cn("px-4 py-3 bg-card", className)}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>
@@ -124,7 +110,7 @@ export function WizardProgress({
                   onClick={() => handleStepClick(stepNumber)}
                   disabled={stepNumber > current}
                   className={cn(
-                    "w-2 h-2 rounded-full transition-all duration-150",
+                    "w-2 h-2 rounded-full transition-[scale,background-color]",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                     state === "completed" && "bg-primary",
                     state === "current" && "bg-primary scale-125",
@@ -142,24 +128,14 @@ export function WizardProgress({
 
         {/* Progress Bar */}
         <div className="mt-2 w-full bg-muted rounded-full h-1 overflow-hidden">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={{ width: "0%" }}
-            animate={{ width: `${percentage}%` }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
-          />
+          <ProgressFill percentage={percentage} />
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className={cn("px-6 py-4 bg-card border-b border-border", className)}
-      variants={motionVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className={cn("px-6 py-4 bg-card border-b border-border", className)}>
       <div className="max-w-4xl mx-auto">
         {/* Progress Bar */}
         <div className="mb-6">
@@ -173,12 +149,7 @@ export function WizardProgress({
           </div>
 
           <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              initial={{ width: "0%" }}
-              animate={{ width: `${percentage}%` }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.5 }}
-            />
+            <ProgressFill percentage={percentage} />
           </div>
         </div>
 
@@ -202,7 +173,7 @@ export function WizardProgress({
                   onClick={() => isClickable && handleStepClick(stepNumber)}
                   disabled={!isClickable}
                   className={cn(
-                    "relative flex items-center justify-center rounded-full transition-all duration-150",
+                    "relative flex items-center justify-center rounded-full transition-[scale,background-color]",
                     "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                     showStepNumbers ? "w-8 h-8 text-sm font-medium" : "w-3 h-3",
                     state === "completed" && [
@@ -250,6 +221,20 @@ export function WizardProgress({
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+/**
+ * The bar's fill moves by transform, not width (design/app-language.md §10), and
+ * only when the step changes: a CSS transition does not run on the first render.
+ */
+function ProgressFill({ percentage }: { percentage: number }) {
+  const filled = Math.min(100, Math.max(0, percentage));
+  return (
+    <div
+      className="h-full w-full bg-primary rounded-full transition-transform duration-(--duration-base)"
+      style={{ transform: `translateX(-${100 - filled}%)` }}
+    />
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
 import { Building2, Crown, Shield, UserCheck } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import type { RoleCategory } from "@/lib/role-categories";
@@ -41,89 +40,71 @@ export function InvitedUserWelcome({
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Celebration Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center space-y-4"
-      >
+      <div className="text-center space-y-4">
         <div className="text-6xl">🎉</div>
         <h2 className="text-3xl font-bold">Welcome!</h2>
         <p className="text-lg text-muted-foreground">
           You've been invited to join a workspace
         </p>
-      </motion.div>
+      </div>
 
       {/* Workspace Info Card */}
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Card className="border-2">
-            <CardContent className="p-6 space-y-6">
-              {/* Workspace Name */}
+      <div>
+        <Card className="border-2">
+          <CardContent className="p-6 space-y-6">
+            {/* Workspace Name */}
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted">
+                <Building2 className="h-8 w-8 text-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">You're joining</p>
+                <h3 className="text-2xl font-bold">
+                  {workspace.name || "Workspace"}
+                </h3>
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Inviter Info */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Invited by
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
+                  {inviterName.charAt(0).toUpperCase()}
+                </div>
+                <p className="font-medium">{inviterName}</p>
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Role Info */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                Your role
+              </p>
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted">
-                  <Building2 className="h-8 w-8 text-foreground" />
-                </div>
+                {ROLE_ICONS[detectRoleCategory(roleName)]}
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground">
-                    You're joining
-                  </p>
-                  <h3 className="text-2xl font-bold">
-                    {workspace.name || "Workspace"}
-                  </h3>
+                  <p className="text-lg font-semibold">{roleName}</p>
+                  {roleDescription && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {roleDescription}
+                    </p>
+                  )}
                 </div>
               </div>
-
-              <div className="h-px bg-border" />
-
-              {/* Inviter Info */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Invited by
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background font-semibold">
-                    {inviterName.charAt(0).toUpperCase()}
-                  </div>
-                  <p className="font-medium">{inviterName}</p>
-                </div>
-              </div>
-
-              <div className="h-px bg-border" />
-
-              {/* Role Info */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Your role
-                </p>
-                <div className="flex items-center gap-4">
-                  {ROLE_ICONS[detectRoleCategory(roleName)]}
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold">{roleName}</p>
-                    {roleDescription && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {roleDescription}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Call to Action */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-        className="text-center space-y-4"
-      >
+      <div className="text-center space-y-4">
         <p className="text-muted-foreground">
           Let's take a quick tour to help you get started
         </p>
@@ -145,7 +126,7 @@ export function InvitedUserWelcome({
             Get Started
           </Button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

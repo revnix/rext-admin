@@ -6,16 +6,10 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { Plus, Users } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { ChipInput } from "@/components/ui/typeform/chip-input";
 import { useAudienceSuggestions } from "@/hooks/use-contextual-suggestions";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "@/components/ui/typeform/motion";
 import { cn } from "@/lib/utils";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionConfig } from "@/types/wizard";
@@ -42,9 +36,6 @@ export function AudienceQuestion({
   isLoading = false,
   onStepAdvance,
 }: AudienceQuestionProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   const currentAudiences = _formData.audience || [];
 
   // Get contextual audience suggestions based on selected industry (Task 7.2)
@@ -90,12 +81,7 @@ export function AudienceQuestion({
   };
 
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <Controller
         name="audience"
         control={form.control}
@@ -119,7 +105,7 @@ export function AudienceQuestion({
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
-        <motion.div variants={itemVariants} className="space-y-3">
+        <div className="space-y-3">
           <div className="text-sm font-medium text-muted-foreground">
             {contextualSuggestions.length > 0 && _formData.industry
               ? `Audiences for ${_formData.industry} industry (click to add):`
@@ -142,7 +128,7 @@ export function AudienceQuestion({
                     isLoading || (!isSelected && currentAudiences.length >= 5)
                   }
                   className={cn(
-                    "px-3 py-2 text-sm rounded-md transition-all duration-200 cursor-pointer",
+                    "px-3 py-2 text-sm rounded-md transition-colors cursor-pointer",
                     "border hover:border-primary/50 shadow-sm hover:shadow-md",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
@@ -168,15 +154,12 @@ export function AudienceQuestion({
               );
             })}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Selected Count */}
       {currentAudiences.length > 0 && (
-        <motion.div
-          variants={itemVariants}
-          className="text-sm text-muted-foreground"
-        >
+        <div className="text-sm text-muted-foreground">
           {currentAudiences.length} audience
           {currentAudiences.length !== 1 ? "s" : ""} selected
           {currentAudiences.length >= 5 && (
@@ -184,8 +167,8 @@ export function AudienceQuestion({
               (Maximum reached)
             </span>
           )}
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

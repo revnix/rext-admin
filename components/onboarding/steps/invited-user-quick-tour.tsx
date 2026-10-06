@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import {
   BookOpen,
   FileText,
@@ -48,14 +47,7 @@ export function InvitedUserQuickTour({
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <motion.div
-          initial={{ opacity: 0, rotate: -10 }}
-          animate={{ opacity: 1, rotate: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-5xl mb-4"
-        >
-          📚
-        </motion.div>
+        <div className="text-5xl mb-4">📚</div>
         <h2 className="text-2xl font-bold">Quick Tour</h2>
         <p className="text-muted-foreground">
           Here are the key features you'll use most often
@@ -64,13 +56,8 @@ export function InvitedUserQuickTour({
 
       {/* Tour Items */}
       <div className="space-y-3">
-        {tourItems.map((item, index) => (
-          <motion.div
-            key={item.title}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
+        {tourItems.map((item) => (
+          <div key={item.title}>
             <Card
               className={
                 item.highlight
@@ -105,16 +92,12 @@ export function InvitedUserQuickTour({
                 </div>
               </CardHeader>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Tip Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
-      >
+      <div>
         <Card className="bg-muted/40 border-border">
           <CardContent className="p-4 flex items-start gap-3">
             <span className="text-2xl">💡</span>
@@ -129,7 +112,7 @@ export function InvitedUserQuickTour({
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3 justify-center pt-4">
