@@ -17,18 +17,6 @@
   "app/admin/platform/invitations/page.tsx": {
     "stock-palette": 19
   },
-  "app/admin/refunds/page.tsx": {
-    "stock-palette": 3,
-    "small-type": 1
-  },
-  "app/admin/subscriptions/page.tsx": {
-    "stock-palette": 12,
-    "literal-colour": 3,
-    "dark-class": 2
-  },
-  "app/admin/subscriptions/plans/page.tsx": {
-    "stock-palette": 7
-  },
   "app/admin/users/page.tsx": {
     "small-type": 7,
     "stock-palette": 4
@@ -85,18 +73,6 @@
   "app/w/page.tsx": {
     "small-type": 3
   },
-  "components/admin/analytics/cohort-retention-matrix.tsx": {
-    "stock-palette": 13
-  },
-  "components/admin/analytics/plan-distribution-chart.tsx": {
-    "literal-colour": 7
-  },
-  "components/admin/analytics/revenue-chart.tsx": {
-    "literal-colour": 3
-  },
-  "components/admin/analytics/subscription-kpis.tsx": {
-    "stock-palette": 3
-  },
   "components/admin/email/email-failures-table.tsx": {
     "stock-palette": 4
   },
@@ -112,10 +88,6 @@
   "components/admin/monitoring/usage-charts.tsx": {
     "literal-colour": 4,
     "stock-palette": 4
-  },
-  "components/admin/refunds/refund-requests-table.tsx": {
-    "stock-palette": 6,
-    "small-type": 1
   },
   "components/admin/roles/permission-badge.tsx": {
     "stock-palette": 27

@@ -13,13 +13,14 @@ interface PlanDistributionChartProps {
   }>;
 }
 
+// Plans are categories, not statuses: the accent first, then the neutral steps.
 const COLORS = [
-  "#8b5cf6",
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#ec4899",
+  "var(--primary)",
+  "var(--neutral-700)",
+  "var(--neutral-500)",
+  "var(--neutral-400)",
+  "var(--neutral-300)",
+  "var(--info-600)",
 ];
 
 export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
@@ -54,7 +55,7 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
               labelLine={false}
               label={(entry) => `${entry.name}: ${entry.value}`}
               outerRadius={100}
-              fill="#8884d8"
+              fill="var(--primary)"
               dataKey="value"
             >
               {chartData.map((entry, index) => (

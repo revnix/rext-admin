@@ -438,22 +438,22 @@ export default function SubscriptionAnalyticsPage() {
                       [
                         "New",
                         revenueMetrics?.current_month.new_revenue,
-                        "bg-emerald-50 text-emerald-600",
+                        "bg-surface-inset text-success-600",
                       ],
                       [
                         "Expansion",
                         revenueMetrics?.current_month.expansion_revenue,
-                        "bg-blue-50 text-blue-600",
+                        "bg-surface-inset text-success-600",
                       ],
                       [
                         "Contraction",
                         revenueMetrics?.current_month.contraction_revenue,
-                        "bg-orange-50 text-orange-600",
+                        "bg-surface-inset text-warning-600",
                       ],
                       [
                         "Churned",
                         revenueMetrics?.current_month.churned_revenue,
-                        "bg-red-50 text-red-600",
+                        "bg-surface-inset text-danger-600",
                       ],
                     ].map(([label, value, color]) => (
                       <div
@@ -503,7 +503,7 @@ export default function SubscriptionAnalyticsPage() {
                         />
                         <Bar
                           dataKey="revenue"
-                          fill="#3b82f6"
+                          fill="var(--primary)"
                           name={`${revenueDisplayPeriod === "monthly" ? "Monthly" : "Yearly"} revenue`}
                         />
                       </BarChart>
@@ -535,10 +535,7 @@ export default function SubscriptionAnalyticsPage() {
                     </span>
                     <span>
                       Conversions:{" "}
-                      <Badge
-                        variant="secondary"
-                        className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                      >
+                      <Badge variant="success">
                         {trialConversion?.trials_converted ?? 0}
                       </Badge>
                     </span>
@@ -584,12 +581,12 @@ export default function SubscriptionAnalyticsPage() {
                         <Legend itemSorter={null} />
                         <Bar
                           dataKey="trials"
-                          fill="#f59e0b"
+                          fill="var(--neutral-400)"
                           name="Trial starts"
                         />
                         <Bar
                           dataKey="conversions"
-                          fill="#10b981"
+                          fill="var(--primary)"
                           name="Conversions"
                         />
                       </BarChart>
