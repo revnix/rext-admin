@@ -268,6 +268,8 @@ type ContentEditorProps = {
   onContentChange: (val: string) => void;
   // Agent activity (shown in right sidebar while generating)
   toolCalls?: ToolCall[];
+  /** The run component while the article is written, at the top of the side panel. */
+  runProgress?: React.ReactNode;
   /** When true, shows the content blurred with a humanizing overlay */
 };
 
@@ -290,6 +292,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     onEditToggle,
     onContentChange,
     toolCalls = [],
+    runProgress,
   } = props;
 
   // JSON-LD is not part of content-level on-page SEO: hide those findings and
@@ -1006,6 +1009,8 @@ function ContentEditorInner(props: ContentEditorProps) {
       </div>
 
       <section className="flex-1 min-h-0 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+        {/* ── The run's stages, while the article is written ── */}
+        {!isFinal && runProgress}
         {/* ── The research, while the article is written: the searches it ran ── */}
         {!isFinal && toolCalls.length > 0 && (
           <div className="space-y-3 pb-2">
