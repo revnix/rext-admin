@@ -66,7 +66,7 @@ export function SelectionView({
           Pick from Library
         </CardTitle>
         <CardDescription className="text-base text-muted-foreground/80">
-          Use a previously analyzed keyword to skip the research phase.
+          Start from a keyword you've already analyzed.
         </CardDescription>
       </CardHeader>
       <CardFooter className="px-8 pb-8 pt-4">
