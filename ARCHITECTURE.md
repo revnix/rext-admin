@@ -83,6 +83,17 @@ A form is built from `components/forms/`. Its schema lives in `schemas/` (the pe
 
 The persona form, workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button); the forms on the older `components/ui/form.tsx` move later.
 
+## States
+
+One component each (design/app-language.md §8), in `components/ui/`:
+- `Notice` is the one box for info, warning, danger and success (icon, title, text, one action), with `role="alert"` for danger and warning;
+- `EmptyState` is a title, one sentence and one action, with no picture, and `as="h1"` on pages outside the shell;
+- `Skeleton` shows through `useShowAfter` (`hooks/use-show-after.ts`, 200 ms), so a fast load shows nothing;
+- `Meter` shows credits and limits, in the warning colour when low;
+- `ScoreRing` is the one 0 to 100 score.
+
+The older `alert.tsx`, loading and error components move to these and go.
+
 ## Data
 
 - **Server state** lives in TanStack Query: key factories in `lib/query-keys.ts` (some areas still use inline keys), `lib/query-options/`, and `useMutationWithToast` / `useOptimisticMutation` in `hooks/mutations/`. A component reads data through a hook.
