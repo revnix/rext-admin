@@ -141,6 +141,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 - **Lint and format:** Biome 2 (`biome.json`); `lint:imports` adds the stores import rule (it needs `rg`); `lint:ui-comments` refuses TODO, FIXME, XXX and HACK comments in `components/ui` and `lib`.
 - **Pre-commit:** Husky runs format, lint, `lint:ui-comments` and `tsc --noEmit` on every commit.
 - **CI:** `.github/workflows/ci_cd.yaml` deploys on pushes to `main` (production) and `staging` (the staging target) through the Vercel CLI. `.github/workflows/pr-checks.yaml` checks pull requests into `staging`: `next typegen`, `tsc --noEmit`, `pnpm lint`, the token and layout checks (once they exist), Jest and `pnpm build` (with dummy env values) on every push; on a private repository, Jest and the build only with the label `build`.
+- **Accessibility and performance (task C10):** `pnpm a11y` runs `e2e/a11y/` in Playwright: axe at WCAG 2.2 AA, the tab order (every focused element seen, ringed and uncovered) and reduced motion, at 1440 and 390 px. In pr-checks it starts the build with `REXT_DEV_PAGES=1` and opens the pages that need no backend: the signed-out ones and `/dev/primitives` (`e2e/a11y/routes.ts`). Against the local stack it takes `A11Y_BASE_URL`, `A11Y_ROUTES_FILE`, `A11Y_WORKSPACE` and a login (`A11Y_EMAIL`, `A11Y_PASSWORD`). `pnpm perf` is Lighthouse CI's budgets (`lighthouserc.json`).
 - **TypeScript:** strict, `typedRoutes: true` in `next.config.ts`, the `@/*` path alias.
 
 ## Traps

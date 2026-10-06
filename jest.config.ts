@@ -24,7 +24,13 @@ const customJestConfig: Config = {
   ],
 
   // Ignore patterns
-  testPathIgnorePatterns: ["/node_modules/", "/.next/", "/__tests__/utils/"],
+  // e2e/ holds Playwright's specs (pnpm a11y), which Jest doesn't run.
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/.next/",
+    "/__tests__/utils/",
+    "/e2e/",
+  ],
 
   // Coverage configuration
   collectCoverageFrom: [

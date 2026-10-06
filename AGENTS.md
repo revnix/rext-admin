@@ -44,6 +44,8 @@ pnpm build                   # production build; about 2 GB of memory
 pnpm tokens:check            # design values outside the tokens; a per-file ratchet (scripts/tokens-baseline.json)
 pnpm layout:check            # pages outside the five layouts, hand-written page widths, headings, tables, fields; a ratchet
 pnpm api:types               # lib/api-client/schema.d.ts from api/openapi.json, the backend's spec (ARCHITECTURE.md, the API client)
+pnpm a11y                    # axe, focus and reduced motion in Playwright, on a build started with REXT_DEV_PAGES=1 (playwright.config.ts)
+pnpm perf                    # Lighthouse CI's budgets on five pages, after a build (lighthouserc.json)
 ```
 
 - The Husky pre-commit hook runs Biome on the staged files only (their fixes are staged with them); never skip it with `--no-verify`. The type check, the full lint and the tests run in CI (`pr-checks.yaml`) and in `check.sh`, not on commit.
@@ -70,7 +72,7 @@ Read `ARCHITECTURE.md` before your first change: routes, the shell, the data lay
 1. The branch holds the current `origin/staging`, and `../rext-control/scripts/app/check.sh` passes (add `--build` for dependencies, `next.config.ts`, `app/globals.css`, the shell or a layout). Outside the rework, the commands above pass, the build included.
 2. You clicked through the pages you changed on the dev server at 390, 820 and 1440 px (rework sessions capture them with the `rext-app-visual-check` skill).
 3. The pull request body says what changed, why, how it was checked and what is not in it, and names the task.
-4. On GitHub, `pr-checks` (`.github/workflows/pr-checks.yaml`) runs the route types, the type check, Biome, `tokens:check` / `layout:check` (once they exist), Jest and the production build on every push. If the repository goes private again, Jest and the build run only with the label `build`, since the Free plan's Actions minutes are then shared with the deploys.
+4. On GitHub, `pr-checks` (`.github/workflows/pr-checks.yaml`) runs the route types, the type check, Biome, `tokens:check` / `layout:check` (once they exist), Jest, the production build, and `pnpm a11y` and `pnpm perf` against that build on every push. If the repository goes private again, Jest, the build and the checks against it run only with the label `build`, since the Free plan's Actions minutes are then shared with the deploys.
 
 ## Code Review Rules
 
