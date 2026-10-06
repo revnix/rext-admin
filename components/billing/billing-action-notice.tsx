@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice, type NoticeTone } from "@/components/ui/notice";
@@ -72,9 +72,22 @@ export type ResolvedBillingAction = BillingAction &
  * (`failed`), no one can tell whether a checkout would be refused.
  */
 export function useBillingAction() {
+  const queryClient = useQueryClient();
   const query = useQuery(subscriptionQueries.billingAction());
   const { isLoading, updatePaymentMethod, resumeSubscription } =
     useBillingActions();
+  // After a resume, the action and the current plan are read again.
+  const resume = async () => {
+    await resumeSubscription();
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.billingAction().queryKey,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.current().queryKey,
+      }),
+    ]);
+  };
   const raw = query.data?.billing_action ?? null;
   const action: ResolvedBillingAction | null = raw
     ? {
@@ -83,9 +96,7 @@ export function useBillingAction() {
         label:
           raw.action === "update_payment_method" ? "Update card" : "Resume",
         run:
-          raw.action === "update_payment_method"
-            ? updatePaymentMethod
-            : resumeSubscription,
+          raw.action === "update_payment_method" ? updatePaymentMethod : resume,
         busy: isLoading,
       }
     : null;
