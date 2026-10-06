@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TrialBanner } from "@/components/billing/trial-banner";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice, type NoticeTone } from "@/components/ui/notice";
@@ -150,12 +151,13 @@ export function BillingActionNotice({
 }
 
 /**
- * The shell's banner (plan F11): a failed renewal, on every page, at the content's width. Resume
- * waits in Billing and on the plan grid: a cancelled plan still runs, so it needs no banner.
+ * The shell's one banner slot, on every page at the content's width (plans F11 and F6): a failed
+ * renewal first, then the trial ending or ended (TrialBanner), then nothing. Resume waits in Plan
+ * and on the plan grid: a cancelled plan still runs, so it needs no banner.
  */
 export function ShellBillingBanner() {
   const { action } = useBillingAction();
-  if (action?.action !== "update_payment_method") return null;
+  if (action?.action !== "update_payment_method") return <TrialBanner />;
   return (
     <PageBand>
       <ActionNotice action={action} />
