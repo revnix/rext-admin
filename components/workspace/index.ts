@@ -14,7 +14,6 @@ export { BrandVoiceRefreshControl } from "./brand-voice-refresh-control";
 export { EditableBrandVoiceCard } from "./editable-brand-voice-card";
 export { WorkspaceBrandVoiceForm } from "./workspace-brand-voice-form";
 
-
 // Members & Invitations
 export { WorkspaceChangeRoleDialog } from "./workspace-change-role-dialog";
 export { WorkspaceInvitationsPanel } from "./workspace-invitations-panel";
