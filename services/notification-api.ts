@@ -58,6 +58,8 @@ const NOTIFICATIONS_CACHE_TTL_MS = 15_000;
 
 export async function fetchNotifications(options?: {
   force?: boolean;
+  /** Throw on a failed read instead of returning nothing (the drawer's Try again needs to know). */
+  throwOnError?: boolean;
 }): Promise<OperationNotification[]> {
   if (
     !options?.force &&
@@ -128,6 +130,7 @@ export async function fetchNotifications(options?: {
       const normalizedError =
         err instanceof Error ? err : new Error(String(err));
       log.error("Error fetching notifications", { error: normalizedError });
+      if (options?.throwOnError) throw normalizedError;
       return []; // Return empty instead of throwing to avoid breaking the layout
     } finally {
       inFlightNotificationsFetch = null;
