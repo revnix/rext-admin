@@ -105,10 +105,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-4xl font-semibold leading-tight tracking-tight-title font-outfit">
+            <h2 className="text-4xl font-semibold leading-tight tracking-tight-title font-display">
               Speedy, Easy and Fast Content Generation.
             </h2>
-            <p className="text-primary-foreground/80 text-lg leading-relaxed font-inter">
+            <p className="text-primary-foreground/80 text-lg leading-relaxed">
               Rext AI helps you set content goals, earn organic traffic, and
               scale your publishing workflow up to 10x faster.
             </p>

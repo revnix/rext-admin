@@ -12,7 +12,10 @@ A Next.js 16 App Router application (16.3 in the lockfile, Turbopack), mostly cl
 
 ```text
 app/
-  layout.tsx                fonts, the provider stack (Lemon Squeezy script, theme, auth, PostHog, SSE, Query, tooltip), the toaster
+  layout.tsx                the font variables on <html>, the provider stack (Lemon Squeezy script, theme, auth, PostHog, SSE, Query,
+                            tooltip), the toaster
+  fonts.ts, fonts/          the three faces, self-hosted through next/font/local (licences in public/fonts/licenses)
+  globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   page.tsx                  the dashboard (/), inside the shell
   w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar, create),
                             personas (+ [personaId], create), brand_voice, members, integrations, knowledge (+ [kbId]),
@@ -71,7 +74,7 @@ Credits are charged by the backend, per pipeline stage. `hooks/use-credit-gate.t
 
 ## Styling
 
-Tailwind CSS v4 through `@tailwindcss/postcss`, configured in `app/globals.css` (about 1,860 lines): a TailAdmin-derived `@theme inline` with full scales for brand (`#465fff`), gray and the status colours, shadcn's semantic variables in `:root` and `.dark`, then component classes, the wizard's media queries and the `.blog-content` article styles. The fonts are Outfit, Inter and Geist Mono through `next/font/google`. A dark theme exists, switched by the app's own `ThemeProvider` and a `.dark` class. Components still use about 1,800 stock palette classes and over a hundred colour literals.
+Tailwind CSS v4 through `@tailwindcss/postcss`, configured in `app/globals.css`: the design tokens in three layers (primitives in `@theme static`, roles and component tokens in `:root`, utilities through `@theme inline`; `design/app-language.md` §3 in rext-control), the type roles (`text-page-title`, `text-section`, `text-body`, `text-table`, `text-label`, `text-caption`, `text-data`, `text-display`, each a size with its line height, tracking and weight) and the `num` utility for tabular figures. shadcn's variable names point at the roles. Tailwind's own palette stays on until the sweep (task B7) has moved the stock classes onto the roles. The faces are Manrope for titles (`font-display`), Inter 4.1 for the interface (`font-sans`, the default) and IBM Plex Mono for data (`font-mono`). `cn()` in `lib/utils.ts` knows the type roles, so `tailwind-merge` keeps them beside a text colour. Dark mode is retired: `dark:` classes apply nowhere until they are removed. Components still use about 1,600 stock palette classes and over a hundred colour literals.
 
 The rework replaces this underneath (plan B): three token layers in `globals.css` (primitives, roles, component tokens), Tailwind's palette switched off, light only, and `pnpm tokens:check` failing a literal. Until then, AGENTS.md says how new code is written.
 
