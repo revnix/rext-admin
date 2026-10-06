@@ -177,9 +177,6 @@
     "stock-palette": 20,
     "dark-class": 10
   },
-  "components/permission/access-denied.tsx": {
-    "stock-palette": 1
-  },
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },

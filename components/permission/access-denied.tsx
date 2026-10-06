@@ -132,7 +132,7 @@ export function AccessDenied({
 
       <CardHeader className="text-center pb-3">
         <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-          <AlertTriangle className="h-6 w-6 text-yellow-500" />
+          <AlertTriangle className="h-6 w-6 text-warning-600" />
           {getDefaultTitle()}
         </CardTitle>
         <CardDescription className="text-base">
