@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import type { ReactNode } from "react";
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/data-table";
 import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
+import { Notice } from "@/components/ui/notice";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAllContent, useDeleteContent } from "@/hooks/use-content";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -310,13 +310,9 @@ export default function WorkspaceContentPage() {
             isLoading={isContentLoading}
             error={
               error ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    Failed to load content. Please try again.
-                  </AlertDescription>
-                </Alert>
+                <Notice tone="danger" title="Content didn't load">
+                  Reload the page to try again.
+                </Notice>
               ) : undefined
             }
             emptyState={
