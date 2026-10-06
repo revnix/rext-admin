@@ -1,3 +1,5 @@
+import { NODE_STAGES, type RunPhase } from "@/lib/generate-content/run-stages";
+
 export type GenerationRunStatus =
   | "pending"
   | "running"
@@ -41,6 +43,8 @@ type GenerationThreadState = GenerationGraphState & {
 export type BackgroundProgress = {
   progress: number;
   stage: string;
+  /** For a running run: the run component's phase and stage, from the nodes running now. */
+  runStage?: { phase: RunPhase; id: string };
   error?: string;
   /** The run finished by pausing for user input rather than by finishing the article. */
   awaitingInput?: boolean;
@@ -143,7 +147,32 @@ const findPendingInterruptType = (state?: GenerationGraphState | null) => {
   return undefined;
 };
 
+/**
+ * The run component's stage for the nodes running now: the deepest running node that has one
+ * (a subgraph's own node sits under its container's name in the list).
+ */
+export function deriveRunStage(
+  state?: GenerationGraphState | null,
+): BackgroundProgress["runStage"] {
+  const active = collectActiveNodes(state);
+  for (let i = active.length - 1; i >= 0; i -= 1) {
+    const stage = NODE_STAGES[active[i]];
+    if (stage) return stage;
+  }
+  return undefined;
+}
+
 export function deriveBackgroundProgress(
+  runStatus: GenerationRunStatus,
+  state?: GenerationThreadState | null,
+): BackgroundProgress {
+  const progress = deriveProgressAndStage(runStatus, state);
+  if (runStatus !== "running" || progress.error) return progress;
+  const runStage = deriveRunStage(state);
+  return runStage ? { ...progress, runStage } : progress;
+}
+
+function deriveProgressAndStage(
   runStatus: GenerationRunStatus,
   state?: GenerationThreadState | null,
 ): BackgroundProgress {

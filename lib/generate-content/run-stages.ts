@@ -141,3 +141,57 @@ export function failStages(stages: RunStage[], now: number): RunStage[] {
     return stage;
   });
 }
+
+/** Where a running node puts the run: its phase and stage. The dock reads this from the thread's
+ *  state (the nodes running when it polls), so it holds every node that can run, not only the
+ *  ones that end a stage. */
+export const NODE_STAGES: Record<string, { phase: RunPhase; id: string }> = {
+  serp_engine: { phase: "analysis", id: "search-results" },
+  fetch_serp: { phase: "analysis", id: "search-results" },
+  normalize_serp: { phase: "analysis", id: "search-results" },
+  extract_competitor: { phase: "analysis", id: "competitors" },
+  seo_engine: { phase: "analysis", id: "measure" },
+  seo_entry: { phase: "analysis", id: "measure" },
+  fetch_dataforseo_backlinks: { phase: "analysis", id: "measure" },
+  keyword_recommendation: { phase: "analysis", id: "measure" },
+  save_keyword_research: { phase: "analysis", id: "measure" },
+  recommend_content_type: { phase: "content-type", id: "content-type" },
+  content_type: { phase: "content-type", id: "content-type" },
+  generate_topics: { phase: "titles", id: "titles" },
+  topic_generation: { phase: "titles", id: "titles" },
+  keyword_clustering: { phase: "outline", id: "keyword-groups" },
+  map_keyword_clusters: { phase: "outline", id: "keyword-groups" },
+  generate_outline: { phase: "outline", id: "outline" },
+  review_outline: { phase: "outline", id: "outline" },
+  generate_content: { phase: "article", id: "draft" },
+  validate_content: { phase: "article", id: "polish" },
+  repair_content: { phase: "article", id: "polish" },
+  humanize_content: { phase: "article", id: "polish" },
+  final_validate_content: { phase: "article", id: "polish" },
+  review_content: { phase: "article", id: "checks" },
+  calculate_readability: { phase: "article", id: "checks" },
+  calculate_on_page_seo: { phase: "article", id: "checks" },
+  calculate_eeat_trust: { phase: "article", id: "checks" },
+  persist_content: { phase: "article", id: "save" },
+};
+
+/**
+ * A phase's stages as seen from outside the stream (the dock's poll): the given stage running
+ * since `startedAt`, the ones before it done, the ones after waiting. An unknown stage id gives
+ * every stage waiting.
+ */
+export function stagesAt(
+  phase: RunPhase,
+  stageId: string,
+  startedAt?: number,
+): RunStage[] {
+  const defs = RUN_PHASES[phase];
+  const at = defs.findIndex((def) => def.id === stageId);
+  return defs.map((def, index) => ({
+    id: def.id,
+    label: def.label,
+    state:
+      at === -1 || index > at ? "pending" : index < at ? "complete" : "active",
+    startedAt: index === at ? startedAt : undefined,
+  }));
+}

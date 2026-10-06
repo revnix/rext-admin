@@ -11,6 +11,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { RunProgress } from "@/components/generate-content/run-progress";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { authenticatedFetch } from "@/lib/auth-utils";
@@ -21,6 +22,7 @@ import {
   requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
 import { describeFailedJob } from "@/lib/generate-content/background-progress";
+import { stagesAt } from "@/lib/generate-content/run-stages";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
@@ -49,6 +51,7 @@ type GenerationStatusResponse = {
   stage?: string;
   error?: string;
   awaitingInput?: boolean;
+  runStage?: BackgroundGenerationJob["runStage"];
 };
 
 const isPending = (job: BackgroundGenerationJob) =>
@@ -70,6 +73,7 @@ export function BackgroundGenerationDock() {
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [showStages, setShowStages] = useState(false);
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
   const updateJob = useBackgroundGenerationStore((state) => state.updateJob);
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
@@ -242,6 +246,7 @@ export function BackgroundGenerationDock() {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
+                runStage: undefined,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error: payload.error,
@@ -261,11 +266,17 @@ export function BackgroundGenerationDock() {
               );
               const nextStatus =
                 payload.run.status === "pending" ? "queued" : "running";
+              const nextRunStage = payload.runStage ?? latestJob.runStage;
+              // A new stage starts its clock now; the same one keeps its start.
+              const stageChanged =
+                nextRunStage?.phase !== latestJob.runStage?.phase ||
+                nextRunStage?.id !== latestJob.runStage?.id;
               if (
                 latestJob.runId === payload.run.id &&
                 latestJob.status === nextStatus &&
                 latestJob.stage === nextStage &&
-                latestJob.progress === nextProgress
+                latestJob.progress === nextProgress &&
+                !stageChanged
               ) {
                 return;
               }
@@ -274,6 +285,10 @@ export function BackgroundGenerationDock() {
                 status: nextStatus,
                 stage: nextStage,
                 progress: nextProgress,
+                runStage: nextRunStage,
+                ...(stageChanged && {
+                  stageStartedAt: new Date().toISOString(),
+                }),
               });
               return;
             }
@@ -285,6 +300,7 @@ export function BackgroundGenerationDock() {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "completed",
+                runStage: undefined,
                 stage: payload.stage ?? "Article ready",
                 progress: Math.max(latestJob.progress, payload.progress ?? 100),
                 awaitingInput: payload.awaitingInput === true,
@@ -301,6 +317,7 @@ export function BackgroundGenerationDock() {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
+                runStage: undefined,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error:
@@ -475,6 +492,15 @@ export function BackgroundGenerationDock() {
   // blank selection page — which hid Continue for a job that was waiting on the
   // user, leaving no way back into it.
   const isOnResultPage = openThreadId === job.threadId;
+  // The run component, for a run the poll has placed in a stage; other jobs keep their sentence.
+  const runStages =
+    pending && job.runStage
+      ? stagesAt(
+          job.runStage.phase,
+          job.runStage.id,
+          job.stageStartedAt ? Date.parse(job.stageStartedAt) : undefined,
+        )
+      : null;
 
   return (
     <section
@@ -519,19 +545,40 @@ export function BackgroundGenerationDock() {
               </button>
             )}
           </div>
-          <p
-            role="status"
-            aria-live="polite"
-            className={cn(
-              "truncate text-caption text-muted-foreground",
-              job.status === "failed" && "text-danger-600",
-            )}
-          >
-            {job.error ?? (pending ? `${job.stage}…` : job.stage)}
-          </p>
+          {runStages ? (
+            <RunProgress
+              variant="compact"
+              stages={runStages}
+              className="mt-1 max-w-sm"
+            />
+          ) : (
+            <p
+              role="status"
+              aria-live="polite"
+              className={cn(
+                "truncate text-caption text-muted-foreground",
+                job.status === "failed" && "text-danger-600",
+              )}
+            >
+              {job.error ?? (pending ? `${job.stage}…` : job.stage)}
+            </p>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
+          {runStages && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              aria-expanded={showStages}
+              aria-controls="background-generation-stages"
+              onClick={() => setShowStages((open) => !open)}
+            >
+              {showStages ? "Hide steps" : "Steps"}
+            </Button>
+          )}
           {!isOnResultPage && (
             <Button
               type="button"
@@ -584,6 +631,15 @@ export function BackgroundGenerationDock() {
           )}
         </div>
       </div>
+
+      {showStages && runStages && (
+        <div
+          id="background-generation-stages"
+          className="border-t border-border px-4 py-3 md:px-6"
+        >
+          <RunProgress stages={runStages} className="max-w-md" />
+        </div>
+      )}
 
       {expanded && otherJobs.length > 0 && (
         <ul

@@ -65,9 +65,10 @@ function stageTime(stage: RunStage, now: number, expected?: number): string {
   if (stage.state === "pending") {
     return expected ? `about ${formatDuration(expected)}` : "";
   }
-  const start = stage.startedAt ?? now;
+  // A stage seen only from outside (the dock) may have no times: say nothing rather than "0 s".
+  if (!stage.startedAt) return "";
   const end = stage.state === "complete" ? (stage.endedAt ?? now) : now;
-  return formatDuration(end - start);
+  return formatDuration(end - stage.startedAt);
 }
 
 export interface RunProgressProps {
