@@ -1,7 +1,7 @@
 /**
  * Personas (D3a): an uploaded photo can be removed from the edit form, which sends the backend's
  * removal signal (an empty `avatar_url`), and the persona list's article counts are refreshed
- * whenever an article is created or moved to the trash.
+ * whenever an article is created, moved to the trash or finished by a run, in every open tab.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,7 +16,9 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { PersonaForm } from "@/components/personas/persona-form";
 import { useCreateContent, useTrashContent } from "@/hooks/use-content";
+import { useRefreshPersonaCountsOnFinishedRuns } from "@/hooks/use-personas";
 import { personaQueries } from "@/lib/query-keys";
+import type { BackgroundGenerationJob } from "@/stores/background-generation-store";
 import type { Persona } from "@/types/workspace";
 
 jest.mock("@/lib/api-client", () => ({
@@ -171,6 +173,72 @@ describe("the persona list's article counts", () => {
 
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: personaQueries.lists("ws-1"),
+    });
+  });
+
+  describe("after a run", () => {
+    function job(
+      threadId: string,
+      changes: Partial<BackgroundGenerationJob> = {},
+    ): BackgroundGenerationJob {
+      return {
+        threadId,
+        workspaceId: "ws-1",
+        workspaceSlug: "acme",
+        title: "An article",
+        keyword: "a keyword",
+        status: "running",
+        stage: "Writing",
+        progress: 60,
+        createdAt: "2026-10-06T20:00:00Z",
+        updatedAt: "2026-10-06T20:00:00Z",
+        resultUrl: "/w/acme/content/c1",
+        ...changes,
+      };
+    }
+
+    function renderRuns(jobs: BackgroundGenerationJob[]) {
+      const client = newClient();
+      const invalidate = jest.spyOn(client, "invalidateQueries");
+      const view = renderHook(
+        ({ current }) => useRefreshPersonaCountsOnFinishedRuns(current, true),
+        { wrapper: wrapperFor(client), initialProps: { current: jobs } },
+      );
+      return { invalidate, rerender: view.rerender };
+    }
+
+    it("are refreshed once when a run finishes its article, even if another tab already announced it", () => {
+      const { invalidate, rerender } = renderRuns([job("t1")]);
+
+      const finished = job("t1", {
+        status: "completed",
+        progress: 100,
+        completionNotified: true,
+      });
+      rerender({ current: [finished] });
+      rerender({
+        current: [{ ...finished, updatedAt: "2026-10-06T20:05:00Z" }],
+      });
+
+      expect(invalidate).toHaveBeenCalledTimes(1);
+      expect(invalidate).toHaveBeenCalledWith({
+        queryKey: personaQueries.lists("ws-1"),
+      });
+    });
+
+    it("aren't refreshed for runs that had finished before the tab loaded, or that paused for input", () => {
+      const { invalidate, rerender } = renderRuns([
+        job("t1", { status: "completed", progress: 100 }),
+      ]);
+
+      rerender({
+        current: [
+          job("t1", { status: "completed", progress: 100 }),
+          job("t2", { status: "completed", awaitingInput: true }),
+        ],
+      });
+
+      expect(invalidate).not.toHaveBeenCalled();
     });
   });
 });
