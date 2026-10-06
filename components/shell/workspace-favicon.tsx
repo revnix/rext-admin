@@ -17,9 +17,11 @@ export function WorkspaceFavicon({
   src?: string | null;
   className?: string;
 }) {
-  const [failed, setFailed] = useState(false);
+  // The source that failed to load, so another workspace's source gets its own try
+  // while the switcher stays mounted.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  if (src && !failed) {
+  if (src && src !== failedSrc) {
     return (
       // A plain img: favicons come from any host, which next/image would have to allow one by one.
       <img
@@ -28,7 +30,7 @@ export function WorkspaceFavicon({
         width={20}
         height={20}
         loading="lazy"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
         className={cn("size-5 shrink-0 rounded-sm object-contain", className)}
       />
     );
