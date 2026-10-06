@@ -19,7 +19,7 @@ const WORKSPACE_SECTIONS: Record<
   content: { label: "Content" },
   personas: { label: "Personas", pages: { create: "New persona" } },
   integrations: { label: "Integrations" },
-  settings: { label: "Settings", pages: { trash: "Trash" } },
+  settings: { label: "Settings" },
   brand_voice: { label: "Brand voice", parent: "settings" },
   members: { label: "Members", parent: "settings" },
 };
@@ -46,7 +46,6 @@ const TOP_LEVEL: Record<
     label: "Account",
     pages: {
       security: "Security",
-      sessions: "Sessions",
       subscription: "Subscription",
       billing: "Billing",
       trash: "Trash",
@@ -74,13 +73,10 @@ const TOP_LEVEL: Record<
       refunds: "Refunds",
       monitoring: "Monitoring",
       "email-analytics": "Email analytics",
-      "email-templates": "Email templates",
       roles: "Roles and permissions",
       "audit-logs": "Audit logs",
       security: "Security",
-      statistics: "Statistics",
       webhooks: "Webhooks",
-      analytics: "Analytics",
       invitations: "Invitations",
       platform: "Platform",
     },
@@ -103,7 +99,7 @@ function pageLabel(
 }
 
 /** Folders with pages under them but no page of their own. */
-const NO_PAGE = new Set(["/legal", "/admin/analytics", "/admin/platform"]);
+const NO_PAGE = new Set(["/legal", "/admin/platform"]);
 
 /** Gives every crumb but the last its link, where there is a page to link to. */
 function withLinks(trail: { label: string; path: string }[]): Crumb[] {

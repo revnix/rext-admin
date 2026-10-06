@@ -44,12 +44,6 @@ export interface CreateIntegrationRequest {
   app_password?: string;
 }
 
-export interface CreateShopifyConnectionRequest {
-  store_url: string;
-  access_token?: string | null;
-  is_active: boolean;
-}
-
 export interface StartShopifyInstallRequest {
   store_url: string;
   return_path?: string;
@@ -59,18 +53,6 @@ export interface StartShopifyInstallResponse {
   install_url?: string;
   redirect_url?: string;
   url?: string;
-}
-
-export interface ShopifyConnection {
-  id: string;
-  workspace_id: string;
-  integration_type: string;
-  store_url: string;
-  is_active: boolean;
-  has_access_token: boolean;
-  config_json?: Record<string, unknown>;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface UpdateIntegrationRequest {
@@ -365,60 +347,6 @@ export class IntegrationsApiService {
   }
 
   /**
-   * Create Shopify connection via dedicated endpoint (validates credentials before saving)
-   */
-  async createShopifyConnection(
-    workspaceId: string,
-    data: CreateShopifyConnectionRequest,
-  ): Promise<ShopifyConnection> {
-    const url = `${this.baseUrl}/api/v1/shopify/connect?workspace_id=${workspaceId}`;
-
-    this.log.info("Creating Shopify connection", {
-      workspaceId,
-      store_url: data.store_url,
-    });
-
-    try {
-      const payload: CreateShopifyConnectionRequest = {
-        store_url: data.store_url,
-        is_active: data.is_active,
-      };
-
-      if (data.access_token) {
-        payload.access_token = data.access_token;
-      }
-
-      const response = await authenticatedFetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await safeParseErrorBody(response);
-        const errorMessage = extractApiError(
-          errorData,
-          "Failed to connect Shopify store",
-        );
-        throw new IntegrationsApiError(
-          "CREATE_FAILED",
-          errorMessage,
-          response.status,
-        );
-      }
-
-      const result = await response.json();
-      return result.connection || result.data || result;
-    } catch (error) {
-      if (error instanceof IntegrationsApiError) throw error;
-      throw new IntegrationsApiError(
-        "CREATE_FAILED",
-        error instanceof Error ? error.message : "Unknown error",
-      );
-    }
-  }
-
-  /**
    * Start Shopify OAuth install flow and return install URL
    */
   async startShopifyInstall(
@@ -471,23 +399,6 @@ export class IntegrationsApiService {
         error instanceof Error ? error.message : "Unknown error",
       );
     }
-  }
-
-  /**
-   * Test an existing Shopify connection
-   */
-  async testShopifyConnection(
-    connectionId: string,
-    workspaceId: string,
-  ): Promise<{
-    success: boolean;
-    shop_info?: Record<string, unknown>;
-    error?: string;
-  }> {
-    const url = `${this.baseUrl}/api/v1/shopify/${connectionId}/test?workspace_id=${workspaceId}`;
-    const response = await authenticatedFetch(url, { method: "POST" });
-    const result = await response.json();
-    return result.result || result;
   }
 
   /**

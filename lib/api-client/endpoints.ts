@@ -244,7 +244,6 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
-    delete: "/api/v1/user/delete",
     recoveryRequest: "/api/v1/user/account-recovery/request",
     recoveryVerify: "/api/v1/user/account-recovery/verify",
   },
@@ -329,23 +328,8 @@ export const ENDPOINTS = {
     audit: {
       myLogs: "/api/v1/audit-logs/user/my-logs",
       allLogs: "/api/v1/audit-logs/",
-      detail: (id: string) => `/api/v1/audit/${id}` as const,
-    },
-
-    // Email Templates (uses singular "workspace" - backend inconsistency)
-    emailTemplates: {
-      list: (workspaceId: string) =>
-        `/api/v1/workspace/email-templates/${workspaceId}` as const,
-      variables: (templateType: string) =>
-        `/api/v1/workspace/email-templates/variables/${templateType}` as const,
-      defaults: (templateType: string) =>
-        `/api/v1/workspace/email-templates/defaults/${templateType}` as const,
-      preview: "/api/v1/workspace/email-templates/preview",
-      create: "/api/v1/workspace/email-templates/",
-      update: (templateId: string) =>
-        `/api/v1/workspace/email-templates/${templateId}` as const,
-      delete: (templateId: string) =>
-        `/api/v1/workspace/email-templates/${templateId}` as const,
+      detail: (id: string) => `/api/v1/audit-logs/${id}` as const,
+      exportDownload: "/api/v1/audit-logs/export/download",
     },
 
     // Analytics
@@ -459,22 +443,6 @@ export const ENDPOINTS = {
       `/api/v1/admin-invitations/${token}/accept` as const,
     decline: (token: string) =>
       `/api/v1/admin-invitations/${token}/decline` as const,
-  },
-
-  /**
-   * License Endpoints
-   * @note Manages license activation and validation
-   */
-  LICENSES: {
-    BASE: "/api/v1/licenses",
-    list: "/api/v1/licenses",
-    detail: (licenseId: string) => `/api/v1/licenses/${licenseId}` as const,
-    activations: (licenseId: string) =>
-      `/api/v1/licenses/${licenseId}/activations` as const,
-    activate: "/api/v1/licenses/activate",
-    deactivate: (licenseId: string) =>
-      `/api/v1/licenses/${licenseId}/deactivate` as const,
-    validate: "/api/v1/licenses/validate",
   },
 
   /**

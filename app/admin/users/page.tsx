@@ -14,6 +14,7 @@ import {
   Users as UsersIcon,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
@@ -24,6 +25,7 @@ import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-
 import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
 import { ListPage } from "@/components/layouts";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -599,6 +601,17 @@ export default function AdminUsersPage() {
     <ListPage
       title="User Management"
       description="Manage system users and impersonation"
+      actions={
+        // Platform admins are invited, not created here; the invitations page is super admin only.
+        <AdminGuard superAdminOnly>
+          <Button variant="outline" asChild>
+            <Link href="/admin/platform/invitations">
+              <Mail className="h-4 w-4 mr-2" />
+              Admin invitations
+            </Link>
+          </Button>
+        </AdminGuard>
+      }
     >
       <PermissionGuard
         // user.manage is held only by admin/super_admin; the global support

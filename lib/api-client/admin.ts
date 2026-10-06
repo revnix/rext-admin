@@ -1,10 +1,9 @@
 /**
  * Admin API Namespace
  *
- * Handles admin-only features: impersonation, audit logs, email templates
+ * Handles admin-only features: impersonation and audit logs
  *
  * ⚠️ KNOWN INCONSISTENCIES (backend-driven):
- * - Email templates use singular "workspace" namespace (/api/v1/workspace/email-templates)
  * - Impersonation endpoints use /api/v1/user/impersonate (not under /admin)
  * - Audit uses /api/v1/audit (not under /admin)
  *
@@ -14,18 +13,6 @@
 import { buildUrl } from "../url-utils";
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
-
-export interface EmailTemplate {
-  id: string;
-  workspace_id: string;
-  template_type: string;
-  subject: string;
-  body: string;
-  is_default: boolean;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
 
 // ============================================================================
 // IMPERSONATION
@@ -276,7 +263,7 @@ export function createAuditLogsNamespace(client: ApiClient) {
       action?: string;
       resource_type?: string;
     }) => {
-      const endpoint = buildUrl(`/api/v1/audit/logs/export/download`, {
+      const endpoint = buildUrl(ENDPOINTS.ADMIN.audit.exportDownload, {
         format: filters.format,
         user_email: filters.user_email,
         action: filters.action,
@@ -288,123 +275,6 @@ export function createAuditLogsNamespace(client: ApiClient) {
       });
 
       return response.blob();
-    },
-  };
-}
-
-// ============================================================================
-// EMAIL TEMPLATES
-// ============================================================================
-
-export function createEmailTemplatesNamespace(client: ApiClient) {
-  return {
-    /**
-     * List email templates
-     */
-    list: async (workspaceId: string) => {
-      return client.request<{
-        templates: EmailTemplate[];
-      }>(ENDPOINTS.ADMIN.emailTemplates.list(workspaceId), {
-        method: "GET",
-      });
-    },
-
-    /**
-     * Get template variables
-     */
-    getVariables: async (templateType: string) => {
-      return client.request<{
-        variables: Array<{
-          name: string;
-          description: string;
-          example: string;
-        }>;
-      }>(ENDPOINTS.ADMIN.emailTemplates.variables(templateType), {
-        method: "GET",
-      });
-    },
-
-    /**
-     * Get default template
-     */
-    getDefault: async (templateType: string) => {
-      return client.request<{
-        subject: string;
-        body: string;
-      }>(ENDPOINTS.ADMIN.emailTemplates.defaults(templateType), {
-        method: "GET",
-      });
-    },
-
-    /**
-     * Preview template
-     */
-    preview: async (data: {
-      template_type: string;
-      subject: string;
-      body: string;
-      variables?: Record<string, string>;
-    }) => {
-      return client.request<{
-        rendered_subject: string;
-        rendered_body: string;
-      }>(ENDPOINTS.ADMIN.emailTemplates.preview, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-    },
-
-    /**
-     * Create template
-     */
-    create: async (data: {
-      workspace_id: string;
-      template_type: string;
-      subject: string;
-      body: string;
-    }) => {
-      return client.request<EmailTemplate>(
-        ENDPOINTS.ADMIN.emailTemplates.create,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
-    },
-
-    /**
-     * Update template
-     */
-    update: async (
-      templateId: string,
-      data: {
-        subject?: string;
-        body?: string;
-        is_active?: boolean;
-      },
-    ) => {
-      return client.request<EmailTemplate>(
-        ENDPOINTS.ADMIN.emailTemplates.update(templateId),
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
-    },
-
-    /**
-     * Delete template
-     */
-    delete: async (templateId: string) => {
-      return client.request<void>(
-        ENDPOINTS.ADMIN.emailTemplates.delete(templateId),
-        {
-          method: "DELETE",
-        },
-      );
     },
   };
 }
