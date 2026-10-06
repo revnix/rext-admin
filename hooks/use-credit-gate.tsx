@@ -1,15 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { InsufficientCreditsModal } from "@/components/subscription/insufficient-credits-modal";
+import { PaywallDialog } from "@/components/billing/paywall-dialog";
 import { shortfall } from "@/lib/billing/credits";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
 import type { BilledRun } from "@/types/subscription";
 
-const OUT_OF_CREDITS_MESSAGE =
-  "You're out of credits. Please upgrade your plan to continue.";
+const OUT_OF_CREDITS_MESSAGE = "Your credits have run out.";
 
 /**
  * The credits this page spends: the workspace owner's on a workspace page, the person's own
@@ -45,8 +44,8 @@ export function useWorkspaceCredits() {
  * - `ensureCreditsToContinue()` — resuming an in-flight one between gates; only a fully
  *   exhausted balance stops an article whose earlier stages are already paid for.
  *
- * Both open the upgrade popup, saying what the run needs and what the balance holds, and return
- * false when they block, so the caller bails before anything is sent.
+ * Both open the paywall (PaywallDialog: why, what an article costs, the plan grid inline), and
+ * return false when they block, so the caller bails before anything is sent.
  */
 export function useCreditGate() {
   const credits = useWorkspaceCredits();
@@ -106,10 +105,11 @@ export function useCreditGate() {
   }, [isExhausted]);
 
   const creditsModal = (
-    <InsufficientCreditsModal
+    <PaywallDialog
       open={showModal}
       onOpenChange={setShowModal}
-      errorDetail={modalDetail}
+      reason={modalDetail}
+      credits={credits}
     />
   );
 

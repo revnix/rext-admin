@@ -10,6 +10,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { ContinueRow } from "@/components/home/continue-row";
 import { CreditsCard } from "@/components/home/credits-card";
 import { HomeChecklist } from "@/components/home/home-checklist";
+import { PaywallCard } from "@/components/home/paywall-card";
 import {
   articlesToContinue,
   type ChecklistFacts,
@@ -192,6 +193,7 @@ export default function HomePage() {
           }
         >
           <div className="flex flex-col gap-10">
+            <PaywallCard workspaceId={workspaceId} />
             {showChecklist && (
               <SettingsGroup
                 title="Get started"

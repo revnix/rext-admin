@@ -4,6 +4,7 @@
  */
 
 import { act, render, renderHook, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RunBalance,
   RunCostLabel,
@@ -11,6 +12,22 @@ import {
 import { useCreditGate } from "@/hooks/use-credit-gate";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { CreditBalance, RunCost } from "@/types/subscription";
+
+jest.mock("@/hooks/use-auth-session", () => ({
+  useAuthSession: () => ({ user: { id: "u1" } }),
+}));
+jest.mock("@/components/billing/plan-grid", () => ({
+  PlanGrid: () => <p>The plan grid</p>,
+}));
+jest.mock("@/lib/api-client", () => ({
+  apiClient: {
+    subscriptions: {
+      getCredits: jest.fn(),
+      getTrialStatus: jest.fn().mockResolvedValue({ trial_expired: false }),
+      getCatalog: jest.fn().mockResolvedValue({ credits: { per_article: 15 } }),
+    },
+  },
+}));
 
 const run = (cost: number, minimum: number, current: number): RunCost => ({
   cost,
@@ -95,12 +112,22 @@ describe("useCreditGate", () => {
       allowed = result.current.ensureCredits("generate");
     });
     expect(allowed).toBe(false);
-    render(result.current.creditsModal);
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        {result.current.creditsModal}
+      </QueryClientProvider>,
+    );
+    // The paywall: the backend's numbers, then the plan grid inline.
     expect(
       screen.getByText(
-        "Writing the article costs 12 credits, and you have 5 credits.",
+        /Writing the article costs 12 credits, and you have 5 credits\./,
       ),
     ).toBeInTheDocument();
+    expect(screen.getByText("The plan grid")).toBeInTheDocument();
   });
 
   it("lets Approve run with the cost in hand, and Analyze only with a whole article", () => {

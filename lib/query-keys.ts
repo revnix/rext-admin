@@ -201,6 +201,16 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
     }),
+  /**
+   * The person's trial: whether it is over with nothing bought since (`trial_expired`) and its end,
+   * for the paywall's "Your trial ended on <date>".
+   */
+  trialStatus: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "trial-status"] as const,
+      queryFn: () => apiClient.subscriptions.getTrialStatus(),
+      staleTime: 5 * 60 * 1000,
+    }),
   /** The public plan catalogue; it changes with a release, not during a visit. */
   catalog: () =>
     queryOptions({
