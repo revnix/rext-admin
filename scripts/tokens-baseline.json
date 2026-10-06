@@ -162,9 +162,6 @@
   "components/admin/analytics/subscription-kpis.tsx": {
     "stock-palette": 3
   },
-  "components/admin/audit/audit-logs-table.tsx": {
-    "stock-palette": 52
-  },
   "components/admin/email/email-failures-table.tsx": {
     "stock-palette": 4
   },
