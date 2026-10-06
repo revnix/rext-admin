@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 /**
  * Settings page loading state
  *
- * NOTE: This loading.tsx renders inside the settings layout.tsx which already
- * provides the PageLayout (sidebar, header, SettingsNav tabs).
- * Do NOT wrap this in <PageLayout> or <RouteLoading> — that causes a double
- * layout flash (nested header + tabs shift) during tab navigation.
+ * NOTE: This loading.tsx renders inside the settings layout.tsx, which already
+ * provides the SettingsPage layout (the header and the list of sections).
+ * Do NOT wrap this in a page layout or <RouteLoading>: that causes a double
+ * layout flash (a nested header) while moving between sections.
  */
 export default function SettingsLoading() {
   return (

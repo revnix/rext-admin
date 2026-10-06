@@ -105,9 +105,9 @@ export default function LibraryDetail({
       >
         <ArrowLeft className="h-5 w-5" />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
             Overview for &quot;{selectedItem.keyword}&quot;
-          </h1>
+          </h2>
           <p className="text-sm text-muted-foreground flex items-start sm:items-center gap-2">
             <Globe className="h-3 w-3 mt-1 sm:mt-0" /> SERP & KD updated{" "}
             {selectedItem.lastUpdated}

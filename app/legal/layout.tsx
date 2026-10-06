@@ -1,4 +1,4 @@
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { ShellLayout } from "@/components/shell/shell-layout";
 
 export default function LegalLayout({
@@ -8,12 +8,12 @@ export default function LegalLayout({
 }) {
   return (
     <ShellLayout>
-      <PageLayout
+      <DetailPage
         title="Legal"
         description="Terms, policies, and legal information"
       >
         <div className="max-w-4xl mx-auto">{children}</div>
-      </PageLayout>
+      </DetailPage>
     </ShellLayout>
   );
 }

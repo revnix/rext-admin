@@ -83,8 +83,8 @@ export function ImpersonationStartDialog({
 
       // Leave the admin area: the impersonated user cannot access admin
       // pages, so staying here would just render a wall of 403s. The
-      // dashboard renders PageLayout, which shows the impersonation banner
-      // (with the "Stop Impersonation" button).
+      // dashboard's shell shows the impersonation banner (with the "Stop
+      // Impersonation" button).
       startTransition(() => {
         router.push("/" as Route);
         router.refresh();

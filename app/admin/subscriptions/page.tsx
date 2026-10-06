@@ -20,7 +20,7 @@ import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-reten
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { Badge } from "@/components/ui/badge";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -352,11 +352,11 @@ export default function SubscriptionAnalyticsPage() {
 
   if (overviewLoading) {
     return (
-      <PageLayout title="">
+      <ListPage title="Subscription Analytics">
         <div className="flex items-center justify-center h-96">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
@@ -383,7 +383,7 @@ export default function SubscriptionAnalyticsPage() {
   }));
 
   return (
-    <PageLayout
+    <ListPage
       title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
@@ -772,6 +772,6 @@ export default function SubscriptionAnalyticsPage() {
           </Tabs>
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

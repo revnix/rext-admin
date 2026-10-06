@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { inSeriesOrder } from "@/lib/charts";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -272,18 +272,18 @@ export default function SubscriptionAnalyticsPage() {
 
   if (loading) {
     return (
-      <PageLayout
+      <ListPage
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
       >
         <AnalyticsLoadingSkeleton />
-      </PageLayout>
+      </ListPage>
     );
   }
 
   if (!overview || !revenue || !churn || !trialConversion) {
     return (
-      <PageLayout
+      <ListPage
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
       >
@@ -306,7 +306,7 @@ export default function SubscriptionAnalyticsPage() {
             </Button>
           </CardContent>
         </Card>
-      </PageLayout>
+      </ListPage>
     );
   }
 
@@ -369,7 +369,7 @@ export default function SubscriptionAnalyticsPage() {
 
   return (
     <AdminGuard superAdminOnly={true}>
-      <PageLayout
+      <ListPage
         title="Subscription Analytics"
         description="Monitor key metrics and insights"
         actions={
@@ -745,7 +745,7 @@ export default function SubscriptionAnalyticsPage() {
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

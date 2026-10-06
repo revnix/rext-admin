@@ -16,7 +16,7 @@ import { Loader2, Plus, Shield } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActivateLicenseModal } from "@/components/licenses/activate-license-modal";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,7 +144,7 @@ export default function LicensesPage() {
 
   if (loading) {
     return (
-      <PageLayout
+      <ListPage
         title="License Management"
         description="Manage your license keys and device activations"
       >
@@ -154,12 +154,12 @@ export default function LicensesPage() {
             <p className="text-muted-foreground">Loading licenses...</p>
           </div>
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="License Management"
       description="Manage your license keys and device activations"
     >
@@ -350,6 +350,6 @@ export default function LicensesPage() {
           }}
         />
       )}
-    </PageLayout>
+    </ListPage>
   );
 }

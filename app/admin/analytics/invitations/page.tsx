@@ -11,7 +11,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +60,7 @@ export default function InvitationAnalyticsPage() {
 
   if (isLoading) {
     return (
-      <PageLayout
+      <ListPage
         title="Invitation Analytics"
         description="Track and analyze invitation metrics"
       >
@@ -73,13 +73,13 @@ export default function InvitationAnalyticsPage() {
           </div>
           <Skeleton className="h-96" />
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   if (!analytics) {
     return (
-      <PageLayout
+      <ListPage
         title="Invitation Analytics"
         description="Track and analyze invitation metrics"
       >
@@ -90,7 +90,7 @@ export default function InvitationAnalyticsPage() {
             </p>
           </CardContent>
         </Card>
-      </PageLayout>
+      </ListPage>
     );
   }
 
@@ -98,7 +98,7 @@ export default function InvitationAnalyticsPage() {
 
   return (
     <AdminGuard>
-      <PageLayout
+      <ListPage
         title="Invitation Analytics"
         description="Track and analyze invitation metrics across the platform"
       >
@@ -391,7 +391,7 @@ export default function InvitationAnalyticsPage() {
             </Card>
           )}
         </div>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

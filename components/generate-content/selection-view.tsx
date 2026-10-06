@@ -80,9 +80,9 @@ export function SelectionView({
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] py-6 lg:py-0">
       <div className="text-center mb-12 space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">
+        <h2 className="text-4xl font-bold tracking-tight text-foreground">
           How would you like to start?
-        </h1>
+        </h2>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Choose your starting point for building content authority.
         </p>

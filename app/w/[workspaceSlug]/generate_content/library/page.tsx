@@ -1,22 +1,14 @@
 "use client";
 
-import { PageLayout } from "@/components/page-layout";
-import { useWorkspace } from "@/providers/workspace-provider";
 import { LibraryView } from "@/components/generate-content/library-view";
+import { WorkingSurface } from "@/components/layouts";
 
 export default function Page() {
-  const { workspace } = useWorkspace();
-
   return (
-    <PageLayout
-      title="Generate Content"
-      hideTitle={true}
-      description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
-      fullWidth
-    >
+    <WorkingSurface title="Keyword library" hidden>
       <div className="w-full">
         <LibraryView />
       </div>
-    </PageLayout>
+    </WorkingSurface>
   );
 }

@@ -291,7 +291,7 @@ export function WorkspaceBrandVoiceForm({
   };
 
   return (
-    <div className="space-y-8 w-full max-w-6xl mx-auto overflow-x-hidden">
+    <div className="w-full space-y-8 overflow-x-hidden">
       {/* Brand Voice Form Card */}
       <Form {...form}>
         <form

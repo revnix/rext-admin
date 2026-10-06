@@ -7,7 +7,7 @@ import { workspaceQueries } from "@/lib/query-keys";
 import { EmailFailuresTable } from "@/components/admin/email/email-failures-table";
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
@@ -184,7 +184,7 @@ export default function EmailAnalyticsPage() {
 
   return (
     <AdminGuard>
-      <PageLayout
+      <ListPage
         title="Email Analytics"
         description="Monitor email delivery, engagement, and performance"
         actions={
@@ -318,7 +318,7 @@ export default function EmailAnalyticsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

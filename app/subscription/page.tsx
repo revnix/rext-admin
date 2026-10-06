@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Footer } from "@/components/layout/footer";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { CancelSubscriptionModal } from "@/components/subscription/cancel-subscription-modal";
 import { CustomerPortalButton } from "@/components/subscription/customer-portal-button";
 import { PlanChangeModal } from "@/components/subscription/plan-change-modal";
@@ -121,7 +121,7 @@ export default function SubscriptionDashboardPage() {
 
   if (loading) {
     return (
-      <PageLayout
+      <DetailPage
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
       >
@@ -131,14 +131,14 @@ export default function SubscriptionDashboardPage() {
             <p className="text-muted-foreground">Loading subscription...</p>
           </div>
         </div>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   // Render the dashboard if we have subscription data, even if usage stats failed
   if (!subscription?.subscription) {
     return (
-      <PageLayout
+      <DetailPage
         title="Subscription Management"
         description="Manage your subscription, view usage, and access billing"
       >
@@ -158,7 +158,7 @@ export default function SubscriptionDashboardPage() {
             </Button>
           </CardContent>
         </Card>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
@@ -174,7 +174,7 @@ export default function SubscriptionDashboardPage() {
   // NOTE: This page is protected by middleware (see middleware.ts)
   // No need for PermissionGuard wrapper as middleware already validates subscription.read permission
   return (
-    <PageLayout
+    <DetailPage
       title="Subscription Management"
       description="Manage your subscription, view usage, and access billing"
     >
@@ -404,6 +404,6 @@ export default function SubscriptionDashboardPage() {
 
       {/* Footer with Policy Links */}
       <Footer variant="minimal" className="mt-12" />
-    </PageLayout>
+    </DetailPage>
   );
 }

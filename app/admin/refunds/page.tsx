@@ -4,7 +4,7 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { AlertCircle, ExternalLink, RefreshCw, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -264,7 +264,7 @@ export default function RefundManagementPage() {
 
   return (
     <AdminGuard superAdminOnly={true}>
-      <PageLayout
+      <ListPage
         title="Refund Management"
         description="View refund history and process customer refund requests"
         actions={
@@ -415,7 +415,7 @@ export default function RefundManagementPage() {
             />
           </CardContent>
         </Card>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

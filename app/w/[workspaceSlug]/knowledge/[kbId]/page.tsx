@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Plus, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -153,7 +153,7 @@ export default function KnowledgeBaseDetailPage() {
 
   if (kbError) {
     return (
-      <PageLayout
+      <ListPage
         title="Knowledge Base Not Found"
         description="The requested knowledge base could not be loaded"
       >
@@ -174,12 +174,12 @@ export default function KnowledgeBaseDetailPage() {
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title={kb?.name || "Loading..."}
       description={
         kb?.description ||
@@ -326,6 +326,6 @@ export default function KnowledgeBaseDetailPage() {
           />
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

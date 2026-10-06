@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 
 /**
  * Root level loading state
- * Simple spinner without PageLayout to prevent dashboard shell flash.
+ * Simple spinner without a page layout, to prevent a flash of the page's frame.
  * This is used as the fallback UI while any page segment in the root app directory is loading.
  */
 export default function RootLoading() {

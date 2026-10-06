@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -29,18 +29,18 @@ export default function PersonaDetailPage() {
   // Fallback for loading
   if (isPersonaLoading) {
     return (
-      <PageLayout title="Personas">
+      <DetailPage title="Personas">
         <div className="flex items-start p-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
           <span className="ml-3 text-muted-foreground">Loading persona...</span>
         </div>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   if (error || !persona) {
     return (
-      <PageLayout title="Persona Not Found">
+      <DetailPage title="Persona Not Found">
         <div className="flex flex-col items-center justify-center p-12 space-y-4">
           <p className="text-muted-foreground">
             The persona you are looking for does not exist or you do not have
@@ -57,13 +57,13 @@ export default function PersonaDetailPage() {
             </Button>
           </Link>
         </div>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   return (
-    <PageLayout title={persona.name} description={persona.description}>
+    <DetailPage title={persona.name} description={persona.description}>
       <PersonaDetail persona={persona} />
-    </PageLayout>
+    </DetailPage>
   );
 }

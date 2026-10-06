@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
 import { BrandVoiceSection } from "@/components/workspace-settings/brand-voice-section";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
@@ -24,20 +24,19 @@ export default function BrandVoicePage() {
 
   if (!workspace?.id || isPermLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
+      <DetailPage title="Loading Permissions...">
         <div className="space-y-4 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   return (
-    <PageLayout
+    <DetailPage
       title="Brand Voice"
       description="Define and manage your brand's unique voice and personality for AI-powered content creation."
-      fullWidth
     >
       <PermissionGuard
         permission={BRAND_VOICE_PERMISSIONS.READ}
@@ -61,10 +60,10 @@ export default function BrandVoicePage() {
           </Card>
         }
       >
-        <div className="max-w-4xl py-6">
+        <div className="max-w-4xl">
           <BrandVoiceSection />
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </DetailPage>
   );
 }

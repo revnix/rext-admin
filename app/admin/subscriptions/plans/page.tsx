@@ -6,7 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SubscriptionPlanForm } from "@/components/admin/subscription-plans/subscription-plan-form";
 import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -153,7 +153,7 @@ export default function SubscriptionPlansPage() {
   ];
 
   return (
-    <PageLayout
+    <ListPage
       title="Subscription Plans"
       description="Manage subscription plans and pricing"
       actions={
@@ -286,6 +286,6 @@ export default function SubscriptionPlansPage() {
           </DialogContent>
         </Dialog>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

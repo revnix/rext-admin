@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
@@ -437,7 +437,7 @@ export default function WebhookMonitoringPage() {
 
   return (
     <AdminGuard superAdminOnly={true}>
-      <PageLayout
+      <ListPage
         title="Webhook Monitoring"
         description="Monitor and manage webhook events from LemonSqueezy"
         actions={
@@ -642,7 +642,7 @@ export default function WebhookMonitoringPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

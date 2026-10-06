@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
       ]}
       requireAll={false}
       fallback={
-        <PageLayout title="Access Denied" description="Admin access required">
+        <ListPage title="Access Denied" description="Admin access required">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2">
@@ -143,10 +143,10 @@ export default function AdminDashboardPage() {
               </Button>
             </CardContent>
           </Card>
-        </PageLayout>
+        </ListPage>
       }
     >
-      <PageLayout
+      <ListPage
         title="Administration"
         description="Manage users, roles, and system settings"
       >
@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
             </Card>
           )}
         </div>
-      </PageLayout>
+      </ListPage>
     </PermissionGuard>
   );
 }

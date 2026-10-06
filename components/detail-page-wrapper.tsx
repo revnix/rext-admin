@@ -3,7 +3,8 @@
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { DetailPage } from "@/components/layouts";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CardContent,
@@ -69,10 +70,11 @@ export function DetailPageWrapper({
   isLoading = false,
   error,
   loadingMessage = "Loading...",
-  className,
+  // The page's frame and header are DetailPage's now: these two no longer apply.
+  className: _className,
   contentClassName,
   sidebarClassName,
-  headerClassName,
+  headerClassName: _headerClassName,
   containerClassName: _containerClassName,
   variant: _variant = "default",
 }: DetailPageWrapperProps) {
@@ -318,7 +320,7 @@ export function DetailPageWrapper({
   if (error) {
     const errorMessage = typeof error === "string" ? error : error.message;
     return (
-      <PageLayout title="Error" description="Failed to load details">
+      <DetailPage title="Error" description="Failed to load details">
         <DetailCard variant="warning" className="text-center">
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -337,14 +339,14 @@ export function DetailPageWrapper({
             </div>
           </div>
         </DetailCard>
-      </PageLayout>
+      </DetailPage>
     );
   }
 
   // Loading state
   if (isLoading) {
     return (
-      <PageLayout
+      <DetailPage
         title={loadingMessage}
         description="Please wait while we load the details..."
       >
@@ -352,7 +354,7 @@ export function DetailPageWrapper({
           showSidebar={layout !== "no-sidebar"}
           sections={3}
         />
-      </PageLayout>
+      </DetailPage>
     );
   }
 
@@ -501,28 +503,20 @@ export function DetailPageWrapper({
     return baseClasses.join(" ");
   };
 
-  // Build enhanced title with status using new components
-  const enhancedTitle = (
-    <SectionHeader
-      level={1}
-      title={title}
-      variant="spacious"
-      className={cn("mb-0", headerClassName)}
-      badge={status ? { label: status, variant: statusVariant } : undefined}
-    />
-  );
-
   return (
     <TooltipProvider>
-      <PageLayout title="" className={className}>
-        {/* Custom header with enhanced title and metadata */}
+      <DetailPage
+        title={title}
+        status={
+          status ? (
+            <Badge variant={statusVariant} className="shrink-0">
+              {status}
+            </Badge>
+          ) : undefined
+        }
+        actions={pageActions}
+      >
         <div className="space-y-6">
-          {/* Enhanced title section */}
-          <div className="flex items-start justify-between">
-            <div className="space-y-1 flex-1">{enhancedTitle}</div>
-            <div className="flex items-start gap-2 mt-2">{pageActions}</div>
-          </div>
-
           {/* Main content area */}
           <div className={getGridClasses()}>
             {/* Main content */}
@@ -540,7 +534,7 @@ export function DetailPageWrapper({
             </div>
           </div>
         </div>
-      </PageLayout>
+      </DetailPage>
     </TooltipProvider>
   );
 }

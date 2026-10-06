@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import { PageLayout } from "../page-layout";
+import { PageFrame, PageHeader } from "@/components/layouts";
 
 /**
  * Reusable Route Loading Component
@@ -58,20 +58,22 @@ export function RouteLoading({
   // Simple spinner for root-level or fast transitions
   if (variant === "spinner") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div
           className={`flex h-screen items-center justify-center ${className}`}
         >
           <LoadingIndicator variant="spinner" size="lg" message="Loading..." />
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Table skeleton for admin/data-heavy pages
   if (variant === "table") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 ${className}`}>
           <LoadingIndicator
             variant="table"
@@ -81,14 +83,15 @@ export function RouteLoading({
             showPagination={true}
           />
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Dashboard skeleton with stats cards and charts
   if (variant === "dashboard") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 space-y-6 ${className}`}>
           {/* Page header */}
           <div className="space-y-2">
@@ -142,14 +145,15 @@ export function RouteLoading({
             </CardContent>
           </Card>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Workspace overview skeleton
   if (variant === "workspace") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 space-y-6 ${className}`}>
           {/* Page header */}
           <div className="space-y-2">
@@ -194,14 +198,15 @@ export function RouteLoading({
             </CardContent>
           </Card>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // List skeleton for content pages
   if (variant === "list") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 ${className}`}>
           <div className="space-y-4">
             {/* Search and filters */}
@@ -245,14 +250,15 @@ export function RouteLoading({
             </div>
           </div>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Grid skeleton for knowledge/topics pages
   if (variant === "grid") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 space-y-6 ${className}`}>
           {/* Tabs/header */}
           <div className="flex gap-2 border-b">
@@ -292,14 +298,15 @@ export function RouteLoading({
             ))}
           </div>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Form skeleton for settings pages
   if (variant === "form" || variant === "settings") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div
           className={`container mx-auto p-6 max-w-4xl space-y-6 ${className}`}
         >
@@ -354,14 +361,15 @@ export function RouteLoading({
             </CardContent>
           </Card>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Monitoring dashboard skeleton
   if (variant === "monitoring") {
     return (
-      <PageLayout title={title}>
+      <PageFrame>
+        {title && <PageHeader title={title} />}
         <div className={`container mx-auto p-6 space-y-6 ${className}`}>
           {/* Health status cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -395,16 +403,17 @@ export function RouteLoading({
             </CardContent>
           </Card>
         </div>
-      </PageLayout>
+      </PageFrame>
     );
   }
 
   // Fallback to spinner if variant not recognized
   return (
-    <PageLayout title={title}>
+    <PageFrame>
+      {title && <PageHeader title={title} />}
       <div className={`flex h-screen items-center justify-center ${className}`}>
         <Loader2 className="h-8 w-8 animate-spin text-foreground" />
       </div>
-    </PageLayout>
+    </PageFrame>
   );
 }

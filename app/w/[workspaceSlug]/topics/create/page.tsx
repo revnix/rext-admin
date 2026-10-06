@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLayout } from "@/components/page-layout";
+import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { LimitCheckWrapper } from "@/components/subscription/limit-check-wrapper";
 import { TopicBuilderWizard } from "@/components/topic-builder/TopicBuilderWizard";
@@ -20,14 +20,14 @@ export default function WorkspaceTopicCreatePage() {
 
   if (!workspace) {
     return (
-      <PageLayout title="Topic Library">
+      <WorkingSurface title="Topic Library">
         <TableSkeleton rows={8} />
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
   return (
-    <PageLayout
+    <WorkingSurface
       title="Generate Topics"
       description="Create AI-generated topic clusters for your workspace"
     >
@@ -56,6 +56,6 @@ export default function WorkspaceTopicCreatePage() {
           <TopicBuilderWizard />
         </LimitCheckWrapper>
       </PermissionGuard>
-    </PageLayout>
+    </WorkingSurface>
   );
 }

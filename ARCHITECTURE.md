@@ -35,8 +35,9 @@ app/
 components/
   ui/                       the shadcn-based primitives, plus duplicates the rework retires (see AGENTS.md)
   shell/                    the shell: the frame, sidebar, switcher, header, credits meter, user menu, phone bottom bar
-  page-layout.tsx           a page's container and header until the five page layouts (46 importers)
-  page-header.tsx, background-generation-dock.tsx, data-table.tsx
+  layouts/                  the five page layouts (ListPage, DetailPage, FormPage, SettingsPage, WorkingSurface), their
+                            shared header and frame
+  background-generation-dock.tsx, data-table.tsx
   <feature>/                one folder per area: generate-content, content, personas, integrations, knowledge, …
 lib/                        api-client/ (the typed client), query-keys.ts, query-options/, routes.ts (workspaceRoutes,
                             settingsRoutes), permissions.ts, generate-content/, analytics.ts (PostHog), logger.ts (pino), utils.ts (cn)
@@ -57,7 +58,17 @@ The route layouts mount the shell, so it stays mounted while pages change: `app/
 - **The header** (`app-header.tsx`): the breadcrumb (`lib/shell-breadcrumbs.ts` derives it from the path), the credits meter, notifications and help. There is no search and no theme toggle.
 - The workspace comes from the slug in the URL (`WorkspaceProvider`, `stores/workspace`); the shell sits above the provider, so it reads the slug with `useParams` and the workspace from the store. The switcher lists the user's workspaces and keeps the current page when switching (`lib/routes.ts`).
 
-`components/page-layout.tsx` is a page's container (gutters 16, 24 and 32 px, `--content-max` unless `fullWidth`) and its `PageHeader`. The rework's task C2 replaces it with the five page layouts (`ListPage`, `DetailPage`, `FormPage`, `SettingsPage`, `WorkingSurface`).
+## The page layouts
+
+Every page inside the shell renders one of the five layouts of `design/app-language.md` §6 from `components/layouts/`, in its `page.tsx` or in its area's `layout.tsx`. Each draws the page's frame (gutters of 16, 24 and 32 px; `--content-max` wide, or the full width for a working surface) and its header (`PageHeader`: the title as the page's one h1 in the page-title role, an optional status, the description, the actions on the right):
+
+- **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, keywords and topics, knowledge, integrations, members, licenses, all workspaces.
+- **`DetailPage`**: one thing; an optional `aside` of facts beside the main column from 1024 px. Home, a persona, a topic (through `components/detail-page-wrapper.tsx`), billing, subscription, usage, brand voice, legal.
+- **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace or a persona. Task C4 brings the field set and the sticky submit row.
+- **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with. Account settings (`app/settings`), workspace settings (one section until D5).
+- **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar, creating content or topics. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
+
+`loading.tsx` files render their skeleton in `PageFrame`, the same frame. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
 
 ## Data
 

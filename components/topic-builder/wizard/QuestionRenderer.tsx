@@ -62,6 +62,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
       {/* Progress Indicator moved to top with enhanced visibility */}
       {showProgress && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+          {/* layout-ok: the wizard's sticky bar spans the surface, its content stops at the wizard's width */}
           <div className="max-w-6xl mx-auto px-6 py-3">
             <WizardProgress
               current={progress.current}

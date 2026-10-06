@@ -12,7 +12,7 @@ export function HeroSection() {
       className="text-center"
     >
       {/* Main heading */}
-      <motion.h1
+      <motion.h2
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.14, duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
@@ -23,7 +23,7 @@ export function HeroSection() {
           <span className="text-primary">writing</span>
         </span>{" "}
         today?
-      </motion.h1>
+      </motion.h2>
 
       <motion.p
         initial={{ opacity: 0 }}
