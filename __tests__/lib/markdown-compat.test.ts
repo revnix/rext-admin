@@ -51,10 +51,21 @@ describe("tightenLooseLists", () => {
     expect(tightenLooseLists(nested)).toBe(
       "````md\n```\n- a\n\n- b\n```\n````\n\n- c\n- d",
     );
-    expect(tightenLooseLists("~~~\n- a\n\n- b\n~~~")).toBe(
-      "~~~\n- a\n\n- b\n~~~",
-    );
     expect(tightenLooseLists("1) one\n\n2) two")).toBe("1) one\n\n2) two");
+  });
+
+  it("finds fences where Lexical does: at any indentation, backticks only", () => {
+    // A fence under a two-digit item is indented four columns.
+    const indented = "10. Step\n\n    ```\n    - a\n\n    - b\n    ```";
+    expect(tightenLooseLists(indented)).toBe(indented);
+    // A run of backticks that ends its own line is a one-line code block.
+    expect(tightenLooseLists("```one line```\n\n- c\n\n- d")).toBe(
+      "```one line```\n\n- c\n- d",
+    );
+    // Lexical doesn't read tildes as a fence, so the list inside is a list.
+    expect(tightenLooseLists("~~~\n- a\n\n- b\n~~~")).toBe(
+      "~~~\n- a\n- b\n~~~",
+    );
   });
 });
 
@@ -75,6 +86,14 @@ describe("the editor's markdown on Lexical 0.52", () => {
 
   it("escapes a paragraph that starts like a bullet, a heading or a quote", () => {
     for (const md of ["\\- dash", "\\# hash", "\\> quote"]) {
+      const once = roundTrip(md);
+      expect(once.blocks).toEqual(["paragraph"]);
+      expect(roundTrip(once.markdown).blocks).toEqual(["paragraph"]);
+    }
+  });
+
+  it("keeps an indented list marker escaped, and one followed by a tab", () => {
+    for (const md of ["  \\- note", "  1\\. note", "1\\.\tTab"]) {
       const once = roundTrip(md);
       expect(once.blocks).toEqual(["paragraph"]);
       expect(roundTrip(once.markdown).blocks).toEqual(["paragraph"]);
