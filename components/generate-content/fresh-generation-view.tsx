@@ -2194,6 +2194,7 @@ export function FreshGenerationView({
     content_type: (
       <ContentType
         recommendedContentType={recommendedContentType}
+        gate={state.interrupt?.[0]?.value}
         instruction={displayedInstruction}
         contentTypes={contentTypes}
         keyword={primaryKeyword || userKeyword}
