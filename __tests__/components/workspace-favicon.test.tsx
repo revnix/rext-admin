@@ -31,4 +31,21 @@ describe("WorkspaceFavicon", () => {
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByText("R")).toBeInTheDocument();
   });
+
+  it("tries a new source after the previous one failed", () => {
+    const { container, rerender } = render(
+      <WorkspaceFavicon name="Rext" src="https://media.test/gone.ico" />,
+    );
+    fireEvent.error(container.querySelector("img") as HTMLImageElement);
+    expect(container.querySelector("img")).toBeNull();
+
+    rerender(
+      <WorkspaceFavicon name="Nextly" src="https://media.test/nextly.png" />,
+    );
+
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://media.test/nextly.png",
+    );
+  });
 });
