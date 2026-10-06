@@ -139,6 +139,19 @@ export const profileQueries = {
     }),
 };
 
+export const onboardingQueries = {
+  all: () => ["onboarding"] as const,
+  /** Whether the first-login questions are for this user; asked once a session. */
+  shouldShow: () =>
+    queryOptions({
+      queryKey: [...onboardingQueries.all(), "should-show"] as const,
+      queryFn: () => apiClient.onboarding.shouldShow(),
+      staleTime: Number.POSITIVE_INFINITY,
+      refetchOnWindowFocus: false,
+      retry: false,
+    }),
+};
+
 // ============================================================================
 // SESSION & SECURITY QUERIES
 // ============================================================================

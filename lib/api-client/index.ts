@@ -39,6 +39,7 @@ import { createAdminInvitationsNamespace } from "./admin-invitations";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
 import { createAccountRecoveryNamespace } from "./account-recovery";
+import { createOnboardingNamespace } from "./onboarding";
 
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
@@ -85,6 +86,7 @@ function createApiClient() {
     subscriptions: createSubscriptionsNamespace(client),
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
+    onboarding: createOnboardingNamespace(client),
     personas: createPersonasNamespace(client),
     integrations: createIntegrationsNamespace(client),
 
