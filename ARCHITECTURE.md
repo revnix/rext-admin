@@ -153,4 +153,5 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 - `NEXT_PUBLIC_*` values are compiled into the browser bundle wherever client code reads them, so a secret never takes that prefix.
 - A merge into `staging` deploys the staging app; a merge into `main` deploys app.rext.ai.
 - pnpm is the package manager and `pnpm-lock.yaml` the only lockfile (Vercel installs from it); the app is deployed by Vercel only, with no container image.
+- A query held back until an id is known (`enabled: !!workspaceId`) is pending but not loading in TanStack Query v5, so a list or a detail that waits on `isLoading` shows its empty or not-found state before it has asked. Wait on `awaitingData(query)` (`lib/query-state.ts`), with `willRun: false` where the member may not read it.
 - `lucide-react` 1.x is the one icon library. It has no brand icons and sets `aria-hidden` on every icon by default, so an icon-only button needs its own label.
