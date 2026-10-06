@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type {
   ContentItem,
+  ContentListResponse,
   CreateContentRequest,
   UpdateContentRequest,
 } from "@/types/content";
@@ -12,31 +13,38 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 
 // The backend's largest page of content (content_retrieval.py: limit at most 500).
 const CONTENT_PAGE_LIMIT = 500;
+// A stop for a backend that ignores the offset: 40 pages is 20,000 items.
+const CONTENT_MAX_PAGES = 40;
+
+type ContentPage = Pick<ContentListResponse, "content" | "total_count">;
 
 /**
- * Every content item in the workspace, read page by page. The backend's list has no search or sort,
- * so the library loads all of it and searches, filters and sorts in the browser; the default page
- * of 100 used to hide anything past the hundredth item.
+ * Reads every page of a list: 500 items a request, until a short page or the total. The backend's
+ * list has no search or sort, so the library loads all of it and does both in the browser.
  */
+export async function fetchAllContent(
+  listPage: (page: { limit: number; offset: number }) => Promise<ContentPage>,
+): Promise<ContentItem[]> {
+  const items: ContentItem[] = [];
+  for (let page = 0; page < CONTENT_MAX_PAGES; page++) {
+    const { content, total_count } = await listPage({
+      limit: CONTENT_PAGE_LIMIT,
+      offset: page * CONTENT_PAGE_LIMIT,
+    });
+    items.push(...content);
+    if (content.length < CONTENT_PAGE_LIMIT || items.length >= total_count) {
+      break;
+    }
+  }
+  return items;
+}
+
+/** Every content item in the workspace; the default page of 100 used to hide the rest. */
 export function useAllContent(workspaceId: string) {
   return useQuery({
     queryKey: ["content", workspaceId, "all"],
-    queryFn: async () => {
-      const items: ContentItem[] = [];
-      for (let offset = 0; ; offset += CONTENT_PAGE_LIMIT) {
-        const page = await apiClient.content.list(workspaceId, {
-          limit: CONTENT_PAGE_LIMIT,
-          offset,
-        });
-        items.push(...page.content);
-        if (
-          page.content.length < CONTENT_PAGE_LIMIT ||
-          items.length >= page.total_count
-        ) {
-          return items;
-        }
-      }
-    },
+    queryFn: () =>
+      fetchAllContent((page) => apiClient.content.list(workspaceId, page)),
     enabled: !!workspaceId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
