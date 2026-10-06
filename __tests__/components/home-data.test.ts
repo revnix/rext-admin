@@ -10,9 +10,15 @@ import {
   suggestKeywords,
 } from "@/components/home/home-data";
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
-import type { Content } from "@/types/content";
+import type { ContentItem } from "@/types/content";
 
-const article = (fields: Partial<Content> & { status: string }): Content =>
+/** An article as the list returns it; a status the type doesn't list yet (ready) is allowed. */
+type Fields = Omit<Partial<ContentItem>, "status" | "seo_data"> & {
+  status: string;
+  seo_data?: { focus_keyphrase?: string };
+};
+
+const article = (fields: Fields): ContentItem =>
   ({
     id: Math.random().toString(36).slice(2),
     workspace_id: "w",
@@ -20,7 +26,7 @@ const article = (fields: Partial<Content> & { status: string }): Content =>
     title: "An article",
     updated_at: "2026-10-01T10:00:00Z",
     ...fields,
-  }) as unknown as Content;
+  }) as unknown as ContentItem;
 
 const entry = (
   query: string,
@@ -121,7 +127,7 @@ describe("suggestKeywords", () => {
         article({
           status: "published",
           seo_data: { focus_keyphrase: "keyword research" },
-        } as Partial<Content> & { status: string }),
+        }),
       ],
       3,
     );

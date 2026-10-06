@@ -13,7 +13,7 @@ import {
   type ContentListStatus,
 } from "@/lib/search-params/content";
 import type { BackgroundGenerationJob } from "@/stores/background-generation-store";
-import type { Content } from "@/types/content";
+import type { ContentItem } from "@/types/content";
 
 function Row({
   href,
@@ -73,7 +73,7 @@ function RunRow({ job }: { job: BackgroundGenerationJob }) {
   );
 }
 
-function ArticleRow({ item, slug }: { item: Content; slug: string }) {
+function ArticleRow({ item, slug }: { item: ContentItem; slug: string }) {
   const status = String(item.status) as ContentListStatus;
   return (
     <Row
@@ -102,7 +102,7 @@ export function ContinueRow({
 }: {
   slug: string;
   runs: BackgroundGenerationJob[];
-  articles: Content[];
+  articles: ContentItem[];
 }) {
   if (runs.length === 0 && articles.length === 0) {
     return (
