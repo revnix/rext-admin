@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { FieldController } from "@/components/forms/field-controller";
@@ -37,6 +38,7 @@ const ONE_PER_LINE = "One per line.";
  * brand_voice.update the form is shown disabled.
  */
 export function BrandVoiceSection() {
+  const drafted = useSearchParams().get("drafted") === "1";
   const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
   const { hasPermission: canRead, isLoading: isReadLoading } =
@@ -116,6 +118,14 @@ export function BrandVoiceSection() {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Arriving from a new workspace's analysis (WorkspaceCreateWizard): the draft is saved already. */}
+      {drafted && (
+        <Notice tone="success" title="Your brand voice is drafted">
+          We read your website and saved this brand voice, its personas and
+          competitors. Review the fields below and save any change; the personas
+          are on the Personas page.
+        </Notice>
+      )}
       <SettingsGroup
         title="Brand voice"
         description={

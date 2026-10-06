@@ -21,6 +21,10 @@ const TYPICAL_MS: Record<string, number> = {
   draft: 110_000,
   style: 45_000,
   checks: 40_000,
+  // The workspace analysis (lib/workspace/workspace-run-stages.ts).
+  "workspace-scrape": 20_000,
+  "workspace-brand-voice": 60_000,
+  "workspace-competitors": 15_000,
 };
 
 type Samples = Record<string, number[]>;

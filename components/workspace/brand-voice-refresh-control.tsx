@@ -13,9 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WorkspaceProgressTimeline } from "@/components/workspace";
+import { RunProgress } from "@/components/generate-content/run-progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { cn } from "@/lib/utils";
+import { workspaceRunStages } from "@/lib/workspace/workspace-run-stages";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 
 interface BrandVoiceRefreshControlProps {
@@ -81,8 +82,9 @@ export function BrandVoiceRefreshControl({
     clearCurrentOperation();
   }, [clearCurrentOperation, setBrandVoiceRefreshState]);
 
-  const { events, latestEvent, status, disconnect, isConnected } =
-    useSSEChannel(operationId, {
+  const { events, status, disconnect, isConnected } = useSSEChannel(
+    operationId,
+    {
       autoConnect: true,
       onComplete: async () => {
         toast.success("The brand voice was read from your website again");
@@ -107,7 +109,8 @@ export function BrandVoiceRefreshControl({
         });
         closeDialog();
       },
-    });
+    },
+  );
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -203,10 +206,7 @@ export function BrandVoiceRefreshControl({
             </DialogDescription>
           </DialogHeader>
 
-          <WorkspaceProgressTimeline
-            events={events}
-            progress={latestEvent?.progress ?? 0}
-          />
+          <RunProgress stages={workspaceRunStages(events)} />
 
           <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
             <span>{isConnected ? "Connected" : "Connecting…"}</span>

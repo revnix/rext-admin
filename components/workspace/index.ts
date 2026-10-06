@@ -11,7 +11,6 @@
 
 // Brand Voice
 export { BrandVoiceRefreshControl } from "./brand-voice-refresh-control";
-export { WorkspaceBrandVoiceForm } from "./workspace-brand-voice-form";
 
 // Members & Invitations
 export { WorkspaceChangeRoleDialog } from "./workspace-change-role-dialog";
@@ -22,12 +21,10 @@ export { WorkspaceRemoveMemberDialog } from "./workspace-remove-member-dialog";
 
 // Personas
 export { PersonaCard, PersonasGrid } from "./persona-card";
-export { PersonaSelection } from "./persona-selection";
 
 // Workspace Core
 export { WorkspaceCreateWizard } from "./workspace-create-wizard";
 export { WorkspaceDeleteDialog } from "./workspace-delete-dialog";
-export { WorkspaceProgressTimeline } from "./workspace-progress-timeline";
 export {
   WorkspaceWelcomeModal,
   markWelcomeModalShown,
