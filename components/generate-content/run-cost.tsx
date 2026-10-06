@@ -16,13 +16,13 @@ import {
 import type { BilledRun, CreditBalance, RunCost } from "@/types/subscription";
 
 /** The run's cost, and whether the plan meters it (an unlimited plan has no balance to show). */
-function useRunCost(run: BilledRun): {
+function useRunCost(run: BilledRun | null): {
   credits: CreditBalance;
   cost: RunCost;
   metered: boolean;
 } | null {
   const credits = useWorkspaceCredits();
-  const cost = credits?.runs?.[run];
+  const cost = run ? credits?.runs?.[run] : undefined;
   if (!credits || !cost) return null;
   return { credits, cost, metered: credits.articles_remaining !== null };
 }
@@ -73,7 +73,8 @@ export function RunCostTooltip({
   run,
   children,
 }: {
-  run: BilledRun;
+  /** null: the button starts no billed run, so it has no tooltip. */
+  run: BilledRun | null;
   children: ReactElement;
 }) {
   const view = useRunCost(run);

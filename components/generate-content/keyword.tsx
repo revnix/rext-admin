@@ -18,8 +18,8 @@ export function KeywordForm({
   country: string;
   /** Blocks re-submission while a generation is already running */
   disabled?: boolean;
-  /** The run the button starts: a new analysis, or a new keyword on a paused run. */
-  run?: "analyze" | "change_keyword";
+  /** The run the button starts: a new analysis, a new keyword on a paused run, or none (the same keyword goes on unbilled). */
+  run?: "analyze" | "change_keyword" | null;
   onSubmit: () => void;
   onKeywordChange: (val: string) => void;
   onCountryChange: (val: string) => void;
@@ -74,7 +74,7 @@ export function KeywordForm({
               className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0 w-[70%] sm:w-auto"
             >
               Analyze
-              <RunCostLabel run={run} />
+              {run && <RunCostLabel run={run} />}
               <ArrowRight className="w-3 h-3" />
             </Button>
           </RunCostTooltip>
