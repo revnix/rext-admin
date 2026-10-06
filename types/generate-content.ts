@@ -1,6 +1,6 @@
 import type { VolumeStatus } from "@/lib/generate-content/monthly-volume";
 import type { Message } from "@langchain/langgraph-sdk";
-import type { LoadingStep } from "@/constants/loading-steps";
+import type { RunPhase } from "@/lib/generate-content/run-stages";
 
 export type KeywordCluster = {
   cluster_name: string;
@@ -913,14 +913,14 @@ export interface PageState {
   loadingStatus?: string;
   isLoading: boolean;
   isManualLoading: boolean;
-  completedNodes: string[];
   readabilityScore: ReadabilityMetrics | null;
   checklist: ContentChecklist | null;
   seoScore: SEORESULT | null;
   trustScore: TrustScore | null;
   eeatData: EEATData | null;
   allContent: FinalContent | null;
-  currentLoadingSteps: LoadingStep[];
+  /** The run the page is waiting on, if any: its phase, whether it was picked up mid-way, and a counter that changes with each start. */
+  run: { phase: RunPhase; joined: boolean; seq: number } | null;
   keywordDifficulty: number | null;
   keywordClusters: KeywordCluster[];
   recommendedContentType: string | null;
@@ -952,11 +952,11 @@ export type PageAction =
   | { type: "SET_RECOMMENDED_TOPIC"; payload: string | null }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
-  | { type: "SET_LOADING_STEPS"; payload: LoadingStep[] }
+  | {
+      type: "SET_RUN_PHASE";
+      payload: { phase: RunPhase; joined?: boolean } | null;
+    }
   | { type: "SET_MANUAL_LOADING"; payload: boolean }
-  | { type: "ADD_COMPLETED_NODE"; payload: string }
-  | { type: "ADD_COMPLETED_NODE"; payload: string }
-  | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
   | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }

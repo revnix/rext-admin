@@ -13,7 +13,8 @@ import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/back
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
-import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
+import { RunProgress } from "@/components/generate-content/run-progress";
+import { useRunStages } from "@/hooks/use-run-stages";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
@@ -32,14 +33,6 @@ import type {
   WREXT,
   WorkflowStep,
 } from "@/types/generate-content";
-import {
-  INITIAL_ANALYSIS_STEPS,
-  KEYWORD_SELECTION_STEPS,
-  TOPIC_GENERATION_STEPS,
-  TOPIC_REGENERATION_STEPS,
-  CONTENT_TYPE_STEPS,
-  FINAL_GENERATION_STEPS,
-} from "@/constants/loading-steps";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
@@ -258,6 +251,9 @@ export function FreshGenerationView({
   backgroundThreadId,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
+  // The run on screen as named stages (RunProgress): started with each phase the page waits on,
+  // moved by the stream's node updates (processStream), cleared when the page stops waiting.
+  const runStages = useRunStages();
   const router = useRouter();
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
@@ -308,19 +304,24 @@ export function FreshGenerationView({
     contentTypes,
     loadingStatus,
     isManualLoading,
-    completedNodes,
     isLoading,
     readabilityScore,
     checklist,
     seoScore,
     trustScore,
     allContent,
-    currentLoadingSteps,
+    run: runState,
     keywordClusters,
     recommendedContentType,
     selectedContentType,
     recommendedTopic,
   } = state;
+
+  const { start: startRunStages, clear: clearRunStages } = runStages;
+  useEffect(() => {
+    if (runState) startRunStages(runState.phase, { joined: runState.joined });
+    else clearRunStages();
+  }, [runState, startRunStages, clearRunStages]);
 
   const interruptInternalLinks = useMemo(
     () =>
@@ -598,11 +599,17 @@ export function FreshGenerationView({
 
     if (isArticlePhase(trackedJob?.progress)) {
       dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+      dispatch({
+        type: "SET_RUN_PHASE",
+        payload: { phase: "article", joined: true },
+      });
       restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
     } else {
       // Research phase — show the plain analysis loader, not the article editor.
-      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      dispatch({
+        type: "SET_RUN_PHASE",
+        payload: { phase: "analysis", joined: true },
+      });
       setIsBackgroundGenerationActive(false);
     }
     setRestoreError(null);
@@ -679,7 +686,7 @@ export function FreshGenerationView({
           setIsEnhancing(false);
           dispatch({ type: "SET_MANUAL_LOADING", payload: false });
           dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-          dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+          dispatch({ type: "SET_RUN_PHASE", payload: null });
           updateBackgroundJob(backgroundThreadId, {
             status: "completed",
             stage: payload.stage ?? "Waiting for your input",
@@ -703,7 +710,7 @@ export function FreshGenerationView({
             setIsEnhancing(false);
             dispatch({ type: "SET_MANUAL_LOADING", payload: false });
             dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-            dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+            dispatch({ type: "SET_RUN_PHASE", payload: null });
             updateBackgroundJob(backgroundThreadId, {
               status: "completed",
               stage: "Article ready",
@@ -728,10 +735,11 @@ export function FreshGenerationView({
 
         dispatch({ type: "SET_MANUAL_LOADING", payload: true });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: inArticlePhase
-            ? FINAL_GENERATION_STEPS
-            : INITIAL_ANALYSIS_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: {
+            phase: inArticlePhase ? "article" : "analysis",
+            joined: true,
+          },
         });
         if (inArticlePhase) {
           restoreActiveGenerationView(payload.progress, payload.stage);
@@ -1511,6 +1519,7 @@ export function FreshGenerationView({
         Object.keys(updates)
           .filter((k) => !k.startsWith("__"))
           .forEach((node) => {
+            runStages.nodeDone(node);
             dispatch({
               type: "SET_LOADING_STATUS",
               payload: `${formatNodeName(node)}...`,
@@ -1546,15 +1555,11 @@ export function FreshGenerationView({
         streamingThreadRef.current !== null &&
         streamingThreadRef.current !== activeThreadId;
       if (!superseded) {
-        if (loadingStatus?.endsWith("..."))
-          dispatch({
-            type: "ADD_COMPLETED_NODE",
-            payload: loadingStatus.slice(0, -3),
-          });
+        if (settled) runStages.settle();
         await new Promise((r) => setTimeout(r, 1500));
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-        dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+        dispatch({ type: "SET_RUN_PHASE", payload: null });
       }
     }
     return settled;
@@ -1594,8 +1599,7 @@ export function FreshGenerationView({
 
       setRunError(null);
       dispatch({ type: "RESET_FOR_REANALYSIS" });
-      dispatch({ type: "CLEAR_COMPLETED_NODES" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      dispatch({ type: "SET_RUN_PHASE", payload: { phase: "analysis" } });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
       setTokenTarget("none");
@@ -1744,7 +1748,6 @@ export function FreshGenerationView({
     let unsettled = false;
 
     try {
-      dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       if (statusMsg)
         dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
@@ -1870,10 +1873,8 @@ export function FreshGenerationView({
         // neither be shown nor reused while the new analysis runs.
         if (isReanalysis) dispatch({ type: "RESET_FOR_REANALYSIS" });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: isReanalysis
-            ? INITIAL_ANALYSIS_STEPS
-            : KEYWORD_SELECTION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: isReanalysis ? "analysis" : "content-type" },
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
@@ -1909,8 +1910,8 @@ export function FreshGenerationView({
           payload: value,
         });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: TOPIC_GENERATION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "titles" },
         });
         return resumeWorkflow({
           payload: { "Selected Content Type": value },
@@ -1920,8 +1921,8 @@ export function FreshGenerationView({
         setTokenTarget("none");
         tokenTargetRef.current = "none";
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: CONTENT_TYPE_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "outline" },
         });
         analytics.track("title_selected", {
           title: value,
@@ -1940,8 +1941,8 @@ export function FreshGenerationView({
         dispatch({ type: "SET_TOPICS", payload: [] });
         dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: TOPIC_REGENERATION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "titles" },
         });
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
@@ -1957,8 +1958,8 @@ export function FreshGenerationView({
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: FINAL_GENERATION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "article" },
         });
         analytics.track("outline_approved", {
           keyword: primaryKeyword,
@@ -2050,7 +2051,7 @@ export function FreshGenerationView({
   // Suppress the loader in the library flow only when passively waiting for topics
   // (no steps dispatched). Once a topic is selected and steps are set, show the loader.
   const suppressLibraryTopicLoader =
-    isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
+    isLibrary && isTopicLoading && runState === null;
 
   const handleEditToggle = useCallback(
     () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
@@ -2093,11 +2094,12 @@ export function FreshGenerationView({
       // Best-effort: the run may already be gone. The record cleanup below
       // still stops the UI from tracking work that will never finish.
     }
+    runStages.fail();
     removeBackgroundJob(threadId);
     announceBackgroundGenerationRemoval([threadId]);
     dispatch({ type: "SET_MANUAL_LOADING", payload: false });
     dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-    dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+    dispatch({ type: "SET_RUN_PHASE", payload: null });
     toast.info("Generation cancelled", {
       description: "Credits already used for this generation are not refunded.",
     });
@@ -2119,13 +2121,13 @@ export function FreshGenerationView({
             : "min-h-0 pt-2",
         )}
       >
-        <LoadingIndicatorVariants
-          step={instructionType}
-          isLoading={isLoading || isManualLoading}
-          loadingStatus={loadingStatus}
-          completedSteps={completedNodes}
-          steps={currentLoadingSteps}
-        />
+        {runStages.run && (
+          <RunProgress
+            stages={runStages.run.stages}
+            onCancel={_handleCancelGeneration}
+            className="max-w-md"
+          />
+        )}
       </div>
     );
   }
@@ -2309,8 +2311,8 @@ export function FreshGenerationView({
                 dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
                 dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
                 dispatch({
-                  type: "SET_LOADING_STEPS",
-                  payload: FINAL_GENERATION_STEPS,
+                  type: "SET_RUN_PHASE",
+                  payload: { phase: "article" },
                 });
                 analytics.track("outline_approved", {
                   keyword: primaryKeyword,
