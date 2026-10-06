@@ -50,7 +50,7 @@ export default function ContentType({
           const { icon: Icon, description } = getContentTypeConfig(type);
 
           const keywordDescription = description
-            .replace(/\{keyword\}/g, keyword?.trim() || "this topic")
+            .replace(/\{keyword\}/g, keyword?.trim() || "this keyword")
             .replace(/\{intent\}/g, intent?.trim() || "relevant");
 
           const isSelected = selectedType === type;

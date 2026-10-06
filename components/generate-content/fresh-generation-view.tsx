@@ -2208,7 +2208,7 @@ export function FreshGenerationView({
     { id: "keyword", label: "Search Keyword" },
     { id: "keyword Selection", label: "Select Keyword" },
     { id: "content_type", label: "Content Type" },
-    { id: "topic", label: "Topic Selection", aliases: ["topic_selection"] },
+    { id: "topic", label: "Title", aliases: ["topic_selection"] },
     {
       id: "outline_review",
       label: "Content Outline",

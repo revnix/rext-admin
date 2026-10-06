@@ -91,7 +91,7 @@ const AWAITING_INPUT_STAGES: Record<
 > = {
   "keyword Selection": { progress: 14, stage: "Keywords ready to review" },
   content_type: { progress: 26, stage: "Content types ready to review" },
-  topic: { progress: 32, stage: "Topics ready to review" },
+  topic: { progress: 32, stage: "Titles ready to review" },
   topic_selection: { progress: 32, stage: "Topics ready to review" },
   outline_review: { progress: 38, stage: "Outline ready to review" },
   outline_reject: { progress: 38, stage: "Outline ready to review" },
@@ -247,7 +247,7 @@ export function deriveBackgroundProgress(
       return { progress: 34, stage: "Building your outline" };
     }
     if (activeNodes.some((node) => TOPIC_STAGE_NAMES.has(node))) {
-      return { progress: 28, stage: "Preparing your topics" };
+      return { progress: 28, stage: "Preparing your titles" };
     }
     return { progress: 26, stage: "Planning your article" };
   }
