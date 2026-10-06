@@ -322,7 +322,7 @@ function DayCell({
         aria-current={isToday ? "date" : undefined}
         className={cn(
           "num flex size-6 items-center justify-center self-end rounded-full text-xs",
-          inMonth ? "text-foreground" : "text-muted-foreground",
+          inMonth && day >= today ? "text-foreground" : "text-muted-foreground",
           isToday && "bg-primary text-primary-foreground",
         )}
       >
@@ -444,8 +444,11 @@ function EntryLook({
   return (
     <span
       className={cn(
-        "flex min-w-0 items-baseline gap-1.5 rounded-sm border text-xs",
-        roomy ? "px-3 py-2 text-sm" : "px-1.5 py-1",
+        "flex min-w-0 rounded-sm border",
+        // In the grid the time sits above a title of up to two lines; on the phone's list, beside it.
+        roomy
+          ? "items-baseline gap-1.5 px-3 py-2 text-sm"
+          : "flex-col px-1.5 py-1 text-xs",
         scheduled
           ? "border-info-200 bg-info-50 text-info-700"
           : "border-border bg-surface-raised text-foreground",
@@ -460,7 +463,12 @@ function EntryLook({
       >
         {timeIn(entry.date, timeZone)}
       </span>
-      <span className={cn("min-w-0", roomy ? "wrap-break-word" : "truncate")}>
+      <span
+        className={cn(
+          "min-w-0 wrap-break-word",
+          !roomy && "line-clamp-2 font-medium",
+        )}
+      >
         {entry.title || "Untitled"}
       </span>
       {roomy && (
