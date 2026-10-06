@@ -93,16 +93,19 @@ function ArticleRow({ item, slug }: { item: ContentItem; slug: string }) {
 /**
  * Continue (plans/app/D-pages.md §2.1): the runs still going in this browser, on the run component,
  * then the articles in review and the drafts. Runs started on another device or by a teammate
- * aren't known here: the dashboard keeps its runs in the browser.
+ * aren't known here: the dashboard keeps its runs in the browser. Starting an article is offered
+ * only to someone who may (`content.create`), as on Generate.
  */
 export function ContinueRow({
   slug,
   runs,
   articles,
+  canGenerate,
 }: {
   slug: string;
   runs: BackgroundGenerationJob[];
   articles: ContentItem[];
+  canGenerate: boolean;
 }) {
   if (runs.length === 0 && articles.length === 0) {
     return (
@@ -110,11 +113,19 @@ export function ContinueRow({
         <EmptyState
           as="h3"
           title="Nothing in progress"
-          description="Start an article from a keyword: research, a title, an outline, then the draft."
-          action={{
-            label: "Start an article",
-            href: workspaceRoutes.generate_content(slug),
-          }}
+          description={
+            canGenerate
+              ? "Start an article from a keyword: research, a title, an outline, then the draft."
+              : "The articles in review and the drafts of this workspace show here."
+          }
+          action={
+            canGenerate
+              ? {
+                  label: "Start an article",
+                  href: workspaceRoutes.generate_content(slug),
+                }
+              : undefined
+          }
         />
       </div>
     );

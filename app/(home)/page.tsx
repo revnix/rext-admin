@@ -34,8 +34,10 @@ import { useChecklistAnalytics } from "@/hooks/use-checklist-analytics";
 import { useAllContent } from "@/hooks/use-content";
 import { useIntegrations } from "@/hooks/use-integrations";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { libraryQueries, workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
@@ -84,6 +86,11 @@ export default function HomePage() {
   const workspaceId = workspace?.id ?? "";
   const slug = workspace?.slug ?? "";
   const content = useAllContent(workspaceId);
+  // Generation is offered only to someone who may generate, as on Generate (the backend refuses the run).
+  const { hasPermission: canGenerate } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.CREATE,
+    workspaceId,
+  );
   const sites = useIntegrations(workspaceId || null);
   const brandVoice = useQuery(workspaceQueries.brandVoice(workspaceId));
   const library = useQuery(libraryQueries.list(workspaceId, user?.id ?? ""));
@@ -178,12 +185,14 @@ export default function HomePage() {
           title={getWorkspaceDisplayTitle(workspace, "Home")}
           description="What to do next in this workspace."
           actions={
-            <Button asChild>
-              <Link href={generate as Route}>
-                <Plus aria-hidden />
-                Start an article
-              </Link>
-            </Button>
+            canGenerate ? (
+              <Button asChild>
+                <Link href={generate as Route}>
+                  <Plus aria-hidden />
+                  Start an article
+                </Link>
+              </Button>
+            ) : undefined
           }
           aside={
             <div className="flex flex-col gap-4">
@@ -213,7 +222,12 @@ export default function HomePage() {
             )}
             <SettingsGroup title="Continue">
               {articles ? (
-                <ContinueRow slug={slug} runs={runs} articles={toContinue} />
+                <ContinueRow
+                  slug={slug}
+                  runs={runs}
+                  articles={toContinue}
+                  canGenerate={canGenerate}
+                />
               ) : content.isError ? (
                 <Notice
                   tone="danger"
@@ -247,7 +261,11 @@ export default function HomePage() {
                 title="Suggested keywords"
                 description="Keywords you've researched that no article covers yet."
               >
-                <SuggestedKeywords slug={slug} entries={suggestions} />
+                <SuggestedKeywords
+                  slug={slug}
+                  entries={suggestions}
+                  canGenerate={canGenerate}
+                />
               </SettingsGroup>
             )}
           </div>
