@@ -18554,6 +18554,27 @@
         "title": "CatalogPlan",
         "description": "A plan a customer can buy, with every figure the pricing pages show."
       },
+      "CatalogRefund": {
+        "properties": {
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days",
+            "description": "Days after a payment a refund can be asked for"
+          },
+          "credit_limit": {
+            "type": "integer",
+            "title": "Credit Limit",
+            "description": "A full refund if fewer than this many credits were used since the payment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_days",
+          "credit_limit"
+        ],
+        "title": "CatalogRefund",
+        "description": "The refund rule: the whole payment back within the window, under the credit limit."
+      },
       "CatalogTrial": {
         "properties": {
           "plan_name": {
@@ -25752,6 +25773,9 @@
           "credits": {
             "$ref": "#/components/schemas/CatalogCredits"
           },
+          "refund": {
+            "$ref": "#/components/schemas/CatalogRefund"
+          },
           "offer": {
             "anyOf": [
               {
@@ -25767,7 +25791,8 @@
         "required": [
           "currency",
           "plans",
-          "credits"
+          "credits",
+          "refund"
         ],
         "title": "PlanCatalogResponse",
         "description": "The public plan catalogue: plans, the trial, the credit costs and the active offer."
@@ -26938,28 +26963,16 @@
             "minLength": 1,
             "title": "Reason",
             "description": "Why the customer wants a refund"
-          },
-          "requested_amount": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Requested Amount",
-            "description": "Cents the customer is asking for, when they want part of the order back. Omit for the whole remaining refundable balance. Refused if it exceeds what is still refundable."
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "lemonsqueezy_order_id",
           "reason"
         ],
         "title": "RefundRequestCreate",
-        "description": "Body for a customer raising a refund request."
+        "description": "Body for a customer raising a refund request.\n\nThere is no amount: under the refund rule a request is always for the whole\nremaining payment. An admin logging an emailed request may ask for part of\none (AdminRefundRequestCreate). Unknown fields are refused, so a client still\nsending the old `requested_amount` gets a 422 instead of a request for the\nwhole payment it didn't ask for."
       },
       "RefundRequestListResponse": {
         "properties": {
