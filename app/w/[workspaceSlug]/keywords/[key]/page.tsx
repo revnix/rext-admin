@@ -21,6 +21,7 @@ import { serpResultsFromOrganic } from "@/lib/keywords/serp-results";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { libraryQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
+import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 /**
@@ -56,10 +57,9 @@ export default function Page() {
   const query = libraryQueries.item(workspaceId, user?.id ?? "", key);
   const item = useQuery({ ...query, enabled: query.enabled && canRead });
   const [intent, setIntent] = useState<SearchIntent | "">("");
-  // Pending, not loading: the item waits for the signed-in user too, and a waiting query isn't
-  // loading (D16a). Without the right to read it never runs, so that case isn't waited for.
+  // The item waits for the signed-in user too (D16a); without the right to read it never runs.
   const loading =
-    !workspaceId || isPermissionLoading || (canRead && item.isPending);
+    !workspaceId || isPermissionLoading || awaitingData(item, canRead);
   const showSkeleton = useShowAfter(loading);
 
   if (loading) {

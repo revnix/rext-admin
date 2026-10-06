@@ -27,6 +27,7 @@ import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { libraryQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 import { keywordLibraryParams } from "@/lib/search-params/keyword-library";
+import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
 
 const libraryLogger = log.forComponent("library-view");
@@ -130,9 +131,8 @@ export function LibraryView() {
         rows={rows}
         state={tableState}
         search={{ placeholder: "Search keywords" }}
-        // Pending, not loading: the list waits for the signed-in user, and a waiting query isn't
-        // loading, so it would say "No keywords yet" first (D16a).
-        isLoading={isPermissionLoading || (canRead && library.isPending)}
+        // The list waits for the signed-in user (D16a); without the right to read it never runs.
+        isLoading={isPermissionLoading || awaitingData(library, canRead)}
         error={
           library.error ? (
             <Notice tone="danger" title="Your keywords didn't load">

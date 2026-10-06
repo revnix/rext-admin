@@ -16,6 +16,7 @@ import {
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
+import { awaitingData } from "@/lib/query-state";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
@@ -42,14 +43,14 @@ export default function WorkspaceContentDetailPage({
   // family as the list page and the editor's invalidation (finding #10).
   const workspaceId = workspace?.id || "";
 
-  // Fetch content details using hook. Pending, not loading: until the workspace is known the query
-  // waits, and a waiting query isn't loading, so the page would say "Content not found" (D16a).
+  // Fetch content details using hook. Until the workspace is known the query waits, so the page
+  // waits on `awaitingData`, not `isLoading`, or it would say "Content not found" (D16a).
+  const contentQuery = useContentDetail(workspaceId, id);
   const {
     data: contentResponse,
-    isPending: isContentPending,
     error: fetchError,
     refetch: refetchContent,
-  } = useContentDetail(workspaceId, id);
+  } = contentQuery;
 
   const content = contentResponse?.content;
   const [isEditing, setIsEditing] = useState(false);
@@ -188,7 +189,7 @@ export default function WorkspaceContentDetailPage({
 
   const finalContent = advancedContent?.final_content;
 
-  if (isContentPending) {
+  if (awaitingData(contentQuery)) {
     return (
       <WorkingSurface title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">

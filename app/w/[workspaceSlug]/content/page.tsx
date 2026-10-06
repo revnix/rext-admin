@@ -33,6 +33,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { dateFormat } from "@/lib/formatters/date-formatters";
+import { awaitingData } from "@/lib/query-state";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import {
@@ -238,14 +239,11 @@ export default function WorkspaceContentPage() {
     }.`,
   );
 
-  // Every item: the table searches, filters and sorts them in the browser. Pending, not loading:
-  // the query waits for the workspace, and a waiting query isn't loading, so the list would say
-  // "No content yet" before it had asked (D16a).
-  const {
-    data: content = NO_CONTENT,
-    isPending: isContentPending,
-    error,
-  } = useAllContent(workspaceId);
+  // Every item: the table searches, filters and sorts them in the browser. The query waits for the
+  // workspace, so the list waits on `awaitingData`, not `isLoading` (D16a).
+  const contentQuery = useAllContent(workspaceId);
+  const content = contentQuery.data ?? NO_CONTENT;
+  const { error } = contentQuery;
 
   const { data: personaList, isSuccess: personasLoaded } = usePersonas(
     workspaceId || null,
@@ -384,7 +382,7 @@ export default function WorkspaceContentPage() {
               getRowId={(item) => item.id}
               getRowLabel={(item) => item.title || "Untitled"}
               state={tableState}
-              isLoading={isContentPending}
+              isLoading={awaitingData(contentQuery)}
               error={
                 error ? (
                   <Notice tone="danger" title="Content didn't load">
