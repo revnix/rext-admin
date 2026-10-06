@@ -73,7 +73,7 @@ export function TopicsSection({
           transition={{ delay: 0.1 }}
           className="text-muted-foreground text-sm"
         >
-          Pick a topic below, or refine the direction with your own feedback.
+          Pick a title below, or refine the direction with your own feedback.
         </motion.p>
       </div>
 

@@ -1281,7 +1281,7 @@ export function OutlineDisplay({
               </p>
               <p className="text-xs text-muted-foreground">
                 Who this article is written as — recommended by fit with the
-                topic, title, search intent and content type. Pick another, or
+                keyword, title, search intent and content type. Pick another, or
                 clear it to write with no persona.
               </p>
             </div>

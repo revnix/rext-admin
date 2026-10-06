@@ -295,17 +295,17 @@ export default function LibraryDetail({
               </div>
               <div>
                 <h3 className="font-semibold text-foreground leading-tight">
-                  Related Topics
+                  Related keywords
                 </h3>
                 <p className="text-caption text-muted-foreground mt-0.5">
-                  Keyword clusters &amp; topic ideas to explore
+                  Keyword clusters and ideas to explore
                 </p>
               </div>
             </div>
             {!!data.related_topics?.length && (
               <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-full border border-border/50 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground inline-block" />
-                {data.related_topics.length} topics
+                {data.related_topics.length} keywords
               </div>
             )}
           </div>
@@ -325,7 +325,7 @@ export default function LibraryDetail({
             </div>
           ) : (
             <p className="px-6 py-12 text-center text-sm text-muted-foreground">
-              No related topics found.
+              No related keywords found.
             </p>
           )}
         </Card>

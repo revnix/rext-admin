@@ -19,11 +19,11 @@ export const KEYWORD_SELECTION_STEPS: LoadingStep[] = [
 ];
 
 export const TOPIC_GENERATION_STEPS: LoadingStep[] = [
-  { id: "Topic Generation", label: "Content Topic Generation" },
+  { id: "Topic Generation", label: "Suggesting titles" },
 ];
 
 export const TOPIC_REGENERATION_STEPS: LoadingStep[] = [
-  { id: "Regenerating topics", label: "Regenerating Topics" },
+  { id: "Regenerating topics", label: "Regenerating titles" },
 ];
 
 export const CONTENT_TYPE_STEPS: LoadingStep[] = [
