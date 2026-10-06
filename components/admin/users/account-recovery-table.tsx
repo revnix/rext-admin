@@ -22,7 +22,8 @@ import {
   UNKNOWN,
   useDataTableLocalState,
 } from "@/components/ui/data-table";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
@@ -172,11 +173,17 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
 
   if (error) {
     return (
-      <ErrorPage
+      <Notice
+        tone="danger"
         title="Failed to load recovery requests"
-        message="There was an error loading account recovery requests. Please try again."
-        retry={() => refetch()}
-      />
+        action={
+          <Button size="sm" variant="outline" onClick={() => void refetch()}>
+            Try again
+          </Button>
+        }
+      >
+        There was an error loading account recovery requests. Please try again.
+      </Notice>
     );
   }
 
