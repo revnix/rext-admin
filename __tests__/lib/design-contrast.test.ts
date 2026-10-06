@@ -88,6 +88,23 @@ describe("the tokens' contrast", () => {
     }
   });
 
+  it("gives every primitive a value of its own, which /dev/tokens draws as it is", () => {
+    const primitives = [...readTokens(CSS).values()].filter(
+      (t) => t.block === "@theme static",
+    );
+    expect(primitives.map((t) => t.name)).toEqual(
+      expect.arrayContaining([
+        "--accent-fill",
+        "--accent-fill-hover",
+        "--accent-ring",
+        "--accent-on-fill",
+      ]),
+    );
+    for (const t of primitives) {
+      expect(() => toRgba(t.value)).not.toThrow();
+    }
+  });
+
   it("fails a mid-tone accent", () => {
     const wrong = CSS.replace(
       /--accent-fill:[^;]+;/,
@@ -106,7 +123,8 @@ describe("the tokens' contrast", () => {
   });
 
   // The schemes task B5 showed the founder (rext-control looks/app/B5): a swap edits the four accent
-  // lines and nothing else, and every role pair still clears its minimum.
+  // lines and nothing else, and every role pair still clears its minimum. The values are literal, as
+  // every primitive's is: /dev/tokens draws each primitive from its own value.
   const SCHEMES = {
     "lime on obsidian": {
       "--accent-fill": "oklch(20.8% 0.015 172.4)",
@@ -115,10 +133,10 @@ describe("the tokens' contrast", () => {
       "--accent-on-fill": "oklch(92.6% 0.144 125.8)",
     },
     "neutral near-black": {
-      "--accent-fill": "var(--neutral-900)",
-      "--accent-fill-hover": "var(--neutral-800)",
-      "--accent-ring": "var(--neutral-500)",
-      "--accent-on-fill": "var(--neutral-0)",
+      "--accent-fill": "oklch(20.5% 0 0)",
+      "--accent-fill-hover": "oklch(26.9% 0 0)",
+      "--accent-ring": "oklch(55.6% 0 0)",
+      "--accent-on-fill": "oklch(100% 0 0)",
     },
   };
 

@@ -34,11 +34,12 @@
 
   /* Accent: the one colour (design/app-language.md §2.1), as the four lines a colour swap edits and
      nothing else. A near-black fill takes a lighter hover and its own text colour, so both are part
-     of the scheme; the accent has no tints, since selection and the active item use the surfaces. */
+     of the scheme; the accent has no tints, since selection and the active item use the surfaces.
+     Each line is a value, not a var(): /dev/tokens draws every primitive from its own value. */
   --accent-fill: oklch(50.5% 0.26 270);
   --accent-fill-hover: oklch(44.8% 0.244 270);
   --accent-ring: oklch(56.8% 0.237 270); /* the brand blue #465fff */
-  --accent-on-fill: var(--neutral-0);
+  --accent-on-fill: oklch(100% 0 0);
 
   /* Status: Tailwind's green, amber, red and sky, only the steps the roles use. */
   --positive-50: oklch(98.2% 0.018 155.826);
