@@ -18,10 +18,8 @@ import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
  *
  * Milestones:
  * - Account created (automatic - 0%)
- * - Workspace created (40%)
- * - Topic created (30%)
- * - Content created (30%)
- * - Knowledge added (optional - 0%)
+ * - Workspace created (50%)
+ * - Content created (50%)
  * - Members invited (optional - 0%)
  *
  * @param workspaceId - Optional workspace ID for workspace-specific tracking
@@ -99,9 +97,7 @@ export function useOnboardingProgress(
 
   // Calculate milestone completion based on real-time stats
   const milestones = useMemo<OnboardingMilestone[]>(() => {
-    const topicCount = stats?.topics_count || 0;
     const contentCount = stats?.content_count || 0;
-    const knowledgeCount = stats?.knowledge_items_count || 0;
     const membersCount = stats?.members_count || 0;
 
     return [
@@ -117,30 +113,14 @@ export function useOnboardingProgress(
         label: "Create Workspace",
         description: "Set up your first workspace",
         completed: hasWorkspaces,
-        weight: 40,
-      },
-      {
-        id: "topic",
-        label: "Create Topic",
-        description: "Generate your first content topic",
-        completed: topicCount > 0,
-        weight: 30,
+        weight: 50,
       },
       {
         id: "content",
         label: "Create Content",
         description: "Publish your first piece of content",
         completed: contentCount > 0,
-        weight: 30,
-      },
-      {
-        id: "knowledge",
-        label: "Add Knowledge Base",
-        description: "Upload documents to your knowledge base",
-        completed: knowledgeCount > 0,
-        weight: 0, // Optional, doesn't affect progress
-        optional: true,
-        skipped: skippedSteps.includes("knowledge"),
+        weight: 50,
       },
       {
         id: "members",

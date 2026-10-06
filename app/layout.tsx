@@ -6,12 +6,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { LemonSqueezyProvider } from "@/components/subscription/lemonsqueezy-provider";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
-import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
 import { MotionProvider } from "@/providers/motion-provider";
-import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 import { auth } from "@/auth";
 
@@ -100,17 +98,12 @@ export default async function RootLayout({
             <SSEProvider>
               <UserNotificationsListener />
               <QueryProvider>
-                <TooltipProvider>
-                  <MotionProvider>
-                    {/* Welcome modal shows first, then invited user onboarding */}
-                    <WorkspaceWelcomeGate>
-                      <InvitedUserOnboardingGate>
-                        {/* URL search params as state (nuqs): filters survive a reload */}
-                        <NuqsAdapter>{children}</NuqsAdapter>
-                      </InvitedUserOnboardingGate>
-                    </WorkspaceWelcomeGate>
-                  </MotionProvider>
-                </TooltipProvider>
+                <MotionProvider>
+                  <WorkspaceWelcomeGate>
+                    {/* URL search params as state (nuqs): filters survive a reload */}
+                    <NuqsAdapter>{children}</NuqsAdapter>
+                  </WorkspaceWelcomeGate>
+                </MotionProvider>
               </QueryProvider>
             </SSEProvider>
           </PostHogProvider>

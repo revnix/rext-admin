@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { useResourceLimit } from "./usage-limit-warning";
+import { type LimitedResource, useResourceLimit } from "./usage-limit-warning";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
 
@@ -28,12 +28,7 @@ interface LimitCheckWrapperProps {
   /**
    * Resource to check limits for
    */
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage";
+  resource: LimitedResource;
 
   /**
    * Name of the action (for messages)
@@ -163,14 +158,7 @@ export function LimitCheckWrapper({
  * Hook to programmatically check and handle limits
  * Use this in forms or before API calls
  */
-export function useCheckLimit(
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage",
-) {
+export function useCheckLimit(resource: LimitedResource) {
   const router = useRouter();
   const { isLimitReached, usagePercentage, canCreate, isLoading } =
     useResourceLimit(resource);

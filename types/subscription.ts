@@ -89,9 +89,6 @@ export interface SubscriptionPlanCreate {
   features?: Record<string, unknown>;
   max_workspaces?: number;
   max_members_per_workspace?: number;
-  max_topics?: number;
-  max_knowledge_items?: number;
-  max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
   lemonsqueezy_product_id?: string;
@@ -107,9 +104,6 @@ export interface SubscriptionPlanUpdate {
   features?: Record<string, unknown>;
   max_workspaces?: number;
   max_members_per_workspace?: number;
-  max_topics?: number;
-  max_knowledge_items?: number;
-  max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
   lemonsqueezy_product_id?: string;

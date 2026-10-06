@@ -124,7 +124,7 @@ export default function SubscriptionPlansPage() {
               ? "∞"
               : row.max_members_per_workspace}
           </div>
-          <div>Topics: {row.max_topics === -1 ? "∞" : row.max_topics}</div>
+          <div>Credits: {row.credits_per_month ?? "-"}/month</div>
         </div>
       ),
     },

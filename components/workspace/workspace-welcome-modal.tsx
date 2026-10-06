@@ -30,7 +30,6 @@ interface WorkspaceWelcomeModalProps {
   inviterName: string;
   roleName: string;
   rolePermissions?: string[];
-  onStartTour?: () => void;
 }
 
 /**
@@ -40,11 +39,10 @@ interface WorkspaceWelcomeModalProps {
  * - Celebration UI with animations
  * - Workspace and role information
  * - Quick permission summary
- * - Options to start exploring or take tour
+ * - A button to start exploring
  * - "Don't show again" checkbox
  *
- * Shown immediately after invitation acceptance, before
- * the invited user onboarding (if enabled).
+ * Shown right after an invitation is accepted.
  */
 export function WorkspaceWelcomeModal({
   open,
@@ -53,7 +51,6 @@ export function WorkspaceWelcomeModal({
   inviterName,
   roleName,
   rolePermissions = [],
-  onStartTour,
 }: WorkspaceWelcomeModalProps) {
   const router = useRouter();
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -93,16 +90,6 @@ export function WorkspaceWelcomeModal({
   const handleStartExploring = () => {
     handleClose();
     router.push(`/w/${workspace.slug}/generate_content` as Route);
-  };
-
-  const handleTakeTour = () => {
-    handleClose();
-    if (onStartTour) {
-      onStartTour();
-    } else {
-      // Fallback: trigger invited user onboarding if available
-      router.push(`/w/${workspace.slug}?tour=true` as Route);
-    }
   };
 
   return (
@@ -228,14 +215,6 @@ export function WorkspaceWelcomeModal({
                 Start Exploring
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button
-                onClick={handleTakeTour}
-                variant="outline"
-                size="lg"
-                className="flex-1"
-              >
-                Take a Quick Tour
-              </Button>
             </div>
 
             {/* Don't show again checkbox */}
@@ -336,7 +315,6 @@ function getDefaultPermissions(roleName: string): string[] {
     case "editor":
       return [
         "Create and edit content",
-        "Manage topics and knowledge base",
         "Collaborate with team members",
         "No team management access",
       ];
@@ -344,7 +322,6 @@ function getDefaultPermissions(roleName: string): string[] {
     default:
       return [
         "View all workspace content",
-        "Browse knowledge base",
         "See team member profiles",
         "Read-only access",
       ];
