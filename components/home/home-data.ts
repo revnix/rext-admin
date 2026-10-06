@@ -1,5 +1,5 @@
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
-import type { Content } from "@/types/content";
+import type { ContentItem } from "@/types/content";
 
 /**
  * What the home shows, worked out from data the dashboard already loads (plans/app/D-pages.md §2.1).
@@ -19,16 +19,20 @@ export type PipelineCounts = {
 };
 
 /** When an article went out: the site's publish date, else its last change. */
-export function publishedAt(item: Content): Date | null {
+export function publishedAt(item: ContentItem): Date | null {
   const raw =
     item.wordpress_published_at ??
-    (item as { shopify_published_at?: string }).shopify_published_at ??
+    (item as ContentItem & { shopify_published_at?: string })
+      .shopify_published_at ??
     item.updated_at;
   const time = raw ? Date.parse(raw) : Number.NaN;
   return Number.isNaN(time) ? null : new Date(time);
 }
 
-export function countPipeline(content: Content[], now: Date): PipelineCounts {
+export function countPipeline(
+  content: ContentItem[],
+  now: Date,
+): PipelineCounts {
   const counts: PipelineCounts = {
     drafts: 0,
     review: 0,
@@ -55,9 +59,10 @@ export function countPipeline(content: Content[], now: Date): PipelineCounts {
 }
 
 /** The articles to pick up again: in review first, then drafts, each newest first. */
-export function articlesToContinue(content: Content[], limit: number) {
-  const changed = (item: Content) => Date.parse(item.updated_at ?? "") || 0;
-  const rank = (item: Content) => (String(item.status) === "review" ? 0 : 1);
+export function articlesToContinue(content: ContentItem[], limit: number) {
+  const changed = (item: ContentItem) => Date.parse(item.updated_at ?? "") || 0;
+  const rank = (item: ContentItem) =>
+    String(item.status) === "review" ? 0 : 1;
   return content
     .filter((item) => {
       const status = String(item.status);
@@ -83,7 +88,7 @@ export function searchVolume(entry: LibraryEntry): number | null {
  */
 export function suggestKeywords(
   library: LibraryEntry[],
-  content: Content[],
+  content: ContentItem[],
   limit: number,
   inProgress: string[] = [],
 ): LibraryEntry[] {
