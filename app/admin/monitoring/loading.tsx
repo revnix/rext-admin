@@ -1,14 +1,8 @@
-import { RouteLoading } from "@/components/ui/route-loading";
+import { PageSkeleton } from "@/components/layouts";
 
 /**
  * Admin monitoring page loading state
  */
 export default function MonitoringLoading() {
-  return (
-    <RouteLoading
-      variant="monitoring"
-      statCards={4}
-      title="System Monitoring"
-    />
-  );
+  return <PageSkeleton stats={4} />;
 }
