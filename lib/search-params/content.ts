@@ -1,11 +1,17 @@
-import { createLoader, parseAsString, parseAsStringLiteral } from "nuqs/server";
+import { createLoader } from "nuqs/server";
+import {
+  dataTableParams,
+  parseAsFacet,
+  parseAsSort,
+} from "@/components/ui/data-table/url-state";
 
 /**
- * The content library's filters as URL search params (`?q=…&status=draft`),
- * so a reload, a shared link and Back keep them. One parsers object serves
- * both sides: the page reads and sets them with `useQueryStates(contentListParams)`
- * and server code parses a request's `searchParams` with `loadContentListParams`.
- * Imported from `nuqs/server`, which carries no "use client" directive.
+ * The content library's table state as URL search params
+ * (`?q=…&status=draft,review&sort=title.asc&page=2`), so a reload, a shared
+ * link and Back keep them. One parsers object serves both sides: the page reads
+ * and sets them with `useDataTableUrlState(contentListParams)` and server code
+ * parses a request's `searchParams` with `loadContentListParams`. Imported from
+ * `nuqs/server`, which carries no "use client" directive.
  */
 
 /** The backend's content states (its transition table), trash excluded. */
@@ -34,8 +40,12 @@ export const CONTENT_LIST_STATUS_LABELS: Record<ContentListStatus, string> = {
 };
 
 export const contentListParams = {
-  q: parseAsString.withDefault(""),
-  status: parseAsStringLiteral(CONTENT_LIST_STATUSES),
+  ...dataTableParams,
+  sort: parseAsSort.withDefault({ id: "created_at", desc: true }),
+  status: parseAsFacet(CONTENT_LIST_STATUSES),
 };
+
+/** The keys of `contentListParams` that are faceted filters on the table's columns. */
+export const CONTENT_LIST_FACETS = ["status"] as const;
 
 export const loadContentListParams = createLoader(contentListParams);

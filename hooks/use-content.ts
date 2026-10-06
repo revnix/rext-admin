@@ -4,18 +4,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import type {
+  ContentItem,
   CreateContentRequest,
   UpdateContentRequest,
 } from "@/types/content";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
+// The backend's largest page of content (content_retrieval.py: limit at most 500).
+const CONTENT_PAGE_LIMIT = 500;
+
 /**
- * Hook to fetch content for a workspace
+ * Every content item in the workspace, read page by page. The backend's list has no search or sort,
+ * so the library loads all of it and searches, filters and sorts in the browser; the default page
+ * of 100 used to hide anything past the hundredth item.
  */
-export function useContent(workspaceId: string, status?: string) {
+export function useAllContent(workspaceId: string) {
   return useQuery({
-    queryKey: ["content", workspaceId, status],
-    queryFn: () => apiClient.content.list(workspaceId, { status }),
+    queryKey: ["content", workspaceId, "all"],
+    queryFn: async () => {
+      const items: ContentItem[] = [];
+      for (let offset = 0; ; offset += CONTENT_PAGE_LIMIT) {
+        const page = await apiClient.content.list(workspaceId, {
+          limit: CONTENT_PAGE_LIMIT,
+          offset,
+        });
+        items.push(...page.content);
+        if (
+          page.content.length < CONTENT_PAGE_LIMIT ||
+          items.length >= page.total_count
+        ) {
+          return items;
+        }
+      }
+    },
     enabled: !!workspaceId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
