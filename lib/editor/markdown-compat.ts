@@ -7,36 +7,37 @@ import type { ElementTransformer } from "@lexical/markdown";
  */
 
 const LIST_ITEM = /^\s*(?:[-*+]|\d+\.)\s/; // the list items Lexical reads
-const FENCE = /^\s{0,3}(`{3,}|~{3,})/;
+// Lexical's code fence: three or more backticks at any indentation (tildes are
+// not a fence to it), closed by a line of at least as many.
+const FENCE = /^[ \t]*(`{3,})/;
+const FENCE_CLOSE = /^[ \t]*(`{3,})$/;
+const RUN_AT_END = /`{3,}$/;
 
 /**
  * Lexical 0.52 reads a loose list (items separated by blank lines) wrongly:
  * the continuation line of an item that follows a blank line leaves the list
  * as a paragraph and splits the list in two. A blank line between two items of
  * one list doesn't change what the list says, so it is dropped before import.
- * Fenced code is left as it is: a fence closes only on a run of its own
- * character at least as long as the one that opened it, as in CommonMark.
+ * Fenced code is left as it is, found the way Lexical finds it: a line that
+ * also ends in a run as long is a one-line code block, and otherwise the code
+ * runs to a line of at least as many backticks.
  */
 export function tightenLooseLists(markdown: string): string {
   const lines = markdown.split("\n");
   const out: string[] = [];
   let inList = false;
-  let fence: string | null = null; // the run of backticks or tildes that opened the code
+  let fence: string | null = null; // the run of backticks that opened the code
   lines.forEach((line, i) => {
-    const run = FENCE.exec(line)?.[1];
     if (fence !== null) {
-      if (
-        run &&
-        run[0] === fence[0] &&
-        run.length >= fence.length &&
-        line.trim() === run
-      )
-        fence = null;
+      const close = FENCE_CLOSE.exec(line)?.[1];
+      if (close && close.length >= fence.length) fence = null;
       out.push(line);
       return;
     }
+    const run = FENCE.exec(line)?.[1];
     if (run) {
-      fence = run;
+      const rest = line.slice(line.indexOf(run) + run.length);
+      if ((RUN_AT_END.exec(rest)?.[0].length ?? 0) < run.length) fence = run;
       inList = false;
       out.push(line);
       return;
@@ -55,10 +56,11 @@ export function tightenLooseLists(markdown: string): string {
   return out.join("\n");
 }
 
-// What Lexical's import reads as a block: `1. `, `- `, `* `, `+ `, `# ` to
-// `###### `, `> `. (`1)` is not among them, and marked renders it as a list, so
-// it is left alone.)
-const BLOCK_START = /^(\d+)\. |^([-*+]) |^(#{1,6}) |^> /;
+// What Lexical's import reads as a block: a list marker (`1.`, `-`, `*`, `+`)
+// after any indentation, or `#` to `######` or `>` at the start of the line,
+// each followed by whitespace. (`1)` is not among them, and marked renders it
+// as a list, so it is left alone.)
+const BLOCK_START = /^(\s*)(?:(\d+)\.|([-*+]))(?=\s)|^(#{1,6}|>)(?=\s)/;
 
 /**
  * Lexical 0.52 unescapes a paragraph written as `1\. Text` on import (0.39
@@ -73,14 +75,12 @@ export const PARAGRAPH_ESCAPE_TRANSFORMER: ElementTransformer = {
     if (!$isParagraphNode(node)) return null;
     const text = traverseChildren(node);
     if (!BLOCK_START.test(text)) return null;
-    return text.replace(BLOCK_START, (match, digits, bullet, hashes) =>
+    return text.replace(BLOCK_START, (_match, indent, digits, bullet, mark) =>
       digits
-        ? `${digits}\\. `
+        ? `${indent}${digits}\\.`
         : bullet
-          ? `\\${bullet} `
-          : hashes
-            ? `\\${hashes} `
-            : `\\${match}`,
+          ? `${indent}\\${bullet}`
+          : `\\${mark}`,
     );
   },
   // Paragraphs are what a line becomes when nothing else matches; this never
