@@ -1,5 +1,6 @@
 import type { Route } from "next";
 import Link from "next/link";
+import { UNKNOWN } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { workspaceRoutes } from "@/lib/routes";
 import type { PipelineCounts as Counts } from "./home-data";
@@ -12,9 +13,12 @@ import type { PipelineCounts as Counts } from "./home-data";
 export function PipelineCounts({
   slug,
   counts,
+  failed = false,
 }: {
   slug: string;
   counts: Counts | null;
+  /** The articles didn't load: each count reads as unknown instead of loading. */
+  failed?: boolean;
 }) {
   const library = workspaceRoutes.content(slug);
   const tiles = [
@@ -35,11 +39,11 @@ export function PipelineCounts({
             href={`${library}?status=${tile.status}` as Route}
             className="flex h-full flex-col gap-1 rounded-md border border-border bg-card p-4 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {tile.value === undefined ? (
+            {tile.value === undefined && !failed ? (
               <Skeleton className="h-8 w-10" />
             ) : (
               <span className="num font-display text-page-title text-foreground">
-                {tile.value.toLocaleString()}
+                {tile.value?.toLocaleString() ?? UNKNOWN}
               </span>
             )}
             <span className="text-sm text-muted-foreground">{tile.label}</span>

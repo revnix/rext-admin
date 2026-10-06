@@ -15,6 +15,7 @@ import {
   type ChecklistFacts,
   checklistSteps,
   countPipeline,
+  hasWrittenArticle,
   suggestKeywords,
 } from "@/components/home/home-data";
 import { PipelineCounts } from "@/components/home/pipeline-counts";
@@ -25,6 +26,7 @@ import { SettingsGroup } from "@/components/settings/settings-group";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useChecklistAnalytics } from "@/hooks/use-checklist-analytics";
@@ -137,7 +139,7 @@ export default function HomePage() {
         )
       : undefined,
     keyword: library.isSuccess ? library.data.length > 0 : undefined,
-    content: articles ? articles.length > 0 : undefined,
+    content: articles ? hasWrittenArticle(articles) : undefined,
     publish: articles
       ? articles.some((item) =>
           ["published", "scheduled"].includes(String(item.status)),
@@ -210,12 +212,33 @@ export default function HomePage() {
             <SettingsGroup title="Continue">
               {articles ? (
                 <ContinueRow slug={slug} runs={runs} articles={toContinue} />
+              ) : content.isError ? (
+                <Notice
+                  tone="danger"
+                  title="Your articles didn't load"
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => content.refetch()}
+                      disabled={content.isFetching}
+                    >
+                      Try again
+                    </Button>
+                  }
+                >
+                  The pipeline counts wait for them too.
+                </Notice>
               ) : (
                 <Skeleton className="h-32 w-full" />
               )}
             </SettingsGroup>
             <SettingsGroup title="Pipeline">
-              <PipelineCounts slug={slug} counts={counts} />
+              <PipelineCounts
+                slug={slug}
+                counts={counts}
+                failed={content.isError}
+              />
             </SettingsGroup>
             {suggestions.length > 0 && (
               <SettingsGroup

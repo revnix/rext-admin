@@ -248,7 +248,8 @@ export const libraryQueries = {
         return searchLibrary(userId, workspaceId);
       },
       enabled: !!workspaceId && !!userId,
-      staleTime: 2 * 60 * 1000,
+      // Research is saved by the run, which knows nothing of this key: ask again on every visit.
+      staleTime: 0,
     }),
 };
 
