@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { CheckEmail } from "@/components/auth/check-email";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -29,6 +30,8 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  // Set once the account exists but can't log in until its email is verified.
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -118,14 +121,22 @@ export function SignupForm({
         method: isInvitationSignup ? "invitation" : "credentials",
       });
 
-      // Auto-login after successful registration
+      // Login needs a verified email (the backend's REQUIRE_EMAIL_VERIFICATION), so a new account
+      // that isn't verified can't be logged in yet: say where the link went instead of trying.
+      if (registerResult.user.email_verified === false) {
+        setVerifyEmail(data.email);
+        return;
+      }
+
+      // Auto-login after successful registration. next-auth answers a refused login with `ok`
+      // and an `error`, so both are read.
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
-      if (result?.ok) {
+      if (result?.ok && !result.error) {
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
         toast.success("Account created successfully! Logging you in...");
@@ -202,10 +213,9 @@ export function SignupForm({
           router.push("/" as Route);
         }
       } else {
-        // If auto-login fails, redirect to login page
-        setTimeout(() => {
-          router.push("/login" as Route);
-        }, 2000);
+        // The account exists but the login was refused: most likely its email still needs
+        // verifying. The same page says so and leads to the login form either way.
+        setVerifyEmail(data.email);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
@@ -246,6 +256,14 @@ export function SignupForm({
       setIsLoading(false);
     }
   };
+
+  if (verifyEmail) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <CheckEmail email={verifyEmail} />
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
