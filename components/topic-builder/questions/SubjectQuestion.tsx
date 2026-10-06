@@ -86,7 +86,7 @@ export function SubjectQuestion({
                   "px-3 py-2 text-sm rounded-md border transition-colors",
                   "border-border hover:border-primary/50 cursor-pointer",
                   "bg-background hover:bg-primary/5 text-foreground",
-                  "hover:text-primary shadow-sm hover:shadow-md",
+                  "hover:text-primary",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
                 )}

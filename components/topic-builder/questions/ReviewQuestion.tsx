@@ -399,7 +399,7 @@ export function ReviewQuestion({
 
           {/* Enhanced Number Input - Bigger */}
           <div className="flex items-center justify-center">
-            <div className="flex items-center gap-4 bg-muted/50 rounded-md px-6 py-4 border border-border/50 hover:border-primary/30 transition-colors shadow-sm">
+            <div className="flex items-center gap-4 bg-muted/50 rounded-md px-6 py-4 border border-border/50 hover:border-primary/30 transition-colors">
               <Hash className="h-6 w-6 text-foreground flex-shrink-0" />
               <Input
                 id="num_topics"
@@ -438,7 +438,7 @@ export function ReviewQuestion({
                 onClick={() => updateFormData("num_topics", count)}
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                  "border hover:border-primary/50 shadow-sm hover:shadow-md",
+                  "border hover:border-primary/50",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
                   formData.num_topics === count

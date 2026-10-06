@@ -127,7 +127,6 @@ export function PurposeQuestion({
               disabled={isLoading}
               className={cn(
                 "h-auto",
-                isSelected && "shadow-lg",
                 isRecommended &&
                   !isSelected &&
                   "ring-1 ring-primary/30 bg-primary/5 border-primary/20",
@@ -158,7 +157,7 @@ export function PurposeQuestion({
           {currentPurposes.length} purpose
           {currentPurposes.length !== 1 ? "s" : ""} selected
           {currentPurposes.length >= 3 && (
-            <span className="ml-2 text-amber-600 dark:text-amber-400">
+            <span className="ml-2 text-warning-600">
               (Consider focusing on 1-2 main purposes for better results)
             </span>
           )}

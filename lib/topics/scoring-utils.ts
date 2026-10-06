@@ -90,35 +90,33 @@ export function getScoreColorClasses(score: number): {
 } {
   if (score >= SCORE_THRESHOLDS.excellent) {
     return {
-      badge:
-        "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400",
-      background: "bg-green-100 dark:bg-green-950/50",
-      text: "text-green-600 dark:text-green-400",
-      progress: "bg-green-500",
+      badge: "bg-success-50 text-success-700",
+      background: "bg-success-50",
+      text: "text-success-600",
+      progress: "bg-success-600",
     };
   }
   if (score >= SCORE_THRESHOLDS.good) {
     return {
-      badge: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400",
-      background: "bg-blue-100 dark:bg-blue-950/50",
-      text: "text-blue-600 dark:text-blue-400",
-      progress: "bg-blue-500",
+      badge: "bg-info-50 text-info-700",
+      background: "bg-info-50",
+      text: "text-info-600",
+      progress: "bg-info-600",
     };
   }
   if (score >= SCORE_THRESHOLDS.fair) {
     return {
-      badge:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400",
-      background: "bg-yellow-100 dark:bg-yellow-950/50",
-      text: "text-yellow-600 dark:text-yellow-400",
-      progress: "bg-yellow-500",
+      badge: "bg-warning-50 text-warning-700",
+      background: "bg-warning-50",
+      text: "text-warning-600",
+      progress: "bg-warning-600",
     };
   }
   return {
-    badge: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
-    background: "bg-red-100 dark:bg-red-950/50",
-    text: "text-red-600 dark:text-red-400",
-    progress: "bg-red-500",
+    badge: "bg-danger-50 text-danger-700",
+    background: "bg-danger-50",
+    text: "text-danger-600",
+    progress: "bg-danger-600",
   };
 }
 

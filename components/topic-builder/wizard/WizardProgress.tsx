@@ -181,7 +181,7 @@ export function WizardProgress({
                       isClickable && "hover:bg-primary/90 cursor-pointer",
                     ],
                     state === "current" && [
-                      "bg-primary text-primary-foreground shadow-md",
+                      "bg-primary text-primary-foreground",
                       showStepNumbers ? "scale-110" : "scale-125",
                     ],
                     state === "upcoming" && [

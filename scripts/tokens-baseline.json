@@ -376,41 +376,6 @@
     "stock-palette": 25,
     "dark-class": 10
   },
-  "components/topic-builder/questions/AudienceQuestion.tsx": {
-    "off-scale": 2,
-    "stock-palette": 2,
-    "dark-class": 1
-  },
-  "components/topic-builder/questions/PurposeQuestion.tsx": {
-    "off-scale": 1,
-    "stock-palette": 2,
-    "dark-class": 1
-  },
-  "components/topic-builder/questions/ReviewQuestion.tsx": {
-    "off-scale": 3
-  },
-  "components/topic-builder/questions/SubjectQuestion.tsx": {
-    "off-scale": 2
-  },
-  "components/topic-builder/results/TopicDetailDrawer.tsx": {
-    "off-scale": 6,
-    "stock-palette": 19,
-    "dark-class": 9
-  },
-  "components/topic-builder/results/TopicsList.tsx": {
-    "stock-palette": 1
-  },
-  "components/topic-builder/results/TopicsTable.tsx": {
-    "stock-palette": 11,
-    "off-scale": 1,
-    "dark-class": 1
-  },
-  "components/topic-builder/wizard/WizardNavigation.tsx": {
-    "off-scale": 2
-  },
-  "components/topic-builder/wizard/WizardProgress.tsx": {
-    "off-scale": 1
-  },
   "components/topics/detail/OverallScoreCard.tsx": {
     "small-type": 1
   },
@@ -592,13 +557,6 @@
   },
   "lib/animations.ts": {
     "literal-colour": 3
-  },
-  "lib/topic-display-utils.ts": {
-    "stock-palette": 46
-  },
-  "lib/topics/scoring-utils.ts": {
-    "stock-palette": 36,
-    "dark-class": 16
   },
   "lib/typeform-utils.ts": {
     "literal-colour": 13
