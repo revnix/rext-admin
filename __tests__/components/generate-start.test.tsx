@@ -122,7 +122,7 @@ describe("RecentKeywords", () => {
     expect(within(section).getAllByText("1.2K searches")).toHaveLength(5);
     expect(
       within(section).getByRole("link", { name: "All keywords" }),
-    ).toHaveAttribute("href", "/w/acme/generate_content/library");
+    ).toHaveAttribute("href", "/w/acme/keywords");
     expect(searchLibrary).toHaveBeenCalledWith("u1", "w1");
   });
 
