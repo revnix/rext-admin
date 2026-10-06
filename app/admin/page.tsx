@@ -225,9 +225,9 @@ export default function AdminDashboardPage() {
                 <p>
                   The admin features will be fully functional once the backend
                   includes{" "}
-                  <code className="bg-yellow-100 px-1 rounded-md">role</code>{" "}
+                  <code className="bg-surface-inset px-1 rounded-md">role</code>{" "}
                   and{" "}
-                  <code className="bg-yellow-100 px-1 rounded-md">
+                  <code className="bg-surface-inset px-1 rounded-md">
                     permissions
                   </code>{" "}
                   in the JWT token during login.

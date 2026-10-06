@@ -59,13 +59,13 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="date"
-          stroke="#888888"
+          stroke="var(--muted-foreground)"
           fontSize={12}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
-          stroke="#888888"
+          stroke="var(--muted-foreground)"
           fontSize={12}
           tickLine={false}
           axisLine={false}
@@ -76,35 +76,35 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
         <Line
           type="monotone"
           dataKey="Sent"
-          stroke="#667eea"
+          stroke="var(--primary)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Delivered"
-          stroke="#0ea5e9"
+          stroke="var(--success-600)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Opened"
-          stroke="#22c55e"
+          stroke="var(--info-600)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Clicked"
-          stroke="#f59e0b"
+          stroke="var(--neutral-500)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Failed"
-          stroke="#ef4444"
+          stroke="var(--danger-600)"
           strokeWidth={2}
           dot={false}
         />

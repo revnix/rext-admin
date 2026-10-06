@@ -65,27 +65,27 @@ const STATUS_CONFIG = {
   pending: {
     label: "Pending",
     icon: Clock,
-    color: "bg-yellow-500/10 text-yellow-700 border-yellow-200",
+    color: "border-warning-200 bg-warning-50 text-warning-700",
   },
   accepted: {
     label: "Accepted",
     icon: CheckCircle2,
-    color: "bg-green-500/10 text-green-700 border-green-200",
+    color: "border-success-200 bg-success-50 text-success-700",
   },
   declined: {
     label: "Declined",
     icon: XCircle,
-    color: "bg-red-500/10 text-red-700 border-red-200",
+    color: "border-danger-200 bg-danger-50 text-danger-700",
   },
   revoked: {
     label: "Revoked",
     icon: Ban,
-    color: "bg-gray-500/10 text-gray-700 border-gray-200",
+    color: "border-border bg-surface-inset text-foreground",
   },
   expired: {
     label: "Expired",
     icon: AlertCircle,
-    color: "bg-orange-500/10 text-orange-700 border-orange-200",
+    color: "border-border bg-surface-inset text-foreground",
   },
 } as const;
 
@@ -190,7 +190,7 @@ export default function AdminInvitationsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
+              <Clock className="h-4 w-4 text-warning-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pending}</div>
@@ -199,7 +199,7 @@ export default function AdminInvitationsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 text-success-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.accepted}</div>
@@ -208,7 +208,7 @@ export default function AdminInvitationsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Declined</CardTitle>
-              <XCircle className="h-4 w-4 text-red-600" />
+              <XCircle className="h-4 w-4 text-danger-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.declined}</div>
@@ -320,7 +320,7 @@ export default function AdminInvitationsPage() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {invitation.is_expired ? (
-                            <span className="text-red-600">Expired</span>
+                            <span className="text-danger-600">Expired</span>
                           ) : invitation.status === "pending" ? (
                             formatDistanceToNow(
                               new Date(invitation.expires_at),
