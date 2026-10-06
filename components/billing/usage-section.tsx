@@ -11,6 +11,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
+import { bonusWords, monthlyCreditsLeft } from "./billing-format";
 import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 
 /** "1 workspace", "3 workspaces". */
@@ -106,12 +107,11 @@ function CreditsCard({
   credits: CreditBalance;
   onTrial: boolean;
 }) {
-  const left = credits.current_credits;
+  const left = monthlyCreditsLeft(credits);
   const total = credits.credits_per_month;
   const usedShare =
     total && total > 0 ? Math.min(1, Math.max(0, 1 - left / total)) : null;
   const warn = usedShare !== null && usedShare >= WARN_USED_SHARE;
-  const bonus = credits.bonus;
 
   return (
     <div className="flex flex-col gap-4">
@@ -154,9 +154,7 @@ function CreditsCard({
               credits.articles_remaining !== null
                 ? `About ${credits.articles_remaining.toLocaleString()} articles.`
                 : null,
-              bonus
-                ? `Includes ${bonus.credits.toLocaleString()} of ${bonus.granted.toLocaleString()} ${bonus.label.toLowerCase()} credits${bonus.expires_at ? `, until ${dateFormat.short(bonus.expires_at)}` : ""}.`
-                : null,
+              bonusWords(credits),
               credits.credits_reset_date
                 ? onTrial
                   ? `The trial ends ${dateFormat.short(credits.credits_reset_date)}; its credits don't renew.`
