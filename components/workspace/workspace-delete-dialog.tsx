@@ -222,7 +222,7 @@ export function WorkspaceDeleteDialog({
             {knowledgeCount > 0 && (
               <>
                 {" "}
-                <span className="text-orange-600 dark:text-orange-400 font-medium">
+                <span className="text-warning-600 font-medium">
                   ⚠️ This includes {knowledgeCount} knowledge item
                   {knowledgeCount === 1 ? "" : "s"}
                   (websites, files, and text notes) associated with this
@@ -307,7 +307,7 @@ export function WorkspaceDeleteDialog({
           >
             {isDeleting || loadingStates.deleting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive-foreground mr-2" />
                 Deleting...
               </>
             ) : (
