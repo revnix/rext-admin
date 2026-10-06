@@ -256,7 +256,7 @@ progress displays consistent. No WebSocket / BroadcastChannel needed.
 [`components/background-generation-dock.tsx`](components/background-generation-dock.tsx),
 mounted in the shell ([`components/shell/app-shell.tsx`](components/shell/app-shell.tsx)), so it
 appears across workspace pages (Content Calendar, Brand Voice, Integrations,
-Knowledge, Media, Members, …).
+Media, Members, …).
 
 - **Active job:** title, stage, progress track, %, `View progress`, count of
   other active jobs.

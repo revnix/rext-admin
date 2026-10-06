@@ -19,8 +19,8 @@ app/
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
   w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar),
-                            personas (+ [personaId], create), brand_voice, members, integrations, knowledge (+ [kbId]),
-                            topics (+ [id], create, create/results), settings; page.tsx redirects to /
+                            personas (+ [personaId], create), brand_voice, members, integrations, settings;
+                            page.tsx redirects to /; /topics and /knowledge redirect (both features are removed)
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
   settings/                 the account hub, security (with sessions), subscription, trash (billing redirects to subscription)
   subscription/, billing/, usage/, pricing/, checkout/{success,cancel}, profile/ (redirects to /settings)
@@ -28,7 +28,6 @@ app/
   invitations/accept/, accept-invitation/, accept-admin-invitation/      the auth pages, outside the shell
   legal/                    terms, privacy, refund policy, subscription terms
   admin/                    the 12 super-admin pages (guarded in proxy.ts and app/admin/layout.tsx)
-  topics/                   no route: the client components and the one server action the /w/[slug]/topics pages use
   api/auth/[...nextauth]    next-auth
   api/generate/**           the generation proxy: threads (start), [threadId]/{stream,join,resume,status,cancel}
   maintenance/              reachable only by typing the address
@@ -38,7 +37,7 @@ components/
   layouts/                  the five page layouts (ListPage, DetailPage, FormPage, SettingsPage, WorkingSurface), their
                             shared header and frame
   background-generation-dock.tsx, data-table.tsx (the older table, until its lists move to ui/data-table)
-  <feature>/                one folder per area: generate-content, content, personas, integrations, knowledge, …
+  <feature>/                one folder per area: generate-content, content, personas, integrations, …
 lib/                        api-client/ (the typed client), query-keys.ts, query-options/, routes.ts (workspaceRoutes,
                             settingsRoutes), permissions.ts, generate-content/, analytics.ts (PostHog), logger.ts (pino), utils.ts (cn)
 hooks/                      data hooks (use-content, use-personas, …), mutations/, use-sse-channel, use-credit-gate, use-permission
@@ -62,11 +61,11 @@ The route layouts mount the shell, so it stays mounted while pages change: `app/
 
 Every page inside the shell renders one of the five layouts of `design/app-language.md` §6 from `components/layouts/`, in its `page.tsx` or in its area's `layout.tsx`. Each draws the page's frame (gutters of 16, 24 and 32 px; `--content-max` wide, or the full width for a working surface) and its header (`PageHeader`: the title as the page's one h1 in the page-title role, an optional status, the description, the actions on the right):
 
-- **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, keywords and topics, knowledge, integrations, members, all workspaces.
+- **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, the keyword library, integrations, members, all workspaces.
 - **`DetailPage`**: one thing; an optional `aside` of facts beside the main column from 1024 px. Home, a persona, a topic (through `components/detail-page-wrapper.tsx`), billing, subscription, usage, legal.
 - **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace or a persona. Task C4 brings the field set and the sticky submit row.
 - **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`), workspace settings and brand voice (no list of sections until D5 joins them).
-- **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar, creating topics. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
+- **`WorkingSurface`**: full width; an optional `side` pane that becomes a sheet under 1024 px. Generate and its keyword library, the editor, the calendar. `hidden` keeps the title as a screen-reader h1 where the surface draws its own visible heading (an h2); `ownHeading` is for the editor, whose article title is the page's h1; `flush` drops the room above and below.
 
 `loading.tsx` files render their skeleton in `PageFrame`, the same frame. `pnpm layout:check` (`scripts/check-layout.mjs`) holds the rule: a page in the shell without one of the five fails, and so does a page width written by hand, an `<h1>` outside the layouts' header, a hand-written `<table>` and a field styled by hand; `{/* layout-ok: the reason */}` excuses one element, and `scripts/layout-baseline.json` holds today's tables and fields until C3 and C4 replace them.
 

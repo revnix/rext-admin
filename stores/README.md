@@ -11,7 +11,6 @@ Import from the specific store file for standalone or independent stores:
 - `@/stores/auth-store`
 - `@/stores/permission-store`
 - `@/stores/subscription-store`
-- `@/stores/topic-builder-store`
 - `@/stores/notification-store`
 
 > [!IMPORTANT]
