@@ -40,10 +40,11 @@ pnpm lint                    # biome check; pnpm format writes the fixes
 pnpm lint:imports            # biome, plus the stores import rule in stores/README.md
 pnpm test                    # jest; pnpm test:ci adds coverage
 pnpm build                   # production build; about 2 GB of memory
+pnpm tokens:check            # design values outside the tokens; a per-file ratchet (scripts/tokens-baseline.json)
 ```
 
 - The Husky pre-commit hook formats, lints and type-checks every commit; never skip it with `--no-verify`.
-- `pnpm tokens:check` (task B3) and `pnpm layout:check` (task C2) join these once they exist.
+- `pnpm tokens:check` fails when a file gains a stock palette class, a colour literal, a `dark:` class or an off-scale radius, shadow or font size; mark a line that must stay with `tokens-ok: the reason`. After lowering a file's count, run `pnpm tokens:check --update` (it only ever lowers the baseline). `pnpm layout:check` (task C2) joins these once it exists.
 - A dev server takes over 1 GB of memory: stop it when you are done.
 
 ## Code
