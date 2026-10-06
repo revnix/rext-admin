@@ -158,7 +158,10 @@ export default function TokensPage() {
 
   const scales = new Map<string, Token[]>();
   for (const t of all.filter((t) => t.block === "@theme static")) {
-    const scale = t.name.replace(/^--/, "").replace(/-\d+$/, "");
+    // A ramp groups by its name without the step; the accent's four named lines group as one.
+    const scale = t.name.startsWith("--accent-")
+      ? "accent"
+      : t.name.replace(/^--/, "").replace(/-\d+$/, "");
     scales.set(scale, [...(scales.get(scale) ?? []), t]);
   }
   const roles = all.filter(
