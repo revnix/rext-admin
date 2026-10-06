@@ -5,7 +5,6 @@ import { RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { RestoreUserDialog } from "@/components/admin/users/restore-user-dialog";
 import { PermanentDeleteUserDialog } from "@/components/admin/users/permanent-delete-user-dialog";
-import { DataTable } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -14,20 +13,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+  useDataTableLocalState,
+} from "@/components/ui/data-table";
 import { ErrorPage } from "@/components/ui/error-states";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import type { User } from "@/lib/api-client/users";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import { USER_PERMISSIONS } from "@/lib/permissions";
-import type { Column, RowAction } from "@/types/data-table";
-
-interface DeletedUserRow extends Record<string, unknown> {
-  id: string;
-  name: string;
-  email: string;
-  display_role: string;
-  deleted_at: string | null | undefined;
-}
 
 interface DeletedUsersTableProps {
   active: boolean;
@@ -39,25 +37,42 @@ type DeletedDialogState =
   | { type: "restore"; user: User }
   | { type: "permanentDelete"; user: User };
 
-function formatDate(dateStr?: string | null) {
-  if (!dateStr) return "—";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+const column = createDataTableColumnHelper<User>();
+
+const columns = column.columns([
+  column.accessor((u) => u.display_name || u.full_name || u.email, {
+    id: "name",
+    header: "User",
+    cell: ({ row, getValue }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{getValue()}</p>
+        <p className="truncate text-muted-foreground">{row.original.email}</p>
+      </div>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor((u) => u.display_role || "User", {
+    id: "role",
+    header: "Role",
+    cell: ({ getValue }) => <Badge variant="neutral">{getValue()}</Badge>,
+    enableSorting: false,
+  }),
+  column.accessor("deleted_at", {
+    header: "Deleted",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => dateFormat.short(getValue()) || UNKNOWN,
+    enableSorting: false,
+  }),
+]);
+
+const NO_USERS: User[] = [];
 
 export function DeletedUsersTable({
   active,
   viewerIsSuperAdmin,
 }: DeletedUsersTableProps) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const tableState = useDataTableLocalState({ pageSize: 10 });
+  const { pageIndex, pageSize } = tableState.pagination;
   const [dialogState, setDialogState] = useState<DeletedDialogState>({
     type: "closed",
   });
@@ -65,74 +80,30 @@ export function DeletedUsersTable({
   const canRestore = usePermission(USER_PERMISSIONS.UPDATE);
   const canPermanentlyDelete = usePermission(USER_PERMISSIONS.DELETE);
 
+  // The server pages this list: the table shows one page and its total.
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-users-deleted", page, pageSize],
-    queryFn: () => apiClient.users.listDeleted({ page, per_page: pageSize }),
+    queryKey: ["admin-users-deleted", pageIndex + 1, pageSize],
+    queryFn: () =>
+      apiClient.users.listDeleted({ page: pageIndex + 1, per_page: pageSize }),
     enabled: active,
   });
-
-  const users = data?.users ?? [];
-  const findUser = (id: string) => users.find((u) => u.id === id) ?? null;
+  const users = data?.users ?? NO_USERS;
   const closeDialog = () => setDialogState({ type: "closed" });
 
-  const rows: DeletedUserRow[] = users.map((u) => ({
-    id: u.id,
-    name: u.display_name || u.full_name || u.email,
-    email: u.email,
-    display_role: u.display_role || "User",
-    deleted_at: u.deleted_at,
-  }));
-
-  const columns: Column<DeletedUserRow>[] = [
-    {
-      key: "name",
-      header: "User",
-      cell: (value, row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{value as string}</p>
-          <p className="text-caption text-muted-foreground truncate">
-            {row.email}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "display_role",
-      header: "Role",
-      width: "140px",
-      cell: (value) => <Badge variant="outline">{value as string}</Badge>,
-    },
-    {
-      key: "deleted_at",
-      header: "Deleted",
-      width: "130px",
-      cell: (value) => (
-        <span className="text-xs text-muted-foreground">
-          {formatDate(value as string | null)}
-        </span>
-      ),
-    },
-  ];
-
   // Both recovering and permanently deleting a soft-deleted account are
-  // Super Admin only — the backend enforces it, this greys the buttons out for
+  // Super Admin only — the backend enforces it, this greys the items out for
   // everyone else rather than letting them 403.
-  const superAdminOnlyReason = (verb: string) => () =>
-    viewerIsSuperAdmin ? null : `Only a Super Admin can ${verb}`;
+  const superAdminOnly = (verb: string) =>
+    viewerIsSuperAdmin ? false : `Only a Super Admin can ${verb}`;
 
-  const rowActions: RowAction<DeletedUserRow>[] = [
+  const rowActions = (user: User): DataTableRowAction[] => [
     ...(canRestore
       ? [
           {
             label: "Restore",
-            icon: <RotateCcw className="h-4 w-4" />,
-            primary: true,
-            disabled: () => !viewerIsSuperAdmin,
-            disabledReason: superAdminOnlyReason("restore a deleted user"),
-            onClick: (row: DeletedUserRow) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "restore", user });
-            },
+            icon: RotateCcw,
+            disabled: superAdminOnly("restore a deleted user"),
+            onSelect: () => setDialogState({ type: "restore", user }),
           },
         ]
       : []),
@@ -140,14 +111,10 @@ export function DeletedUsersTable({
       ? [
           {
             label: "Delete permanently",
-            icon: <Trash2 className="h-4 w-4" />,
-            variant: "destructive" as const,
-            disabled: () => !viewerIsSuperAdmin,
-            disabledReason: superAdminOnlyReason("permanently delete a user"),
-            onClick: (row: DeletedUserRow) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "permanentDelete", user });
-            },
+            icon: Trash2,
+            destructive: true,
+            disabled: superAdminOnly("permanently delete a user"),
+            onSelect: () => setDialogState({ type: "permanentDelete", user }),
           },
         ]
       : []),
@@ -175,25 +142,35 @@ export function DeletedUsersTable({
         </CardHeader>
         <CardContent>
           <DataTable
+            caption="Soft deleted users"
             columns={columns}
-            data={rows}
+            data={users}
+            getRowId={(user) => user.id}
+            getRowLabel={(user) => user.display_name || user.email}
+            state={tableState}
+            manual={{ rowCount: data?.total_count ?? 0 }}
             isLoading={isLoading}
+            surface="plain"
             rowActions={rowActions}
-            mobileCards
-            manualPagination
-            page={page}
-            totalCount={data?.total_count ?? 0}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
-            showSearch={false}
-            emptyTitle="Nothing in trash"
-            emptyDescription="No users have been soft-deleted."
-            pageSize={pageSize}
-            pageSizeOptions={[10, 25, 50, 100]}
-            tableId="admin-users-deleted"
+            emptyState={
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Nothing in the trash: no users have been soft-deleted.
+              </p>
+            }
+            renderCard={(user, { actions }) => (
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">
+                    {user.display_name || user.full_name || user.email}
+                  </p>
+                  <p className="truncate text-muted-foreground">
+                    {user.email} · deleted{" "}
+                    {dateFormat.short(user.deleted_at) || UNKNOWN}
+                  </p>
+                </div>
+                {actions}
+              </div>
+            )}
           />
         </CardContent>
       </Card>
