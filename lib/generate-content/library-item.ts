@@ -39,22 +39,33 @@ async function libraryStore(userId: string, workspaceId: string) {
 /** One researched keyword in the caller's Library, by its store key. */
 export type LibraryEntry = { key: string; value: StoredKeyword };
 
+/** The store's items read a page at a time, up to this many in all. */
+const LIBRARY_PAGE = 100;
+const LIBRARY_MAX = 2000;
+
 /**
  * The caller's researched keywords in a workspace, newest first, one per
  * keyword: researching a keyword again adds an item, and the newest one wins,
- * as in the Library list.
+ * as in the Library list. Every page is read, so the list's search (in the
+ * browser) finds an older keyword too.
  */
 export async function searchLibrary(
   userId: string,
   workspaceId: string,
-  limit = 50,
 ): Promise<LibraryEntry[]> {
   const { client, namespace } = await libraryStore(userId, workspaceId);
-  const result = (await client.store.searchItems(namespace, { limit })) as {
-    items?: { key: string; value: unknown }[];
-  };
+  const items: { key: string; value: unknown }[] = [];
+  for (let offset = 0; offset < LIBRARY_MAX; offset += LIBRARY_PAGE) {
+    const page = (await client.store.searchItems(namespace, {
+      limit: LIBRARY_PAGE,
+      offset,
+    })) as { items?: { key: string; value: unknown }[] };
+    const got = page.items ?? [];
+    items.push(...got);
+    if (got.length < LIBRARY_PAGE) break;
+  }
   const newest = new Map<string, LibraryEntry>();
-  for (const item of result.items ?? []) {
+  for (const item of items) {
     const value = item.value as StoredKeyword;
     const keyword = value?.original_query?.trim();
     if (!keyword) continue;
