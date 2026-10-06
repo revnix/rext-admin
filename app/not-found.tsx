@@ -1,33 +1,19 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-(--page-gutter)">
-      <Empty>
-        <EmptyHeader>
-          <p className="num font-mono text-label text-muted-foreground">404</p>
-          <EmptyTitle className="font-display text-page-title text-foreground">
-            {/* layout-ok: a page outside the shell, with no layout header to hold its title */}
-            <h1>Page not found</h1>
-          </EmptyTitle>
-          <EmptyDescription>
-            We can&apos;t find the page you&apos;re looking for.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild variant="outline">
-            <Link href="/">Back to the home page</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <EmptyState
+        as="h1"
+        eyebrow="404"
+        title="Page not found"
+        description="We can’t find the page you’re looking for."
+        action={{
+          label: "Back to the home page",
+          href: "/",
+          variant: "outline",
+        }}
+      />
     </main>
   );
 }

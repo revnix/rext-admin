@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { Meter } from "@/components/ui/meter";
 import { cn } from "@/lib/utils";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -57,34 +58,6 @@ function describe(credits: CreditBalance) {
   };
 }
 
-function Bar({
-  share,
-  low,
-  className,
-}: {
-  share: number;
-  low: boolean;
-  className?: string;
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "block h-1 overflow-hidden rounded-full bg-surface-inset",
-        className,
-      )}
-    >
-      <span
-        className={cn(
-          "block h-full rounded-full",
-          low ? "bg-warning-600" : "bg-foreground",
-        )}
-        style={{ width: `${Math.round(share * 100)}%` }}
-      />
-    </span>
-  );
-}
-
 /**
  * The credits meter (design/app-language.md §5): in the header, the balance with a short bar; in
  * the sidebar's footer, the bar and "412 of 1,000 credits". Both open the usage page.
@@ -110,7 +83,9 @@ export function CreditMeter({
           className,
         )}
       >
-        {share !== null && <Bar share={share} low={low} className="w-10" />}
+        {share !== null && total !== null && (
+          <Meter value={left} max={total} low={low} className="w-10" />
+        )}
         <span>
           <span className="num font-medium text-foreground">
             {left.toLocaleString()}
@@ -140,7 +115,9 @@ export function CreditMeter({
         className,
       )}
     >
-      {share !== null && <Bar share={share} low={low} />}
+      {share !== null && total !== null && (
+        <Meter value={left} max={total} low={low} />
+      )}
       <span className="mt-2 block text-caption text-muted-foreground">
         <span className="num font-medium text-foreground">
           {left.toLocaleString()}
