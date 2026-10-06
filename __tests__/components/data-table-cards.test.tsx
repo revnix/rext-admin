@@ -12,8 +12,8 @@ const columns = column.columns([
 ]);
 const rows: Row[] = [{ id: "1", name: "Ada" }];
 
-function renderTable(cardsBelow?: "sm" | "lg") {
-  render(
+function renderTable(cardsWhen?: "phone" | "narrow") {
+  const { container } = render(
     <DataTable
       columns={columns}
       data={rows}
@@ -21,26 +21,29 @@ function renderTable(cardsBelow?: "sm" | "lg") {
       getRowLabel={(row) => row.name}
       caption="People"
       renderCard={(row) => <p>{row.name}</p>}
-      cardsBelow={cardsBelow}
+      cardsWhen={cardsWhen}
     />,
   );
+  const root = container.querySelector('[data-slot="data-table"]');
   const table = screen.getByRole("table").closest("div.hidden");
   const cards = screen.getByRole("list", { name: "People" });
-  return { table, cards };
+  return { root, table, cards };
 }
 
 describe("DataTable cards", () => {
-  it("draws cards under 640 px and the table above, by default", () => {
-    const { table, cards } = renderTable();
+  it("draws cards under 640 px of screen and the table above, by default", () => {
+    const { root, table, cards } = renderTable();
+    expect(root).not.toHaveClass("@container");
     expect(table).toHaveClass("sm:block");
     expect(cards).toHaveClass("sm:hidden");
   });
 
-  it("keeps the cards up to 1024 px for a table in a narrow column", () => {
-    const { table, cards } = renderTable("lg");
-    expect(table).toHaveClass("lg:block");
+  it("draws cards while the table's own box is narrow, whatever the screen", () => {
+    const { root, table, cards } = renderTable("narrow");
+    expect(root).toHaveClass("@container");
+    expect(table).toHaveClass("@xl:block");
     expect(table).not.toHaveClass("sm:block");
-    expect(cards).toHaveClass("lg:hidden");
+    expect(cards).toHaveClass("@xl:hidden");
     expect(cards).not.toHaveClass("sm:hidden");
   });
 });
