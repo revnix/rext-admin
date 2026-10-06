@@ -247,6 +247,7 @@ function CalendarBody() {
           <CalendarBoard
             workspaceId={workspaceId}
             workspaceSlug={workspaceSlug}
+            timeZone={timeZone}
           />
         </TabsContent>
         <TabsContent value="list">
