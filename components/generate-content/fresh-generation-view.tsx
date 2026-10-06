@@ -73,6 +73,7 @@ import { RunNotice } from "@/components/generate-content/run-notice";
 import {
   readRunFailedEvent,
   readStoppedRun,
+  runIsGoing,
   settlesRun,
 } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
@@ -390,6 +391,27 @@ export function FreshGenerationView({
   const cancelStream = () => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+  };
+
+  // The thread's latest run as the server has it, or null when it has none (or
+  // the check fails). The stream routes announce a run (`run/created`) with
+  // its first chunk, so a connection lost before that hides a run that goes on.
+  const readLatestRun = async (
+    runThreadId: string,
+  ): Promise<{ status?: string } | null> => {
+    try {
+      const response = await authenticatedFetch(
+        `/api/generate/${encodeURIComponent(runThreadId)}/status`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) return null;
+      const payload = (await response.json()) as {
+        run?: { status?: string } | null;
+      };
+      return payload.run ?? null;
+    } catch {
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -1685,7 +1707,12 @@ export function FreshGenerationView({
       );
 
       const settled = await processStream(stream);
-      if (!settled && runCreatedRef.current && !signal.aborted) {
+      // A new thread has no other run: any run on it is this one.
+      if (
+        !settled &&
+        !signal.aborted &&
+        (runCreatedRef.current || (await readLatestRun(newThreadId)))
+      ) {
         unsettledThreadId = newThreadId;
       }
     } finally {
@@ -1750,6 +1777,7 @@ export function FreshGenerationView({
       setRunError(null);
       let settled = false;
       let aborted = false;
+      let runGoing = false;
       for (let attempt = 0; attempt < 2; attempt++) {
         cancelStream();
         const controller = new AbortController();
@@ -1771,10 +1799,15 @@ export function FreshGenerationView({
 
         // An abort is deliberate (cancelled generation, unmount, a newer
         // stream taking over) — never retry over it.
-        if (runCreatedRef.current || aborted) break;
+        if (runCreatedRef.current || aborted || settled) break;
+        // No announcement, but the server may have started the run before the
+        // connection went: never resume a thread whose run is still going.
+        runGoing = runIsGoing((await readLatestRun(threadId))?.status);
+        if (runGoing) break;
       }
-      unsettled = runCreatedRef.current && !settled && !aborted;
-      return runCreatedRef.current;
+      const started = runCreatedRef.current || runGoing;
+      unsettled = started && !settled && !aborted;
+      return started;
     } finally {
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
