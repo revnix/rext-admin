@@ -1891,6 +1891,8 @@ export function FreshGenerationView({
         });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
+        // A new keyword or country is billed (change_keyword): the paywall if it can't start.
+        if (isReanalysis && !ensureCredits("change_keyword")) return;
         // Drop everything derived from the previous keyword/country so it can
         // neither be shown nor reused while the new analysis runs.
         if (isReanalysis) dispatch({ type: "RESET_FOR_REANALYSIS" });
@@ -2013,6 +2015,8 @@ export function FreshGenerationView({
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
         return;
       case "OUTLINE_REJECT_REASON": {
+        // Writing the outline again is billed (regenerate_outline).
+        if (!ensureCredits("regenerate_outline")) return;
         const requestedTargetWordCount = extractRequestedTargetWordCount(value);
         if (
           requestedTargetWordCount !== null &&
