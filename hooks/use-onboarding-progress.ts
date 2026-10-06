@@ -34,6 +34,11 @@ import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
  * ```
  */
 
+/** The tracked-milestones entry that records the completion event was sent. */
+const COMPLETION_ID = "onboarding-completed";
+/** The required milestones before the topic one was retired. */
+const LEGACY_REQUIRED = ["workspace", "topic", "content"];
+
 export interface OnboardingMilestone {
   id: string;
   label: string;
@@ -170,13 +175,13 @@ export function useOnboardingProgress(
     if (isLoading || isFetching) return;
 
     const tracked = new Set(local.getJSON<string[]>(trackedMilestonesKey, []));
-    let didTrackCompletion = false;
+    let changed = false;
 
     milestones.forEach((milestone) => {
       if (!milestone.completed || tracked.has(milestone.id)) return;
 
       tracked.add(milestone.id);
-      didTrackCompletion = true;
+      changed = true;
 
       analytics.track("onboarding_milestone_completed", {
         milestone_id: milestone.id,
@@ -187,16 +192,24 @@ export function useOnboardingProgress(
       });
     });
 
-    if (didTrackCompletion) {
-      local.setJSON(trackedMilestonesKey, Array.from(tracked));
+    // Completion is recorded on its own: retiring a milestone (the topic one) can complete
+    // onboarding without any new milestone. Before that, it was reported when workspace, topic
+    // and content were all tracked, so those users aren't counted twice.
+    const completionReported =
+      tracked.has(COMPLETION_ID) ||
+      LEGACY_REQUIRED.every((id) => tracked.has(id));
+    if (isComplete && !completionReported) {
+      tracked.add(COMPLETION_ID);
+      changed = true;
+      analytics.track("onboarding_completed", {
+        workspace_id: workspaceId,
+        user_id: user?.id,
+        completion_time_ms: Date.now(),
+      });
+    }
 
-      if (isComplete) {
-        analytics.track("onboarding_completed", {
-          workspace_id: workspaceId,
-          user_id: user?.id,
-          completion_time_ms: Date.now(),
-        });
-      }
+    if (changed) {
+      local.setJSON(trackedMilestonesKey, Array.from(tracked));
     }
   }, [
     milestones,
