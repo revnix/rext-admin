@@ -134,7 +134,18 @@ export interface DataTableProps<TData extends object> {
     row: TData,
     parts: { actions: ReactNode; select: ReactNode },
   ) => ReactNode;
+  /**
+   * Where the cards give way to the table: 640 px, or 1024 px for a table in a page's narrower
+   * column (a settings section beside its list of sections), which has under 560 px from 768 px.
+   */
+  cardsBelow?: "sm" | "lg";
 }
+
+/** The table and the cards, each shown on its side of `cardsBelow`. */
+const CARDS_BELOW = {
+  sm: { table: "hidden sm:block", cards: "sm:hidden" },
+  lg: { table: "hidden lg:block", cards: "lg:hidden" },
+} as const;
 
 /**
  * The one table for lists (plans/app/C-shell.md §2.4, research 06 §5.7), on TanStack Table v9: a
@@ -168,6 +179,7 @@ export function DataTable<TData extends object>({
   onRowClick,
   pageSizeOptions = DATA_TABLE_PAGE_SIZES,
   renderCard,
+  cardsBelow = "sm",
 }: DataTableProps<TData>) {
   const localState = useDataTableLocalState();
   const state = givenState ?? localState;
@@ -324,7 +336,7 @@ export function DataTable<TData extends object>({
   } else {
     body = (
       <>
-        <div className={cn(frame, renderCard && "hidden sm:block")}>
+        <div className={cn(frame, renderCard && CARDS_BELOW[cardsBelow].table)}>
           <ScrollingTable
             caption={caption}
             maxHeight={stickyHeader ? maxHeight : undefined}
@@ -425,7 +437,10 @@ export function DataTable<TData extends object>({
           </ScrollingTable>
         </div>
         {renderCard && (
-          <ul className="flex flex-col gap-2 sm:hidden" aria-label={caption}>
+          <ul
+            className={cn("flex flex-col gap-2", CARDS_BELOW[cardsBelow].cards)}
+            aria-label={caption}
+          >
             {isLoading
               ? showSkeleton &&
                 Array.from(
