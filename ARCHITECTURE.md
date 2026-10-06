@@ -36,6 +36,8 @@ app/
   api/auth/[...nextauth]    next-auth
   api/generate/**           the generation proxy: threads (start), [threadId]/{stream,join,resume,status,cancel}
   maintenance/              reachable only by typing the address
+  dev/                      development only (a production build answers 404): tokens/ (every token and its contrast) and
+                            primitives/ (every primitive in each variant and state, the five layouts)
 components/
   ui/                       the shadcn-based primitives, plus duplicates the rework retires (see AGENTS.md)
   shell/                    the shell: the frame, sidebar, switcher, header, credits meter, user menu, phone bottom bar
@@ -102,6 +104,9 @@ One component each (design/app-language.md §8), in `components/ui/`:
 - `ConfirmationDialog` and `useConfirmation` ask before an action, with buttons that name it and its opposite ("Delete article", "Keep article"); a `Dialog` takes the whole screen under 640 px.
 
 `alert.tsx` stays only for `components/account-settings/privacy-settings.tsx`, which rext-admin#416 is rewriting; it goes when that last user moves (C5b #449).
+
+
+Every primitive renders at `/dev/primitives` (development only), in its variants and states; a change to one is looked at there first, at 390, 820 and 1440 px.
 
 ## Data
 
