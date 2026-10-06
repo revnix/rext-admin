@@ -1297,8 +1297,8 @@ function ContentEditorInner(props: ContentEditorProps) {
         </aside>
       </div>
 
-      {/* Mobile Responsive Drawers */}
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
+      {/* Mobile Responsive Drawers: above the phone's bottom bar, which shows under 1024 px. */}
+      <div className="fixed bottom-[calc(var(--bottom-bar-height,0px)+--spacing(4))] lg:bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
         {sidebarSections && sidebarSections.length > 0 && (
           <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
