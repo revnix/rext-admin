@@ -141,7 +141,7 @@ export function LibraryView() {
         emptyState={
           <EmptyState
             title="No keywords yet"
-            description="Every keyword you analyze is saved here, so an article can start from it later without researching it again."
+            description="Every keyword you analyze is saved here, so you can start an article from it later."
             action={
               canGenerate
                 ? {

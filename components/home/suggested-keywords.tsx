@@ -11,8 +11,8 @@ import { workspaceRoutes } from "@/lib/routes";
 
 /**
  * Suggested next keywords (plans/app/D-pages.md §2.1): keywords already researched that no article is
- * written on yet, the most searched first. "Plan" starts an article from the keyword's research, as
- * the Library's "Use keyword" does, without researching it again.
+ * written on yet, the most searched first. "Plan" starts an article from the saved keyword, as the
+ * Library's "Use keyword" does; the run checks the search results again.
  */
 export function SuggestedKeywords({
   slug,
