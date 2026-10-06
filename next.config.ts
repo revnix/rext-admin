@@ -183,6 +183,52 @@ const nextConfig: NextConfig = {
         destination: "/admin/users",
         permanent: false,
       },
+      // Legacy pages removed on 2026-10-06 (D19): an old bookmark lands on the page
+      // that does the job now.
+      {
+        // Lifetime licences: no lifetime plan exists; the plan is in Subscription.
+        source: "/licenses",
+        destination: "/settings/subscription",
+        permanent: false,
+      },
+      {
+        // Sessions are a tab of Security.
+        source: "/settings/sessions",
+        destination: "/settings/security",
+        permanent: false,
+      },
+      {
+        // Deleted workspaces are restored from the account's trash.
+        source: "/w/:workspaceSlug/settings/trash",
+        destination: "/settings/trash",
+        permanent: false,
+      },
+      {
+        source: "/admin/analytics/subscriptions",
+        destination: "/admin/subscriptions",
+        permanent: false,
+      },
+      {
+        source: "/admin/analytics/invitations",
+        destination: "/admin/platform/invitations",
+        permanent: false,
+      },
+      {
+        source: "/admin/analytics",
+        destination: "/admin",
+        permanent: false,
+      },
+      {
+        source: "/admin/statistics",
+        destination: "/admin",
+        permanent: false,
+      },
+      {
+        // Email templates were never wired to a working API; email reporting stays.
+        source: "/admin/email-templates",
+        destination: "/admin/email-analytics",
+        permanent: false,
+      },
     ];
   },
 };

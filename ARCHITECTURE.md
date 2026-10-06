@@ -20,14 +20,14 @@ app/
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
   w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar),
                             personas (+ [personaId], create), brand_voice, members, integrations, knowledge (+ [kbId]),
-                            topics (+ [id], create, create/results), settings (+ trash); page.tsx redirects to /
+                            topics (+ [id], create, create/results), settings; page.tsx redirects to /
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
-  settings/                 the account hub, security, sessions, subscription, trash (billing redirects to subscription)
-  subscription/, billing/, usage/, licenses/, pricing/, checkout/{success,cancel}, profile/ (redirects to /settings)
+  settings/                 the account hub, security (with sessions), subscription, trash (billing redirects to subscription)
+  subscription/, billing/, usage/, pricing/, checkout/{success,cancel}, profile/ (redirects to /settings)
   login/, signup/, forgot-password/, reset-password/, verify-email/, account-recovery/,
   invitations/accept/, accept-invitation/, accept-admin-invitation/      the auth pages, outside the shell
   legal/                    terms, privacy, refund policy, subscription terms
-  admin/                    the 16 super-admin pages (guarded in proxy.ts and app/admin/layout.tsx)
+  admin/                    the 12 super-admin pages (guarded in proxy.ts and app/admin/layout.tsx)
   topics/                   no route: the client components and the one server action the /w/[slug]/topics pages use
   api/auth/[...nextauth]    next-auth
   api/generate/**           the generation proxy: threads (start), [threadId]/{stream,join,resume,status,cancel}
@@ -51,7 +51,7 @@ types/                      the API types, written by hand (no generated client)
 
 ## The shell
 
-The route layouts mount the shell, so it stays mounted while pages change: `app/w/layout.tsx` (every /w page), `app/(home)/layout.tsx` (/), and the layouts of settings, subscription, billing, usage, licenses, legal and admin each render `ShellLayout` (`components/shell/shell-layout.tsx`). It reads the sidebar's saved state from the `sidebar_state` cookie on the server and renders `AppShell`: shadcn's sidebar (`components/ui/sidebar/`), the header, the impersonation banner, the page in `main#main-content`, the background-generation dock, and under 1024 px a bottom bar. A page never mounts the shell; going from one of these areas to another mounts it again, which loses nothing (the sidebar state is in the cookie, the data in the query cache).
+The route layouts mount the shell, so it stays mounted while pages change: `app/w/layout.tsx` (every /w page), `app/(home)/layout.tsx` (/), and the layouts of settings, subscription, billing, usage, legal and admin each render `ShellLayout` (`components/shell/shell-layout.tsx`). It reads the sidebar's saved state from the `sidebar_state` cookie on the server and renders `AppShell`: shadcn's sidebar (`components/ui/sidebar/`), the header, the impersonation banner, the page in `main#main-content`, the background-generation dock, and under 1024 px a bottom bar. A page never mounts the shell; going from one of these areas to another mounts it again, which loses nothing (the sidebar state is in the cookie, the data in the query cache).
 
 - **The sidebar** (`app-sidebar.tsx`) follows `design/app-language.md` §5: the wordmark, the switcher (`workspace-switcher.tsx`), Generate (shortcut C, `use-generate-shortcut.ts`), Home, Content with a drafts badge, Keywords (the keyword library, which sits under Generate in the URL), Calendar, the Setup group, Settings, and the admin group for the roles that hold it; the credits meter and the user menu at its foot. The items, their permissions and the current page come from `use-shell-navigation.ts`, which the bottom bar reads too; a new page under a workspace is marked by the longest item URL its path starts with.
 - **Widths:** one cutoff, 1024 px (`hooks/use-mobile.ts`, Tailwind's `lg`): below it the sidebar is a sheet. From 1024 to 1279 px it shows icons only until the person clicks the trigger; the choice ("expanded" or "collapsed") then holds at every width. In the sidebar, `data-collapse="hide"` removes an element in the icon rail and `data-collapse="label"` keeps it for screen readers only.
@@ -62,7 +62,7 @@ The route layouts mount the shell, so it stays mounted while pages change: `app/
 
 Every page inside the shell renders one of the five layouts of `design/app-language.md` §6 from `components/layouts/`, in its `page.tsx` or in its area's `layout.tsx`. Each draws the page's frame (gutters of 16, 24 and 32 px; `--content-max` wide, or the full width for a working surface) and its header (`PageHeader`: the title as the page's one h1 in the page-title role, an optional status, the description, the actions on the right):
 
-- **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, keywords and topics, knowledge, integrations, members, licenses, all workspaces.
+- **`ListPage`**: lists of things; the header, an optional `toolbar`, then the table or card grid. The admin pages, content, personas, keywords and topics, knowledge, integrations, members, all workspaces.
 - **`DetailPage`**: one thing; an optional `aside` of facts beside the main column from 1024 px. Home, a persona, a topic (through `components/detail-page-wrapper.tsx`), billing, subscription, usage, legal.
 - **`FormPage`**: create and edit; the form in one column of `--form-max` (560 px). Creating a workspace or a persona. Task C4 brings the field set and the sticky submit row.
 - **`SettingsPage`**: rendered by a settings area's `layout.tsx` with its `sections` (plain `{ label, href }`, so a server layout can pass them): a list on the left from 768 px, a select on a phone, the current section by the longest href the path starts with; each section at most 48 rem wide. Account settings (`app/settings`), workspace settings and brand voice (no list of sections until D5 joins them).

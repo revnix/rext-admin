@@ -27,7 +27,6 @@ export const settingsRoutes = {
   root: "/settings",
   security: "/settings/security",
   trash: "/settings/trash",
-  billing: "/settings/billing",
   subscription: "/settings/subscription",
 } as const satisfies Record<string, Route>;
 
@@ -98,10 +97,6 @@ export const workspaceRoutes = {
    */
   settings: {
     root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-    billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
-    integrations: (workspaceSlug: string) =>
-      `/w/${workspaceSlug}/settings/integrations`,
-    trash: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/trash`,
   },
 } as const;
 
@@ -188,39 +183,3 @@ export function buildWorkspacePath(
     ? routeFn(workspaceSlug)
     : workspaceRoutes.topics(workspaceSlug);
 }
-
-/**
- * Validate workspace ID format (UUID v4)
- *
- * @param workspaceId - The workspace ID to validate
- * @returns True if valid UUID format
- */
-export function isValidWorkspaceId(workspaceId: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(workspaceId);
-}
-
-/**
- * Get workspace detail tab URL
- *
- * @param workspaceId - The workspace ID
- * @param tab - The tab name (overview, knowledge, members)
- * @returns The workspace detail URL with tab parameter
- */
-export function getWorkspaceTabUrl(
-  workspaceId: string,
-  tab: "overview" | "knowledge" | "members",
-): string {
-  return `/w/${workspaceId}?tab=${tab}`;
-}
-
-/**
- * Legacy route helpers for backward compatibility during migration
- * @deprecated Use workspaceRoutes instead
- */
-export const legacyRoutes = {
-  workspaceDetail: (workspaceId: string) => `/workspaces/${workspaceId}`,
-  topics: () => "/topics",
-  content: () => "/content",
-} as const;

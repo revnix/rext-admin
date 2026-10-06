@@ -31,9 +31,7 @@
 
 import {
   createAuditLogsNamespace,
-  createEmailTemplatesNamespace,
   createImpersonationNamespace,
-  type EmailTemplate,
 } from "./admin";
 import { createAdminAccountAllowlistNamespace } from "./admin-account-allowlist";
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
@@ -42,15 +40,11 @@ import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
 import { createAccountRecoveryNamespace } from "./account-recovery";
 
-// Re-export types for convenience
-export type { EmailTemplate };
-
 import { createContentNamespace } from "./content";
 import { ApiClient } from "./core";
 import { createDashboardNamespace } from "./dashboard";
 import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createKnowledgeNamespace } from "./knowledge";
-import { createLicensesClient } from "./licenses";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
 import { createPersonasNamespace } from "./personas";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
@@ -93,7 +87,6 @@ function createApiClient() {
     invitations: createInvitationsNamespace(client),
     roles: createRolesNamespace(client),
     subscriptions: createSubscriptionsNamespace(client),
-    licenses: createLicensesClient(client),
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
     personas: createPersonasNamespace(client),
@@ -102,7 +95,6 @@ function createApiClient() {
     users: createUsersNamespace(client),
     impersonation: createImpersonationNamespace(client),
     auditLogs: createAuditLogsNamespace(client),
-    emailTemplates: createEmailTemplatesNamespace(client),
     adminAnalytics: createAdminAnalyticsNamespace(client),
     adminWebhooks: createAdminWebhooksNamespace(client),
     adminRefunds: createAdminRefundsNamespace(client),
@@ -159,7 +151,6 @@ function createApiClient() {
  * // Admin
  * await apiClient.impersonation.start(userId);
  * const logs = await apiClient.auditLogs.getMyLogs();
- * const templates = await apiClient.emailTemplates.list(workspaceId);
  *
  * // Settings
  * const prefs = await apiClient.notifications.getPreferences();

@@ -14,9 +14,6 @@ export { BrandVoiceRefreshControl } from "./brand-voice-refresh-control";
 export { EditableBrandVoiceCard } from "./editable-brand-voice-card";
 export { WorkspaceBrandVoiceForm } from "./workspace-brand-voice-form";
 
-// Email Templates
-export { EmailTemplateEditor } from "./email-template-editor";
-
 // Knowledge Management
 export { WorkspaceAddKnowledgeDialog } from "./workspace-add-knowledge-dialog";
 export { WorkspaceCreateKnowledgeBaseDialog } from "./workspace-create-knowledge-base-dialog";
@@ -46,7 +43,6 @@ export { PersonaSelection } from "./persona-selection";
 // Workspace Core
 export { WorkspaceCreateWizard } from "./workspace-create-wizard";
 export { WorkspaceDeleteDialog } from "./workspace-delete-dialog";
-export { WorkspaceEmptyState } from "./workspace-empty-state";
 export { WorkspaceOverviewForm } from "./workspace-overview-form";
 export { WorkspaceProgressTimeline } from "./workspace-progress-timeline";
 export {

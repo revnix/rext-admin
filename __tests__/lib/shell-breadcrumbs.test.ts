@@ -70,8 +70,8 @@ describe("buildBreadcrumbs", () => {
       { label: "Legal" },
       { label: "Terms of service" },
     ]);
-    expect(buildBreadcrumbs("/admin/analytics/invitations")[1]).toEqual({
-      label: "Analytics",
+    expect(buildBreadcrumbs("/admin/platform/invitations")[1]).toEqual({
+      label: "Platform",
     });
   });
 
