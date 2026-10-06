@@ -34,6 +34,9 @@ jest.mock("@/lib/password-utils", () => ({
 
 const register = jest.fn();
 const resendVerification = jest.fn();
+const listWorkspaces = jest.fn();
+const request = jest.fn();
+jest.mock("@/lib/auth-utils", () => ({ getAuthHeaders: async () => ({}) }));
 jest.mock("@/lib/api-client", () => {
   const actual = jest.requireActual("@/lib/api-client");
   return {
@@ -43,6 +46,8 @@ jest.mock("@/lib/api-client", () => {
       profile: {
         resendVerification: (email: string) => resendVerification(email),
       },
+      workspaces: { list: () => listWorkspaces() },
+      request: (path: string, init?: unknown) => request(path, init),
     },
   };
 });
@@ -155,5 +160,26 @@ describe("SignupForm, an account that must verify its email", () => {
     expect(
       screen.queryByRole("heading", { name: "Check your email" }),
     ).toBeNull();
+  });
+
+  it("logs a verified account in and opens its workspace, with no audit write of its own", async () => {
+    register.mockResolvedValue({
+      user: { id: "u1", email: EMAIL, email_verified: true },
+      message: "ok",
+    });
+    signIn.mockResolvedValue({ ok: true, error: undefined });
+    listWorkspaces.mockResolvedValue({
+      workspaces: [{ slug: "acme", name: "Acme" }],
+    });
+    await signUp();
+
+    await screen.findByRole("button", { name: "Create account" });
+    expect(push).toHaveBeenCalledWith("/w/acme/generate_content");
+    // The backend's register endpoint records user.create; the form adds no second entry.
+    expect(request).not.toHaveBeenCalled();
+    expect(listWorkspaces).toHaveBeenCalledTimes(1);
+    expect(signIn.mock.invocationCallOrder[0]).toBeLessThan(
+      listWorkspaces.mock.invocationCallOrder[0],
+    );
   });
 });

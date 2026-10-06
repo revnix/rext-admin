@@ -168,28 +168,8 @@ export function SignupForm({
           }
         }
 
-        // Record account creation audit log
-        try {
-          // Attempt to get profile ID for the log
-          const profileRes = await apiClient.request<{
-            profile?: { id?: string };
-            id?: string;
-          }>("/api/v1/user/profile", { method: "GET" });
-          const userId = profileRes?.profile?.id ?? profileRes?.id;
-
-          await apiClient.request("/api/v1/audit-logs/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "user.create",
-              resource_type: "user",
-              resource_id: userId,
-              status: "success",
-            }),
-          });
-        } catch (e) {
-          log.error("[AuditLog] Failed to log user.create", e);
-        }
+        // No audit write here: the backend's register endpoints record user.create themselves,
+        // for an account that must verify its email too.
 
         // Fetch workspaces to determine redirect
         try {
