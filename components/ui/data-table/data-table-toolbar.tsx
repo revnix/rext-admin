@@ -31,6 +31,8 @@ export interface DataTableFacet {
    * holds and the ones chosen. Without it the values come from the rows themselves.
    */
   options?: readonly { value: string; label: string }[];
+  /** One value at a time, for a server that filters by a single value. */
+  single?: boolean;
 }
 
 export function DataTableSearch({
@@ -61,9 +63,15 @@ export function DataTableSearch({
 export function DataTableFacetFilter<TData extends object>({
   column,
   facet,
+  onServer = false,
 }: {
   column: Column<DataTableFeatures, TData>;
   facet: DataTableFacet;
+  /**
+   * The server filters (`manual`): the rows are one page, so their counts would mislead. Every
+   * option is offered, without a count.
+   */
+  onServer?: boolean;
 }) {
   const counts = column.getFacetedUniqueValues();
   const selected = new Set(
@@ -74,7 +82,8 @@ export function DataTableFacetFilter<TData extends object>({
   // The values some row holds, and any chosen one no row holds now, so it can still be unticked.
   const options = facet.options
     ? facet.options.filter(
-        (option) => counts.has(option.value) || selected.has(option.value),
+        (option) =>
+          onServer || counts.has(option.value) || selected.has(option.value),
       )
     : [...new Set([...counts.keys(), ...selected])]
         .filter((value): value is string => typeof value === "string")
@@ -82,6 +91,10 @@ export function DataTableFacetFilter<TData extends object>({
         .map((value) => ({ value, label: value }));
 
   const toggle = (value: string, checked: boolean) => {
+    if (facet.single) {
+      column.setFilterValue(checked ? [value] : undefined);
+      return;
+    }
     const next = new Set(selected);
     if (checked) next.add(value);
     else next.delete(value);
@@ -115,9 +128,11 @@ export function DataTableFacetFilter<TData extends object>({
             onSelect={(event) => event.preventDefault()}
           >
             <span className="flex-1">{option.label}</span>
-            <span className="num text-xs text-muted-foreground">
-              {counts.get(option.value) ?? 0}
-            </span>
+            {!onServer && (
+              <span className="num text-xs text-muted-foreground">
+                {counts.get(option.value) ?? 0}
+              </span>
+            )}
           </DropdownMenuCheckboxItem>
         ))}
         {selected.size > 0 && (

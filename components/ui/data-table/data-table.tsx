@@ -246,6 +246,7 @@ export function DataTable<TData extends object>({
             key={facet.column}
             column={column}
             facet={facet}
+            onServer={Boolean(manual)}
           />
         ) : null;
       })}
