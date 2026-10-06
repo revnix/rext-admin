@@ -5,9 +5,9 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { LibraryKeywordDetail } from "@/components/generate-content/library-detail";
+import { LibraryKeywordDetail } from "@/components/keywords/library-detail";
 import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
-import { WorkingSurface } from "@/components/layouts";
+import { DetailPage } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,8 +37,8 @@ function routeKey(segment: string): string {
 
 /**
  * One researched keyword from the library: its card and related keywords, the search results' top
- * ten beside them (a sheet on narrow screens), and "Use this keyword", which starts an article from
- * the saved research with the intent chosen here.
+ * ten beside them (beneath them on narrow screens), and "Use this keyword", which starts an article
+ * from the saved research with the intent chosen here.
  */
 export default function Page() {
   const params = useParams<{ key: string }>();
@@ -61,26 +61,26 @@ export default function Page() {
 
   if (loading) {
     return (
-      <WorkingSurface title="Keyword">
+      <DetailPage title="Keyword">
         {showSkeleton && <Skeleton className="h-48 w-full" />}
-      </WorkingSurface>
+      </DetailPage>
     );
   }
 
   const libraryHref = workspaceRoutes.keywordLibrary(workspaceSlug) as Route;
   if (!canRead) {
     return (
-      <WorkingSurface title="Keyword">
+      <DetailPage title="Keyword">
         <EmptyState
           title="You can't see this workspace's keywords"
           description="Ask a workspace admin for access to its content."
         />
-      </WorkingSurface>
+      </DetailPage>
     );
   }
   if (!item.data) {
     return (
-      <WorkingSurface title="Keyword">
+      <DetailPage title="Keyword">
         <EmptyState
           title={
             item.error
@@ -94,14 +94,14 @@ export default function Page() {
           }
           action={{ label: "Back to keywords", href: libraryHref }}
         />
-      </WorkingSurface>
+      </DetailPage>
     );
   }
 
   const { value } = item.data;
   const researched = dateFormat.short(value.timestamp);
   return (
-    <WorkingSurface
+    <DetailPage
       title={value.original_query}
       description={researched ? `Researched ${researched}` : undefined}
       actions={
@@ -117,20 +117,17 @@ export default function Page() {
           </Button>
         ) : undefined
       }
-      side={
+      aside={
         <SerpSnapshot
           results={serpResultsFromOrganic(value.top_organic_results)}
-          heading={null}
         />
       }
-      sideTitle="Top search results"
-      showSideTitle
     >
       <LibraryKeywordDetail
         entry={item.data}
         intent={intent}
         onIntentChange={setIntent}
       />
-    </WorkingSurface>
+    </DetailPage>
   );
 }

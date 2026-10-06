@@ -10,13 +10,17 @@ export interface Crumb {
   href?: string;
 }
 
-/** The workspace's sections, with the pages under them. */
+/**
+ * The workspace's sections, with the pages under them. `record` names what every other page under a
+ * section is, where its records are keyed by text rather than an id (a keyword in the library).
+ */
 const WORKSPACE_SECTIONS: Record<
   string,
-  { label: string; pages?: Record<string, string> }
+  { label: string; pages?: Record<string, string>; record?: string }
 > = {
   generate_content: { label: "Generate" },
   content: { label: "Content" },
+  keywords: { label: "Keywords", record: "Keyword" },
   personas: { label: "Personas", pages: { create: "New persona" } },
   integrations: { label: "Integrations" },
   settings: {
@@ -38,12 +42,6 @@ const WORKSPACE_DETAIL: Record<string, string> = {
 /** Pages that live under another section in the URL but are items of their own in the sidebar. */
 const OWN_ITEMS: Record<string, string> = {
   "content/calendar": "Calendar",
-  "generate_content/library": "Keywords",
-};
-
-/** What a record under one of those items is. */
-const OWN_ITEM_DETAIL: Record<string, string> = {
-  "generate_content/library": "Keyword",
 };
 
 /** Pages outside a workspace: the first segment, then the pages under it. */
@@ -132,13 +130,6 @@ function workspaceTrail(
   const own = pages[0] && OWN_ITEMS[`${section}/${pages[0]}`];
   if (own) {
     trail.push({ label: own, path: `${base}/${section}/${pages[0]}` });
-    // One of the item's own records: a keyword in the library.
-    if (pages[1]) {
-      trail.push({
-        label: OWN_ITEM_DETAIL[`${section}/${pages[0]}`] ?? "Details",
-        path: `${base}/${section}/${pages[0]}/${pages[1]}`,
-      });
-    }
     return trail;
   }
 
@@ -153,6 +144,7 @@ function workspaceTrail(
     path += `/${page}`;
     const label =
       known?.pages?.[page] ??
+      known?.record ??
       (ID.test(page)
         ? (WORKSPACE_DETAIL[section] ?? "Details")
         : humanize(page));

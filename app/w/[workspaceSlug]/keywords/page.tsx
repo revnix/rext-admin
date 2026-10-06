@@ -1,6 +1,6 @@
 "use client";
 
-import { LibraryView } from "@/components/generate-content/library-view";
+import { LibraryView } from "@/components/keywords/library-view";
 import { ListPage } from "@/components/layouts";
 
 export default function Page() {

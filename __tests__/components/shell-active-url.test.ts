@@ -4,7 +4,7 @@ const URLS = [
   "/",
   "/w/acme/content",
   "/w/acme/generate_content",
-  "/w/acme/generate_content/library",
+  "/w/acme/keywords",
   "/w/acme/content/calendar",
   "/w/acme/settings",
   "/w/acme/settings/members",
@@ -26,9 +26,10 @@ describe("findActiveUrl", () => {
     );
   });
 
-  it("gives the keyword library to Keywords and the flow to Generate", () => {
-    expect(findActiveUrl("/w/acme/generate_content/library", URLS)).toBe(
-      "/w/acme/generate_content/library",
+  it("gives the keyword library and a keyword's page to Keywords, the flow to Generate", () => {
+    expect(findActiveUrl("/w/acme/keywords", URLS)).toBe("/w/acme/keywords");
+    expect(findActiveUrl("/w/acme/keywords/seo%20tools", URLS)).toBe(
+      "/w/acme/keywords",
     );
     expect(findActiveUrl("/w/acme/generate_content", URLS)).toBe(
       "/w/acme/generate_content",

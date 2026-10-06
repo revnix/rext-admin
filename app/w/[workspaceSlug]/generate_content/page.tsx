@@ -33,7 +33,7 @@ import { useBackgroundGenerationStore } from "@/stores/background-generation-sto
 type PageView = "selection" | "fresh" | "library";
 
 export default function Page() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const router = useRouter();
   const { isLoading: isPermLoading } = useWorkspacePermission(
     CONTENT_PERMISSIONS.READ,
@@ -121,7 +121,7 @@ export default function Page() {
 
   const handlePickFromLibrary = () => {
     setView("library");
-    router.push(`/w/${workspace?.slug}/generate_content/library` as Route);
+    router.push(workspaceRoutes.keywordLibrary(workspaceSlug) as Route);
   };
 
   const handleBackToSelection = () => {
