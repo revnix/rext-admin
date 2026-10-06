@@ -34,9 +34,6 @@ const nextConfig: NextConfig = {
       "react-hook-form", // Tree-shake validators
       "react-day-picker", // Only load needed components
       "cmdk", // Command palette library
-
-      // Utilities
-      "canvas-confetti", // Only load when needed
     ],
   },
 
