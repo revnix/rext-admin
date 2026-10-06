@@ -194,20 +194,21 @@ function TypeCard({
         />
         <span
           id={`${id}-label`}
-          className="flex-1 text-section text-foreground"
+          className="min-w-0 flex-1 text-section text-foreground"
         >
           {contentTypeLabel(type)}
           {recommended && <span className="sr-only"> (recommended)</span>}
         </span>
-        {recommended && (
-          <span aria-hidden="true" className={badgeVariants()}>
-            Recommended
-          </span>
-        )}
         {selected && (
-          <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          <Check aria-hidden="true" className="mt-1 size-4 shrink-0" />
         )}
       </span>
+      {/* Its own line, so a narrow card never squeezes the name. */}
+      {recommended && (
+        <span aria-hidden="true" className={badgeVariants()}>
+          Recommended
+        </span>
+      )}
       <span
         id={`${id}-text`}
         className="block text-table text-muted-foreground"
