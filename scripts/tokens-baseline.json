@@ -438,7 +438,7 @@
   },
   "components/ui/lexical-editor.tsx": {
     "stock-palette": 9,
-    "off-scale": 2,
+    "off-scale": 1,
     "small-type": 1
   },
   "components/ui/loading-indicator.tsx": {
