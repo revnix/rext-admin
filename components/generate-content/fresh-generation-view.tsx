@@ -2160,7 +2160,6 @@ export function FreshGenerationView({
   const instructionViewMap: Record<string, React.ReactNode> = {
     "keyword Selection": isLibrary ? null : (
       <SuggestionsSection
-        instruction={displayedInstruction}
         primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}

@@ -55,6 +55,10 @@ export const workspaceRoutes = {
   content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
   generate_content: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/generate_content`,
+  keywordLibrary: (workspaceSlug: string) =>
+    `/w/${workspaceSlug}/generate_content/library`,
+  keywordLibraryItem: (workspaceSlug: string, key: string) =>
+    `/w/${workspaceSlug}/generate_content/library/${encodeURIComponent(key)}`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/${contentId}`,
   content_calendar: (workspaceSlug: string) =>
