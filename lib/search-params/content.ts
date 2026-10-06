@@ -1,4 +1,5 @@
 import { createLoader, parseAsArrayOf, parseAsString } from "nuqs/server";
+import type { ContentStatus } from "@/types/content";
 import {
   dataTableParams,
   parseAsFacet,
@@ -14,7 +15,7 @@ import {
  * `nuqs/server`, which carries no "use client" directive.
  */
 
-/** The backend's content states (its transition table), trash excluded. */
+/** The backend's content states (`ContentStatus`), the trash excluded. */
 export const CONTENT_LIST_STATUSES = [
   "draft",
   "generating",
@@ -24,7 +25,7 @@ export const CONTENT_LIST_STATUSES = [
   "published",
   "failed",
   "archived",
-] as const;
+] as const satisfies readonly ContentStatus[];
 
 export type ContentListStatus = (typeof CONTENT_LIST_STATUSES)[number];
 
