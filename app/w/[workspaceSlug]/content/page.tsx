@@ -82,18 +82,30 @@ function typeLabel(type: string): string {
   return words ? words[0].toUpperCase() + words.slice(1).toLowerCase() : "";
 }
 
-/** The sites an article went out to: each publishing result's site, else WordPress for an older row. */
+/**
+ * The sites an article went out to: each publishing result's site by name, the unnamed ones counted by
+ * their site id, else WordPress for an older row.
+ */
 function publishedTo(item: ContentItem): string[] {
-  const sites = (item.publishing_results ?? [])
-    .filter(
-      (result) =>
-        result.external_url ||
-        result.status === "published" ||
-        result.status === "synced",
-    )
-    .map((result) => result.site_name || "A connected site");
+  const sent = (item.publishing_results ?? []).filter(
+    (result) =>
+      result.external_url ||
+      result.status === "published" ||
+      result.status === "synced",
+  );
+  const named = new Set(
+    sent.flatMap((result) => (result.site_name ? [result.site_name] : [])),
+  );
+  const unnamed = new Set(
+    sent.filter((result) => !result.site_name).map((result) => result.site_id),
+  ).size;
+  const sites = [...named];
+  if (unnamed > 0)
+    sites.push(
+      unnamed === 1 ? "A connected site" : `${unnamed} connected sites`,
+    );
   if (sites.length === 0 && item.wordpress_url) sites.push("WordPress");
-  return [...new Set(sites)];
+  return sites;
 }
 
 function updatedAt(item: ContentItem): string {
@@ -101,11 +113,12 @@ function updatedAt(item: ContentItem): string {
 }
 
 /** The workspace's persona names by id, for the module-scope columns to read. */
-const PersonaNames = createContext<ReadonlyMap<string, string>>(new Map());
+/** `null` until the workspace's personas have loaded, so a missing name isn't taken for a removed one. */
+const PersonaNames = createContext<ReadonlyMap<string, string> | null>(null);
 
 function PersonaName({ id }: { id: string }) {
   const names = useContext(PersonaNames);
-  if (!id) return UNKNOWN;
+  if (!id || !names) return UNKNOWN;
   return (
     <span className="truncate">{names.get(id) ?? "A removed persona"}</span>
   );
@@ -282,7 +295,9 @@ export default function WorkspaceContentPage() {
     error,
   } = useAllContent(workspaceId);
 
-  const { data: personaList } = usePersonas(workspaceId || null);
+  const { data: personaList, isSuccess: personasLoaded } = usePersonas(
+    workspaceId || null,
+  );
   const personaNames = useMemo(
     () =>
       new Map(
@@ -421,7 +436,7 @@ export default function WorkspaceContentPage() {
             </Card>
           }
         >
-          <PersonaNames.Provider value={personaNames}>
+          <PersonaNames.Provider value={personasLoaded ? personaNames : null}>
             <DataTable
               caption="Content"
               columns={columns}
