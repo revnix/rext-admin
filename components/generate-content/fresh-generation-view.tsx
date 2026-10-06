@@ -108,6 +108,8 @@ interface FreshGenerationViewProps {
   initialKeyword?: string;
   initialIntent?: string;
   isLibrary?: boolean;
+  /** The Library item a Library start names (its store key); the backend loads its research. */
+  libraryKey?: string;
   backgroundThreadId?: string;
 }
 
@@ -246,6 +248,7 @@ export function FreshGenerationView({
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
+  libraryKey,
   backgroundThreadId,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
@@ -1576,7 +1579,22 @@ export function FreshGenerationView({
       outline.resetStream();
       content.resetStream();
 
-      const newThreadId = await createThread();
+      if (!workspaceId) {
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        return;
+      }
+      let newThreadId: string;
+      try {
+        newThreadId = await createThread(workspaceId);
+      } catch (error) {
+        // The server refused the run (a role without content.create) or could
+        // not start it: say so in the run notice instead of a spinner.
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        setRunError(
+          error instanceof Error ? error.message : "This run could not start.",
+        );
+        return;
+      }
       if (!newThreadId) {
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         return;
@@ -1641,6 +1659,7 @@ export function FreshGenerationView({
               user_id: user?.id,
               workspace_id: workspaceId ?? undefined,
               is_library: isLibrary,
+              ...(isLibrary && libraryKey ? { library_key: libraryKey } : {}),
             },
             ...(selectedIntent || _initialIntent
               ? { final_intent_type: selectedIntent || _initialIntent }

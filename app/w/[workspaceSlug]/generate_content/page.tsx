@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
+import { RunNotice } from "@/components/generate-content/run-notice";
 import { SelectionView } from "@/components/generate-content/selection-view";
 import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
@@ -16,9 +17,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
+import {
+  findLibraryItem,
+  type LibraryStart,
+} from "@/lib/generate-content/library-item";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -35,11 +41,20 @@ export default function Page() {
   );
   const { hasPermission: canCreate, isLoading: isCreatePermLoading } =
     useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
+  const { user } = useAuthSession();
   const urlParams = useSearchParams();
-  const libraryKeyword = urlParams.get("library");
+  // `?library=` names a Library item by its store key (E17). The page reads the
+  // item before starting: its keyword is what the run starts from, and a key
+  // that isn't in the user's Library (or typed text) starts nothing.
+  const libraryKey = urlParams.get("library");
+  const [libraryStart, setLibraryStart] = useState<
+    LibraryStart | "missing" | null
+  >(null);
+  const libraryKeyword =
+    libraryStart && libraryStart !== "missing" ? libraryStart.keyword : null;
   const libraryIntent = urlParams.get("intent");
   const backgroundThreadId = urlParams.get("thread");
-  const isLibrary = libraryKeyword !== null;
+  const isLibrary = libraryKey !== null;
   const backgroundJobsHydrated = useBackgroundGenerationStore(
     (state) => state.hasHydrated,
   );
@@ -49,6 +64,20 @@ export default function Page() {
   const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
     string | undefined
   >(libraryKeyword ?? undefined);
+
+  useEffect(() => {
+    if (!libraryKey || !user?.id || !workspaceId) {
+      setLibraryStart(null);
+      return;
+    }
+    let cancelled = false;
+    void findLibraryItem(libraryKey, user.id, workspaceId).then((item) => {
+      if (!cancelled) setLibraryStart(item ?? "missing");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryKey, user?.id, workspaceId]);
 
   useEffect(() => {
     if (libraryKeyword) {
@@ -128,7 +157,14 @@ export default function Page() {
   // permanent spinner while anything was still generating.
   const isResolvingActiveGeneration = !backgroundJobsHydrated;
 
-  if (!workspace?.id || isPermLoading || isResolvingActiveGeneration) {
+  const isResolvingLibraryItem = libraryKey !== null && libraryStart === null;
+
+  if (
+    !workspace?.id ||
+    isPermLoading ||
+    isResolvingActiveGeneration ||
+    isResolvingLibraryItem
+  ) {
     return (
       <WorkingSurface title="Generate" hidden>
         <div className="space-y-4 text-center">
@@ -172,14 +208,28 @@ export default function Page() {
               isPermLoading={isCreatePermLoading}
             />
           )}
-          {view === "fresh" && (
-            <FreshGenerationView
-              onBack={handleBackToSelection}
-              initialKeyword={selectedLibraryKeyword}
-              initialIntent={libraryIntent ?? undefined}
-              isLibrary={isLibrary}
-              backgroundThreadId={backgroundThreadId ?? undefined}
+          {libraryStart === "missing" && !backgroundThreadId ? (
+            <RunNotice
+              title="This keyword isn't in your Library"
+              message="Search for it to research it, then start the article from the Library."
+              actionLabel="Open the Library"
+              onAction={handlePickFromLibrary}
             />
+          ) : (
+            view === "fresh" && (
+              <FreshGenerationView
+                onBack={handleBackToSelection}
+                initialKeyword={selectedLibraryKeyword}
+                initialIntent={libraryIntent ?? undefined}
+                isLibrary={isLibrary}
+                libraryKey={
+                  libraryStart && libraryStart !== "missing"
+                    ? libraryStart.key
+                    : undefined
+                }
+                backgroundThreadId={backgroundThreadId ?? undefined}
+              />
+            )
           )}
         </div>
       </PermissionGuard>
