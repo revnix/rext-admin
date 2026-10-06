@@ -81,7 +81,8 @@ export function Notice({
           size="icon"
           onClick={onDismiss}
           aria-label={dismissLabel}
-          className="-my-1 -mr-2 size-7 shrink-0 text-current"
+          // 28 px, with a 40 px touch area under 1024 px that leaves the notice's height alone.
+          className="relative -my-1 -mr-2 size-7 shrink-0 text-current after:absolute after:-inset-1.5 lg:after:hidden"
         >
           <X className="size-4" aria-hidden />
         </Button>
