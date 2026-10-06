@@ -59,16 +59,18 @@ function Swatch({
         style={{ background: value }}
       />
       <div className="space-y-0.5 text-caption">
-        <p className="font-mono text-foreground">{name}</p>
+        <p className="truncate font-mono text-foreground" title={name}>
+          {name}
+        </p>
         <p className="font-mono text-muted-foreground">
           {toHex(colour)}
           {colour.alpha < 1 ? ` at ${Math.round(colour.alpha * 100)}%` : ""}
         </p>
-        <p className="num text-muted-foreground">
+        <p className="num whitespace-nowrap text-muted-foreground">
           on page {ratio(contrast(colour, surface))}
         </p>
         {colour.alpha === 1 && (
-          <p className="num text-muted-foreground">
+          <p className="num whitespace-nowrap text-muted-foreground">
             ink on it {ratio(contrast(ink, colour))}
           </p>
         )}
@@ -96,12 +98,17 @@ function PairRow({ m, value }: { m: Measured; value: (n: string) => string }) {
           {m.kind === "text" ? "Aa" : ""}
         </span>
       </td>
-      <td className="py-2 pr-4 font-mono text-caption">
-        {m.foreground} on {m.background}
+      <td className="py-2 pr-4 text-caption">
+        <p className="font-mono break-words">
+          {m.foreground} on {m.background}
+        </p>
+        <p className="num text-muted-foreground">
+          {m.kind}, needs {m.minimum} : 1
+        </p>
       </td>
-      <td className="py-2 pr-4 text-caption">{m.kind}</td>
-      <td className="num py-2 pr-4 text-table">{ratio(m.ratio)}</td>
-      <td className="num py-2 pr-4 text-table">{m.minimum}</td>
+      <td className="num whitespace-nowrap py-2 pr-4 text-table">
+        {ratio(m.ratio)}
+      </td>
       <td
         className={
           verdict === "fails"
@@ -174,14 +181,12 @@ export default function TokensPage() {
         description="Every pair the roles make, as the contrast test asserts it (lib/design/contrast.ts)."
       >
         <div className="overflow-x-auto rounded-md border border-border bg-surface-raised px-4">
-          <table className="w-full min-w-[640px] text-left">
+          <table className="w-full text-left">
             <thead>
               <tr className="text-label text-muted-foreground">
                 <th className="py-2 pr-4 font-medium">Sample</th>
                 <th className="py-2 pr-4 font-medium">Pair</th>
-                <th className="py-2 pr-4 font-medium">Kind</th>
                 <th className="py-2 pr-4 font-medium">Ratio</th>
-                <th className="py-2 pr-4 font-medium">Needs</th>
                 <th className="py-2 font-medium">Result</th>
               </tr>
             </thead>
@@ -261,7 +266,7 @@ export default function TokensPage() {
           {[...scales].map(([scale, steps]) => (
             <div key={scale} className="space-y-2">
               <h3 className="text-label">{scale}</h3>
-              <div className="grid grid-cols-3 gap-4 sm:grid-cols-6 lg:grid-cols-12">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
                 {steps.map((t) => (
                   <Swatch
                     key={t.name}
