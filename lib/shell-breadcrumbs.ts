@@ -13,15 +13,20 @@ export interface Crumb {
 /** The workspace's sections, with the pages under them. */
 const WORKSPACE_SECTIONS: Record<
   string,
-  { label: string; parent?: "settings"; pages?: Record<string, string> }
+  { label: string; pages?: Record<string, string> }
 > = {
   generate_content: { label: "Generate" },
   content: { label: "Content" },
   personas: { label: "Personas", pages: { create: "New persona" } },
   integrations: { label: "Integrations" },
-  settings: { label: "Settings" },
-  brand_voice: { label: "Brand voice", parent: "settings" },
-  members: { label: "Members", parent: "settings" },
+  settings: {
+    label: "Settings",
+    pages: {
+      "brand-voice": "Brand voice",
+      members: "Members",
+      "danger-zone": "Danger zone",
+    },
+  },
 };
 
 /** What an id stands for under each workspace section. */
@@ -127,10 +132,6 @@ function workspaceTrail(
   }
 
   const known = WORKSPACE_SECTIONS[section];
-  if (known?.parent) {
-    const parent = WORKSPACE_SECTIONS[known.parent];
-    trail.push({ label: parent.label, path: `${base}/${known.parent}` });
-  }
   trail.push({
     label: known?.label ?? humanize(section),
     path: `${base}/${section}`,

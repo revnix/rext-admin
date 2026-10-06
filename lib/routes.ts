@@ -12,11 +12,10 @@ import type { Route } from "next";
  */
 export const WORKSPACE_PAGES = [
   "content",
-  "members",
   "integrations",
   "personas",
   "persona_create",
-  "brand_voice",
+  "settings",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
@@ -54,11 +53,6 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/content/calendar`,
 
   /**
-   * Members route
-   */
-  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
-
-  /**
    * Integrations route
    */
   integrations: (workspaceSlug: string) => `/w/${workspaceSlug}/integrations`,
@@ -71,15 +65,15 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/personas/create`,
 
   /**
-   * Brand Voice route
-   */
-  brand_voice: (workspaceSlug: string) => `/w/${workspaceSlug}/brand_voice`,
-
-  /**
-   * Settings routes
+   * Workspace settings: one SettingsPage, a route per section (General is the root).
    */
   settings: {
     root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
+    brandVoice: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/settings/brand-voice`,
+    members: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/members`,
+    dangerZone: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/settings/danger-zone`,
   },
 } as const;
 
@@ -139,7 +133,7 @@ export function extractWorkspacePageSegment(
  * Build workspace path for a given page segment
  *
  * @param workspaceSlug - The workspace slug
- * @param pageSegment - The page segment (content, members, etc.)
+ * @param pageSegment - The page segment (content, settings, etc.)
  * @returns The full workspace path
  *
  * @example
@@ -151,11 +145,10 @@ export function buildWorkspacePath(
 ): string {
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
     content: workspaceRoutes.content,
-    members: workspaceRoutes.members,
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
-    brand_voice: workspaceRoutes.brand_voice,
+    settings: workspaceRoutes.settings.root,
   };
 
   const routeFn = routeMap[pageSegment];

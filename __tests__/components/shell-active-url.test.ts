@@ -7,7 +7,7 @@ const URLS = [
   "/w/acme/generate_content/library",
   "/w/acme/content/calendar",
   "/w/acme/settings",
-  "/w/acme/members",
+  "/w/acme/settings/members",
 ];
 
 describe("findActiveUrl", () => {
@@ -42,6 +42,12 @@ describe("findActiveUrl", () => {
   it("keeps a settings sub-page under General", () => {
     expect(findActiveUrl("/w/acme/settings/trash", URLS)).toBe(
       "/w/acme/settings",
+    );
+  });
+
+  it("gives a settings section its own item, not General", () => {
+    expect(findActiveUrl("/w/acme/settings/members", URLS)).toBe(
+      "/w/acme/settings/members",
     );
   });
 });

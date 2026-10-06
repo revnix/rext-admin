@@ -24,7 +24,10 @@ export function QuickActions({ workspace }: QuickActionsProps) {
     {
       label: "Invite Team Member",
       icon: UserPlus,
-      href: slug !== "default" ? workspaceRoutes.members(slug) : "/members",
+      href:
+        slug !== "default"
+          ? workspaceRoutes.settings.members(slug)
+          : "/members",
       description: "Add collaborators to this workspace",
     },
     {

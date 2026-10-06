@@ -85,7 +85,7 @@ export function BrandVoiceRefreshControl({
     useSSEChannel(operationId, {
       autoConnect: true,
       onComplete: async () => {
-        toast.success("Brand voice updated successfully");
+        toast.success("The brand voice was read from your website again");
         await Promise.all([
           queryClient.invalidateQueries({
             queryKey: ["workspace", workspaceId],
@@ -101,7 +101,7 @@ export function BrandVoiceRefreshControl({
         closeDialog();
       },
       onError: (errorMessage) => {
-        toast.error(errorMessage || "Brand voice refresh failed");
+        toast.error(errorMessage || "The website couldn't be read");
         setBrandVoiceRefreshState({
           refreshError: errorMessage,
         });
@@ -141,12 +141,12 @@ export function BrandVoiceRefreshControl({
         operationId: operationId,
         refreshError: undefined,
       });
-      toast.success("Refreshing brand voice...");
+      toast.success("Reading your website…");
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to start brand voice refresh";
+          : "Reading the website couldn't start. Try again.";
       toast.error(message);
     }
   }, [
@@ -181,12 +181,12 @@ export function BrandVoiceRefreshControl({
           buttonClassName,
         )}
         onClick={handleRefresh}
-        title="Re-analyze workspace content to refresh brand voice"
+        title="Read the workspace's website again and replace the brand voice"
       >
         {brandVoiceRefresh.isRefreshing ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Refreshing...</span>
+            <span>Reading…</span>
           </>
         ) : (
           idleContent
@@ -196,10 +196,10 @@ export function BrandVoiceRefreshControl({
       <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Refreshing Brand Voice</DialogTitle>
+            <DialogTitle>Reading your website</DialogTitle>
             <DialogDescription>
-              We&apos;re re-scraping the workspace website and updating the
-              brand voice profile. This usually takes less than a minute.
+              The brand voice is read from the workspace's website again and
+              replaces the one saved. It usually takes less than a minute.
             </DialogDescription>
           </DialogHeader>
 
@@ -209,9 +209,7 @@ export function BrandVoiceRefreshControl({
           />
 
           <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {isConnected ? "Connected to server" : "Awaiting connection..."}
-            </span>
+            <span>{isConnected ? "Connected" : "Connecting…"}</span>
             {status.retryCount > 0 && (
               <span>{`Retry attempt ${status.retryCount}`}</span>
             )}
