@@ -3,7 +3,8 @@
 # in CI (.github/workflows/pr-checks.yaml) and in check.sh, so a commit takes seconds and no memory to speak of.
 #
 # A file staged as a whole is formatted and lint-fixed, then staged again with its fixes. A file that also has
-# unstaged changes is only checked: staging its fixes would stage the part that was left out on purpose.
+# unstaged changes is only checked, and in the version being committed: for the check its staged content takes
+# the file's place, and the working copy (kept in the git directory meanwhile) comes back however the hook ends.
 set -e
 
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
@@ -26,6 +27,21 @@ if [ -n "$whole" ]; then
   git add -- $whole
 fi
 if [ -n "$partly" ]; then
+  kept="$(git rev-parse --git-dir)/pre-commit-working-copies"
+  rm -rf "${kept:?}"
+  restore() {
+    for file in $partly; do
+      if [ -f "$kept/$file" ]; then cp -p "$kept/$file" "$file"; fi
+    done
+    rm -rf "${kept:?}"
+  }
+  trap restore EXIT
+  trap 'exit 1' INT TERM
+  for file in $partly; do
+    mkdir -p "$kept/$(dirname "$file")"
+    cp -p "$file" "$kept/$file"
+    git show ":$file" > "$file"
+  done
   $biome $partly
 fi
 
