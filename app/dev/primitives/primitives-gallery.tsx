@@ -3,7 +3,7 @@
 import { Copy, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { z } from "zod";
 import { FieldController } from "@/components/forms/field-controller";
 import { FormSection, FormShell } from "@/components/forms/form-shell";
@@ -234,9 +234,15 @@ function SampleForm() {
   );
 }
 
-/** Always throws, so the boundary around it shows its fallback (and Try again throws again). */
+/**
+ * Throws once mounted, so the boundary around it shows its fallback (and Try again throws again).
+ * Not during the server render: a boundary catches nothing there, and the page would fail.
+ */
 function Thrower(): ReactNode {
-  throw new Error("A sample failure for /dev/primitives");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (mounted) throw new Error("A sample failure for /dev/primitives");
+  return null;
 }
 
 const SAMPLE_ROUTE_ERROR = Object.assign(new Error("A sample route error"), {
