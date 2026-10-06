@@ -12,6 +12,7 @@ Import from the specific store file for standalone or independent stores:
 - `@/stores/permission-store`
 - `@/stores/subscription-store`
 - `@/stores/notification-store`
+- `@/stores/generate-preferences-store`
 
 > [!IMPORTANT]
 > **Do not import from `@/stores` or `@/stores/index`.**

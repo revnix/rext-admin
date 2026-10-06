@@ -1,39 +1,19 @@
 "use client";
 
-import { motion } from "motion/react";
-
+/**
+ * The start screen's heading (plans/app/E-workflow.md §4 steps 0 and 1): what the screen is for,
+ * above the keyword input, with the recent keywords beneath it. No hero: the input is the point.
+ */
 export function HeroSection() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="text-center"
-    >
-      {/* Main heading */}
-      <motion.h2
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.14, duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-        className="font-display text-display text-foreground mt-2 mb-1"
-      >
-        What are we{" "}
-        <span className="relative inline-block">
-          <span className="text-primary">writing</span>
-        </span>{" "}
-        today?
-      </motion.h2>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.28, duration: 0.45 }}
-        className="text-body text-muted-foreground max-w-xl mx-auto leading-relaxed"
-      >
-        Enter a keyword — AI researches, plans, and writes fully optimized
-        content in minutes.
-      </motion.p>
-    </motion.div>
+    <div className="flex flex-col gap-1 text-center">
+      <h2 className="font-display text-page-title text-foreground">
+        Start with a keyword
+      </h2>
+      <p className="text-body text-muted-foreground">
+        We read its search results first. You choose the type, the title and the
+        outline before the article is written.
+      </p>
+    </div>
   );
 }
