@@ -71,6 +71,37 @@ export const workspaceFormSchema = z.object({
   timezone: timezoneSchema,
 });
 
+/**
+ * Workspace settings, General section: the name and the website (the slug is shown, not edited).
+ * Unlike the create form's `urlSchema`, an http:// address is accepted here, as it always was.
+ */
+export const workspaceGeneralInfoSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Workspace name is required")
+    .max(200, "Workspace name must be 200 characters or less")
+    .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
+  slug: z.string(),
+  url: z
+    .string()
+    .trim()
+    .min(1, "Website URL is required")
+    .url("Must be a valid URL")
+    .refine((value) => {
+      try {
+        const hostname = new URL(value).hostname;
+        return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
+          hostname,
+        );
+      } catch {
+        return false;
+      }
+    }, "URL must include a valid domain extension"),
+});
+
+export type WorkspaceGeneralInfo = z.infer<typeof workspaceGeneralInfoSchema>;
+
 export const createWorkspaceRequestSchema = z.object({
   name: workspaceNameSchema,
   title: z

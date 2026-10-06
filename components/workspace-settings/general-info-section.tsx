@@ -1,18 +1,17 @@
 "use client";
 
 import * as React from "react";
-import * as z from "zod";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import type { Route } from "next";
 
+import { FieldController } from "@/components/forms/field-controller";
+import { FormShell } from "@/components/forms/form-shell";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { PermissionGuard } from "@/components/permission/permission-guard";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,55 +19,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { useWorkspace } from "@/providers/workspace-provider";
+import {
+  type WorkspaceGeneralInfo,
+  workspaceGeneralInfoSchema,
+} from "@/schemas/workspace-schemas";
 import { useWorkspaceStore } from "@/stores/workspace";
-
-const generalInfoSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Workspace name is required")
-    .max(200, "Workspace name must be 200 characters or less")
-    .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
-
-  slug: z.string(),
-
-  description: z
-    .string()
-    .max(500, "Description must be 500 characters or less")
-    .optional(),
-
-  url: z
-    .string()
-    .trim()
-    .min(1, "Website URL is required")
-    .url("Must be a valid URL")
-    .refine((value) => {
-      try {
-        const hostname = new URL(value).hostname;
-
-        return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
-          hostname,
-        );
-      } catch {
-        return false;
-      }
-    }, "URL must include a valid domain extension"),
-});
-
-type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
 
 export function GeneralInfoSection() {
   const { workspace } = useWorkspace();
@@ -83,20 +43,15 @@ export function GeneralInfoSection() {
     (state) => state.updateWorkspaceInList,
   );
 
-  const form = useForm<GeneralInfoForm>({
-    resolver: zodResolver(generalInfoSchema),
-
-    // Validate while the user is typing.
-    mode: "onChange",
-    reValidateMode: "onChange",
-
-    defaultValues: {
-      name: "",
-      slug: "",
-      description: "",
-      url: "",
-    },
+  const form = useZodForm(workspaceGeneralInfoSchema, {
+    defaultValues: { name: "", slug: "", url: "" },
   });
+  // The inline "Saved" beside the button; the next change clears it.
+  const [saved, setSaved] = React.useState(false);
+  const isDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    if (isDirty) setSaved(false);
+  }, [isDirty]);
 
   // Reset form when workspace changes.
   React.useEffect(() => {
@@ -107,12 +62,11 @@ export function GeneralInfoSection() {
     form.reset({
       name: workspace.name || "",
       slug: workspace.slug || "",
-      description: workspace.description || "",
       url: workspace.url || "",
     });
   }, [workspace, form]);
 
-  const onSubmit = async (data: GeneralInfoForm) => {
+  const onSubmit = async (data: WorkspaceGeneralInfo) => {
     try {
       if (!workspace?.id) {
         throw new Error("Workspace data is not loaded yet. Please try again.");
@@ -166,6 +120,7 @@ export function GeneralInfoSection() {
         router.refresh();
       }
 
+      setSaved(true);
       toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
       const errorMessage =
@@ -180,7 +135,7 @@ export function GeneralInfoSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>General Information</CardTitle>
+        <CardTitle>General information</CardTitle>
 
         <CardDescription>
           Update your workspace name, and other basic information
@@ -196,90 +151,49 @@ export function GeneralInfoSection() {
             </p>
           }
         >
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4"
-              noValidate
-            >
-              {/* Workspace Name */}
-              <FormField
+          <FormShell
+            form={form}
+            onSubmit={onSubmit}
+            submitLabel="Save changes"
+            status={saved ? "Saved" : null}
+          >
+            <FieldGroup>
+              <FieldController
                 control={form.control}
                 name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workspace Name</FormLabel>
-
-                    <FormControl>
-                      <Input placeholder="My Workspace" {...field} />
-                    </FormControl>
-
-                    <FormDescription>
-                      The display name for your workspace
-                    </FormDescription>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Workspace Slug */}
-              <FormField
+                label="Workspace name"
+                required
+                description="The display name for your workspace."
+              >
+                {(field) => <Input {...field} placeholder="My Workspace" />}
+              </FieldController>
+              <FieldController
                 control={form.control}
                 name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workspace Slug</FormLabel>
-
-                    <FormControl>
-                      <Input placeholder="my-workspace" {...field} disabled />
-                    </FormControl>
-
-                    <FormDescription>
-                      Used in URLs. Cannot be changed after creation
-                    </FormDescription>
-
-                    <FormMessage />
-                  </FormItem>
+                label="Workspace slug"
+                description="Used in URLs; it can't be changed after creation."
+              >
+                {(field) => (
+                  <Input {...field} placeholder="my-workspace" disabled />
                 )}
-              />
-
-              {/* Website URL */}
-              <FormField
+              </FieldController>
+              <FieldController
                 control={form.control}
                 name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website URL</FormLabel>
-
-                    <FormControl>
-                      <Input
-                        placeholder="https://example.com"
-                        type="url"
-                        {...field}
-                      />
-                    </FormControl>
-
-                    <FormDescription>
-                      Your company or project website
-                    </FormDescription>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full sm:w-auto"
-                disabled={
-                  form.formState.isSubmitting || !form.formState.isDirty
-                }
+                label="Website URL"
+                required
+                description="Your company or project website."
               >
-                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </form>
-          </Form>
+                {(field) => (
+                  <Input
+                    {...field}
+                    type="url"
+                    placeholder="https://example.com"
+                  />
+                )}
+              </FieldController>
+            </FieldGroup>
+          </FormShell>
         </PermissionGuard>
       </CardContent>
     </Card>
