@@ -70,7 +70,7 @@ export function IntegrationCatalogue({
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <PlatformCard
-        mark={<WordPressMark aria-hidden className="size-8" />}
+        mark={<WordPressMark aria-hidden className="size-5" />}
         name="WordPress"
         action={connect}
       >
@@ -79,7 +79,7 @@ export function IntegrationCatalogue({
       </PlatformCard>
       <PlatformCard
         mark={
-          <ShopifyMark aria-hidden className="size-8 text-muted-foreground" />
+          <ShopifyMark aria-hidden className="size-5 text-muted-foreground" />
         }
         name="Shopify"
         badge={<Badge variant="neutral">Coming soon</Badge>}
