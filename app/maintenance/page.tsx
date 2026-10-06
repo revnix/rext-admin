@@ -17,6 +17,7 @@ export default function MaintenancePage() {
             Maintenance
           </p>
           <EmptyTitle className="font-display text-page-title text-foreground">
+            {/* layout-ok: a page outside the shell, with no layout header to hold its title */}
             <h1>Down for maintenance</h1>
           </EmptyTitle>
           <EmptyDescription>
