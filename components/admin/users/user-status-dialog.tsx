@@ -1,16 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Ban,
-  CheckCircle2,
-  Loader2,
-  PauseCircle,
-} from "lucide-react";
+import { Ban, CheckCircle2, Loader2, PauseCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -175,12 +169,7 @@ export function UserStatusDialog({
               </p>
             </div>
 
-            {copy.warning && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{copy.warning}</AlertDescription>
-              </Alert>
-            )}
+            {copy.warning && <Notice tone="warning">{copy.warning}</Notice>}
 
             <div className="space-y-2">
               <Label htmlFor="reason">

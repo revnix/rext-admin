@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { performLogout } from "@/lib/logout-utils";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -128,29 +128,18 @@ export function AccountDeactivation() {
   return (
     <Form {...form}>
       <div className="space-y-6">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Warning:</strong> Deactivating your account is a serious
-            action. Your account will be scheduled for permanent deletion in 14
-            days.
-          </AlertDescription>
-        </Alert>
+        <Notice tone="danger" title="This schedules your account for deletion">
+          Deactivating your account is a serious action. Your account will be
+          scheduled for permanent deletion in 14 days.
+        </Notice>
 
         {hasActiveSubscriptions && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Active Subscriptions Detected</strong>
-              <p className="mt-2">
-                You have {subscriptions.length} active subscription
-                {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to
-                cancel {subscriptions.length > 1 ? "them" : "it"} before
-                deactivating your account, or choose to automatically cancel
-                during deactivation.
-              </p>
-            </AlertDescription>
-          </Alert>
+          <Notice tone="warning" title="Active subscriptions detected">
+            You have {subscriptions.length} active subscription
+            {subscriptions.length > 1 ? "s" : ""}. You&apos;ll need to cancel{" "}
+            {subscriptions.length > 1 ? "them" : "it"} before deactivating your
+            account, or choose to automatically cancel during deactivation.
+          </Notice>
         )}
 
         <div className="space-y-4">
