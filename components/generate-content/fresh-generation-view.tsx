@@ -1835,8 +1835,7 @@ export function FreshGenerationView({
     payload,
     status: statusMsg,
   }: ResumeOptions) => {
-    // Approving the outline starts the article's billed stages: their whole cost up front.
-    if (!threadId || !ensureCredits("generate")) return;
+    if (!threadId || !ensureCreditsToContinue()) return;
 
     const now = new Date().toISOString();
     const resultUrl = `${workspaceRoutes.generate_content(
@@ -1972,6 +1971,8 @@ export function FreshGenerationView({
         });
 
       case "OUTLINE_APPROVE":
+        // The article's billed stages need their whole cost: checked before the view moves on.
+        if (!ensureCredits("generate")) return;
         setTokenTarget("content");
         tokenTargetRef.current = "content";
         content.resetStream();
@@ -2296,10 +2297,18 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               disabled={isManualLoading}
+              // On the keyword step only a new keyword or country is billed.
               run={
-                instructionType === "keyword Selection"
-                  ? "change_keyword"
-                  : "analyze"
+                instructionType !== "keyword Selection"
+                  ? "analyze"
+                  : isKeywordReanalysis({
+                        value: userKeyword,
+                        primaryKeyword,
+                        country,
+                        analyzedCountry,
+                      })
+                    ? "change_keyword"
+                    : null
               }
               // Step 2 already owns a thread paused on the keyword interrupt.
               // Re-analysing there must resume that thread — starting a new one
@@ -2330,6 +2339,7 @@ export function FreshGenerationView({
               brandVoicePromotion={interruptBrandVoicePromotion}
               workspaceId={workspaceId}
               onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
+                if (!ensureCredits("generate")) return;
                 setTokenTarget("content");
                 tokenTargetRef.current = "content";
                 content.resetStream();
