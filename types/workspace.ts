@@ -25,6 +25,8 @@ export interface Workspace {
   slug: string; // URL-safe identifier for workspace
   timezone?: string; // optional IANA timezone
   url: string; // required
+  // The site's favicon as an absolute URL, kept by the backend (G9); null until fetched.
+  favicon_url?: string | null;
   // Not returned by the backend yet (pending workspace-validation PR); the
   // general-info form reads it optimistically, so keep it optional.
   description?: string;

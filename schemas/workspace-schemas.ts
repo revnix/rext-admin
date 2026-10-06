@@ -210,6 +210,8 @@ export const workspaceSchema = z.object({
   slug: z.string(),
   timezone: z.string().optional(),
   url: z.string(),
+  // The site's favicon, kept by the backend (task G9); null until it was fetched.
+  favicon_url: z.string().nullish(),
   created_at: z.string(),
   updated_at: z.string().optional(),
   brand_voice: brandVoiceSchema.optional(),

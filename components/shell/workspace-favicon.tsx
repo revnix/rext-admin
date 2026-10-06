@@ -4,8 +4,9 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * A workspace's 20 px mark in the switcher: its site's favicon when there is one (task C7 gives
- * the source), else the name's first letter on the inset surface. Never stretched.
+ * A workspace's 20 px mark in the switcher: its site's favicon when the backend has one (G9's
+ * favicon_url), else the name's first letter on the inset surface, which is also shown when the
+ * image fails to load. Never stretched.
  */
 export function WorkspaceFavicon({
   name,
