@@ -15,12 +15,12 @@ export default function VerifyEmailError(props: {
   return (
     <RouteError
       {...props}
-      title="Email Verification Error"
+      title="Email verification error"
       description="We encountered an error during email verification. Please try again or contact support if the problem persists."
       logContext="VerifyEmailError"
       navigationType="link"
       navigationLink="/login"
-      navigationLabel="Go to Login"
+      navigationLabel="Go to login"
       layout="fullscreen"
     />
   );

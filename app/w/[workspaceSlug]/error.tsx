@@ -14,11 +14,12 @@ export default function WorkspaceError(props: {
   return (
     <RouteError
       {...props}
-      title="Workspace Error"
+      title="Workspace error"
       logContext="WorkspaceError"
       navigationType="link"
       navigationLink="/"
       navigationLabel="Workspaces"
+      layout="container"
     />
   );
 }

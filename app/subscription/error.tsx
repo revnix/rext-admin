@@ -9,11 +9,12 @@ export default function SubscriptionError(props: {
   return (
     <RouteError
       {...props}
-      title="Subscription Error"
+      title="Subscription error"
       logContext="SubscriptionError"
       navigationType="link"
       navigationLink="/settings/subscription"
-      navigationLabel="Subscription Settings"
+      navigationLabel="Subscription settings"
+      layout="container"
     />
   );
 }

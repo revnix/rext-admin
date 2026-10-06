@@ -12,7 +12,7 @@ import {
   SECURITY_PERMISSIONS,
   USER_PERMISSIONS,
 } from "@/lib/permissions";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { Route } from "next";
 
 /**
@@ -76,5 +76,5 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <APIErrorBoundary>{children}</APIErrorBoundary>;
+  return <ErrorBoundary>{children}</ErrorBoundary>;
 }
