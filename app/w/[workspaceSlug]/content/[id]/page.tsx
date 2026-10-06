@@ -42,10 +42,11 @@ export default function WorkspaceContentDetailPage({
   // family as the list page and the editor's invalidation (finding #10).
   const workspaceId = workspace?.id || "";
 
-  // Fetch content details using hook
+  // Fetch content details using hook. Pending, not loading: until the workspace is known the query
+  // waits, and a waiting query isn't loading, so the page would say "Content not found" (D16a).
   const {
     data: contentResponse,
-    isLoading: isContentLoading,
+    isPending: isContentPending,
     error: fetchError,
     refetch: refetchContent,
   } = useContentDetail(workspaceId, id);
@@ -187,7 +188,7 @@ export default function WorkspaceContentDetailPage({
 
   const finalContent = advancedContent?.final_content;
 
-  if (isContentLoading) {
+  if (isContentPending) {
     return (
       <WorkingSurface title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">
