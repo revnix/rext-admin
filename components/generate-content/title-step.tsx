@@ -252,7 +252,8 @@ export function TitleStep({
   return (
     <WithSidePane
       sideTitle="Top search results"
-      side={<SerpSnapshot results={serpTitles} />}
+      showTitle
+      side={<SerpSnapshot results={serpTitles} heading={null} />}
     >
       {list}
     </WithSidePane>

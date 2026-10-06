@@ -19,6 +19,11 @@ export interface WithSidePaneProps {
   side: ReactNode;
   /** Names the side pane: its landmark, its button and its sheet's title. */
   sideTitle?: string;
+  /**
+   * Shows the title above the pane on wide screens too (the sheet always shows it), for content
+   * with no heading of its own.
+   */
+  showTitle?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -31,6 +36,7 @@ export interface WithSidePaneProps {
 export function WithSidePane({
   side,
   sideTitle = "Details",
+  showTitle = false,
   className,
   children,
 }: WithSidePaneProps) {
@@ -38,6 +44,11 @@ export function WithSidePane({
     <div className={cn("flex gap-6", className)}>
       <div className="min-w-0 flex-1">{children}</div>
       <aside aria-label={sideTitle} className="hidden w-80 shrink-0 lg:block">
+        {showTitle && (
+          <h2 className="mb-3 text-sm font-medium text-foreground">
+            {sideTitle}
+          </h2>
+        )}
         {side}
       </aside>
       <Sheet>

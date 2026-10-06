@@ -2247,7 +2247,11 @@ export function FreshGenerationView({
     <div className="relative">
       <div
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
+          "mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
+          // A step with a side pane beside it (the Title step's search results) gets the room for both.
+          instructionType === "topic" || instructionType === "topic_selection"
+            ? "max-w-6xl"
+            : "max-w-3xl",
           instructionType === "keyword"
             ? "min-h-[70vh]"
             : !showContentStream
