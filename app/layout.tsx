@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Outfit, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { fontVariables } from "./fonts";
 import { Toaster } from "@/components/ui/sonner";
 import { LemonSqueezyProvider } from "@/components/subscription/lemonsqueezy-provider";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
@@ -14,24 +14,6 @@ import { MotionProvider } from "@/providers/motion-provider";
 import { TooltipProvider } from "@/providers/tooltip-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 import { auth } from "@/auth";
-
-// Design Tokens - Typography
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -100,7 +82,7 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -123,10 +105,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${outfit.variable} ${inter.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
+      <body className="antialiased" suppressHydrationWarning>
         {/*
           Loads lemon.js and owns the checkout overlay lifecycle, so a purchase
           completes in place instead of navigating the user to LemonSqueezy.

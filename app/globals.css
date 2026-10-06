@@ -211,11 +211,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Faces from next/font in app/layout.tsx (task B2 sets the final ones). */
-  --font-outfit: var(--font-outfit);
-  --font-inter: var(--font-inter);
-  --font-sans: var(--font-outfit);
-  --font-mono: var(--font-geist-mono);
+  /* The faces, from next/font in app/fonts.ts: Manrope for titles of 18 px and up, Inter for
+     the interface, IBM Plex Mono for data (language §4). */
+  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   /* Three radii. The older steps are folded in until the sweep retires their classes. */
   --radius-sm: var(--radius);
@@ -245,9 +245,52 @@
   --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
+/*
+ * The type roles (language §4): each sets size, line height, tracking and weight at once.
+ * `text-page-title` and `text-display` go with `font-display`; `text-data` with `font-mono num`.
+ */
+@theme {
+  --text-display: 2rem;
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 600;
+  --text-page-title: 1.5rem;
+  --text-page-title--line-height: 2rem;
+  --text-page-title--letter-spacing: -0.04em;
+  --text-page-title--font-weight: 600;
+  --text-section: 1rem;
+  --text-section--line-height: 1.5rem;
+  --text-section--letter-spacing: -0.02em;
+  --text-section--font-weight: 600;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-body--font-weight: 400;
+  --text-table: 0.8125rem;
+  --text-table--line-height: 1.125rem;
+  --text-table--font-weight: 400;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1rem;
+  --text-label--font-weight: 500;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--font-weight: 400;
+  --text-data: 0.8125rem;
+  --text-data--line-height: 1.4;
+  --text-data--font-weight: 400;
+}
+
+/* Numbers in tables, meters, scores and timers: tabular figures and the slashed zero. */
+@utility num {
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-optical-sizing: auto;
   }
 
   body {
