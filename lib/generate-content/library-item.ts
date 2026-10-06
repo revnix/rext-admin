@@ -29,17 +29,18 @@ export async function findLibraryItem(
   userId: string,
   workspaceId: string,
 ): Promise<LibraryStart | null> {
-  const { Authorization } = await getAuthHeaders();
-  const ownerId =
-    tokenUserId(Authorization?.replace(/^Bearer\s+/i, "") ?? "") ?? userId;
-  const client = new Client({
-    apiUrl: resolveApiBaseUrl({
-      explicitBaseUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL,
-    }),
-    callerOptions: { fetch: authenticatedFetch },
-  });
-
+  // Any failure (the session read, the network, the store) finds nothing, so
+  // the page shows its notice instead of waiting forever.
   try {
+    const { Authorization } = await getAuthHeaders();
+    const ownerId =
+      tokenUserId(Authorization?.replace(/^Bearer\s+/i, "") ?? "") ?? userId;
+    const client = new Client({
+      apiUrl: resolveApiBaseUrl({
+        explicitBaseUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL,
+      }),
+      callerOptions: { fetch: authenticatedFetch },
+    });
     const item = await client.store.getItem(
       ["library", ownerId, workspaceId],
       key,

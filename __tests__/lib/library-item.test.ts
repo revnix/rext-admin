@@ -42,4 +42,11 @@ describe("a start from the Library names its item", () => {
     getItem.mockRejectedValueOnce(new Error("Forbidden"));
     await expect(findLibraryItem(KEY, "u1", "w1")).resolves.toBe(null);
   });
+
+  it("finds nothing when the session can't be read, instead of hanging", async () => {
+    const { getAuthHeaders } = jest.requireMock("@/lib/auth-utils");
+    getAuthHeaders.mockRejectedValueOnce(new Error("network"));
+
+    await expect(findLibraryItem(KEY, "u1", "w1")).resolves.toBe(null);
+  });
 });
