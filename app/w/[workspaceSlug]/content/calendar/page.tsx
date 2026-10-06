@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CalendarAgenda } from "@/components/calendar/calendar-agenda";
 import { CalendarBoard } from "@/components/calendar/calendar-board";
@@ -20,6 +20,7 @@ import {
 } from "@/components/calendar/calendar-item-sheet";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import { WorkingSurface } from "@/components/layouts";
+import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,15 +50,46 @@ import type { CalendarEntry } from "@/types/content";
  */
 export default function ContentCalendarPage() {
   usePageTitle("Calendar");
+  return (
+    <WorkingSurface
+      title="Calendar"
+      description="Scheduled and published articles by day, in your account's timezone."
+    >
+      {/* Nothing is read before the permission is known: the board lists every article. */}
+      <PermissionGuard
+        permission={CONTENT_PERMISSIONS.READ}
+        showLoading={false}
+        fallback={
+          <Notice tone="warning" title="The calendar isn't open to you">
+            Your role in this workspace can't read its articles. A workspace
+            owner can change that.
+          </Notice>
+        }
+      >
+        <CalendarBody />
+      </PermissionGuard>
+    </WorkingSurface>
+  );
+}
+
+function CalendarBody() {
   const { workspaceId, workspaceSlug } = useWorkspace();
   const [{ view, month: monthParam }, setParams] =
     useQueryStates(calendarParams);
-  const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const month = monthParam ?? monthOf(todayIn(knownTimeZone(browserZone)));
+  // The account's timezone, once the backend has named it; until then the browser's picks the month.
+  const [accountZone, setAccountZone] = useState<string | null>(null);
+  const browserZone = knownTimeZone(
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const month = monthParam ?? monthOf(todayIn(accountZone ?? browserZone));
 
   const [year, monthNumber] = month.split("-").map(Number);
   const calendarQuery = useContentCalendar(workspaceId, year, monthNumber);
-  const timeZone = knownTimeZone(calendarQuery.data?.timezone);
+  const reportedZone = calendarQuery.data?.timezone;
+  useEffect(() => {
+    if (reportedZone) setAccountZone(knownTimeZone(reportedZone));
+  }, [reportedZone]);
+  const timeZone = accountZone ?? knownTimeZone(reportedZone);
   const today = todayIn(timeZone);
   const showSkeleton = useShowAfter(calendarQuery.isLoading);
 
@@ -143,6 +175,7 @@ export default function ContentCalendarPage() {
           Today
         </Button>
       )}
+      <p className="text-sm text-muted-foreground">Times in {timeZone}</p>
     </div>
   );
 
@@ -178,14 +211,7 @@ export default function ContentCalendarPage() {
   };
 
   return (
-    <WorkingSurface
-      title="Calendar"
-      description={
-        calendarQuery.data
-          ? `Scheduled and published articles by day. Times are in ${timeZone}, your account's timezone.`
-          : "Scheduled and published articles by day."
-      }
-    >
+    <>
       <Tabs
         value={view}
         onValueChange={(next) => setParams({ view: next as CalendarView })}
@@ -249,6 +275,6 @@ export default function ContentCalendarPage() {
         onMove={move}
         onCancelSchedule={cancel}
       />
-    </WorkingSurface>
+    </>
   );
 }
