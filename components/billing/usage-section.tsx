@@ -18,6 +18,14 @@ import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 const workspaces = (count: number) =>
   `${count.toLocaleString()} ${count === 1 ? "workspace" : "workspaces"}`;
 
+/** "About 4 articles", "About 1 article", or none left for a whole one. */
+const articlesWords = (count: number | null) =>
+  count === null
+    ? null
+    : count < 1
+      ? "Not enough for a whole article."
+      : `About ${count.toLocaleString()} ${count === 1 ? "article" : "articles"}.`;
+
 /** At 80 % of the period's credits used, the meter warns and a notice says what to do. */
 const WARN_USED_SHARE = 0.8;
 
@@ -52,7 +60,11 @@ export function UsageSection() {
             Refresh the page to try again.
           </Notice>
         ) : (
-          <CreditsCard credits={credits.data} onTrial={onTrial} />
+          <CreditsCard
+            credits={credits.data}
+            onTrial={onTrial}
+            trialEnd={current.data?.subscription?.trial_end_date}
+          />
         )}
       </SettingsGroup>
 
@@ -103,15 +115,19 @@ export function UsageSection() {
 function CreditsCard({
   credits,
   onTrial,
+  trialEnd,
 }: {
   credits: CreditBalance;
   onTrial: boolean;
+  /** The trial's own end, as the pill and the banner read it: an extension moves it, not the reset date. */
+  trialEnd?: string | null;
 }) {
   const left = monthlyCreditsLeft(credits);
   const total = credits.credits_per_month;
   const usedShare =
     total && total > 0 ? Math.min(1, Math.max(0, 1 - left / total)) : null;
   const warn = usedShare !== null && usedShare >= WARN_USED_SHARE;
+  const trialEndsOn = trialEnd ?? credits.credits_reset_date;
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,15 +167,13 @@ function CreditsCard({
           )}
           <p className="text-sm text-muted-foreground">
             {[
-              credits.articles_remaining !== null
-                ? `About ${credits.articles_remaining.toLocaleString()} articles.`
-                : null,
+              articlesWords(credits.articles_remaining),
               bonusWords(credits),
-              credits.credits_reset_date
-                ? onTrial
-                  ? `The trial ends ${dateFormat.short(credits.credits_reset_date)}; its credits don't renew.`
-                  : `Credits reset to the plan's amount ${dateFormat.short(credits.credits_reset_date)}; unused ones don't carry over.`
-                : null,
+              onTrial
+                ? trialEndsOn &&
+                  `The trial ends ${dateFormat.short(trialEndsOn)}; its credits don't renew.`
+                : credits.credits_reset_date &&
+                  `Credits reset to the plan's amount ${dateFormat.short(credits.credits_reset_date)}; unused ones don't carry over.`,
             ]
               .filter(Boolean)
               .join(" ")}
