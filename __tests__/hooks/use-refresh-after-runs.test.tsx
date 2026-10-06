@@ -34,6 +34,7 @@ function job(
 
 const credits = subscriptionQueries.workspaceCredits("ws-1").queryKey;
 const content = ["content", "ws-1"];
+const library = ["library", "ws-1"];
 
 function setup(jobs: BackgroundGenerationJob[]) {
   useBackgroundGenerationStore.setState({ jobs, hasHydrated: true });
@@ -64,10 +65,10 @@ describe("refreshing what a run changed", () => {
     expect(invalidate).not.toHaveBeenCalled();
   });
 
-  it("refreshes the balance when a run pauses at a gate", () => {
+  it("refreshes the balance, and the Library its research went to, when a run pauses", () => {
     const { keys } = setup([job("a")]);
     setJobs([job("a", { status: "completed", awaitingInput: true })]);
-    expect(keys()).toEqual([credits]);
+    expect(keys()).toEqual([credits, library]);
   });
 
   it("refreshes the balance and the article list when a run finishes its article", () => {
@@ -89,7 +90,8 @@ describe("refreshing what a run changed", () => {
     setJobs([{ ...paused, progress: 50 }]);
     setJobs([job("a")]);
     setJobs([paused]);
-    expect(keys()).toEqual([credits, credits]);
+    // The Library once per run: only the first gate saves research.
+    expect(keys()).toEqual([credits, library, credits]);
   });
 
   it("refreshes a run started after the jobs loaded when it finishes", () => {
