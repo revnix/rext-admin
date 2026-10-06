@@ -1479,7 +1479,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       </div>
 
                       {/* Content Skeleton */}
-                      <div className="blog-content space-y-4">
+                      <div className="max-w-prose space-y-4">
                         {CONTENT_SKELETON_KEYS.map((key) => (
                           <Skeleton key={key} className="h-4 rounded-md" />
                         ))}
