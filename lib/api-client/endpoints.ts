@@ -149,6 +149,24 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Integration Endpoints
+   * @note Legacy (Query): workspace scoped by `?workspace_id=`
+   * WordPress sites; Shopify is not offered yet.
+   */
+  INTEGRATIONS: {
+    WORDPRESS: {
+      base: "/api/v1/integrations/wordpress/",
+      byId: (id: string) => `/api/v1/integrations/wordpress/${id}` as const,
+      activate: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/activate` as const,
+      deactivate: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/deactivate` as const,
+      test: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/test` as const,
+    },
+  },
+
+  /**
    * User Endpoints
    * @note Uses singular `user` namespace
    */

@@ -45,46 +45,9 @@ export const integrationSchema = z.object({
 
 export type IntegrationFormData = z.infer<typeof integrationSchema>;
 
-export const updateIntegrationSchema = integrationSchema.partial().extend({
-  // Add any update-specific refinements if needed
+export const updateIntegrationSchema = integrationSchema.extend({
+  // The saved key never comes back from the backend: left blank, it stays.
+  api_key: z.string(),
 });
 
 export type UpdateIntegrationFormData = z.infer<typeof updateIntegrationSchema>;
-
-// ── Shopify ──────────────────────────────────────────────────────────────────
-
-export const shopifyIntegrationSchema = z.object({
-  store_url: z
-    .string()
-    .min(1, "Store URL is required")
-    .transform((v) => {
-      // Strip protocol and trailing slash, then re-add https://
-      const stripped = v
-        .trim()
-        .replace(/^https?:\/\//i, "")
-        .replace(/\/$/, "");
-      return `https://${stripped}`;
-    })
-    .pipe(
-      z.string().refine(
-        (url) => {
-          try {
-            const hostname = new URL(url).hostname;
-            return hostname.includes(".");
-          } catch {
-            return false;
-          }
-        },
-        {
-          message:
-            "Must be a valid Shopify store URL (e.g. yourstore.myshopify.com)",
-        },
-      ),
-    ),
-  access_token: z.string().min(1, "Admin API access token is required"),
-  is_active: z.boolean(),
-});
-
-export type ShopifyIntegrationFormData = z.infer<
-  typeof shopifyIntegrationSchema
->;

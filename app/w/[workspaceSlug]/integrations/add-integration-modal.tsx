@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { integrationsApiService } from "@/services/integrations-api";
+import { useConnectWordPress } from "@/hooks/use-integrations";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,8 +29,6 @@ import { toast } from "sonner";
 import {
   integrationSchema,
   type IntegrationFormData,
-  shopifyIntegrationSchema,
-  type ShopifyIntegrationFormData,
 } from "@/schemas/integration-schemas";
 import { log } from "@/lib/logger";
 import { useState } from "react";
@@ -106,6 +105,8 @@ const INTEGRATION_OPTIONS: {
   label: string;
   Logo: React.ComponentType<{ className?: string }>;
   description: string;
+  /** Shown but not offered yet: a disabled card with a Coming soon badge. */
+  comingSoon?: boolean;
 }[] = [
   {
     type: "wordpress",
@@ -118,6 +119,7 @@ const INTEGRATION_OPTIONS: {
     label: "Shopify",
     Logo: ShopifyLogo,
     description: "Sync content with your Shopify store blog",
+    comingSoon: true,
   },
 ];
 
@@ -142,11 +144,11 @@ function WordPressForm({
     },
   });
   const { isSubmitting } = form.formState;
+  const connectSite = useConnectWordPress(workspaceId);
 
   const onSubmit = async (data: IntegrationFormData) => {
     try {
-      await integrationsApiService.createIntegration(workspaceId, {
-        integration_type: "wordpress",
+      await connectSite.mutateAsync({
         is_active: data.is_active,
         site_url: data.site_url,
         api_endpoint: data.api_endpoint,
@@ -282,123 +284,6 @@ function WordPressForm({
   );
 }
 
-function ShopifyForm({
-  onSuccess: _onSuccess,
-  onClose,
-  workspaceId,
-}: {
-  onSuccess: () => void;
-  onClose: () => void;
-  workspaceId: string;
-}) {
-  const form = useForm<
-    Pick<ShopifyIntegrationFormData, "store_url" | "is_active">
-  >({
-    resolver: zodResolver(
-      shopifyIntegrationSchema.pick({ store_url: true, is_active: true }),
-    ),
-    defaultValues: {
-      store_url: "",
-      is_active: true,
-    },
-  });
-  const { isSubmitting } = form.formState;
-
-  const onSubmit = async (
-    data: Pick<ShopifyIntegrationFormData, "store_url" | "is_active">,
-  ) => {
-    try {
-      const result = await integrationsApiService.startShopifyInstall(
-        workspaceId,
-        {
-          store_url: data.store_url,
-          return_path:
-            typeof window !== "undefined"
-              ? window.location.pathname
-              : undefined,
-        },
-      );
-
-      const installUrl =
-        result.install_url || result.redirect_url || result.url;
-
-      if (installUrl) {
-        toast.success("Opening Shopify installation in a new tab...");
-        if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(
-            `shopify_install_pending_${workspaceId}`,
-            "true",
-          );
-        }
-        window.open(installUrl, "_blank", "noopener,noreferrer");
-      } else {
-        throw new Error("Failed to get installation URL from Shopify");
-      }
-    } catch (error: unknown) {
-      log.error("Failed to start Shopify installation", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to start installation",
-      );
-      analytics.track("cms_connection_failed", {
-        cms_type: "shopify",
-        workspace_id: workspaceId,
-        error_message: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
-
-  const handleEnableChange = (checked: boolean) => {
-    form.setValue("is_active", checked);
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex items-center space-x-2 space-y-0">
-              <FormLabel>Enable Integration</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={handleEnableChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="store_url"
-          render={({ field }) => (
-            <FormItem className="grid gap-2 space-y-0">
-              <FormLabel>Store URL *</FormLabel>
-              <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://yourstore.myshopify.com"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <DialogFooter className="mt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Connecting..." : "Install on Shopify"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
-  );
-}
-
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export function AddIntegrationModal({
@@ -444,19 +329,24 @@ export function AddIntegrationModal({
               <button
                 key={opt.type}
                 type="button"
+                disabled={opt.comingSoon}
                 onClick={() => {
                   setSelectedType(opt.type);
                 }}
                 className={cn(
-                  "flex flex-col items-center gap-3 p-5 rounded-md border border-border/50 bg-card hover:border-primary/40 hover:bg-accent/10 transition-all duration-200 cursor-pointer text-left group",
-                  opt.type === "shopify" &&
-                    "hidden disabled:opacity-50 disabled:cursor-not-allowed",
+                  "flex flex-col items-center gap-3 p-5 rounded-md border border-border/50 bg-card transition-all duration-200 text-left group",
+                  opt.comingSoon
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:border-primary/40 hover:bg-accent/10",
                 )}
               >
                 <opt.Logo className="h-8 w-auto object-contain" />
                 <div>
-                  <p className="text-label font-semibold text-foreground text-center">
+                  <p className="flex items-center justify-center gap-2 text-label font-semibold text-foreground text-center">
                     {opt.label}
+                    {opt.comingSoon && (
+                      <Badge variant="neutral">Coming soon</Badge>
+                    )}
                   </p>
                   <p className="text-caption text-muted-foreground text-center mt-0.5 leading-snug">
                     {opt.description}
@@ -481,13 +371,6 @@ export function AddIntegrationModal({
         {/* Forms */}
         {selectedType === "wordpress" && workspace?.id && (
           <WordPressForm
-            workspaceId={workspace.id}
-            onSuccess={handleSuccess}
-            onClose={handleClose}
-          />
-        )}
-        {selectedType === "shopify" && workspace?.id && (
-          <ShopifyForm
             workspaceId={workspace.id}
             onSuccess={handleSuccess}
             onClose={handleClose}
