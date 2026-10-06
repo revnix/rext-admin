@@ -21,7 +21,7 @@ import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
-import type { WorkspaceData } from "@/types/data-table";
+import type { WorkspaceData } from "@/types/workspace";
 import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceDeleteDialogProps {
