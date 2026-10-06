@@ -40,7 +40,10 @@ function ScoreRing({ value }: { value: number }) {
   const circumference = 2 * Math.PI * 28;
   return (
     <div className="relative grid size-16 shrink-0 place-items-center">
-      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90">
+      <svg
+        viewBox="0 0 64 64"
+        className="absolute inset-0 size-full -rotate-90"
+      >
         <title>On-page score: {value} out of 100</title>
         <circle
           cx="32"
@@ -80,9 +83,9 @@ function Row({
 }) {
   return (
     <div className="flex items-start justify-between gap-3 py-3">
-      <dt className="text-table text-muted-foreground">{label}</dt>
-      <dd className="text-right">
-        <div className="flex items-center justify-end gap-2 text-table text-foreground">
+      <dt className="min-w-0 text-table text-muted-foreground">{label}</dt>
+      <dd className="shrink-0 text-right">
+        <div className="flex items-center justify-end gap-2 whitespace-nowrap text-table text-foreground">
           {value}
         </div>
         {note ? (
