@@ -403,7 +403,7 @@ export function TopicDetailDrawer({
                           {topic.channel_fit.map((channel) => (
                             <div
                               key={channel}
-                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-colors font-medium text-foreground"
+                              className="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm font-medium text-foreground"
                             >
                               {channel}
                             </div>
@@ -422,7 +422,7 @@ export function TopicDetailDrawer({
                           {topic.audience_fit.map((audience) => (
                             <div
                               key={audience}
-                              className="bg-white/90 dark:bg-background/90 rounded-md px-3 py-2 text-sm border-2 border-slate-300/80 dark:border-slate-600/80 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-colors font-medium text-foreground"
+                              className="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm font-medium text-foreground"
                             >
                               {audience}
                             </div>

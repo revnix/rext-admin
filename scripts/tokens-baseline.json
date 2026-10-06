@@ -437,9 +437,9 @@
     "off-scale": 2
   },
   "components/topic-builder/results/TopicDetailDrawer.tsx": {
-    "off-scale": 8,
-    "stock-palette": 29,
-    "dark-class": 15
+    "off-scale": 6,
+    "stock-palette": 19,
+    "dark-class": 9
   },
   "components/topic-builder/results/TopicsList.tsx": {
     "stock-palette": 1
@@ -635,7 +635,7 @@
     "arbitrary-radius": 1
   },
   "lib/animations.ts": {
-    "literal-colour": 5
+    "literal-colour": 3
   },
   "lib/topic-display-utils.ts": {
     "stock-palette": 46
