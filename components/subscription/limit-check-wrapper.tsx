@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { type LimitedResource, useResourceLimit } from "./usage-limit-warning";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
+import { settingsRoutes } from "@/lib/routes";
 
 /**
  * Limit Check Wrapper Component
@@ -106,7 +107,7 @@ export function LimitCheckWrapper({
             <Button
               size="sm"
               variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-              onClick={() => router.push("/subscription" as Route)}
+              onClick={() => router.push(settingsRoutes.plan as Route)}
             >
               View usage
             </Button>

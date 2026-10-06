@@ -29,7 +29,9 @@ export const settingsRoutes = {
   root: "/settings",
   security: "/settings/security",
   notifications: "/settings/notifications",
-  subscription: "/settings/subscription",
+  plan: "/settings/plan",
+  usage: "/settings/usage",
+  invoices: "/settings/invoices",
   data: "/settings/data",
 } as const satisfies Record<string, Route>;
 

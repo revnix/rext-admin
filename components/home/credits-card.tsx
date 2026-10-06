@@ -103,9 +103,7 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
         </p>
       </div>
       <Button asChild variant="outline" className="self-start">
-        <Link
-          href={(onTrial ? "/pricing" : settingsRoutes.subscription) as Route}
-        >
+        <Link href={(onTrial ? "/pricing" : settingsRoutes.plan) as Route}>
           {onTrial ? "Choose a plan" : "Plan and billing"}
         </Link>
       </Button>

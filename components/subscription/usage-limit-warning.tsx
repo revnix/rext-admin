@@ -9,6 +9,7 @@ import { Notice } from "@/components/ui/notice";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
+import { settingsRoutes } from "@/lib/routes";
 
 /**
  * Usage Limit Warning Component
@@ -264,7 +265,7 @@ export function UsageLimitWarning({
           <Button
             size="sm"
             variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-            onClick={() => router.push("/subscription" as Route)}
+            onClick={() => router.push(settingsRoutes.usage as Route)}
           >
             View usage
           </Button>

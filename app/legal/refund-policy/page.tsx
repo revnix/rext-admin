@@ -1,6 +1,7 @@
 import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { DetailPage } from "@/components/layouts";
+import { settingsRoutes } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "Refunds and cancellation",
@@ -24,7 +25,7 @@ export default function RefundPolicyPage() {
           <ul className="space-y-1 text-body">
             <li>
               <Link
-                href={"/subscription" as Route}
+                href={settingsRoutes.plan as Route}
                 className="text-primary hover:underline"
               >
                 Cancel your plan

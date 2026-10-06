@@ -159,9 +159,31 @@ const nextConfig: NextConfig = {
   reactStrictMode: true, // Enable React strict mode for better error detection
   async redirects() {
     return [
+      // Billing is three account settings sections since F5 (Plan, Usage, Invoices):
+      // the old billing pages land on the section that does their job.
       {
         source: "/settings/billing",
-        destination: "/settings/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/settings/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/billing",
+        destination: "/settings/invoices",
+        permanent: false,
+      },
+      {
+        source: "/usage",
+        destination: "/settings/usage",
         permanent: false,
       },
       {
@@ -198,9 +220,9 @@ const nextConfig: NextConfig = {
       // Legacy pages removed on 2026-10-06 (D19): an old bookmark lands on the page
       // that does the job now.
       {
-        // Lifetime licences: no lifetime plan exists; the plan is in Subscription.
+        // Lifetime licences: no lifetime plan exists; the plan is in Plan.
         source: "/licenses",
-        destination: "/settings/subscription",
+        destination: "/settings/plan",
         permanent: false,
       },
       {
