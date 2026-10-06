@@ -7,7 +7,6 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,7 +14,7 @@ import { toast } from "sonner";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { refreshPersonaCounts } from "@/hooks/use-personas";
+import { useRefreshPersonaCountsOnFinishedRuns } from "@/hooks/use-personas";
 import { useRefreshAfterRuns } from "@/hooks/use-refresh-after-runs";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
@@ -77,8 +76,8 @@ export function BackgroundGenerationDock() {
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showStages, setShowStages] = useState(false);
-  const queryClient = useQueryClient();
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
+  const jobsLoaded = useBackgroundGenerationStore((state) => state.hasHydrated);
   const updateJob = useBackgroundGenerationStore((state) => state.updateJob);
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
   const mergeJobs = useBackgroundGenerationStore((state) => state.mergeJobs);
@@ -406,8 +405,6 @@ export function BackgroundGenerationDock() {
           },
         });
       } else if (completed) {
-        // A new article counts toward its author persona.
-        if (job.workspaceId) refreshPersonaCounts(queryClient, job.workspaceId);
         toast.success("Your article is ready", {
           description: job.title,
           action: {
@@ -426,7 +423,10 @@ export function BackgroundGenerationDock() {
         });
       }
     }
-  }, [jobs, openJob, queryClient, updateJob]);
+  }, [jobs, openJob, updateJob]);
+
+  // A new article counts toward its author persona, in every open tab.
+  useRefreshPersonaCountsOnFinishedRuns(jobs, jobsLoaded);
 
   const cancelJob = async (target: BackgroundGenerationJob) => {
     try {
