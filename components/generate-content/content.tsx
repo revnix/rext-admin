@@ -1,13 +1,14 @@
 import type { WordPressPostStatus } from "@/types/content";
 import type {
+  ContentChecklist,
   FinalContent,
   Outline,
   ReadabilityMetrics,
   SEORESULT,
-  Issue,
   TrustScore,
 } from "@/types/generate-content";
 import type { ToolCall } from "@/components/generate-content/agent-feed";
+import { ArticleChecklist } from "@/components/generate-content/article-checklist";
 import { Button } from "../ui/button";
 import {
   Activity,
@@ -24,10 +25,8 @@ import {
   Save,
   Search,
   Send,
-  Sparkles,
   List,
   CheckCircle2,
-  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -248,33 +247,6 @@ const slugify = (text: string) => {
     .trim();
 };
 
-const getStatusMessage = (score: number) => {
-  if (score >= 80) return "Excellent EEAT signals detected";
-  if (score >= 60) return "Good EEAT signals detected";
-  if (score >= 40) return "Moderate EEAT signals detected";
-  return "Weak EEAT signals detected";
-};
-
-const getSEOStatusText = (score: number) => {
-  if (score >= 95) return "Perfect SEO!";
-  if (score >= 85) return "Almost Perfect!";
-  if (score >= 70) return "Great Work!";
-  if (score >= 50) return "Good Progress";
-  if (score >= 30) return "Needs Optimization";
-  return "Poor SEO Score";
-};
-
-const levelToStatus = (level: string) => {
-  switch (level) {
-    case "GOOD":
-      return "success";
-    case "WARNING":
-      return "warning";
-    default:
-      return "info";
-  }
-};
-
 type PipelineStep = { label: string; status: "pending" | "active" | "done" };
 
 type ContentEditorProps = {
@@ -287,6 +259,8 @@ type ContentEditorProps = {
   enhancingDescription?: string;
   allContent: FinalContent | null;
   readabilityScore: ReadabilityMetrics | null;
+  /** The backend's checklist: content.checklist or content.review.checklist. */
+  checklist?: ContentChecklist | null;
   trustScore: TrustScore | null;
   generatedContent: string;
   isEditing: boolean;
@@ -310,6 +284,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     enhancingDescription,
     allContent,
     readabilityScore,
+    checklist = null,
     trustScore,
     generatedContent,
     seoScore: rawSeoScore,
@@ -1149,136 +1124,12 @@ function ContentEditorInner(props: ContentEditorProps) {
             )}
           </div>
         )}
-        {/* ── Metrics (shown once generation is complete) ─────────────── */}
-        {score ? (
-          <>
-            <div className="flex items-center gap-2">
-              <Activity size={16} className="text-foreground" />
-              <h4 className="text-sm font-semibold text-foreground">
-                Performance & SEO
-              </h4>
-            </div>
-          </>
-        ) : null}
-
-        {seoScore ? (
-          <div className="bg-card p-5 rounded-md border border-border space-y-6">
-            <h4 className="text-base font-semibold text-foreground">
-              On-Page SEO
-            </h4>
-
-            <div className="flex items-center gap-6">
-              <div className="relative flex items-center justify-center shrink-0">
-                <svg className="w-20 h-20 transform -rotate-90">
-                  <title id="seo-health-score-title">
-                    SEO health score: {seoScore.seo_health_score} percent
-                  </title>
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="transparent"
-                    className="text-muted/30"
-                  />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="transparent"
-                    strokeDasharray={226.2}
-                    strokeDashoffset={
-                      226.2 * (1 - seoScore.seo_health_score / 100)
-                    }
-                    strokeLinecap="round"
-                    className="text-foreground transition-all duration-1000"
-                  />
-                </svg>
-                <span className="absolute text-xl font-bold text-foreground">
-                  {Math.round(seoScore.seo_health_score)}
-                </span>
-              </div>
-
-              <div className="space-y-0.5">
-                <div className="text-base font-semibold text-foreground leading-tight">
-                  {getSEOStatusText(seoScore.seo_health_score)}
-                </div>
-                {seoScore.issue_summary?.warnings ||
-                seoScore.issue_summary?.errors ? (
-                  <div className="text-sm text-muted-foreground">
-                    {seoScore.issue_summary?.warnings} warnings
-                    <br />
-                    {seoScore.issue_summary?.errors} errors
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              {seoScore.issues?.length > 0 &&
-                seoScore.issues.map((issue: Issue) => {
-                  const status = levelToStatus(issue.level);
-                  return (
-                    <div
-                      key={issue.message}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      {status === "success" ? (
-                        <CheckCircle2
-                          size={18}
-                          className="text-foreground shrink-0"
-                        />
-                      ) : (
-                        <AlertCircle
-                          size={18}
-                          className={
-                            status === "warning"
-                              ? "text-foreground shrink-0"
-                              : "text-muted-foreground shrink-0"
-                          }
-                        />
-                      )}
-                      <span className="leading-tight">{issue.message}</span>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        ) : null}
-
-        {trustScore ? (
-          <>
-            <hr />
-            <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-foreground" />
-              <h4 className="text-sm font-semibold text-foreground">
-                EEAT Assistant
-              </h4>
-            </div>
-
-            <div className="bg-card p-5 rounded-md border border-border space-y-4">
-              <h4 className="text-base font-semibold text-foreground leading-tight">
-                Trust Score
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-4xl font-semibold text-foreground tracking-tight">
-                  {trustScore.score ? trustScore.score : trustScore.trust_score}
-                  %
-                </span>
-                <TrendingUp
-                  size={20}
-                  className="text-muted-foreground shrink-0"
-                />
-              </div>
-              <div className="text-label text-muted-foreground">
-                {getStatusMessage(trustScore.score ?? trustScore.trust_score)}
-              </div>
-            </div>
-          </>
-        ) : null}
+        {/* The checklist (once the article's checks have come back) */}
+        <ArticleChecklist
+          seoScore={seoScore}
+          checklist={checklist}
+          trustScore={trustScore}
+        />
       </section>
     </div>
   );
@@ -1553,11 +1404,11 @@ function ContentEditorInner(props: ContentEditorProps) {
               className="rounded-md h-11 pr-5 pl-4 flex items-center gap-2 bg-background hover:bg-muted text-foreground border border-border"
             >
               <Activity size={18} />
-              <span className="font-bold text-sm">Analysis</span>
+              <span className="font-bold text-sm">Checklist</span>
             </Button>
             <SheetContent side="right" className="p-0 w-80 bg-card">
               <SheetHeader className="px-6 py-4 border-b">
-                <SheetTitle>SEO & Performance</SheetTitle>
+                <SheetTitle>Checklist</SheetTitle>
               </SheetHeader>
               {analysisSidebarContent}
             </SheetContent>
