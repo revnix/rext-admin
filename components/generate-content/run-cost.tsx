@@ -78,7 +78,7 @@ export function RunCostTooltip({
   children: ReactElement;
 }) {
   const view = useRunCost(run);
-  if (!view) return children;
+  if (!run || !view) return children;
   const { credits, cost, metered } = view;
   const short = shortfall(run, credits);
   return (
