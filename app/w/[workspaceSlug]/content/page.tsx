@@ -28,7 +28,10 @@ import {
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import { Notice } from "@/components/ui/notice";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useAwaitingData } from "@/hooks/use-awaiting-data";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useAllContent, useTrashContent } from "@/hooks/use-content";
 import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -207,7 +210,8 @@ function ContentRowCard({
  * render inside the list layout, and permissions and the workspace are checked before the list.
  */
 export default function WorkspaceContentPage() {
-  const { workspace, workspaceSlug, error: workspaceError } = useWorkspace();
+  const { workspace, workspaceSlug } = useWorkspace();
+  const workspaceError = useWorkspaceFailure();
   // The search, the statuses, the sort and the page live in the URL (?q=…&status=draft&page=2).
   const tableState = useDataTableUrlState(contentListParams, {
     facets: CONTENT_LIST_FACETS,

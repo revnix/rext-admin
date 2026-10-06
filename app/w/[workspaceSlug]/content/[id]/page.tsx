@@ -17,7 +17,10 @@ import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { useAwaitingData } from "@/hooks/use-awaiting-data";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
@@ -36,7 +39,8 @@ export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
   const { id } = use(params);
-  const { workspace, error: workspaceError } = useWorkspace();
+  const { workspace } = useWorkspace();
+  const workspaceError = useWorkspaceFailure();
   const router = useRouter();
 
   // Canonical workspace UUID — keeps the detail query key in the same cache
