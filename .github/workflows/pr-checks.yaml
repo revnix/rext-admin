@@ -49,6 +49,11 @@ jobs:
 
       - name: Route types
         run: pnpm exec next typegen
+        env:
+          # next typegen loads next.config.ts, which checks the environment as a production build does (env.ts).
+          # Dummy values, as in the build below.
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:2024
+          AUTH_SECRET: ci-build-only-not-a-secret
 
       - name: Types
         run: pnpm exec tsc --noEmit
