@@ -336,3 +336,18 @@ export type MemberPermissionsResponseSchemaType = z.infer<
 export type UpdateBrandVoiceResponseSchemaType = z.infer<
   typeof updateBrandVoiceResponseSchema
 >;
+
+/** Change a member's role (the members list's dialog): one role, picked from the workspace's. */
+export const changeMemberRoleSchema = z.object({
+  role_id: z.string().min(1, "Choose a role"),
+});
+
+export type ChangeMemberRoleValues = z.infer<typeof changeMemberRoleSchema>;
+
+/** Invite members (the members list's dialog): the role they join with and how long the links last. */
+export const inviteMembersSchema = z.object({
+  role_id: z.string().min(1, "Choose a role"),
+  expires_in_days: z.number().int().min(1).max(30),
+});
+
+export type InviteMembersValues = z.infer<typeof inviteMembersSchema>;

@@ -451,3 +451,39 @@ export type SubscriptionUpgradeRequest = z.infer<
 export type SubscriptionCancelRequest = z.infer<
   typeof SubscriptionCancelRequestSchema
 >;
+
+/**
+ * A subscription plan as a super admin creates or edits it (the admin plans page). The internal
+ * name can't change after creation. -1 means unlimited and 0 turns a limit off.
+ */
+export const subscriptionPlanFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be less than 50 characters")
+    .regex(
+      /^[a-z0-9_]+$/,
+      "Name must be lowercase letters, numbers, and underscores only",
+    ),
+  display_name: z
+    .string()
+    .min(2, "Display name must be at least 2 characters")
+    .max(150, "Display name must be less than 150 characters"),
+  description: z.string().optional(),
+  price_monthly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  price_yearly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  max_workspaces: z.number().int(),
+  max_members_per_workspace: z.number().int(),
+  is_active: z.boolean(),
+  is_public: z.boolean(),
+});
+
+export type SubscriptionPlanFormValues = z.infer<
+  typeof subscriptionPlanFormSchema
+>;

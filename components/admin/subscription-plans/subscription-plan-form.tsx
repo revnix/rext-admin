@@ -1,56 +1,19 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FieldController } from "@/components/forms/field-controller";
+import { FormSection, FormShell } from "@/components/forms/form-shell";
+import { ToggleController } from "@/components/forms/toggle-controller";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import {
+  type SubscriptionPlanFormValues,
+  subscriptionPlanFormSchema,
+} from "@/schemas/subscription-schemas";
 import type { SubscriptionPlan } from "@/types/subscription";
-
-const planFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters")
-    .regex(
-      /^[a-z0-9_]+$/,
-      "Name must be lowercase letters, numbers, and underscores only",
-    ),
-  display_name: z
-    .string()
-    .min(2, "Display name must be at least 2 characters")
-    .max(150, "Display name must be less than 150 characters"),
-  description: z.string().optional(),
-  price_monthly: z
-    .number()
-    .min(0, "Price must be positive")
-    .max(999999, "Price too large"),
-  price_yearly: z
-    .number()
-    .min(0, "Price must be positive")
-    .max(999999, "Price too large"),
-  max_workspaces: z.number().int(),
-  max_members_per_workspace: z.number().int(),
-  is_active: z.boolean(),
-  is_public: z.boolean(),
-});
-
-type PlanFormValues = z.infer<typeof planFormSchema>;
 
 interface SubscriptionPlanFormProps {
   plan?: SubscriptionPlan;
@@ -65,8 +28,7 @@ export function SubscriptionPlanForm({
 }: SubscriptionPlanFormProps) {
   const isEditing = !!plan;
 
-  const form = useForm<PlanFormValues>({
-    resolver: zodResolver(planFormSchema),
+  const form = useZodForm(subscriptionPlanFormSchema, {
     defaultValues: isEditing
       ? {
           name: plan.name,
@@ -93,7 +55,7 @@ export function SubscriptionPlanForm({
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: PlanFormValues) => {
+    mutationFn: async (values: SubscriptionPlanFormValues) => {
       if (isEditing) {
         // Exclude name field for updates (can't change after creation)
         const { name: _name, ...updateData } = values;
@@ -120,239 +82,160 @@ export function SubscriptionPlanForm({
     },
   });
 
-  const onSubmit = (values: PlanFormValues) => {
-    mutation.mutate(values);
+  const onSubmit = async (values: SubscriptionPlanFormValues) => {
+    await mutation.mutateAsync(values).catch(() => undefined);
   };
 
+  const monthly = form.watch("price_monthly");
+  const yearly = form.watch("price_yearly");
+  const yearlySaving =
+    monthly > 0 && yearly > 0
+      ? Math.round(((monthly * 12 - yearly) / (monthly * 12)) * 100)
+      : null;
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Basic Information</h3>
-
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Internal Name *</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="pro"
-                    {...field}
-                    disabled={isEditing} // Can't change name after creation
-                  />
-                </FormControl>
-                <FormDescription>
-                  Unique identifier (lowercase, no spaces). Cannot be changed
-                  after creation.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="display_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Pro Plan" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Name shown to users in the pricing page.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Perfect for growing teams..."
-                    {...field}
-                    rows={3}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Brief description of the plan benefits.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Pricing */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Pricing</h3>
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="price_monthly"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Monthly Price ($) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="29.99"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <FormShell
+      form={form}
+      onSubmit={onSubmit}
+      submitLabel={isEditing ? "Update plan" : "Create plan"}
+      cancel={{ onCancel }}
+    >
+      <FormSection title="Basic information">
+        <FieldController
+          control={form.control}
+          name="name"
+          label="Internal name"
+          required
+          description="A unique id: lowercase letters, numbers and underscores. It can't change after creation."
+        >
+          {(field) => (
+            <Input
+              {...field}
+              placeholder="pro"
+              disabled={isEditing} // Can't change name after creation
             />
-
-            <FormField
-              control={form.control}
-              name="price_yearly"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Yearly Price ($) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="299.99"
-                      className="mt-1"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    {form.watch("price_monthly") > 0 &&
-                      form.watch("price_yearly") > 0 &&
-                      `Save ${Math.round(((form.watch("price_monthly") * 12 - form.watch("price_yearly")) / (form.watch("price_monthly") * 12)) * 100)}%`}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+          )}
+        </FieldController>
+        <FieldController
+          control={form.control}
+          name="display_name"
+          label="Display name"
+          required
+          description="The name customers see on the pricing page."
+        >
+          {(field) => <Input {...field} placeholder="Pro Plan" />}
+        </FieldController>
+        <FieldController
+          control={form.control}
+          name="description"
+          label="Description"
+          description="What the plan gives, in a sentence or two."
+        >
+          {(field) => (
+            <Textarea
+              {...field}
+              value={field.value ?? ""}
+              rows={3}
+              placeholder="Perfect for growing teams..."
             />
-          </div>
-        </div>
+          )}
+        </FieldController>
+      </FormSection>
 
-        {/* Limits */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Limits</h3>
-          <p className="text-sm text-muted-foreground">
-            Use -1 for unlimited. Use 0 to disable the feature.
-          </p>
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="max_workspaces"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Workspaces *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="5"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="max_members_per_workspace"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Members per Workspace *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="10"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Settings</h3>
-
-          <FormField
+      <FormSection title="Pricing">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FieldController
             control={form.control}
-            name="is_active"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Active</FormLabel>
-                  <FormDescription>
-                    Inactive plans cannot be selected by users.
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
+            name="price_monthly"
+            label="Monthly price ($)"
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="number"
+                step="0.01"
+                placeholder="29.99"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
             )}
-          />
-
-          <FormField
+          </FieldController>
+          <FieldController
             control={form.control}
-            name="is_public"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Public</FormLabel>
-                  <FormDescription>
-                    Private plans are hidden from the pricing page (admin-only).
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
+            name="price_yearly"
+            label="Yearly price ($)"
+            required
+            description={
+              yearlySaving !== null ? `Save ${yearlySaving}%` : undefined
+            }
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="number"
+                step="0.01"
+                placeholder="299.99"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
             )}
-          />
+          </FieldController>
         </div>
+      </FormSection>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      <FormSection
+        title="Limits"
+        description="Use -1 for unlimited. Use 0 to turn the feature off."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FieldController
+            control={form.control}
+            name="max_workspaces"
+            label="Max workspaces"
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="number"
+                placeholder="5"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
             )}
-            {isEditing ? "Update Plan" : "Create Plan"}
-          </Button>
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="max_members_per_workspace"
+            label="Max members per workspace"
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="number"
+                placeholder="10"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
+            )}
+          </FieldController>
         </div>
-      </form>
-    </Form>
+      </FormSection>
+
+      <FormSection title="Settings">
+        <ToggleController
+          control={form.control}
+          name="is_active"
+          kind="switch"
+          label="Active"
+          description="Customers can't choose an inactive plan."
+        />
+        <ToggleController
+          control={form.control}
+          name="is_public"
+          kind="switch"
+          label="Public"
+          description="A private plan is hidden from the pricing page (admin-only)."
+        />
+      </FormSection>
+    </FormShell>
   );
 }

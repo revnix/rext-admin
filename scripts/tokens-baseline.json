@@ -12,9 +12,6 @@
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },
-  "components/profile/change-password-form.tsx": {
-    "stock-palette": 4
-  },
   "components/ui/alert-dialog.tsx": {
     "stock-palette": 1,
     "off-scale": 1
