@@ -43,6 +43,9 @@ export function getCSPHeader(_nonce: string): string {
       checkout: "https://*.lemonsqueezy.com",
     },
     posthog: posthogHost,
+    // The password breach check on sign-up and reset (lib/password-utils.ts) asks Have I Been
+    // Pwned for a five-character hash prefix, from the browser.
+    pwnedPasswords: "https://api.pwnedpasswords.com",
   };
 
   // Build CSP directives
@@ -67,7 +70,7 @@ export function getCSPHeader(_nonce: string): string {
     "font-src 'self' data:",
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog}`,
+    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog} ${thirdPartyDomains.pwnedPasswords}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
     `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.checkout}`,
@@ -107,6 +110,7 @@ export function getCSPHeader(_nonce: string): string {
  *   - frame-src: Allows checkout overlay iframes from *.lemonsqueezy.com
  *     (checkout URLs are served from the store subdomain, not app.)
  *   - connect-src: Enables API connections to app.lemonsqueezy.com
+ * - Have I Been Pwned: the password breach check (connect-src api.pwnedpasswords.com)
  * - To add new services: Update thirdPartyDomains object and relevant directives
  *
  * Security Features Still Active:
