@@ -10,33 +10,47 @@ import type { PlanCatalog } from "@/types/plan-catalog";
 
 /** The pipeline's billed stages, by the catalogue's keys (`credit_manager.py`). */
 const STAGE_NAMES: Record<string, string> = {
-  serp_seo: "the search and SEO analysis",
-  title_generation: "the title",
-  generate_outline: "the outline",
-  deep_research: "the research",
-  content_drafting: "the draft",
-  featured_image: "the featured image",
-  humanization: "the rewrite for a natural voice",
-  eeat_optimization: "the experience and trust signals",
+  serp_seo: "Search and SEO analysis",
+  title_generation: "Title",
+  generate_outline: "Outline",
+  deep_research: "Research",
+  content_drafting: "Draft",
+  featured_image: "Featured image",
+  humanization: "Rewrite for a natural voice",
+  eeat_optimization: "Experience and trust signals",
 };
 
 const count = (n: number) => n.toLocaleString("en-US");
 
-function listWords(items: string[]) {
-  if (items.length < 2) return items.join("");
-  return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
-}
-
 function answers(catalog: PlanCatalog) {
   const { credits, trial } = catalog;
-  const stages = credits.stages.map(
-    (stage) =>
-      `${STAGE_NAMES[stage.key] ?? stage.key.replaceAll("_", " ")} ${count(stage.credits)}`,
-  );
   const items: { question: string; answer: ReactNode }[] = [
     {
       question: "What does an article cost?",
-      answer: `${count(credits.per_article)} credits, whatever its length: ${listWords(stages)}. Changing the keyword costs ${count(credits.keyword_change)} more, and writing the outline again ${count(credits.outline_regeneration)}. An article starts only with ${count(credits.minimum_to_start)} credits or more.`,
+      answer: (
+        <span className="flex flex-col gap-2">
+          <span>
+            {count(credits.per_article)} credits, whatever its length, spent
+            stage by stage:
+          </span>
+          <span className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
+            {credits.stages.map((stage) => (
+              <span key={stage.key} className="contents">
+                <span>
+                  {STAGE_NAMES[stage.key] ?? stage.key.replaceAll("_", " ")}
+                </span>
+                <span className="num text-right">{count(stage.credits)}</span>
+              </span>
+            ))}
+          </span>
+          <span>
+            Changing the keyword costs {count(credits.keyword_change)} more, and
+            writing the outline again {count(credits.outline_regeneration)}. An
+            article starts only with {count(credits.minimum_to_start)} credits
+            or more.
+          </span>
+        </span>
+      ),
     },
     {
       question: "Do unused credits carry over?",
