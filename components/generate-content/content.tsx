@@ -1104,10 +1104,10 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   return (
-    // Full-bleed (cancels PageLayout's side padding) and, on xl, exactly the
-    // viewport below the 5rem app header: each column scrolls on its own, so
-    // there is one scrollbar per column and none on the page.
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 sm:-mx-8 xl:h-[calc(100dvh-5rem)] xl:overflow-hidden">
+    // Full-bleed (cancels PageFrame's side gutters, 16, 24 and 32 px) and, on
+    // xl, exactly the viewport below the 5rem app header: each column scrolls
+    // on its own, so there is one scrollbar per column and none on the page.
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-5rem)] xl:overflow-hidden">
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
