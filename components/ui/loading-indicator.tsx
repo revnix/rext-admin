@@ -4,7 +4,6 @@ import { Loader2, Check, Shield } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "motion/react";
 import type { LoadingStep } from "@/constants/loading-steps";
 
 type SpinnerVariant = {
@@ -226,31 +225,23 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
             const isPending = !isActive && !isCompleted;
 
             return (
-              <motion.div
+              <div
                 key={step.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.04 }}
                 className={cn(
-                  "relative flex items-center gap-4 px-5 py-3.5 transition-colors duration-300",
+                  "relative flex items-center gap-4 px-5 py-3.5 transition-colors",
                   isActive ? "bg-muted/50" : "",
                   isCompleted ? "opacity-60" : "",
                 )}
               >
                 {/* Active left bar */}
                 {isActive && (
-                  <motion.span
-                    layoutId="active-bar"
-                    className="absolute left-0 top-0 bottom-0 w-[2px] bg-foreground rounded-full"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
+                  <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-foreground rounded-full" />
                 )}
 
                 {/* Step indicator */}
                 <div
                   className={cn(
-                    "shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-all duration-300",
+                    "shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-colors",
                     isActive
                       ? "bg-foreground border-foreground text-background"
                       : isCompleted
@@ -272,7 +263,7 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 {/* Label */}
                 <p
                   className={cn(
-                    "flex-1 text-[13px] font-medium transition-colors duration-200",
+                    "flex-1 text-[13px] font-medium transition-colors",
                     isActive
                       ? "text-foreground"
                       : isCompleted
@@ -285,28 +276,15 @@ export function LoadingIndicator(props: LoadingIndicatorProps) {
                 </p>
 
                 {/* Status indicator */}
-                <AnimatePresence mode="wait">
-                  {isActive && (
-                    <motion.span
-                      key="active"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className="shrink-0 text-[11px] font-medium text-foreground bg-muted px-2 py-0.5 rounded-md border border-border"
-                    >
-                      Running
-                    </motion.span>
-                  )}
-                  {isCompleted && (
-                    <motion.span
-                      key="done"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="shrink-0 w-1.5 h-1.5 rounded-full bg-foreground/40"
-                    />
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                {isActive && (
+                  <span className="shrink-0 text-[11px] font-medium text-foreground bg-muted px-2 py-0.5 rounded-md border border-border">
+                    Running
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-foreground/40" />
+                )}
+              </div>
             );
           })}
         </div>

@@ -112,9 +112,6 @@
     "stock-palette": 9,
     "dark-class": 4
   },
-  "app/styles/article.css": {
-    "arbitrary-size": 7
-  },
   "app/styles/wizards.css": {
     "arbitrary-size": 3
   },
@@ -485,18 +482,10 @@
   "components/ui/topic-cell-formatters.tsx": {
     "stock-palette": 22
   },
-  "components/ui/typeform/celebration.tsx": {
-    "literal-colour": 13,
-    "off-scale": 1
-  },
   "components/ui/typeform/chip-input.tsx": {
     "stock-palette": 5
   },
   "components/ui/typeform/multi-select-card.tsx": {
-    "off-scale": 1
-  },
-  "components/ui/typeform/progress-bar.tsx": {
-    "stock-palette": 2,
     "off-scale": 1
   },
   "components/ui/typeform/single-select-card.tsx": {
@@ -536,12 +525,6 @@
     "dark-class": 2,
     "stock-palette": 6,
     "arbitrary-radius": 1
-  },
-  "lib/animations.ts": {
-    "literal-colour": 3
-  },
-  "lib/typeform-utils.ts": {
-    "literal-colour": 13
   },
   "providers/tooltip-provider.tsx": {
     "off-scale": 1

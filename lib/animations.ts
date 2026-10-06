@@ -6,7 +6,6 @@
  */
 
 import type { Variants } from "motion/react";
-import type { AnimationTiming } from "@/types/typeform";
 
 export const DURATION = {
   fast: 0.12,
@@ -15,116 +14,6 @@ export const DURATION = {
 } as const;
 
 export const EASE_OUT = [0.2, 0, 0, 1] as const;
-
-// ============================================================================
-// ANIMATION TIMING CONSTANTS
-// ============================================================================
-
-export const ANIMATION_TIMING: AnimationTiming = {
-  fast: 0.1,
-  normal: 0.15,
-  slow: 0.25,
-  celebration: 1.0,
-} as const;
-
-export const MOTION_DURATION = {
-  instant: 0,
-  veryFast: 0.1,
-  medium: 0.4,
-  long: 1,
-  shimmer: 1.5,
-  floating: 2,
-} as const;
-
-export const SPRING_PRESETS = {
-  snappy: { type: "spring", stiffness: 500, damping: 25 },
-  interactive: { type: "spring", stiffness: 300, damping: 25 },
-  gentle: { type: "spring", stiffness: 200, damping: 25 },
-  pop: { type: "spring", stiffness: 300, damping: 20 },
-} as const;
-
-export const EASING = {
-  easeInOut: [0.4, 0.0, 0.2, 1],
-  easeOut: [0.0, 0.0, 0.2, 1],
-  easeIn: [0.4, 0.0, 1, 1],
-  spring: { type: "spring", stiffness: 300, damping: 30 },
-  gentleSpring: { type: "spring", stiffness: 200, damping: 25 },
-  anticipate: [0.175, 0.885, 0.32, 1.275],
-} as const;
-
-// ============================================================================
-// OPTION CARD ANIMATIONS
-// ============================================================================
-
-export const optionCardVariants: Variants = {
-  idle: {
-    scale: 1,
-    y: 0,
-    boxShadow: "none",
-    borderWidth: "1px",
-    borderColor: "var(--border)",
-  },
-
-  hover: {
-    scale: 1.02,
-    y: -2,
-    boxShadow: "none",
-    borderColor: "color-mix(in srgb, var(--foreground) 40%, transparent)",
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-      ease: EASING.easeOut,
-    },
-  },
-
-  tap: {
-    scale: 0.98,
-    transition: {
-      duration: MOTION_DURATION.veryFast,
-      ease: EASING.easeInOut,
-    },
-  },
-
-  selected: {
-    scale: 1.02,
-    boxShadow: "none",
-    borderColor: "var(--foreground)",
-    backgroundColor: "var(--card)",
-    transition: {
-      ...EASING.spring,
-    },
-  },
-
-  disabled: {
-    opacity: 0.6,
-    scale: 1,
-    cursor: "not-allowed",
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-    },
-  },
-};
-
-// ============================================================================
-// SELECTION INDICATOR ANIMATIONS
-// ============================================================================
-
-export const selectionIndicatorVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    scale: 0,
-    rotate: -180,
-  },
-
-  visible: {
-    opacity: 1,
-    scale: 1,
-    rotate: 0,
-    transition: {
-      ...SPRING_PRESETS.snappy,
-      duration: ANIMATION_TIMING.normal,
-    },
-  },
-};
 
 // ============================================================================
 // STEP CHANGE
@@ -142,103 +31,6 @@ export const stepChangeVariants: Variants = {
     transition: { duration: DURATION.base, ease: EASE_OUT },
   },
   exit: { opacity: 0, transition: { duration: 0 } },
-};
-
-// ============================================================================
-// QUESTION CONTENT
-// ============================================================================
-
-/**
- * A question's content and its items. Only the step changes, so every state is
- * the resting state: nothing enters, rises or staggers on its own. The names
- * stay because the typeform components still ask for them.
- */
-export const questionContentVariants: Variants = {
-  hidden: {},
-  visible: {},
-  exit: {},
-};
-
-export const questionItemVariants: Variants = {
-  hidden: {},
-  visible: {},
-  exit: {},
-};
-
-// ============================================================================
-// PROGRESS BAR ANIMATIONS
-// ============================================================================
-
-export const progressBarVariants: Variants = {
-  initial: {
-    width: "0%",
-    opacity: 0,
-  },
-
-  animate: {
-    width: "var(--progress-width)",
-    opacity: 1,
-    transition: {
-      width: {
-        duration: MOTION_DURATION.medium,
-        ease: EASING.easeOut,
-      },
-      opacity: {
-        duration: ANIMATION_TIMING.fast,
-      },
-    },
-  },
-
-  milestone: {
-    boxShadow: [
-      "0 0 0 rgba(59, 130, 246, 0)",
-      "0 0 20px rgba(59, 130, 246, 0.4)",
-      "0 0 0 rgba(59, 130, 246, 0)",
-    ],
-    transition: {
-      duration: ANIMATION_TIMING.celebration,
-      repeat: 1,
-    },
-  },
-};
-
-// ============================================================================
-// CELEBRATION ANIMATIONS
-// ============================================================================
-
-export const celebrationVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    scale: 0,
-    y: 20,
-  },
-
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      ...SPRING_PRESETS.pop,
-      duration: ANIMATION_TIMING.normal,
-    },
-  },
-
-  confetti: {
-    scale: [1, 1.1, 1],
-    rotate: [0, 10, -10, 0],
-    transition: {
-      duration: MOTION_DURATION.long,
-      repeat: 0,
-    },
-  },
-
-  exit: {
-    opacity: 0,
-    scale: 0.8,
-    transition: {
-      duration: ANIMATION_TIMING.fast,
-    },
-  },
 };
 
 // ============================================================================
@@ -292,5 +84,9 @@ export const useReducedMotion = (): boolean => {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 };
 
-// Removed unused animationVariants aggregate, utilities (createStaggeredAnimation, createSpringAnimation),
-// and default export per TASK-267.
+/**
+ * The variants as given, or, for a visitor who asked for reduced motion, with
+ * every finished state at once.
+ */
+export const useMotionVariants = (variants: Variants): Variants =>
+  getMotionVariants(variants, useReducedMotion());

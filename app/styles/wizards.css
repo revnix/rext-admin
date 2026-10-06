@@ -1,8 +1,6 @@
 /*
- * The two step-by-step flows still on their own classes: the content creation wizard
- * (components/content-creation) and the topic builder's question cards, which
- * lib/typeform-utils.ts adds. Both are on the tokens; the file goes when Plan D
- * rebuilds those pages on the primitives.
+ * The content creation wizard's own classes (components/content-creation), on the tokens;
+ * the file goes when Plan D rebuilds those pages on the primitives.
  */
 
 .wizard-container,
@@ -94,92 +92,6 @@
 
   @variant lg {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* The question steps of the topic builder (lib/typeform-utils.ts adds these). */
-.typeform-card,
-.typeform-card-interactive {
-  padding: 1rem;
-  color: var(--foreground);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--card-radius);
-  transition:
-    background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
-}
-
-.typeform-card-interactive {
-  cursor: pointer;
-  min-height: 44px;
-}
-
-.typeform-card-interactive:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-inset);
-}
-
-.typeform-card-interactive:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.typeform-card-selected {
-  border-color: var(--primary);
-  background: var(--surface-inset);
-}
-
-.typeform-card-error {
-  border-color: var(--danger-500);
-  background: var(--danger-50);
-}
-
-.typeform-card-loading {
-  opacity: 0.75;
-  cursor: wait;
-}
-
-.typeform-glow-effect {
-  box-shadow: 0 0 0 1px var(--border-strong);
-}
-
-.typeform-glow-effect-strong {
-  box-shadow: 0 0 0 2px var(--ring);
-}
-
-.typeform-shake {
-  animation: shake 0.4s var(--ease-out);
-}
-
-.typeform-bounce-in {
-  animation: settle-in var(--duration-base) var(--ease-out);
-}
-
-.typeform-pulse-success {
-  animation: settle-in var(--duration-base) var(--ease-out);
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    translate: 0;
-  }
-
-  25%,
-  75% {
-    translate: -4px;
-  }
-
-  50% {
-    translate: 4px;
-  }
-}
-
-@keyframes settle-in {
-  from {
-    opacity: 0;
-    scale: 0.96;
   }
 }
 
