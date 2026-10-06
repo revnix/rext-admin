@@ -17,7 +17,11 @@ import { RunProgress } from "@/components/generate-content/run-progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { cn } from "@/lib/utils";
 import { workspaceRunStages } from "@/lib/workspace/workspace-run-stages";
-import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
+import {
+  brandVoiceRefreshFor,
+  useWorkspaceCrudStore,
+  useWorkspaceStore,
+} from "@/stores/workspace";
 
 interface BrandVoiceRefreshControlProps {
   workspaceId: string;
@@ -44,7 +48,7 @@ export function BrandVoiceRefreshControl({
 
   // Use useShallow to properly memoize the selector
   const {
-    brandVoiceRefresh,
+    brandVoiceRefresh: refreshState,
     refreshBrandVoice,
     setBrandVoiceRefreshState,
     clearCurrentOperation,
@@ -57,6 +61,8 @@ export function BrandVoiceRefreshControl({
     })),
   );
 
+  // Only this workspace's run: another workspace's doesn't lock the button or open the dialog here.
+  const brandVoiceRefresh = brandVoiceRefreshFor(refreshState, workspaceId);
   const { setCurrentOperation } = useWorkspaceCrudStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
@@ -105,6 +111,7 @@ export function BrandVoiceRefreshControl({
       onError: (errorMessage) => {
         toast.error(errorMessage || "The website couldn't be read");
         setBrandVoiceRefreshState({
+          workspaceId,
           refreshError: errorMessage,
         });
         closeDialog();
@@ -140,6 +147,7 @@ export function BrandVoiceRefreshControl({
       const operationId = await refreshBrandVoice(workspaceId);
       setCurrentOperation({ operationId, workspaceId });
       setBrandVoiceRefreshState({
+        workspaceId,
         isRefreshing: true,
         operationId: operationId,
         refreshError: undefined,

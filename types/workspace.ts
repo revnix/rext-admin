@@ -298,6 +298,8 @@ export interface RefreshBrandVoiceResponse {
  * UI state for brand voice refresh operations
  */
 export interface BrandVoiceRefreshState {
+  /** The workspace the run and its error belong to; another workspace sees neither. */
+  workspaceId?: string;
   isRefreshing: boolean;
   operationId?: string;
   refreshError?: string;

@@ -1,8 +1,24 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { apiClient } from "@/lib/api-client";
-import type { BrandVoiceRefreshStoreState } from "@/types/workspace";
+import type {
+  BrandVoiceRefreshState,
+  BrandVoiceRefreshStoreState,
+} from "@/types/workspace";
 import { useWorkspaceCrudStore } from "./use-workspace-crud-store";
+
+/**
+ * The refresh as one workspace sees it. The state is kept once for the whole app, so a run or a
+ * failure in another workspace shows as nothing here.
+ */
+export function brandVoiceRefreshFor(
+  refresh: BrandVoiceRefreshState,
+  workspaceId: string | undefined,
+): BrandVoiceRefreshState {
+  return workspaceId && refresh.workspaceId === workspaceId
+    ? refresh
+    : { isRefreshing: false };
+}
 
 export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
   devtools(
@@ -18,7 +34,9 @@ export const useBrandVoiceRefreshStore = create<BrandVoiceRefreshStoreState>()(
           set((state) => ({
             brandVoiceRefresh: {
               ...state.brandVoiceRefresh,
+              workspaceId,
               isRefreshing: true,
+              operationId: undefined,
               refreshError: undefined,
             },
           }));

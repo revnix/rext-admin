@@ -48,7 +48,10 @@ export {
 // BRAND VOICE REFRESH STORE
 // ============================================================================
 
-export { useBrandVoiceRefreshStore } from "./use-brand-voice-refresh-store";
+export {
+  brandVoiceRefreshFor,
+  useBrandVoiceRefreshStore,
+} from "./use-brand-voice-refresh-store";
 
 // ============================================================================
 // COMBINED WORKSPACE STORE (for backward compatibility)
