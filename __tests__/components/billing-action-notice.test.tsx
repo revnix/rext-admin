@@ -23,6 +23,10 @@ jest.mock("@/lib/api-client", () => ({
   },
 }));
 
+jest.mock("@/components/billing/trial-banner", () => ({
+  TrialBanner: () => <p>The trial banner</p>,
+}));
+
 const mockOpenPaymentMethodDialog = jest.fn();
 jest.mock("@/stores/subscription-store", () => ({
   useSubscriptionStore: (select: (state: unknown) => unknown) =>
@@ -95,6 +99,15 @@ describe("ShellBillingBanner", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a failed renewal instead of the trial banner", async () => {
+    renderWith(pastDue, <ShellBillingBanner />);
+
+    expect(
+      await screen.findByText("Your payment on October 1 failed"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("The trial banner")).not.toBeInTheDocument();
+  });
+
   it("leaves a cancelled plan to Billing and the plan grid", async () => {
     renderWith(
       {
@@ -111,6 +124,8 @@ describe("ShellBillingBanner", () => {
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    // The slot falls back to the trial's banner.
+    expect(screen.getByText("The trial banner")).toBeInTheDocument();
   });
 });
 
