@@ -68,4 +68,13 @@ describe("env", () => {
       loadEnv({ NODE_ENV: "production", SKIP_ENV_VALIDATION: "1" }),
     ).resolves.toBeDefined();
   });
+
+  it.each(["0", "false"])(
+    "keeps the checks on when the skip flag is %s",
+    async (value) => {
+      await expect(
+        loadEnv({ NODE_ENV: "production", SKIP_ENV_VALIDATION: value }),
+      ).rejects.toThrow("AUTH_SECRET");
+    },
+  );
 });

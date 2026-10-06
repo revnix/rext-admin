@@ -103,5 +103,6 @@ export const env = createEnv({
     throw new Error(`Invalid environment variables:\n${lines.join("\n")}`);
   },
   emptyStringAsUndefined: true,
-  skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
+  // Only the documented value: "0" or "false" must not switch the checks off.
+  skipValidation: process.env.SKIP_ENV_VALIDATION === "1",
 });
