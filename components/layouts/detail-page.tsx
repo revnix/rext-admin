@@ -18,7 +18,9 @@ export function DetailPage({ aside, children, ...header }: DetailPageProps) {
     <PageFrame>
       <PageHeader {...header} />
       {aside ? (
-        <PageBody className="grid gap-8 lg:grid-cols-3">
+        // content-start: PageBody grows to the window's height, and a grid stretches its rows to fill
+        // it, which opened a gap between the main column and the aside on a short page on a phone.
+        <PageBody className="grid content-start gap-8 lg:grid-cols-3">
           <div className="min-w-0 lg:col-span-2">{children}</div>
           <aside data-slot="detail-aside" className="min-w-0">
             {aside}

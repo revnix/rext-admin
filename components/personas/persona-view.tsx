@@ -176,7 +176,7 @@ export function PersonaFacts({
 }) {
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4 pt-6">
         <Avatar className="size-16 rounded-md border">
           <AvatarImage
             src={persona.avatar_url || ""}
