@@ -182,8 +182,8 @@ export default function CheckoutSuccessPage() {
         {phase === "slow" && (
           <Notice tone="warning" title="Your plan isn't showing yet">
             The payment went through, and Lemon Squeezy tells us within a few
-            minutes. This page keeps looking, and Billing shows the plan once it
-            arrives; nothing needs to be paid again.
+            minutes. This page keeps looking, and Plan in your account settings
+            shows it once it arrives; nothing needs to be paid again.
           </Notice>
         )}
         {phase !== "slow" && (
