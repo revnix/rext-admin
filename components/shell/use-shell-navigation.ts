@@ -100,10 +100,11 @@ function workspaceGroups(slug: string): NavGroup[] {
         },
         {
           // The keyword library lives under Generate in the URL; the longer url marks it current.
+          // Its keywords start a generation and can be deleted, so it needs Generate's permission.
           title: "Keywords",
           url: `${workspaceRoutes.generate_content(slug)}/library`,
           icon: Hash,
-          permission: "content.read",
+          permission: "content.create",
           prefetch: false,
         },
         {
