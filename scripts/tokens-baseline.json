@@ -1,0 +1,665 @@
+{
+  "app/accept-admin-invitation/page.tsx": {
+    "stock-palette": 16
+  },
+  "app/account-recovery/page.tsx": {
+    "stock-palette": 1
+  },
+  "app/admin/analytics/invitations/page.tsx": {
+    "stock-palette": 1
+  },
+  "app/admin/analytics/subscriptions/page.tsx": {
+    "literal-colour": 13,
+    "stock-palette": 18,
+    "dark-class": 6
+  },
+  "app/admin/email-analytics/page.tsx": {
+    "stock-palette": 3
+  },
+  "app/admin/email-templates/page.tsx": {
+    "stock-palette": 7,
+    "dark-class": 2
+  },
+  "app/admin/monitoring/page.tsx": {
+    "stock-palette": 6
+  },
+  "app/admin/page.tsx": {
+    "stock-palette": 2
+  },
+  "app/admin/platform/invitations/page.tsx": {
+    "stock-palette": 19
+  },
+  "app/admin/refunds/page.tsx": {
+    "stock-palette": 3,
+    "small-type": 1
+  },
+  "app/admin/subscriptions/page.tsx": {
+    "stock-palette": 12,
+    "literal-colour": 3,
+    "dark-class": 2
+  },
+  "app/admin/subscriptions/plans/page.tsx": {
+    "stock-palette": 7
+  },
+  "app/admin/users/page.tsx": {
+    "small-type": 7,
+    "stock-palette": 4
+  },
+  "app/admin/webhooks/page.tsx": {
+    "stock-palette": 15,
+    "dark-class": 4
+  },
+  "app/checkout/cancel/page.tsx": {
+    "stock-palette": 9
+  },
+  "app/checkout/success/page.tsx": {
+    "stock-palette": 8,
+    "dark-class": 1
+  },
+  "app/error.tsx": {
+    "stock-palette": 14,
+    "literal-colour": 2,
+    "arbitrary-colour": 4,
+    "arbitrary-size": 1,
+    "off-scale": 1
+  },
+  "app/global-error.tsx": {
+    "stock-palette": 14,
+    "literal-colour": 2,
+    "arbitrary-colour": 4,
+    "arbitrary-size": 1,
+    "off-scale": 1
+  },
+  "app/invitations/accept/page.tsx": {
+    "stock-palette": 3
+  },
+  "app/legal/privacy/page.tsx": {
+    "dark-class": 1
+  },
+  "app/legal/refund-policy/page.tsx": {
+    "dark-class": 1
+  },
+  "app/legal/subscription-terms/page.tsx": {
+    "dark-class": 1
+  },
+  "app/legal/terms/page.tsx": {
+    "dark-class": 1
+  },
+  "app/maintenance/page.tsx": {
+    "stock-palette": 11,
+    "literal-colour": 2,
+    "arbitrary-colour": 4,
+    "off-scale": 2
+  },
+  "app/not-found.tsx": {
+    "stock-palette": 14,
+    "literal-colour": 2,
+    "arbitrary-colour": 4,
+    "arbitrary-size": 1,
+    "off-scale": 1
+  },
+  "app/reset-password/page.tsx": {
+    "stock-palette": 11
+  },
+  "app/settings/security/page.tsx": {
+    "stock-palette": 4,
+    "dark-class": 1
+  },
+  "app/settings/sessions/page.tsx": {
+    "stock-palette": 9,
+    "dark-class": 4
+  },
+  "app/verify-email/page.tsx": {
+    "stock-palette": 11
+  },
+  "app/w/[workspaceSlug]/content/[id]/page.tsx": {
+    "stock-palette": 5,
+    "small-type": 2
+  },
+  "app/w/[workspaceSlug]/content/calendar/page.tsx": {
+    "stock-palette": 9,
+    "small-type": 9
+  },
+  "app/w/[workspaceSlug]/integrations/add-integration-modal.tsx": {
+    "literal-colour": 3,
+    "arbitrary-size": 4,
+    "small-type": 1
+  },
+  "app/w/[workspaceSlug]/integrations/custom-integration-configuration.tsx": {
+    "stock-palette": 12
+  },
+  "app/w/[workspaceSlug]/integrations/page.tsx": {
+    "stock-palette": 3,
+    "dark-class": 1
+  },
+  "app/w/[workspaceSlug]/personas/[personaId]/page.tsx": {
+    "stock-palette": 1
+  },
+  "app/w/[workspaceSlug]/personas/create/page.tsx": {
+    "off-scale": 1
+  },
+  "app/w/page.tsx": {
+    "small-type": 3
+  },
+  "components/admin/analytics/cohort-retention-matrix.tsx": {
+    "stock-palette": 13
+  },
+  "components/admin/analytics/plan-distribution-chart.tsx": {
+    "literal-colour": 7
+  },
+  "components/admin/analytics/revenue-chart.tsx": {
+    "literal-colour": 3
+  },
+  "components/admin/analytics/subscription-kpis.tsx": {
+    "stock-palette": 3
+  },
+  "components/admin/audit/audit-logs-table.tsx": {
+    "stock-palette": 52
+  },
+  "components/admin/email/email-failures-table.tsx": {
+    "stock-palette": 4
+  },
+  "components/admin/email/email-overview-kpis.tsx": {
+    "stock-palette": 3
+  },
+  "components/admin/email/email-volume-chart.tsx": {
+    "literal-colour": 7
+  },
+  "components/admin/monitoring/error-logs-table.tsx": {
+    "stock-palette": 3
+  },
+  "components/admin/monitoring/usage-charts.tsx": {
+    "literal-colour": 4,
+    "stock-palette": 4
+  },
+  "components/admin/refunds/refund-requests-table.tsx": {
+    "stock-palette": 6,
+    "small-type": 1
+  },
+  "components/admin/roles/bulk-assign-permissions-dialog.tsx": {
+    "small-type": 3,
+    "stock-palette": 2
+  },
+  "components/admin/roles/edit-permission-dialog.tsx": {
+    "small-type": 2
+  },
+  "components/admin/roles/permission-badge.tsx": {
+    "stock-palette": 33
+  },
+  "components/admin/roles/permission-dependency-view.tsx": {
+    "stock-palette": 27,
+    "dark-class": 13
+  },
+  "components/admin/users/account-recovery-table.tsx": {
+    "small-type": 2
+  },
+  "components/admin/users/deleted-users-table.tsx": {
+    "small-type": 2
+  },
+  "components/admin/users/manage-user-roles-dialog.tsx": {
+    "small-type": 4
+  },
+  "components/admin/users/recovery-review-dialog.tsx": {
+    "stock-palette": 1
+  },
+  "components/admin/users/user-status-dialog.tsx": {
+    "stock-palette": 1
+  },
+  "components/auth/auth-layout.tsx": {
+    "stock-palette": 51
+  },
+  "components/background-generation-dock.tsx": {
+    "stock-palette": 6
+  },
+  "components/content-creation/fields/content-length-selector.tsx": {
+    "stock-palette": 2
+  },
+  "components/content-creation/fields/keyword-tag-input.tsx": {
+    "stock-palette": 2
+  },
+  "components/content-creation/fields/multi-select-checkbox-grid.tsx": {
+    "stock-palette": 1
+  },
+  "components/content-creation/fields/reviewer-selector.tsx": {
+    "stock-palette": 4
+  },
+  "components/content-creation/fields/selected-topic-display.tsx": {
+    "stock-palette": 1
+  },
+  "components/content-creation/fields/toggle-field-group.tsx": {
+    "stock-palette": 2
+  },
+  "components/content-creation/fields/tone-selector.tsx": {
+    "stock-palette": 10,
+    "off-scale": 1
+  },
+  "components/content-creation/layouts/question-answer-layout.tsx": {
+    "small-type": 1
+  },
+  "components/content-creation/steps/audience-goals-step.tsx": {
+    "stock-palette": 2
+  },
+  "components/content-creation/steps/voice-style-step.tsx": {
+    "stock-palette": 1,
+    "small-type": 1
+  },
+  "components/content-creation/wizard-navigation.tsx": {
+    "stock-palette": 1
+  },
+  "components/content-creation/wizard-sidebar-progress.tsx": {
+    "stock-palette": 17,
+    "small-type": 4
+  },
+  "components/content/content-card.tsx": {
+    "stock-palette": 10
+  },
+  "components/dashboard/revamp/recent-content.tsx": {
+    "stock-palette": 14,
+    "dark-class": 6,
+    "small-type": 1
+  },
+  "components/data-table.tsx": {
+    "arbitrary-size": 2
+  },
+  "components/detail-page-wrapper.tsx": {
+    "stock-palette": 6
+  },
+  "components/forgot-password-form.tsx": {
+    "stock-palette": 6
+  },
+  "components/generate-content/agent-feed.tsx": {
+    "stock-palette": 26,
+    "small-type": 14,
+    "dark-class": 2,
+    "off-scale": 1
+  },
+  "components/generate-content/content.tsx": {
+    "stock-palette": 21,
+    "arbitrary-colour": 2,
+    "dark-class": 2,
+    "arbitrary-size": 6,
+    "small-type": 6
+  },
+  "components/generate-content/hero.tsx": {
+    "arbitrary-size": 3,
+    "stock-palette": 1,
+    "dark-class": 1
+  },
+  "components/generate-content/keyword.tsx": {
+    "arbitrary-size": 1
+  },
+  "components/generate-content/library-detail.tsx": {
+    "stock-palette": 11,
+    "dark-class": 10,
+    "small-type": 2
+  },
+  "components/generate-content/library-view.tsx": {
+    "stock-palette": 10,
+    "small-type": 3
+  },
+  "components/generate-content/outline.tsx": {
+    "small-type": 8,
+    "arbitrary-size": 3
+  },
+  "components/generate-content/selection-view.tsx": {
+    "stock-palette": 2,
+    "dark-class": 2
+  },
+  "components/generate-content/topics.tsx": {
+    "small-type": 4
+  },
+  "components/impersonation/impersonation-banner.tsx": {
+    "stock-palette": 21,
+    "dark-class": 10
+  },
+  "components/knowledge/shared/BaseKnowledgeCard.tsx": {
+    "off-scale": 1
+  },
+  "components/notifications-drawer.tsx": {
+    "stock-palette": 24,
+    "dark-class": 2
+  },
+  "components/oauth-buttons.tsx": {
+    "literal-colour": 4
+  },
+  "components/onboarding/steps/invited-user-first-tasks.tsx": {
+    "off-scale": 1,
+    "stock-palette": 10,
+    "dark-class": 5
+  },
+  "components/onboarding/steps/invited-user-permissions.tsx": {
+    "stock-palette": 20,
+    "dark-class": 10
+  },
+  "components/page-layout.tsx": {
+    "stock-palette": 23,
+    "dark-class": 27,
+    "small-type": 1
+  },
+  "components/permission/access-denied.tsx": {
+    "stock-palette": 1
+  },
+  "components/permission/locked-feature-tooltip.tsx": {
+    "stock-palette": 3
+  },
+  "components/personas/persona-card.tsx": {
+    "stock-palette": 7,
+    "off-scale": 1
+  },
+  "components/personas/persona-detail.tsx": {
+    "off-scale": 2,
+    "stock-palette": 3
+  },
+  "components/pricing/pricing-table.tsx": {
+    "stock-palette": 9,
+    "dark-class": 4
+  },
+  "components/profile/change-password-form.tsx": {
+    "stock-palette": 4
+  },
+  "components/search-dialog.tsx": {
+    "stock-palette": 1,
+    "dark-class": 1
+  },
+  "components/security/security-overview.tsx": {
+    "stock-palette": 16,
+    "dark-class": 8
+  },
+  "components/security/unified-activity.tsx": {
+    "stock-palette": 6,
+    "dark-class": 2
+  },
+  "components/session-notifications.tsx": {
+    "stock-palette": 5
+  },
+  "components/signup-form.tsx": {
+    "stock-palette": 3
+  },
+  "components/subscription/checkout-dialog.tsx": {
+    "stock-palette": 1
+  },
+  "components/subscription/credit-balance-widget.tsx": {
+    "arbitrary-colour": 3,
+    "dark-class": 1,
+    "small-type": 1
+  },
+  "components/subscription/invoice-document.tsx": {
+    "stock-palette": 2
+  },
+  "components/subscription/invoice-list.tsx": {
+    "stock-palette": 2,
+    "dark-class": 1
+  },
+  "components/subscription/lemonsqueezy-provider.tsx": {
+    "stock-palette": 1
+  },
+  "components/subscription/plan-change-modal.tsx": {
+    "stock-palette": 8
+  },
+  "components/subscription/subscription-status-card.tsx": {
+    "stock-palette": 7,
+    "dark-class": 3
+  },
+  "components/subscription/trial-status-banner.tsx": {
+    "stock-palette": 35,
+    "dark-class": 13
+  },
+  "components/subscription/usage-limit-warning.tsx": {
+    "stock-palette": 1
+  },
+  "components/subscription/usage-metrics.tsx": {
+    "stock-palette": 25,
+    "dark-class": 10
+  },
+  "components/theme-toggle.tsx": {
+    "dark-class": 4
+  },
+  "components/topic-builder/questions/AudienceQuestion.tsx": {
+    "off-scale": 2,
+    "stock-palette": 2,
+    "dark-class": 1
+  },
+  "components/topic-builder/questions/PurposeQuestion.tsx": {
+    "off-scale": 1,
+    "stock-palette": 2,
+    "dark-class": 1
+  },
+  "components/topic-builder/questions/ReviewQuestion.tsx": {
+    "off-scale": 3
+  },
+  "components/topic-builder/questions/SubjectQuestion.tsx": {
+    "off-scale": 2
+  },
+  "components/topic-builder/results/TopicDetailDrawer.tsx": {
+    "off-scale": 8,
+    "stock-palette": 29,
+    "dark-class": 15
+  },
+  "components/topic-builder/results/TopicsList.tsx": {
+    "stock-palette": 1
+  },
+  "components/topic-builder/results/TopicsTable.tsx": {
+    "stock-palette": 11,
+    "off-scale": 1,
+    "dark-class": 1
+  },
+  "components/topic-builder/wizard/WizardNavigation.tsx": {
+    "off-scale": 2
+  },
+  "components/topic-builder/wizard/WizardProgress.tsx": {
+    "off-scale": 1
+  },
+  "components/topics/detail/OverallScoreCard.tsx": {
+    "small-type": 1
+  },
+  "components/topics/detail/QualityScoreDashboard.tsx": {
+    "stock-palette": 11
+  },
+  "components/topics/detail/TopicInformation.tsx": {
+    "off-scale": 3
+  },
+  "components/topics/detail/TopicScoreBreakdown.tsx": {
+    "off-scale": 1
+  },
+  "components/topics/detail/TopicTags.tsx": {
+    "off-scale": 3
+  },
+  "components/ui/alert-dialog.tsx": {
+    "stock-palette": 1,
+    "off-scale": 1
+  },
+  "components/ui/alert.tsx": {
+    "dark-class": 5,
+    "stock-palette": 8
+  },
+  "components/ui/avatar.tsx": {
+    "stock-palette": 4
+  },
+  "components/ui/button.tsx": {
+    "dark-class": 7,
+    "off-scale": 5,
+    "stock-palette": 1
+  },
+  "components/ui/calendar.tsx": {
+    "off-scale": 1,
+    "arbitrary-size": 2
+  },
+  "components/ui/chart.tsx": {
+    "literal-colour": 5,
+    "off-scale": 1,
+    "arbitrary-radius": 2
+  },
+  "components/ui/checkbox.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/command.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/detail-card.tsx": {
+    "stock-palette": 4,
+    "dark-class": 2
+  },
+  "components/ui/detail-page-skeleton.tsx": {
+    "stock-palette": 3,
+    "dark-class": 3
+  },
+  "components/ui/dialog.tsx": {
+    "stock-palette": 1
+  },
+  "components/ui/dropdown-menu.tsx": {
+    "dark-class": 1
+  },
+  "components/ui/empty.tsx": {
+    "off-scale": 2
+  },
+  "components/ui/error-alert.tsx": {
+    "stock-palette": 21
+  },
+  "components/ui/error-boundary.tsx": {
+    "stock-palette": 6
+  },
+  "components/ui/error-states.tsx": {
+    "off-scale": 1,
+    "stock-palette": 2
+  },
+  "components/ui/info-section.tsx": {
+    "stock-palette": 4,
+    "dark-class": 2
+  },
+  "components/ui/input-group.tsx": {
+    "off-scale": 1,
+    "arbitrary-radius": 3
+  },
+  "components/ui/input.tsx": {
+    "dark-class": 1,
+    "stock-palette": 3
+  },
+  "components/ui/lexical-editor.tsx": {
+    "stock-palette": 9,
+    "off-scale": 2,
+    "small-type": 1
+  },
+  "components/ui/loading-indicator.tsx": {
+    "small-type": 2,
+    "arbitrary-size": 1
+  },
+  "components/ui/popover.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/radio-group.tsx": {
+    "off-scale": 2
+  },
+  "components/ui/scroll-area.tsx": {
+    "arbitrary-radius": 1
+  },
+  "components/ui/security-badge.tsx": {
+    "stock-palette": 26,
+    "dark-class": 13
+  },
+  "components/ui/sheet.tsx": {
+    "stock-palette": 1
+  },
+  "components/ui/sidebar/sidebar-primitives.tsx": {
+    "off-scale": 2,
+    "stock-palette": 1,
+    "arbitrary-shadow": 2
+  },
+  "components/ui/skeleton.tsx": {
+    "stock-palette": 2,
+    "dark-class": 1
+  },
+  "components/ui/sonner.tsx": {
+    "off-scale": 1,
+    "arbitrary-colour": 6
+  },
+  "components/ui/status-badge.tsx": {
+    "stock-palette": 66,
+    "dark-class": 33,
+    "off-scale": 1,
+    "inline-colour": 24
+  },
+  "components/ui/switch.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/textarea.tsx": {
+    "dark-class": 2
+  },
+  "components/ui/tooltip.tsx": {
+    "stock-palette": 4,
+    "arbitrary-radius": 1
+  },
+  "components/ui/topic-cell-formatters.tsx": {
+    "stock-palette": 22
+  },
+  "components/ui/typeform/celebration.tsx": {
+    "literal-colour": 13,
+    "off-scale": 1,
+    "dark-class": 2
+  },
+  "components/ui/typeform/chip-input.tsx": {
+    "stock-palette": 9,
+    "dark-class": 4
+  },
+  "components/ui/typeform/multi-select-card.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/typeform/progress-bar.tsx": {
+    "stock-palette": 3,
+    "dark-class": 1,
+    "off-scale": 1
+  },
+  "components/ui/typeform/single-select-card.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/typeform/text-input.tsx": {
+    "stock-palette": 1
+  },
+  "components/ui/typeform/textarea-input.tsx": {
+    "stock-palette": 1
+  },
+  "components/workspace/email-template-editor.tsx": {
+    "stock-palette": 2
+  },
+  "components/workspace/workspace-brand-voice-form.tsx": {
+    "stock-palette": 6,
+    "dark-class": 6
+  },
+  "components/workspace/workspace-create-wizard.tsx": {
+    "stock-palette": 2
+  },
+  "components/workspace/workspace-delete-dialog.tsx": {
+    "stock-palette": 3,
+    "dark-class": 1
+  },
+  "components/workspace/workspace-invite-members-dialog.tsx": {
+    "stock-palette": 3
+  },
+  "components/workspace/workspace-knowledge-table.tsx": {
+    "stock-palette": 12,
+    "dark-class": 6
+  },
+  "components/workspace/workspace-progress-timeline.tsx": {
+    "stock-palette": 13
+  },
+  "components/workspace/workspace-welcome-modal.tsx": {
+    "dark-class": 2,
+    "stock-palette": 6,
+    "arbitrary-radius": 1
+  },
+  "lib/animations.ts": {
+    "literal-colour": 5
+  },
+  "lib/topic-display-utils.ts": {
+    "stock-palette": 46
+  },
+  "lib/topics/scoring-utils.ts": {
+    "stock-palette": 36,
+    "dark-class": 16
+  },
+  "lib/typeform-utils.ts": {
+    "literal-colour": 13
+  },
+  "providers/tooltip-provider.tsx": {
+    "off-scale": 1
+  }
+}
