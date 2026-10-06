@@ -127,7 +127,7 @@ function StepList({
             >
               {/* Active left bar */}
               {isActive && (
-                <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-foreground rounded-full" />
+                <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground rounded-full" />
               )}
 
               {/* Step indicator */}
