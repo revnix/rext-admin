@@ -310,42 +310,42 @@ export function WorkspaceBrandVoiceForm({
             >
               <TabsTrigger
                 value="info"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <Building2 className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Brand Information</span>
               </TabsTrigger>
               <TabsTrigger
                 value="voice"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <MessageSquare className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Brand Voice</span>
               </TabsTrigger>
               <TabsTrigger
                 value="strategy"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <BookOpen className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Content Strategy</span>
               </TabsTrigger>
               <TabsTrigger
                 value="competitors"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <Swords className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Competitors</span>
               </TabsTrigger>
               <TabsTrigger
                 value="audience"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <Target className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Target Audience</span>
               </TabsTrigger>
               <TabsTrigger
                 value="personas"
-                className="bg-white dark:bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
+                className="bg-card flex-1 shrink-0 ml-0 gap-1.5 px-2 sm:px-4 justify-center border border-input disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-primary data-[state=active]:border-l-border data-[state=active]:border-t-border data-[state=active]:border-r-border"
               >
                 <Users className="w-4 h-4 shrink-0" />
                 <span className="hidden lg:inline">Personas</span>

@@ -400,14 +400,14 @@ export function WorkspaceInviteMembersDialog({
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
                   {result.status === "pending" ? (
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{result.email}</p>
                     {result.status === "pending" ? (
-                      <p className="text-sm text-green-600">
+                      <p className="text-sm text-success-600">
                         Invitation sent successfully
                       </p>
                     ) : (
@@ -504,7 +504,7 @@ export function WorkspaceInviteMembersDialog({
                   <p>
                     {validEmails.length} valid{" "}
                     {emailChips.length > validEmails.length && (
-                      <span className="text-amber-600">
+                      <span className="text-warning-600">
                         • {emailChips.length - validEmails.length} invalid
                       </span>
                     )}

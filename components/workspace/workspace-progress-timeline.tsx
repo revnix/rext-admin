@@ -190,13 +190,13 @@ export function WorkspaceProgressTimeline({
   const getStepIcon = (status: StepStatus) => {
     switch (status) {
       case "completed":
-        return <Check className="h-5 w-5 text-green-600" />;
+        return <Check className="h-5 w-5 text-success-600" />;
       case "failed":
-        return <X className="h-5 w-5 text-red-600" />;
+        return <X className="h-5 w-5 text-danger-600" />;
       case "in-progress":
         return <Loader2 className="h-5 w-5 animate-spin text-foreground" />;
       default:
-        return <Clock className="h-5 w-5 text-gray-400" />;
+        return <Clock className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -251,10 +251,10 @@ export function WorkspaceProgressTimeline({
                   <div
                     className={`
                     flex h-10 w-10 shrink-0 items-center justify-center rounded-full
-                    ${status === "completed" ? "bg-green-100" : ""}
-                    ${status === "in-progress" ? "bg-blue-100" : ""}
-                    ${status === "failed" ? "bg-red-100" : ""}
-                    ${status === "pending" ? "bg-gray-100" : ""}
+                    ${status === "completed" ? "bg-success-50" : ""}
+                    ${status === "in-progress" ? "bg-info-50" : ""}
+                    ${status === "failed" ? "bg-danger-50" : ""}
+                    ${status === "pending" ? "bg-surface-inset" : ""}
                   `}
                   >
                     {getStepIcon(status)}
@@ -265,10 +265,10 @@ export function WorkspaceProgressTimeline({
                     <h4
                       className={`
                       font-medium
-                      ${status === "completed" ? "text-green-900" : ""}
-                      ${status === "in-progress" ? "text-blue-900" : ""}
-                      ${status === "failed" ? "text-red-900" : ""}
-                      ${status === "pending" ? "text-gray-500" : ""}
+                      ${status === "completed" ? "text-success-700" : ""}
+                      ${status === "in-progress" ? "text-info-700" : ""}
+                      ${status === "failed" ? "text-danger-700" : ""}
+                      ${status === "pending" ? "text-muted-foreground" : ""}
                     `}
                     >
                       {step.label}
@@ -282,7 +282,7 @@ export function WorkspaceProgressTimeline({
                       <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 text-xs text-blue-600"
+                        className="mt-1 text-xs text-info-600"
                       >
                         {latestMessage}
                       </motion.p>
@@ -293,7 +293,7 @@ export function WorkspaceProgressTimeline({
                       <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mt-1 text-xs text-red-600"
+                        className="mt-1 text-xs text-danger-600"
                       >
                         {latestMessage}
                       </motion.p>

@@ -490,32 +490,7 @@
   "components/ui/typeform/textarea-input.tsx": {
     "stock-palette": 1
   },
-  "components/workspace/email-template-editor.tsx": {
-    "stock-palette": 2
-  },
-  "components/workspace/workspace-brand-voice-form.tsx": {
-    "stock-palette": 6,
-    "dark-class": 6
-  },
-  "components/workspace/workspace-create-wizard.tsx": {
-    "stock-palette": 2
-  },
-  "components/workspace/workspace-delete-dialog.tsx": {
-    "stock-palette": 3,
-    "dark-class": 1
-  },
-  "components/workspace/workspace-invite-members-dialog.tsx": {
-    "stock-palette": 3
-  },
-  "components/workspace/workspace-knowledge-table.tsx": {
-    "stock-palette": 12,
-    "dark-class": 6
-  },
-  "components/workspace/workspace-progress-timeline.tsx": {
-    "stock-palette": 13
-  },
   "components/workspace/workspace-welcome-modal.tsx": {
-    "dark-class": 2,
     "stock-palette": 6,
     "arbitrary-radius": 1
   },

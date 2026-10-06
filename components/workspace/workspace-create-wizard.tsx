@@ -419,7 +419,7 @@ export function WorkspaceCreateWizard() {
               {/* Connection status indicator */}
               {/* {isConnected && (
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-success-600 animate-pulse" />
                   <span>Connected to server</span>
                 </div>
               )} */}
@@ -537,7 +537,7 @@ export function WorkspaceCreateWizard() {
                 !canCreate ||
                 isLimitReached
               }
-              className="gap-2 text-white"
+              className="gap-2"
             >
               {form.formState.isSubmitting ? (
                 <>

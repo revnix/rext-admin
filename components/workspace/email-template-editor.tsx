@@ -261,7 +261,9 @@ export function EmailTemplateEditor({
                 placeholder="Email subject"
               />
               {errors.subject && (
-                <p className="text-sm text-red-500">{errors.subject.message}</p>
+                <p className="text-sm text-danger-600">
+                  {errors.subject.message}
+                </p>
               )}
             </div>
 
@@ -275,7 +277,7 @@ export function EmailTemplateEditor({
                 className="font-mono text-sm"
               />
               {errors.body && (
-                <p className="text-sm text-red-500">{errors.body.message}</p>
+                <p className="text-sm text-danger-600">{errors.body.message}</p>
               )}
             </div>
 

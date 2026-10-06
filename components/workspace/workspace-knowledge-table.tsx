@@ -66,9 +66,10 @@ export function WorkspaceKnowledgeTable({
 
   const getTypeBadge = (type: string) => {
     const styles = {
-      web: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      file: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      text: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      // A source's type is an attribute, so a neutral word (language §10).
+      web: "bg-surface-inset text-foreground",
+      file: "bg-surface-inset text-foreground",
+      text: "bg-surface-inset text-foreground",
     };
 
     const labels = {

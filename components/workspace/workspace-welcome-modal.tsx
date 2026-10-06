@@ -161,7 +161,7 @@ export function WorkspaceWelcomeModal({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            <div className="rounded-md border border-border/70 bg-muted/40 dark:bg-muted/20 p-5 sm:p-6 space-y-4">
+            <div className="rounded-md border border-border/70 bg-muted/40 p-5 sm:p-6 space-y-4">
               {/* Inviter */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground border border-border">
@@ -187,7 +187,7 @@ export function WorkspaceWelcomeModal({
 
             {/* Permissions */}
             {permissions.length > 0 && (
-              <div className="rounded-md border border-primary/15 bg-primary/5 dark:bg-primary/10 p-5 sm:p-6">
+              <div className="rounded-md border border-primary/15 bg-primary/5 p-5 sm:p-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-foreground" />
                   As {roleName}, you can:
