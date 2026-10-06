@@ -365,10 +365,11 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
  * the inset surface and 500 weight, so the fill is never the only cue (language §5). The icon
  * stays put when the sidebar collapses: 8 px of group padding and 12 px of row padding centre a
  * 16 px icon in the 56 px rail, and the label becomes screen-reader text (a span marked
- * `data-icon` stays, for a mark drawn as a span).
+ * `data-icon` stays, for a mark drawn as a span). In the rail the room kept for a badge or an
+ * action goes, since both are hidden there.
  */
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-3 text-left text-body text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-has-data-[sidebar=menu-badge]/menu-item:pr-10 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:[&>span:not([data-icon])]:sr-only lg:max-xl:group-data-[collapsible=auto]:[&>span:not([data-icon])]:sr-only",
+  "peer/menu-button flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-3 text-left text-body text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-has-data-[sidebar=menu-badge]/menu-item:pr-10 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:[&>span:not([data-icon])]:sr-only lg:max-xl:group-data-[collapsible=auto]:[&>span:not([data-icon])]:sr-only group-data-[collapsible=icon]:pr-3! lg:max-xl:group-data-[collapsible=auto]:pr-3!",
   {
     variants: {
       variant: {
