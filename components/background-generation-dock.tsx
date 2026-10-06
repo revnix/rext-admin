@@ -21,6 +21,7 @@ import {
   BACKGROUND_GENERATION_REMOVAL_STORAGE_KEY,
   requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
+import { describeFailedJob } from "@/lib/generate-content/background-progress";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
@@ -357,12 +358,12 @@ export function BackgroundGenerationDock() {
           ? awaiting
             ? job.stage
             : "Article ready"
-          : "Article generation failed",
+          : describeFailedJob(job).title,
         message: completed
           ? awaiting
             ? `"${job.title}" is ready for your next step.`
             : `"${job.title}" has finished generating.`
-          : `"${job.title}" could not be completed.`,
+          : describeFailedJob(job).description,
         type: completed ? "success" : "error",
         createdAt: new Date().toISOString(),
         read: false,
@@ -390,8 +391,9 @@ export function BackgroundGenerationDock() {
           },
         });
       } else {
-        toast.error("Article generation failed", {
-          description: job.title,
+        const failure = describeFailedJob(job);
+        toast.error(failure.title, {
+          description: failure.description,
           action: {
             label: "View details",
             onClick: () => openJob(job),

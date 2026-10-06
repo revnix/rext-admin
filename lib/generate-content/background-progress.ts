@@ -265,3 +265,27 @@ export function deriveBackgroundProgress(
     stage: "Preparing your article",
   };
 }
+
+/**
+ * The words for a job that ended without an article, in the dock's toast and
+ * notification. A stopped run (a keyword with no search results, a cancelled
+ * run) is not a failure of the system, and its reason is more useful than the
+ * keyword it was for.
+ */
+export function describeFailedJob(job: {
+  title: string;
+  stage?: string;
+  error?: string;
+}): { title: string; description: string } {
+  if (job.stage === "Generation stopped") {
+    return {
+      title: "Generation stopped",
+      description:
+        job.error?.trim() || `"${job.title}" stopped before it finished.`,
+    };
+  }
+  return {
+    title: "Article generation failed",
+    description: `"${job.title}" could not be completed.`,
+  };
+}
