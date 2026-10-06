@@ -73,6 +73,15 @@ Every page inside the shell renders one of the five layouts of `design/app-langu
 
 A list is a `DataTable` (`components/ui/data-table/`), on TanStack Table v9 with one set of features (`features.ts`). Its columns come from `createDataTableColumnHelper<T>()` at module scope, and their `meta` gives `align` and `numeric`. It brings a toolbar (search, faceted filters, the view menu), headers that sort and carry `aria-sort`, a `…` menu per row, selection with bulk actions, and pagination. It also brings the states: a skeleton after 200 ms, an error, the empty state outside the table, and a no-results state with Clear filters. Under 640 px the rows become cards through `renderCard`. The state is local, or in the URL through `useDataTableUrlState(parsers)`; a list's parsers live in `lib/search-params/`, built from `dataTableParams` (`url-state.ts`, safe for server code). `manual` is for lists the server pages. The content library loads every item (`useAllContent`) and filters in the browser, because the backend's list has neither search nor sort. The older `components/data-table.tsx` still serves the other lists until they move to it.
 
+## Forms
+
+A form is built from `components/forms/`. Its schema lives in `schemas/` (the persona form's runs the shared rules in `lib/validation/persona-validation.ts`).
+- `useZodForm(schema)` sets the timing: `mode: "onTouched"` and `reValidateMode: "onChange"`, so a field is checked when it loses focus and then on each change; `shouldFocusError` moves focus to the first error on a failed submit.
+- `FieldController` is one field on shadcn's Field: the label above (a leading asterisk when required), the control, and the help text beneath, which the error replaces; it wires `id`, `aria-invalid` and `aria-describedby`. `maxLength` adds a character count.
+- `FormShell` owns the rhythm: sections (`FormSection`) 32 px apart, fields 16 px apart, and the submit row, where Save stays enabled until the submission starts and then shows a spinner. The row can be sticky on long forms, and a `status` slot shows the inline "Saved". It guards against leaving with unsaved changes: the browser's prompt on reload or close, and a dialog for a link inside the app or the form's Cancel (`use-leave-guard.ts`; the App Router has no navigation events, so the guard watches link clicks).
+
+The persona form and workspace settings (General) are on it; the forms on the older `components/ui/form.tsx` move later.
+
 ## Data
 
 - **Server state** lives in TanStack Query: key factories in `lib/query-keys.ts` (some areas still use inline keys), `lib/query-options/`, and `useMutationWithToast` / `useOptimisticMutation` in `hooks/mutations/`. A component reads data through a hook.
