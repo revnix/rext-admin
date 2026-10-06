@@ -11,9 +11,12 @@ import {
   UNKNOWN,
   useDataTableUrlState,
 } from "@/components/ui/data-table";
+import {
+  ContentStatusBadge,
+  contentStatusLabel,
+} from "@/components/content/content-status-badge";
 import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,35 +37,11 @@ import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import {
   CONTENT_LIST_FACETS,
-  CONTENT_LIST_STATUS_LABELS,
   CONTENT_LIST_STATUSES,
   contentListParams,
 } from "@/lib/search-params/content";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { ContentItem } from "@/types/content";
-
-// The words for every status a row can hold: the backend's, and the older ones still in its data.
-const STATUS_LABELS: Readonly<Record<string, string>> = {
-  ...CONTENT_LIST_STATUS_LABELS,
-  generated: "Generated",
-  cancelled: "Cancelled",
-};
-
-// A tint only for a status worth noticing (design/app-language.md §2); the rest stay neutral.
-const STATUS_TINT: Readonly<Record<string, BadgeProps["variant"]>> = {
-  published: "success",
-  scheduled: "info",
-  review: "warning",
-  failed: "danger",
-};
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <Badge variant={STATUS_TINT[status] ?? "neutral"}>
-      {STATUS_LABELS[status] ?? status}
-    </Badge>
-  );
-}
 
 function ContentTitle({ item }: { item: ContentItem }) {
   const { workspaceSlug } = useWorkspace();
@@ -136,7 +115,7 @@ const columns = column.columns([
   }),
   column.accessor("status", {
     header: "Status",
-    cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+    cell: ({ getValue }) => <ContentStatusBadge status={getValue()} />,
     filterFn: "arrHas",
     enableGlobalFilter: false,
   }),
@@ -213,7 +192,7 @@ const STATUS_FACET = [
     title: "Status",
     options: CONTENT_LIST_STATUSES.map((value) => ({
       value,
-      label: STATUS_LABELS[value],
+      label: contentStatusLabel(value),
     })),
   },
 ];
@@ -242,7 +221,7 @@ function ContentRowCard({
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <ContentTitle item={item} />
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-          <StatusBadge status={item.status} />
+          <ContentStatusBadge status={item.status} />
           <span className="num">{details.join(" · ")}</span>
         </div>
       </div>
