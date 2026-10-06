@@ -16,6 +16,7 @@ import {
   buildOutlineApproval,
   moveRow,
   type OutlineApproval,
+  readOnlyBlocks,
   readOutlineGate,
   removeRow,
   renameRow,
@@ -140,11 +141,10 @@ export function OutlineReview({
     const { rows: next, removed } = removeRow(rows, key);
     if (!removed) return;
     setRows(next);
-    toast(`Removed "${removed.row.heading}"`, {
+    toast(`Removed "${removed.heading}"`, {
       action: {
         label: "Undo",
-        onClick: () =>
-          setRows((current) => restoreRow(current, removed.row, removed.index)),
+        onClick: () => setRows((current) => restoreRow(current, removed.key)),
       },
     });
   };
@@ -216,7 +216,7 @@ export function OutlineReview({
       }
     />
   ) : (
-    <ReadOnlyBlocks blocks={outline?._render?.blocks ?? []} />
+    <ReadOnlyBlocks blocks={readOnlyBlocks(outline)} />
   );
 
   return (

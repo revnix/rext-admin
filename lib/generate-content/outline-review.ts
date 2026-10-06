@@ -16,6 +16,7 @@ import {
 import type {
   BrandVoicePromotion,
   InternalLinkSuggestion,
+  OutlineRenderBlock,
 } from "@/types/generate-content";
 
 export type HeadingLevel = "H2" | "H3";
@@ -117,7 +118,15 @@ export interface TreeRow {
   list: string;
   heading: string;
   level?: HeadingLevel;
+  /**
+   * Removed, with its Undo still possible: the row keeps its place, hidden from
+   * the tree and never sent, so Undo puts it back exactly where it was whatever
+   * was moved or removed since.
+   */
+  removed?: true;
 }
+
+const shown = (row: TreeRow) => !row.removed;
 
 export function rowsFromGate(sections: EditableSectionRow[]): TreeRow[] {
   return sections.map((row) => ({
@@ -129,10 +138,7 @@ export function rowsFromGate(sections: EditableSectionRow[]): TreeRow[] {
   }));
 }
 
-/** The rows grouped by list, each group in the order the lists first appear. */
-export function groupRows(
-  rows: TreeRow[],
-): { list: string; rows: TreeRow[] }[] {
+function groupAll(rows: TreeRow[]): { list: string; rows: TreeRow[] }[] {
   const groups = new Map<string, TreeRow[]>();
   for (const row of rows) {
     const group = groups.get(row.list);
@@ -142,15 +148,45 @@ export function groupRows(
   return Array.from(groups, ([list, listRows]) => ({ list, rows: listRows }));
 }
 
-/** The rows with one list's rows replaced, in that list's new order. */
+/** The rows the tree shows, grouped by list, each group in the order the lists first appear. */
+export function groupRows(
+  rows: TreeRow[],
+): { list: string; rows: TreeRow[] }[] {
+  return groupAll(rows)
+    .map((group) => ({ ...group, rows: group.rows.filter(shown) }))
+    .filter((group) => group.rows.length > 0);
+}
+
+/**
+ * The rows with one list's shown rows in a new order (a drag, a move, an
+ * addition). A removed row stays right after the shown row it followed.
+ */
 export function replaceList(
   rows: TreeRow[],
   list: string,
   listRows: TreeRow[],
 ): TreeRow[] {
-  return groupRows(rows).flatMap((group) =>
-    group.list === list ? listRows : group.rows,
-  );
+  return groupAll(rows).flatMap((group) => {
+    if (group.list !== list) return group.rows;
+    const hiddenAfter = new Map<string | null, TreeRow[]>();
+    let previous: string | null = null;
+    for (const row of group.rows) {
+      if (row.removed) {
+        hiddenAfter.set(previous, [...(hiddenAfter.get(previous) ?? []), row]);
+      } else previous = row.key;
+    }
+    const placed = listRows.filter(shown);
+    const kept = new Set(placed.map((row) => row.key));
+    // A removed row whose neighbour is gone from the list stays at its end.
+    const orphans = [...hiddenAfter]
+      .filter(([key]) => key !== null && !kept.has(key))
+      .flatMap(([, hidden]) => hidden);
+    return [
+      ...(hiddenAfter.get(null) ?? []),
+      ...placed.flatMap((row) => [row, ...(hiddenAfter.get(row.key) ?? [])]),
+      ...orphans,
+    ];
+  });
 }
 
 /** One row moved by `offset` places within its own list (a menu's Move up and Move down). */
@@ -161,7 +197,9 @@ export function moveRow(
 ): TreeRow[] {
   const row = rows.find((candidate) => candidate.key === key);
   if (!row) return rows;
-  const listRows = rows.filter((candidate) => candidate.list === row.list);
+  const listRows = rows.filter(
+    (candidate) => candidate.list === row.list && shown(candidate),
+  );
   const from = listRows.indexOf(row);
   const to = from + offset;
   if (to < 0 || to >= listRows.length) return rows;
@@ -187,32 +225,37 @@ export function renameRow(
 export function canRemoveRow(rows: TreeRow[], key: string): boolean {
   const row = rows.find((candidate) => candidate.key === key);
   return (
-    !!row && rows.filter((candidate) => candidate.list === row.list).length > 1
+    !!row &&
+    shown(row) &&
+    rows.filter((candidate) => candidate.list === row.list && shown(candidate))
+      .length > 1
   );
 }
 
+/** The row hidden in its place, for an Undo to bring back (`restoreRow`). */
 export function removeRow(
   rows: TreeRow[],
   key: string,
-): { rows: TreeRow[]; removed: { row: TreeRow; index: number } | null } {
-  const index = rows.findIndex((row) => row.key === key);
-  if (index === -1 || !canRemoveRow(rows, key)) return { rows, removed: null };
+): { rows: TreeRow[]; removed: TreeRow | null } {
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!row || !canRemoveRow(rows, key)) return { rows, removed: null };
   return {
-    rows: rows.filter((row) => row.key !== key),
-    removed: { row: rows[index], index },
+    rows: rows.map((candidate) =>
+      candidate.key === key
+        ? { ...candidate, removed: true as const }
+        : candidate,
+    ),
+    removed: row,
   };
 }
 
-/** A removed row put back where it was (the undo of `removeRow`). */
-export function restoreRow(
-  rows: TreeRow[],
-  row: TreeRow,
-  index: number,
-): TreeRow[] {
-  if (rows.some((candidate) => candidate.key === row.key)) return rows;
-  const next = [...rows];
-  next.splice(Math.min(index, next.length), 0, row);
-  return next;
+/** The undo of `removeRow`: the row shown again, in the place it kept. */
+export function restoreRow(rows: TreeRow[], key: string): TreeRow[] {
+  return rows.map((row) => {
+    if (row.key !== key || !row.removed) return row;
+    const { removed: _removed, ...restored } = row;
+    return restored;
+  });
 }
 
 let addedCount = 0;
@@ -226,7 +269,7 @@ export function addRow(
   const trimmed = heading.trim();
   if (!trimmed) return rows;
   addedCount += 1;
-  const listRows = rows.filter((row) => row.list === list);
+  const listRows = rows.filter((row) => row.list === list && shown(row));
   const hasLevels = listRows.some((row) => row.level);
   const added: TreeRow = {
     key: `added-${addedCount}`,
@@ -240,9 +283,10 @@ export function addRow(
 
 /** Whether the rows differ from what the gate offered: order, headings, removals or additions. */
 export function rowsEdited(
-  rows: TreeRow[],
+  allRows: TreeRow[],
   offered: EditableSectionRow[],
 ): boolean {
+  const rows = allRows.filter(shown);
   if (rows.length !== offered.length) return true;
   return rows.some(
     (row, index) =>
@@ -256,7 +300,7 @@ export type SectionEdit =
   | { new: true; list: string; heading: string; heading_level?: HeadingLevel };
 
 export function sectionEdits(rows: TreeRow[]): SectionEdit[] {
-  return rows.map((row) => {
+  return rows.filter(shown).map((row) => {
     const level = row.level ? { heading_level: row.level } : {};
     return row.id
       ? { id: row.id, heading: row.heading, ...level }
@@ -306,6 +350,30 @@ export function listLabel(list: string): string {
   const last = list.split(".").pop() ?? list;
   const words = last.replace(/_/g, " ").trim();
   return words ? words[0].toUpperCase() + words.slice(1) : list;
+}
+
+/**
+ * The outline as read-only blocks, for a gate that offers no section edits (an
+ * older or restored run): the backend's `_render` blocks, else the outline's own
+ * sections as one list, so there is always the outline to review.
+ */
+export function readOnlyBlocks(outline: unknown): OutlineRenderBlock[] {
+  if (!isRecord(outline)) return [];
+  const render = isRecord(outline._render) ? outline._render.blocks : undefined;
+  if (Array.isArray(render) && render.length > 0) {
+    return render as OutlineRenderBlock[];
+  }
+  const items = (Array.isArray(outline.sections) ? outline.sections : [])
+    .filter(isRecord)
+    .filter(
+      (section) =>
+        typeof section.heading === "string" && section.heading.trim(),
+    )
+    .map((section) => ({
+      label: (section.heading as string).trim(),
+      points: nonEmptyStrings(section.key_points),
+    }));
+  return items.length > 0 ? [{ heading: "Sections", items }] : [];
 }
 
 // ── While the outline streams ────────────────────────────────────────────────
