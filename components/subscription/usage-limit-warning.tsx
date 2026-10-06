@@ -291,7 +291,7 @@ export function UsageLimitWarning({
                     className={`h-2 ${
                       isCritical
                         ? "[&>div]:bg-destructive"
-                        : "[&>div]:bg-yellow-500"
+                        : "[&>div]:bg-warning-600"
                     }`}
                   />
                 )}

@@ -167,7 +167,7 @@ export function InvoiceList({
                           {formatCurrency(invoice.amount, invoice.currency)}
                         </span>
                         {invoice.paid_at && (
-                          <span className="text-green-600 dark:text-green-400 text-xs">
+                          <span className="text-success-600 text-xs">
                             Paid {formatDate(invoice.paid_at)}
                           </span>
                         )}

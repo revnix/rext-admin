@@ -322,37 +322,6 @@
   "components/signup-form.tsx": {
     "stock-palette": 3
   },
-  "components/subscription/checkout-dialog.tsx": {
-    "stock-palette": 1
-  },
-  "components/subscription/invoice-document.tsx": {
-    "stock-palette": 2
-  },
-  "components/subscription/invoice-list.tsx": {
-    "stock-palette": 2,
-    "dark-class": 1
-  },
-  "components/subscription/lemonsqueezy-provider.tsx": {
-    "stock-palette": 1
-  },
-  "components/subscription/plan-change-modal.tsx": {
-    "stock-palette": 8
-  },
-  "components/subscription/subscription-status-card.tsx": {
-    "stock-palette": 7,
-    "dark-class": 3
-  },
-  "components/subscription/trial-status-banner.tsx": {
-    "stock-palette": 35,
-    "dark-class": 13
-  },
-  "components/subscription/usage-limit-warning.tsx": {
-    "stock-palette": 1
-  },
-  "components/subscription/usage-metrics.tsx": {
-    "stock-palette": 25,
-    "dark-class": 10
-  },
   "components/topics/detail/OverallScoreCard.tsx": {
     "small-type": 1
   },
