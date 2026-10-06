@@ -153,7 +153,7 @@ safe to leave.
 
 1. The user navigates to another feature / another tab / closes the tab.
 2. The SSE reader aborts locally, but the **LangGraph run keeps executing**.
-3. The **global dock** (mounted in `PageLayout`, present on every workspace page)
+3. The **global dock** (mounted in the shell, `components/shell/app-shell.tsx`, present on every workspace page)
    takes over tracking — it polls `/status` and updates the record independently
    of the generation screen.
 
@@ -254,7 +254,7 @@ progress displays consistent. No WebSocket / BroadcastChannel needed.
 ## 10. Global progress bar (the "dock")
 
 [`components/background-generation-dock.tsx`](components/background-generation-dock.tsx),
-mounted in [`components/page-layout.tsx`](components/page-layout.tsx), so it
+mounted in the shell ([`components/shell/app-shell.tsx`](components/shell/app-shell.tsx)), so it
 appears across workspace pages (Content Calendar, Brand Voice, Integrations,
 Knowledge, Media, Members, …).
 
@@ -449,7 +449,7 @@ sequenceDiagram
 ## 18. Common scenarios
 
 - **Navigate to Content Calendar:** generation screen unmounts, local SSE
-  aborts, the run is unaffected (LangGraph owns it); the dock in `PageLayout`
+  aborts, the run is unaffected (LangGraph owns it); the dock in the shell
   keeps polling and showing progress.
 - **Switch tabs:** run continues; other tabs get localStorage updates; a tab
   refreshes status when it becomes visible.
@@ -533,7 +533,7 @@ success state contains `state.values.content.final_content` and
 thread <threadId>`. If missing, check `final_content`/thread id in state and the
 `langgraph_thread_id` column.
 
-**Bar not appearing:** page uses `PageLayout`; store has the job; `hasHydrated`
+**Bar not appearing:** the page is inside the shell (a workspace or account layout); store has the job; `hasHydrated`
 true; job matches current workspace; not pruned/dismissed.
 
 **Stuck at queued:** run/created arrived and `runId` stored; `/status` returns
@@ -570,7 +570,7 @@ pnpm build
 | `components/generate-content/fresh-generation-view.tsx` | Starts the run (live stream), re-joins a running run, restores completed state |
 | `stores/background-generation-store.ts` | Persists + syncs browser tracking records |
 | `components/background-generation-dock.tsx` | Polls active jobs, renders the top bar, creates notifications |
-| `components/page-layout.tsx` | Mounts the bar across workspace pages |
+| `components/shell/app-shell.tsx` | Mounts the bar across workspace pages |
 | `components/notifications-drawer.tsx` | Opens article links from generation notifications |
 | `app/w/[workspaceSlug]/generate_content/page.tsx` | Reads `?thread=` and enters restore mode |
 | `app/api/generate/threads/route.ts` | Creates a durable thread |
