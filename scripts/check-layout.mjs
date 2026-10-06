@@ -227,7 +227,8 @@ function pageFinding(file, source, read) {
   if (path.basename(file) !== "page.tsx") return null;
   const app = path.join(ROOT, "app");
   if (!file.startsWith(`${app}${path.sep}`)) return null;
-  if (MARK.test(source) || rendersNothing(source) || layoutImports(source).size) return null;
+  // A layout-ok mark excuses one element: it never takes a page out of this rule.
+  if (rendersNothing(source) || layoutImports(source).size) return null;
   let shelled = false;
   let laidOut = false;
   for (let dir = path.dirname(file); dir.startsWith(app); dir = path.dirname(dir)) {
@@ -277,6 +278,7 @@ export default function Right({ open }) {
 const PAGES = {
   "app/w/layout.tsx": `export default function L({ children }) { return <ShellLayout>{children}</ShellLayout>; }`,
   "app/w/a/page.tsx": `export default function P() { return <div>No layout</div>; }`,
+  "app/w/g/page.tsx": `export default function P() {\n  return (\n    <div>\n      {/* layout-ok: a table of days */}\n      <table />\n    </div>\n  );\n}`,
   "app/w/b/page.tsx": `import { ListPage } from "@/components/layouts";\nexport default function P() { return <ListPage title="B">x</ListPage>; }`,
   "app/w/c/layout.tsx": `import { SettingsPage } from "@/components/layouts";\nexport default function L({ children }) { return <SettingsPage title="C" sections={[]}>{children}</SettingsPage>; }`,
   "app/w/c/d/page.tsx": `export default function P() { return <form>Under a settings layout</form>; }`,
@@ -284,7 +286,7 @@ const PAGES = {
   "app/w/f/page.tsx": `/** /w/<slug> has no view: home is "/". */\nexport default function P() { useEffect(() => router.replace("/"), [router]); return null; }`,
   "app/login/page.tsx": `export default function P() { return <div>Outside the shell</div>; }`,
 };
-const PAGES_EXPECTED = ["app/w/a/page.tsx"];
+const PAGES_EXPECTED = ["app/w/a/page.tsx", "app/w/g/page.tsx"];
 function selfTest() {
   const fired = {};
   for (const f of elementFindings("wrong.tsx", WRONG)) fired[f.rule] = (fired[f.rule] || 0) + 1;
