@@ -1270,9 +1270,11 @@ function ContentEditorInner(props: ContentEditorProps) {
                     />
                   </>
                 )}
+                {/* Over the article only: the side panel beside it (the run's stages, their
+                    Cancel, the research) stays in reach while the article is written. */}
                 {!isFinal && isEnhancing && (
-                  <div className="not-prose fixed inset-0 grid place-items-center bg-background/70 ml-auto w-full">
-                    <div className="rounded-md border border-border bg-card px-6 py-4">
+                  <div className="not-prose absolute inset-0 flex justify-center bg-background/70 pt-24">
+                    <div className="sticky top-24 h-fit rounded-md border border-border bg-card px-6 py-4">
                       <div className="text-sm font-semibold text-foreground">
                         {enhancingMsg}
                       </div>
