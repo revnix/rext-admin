@@ -103,7 +103,11 @@ export function useDataTableUrlState<TParsers extends UseQueryStatesKeysMap>(
       const next = functionalUpdate(updater, columnFilters);
       const patch: UrlPatch = { ...clearFacets(), page: null };
       for (const { id, value } of next) {
-        if (facets.includes(id) && Array.isArray(value) && value.length > 0) {
+        if (
+          (facets as readonly string[]).includes(id) &&
+          Array.isArray(value) &&
+          value.length > 0
+        ) {
           patch[id] = value;
         }
       }
