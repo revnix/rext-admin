@@ -61,7 +61,7 @@ export function readRunFailedEvent(data: unknown): RunFailedEvent | null {
 export function readStoppedRun(values: unknown): string | null {
   const content = (values as { content?: Record<string, unknown> } | null)
     ?.content;
-  if (!isStoppedRunCode(content?.error_code)) return null;
+  if (!content || !isStoppedRunCode(content.error_code)) return null;
   return typeof content.error === "string" && content.error.trim()
     ? content.error.trim()
     : FALLBACK_MESSAGE;
