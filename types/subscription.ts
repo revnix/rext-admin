@@ -243,6 +243,9 @@ export interface CreditBalance {
   credits_reset_date: string | null;
   articles_remaining: number | null;
   plan_name: string | null;
+  /** Whose credits these are: the workspace owner's when a workspace was asked for. */
+  target_user_id?: string;
+  is_workspace_credits?: boolean;
 }
 
 // ============================================================================

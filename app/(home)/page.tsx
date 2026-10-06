@@ -1,35 +1,65 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { workspaceQueries } from "@/lib/query-keys";
+import { useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth-guard";
-import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
-import { RecentContent } from "@/components/dashboard/revamp/recent-content";
-import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
+import { ContinueRow } from "@/components/home/continue-row";
+import { CreditsCard } from "@/components/home/credits-card";
+import { HomeChecklist } from "@/components/home/home-checklist";
+import {
+  articlesToContinue,
+  type ChecklistFacts,
+  checklistSteps,
+  countPipeline,
+  suggestKeywords,
+} from "@/components/home/home-data";
+import { PipelineCounts } from "@/components/home/pipeline-counts";
+import { SearchConsoleCard } from "@/components/home/search-console-card";
+import { SuggestedKeywords } from "@/components/home/suggested-keywords";
 import { DetailPage, PageSkeleton } from "@/components/layouts";
+import { SettingsGroup } from "@/components/settings/settings-group";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
-import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
+import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { useChecklistAnalytics } from "@/hooks/use-checklist-analytics";
+import { useAllContent } from "@/hooks/use-content";
+import { useIntegrations } from "@/hooks/use-integrations";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { Route } from "next";
+import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
+import { libraryQueries, workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
+import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 
-export default function DashboardPage() {
-  // Auto-select workspace on load
+/** The Continue row shows this many runs and articles at most. */
+const CONTINUE_LIMIT = 5;
+/** Suggested keywords: three to five. */
+const SUGGESTION_LIMIT = 5;
+
+/**
+ * The workspace's home (plans/app/D-pages.md §2.1): what to do next, not totals. Getting started
+ * until its five steps are done; Continue (runs still going, articles in review, drafts); the
+ * pipeline counts; keywords researched but not written yet. Beside them, the credits and the
+ * Search Console slot.
+ */
+export default function HomePage() {
   const {
-    workspace: currentWorkspace,
+    workspace,
     isLoading: isLoadingWorkspaces,
     hasWorkspaces,
   } = useWorkspaceAutoSelect();
-
   const router = useRouter();
+  const { user } = useAuthSession();
   const { isLimitReached, isLoading: isLimitLoading } =
     useResourceLimit("workspaces");
 
-  // Redirect to workspace creation if no workspaces exist
+  // No workspace yet: create one.
   useEffect(() => {
     if (
       !isLoadingWorkspaces &&
@@ -47,81 +77,148 @@ export default function DashboardPage() {
     router,
   ]);
 
-  // Check if onboarding is complete for current workspace
-  const { isLoading } = useOnboardingProgress(currentWorkspace?.id);
+  const workspaceId = workspace?.id ?? "";
+  const slug = workspace?.slug ?? "";
+  const content = useAllContent(workspaceId);
+  const sites = useIntegrations(workspaceId || null);
+  const brandVoice = useQuery(workspaceQueries.brandVoice(workspaceId));
+  const library = useQuery(libraryQueries.list(workspaceId, user?.id ?? ""));
+  const jobs = useBackgroundGenerationStore((state) => state.jobs);
 
-  // Data Fetching: Total Workspaces
-  const { data: workspacesResponse } = useQuery({
-    ...workspaceQueries.list(),
-    throwOnError: true,
-    enabled: !!currentWorkspace, // Only fetch if we have workspaces generally
-  });
-
-  // Data Fetching: Dashboard Stats
-  const { data: dashboardStats, isLoading: isLoadingDashboard } = useQuery({
-    queryKey: ["dashboard-stats", currentWorkspace?.id],
-    // biome-ignore lint/style/noNonNullAssertion: guarded by enabled check below
-    queryFn: () => apiClient.dashboard.getStats(currentWorkspace!.id),
-    enabled: !!currentWorkspace?.id,
-    throwOnError: true,
-    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
-    refetchInterval: 60 * 1000, // Auto-refresh every minute
-    refetchOnWindowFocus: true, // Refresh when user returns to tab
-  });
-
-  // Total Workspaces Count
-  const _totalWorkspaces = workspacesResponse?.total || 0;
-
-  // Update page title and description
-  usePageTitle(
-    currentWorkspace?.title
-      ? `${currentWorkspace.title} - Dashboard`
-      : "Dashboard",
-    currentWorkspace
-      ? `Welcome to ${currentWorkspace.title}. Monitor your progress and manage your workspace.`
-      : "Overview of your content performance, automation flows, and key metrics. Monitor your AI-powered content strategy at a glance.",
+  const now = useMemo(() => new Date(), []);
+  const articles = content.data;
+  const counts = useMemo(
+    () => (articles ? countPipeline(articles, now) : null),
+    [articles, now],
+  );
+  const runs = useMemo(
+    () =>
+      jobs
+        .filter(
+          (job) => job.workspaceSlug === slug && isActiveGenerationJob(job),
+        )
+        .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+        .slice(0, CONTINUE_LIMIT),
+    [jobs, slug],
+  );
+  const toContinue = useMemo(
+    () =>
+      articles
+        ? articlesToContinue(
+            articles,
+            Math.max(0, CONTINUE_LIMIT - runs.length),
+          )
+        : [],
+    [articles, runs.length],
+  );
+  const suggestions = useMemo(
+    () =>
+      library.data && articles
+        ? suggestKeywords(library.data, articles, SUGGESTION_LIMIT)
+        : [],
+    [library.data, articles],
   );
 
-  // Show loading state while fetching workspaces
-  if (isLoadingWorkspaces || isLoading) {
+  // A step whose data didn't come (still loading, or hidden from the person's role) is left out.
+  const facts: ChecklistFacts = {
+    site: sites.isSuccess
+      ? sites.data.some((site) => site.is_active)
+      : undefined,
+    "brand-voice": brandVoice.isSuccess
+      ? Boolean(
+          brandVoice.data?.brand_voice?.about?.trim() ||
+            brandVoice.data?.brand_voice?.brand_name?.trim(),
+        )
+      : undefined,
+    keyword: library.isSuccess ? library.data.length > 0 : undefined,
+    content: articles ? articles.length > 0 : undefined,
+    publish: articles
+      ? articles.some((item) =>
+          ["published", "scheduled"].includes(String(item.status)),
+        )
+      : undefined,
+  };
+  const settled = [sites, brandVoice, library, content].every(
+    (query) => !query.isPending || query.fetchStatus === "idle",
+  );
+  const steps = checklistSteps(facts);
+  const showChecklist =
+    settled && steps.length > 0 && steps.some((step) => !step.done);
+  useChecklistAnalytics(workspaceId || undefined, user?.id, steps, settled);
+
+  usePageTitle(
+    workspace?.title ? `${workspace.title} - Home` : "Home",
+    "What to do next in this workspace.",
+  );
+
+  if (isLoadingWorkspaces) {
     return <PageSkeleton layout="detail" label="Loading your workspace..." />;
   }
-
-  // Show empty state only if no workspaces exist
-  // We return null if we're about to redirect to prevent flicker
-  if (!hasWorkspaces) {
+  // About to go to workspace creation: render nothing rather than a flash of an empty home.
+  if (!hasWorkspaces || !workspace) {
     return null;
   }
+
+  const generate = workspaceRoutes.generate_content(slug);
+  const libraryHref = workspaceRoutes.content(slug);
 
   return (
     <AuthGuard>
       <ErrorBoundary framed>
         <DetailPage
-          title={currentWorkspace?.title || "Dashboard"}
-          description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
-        >
-          <div className="flex flex-col gap-8">
-            {/* Top Row: Metrics Cards (5 Cards) */}
-            <MetricsCards
-              dashboardStats={dashboardStats}
-              isLoading={isLoadingDashboard}
-            />
-
-            {/* Middle Row: Charts (Static Mocks) */}
-            {/* <DashboardCharts /> */}
-
-            {/* Bottom Row: Recent Activities & Quick Actions */}
-            <div className="grid gap-8 xl:grid-cols-[1fr_360px]">
-              {/* Main Content: Recent Activities Table */}
-              <div className="space-y-8 overflow-x-auto">
-                <RecentContent workspace={currentWorkspace} />
-              </div>
-
-              {/* Sidebar: Quick Actions List */}
-              <aside className="space-y-8 h-full">
-                <QuickActions workspace={currentWorkspace} />
-              </aside>
+          title={workspace.title || "Home"}
+          description="What to do next in this workspace."
+          actions={
+            <Button asChild>
+              <Link href={generate as Route}>
+                <Plus aria-hidden />
+                Start an article
+              </Link>
+            </Button>
+          }
+          aside={
+            <div className="flex flex-col gap-4">
+              <CreditsCard workspaceId={workspaceId} />
+              <SearchConsoleCard />
             </div>
+          }
+        >
+          <div className="flex flex-col gap-10">
+            {showChecklist && (
+              <SettingsGroup
+                title="Get started"
+                description="Five steps to your first published article."
+              >
+                <HomeChecklist
+                  steps={steps}
+                  hrefs={{
+                    site: workspaceRoutes.integrations(slug),
+                    "brand-voice": workspaceRoutes.settings.brandVoice(slug),
+                    keyword: generate,
+                    content: generate,
+                    publish: `${libraryHref}?status=draft,ready`,
+                  }}
+                />
+              </SettingsGroup>
+            )}
+            <SettingsGroup title="Continue">
+              {articles ? (
+                <ContinueRow slug={slug} runs={runs} articles={toContinue} />
+              ) : (
+                <Skeleton className="h-32 w-full" />
+              )}
+            </SettingsGroup>
+            <SettingsGroup title="Pipeline">
+              <PipelineCounts slug={slug} counts={counts} />
+            </SettingsGroup>
+            {suggestions.length > 0 && (
+              <SettingsGroup
+                title="Suggested keywords"
+                description="Keywords you've researched that no article covers yet."
+              >
+                <SuggestedKeywords slug={slug} entries={suggestions} />
+              </SettingsGroup>
+            )}
           </div>
         </DetailPage>
       </ErrorBoundary>

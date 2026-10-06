@@ -229,6 +229,30 @@ export const personaQueries = {
 };
 
 // ============================================================================
+// KEYWORD LIBRARY QUERIES
+// ============================================================================
+
+export const libraryQueries = {
+  /**
+   * The caller's researched keywords in a workspace (the LangGraph store's Library, which is per
+   * user), newest first, one per keyword.
+   */
+  list: (workspaceId: string, userId: string) =>
+    queryOptions({
+      queryKey: ["library", workspaceId, userId] as const,
+      // Imported when first asked for, so the store's SDK stays out of every page's bundle.
+      queryFn: async () => {
+        const { searchLibrary } = await import(
+          "@/lib/generate-content/library-item"
+        );
+        return searchLibrary(userId, workspaceId);
+      },
+      enabled: !!workspaceId && !!userId,
+      staleTime: 2 * 60 * 1000,
+    }),
+};
+
+// ============================================================================
 // INTEGRATION QUERIES
 // ============================================================================
 

@@ -6,18 +6,6 @@
  */
 
 export const ONBOARDING_STORAGE_KEYS = {
-  /** Whether the user dismissed the onboarding progress bar. Scoped per workspace. */
-  dismissed: (workspaceId?: string) =>
-    workspaceId
-      ? `onboarding-dismissed-${workspaceId}`
-      : "onboarding-dismissed-global",
-
-  /** Array of skipped milestone IDs. Scoped per workspace. */
-  skipped: (workspaceId?: string) =>
-    workspaceId
-      ? `onboarding-skipped-${workspaceId}`
-      : "onboarding-skipped-global",
-
   /**
    * Array of milestone IDs already reported via analytics.
    * Scoped per workspace — prevents re-firing `onboarding_milestone_completed`
