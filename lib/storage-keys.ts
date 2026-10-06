@@ -28,9 +28,6 @@ export const ONBOARDING_STORAGE_KEYS = {
       ? `onboarding-tracked-milestones-${workspaceId}`
       : "onboarding-tracked-milestones-global",
 
-  /** Serialized InvitationContext stored after invitation acceptance. */
-  recentInvitationAcceptance: "recent_invitation_acceptance",
-
   /** Whether the workspace welcome modal was shown. Scoped per workspace. */
   welcomeShown: (workspaceId: string) =>
     `workspace_welcome_shown_${workspaceId}`,

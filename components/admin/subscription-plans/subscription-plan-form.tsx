@@ -46,9 +46,6 @@ const planFormSchema = z.object({
     .max(999999, "Price too large"),
   max_workspaces: z.number().int(),
   max_members_per_workspace: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
-  max_api_calls_per_month: z.number().int(),
   is_active: z.boolean(),
   is_public: z.boolean(),
 });
@@ -79,9 +76,6 @@ export function SubscriptionPlanForm({
           price_yearly: Number(plan.price_yearly),
           max_workspaces: plan.max_workspaces,
           max_members_per_workspace: plan.max_members_per_workspace,
-          max_topics: plan.max_topics,
-          max_knowledge_items: plan.max_knowledge_items,
-          max_api_calls_per_month: plan.max_api_calls_per_month,
           is_active: plan.is_active,
           is_public: plan.is_public,
         }
@@ -93,9 +87,6 @@ export function SubscriptionPlanForm({
           price_yearly: 0,
           max_workspaces: 1,
           max_members_per_workspace: 5,
-          max_topics: 100,
-          max_knowledge_items: 500,
-          max_api_calls_per_month: 10000,
           is_active: true,
           is_public: true,
         },
@@ -291,63 +282,6 @@ export function SubscriptionPlanForm({
                     <Input
                       type="number"
                       placeholder="10"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="max_topics"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Topics *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="100"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="max_knowledge_items"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Knowledge Items *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="500"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="max_api_calls_per_month"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max API Calls/Month *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="10000"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     />

@@ -17,22 +17,23 @@ import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscrip
  *
  * Features:
  * - Automatic threshold detection (warning at 75%, critical at 90%)
- * - Multiple resource tracking (workspaces, topics, AI requests, etc.)
+ * - Workspaces, the one resource a plan caps
  * - Dismissible warnings
  * - Upgrade prompts
  * - Customizable thresholds
  */
 
+/**
+ * The resources a limit hook can check. Topics and knowledge items stay until E16 removes their last
+ * callers (the topic creation page, the add-knowledge dialog); then only workspaces remain.
+ */
+export type LimitedResource = "workspaces" | "topics" | "knowledge_items";
+
 interface UsageLimitWarningProps {
   /**
    * Resource type to monitor
    */
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage";
+  resource: "workspaces";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -130,28 +131,8 @@ export function UsageLimitWarning({
   useEffect(() => {
     if (!usage || !subscription) return;
 
-    // Calculate usage percentage based on resource type
-    let current = 0;
-    let max = 0;
-
-    switch (resource) {
-      case "workspaces":
-        current = usage.workspaces.used;
-        max = usage.workspaces.limit ?? -1;
-        break;
-      case "knowledge_items":
-        current = usage.knowledge_items.used;
-        max = usage.knowledge_items.limit ?? -1;
-        break;
-      case "ai_requests":
-        current = usage.api_calls.used;
-        max = usage.api_calls.limit ?? -1;
-        break;
-      case "storage":
-        current = 0; // Storage tracking not yet implemented
-        max = -1; // Storage tracking not yet implemented
-        break;
-    }
+    const current = usage.workspaces.used;
+    const max = usage.workspaces.limit ?? -1;
 
     setCurrentUsage(current);
     setLimit(max);
@@ -162,7 +143,7 @@ export function UsageLimitWarning({
     } else {
       setUsagePercentage((current / max) * 100);
     }
-  }, [usage, subscription, resource]);
+  }, [usage, subscription]);
 
   const handleUpgrade = () => {
     router.push("/pricing" as Route);
@@ -201,22 +182,7 @@ export function UsageLimitWarning({
   const isCritical = usagePercentage >= criticalThreshold;
   const isExceeded = usagePercentage >= 100;
 
-  const getResourceLabel = () => {
-    switch (resource) {
-      case "workspaces":
-        return "Workspaces";
-      case "topics":
-        return "Topics";
-      case "knowledge_items":
-        return "Knowledge Items";
-      case "ai_requests":
-        return "AI Requests";
-      case "storage":
-        return "Storage";
-      default:
-        return resource;
-    }
-  };
+  const getResourceLabel = () => "Workspaces";
 
   const getAlertVariant = () => {
     if (isExceeded || isCritical) {
@@ -225,14 +191,7 @@ export function UsageLimitWarning({
     return "default";
   };
 
-  const formatUsage = () => {
-    if (resource === "storage") {
-      const currentGB = (currentUsage / 1024).toFixed(2);
-      const limitGB = (limit / 1024).toFixed(2);
-      return `${currentGB} GB / ${limitGB} GB`;
-    }
-    return `${currentUsage} / ${limit}`;
-  };
+  const formatUsage = () => `${currentUsage} / ${limit}`;
 
   if (compact) {
     return (
@@ -358,14 +317,7 @@ export function UsageLimitWarning({
  * Hook to check if a resource limit is reached
  * Useful for preventing actions before they happen
  */
-export function useResourceLimit(
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage",
-) {
+export function useResourceLimit(resource: LimitedResource) {
   const { usage, subscription, fetchUsage, fetchSubscription } =
     useSubscriptionStore();
   const [isLimitReached, setIsLimitReached] = useState(false);
@@ -455,25 +407,6 @@ export function useResourceLimit(
         );
         break;
       }
-      case "ai_requests": {
-        current = getNumber(
-          (usageData.api_calls as { used?: number } | undefined)?.used ??
-            (usageData as { current_api_calls?: number }).current_api_calls ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_api_calls_per_month ??
-            (usageData.api_calls as { limit?: number } | undefined)?.limit ??
-            (usageData as { max_api_calls_per_month?: number })
-              .max_api_calls_per_month ??
-            -1,
-        );
-        break;
-      }
-      case "storage":
-        current = 0;
-        max = -1;
-        break;
     }
 
     setCounts({ used: current, max });

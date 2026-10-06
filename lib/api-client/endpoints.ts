@@ -17,7 +17,6 @@
  *
  * 3. **Platform-Level Resources**
  *    - Subscriptions: `/api/v1/subscriptions/{resource}`
- *    - Onboarding: `/api/v1/onboarding/{resource}`
  *    - Admin: `/api/v1/admin/{resource}`
  *
  * 4. **Public Resources**
@@ -301,18 +300,6 @@ export const ENDPOINTS = {
     trialStatus: "/api/v1/subscriptions/trial-status",
   },
 
-  /**
-   * Onboarding Endpoints
-   * Managed via dedicated namespace
-   */
-  ONBOARDING: {
-    BASE: "/api/v1/onboarding",
-    update: "/api/v1/onboarding/update",
-    marketing: "/api/v1/onboarding/marketing",
-    complete: "/api/v1/onboarding/complete",
-    reset: "/api/v1/onboarding/reset",
-    shouldShow: "/api/v1/onboarding/should-show",
-  },
   /**
    * Dashboard Endpoints
    * @note Non-standard workspace scoping: uses `/api/v1/dashboard/{id}` instead of `/api/v1/workspaces/{id}/dashboard`

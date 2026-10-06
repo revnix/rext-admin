@@ -296,18 +296,6 @@ export function PlanChangeModal({
                           <Check className="h-3 w-3 text-success-600" />
                           {`${plan.credits_per_month} credits/month`}
                         </li>
-                        {/* <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-success-600" />
-                          {plan.max_topics === -1
-                            ? "Unlimited topics"
-                            : `${plan.max_topics} topics`}
-                        </li>
-                        <li className="text-sm flex items-center gap-1">
-                          <Check className="h-3 w-3 text-success-600" />
-                          {plan.max_api_calls_per_month === -1
-                            ? "Unlimited API requests"
-                            : `${plan.max_api_calls_per_month} API requests/month`}
-                        </li> */}
                       </ul>
                     </div>
                   </div>
@@ -408,13 +396,8 @@ export function PlanChangeModal({
                     {selectedPlan?.max_workspaces ?? "-"}
                   </li>
                   <li>
-                    Topics: {currentPlan?.max_topics ?? "-"} &gt;{" "}
-                    {selectedPlan?.max_topics ?? "-"}
-                  </li>
-                  <li>
-                    API calls/month:{" "}
-                    {currentPlan?.max_api_calls_per_month ?? "-"} &gt;{" "}
-                    {selectedPlan?.max_api_calls_per_month ?? "-"}
+                    Credits/month: {currentPlan?.credits_per_month ?? "-"} &gt;{" "}
+                    {selectedPlan?.credits_per_month ?? "-"}
                   </li>
                 </ul>
               </div>

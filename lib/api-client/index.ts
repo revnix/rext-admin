@@ -52,7 +52,6 @@ import { createKeywordLibraryNamespace } from "./keyword-library";
 import { createKnowledgeNamespace } from "./knowledge";
 import { createLicensesClient } from "./licenses";
 import { createInvitationsNamespace, createMembersNamespace } from "./members";
-import { createOnboardingNamespace } from "./onboarding";
 import { createPersonasNamespace } from "./personas";
 import { createAccountNamespace, createProfileNamespace } from "./profile";
 import { createRolesNamespace } from "./roles";
@@ -97,7 +96,6 @@ function createApiClient() {
     licenses: createLicensesClient(client),
     profile: createProfileNamespace(client),
     account: createAccountNamespace(client),
-    onboarding: createOnboardingNamespace(client),
     personas: createPersonasNamespace(client),
 
     // Admin namespaces

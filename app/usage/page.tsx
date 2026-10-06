@@ -85,8 +85,6 @@ export default function UsagePage() {
       {/* Usage Warnings */}
       <div className="space-y-4 mb-6">
         <UsageLimitWarning resource="workspaces" />
-        <UsageLimitWarning resource="knowledge_items" />
-        <UsageLimitWarning resource="ai_requests" />
       </div>
 
       {/* Detailed Usage Metrics */}
@@ -157,59 +155,6 @@ export default function UsagePage() {
                 </div>
               )}
             </div>
-
-            {/* Plan Limits Summary */}
-            {/* {subscription?.subscription?.plan_limits && (
-              <div className="mt-6 pt-6 border-t">
-                <h4 className="text-sm font-medium text-muted-foreground mb-4">
-                  Plan Limits
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Workspaces</p>
-                    <p className="text-2xl font-bold">
-                      {subscription?.subscription?.plan_limits
-                        ?.max_workspaces === -1
-                        ? "∞"
-                        : subscription?.subscription?.plan_limits
-                            ?.max_workspaces}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Topics</p>
-                    <p className="text-2xl font-bold">
-                      {subscription?.subscription?.plan_limits?.max_topics ===
-                      -1
-                        ? "∞"
-                        : subscription?.subscription?.plan_limits?.max_topics}
-                    </p>
-                  </div>
-                  {/* <div>
-                    <p className="text-sm text-muted-foreground">
-                      Knowledge Items
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {subscription?.subscription?.plan_limits
-                        ?.max_knowledge_items === -1
-                        ? "∞"
-                        : subscription?.subscription?.plan_limits
-                            ?.max_knowledge_items}
-                    </p>
-                  </div> 
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      API Calls/Month
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {subscription?.subscription?.plan_limits
-                        ?.max_api_calls_per_month === -1
-                        ? "∞"
-                        : subscription?.subscription?.plan_limits?.max_api_calls_per_month?.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )} */}
           </CardContent>
         </Card>
       )}

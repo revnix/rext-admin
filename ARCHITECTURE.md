@@ -13,8 +13,8 @@ A Next.js 16 App Router application (16.3 in the lockfile, Turbopack), mostly cl
 
 ```text
 app/
-  layout.tsx                the font variables on <html>, the provider stack (Lemon Squeezy script, theme, auth, PostHog, SSE, Query,
-                            tooltip), the toaster
+  layout.tsx                the font variables on <html>, the provider stack (Lemon Squeezy script, auth, PostHog, SSE, Query,
+                            Motion, the workspace welcome gate, nuqs), the toaster
   fonts.ts, fonts/          the three faces, self-hosted through next/font/local (licences in public/fonts/licenses)
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
