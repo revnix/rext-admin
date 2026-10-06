@@ -1,5 +1,5 @@
 # Rext Admin     
-A modern Next.js application for generating, managing, and utilizing AI-powered content creation. Features a TypeForm-like wizard experience for intuitive topic generation.
+The Rext AI dashboard (app.rext.ai): research a keyword, choose a title and an outline, and get an article written in your brand voice, then edit, schedule and publish it.
            
 
 ## 🔒 Security Notice 
@@ -16,8 +16,8 @@ Key security features implemented:
 
 ## 🚀 Features  
 
-- **TypeForm-Style Topic Builder**: Single-question-per-screen wizard flow
-- **AI-Powered Topic Generation**: Generate relevant, targeted topics
+- **Keyword to article**: research a keyword, choose a content type, a title and an outline, then generate the article (`/w/{slug}/generate_content`)
+- **Content library and calendar**: edit, schedule and publish articles (WordPress)
 - **Modern UI/UX**: Built with Radix UI and Tailwind CSS 4
 - **Full TypeScript**: End-to-end type safety 
 - **Responsive Design**: Optimized for all screen sizes
@@ -146,32 +146,12 @@ wrext-admin/
 ├── app/                    # Next.js App Router pages
 ├── components/             # Reusable UI components
 │   ├── ui/                # Base UI components (shadcn/ui)
-│   └── topic-builder/     # Topic Builder specific components
+│   └── generate-content/  # The keyword-to-article flow
 ├── lib/                   # Utility functions and configurations
 ├── types/                 # TypeScript type definitions
 ├── docs/                  # Documentation
 └── __tests__/             # Test files
 ```
-
-## 🎯 Topic Builder
-
-The main feature is an AI-powered topic generator with a streamlined wizard:
-
-### Wizard Flow
-1. **Getting Started**: Choose your approach (topic-first or industry-first)
-2. **Industry & Subject**: Select domain and specific topic (if applicable)
-3. **Audience**: Define your target audience (optional)
-4. **Goals**: Set content purpose
-5. **Review & Generate**: Set topic count and generate topics
-
-### Key Features
-- Single question per screen for better focus
-- Smooth transitions and animations
-- Progress indication
-- Smart conditional flow
-- Mobile-optimized experience
-- Full keyboard navigation
-- Screen reader support
 
 ## 📚 Documentation
 
@@ -180,13 +160,11 @@ Detailed documentation is available in the `/docs` directory:
 - **[Security Implementation Guide](docs/security-implementation.md)** 🔒
 - [Component Architecture](docs/component-architecture.md)
 - [Accessibility Requirements](docs/accessibility-requirements.md)
-- [TypeForm UX Specifications](docs/typeform-ux-specifications.md)
 - [Animation Specifications](docs/animation-specifications.md)
-- [Topic Questions Overview](topic-questions.md)
 
 ## 🔌 API Integration
 
-The application integrates with a Python backend service for AI topic generation:
+The application talks to the backend (FastAPI and LangGraph) for keyword research and article generation:
 
 ### Environment Variables
 ```bash
@@ -196,10 +174,9 @@ ANTHROPIC_API_KEY=your_anthropic_key
 PERPLEXITY_API_KEY=your_perplexity_key
 ```
 
-### API Endpoints
-- `POST /api/topics/generate` - Generate topics
-- `POST /api/topics/save` - Save topic to library
-- `GET /api/topics` - Retrieve saved topics
+### API Routes
+- `POST /api/generate/threads` - Start a generation thread
+- `/api/generate/[threadId]/{stream,join,resume,status,cancel}` - Follow, answer and stop a run (see ARCHITECTURE.md)
 
 ### Security Architecture
 

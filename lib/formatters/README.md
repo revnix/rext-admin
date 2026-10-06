@@ -352,4 +352,3 @@ numberFormat.integer(stats.count) // Returns "0" if null
 
 ## Related
 
-- [Knowledge Components](../../components/knowledge/) - Example usage
