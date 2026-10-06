@@ -219,6 +219,8 @@ export default function CreatePersonaPage() {
           submitLabel="Create persona"
           cancel={{ onCancel: () => router.back() }}
           sticky
+          // A chosen photo lives outside the form's values; leaving would drop it.
+          dirty={Boolean(avatarFile)}
         >
           <FormSection title="Profile">
             <FieldController

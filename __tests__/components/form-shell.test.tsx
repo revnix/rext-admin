@@ -33,6 +33,20 @@ function NameForm({ onSubmit }: { onSubmit: (v: { name: string }) => void }) {
   );
 }
 
+function FileForm({ chosen }: { chosen: boolean }) {
+  const form = useZodForm(schema, { defaultValues: { name: "" } });
+  return (
+    <FormShell
+      form={form}
+      onSubmit={jest.fn()}
+      submitLabel="Save"
+      dirty={chosen}
+    >
+      <a href="/elsewhere">Elsewhere</a>
+    </FormShell>
+  );
+}
+
 describe("the form shell and its fields", () => {
   beforeEach(() => push.mockClear());
 
@@ -94,5 +108,12 @@ describe("the form shell and its fields", () => {
       screen.getByRole("button", { name: "Leave without saving" }),
     );
     expect(push).toHaveBeenCalledWith("/elsewhere");
+  });
+  it("guards state the form doesn't hold, such as a chosen file", async () => {
+    const user = userEvent.setup();
+    render(<FileForm chosen />);
+    await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
   });
 });
