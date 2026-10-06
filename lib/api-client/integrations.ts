@@ -10,23 +10,15 @@
 
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
+import type { components } from "./schema";
+
+/** The backend's models for these routes, from its OpenAPI spec (api/openapi.json). */
+type Schemas = components["schemas"];
 
 /** One connected site, as the backend returns it; credentials never come back. */
-export interface Integration {
-  id: string;
-  workspace_id: string;
-  integration_type: string;
-  is_active: boolean;
-  site_url?: string | null;
-  api_endpoint?: string | null;
-  username?: string | null;
-  config_json?: Record<string, unknown> | null;
-  has_api_key: boolean;
-  has_app_password: boolean;
-  created_at: string;
-  updated_at?: string | null;
-}
+export type Integration = Schemas["SiteItemResponse"];
 
+/** What the connect dialog sends; checked against the backend's create model below. */
 export interface ConnectWordPressRequest {
   is_active: boolean;
   site_url: string;
@@ -34,6 +26,7 @@ export interface ConnectWordPressRequest {
   api_key: string;
 }
 
+/** What the settings sheet sends; checked against the backend's update model below. */
 export interface UpdateWordPressRequest {
   is_active?: boolean;
   site_url?: string;
@@ -43,14 +36,7 @@ export interface UpdateWordPressRequest {
 }
 
 /** A failed test is an answer, not an error: `ok` is false and `message` says why. */
-export interface ConnectionTestResult {
-  site_id: string;
-  ok: boolean;
-  status: string;
-  message: string;
-  authors_available?: boolean | null;
-  checked_at: string;
-}
+export type ConnectionTestResult = Schemas["WordPressConnectionTest"];
 
 const scoped = (path: string, workspaceId: string) =>
   `${path}?workspace_id=${encodeURIComponent(workspaceId)}`;
@@ -69,7 +55,7 @@ export function createIntegrationsNamespace(client: ApiClient) {
      * The workspace's WordPress sites
      */
     list: async (workspaceId: string): Promise<Integration[]> => {
-      const data = await client.request<{ sites?: Integration[] }>(
+      const data = await client.request<Schemas["SiteListResponse"]>(
         scoped(WORDPRESS.base, workspaceId),
         { method: "GET" },
       );
@@ -83,9 +69,13 @@ export function createIntegrationsNamespace(client: ApiClient) {
       workspaceId: string,
       data: ConnectWordPressRequest,
     ): Promise<Integration> => {
-      const result = await client.request<{ site: Integration }>(
+      const body = {
+        ...data,
+        integration_type: "wordpress",
+      } satisfies Schemas["WorkspaceIntegrationCreate"];
+      const result = await client.request<Schemas["SiteResponse"]>(
         scoped(WORDPRESS.base, workspaceId),
-        json("POST", { ...data, integration_type: "wordpress" }),
+        json("POST", body),
       );
       return result.site;
     },
@@ -98,9 +88,9 @@ export function createIntegrationsNamespace(client: ApiClient) {
       siteId: string,
       data: UpdateWordPressRequest,
     ): Promise<Integration> => {
-      const result = await client.request<{ site: Integration }>(
+      const result = await client.request<Schemas["SiteResponse"]>(
         scoped(WORDPRESS.byId(siteId), workspaceId),
-        json("PATCH", data),
+        json("PATCH", data satisfies Schemas["WorkspaceIntegrationUpdate"]),
       );
       return result.site;
     },
@@ -116,7 +106,7 @@ export function createIntegrationsNamespace(client: ApiClient) {
       const path = active
         ? WORDPRESS.activate(siteId)
         : WORDPRESS.deactivate(siteId);
-      const result = await client.request<{ site: Integration }>(
+      const result = await client.request<Schemas["SiteResponse"]>(
         scoped(path, workspaceId),
         { method: "POST" },
       );

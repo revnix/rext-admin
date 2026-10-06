@@ -22,7 +22,9 @@
       "!app/tasks",
       "!app/api/tasks",
       "!scripts",
-      "!public"
+      "!public",
+      "!api/openapi.json",
+      "!lib/api-client/schema.d.ts"
     ]
   },
   "formatter": {
