@@ -6,6 +6,15 @@ import type { CSSProperties, ReactNode } from "react";
 import { contrast, type Rgba, toHex, toRgba } from "@/lib/design/colour";
 import { type Measured, measure } from "@/lib/design/contrast";
 import { readTokens, resolve, type Token } from "@/lib/design/tokens";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 // Every token of app/globals.css as it renders, with its contrast (task B8). Development only: it reads
 // the stylesheet from disk, and a production build answers 404. Values are inlined from the stylesheet's
@@ -81,44 +90,45 @@ function Swatch({
 
 function PairRow({ m, value }: { m: Measured; value: (n: string) => string }) {
   const verdict = m.passes ? "passes" : m.accepted ? "accepted" : "fails";
+  // Text as text on its background; an edge as a control's 1 px border, the focus ring as its 2 px ring.
   const sample: CSSProperties =
     m.kind === "text"
       ? { color: value(m.foreground), background: value(m.background) }
-      : {
-          background: value(m.background),
-          boxShadow: `inset 0 0 0 2px ${value(m.foreground)}`,
-        };
+      : { borderColor: value(m.foreground), background: value(m.background) };
   return (
-    <tr className="border-t border-border">
-      <td className="py-2 pr-4">
+    <TableRow className="border-border">
+      <TableCell className="py-2 pr-4 pl-0">
         <span
-          className="inline-flex h-8 min-w-12 items-center justify-center rounded-sm px-2 text-label"
+          className={cn(
+            "inline-flex h-8 min-w-12 items-center justify-center rounded-sm px-2 text-label",
+            m.kind === "edge" && "border",
+            m.kind === "ring" && "border-2",
+          )}
           style={sample}
         >
           {m.kind === "text" ? "Aa" : ""}
         </span>
-      </td>
-      <td className="py-2 pr-4 text-caption">
+      </TableCell>
+      <TableCell className="py-2 pr-4 pl-0 text-caption">
         <p className="font-mono break-words">
           {m.foreground} on {m.background}
         </p>
         <p className="num text-muted-foreground">
           {m.kind}, needs {m.minimum} : 1
         </p>
-      </td>
-      <td className="num whitespace-nowrap py-2 pr-4 text-table">
+      </TableCell>
+      <TableCell className="num whitespace-nowrap py-2 pr-4 pl-0 text-table">
         {ratio(m.ratio)}
-      </td>
-      <td
-        className={
-          verdict === "fails"
-            ? "py-2 text-label text-danger-600"
-            : "py-2 text-label text-success-600"
-        }
+      </TableCell>
+      <TableCell
+        className={cn(
+          "py-2 px-0 text-label",
+          verdict === "fails" ? "text-danger-600" : "text-success-600",
+        )}
       >
         {verdict}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -180,17 +190,23 @@ export default function TokensPage() {
         title="Pairs"
         description="Every pair the roles make, as the contrast test asserts it (lib/design/contrast.ts)."
       >
-        <div className="overflow-x-auto rounded-md border border-border bg-surface-raised px-4">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-label text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Sample</th>
-                <th className="py-2 pr-4 font-medium">Pair</th>
-                <th className="py-2 pr-4 font-medium">Ratio</th>
-                <th className="py-2 font-medium">Result</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="rounded-md border border-border bg-surface-raised px-4">
+          <Table>
+            <TableHeader className="bg-transparent">
+              <TableRow className="border-border">
+                <TableHead className="h-10 pr-4 pl-0 text-label">
+                  Sample
+                </TableHead>
+                <TableHead className="h-10 pr-4 pl-0 text-label">
+                  Pair
+                </TableHead>
+                <TableHead className="h-10 pr-4 pl-0 text-label">
+                  Ratio
+                </TableHead>
+                <TableHead className="h-10 px-0 text-label">Result</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {pairs.map((m) => (
                 <PairRow
                   key={`${m.foreground} ${m.background}`}
@@ -198,8 +214,8 @@ export default function TokensPage() {
                   value={value}
                 />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Section>
 
