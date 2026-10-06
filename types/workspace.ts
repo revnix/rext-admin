@@ -9,6 +9,8 @@
  * @see workspace-frontend-tasks.md for backend API reference
  */
 
+import type { BaseTableRow } from "./shared";
+
 // ============================================================================
 // WORKSPACE CORE TYPES
 // ============================================================================
@@ -79,6 +81,23 @@ export interface Persona {
 /**
  * Brand voice data extracted by LLM
  */
+/** A workspace as the workspaces list and its delete dialog read it. */
+export interface WorkspaceData extends BaseTableRow {
+  title: string; // Display name for workspace
+  name?: string; // API field name (mapped to title)
+  slug: string; // URL-safe identifier for workspace
+  description?: string;
+  url: string;
+  created_at: string;
+  updated_at?: string;
+  owner?: {
+    name: string;
+    email: string;
+  };
+  brand_voice?: BrandVoice;
+  status: string;
+}
+
 export interface BrandVoice {
   id?: string;
   workspace_id: string;
