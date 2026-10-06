@@ -41,6 +41,12 @@ export interface CatalogCredits {
   carry_over: boolean;
 }
 
+/** The refund rule: the whole payment back within the window, under the credit limit. */
+export interface CatalogRefund {
+  window_days: number;
+  /** A full refund if fewer than this many credits were used since the payment. */
+  credit_limit: number;
+}
 export interface CatalogOffer {
   id: string;
   label: string;
@@ -57,5 +63,7 @@ export interface PlanCatalog {
   plans: CatalogPlan[];
   trial: CatalogTrial | null;
   credits: CatalogCredits;
+  /** Served since rext-backend#824; absent before. */
+  refund?: CatalogRefund;
   offer: CatalogOffer | null;
 }

@@ -207,6 +207,12 @@ export const subscriptionQueries = {
       queryFn: () => apiClient.subscriptions.getCatalog(),
       staleTime: 10 * 60 * 1000,
     }),
+  /** The signed-in person's own credits and plan. */
+  myCredits: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "credits", "self"] as const,
+      queryFn: () => apiClient.subscriptions.getCredits(),
+    }),
   /** One workspace's credits, which carry its owner's plan (the workspace switcher's plan line). */
   workspaceCredits: (workspaceId: string) =>
     queryOptions({

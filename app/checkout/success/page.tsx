@@ -1,240 +1,189 @@
 "use client";
 
-/**
- * Checkout Success Page
- *
- * Displays a success message after completing a subscription checkout.
- * Fetches updated subscription status and shows plan details.
- *
- * @module app/checkout/success
- */
-
-import { CheckCircle2, Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import type { Route } from "next";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { DetailPage } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+import { Meter } from "@/components/ui/meter";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   READY_STATUSES,
   useSubscriptionSync,
 } from "@/hooks/use-subscription-sync";
 import { analytics } from "@/lib/analytics";
-import type { Route } from "next";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { subscriptionQueries } from "@/lib/query-keys";
+import { settingsRoutes } from "@/lib/routes";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
+type Phase = "confirming" | "confirmed" | "slow";
+
+/** The subscription's status in words. */
+const STATUS_WORDS: Record<string, string> = {
+  active: "Active",
+  trial: "Trial",
+  on_trial: "Trial",
+  cancelled: "Cancelled",
+  past_due: "Payment due",
+};
+
+/**
+ * Where Lemon Squeezy's checkout returns after a payment (plans/app/F-billing.md F7), inside the
+ * shell. The payment succeeds before Lemon Squeezy's webhook reaches the backend, so the page waits
+ * (bounded) for the subscription to show it, then gives the plan and the new balance, read from
+ * the backend. The in-app checkout confirms in place (lemonsqueezy-provider.tsx); this is the page
+ * the overlay's Continue and a direct return land on.
+ */
 export default function CheckoutSuccessPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [isRefreshing, setIsRefreshing] = useState(true);
-  const [syncTimedOut, setSyncTimedOut] = useState(false);
-  const { subscription } = useSubscriptionStore();
-
+  const reference =
+    searchParams.get("session_id") || searchParams.get("checkout_id");
+  const subscription = useSubscriptionStore(
+    (state) => state.subscription?.subscription,
+  );
+  const setCredits = useSubscriptionStore((state) => state.setCredits);
   const { waitForSubscriptionSync } = useSubscriptionSync();
+  const [phase, setPhase] = useState<Phase>("confirming");
 
-  // Get query parameters from LemonSqueezy redirect
-  const checkoutId = searchParams.get("checkout_id");
-  const sessionId = searchParams.get("session_id");
-
-  // Track subscription purchased once the subscription status is confirmed
-  const trackedRef = useRef(false);
-  useEffect(() => {
-    if (trackedRef.current) return;
-    if (!subscription?.subscription) return;
-    const status = subscription.subscription.status ?? "";
-    if (!READY_STATUSES.has(status)) return;
-
-    trackedRef.current = true;
-    analytics.track("subscription_purchased", {
-      plan_name: subscription.subscription.plan_display_name ?? undefined,
-      billing_period: subscription.subscription.billing_period ?? undefined,
-      status,
-      checkout_id: checkoutId ?? undefined,
-      session_id: sessionId ?? undefined,
-    });
-  }, [subscription, checkoutId, sessionId]);
-
-  // Fetch updated subscription after checkout using bounded polling
   useEffect(() => {
     const controller = new AbortController();
-
-    const refreshSubscription = async () => {
-      try {
-        setIsRefreshing(true);
-        setSyncTimedOut(false);
-        const synced = await waitForSubscriptionSync(controller.signal);
-        if (!synced && !controller.signal.aborted) {
-          setSyncTimedOut(true);
-        }
-      } catch {
-        // Keep page usable even if polling fails
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsRefreshing(false);
-        }
-      }
-    };
-
-    refreshSubscription();
+    waitForSubscriptionSync(controller.signal)
+      .then((synced) => {
+        if (!controller.signal.aborted) setPhase(synced ? "confirmed" : "slow");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setPhase("slow");
+      });
     return () => controller.abort();
   }, [waitForSubscriptionSync]);
-  const handleGoToDashboard = () => {
-    router.push("/" as Route);
-  };
 
-  const handleViewBilling = () => {
-    router.push("/settings/subscription" as Route);
-  };
+  // The balance once the payment shows: the new plan's credits, the same the meters then show.
+  const credits = useQuery({
+    ...subscriptionQueries.myCredits(),
+    enabled: phase !== "confirming",
+  });
+  useEffect(() => {
+    if (credits.data) setCredits(credits.data);
+  }, [credits.data, setCredits]);
+
+  // The purchase is counted once its subscription is confirmed.
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (tracked.current || !subscription) return;
+    const status = subscription.status ?? "";
+    if (!READY_STATUSES.has(status)) return;
+    tracked.current = true;
+    analytics.track("subscription_purchased", {
+      plan_name: subscription.plan_display_name ?? undefined,
+      billing_period: subscription.billing_period ?? undefined,
+      status,
+      checkout_id: searchParams.get("checkout_id") ?? undefined,
+      session_id: searchParams.get("session_id") ?? undefined,
+    });
+  }, [subscription, searchParams]);
+
+  const planName =
+    credits.data?.plan_name ?? subscription?.plan_display_name ?? null;
+  const renews = subscription?.renews_at ?? subscription?.current_period_end;
+  const left = credits.data?.current_credits;
+  const total = credits.data?.credits_per_month ?? null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="max-w-2xl w-full">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 relative">
-            <div className="absolute inset-0 animate-ping">
-              <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto opacity-20" />
-            </div>
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto relative" />
-          </div>
-
-          <CardTitle className="text-3xl font-bold">
-            Welcome to Your Subscription!
-          </CardTitle>
-          <CardDescription className="text-lg mt-2">
-            Your payment was successful and your subscription is now active.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Subscription Details */}
-          {isRefreshing ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Activating your subscription...</span>
-            </div>
-          ) : subscription?.subscription ? (
-            <div className="bg-muted/50 rounded-md p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    {subscription?.subscription.plan_display_name}
-                    {subscription?.subscription.status === "trial" && (
-                      <Badge>Trial</Badge>
-                    )}
-                    {subscription?.subscription.status === "active" && (
-                      <Badge variant="default" className="bg-green-500">
-                        Active
-                      </Badge>
-                    )}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Billing period:{" "}
-                    <span className="font-medium capitalize">
-                      {subscription?.subscription.billing_period}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground">Start Date</p>
-                  <p className="font-medium">
-                    {subscription?.subscription.start_date
-                      ? new Date(
-                          subscription?.subscription.start_date,
-                        ).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                </div>
-                {subscription?.subscription.trial_end_date && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Trial Ends</p>
-                    <p className="font-medium">
-                      {new Date(
-                        subscription?.subscription.trial_end_date,
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
+    <DetailPage
+      title={
+        phase === "confirming"
+          ? "Confirming your payment"
+          : planName
+            ? `You're on ${planName}`
+            : "Payment received"
+      }
+      description={
+        phase === "confirming"
+          ? "Lemon Squeezy has taken the payment; this waits for it to reach your account."
+          : "Thank you. A receipt is on its way to your email."
+      }
+      actions={
+        <>
+          <Button asChild variant="outline">
+            <Link href={settingsRoutes.subscription as Route}>Billing</Link>
+          </Button>
+          <Button asChild>
+            <Link href={"/" as Route}>Go to home</Link>
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-6">
+        {phase === "slow" && (
+          <Notice tone="warning" title="Your plan isn't showing yet">
+            The payment went through, and Lemon Squeezy tells us within a few
+            minutes. Billing shows the plan once it arrives; nothing needs to be
+            paid again.
+          </Notice>
+        )}
+        <div className="flex flex-col gap-4 rounded-md border border-border bg-card p-5">
+          {phase === "confirming" ? (
+            <Skeleton className="h-20 w-full" />
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-section">{planName ?? "Your plan"}</h2>
+                {subscription?.status && (
+                  <Badge
+                    variant={
+                      READY_STATUSES.has(subscription.status)
+                        ? "success"
+                        : "neutral"
+                    }
+                  >
+                    {STATUS_WORDS[subscription.status] ?? subscription.status}
+                  </Badge>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              <p>Your subscription is being activated...</p>
-              {syncTimedOut ? (
-                <p className="text-sm mt-2">
-                  Activation is taking longer than expected. You can continue
-                  and check your billing page in a moment.
-                </p>
-              ) : (
-                <p className="text-sm mt-2">
-                  This may take a few moments. Please check your billing
-                  settings.
-                </p>
-              )}
-            </div>
+              <div className="flex flex-col gap-2">
+                {left === undefined ? (
+                  credits.isError ? (
+                    <p className="text-sm text-muted-foreground">
+                      Your balance didn't load; the header shows it in a moment.
+                    </p>
+                  ) : (
+                    <Skeleton className="h-8 w-40" />
+                  )
+                ) : (
+                  <p className="num text-foreground">
+                    <span className="font-display text-page-title">
+                      {left.toLocaleString()}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {total !== null
+                        ? ` of ${total.toLocaleString()} credits`
+                        : " credits"}
+                    </span>
+                  </p>
+                )}
+                {left !== undefined && total !== null && total > 0 && (
+                  <Meter value={left} max={total} label="Credits" />
+                )}
+                {renews && (
+                  <p className="text-sm text-muted-foreground">
+                    Renews {dateFormat.short(renews)}.
+                  </p>
+                )}
+              </div>
+            </>
           )}
-
-          {/* Transaction Info */}
-          {(checkoutId || sessionId) && (
-            <div className="text-center text-sm text-muted-foreground">
-              <p>
-                Reference:{" "}
-                <code className="bg-muted px-2 py-1 rounded-md text-xs">
-                  {sessionId || checkoutId}
-                </code>
-              </p>
-            </div>
-          )}
-
-          {/* Next Steps */}
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-md p-4 space-y-2">
-            <h4 className="font-semibold text-sm">What's Next?</h4>
-            <ul className="text-sm space-y-1.5 text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  You'll receive a confirmation email with your subscription
-                  details
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  Your subscription features are now active and ready to use
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  Manage your subscription anytime from your billing settings
-                </span>
-              </li>
-            </ul>
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex gap-3">
-          <Button onClick={handleGoToDashboard} className="flex-1">
-            Go to Dashboard
-          </Button>
-          <Button
-            onClick={handleViewBilling}
-            variant="outline"
-            className="flex-1"
-          >
-            View Billing
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+        {reference && (
+          <p className="text-sm text-muted-foreground">
+            Reference <span className="num font-mono">{reference}</span>
+          </p>
+        )}
+      </div>
+    </DetailPage>
   );
 }
