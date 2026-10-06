@@ -94,12 +94,9 @@ export function GuestGuard({
   const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
-      setIsChecking(false);
-
       // CRITICAL: Prevent redirect loop if we are on the login page with an error
       const hasError =
         searchParams.get("error") ||
@@ -115,8 +112,10 @@ export function GuestGuard({
     }
   }, [isLoading, isAuthenticated, redirectTo, router, searchParams]);
 
-  // Show loading state
-  if (isLoading || isChecking) {
+  // Show loading state. Only while the session is unknown: the root layout seeds it from the server,
+  // so a signed-out visitor gets the page in the first render, with no spinner swapped out after it
+  // (which moved the page's elements: Lighthouse measured a layout shift of 0.24, task C10).
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
