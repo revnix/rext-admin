@@ -8,6 +8,8 @@ import {
   type KeywordRow,
   KeywordTable,
 } from "@/components/keywords/keyword-table";
+import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
+import { WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTimedOut } from "@/hooks/use-timed-out";
@@ -17,6 +19,7 @@ import {
   keywordMetrics,
   type SearchIntent,
 } from "@/lib/keywords/keyword-metrics";
+import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 
 // No loading state on this step outlives this; then it says what is missing.
@@ -28,8 +31,8 @@ const same = (a: string, b: string) =>
 /**
  * Step 2, Select keyword (plans/app/E-workflow.md §4 step 2): the analysed keyword on the keyword
  * card, with its intent to write for, and "Continue with this keyword"; the suggestions in the
- * keyword table, with the clusters as groups beneath. Analysing another keyword runs the analysis
- * again for it.
+ * keyword table, with the clusters as groups beneath; the search results' top ten in the side pane
+ * when the gate sends them. Analysing another keyword runs the analysis again for it.
  */
 export function SuggestionsSection({
   primaryKeyword,
@@ -39,6 +42,7 @@ export function SuggestionsSection({
   selectedIntent,
   onIntentChange,
   keywordClusters = [],
+  gate,
 }: {
   primaryKeyword: string;
   suggestedKeywords: string[];
@@ -47,6 +51,8 @@ export function SuggestionsSection({
   selectedIntent: SearchIntent | "";
   onIntentChange: (intent: SearchIntent) => void;
   keywordClusters?: KeywordCluster[];
+  /** The keyword gate's payload, for its `serp_titles`. */
+  gate?: unknown;
 }) {
   // The analysis arrives with the keyword gate; if it never does, stop spinning after 30 s and say
   // so rather than show "Fetching" for ever.
@@ -79,7 +85,9 @@ export function SuggestionsSection({
     [keywordClusters, primaryKeyword],
   );
 
-  return (
+  const serpTitles = useMemo(() => serpResultsFromGate(gate), [gate]);
+
+  const step = (
     <div className="flex w-full flex-col gap-6 pt-4 pb-4">
       {seoResult ? (
         <KeywordCard
@@ -134,5 +142,16 @@ export function SuggestionsSection({
         </section>
       )}
     </div>
+  );
+
+  if (serpTitles.length === 0) return step;
+  return (
+    <WithSidePane
+      sideTitle="Top search results"
+      showTitle
+      side={<SerpSnapshot results={serpTitles} heading={null} />}
+    >
+      {step}
+    </WithSidePane>
   );
 }

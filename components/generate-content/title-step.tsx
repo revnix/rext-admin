@@ -20,7 +20,10 @@ import {
   scoreTitle,
   type TitleScore,
 } from "@/lib/generate-content/title-score";
-import type { SerpResult } from "@/lib/keywords/serp-results";
+import {
+  type SerpResult,
+  serpResultsFromGate,
+} from "@/lib/keywords/serp-results";
 import { cn } from "@/lib/utils";
 
 interface TitleStepProps {
@@ -272,16 +275,10 @@ function readGate(gate: unknown): {
   >;
   const text = (key: string) =>
     typeof value[key] === "string" ? (value[key] as string) : null;
-  const results = Array.isArray(value.serp_titles) ? value.serp_titles : [];
   return {
     recommendationReason: text("recommendation_reason"),
     focusKeyphrase: text("focus_keyphrase"),
-    serpTitles: results.filter(
-      (result): result is SerpResult =>
-        !!result &&
-        typeof result === "object" &&
-        typeof result.title === "string",
-    ),
+    serpTitles: serpResultsFromGate(value),
   };
 }
 
