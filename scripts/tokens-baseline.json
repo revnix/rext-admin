@@ -23,14 +23,8 @@
   "app/w/[workspaceSlug]/personas/[personaId]/page.tsx": {
     "stock-palette": 1
   },
-  "app/w/[workspaceSlug]/personas/create/page.tsx": {
-    "off-scale": 1
-  },
   "app/w/page.tsx": {
     "small-type": 3
-  },
-  "components/content/content-card.tsx": {
-    "stock-palette": 10
   },
   "components/data-table.tsx": {
     "arbitrary-size": 2
@@ -89,26 +83,14 @@
   "components/ui/detail-card.tsx": {
     "stock-palette": 2
   },
-  "components/ui/detail-page-skeleton.tsx": {
-    "stock-palette": 3
-  },
   "components/ui/dialog.tsx": {
     "stock-palette": 1
-  },
-  "components/ui/empty.tsx": {
-    "off-scale": 2
-  },
-  "components/ui/error-alert.tsx": {
-    "stock-palette": 21
   },
   "components/ui/error-boundary.tsx": {
     "stock-palette": 6
   },
   "components/ui/error-states.tsx": {
     "off-scale": 1,
-    "stock-palette": 2
-  },
-  "components/ui/info-section.tsx": {
     "stock-palette": 2
   },
   "components/ui/input-group.tsx": {
@@ -142,17 +124,9 @@
   "components/ui/sheet.tsx": {
     "stock-palette": 1
   },
-  "components/ui/skeleton.tsx": {
-    "stock-palette": 1
-  },
   "components/ui/sonner.tsx": {
     "off-scale": 1,
     "arbitrary-colour": 6
-  },
-  "components/ui/status-badge.tsx": {
-    "stock-palette": 33,
-    "off-scale": 1,
-    "inline-colour": 24
   },
   "components/ui/switch.tsx": {
     "off-scale": 1
@@ -160,9 +134,6 @@
   "components/ui/tooltip.tsx": {
     "stock-palette": 4,
     "arbitrary-radius": 1
-  },
-  "components/ui/topic-cell-formatters.tsx": {
-    "stock-palette": 22
   },
   "components/ui/typeform/chip-input.tsx": {
     "stock-palette": 5
