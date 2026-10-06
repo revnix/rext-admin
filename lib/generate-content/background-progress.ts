@@ -92,7 +92,7 @@ const AWAITING_INPUT_STAGES: Record<
   "keyword Selection": { progress: 14, stage: "Keywords ready to review" },
   content_type: { progress: 26, stage: "Content types ready to review" },
   topic: { progress: 32, stage: "Titles ready to review" },
-  topic_selection: { progress: 32, stage: "Topics ready to review" },
+  topic_selection: { progress: 32, stage: "Titles ready to review" },
   outline_review: { progress: 38, stage: "Outline ready to review" },
   outline_reject: { progress: 38, stage: "Outline ready to review" },
 };

@@ -1914,7 +1914,7 @@ export function FreshGenerationView({
         });
         return resumeWorkflow({
           payload: { "Selected Content Type": value },
-          status: "Topic Suggestions...",
+          status: "Suggesting titles...",
         });
       case "TOPIC_SELECT":
         setTokenTarget("none");
@@ -1945,7 +1945,7 @@ export function FreshGenerationView({
         });
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
-          status: "Regenerating topics...",
+          status: "Regenerating titles...",
         });
 
       case "OUTLINE_APPROVE":
