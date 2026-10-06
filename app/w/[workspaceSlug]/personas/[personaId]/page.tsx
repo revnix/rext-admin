@@ -1,69 +1,72 @@
 "use client";
 
-import { DetailPage } from "@/components/layouts";
-import { useWorkspace } from "@/providers/workspace-provider";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { usePersona } from "@/hooks/use-personas";
-import { PersonaDetail } from "@/components/personas/persona-detail";
-import { useParams } from "next/navigation";
 import type { Route } from "next";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { DetailPage } from "@/components/layouts";
+import {
+  PersonaActions,
+  PersonaFacts,
+  PersonaSections,
+} from "@/components/personas/persona-view";
+import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePersona, usePersonas } from "@/hooks/use-personas";
+import { workspaceRoutes } from "@/lib/routes";
+import { useWorkspace } from "@/providers/workspace-provider";
 
 export default function PersonaDetailPage() {
   const { workspace, workspaceSlug } = useWorkspace();
-  const params = useParams();
-  const personaId = params.personaId as string;
+  const { personaId } = useParams<{ personaId: string }>();
+  const { data, isLoading, error } = usePersona(
+    workspace?.id || null,
+    personaId,
+  );
+  // The list carries each persona's article count; the single persona doesn't.
+  const { data: list } = usePersonas(workspace?.id || null);
+  const persona = data?.persona;
 
-  const {
-    data: personaData,
-    isLoading,
-    error,
-  } = usePersona(workspace?.id || null, personaId);
-  const persona = personaData?.persona;
-
-  // Wait for workspace to be loaded before considering it an error
-  const isWorkspaceLoading = !workspace && !error;
-  const isPersonaLoading = isLoading || isWorkspaceLoading;
-
-  // Fallback for loading
-  if (isPersonaLoading) {
+  if (!workspace || isLoading) {
     return (
-      <DetailPage title="Personas">
-        <div className="flex items-start p-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-          <span className="ml-3 text-muted-foreground">Loading persona...</span>
-        </div>
+      <DetailPage title="Persona" aside={<Skeleton className="h-64 w-full" />}>
+        <Skeleton className="h-96 w-full" />
       </DetailPage>
     );
   }
 
   if (error || !persona) {
     return (
-      <DetailPage title="Persona Not Found">
-        <div className="flex flex-col items-center justify-center p-12 space-y-4">
-          <p className="text-muted-foreground">
-            The persona you are looking for does not exist or you do not have
-            permission to view it.
-          </p>
-
-          <Link href={`/w/${workspaceSlug}/personas` as Route}>
-            <Button
-              variant="outline"
-              className="h-10 px-4 rounded-md border-slate-200"
-            >
-              <ArrowLeft size={16} className="mr-2" />
-              Back to Personas
+      <DetailPage title="Persona not found">
+        <Notice
+          tone="danger"
+          title="This persona couldn't be found"
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href={workspaceRoutes.personas(workspaceSlug) as Route}>
+                All personas
+              </Link>
             </Button>
-          </Link>
-        </div>
+          }
+        >
+          It may have been deleted, or it belongs to another workspace.
+        </Notice>
       </DetailPage>
     );
   }
 
+  const articleCount = list?.personas.find(
+    (p) => p.id === persona.id,
+  )?.article_count;
+
   return (
-    <DetailPage title={persona.name} description={persona.description}>
-      <PersonaDetail persona={persona} />
+    <DetailPage
+      title={persona.name}
+      description={persona.professional_title || undefined}
+      actions={<PersonaActions persona={persona} />}
+      aside={<PersonaFacts persona={persona} articleCount={articleCount} />}
+    >
+      <PersonaSections persona={persona} />
     </DetailPage>
   );
 }

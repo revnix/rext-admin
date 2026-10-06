@@ -20,22 +20,11 @@
     "stock-palette": 9,
     "small-type": 9
   },
-  "app/w/[workspaceSlug]/personas/[personaId]/page.tsx": {
-    "stock-palette": 1
-  },
   "components/notifications-drawer.tsx": {
     "stock-palette": 24,
     "dark-class": 2
   },
   "components/permission/locked-feature-tooltip.tsx": {
-    "stock-palette": 3
-  },
-  "components/personas/persona-card.tsx": {
-    "stock-palette": 7,
-    "off-scale": 1
-  },
-  "components/personas/persona-detail.tsx": {
-    "off-scale": 2,
     "stock-palette": 3
   },
   "components/pricing/pricing-table.tsx": {

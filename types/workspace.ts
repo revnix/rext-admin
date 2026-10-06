@@ -76,6 +76,10 @@ export interface Persona {
   pain_points?: string | string[];
   goals?: string | string[];
   behaviors?: string | string[];
+  created_at?: string;
+  updated_at?: string;
+  /** The workspace's articles written as this persona, outside the trash; the list sets it. */
+  article_count?: number;
 }
 
 /**
