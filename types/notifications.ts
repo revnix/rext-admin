@@ -47,8 +47,6 @@ export const NOTIFICATION_CATEGORY_VALUES = [
   "billing_trial_ending",
   "billing_usage_limit_warning",
   "billing_usage_limit_exceeded",
-  "kb_processing_completed",
-  "kb_processing_failed",
   "in_app_notifications",
   "profile_update_failed",
   "avatar_uploaded",
