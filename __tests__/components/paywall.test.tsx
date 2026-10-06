@@ -85,9 +85,26 @@ describe("paywallState", () => {
     });
     expect(paywallState({ credits: enough })).toBeNull();
     expect(
-      paywallState({ credits: credits({ credits_per_month: null }) }),
+      paywallState({
+        credits: credits({ credits_per_month: null, articles_remaining: null }),
+      }),
     ).toBeNull();
     expect(paywallState({})).toBeNull();
+  });
+
+  it("locks a lapsed plan: no plan at all is no credits, not unlimited", () => {
+    // The backend's answer with nothing that grants access: no monthly figure, 0 articles.
+    const lapsed = credits({
+      current_credits: 0,
+      credits_per_month: null,
+      articles_remaining: 0,
+      plan_name: null,
+    });
+    expect(paywallState({ credits: lapsed, perArticle: 15 })).toEqual({
+      kind: "no-credits",
+      balance: 0,
+      perArticle: 15,
+    });
   });
 
   it("words the state in the backend's numbers", () => {

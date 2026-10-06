@@ -24,8 +24,9 @@ export function paywallState({
   if (trial?.trial_expired && trial.trial_end_date) {
     return { kind: "trial-ended", endedOn: trial.trial_end_date };
   }
-  // Unknown or unlimited: nothing to lock.
-  if (!credits || credits.credits_per_month === null) return null;
+  // Unknown or unlimited: nothing to lock. A null articles_remaining is the unlimited plan; no
+  // plan at all (a paid plan that lapsed) has a null credits_per_month but 0 articles, and locks.
+  if (!credits || credits.articles_remaining === null) return null;
   const analyze = credits.runs?.analyze;
   const short = analyze
     ? !analyze.can_run
