@@ -1,11 +1,11 @@
 "use client";
 
-import { AlertTriangle, TrendingUp, X } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Meter } from "@/components/ui/meter";
+import { Notice } from "@/components/ui/notice";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
@@ -183,132 +183,94 @@ export function UsageLimitWarning({
 
   const getResourceLabel = () => "Workspaces";
 
-  const getAlertVariant = () => {
-    if (isExceeded || isCritical) {
-      return "destructive";
-    }
-    return "default";
-  };
+  const tone = isExceeded || isCritical ? "danger" : "warning";
+  const label = getResourceLabel();
+  const dismiss = dismissible ? handleDismiss : undefined;
+  const dismissLabel = `Dismiss ${label.toLowerCase()} usage warning`;
 
   const formatUsage = () => `${currentUsage} / ${limit}`;
 
   if (compact) {
     return (
-      <Alert variant={getAlertVariant()} className={className}>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="flex items-center justify-between">
-          <span className="text-sm">
-            <strong>{getResourceLabel()}:</strong> {formatUsage()} (
-            {usagePercentage.toFixed(0)}%)
-          </span>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handleUpgrade}>
-              Upgrade
-            </Button>
-            {dismissible && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleDismiss}
-                className="h-6 w-6 p-0"
-                aria-label={`Dismiss ${getResourceLabel().toLowerCase()} usage warning`}
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            )}
-          </div>
-        </AlertDescription>
-      </Alert>
+      <Notice
+        tone={tone}
+        className={className}
+        action={
+          <Button size="sm" variant="outline" onClick={handleUpgrade}>
+            Upgrade
+          </Button>
+        }
+        onDismiss={dismiss}
+        dismissLabel={dismissLabel}
+      >
+        <strong>{label}:</strong> {formatUsage()} ({usagePercentage.toFixed(0)}
+        %)
+      </Notice>
     );
   }
 
   return (
-    <Alert variant={getAlertVariant()} className={className}>
-      <AlertTriangle className="h-4 w-4" />
-      <div className="flex-1">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <AlertTitle>
-              {isExceeded
-                ? `${getResourceLabel()} Limit Exceeded`
-                : isCritical
-                  ? `${getResourceLabel()} Limit Almost Reached`
-                  : `${getResourceLabel()} Usage Warning`}
-            </AlertTitle>
-            <AlertDescription className="mt-2 space-y-3">
-              <div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>Current usage: {formatUsage()}</span>
-                  <span className="font-semibold">
-                    {usagePercentage.toFixed(1)}%
-                  </span>
-                </div>
-                {showProgress && (
-                  <Progress
-                    value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${
-                      isCritical
-                        ? "[&>div]:bg-destructive"
-                        : "[&>div]:bg-warning-600"
-                    }`}
-                  />
-                )}
-              </div>
-
-              <p className="text-sm">
-                {isExceeded ? (
-                  <>
-                    You have exceeded your plan's{" "}
-                    {getResourceLabel().toLowerCase()} limit. Upgrade to
-                    continue using this feature.
-                  </>
-                ) : isCritical ? (
-                  <>
-                    You're almost at your {getResourceLabel().toLowerCase()}{" "}
-                    limit. Consider upgrading to avoid interruptions.
-                  </>
-                ) : (
-                  <>
-                    You've used {usagePercentage.toFixed(0)}% of your{" "}
-                    {getResourceLabel().toLowerCase()} limit. Consider upgrading
-                    for higher limits.
-                  </>
-                )}
-              </p>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
-                  onClick={handleUpgrade}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Upgrade Plan
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-                  onClick={() => router.push("/subscription" as Route)}
-                >
-                  View Usage
-                </Button>
-              </div>
-            </AlertDescription>
+    <Notice
+      tone={tone}
+      className={className}
+      title={
+        isExceeded
+          ? `${label} limit exceeded`
+          : isCritical
+            ? `${label} limit almost reached`
+            : `${label} usage warning`
+      }
+      onDismiss={dismiss}
+      dismissLabel={dismissLabel}
+    >
+      <div className="mt-2 flex flex-col gap-3">
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <span>Current usage: {formatUsage()}</span>
+            <span className="font-semibold">{usagePercentage.toFixed(1)}%</span>
           </div>
+          {showProgress && <Meter value={currentUsage} max={limit} low />}
+        </div>
 
-          {dismissible && (
-            <Button
-              size="sm"
-              variant={SUBSCRIPTION_ACTION_VARIANTS.dismissTertiary}
-              onClick={handleDismiss}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <p>
+          {isExceeded ? (
+            <>
+              You have exceeded your plan's {label.toLowerCase()} limit. Upgrade
+              to continue using this feature.
+            </>
+          ) : isCritical ? (
+            <>
+              You're almost at your {label.toLowerCase()} limit. Consider
+              upgrading to avoid interruptions.
+            </>
+          ) : (
+            <>
+              You've used {usagePercentage.toFixed(0)}% of your{" "}
+              {label.toLowerCase()} limit. Consider upgrading for higher limits.
+            </>
           )}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+            onClick={handleUpgrade}
+          >
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Upgrade plan
+          </Button>
+
+          <Button
+            size="sm"
+            variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
+            onClick={() => router.push("/subscription" as Route)}
+          >
+            View usage
+          </Button>
         </div>
       </div>
-    </Alert>
+    </Notice>
   );
 }
 

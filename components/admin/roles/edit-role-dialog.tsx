@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -104,14 +104,11 @@ export function EditRoleDialog({
 
           <div className="space-y-4 py-4">
             {isProtected && (
-              <Alert>
-                <Shield className="h-4 w-4" />
-                <AlertDescription>
-                  {role.is_system_role
-                    ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
-                    : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
-                </AlertDescription>
-              </Alert>
+              <Notice>
+                {role.is_system_role
+                  ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
+                  : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
+              </Notice>
             )}
 
             {/* Name (Read-only) */}

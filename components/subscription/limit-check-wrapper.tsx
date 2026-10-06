@@ -1,10 +1,10 @@
 "use client";
 
-import { AlertTriangle, Lock, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import { type LimitedResource, useResourceLimit } from "./usage-limit-warning";
 import type { Route } from "next";
@@ -76,13 +76,9 @@ export function LimitCheckWrapper({
   if (isLoading) {
     return (
       <div className={className}>
-        <Alert>
-          <Lock className="h-4 w-4" />
-          <AlertTitle>Checking plan limits</AlertTitle>
-          <AlertDescription>
-            We’re confirming your current plan before enabling this action.
-          </AlertDescription>
-        </Alert>
+        <Notice title="Checking plan limits">
+          We’re confirming your current plan before enabling this action.
+        </Notice>
         <div className="opacity-60 pointer-events-none mt-4">{children}</div>
       </div>
     );
@@ -92,34 +88,30 @@ export function LimitCheckWrapper({
   if (isLimitReached) {
     return (
       <div className={className}>
-        <Alert variant="destructive">
-          <Lock className="h-4 w-4" />
-          <AlertTitle>Limit Reached</AlertTitle>
-          <AlertDescription className="space-y-3">
-            <p>
-              You've reached the maximum number of {resource.replace(/_/g, " ")}{" "}
-              allowed on your current plan.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
-                onClick={handleUpgrade}
-              >
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Upgrade Plan
-              </Button>
+        <Notice tone="warning" title="Limit reached">
+          <p>
+            You've reached the maximum number of {resource.replace(/_/g, " ")}{" "}
+            allowed on your current plan.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+              onClick={handleUpgrade}
+            >
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Upgrade plan
+            </Button>
 
-              <Button
-                size="sm"
-                variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-                onClick={() => router.push("/subscription" as Route)}
-              >
-                View Usage
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
+            <Button
+              size="sm"
+              variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
+              onClick={() => router.push("/subscription" as Route)}
+            >
+              View usage
+            </Button>
+          </div>
+        </Notice>
 
         {/* Render disabled version of children */}
         <div className="opacity-50 pointer-events-none mt-4">{children}</div>
@@ -133,18 +125,18 @@ export function LimitCheckWrapper({
   if (showWarning && isApproachingLimit && !isLimitReached) {
     return (
       <div className={className}>
-        <Alert className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span className="text-sm">
-              You're using <strong>{usagePercentage.toFixed(0)}%</strong> of
-              your {resource.replace(/_/g, " ")} limit.
-            </span>
+        <Notice
+          tone="warning"
+          className="mb-4"
+          action={
             <Button size="sm" variant="outline" onClick={handleUpgrade}>
               Upgrade
             </Button>
-          </AlertDescription>
-        </Alert>
+          }
+        >
+          You're using <strong>{usagePercentage.toFixed(0)}%</strong> of your{" "}
+          {resource.replace(/_/g, " ")} limit.
+        </Notice>
         {children}
       </div>
     );

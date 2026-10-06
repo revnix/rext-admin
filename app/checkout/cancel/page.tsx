@@ -9,9 +9,9 @@
  * @module app/checkout/cancel
  */
 
-import { ArrowLeft, HelpCircle, Mail, XCircle } from "lucide-react";
+import { ArrowLeft, Mail, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,13 +62,9 @@ export default function CheckoutCancelPage() {
 
         <CardContent className="space-y-6">
           {/* Info Alert */}
-          <Alert>
-            <HelpCircle className="h-4 w-4" />
-            <AlertDescription>
-              Don't worry - no charges have been made to your account. You can
-              try again whenever you're ready.
-            </AlertDescription>
-          </Alert>
+          <Notice title="No charge was made to your account">
+            You can try again whenever you're ready.
+          </Notice>
 
           {/* Reasons & Next Steps */}
           <div className="space-y-4">

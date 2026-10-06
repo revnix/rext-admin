@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  AlertTriangle,
   CheckCircle,
   Mail,
   Send,
@@ -18,7 +17,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -512,13 +511,10 @@ export function WorkspaceInviteMembersDialog({
                 </div>
 
                 {emailChips.some((c) => c.status !== "valid") && (
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Some emails are invalid or already invited. Only valid
-                      emails will be sent invitations.
-                    </AlertDescription>
-                  </Alert>
+                  <Notice tone="warning">
+                    Some emails are invalid or already invited. Only valid
+                    emails will be sent invitations.
+                  </Notice>
                 )}
               </div>
 
@@ -619,14 +615,11 @@ export function WorkspaceInviteMembersDialog({
               />
 
               {validEmails.length > 1 && (
-                <Alert>
-                  <Mail className="h-4 w-4" />
-                  <AlertDescription>
-                    Each person will receive a separate email invitation. Failed
-                    invitations (duplicates, invalid emails, existing members)
-                    will be reported after submission.
-                  </AlertDescription>
-                </Alert>
+                <Notice>
+                  Each person will receive a separate email invitation. Failed
+                  invitations (duplicates, invalid emails, existing members)
+                  will be reported after submission.
+                </Notice>
               )}
 
               <DialogFooter className="gap-2">

@@ -1,9 +1,9 @@
 "use client";
 
-import { AlertCircle, AlertTriangle, Loader2, XCircle } from "lucide-react";
+import { Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -169,22 +169,18 @@ export function CancelSubscriptionModal({
         <div className="flex-1 overflow-y-auto min-h-0 px-6 scrollbar-hide">
           <div className="space-y-4 py-4">
             {/* Warning Alert */}
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>What happens when you cancel:</strong>
-                <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-                  <li>
-                    {currentPeriodEnd
-                      ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
-                      : "Your access will end immediately"}
-                  </li>
-                  <li>All your data will be preserved for 14 days</li>
-                  <li>You can reactivate your subscription anytime</li>
-                  <li>No refunds for the current billing period</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
+            <Notice tone="warning" title="What happens when you cancel">
+              <ul className="mt-1 list-inside list-disc space-y-1">
+                <li>
+                  {currentPeriodEnd
+                    ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
+                    : "Your access will end immediately"}
+                </li>
+                <li>All your data will be preserved for 14 days</li>
+                <li>You can reactivate your subscription anytime</li>
+                <li>No refunds for the current billing period</li>
+              </ul>
+            </Notice>
 
             {/* Feedback Section */}
             <div className="space-y-3">
@@ -245,12 +241,7 @@ export function CancelSubscriptionModal({
             </div>
 
             {/* Error Message */}
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            {error && <Notice tone="danger">{error}</Notice>}
           </div>
         </div>
 

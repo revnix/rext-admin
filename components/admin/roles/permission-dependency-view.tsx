@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, Network, Shield } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -307,15 +307,11 @@ export function PermissionDependencyView({
             </Card>
 
             {/* Best Practices Alert */}
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Best Practice:</strong> When assigning permissions,
-                always ensure dependent permissions are also assigned. For
-                example, before granting delete permissions, ensure read
-                permissions are already granted.
-              </AlertDescription>
-            </Alert>
+            <Notice title="Best practice">
+              When assigning permissions, always ensure dependent permissions
+              are also assigned. For example, before granting delete
+              permissions, ensure read permissions are already granted.
+            </Notice>
           </div>
         </ScrollArea>
       </DialogContent>

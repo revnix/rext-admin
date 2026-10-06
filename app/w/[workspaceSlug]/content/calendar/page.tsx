@@ -7,7 +7,6 @@ import {
   Clock,
   ExternalLink,
   Loader2,
-  AlertCircle,
   Trash2,
   CalendarDays,
   Inbox,
@@ -18,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { useContentCalendar, useCancelSchedule } from "@/hooks/use-content";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { CalendarEntry } from "@/types/content";
@@ -164,13 +163,9 @@ export default function ContentCalendarPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Failed to load calendar. Please try again.
-          </AlertDescription>
-        </Alert>
+        <Notice tone="danger" title="The calendar didn't load">
+          Reload the page to try again.
+        </Notice>
       ) : (
         <Card>
           <CardHeader className="pb-2 gap-4">
