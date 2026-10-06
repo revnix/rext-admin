@@ -3,7 +3,7 @@
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
-import type { ReactNode } from "react";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 import {
   createDataTableColumnHelper,
   DataTable,
@@ -25,7 +25,8 @@ import {
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import { Notice } from "@/components/ui/notice";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useAllContent, useDeleteContent } from "@/hooks/use-content";
+import { useAllContent, useTrashContent } from "@/hooks/use-content";
+import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { dateFormat } from "@/lib/formatters/date-formatters";
@@ -75,6 +76,36 @@ function ContentTitle({ item }: { item: ContentItem }) {
   );
 }
 
+/** A content type as words: "landing_page" reads "Landing page". */
+function typeLabel(type: string): string {
+  const words = type.replace(/[_-]+/g, " ").trim();
+  return words ? words[0].toUpperCase() + words.slice(1).toLowerCase() : "";
+}
+
+/** The sites an article went out to: each publishing result's site, else WordPress for an older row. */
+function publishedTo(item: ContentItem): string[] {
+  const sites = (item.publishing_results ?? [])
+    .filter((result) => result.external_url || result.status === "published")
+    .map((result) => result.site_name || "A connected site");
+  if (sites.length === 0 && item.wordpress_url) sites.push("WordPress");
+  return [...new Set(sites)];
+}
+
+function updatedAt(item: ContentItem): string {
+  return item.updated_at || item.created_at;
+}
+
+/** The workspace's persona names by id, for the module-scope columns to read. */
+const PersonaNames = createContext<ReadonlyMap<string, string>>(new Map());
+
+function PersonaName({ id }: { id: string }) {
+  const names = useContext(PersonaNames);
+  if (!id) return UNKNOWN;
+  return (
+    <span className="truncate">{names.get(id) ?? "A removed persona"}</span>
+  );
+}
+
 const column = createDataTableColumnHelper<ContentItem>();
 
 const columns = column.columns([
@@ -94,6 +125,29 @@ const columns = column.columns([
   column.accessor((item) => item.content_metadata?.content_type ?? "", {
     id: "type",
     header: "Type",
+    cell: ({ getValue }) => typeLabel(getValue()) || UNKNOWN,
+    filterFn: "arrHas",
+    enableGlobalFilter: true,
+  }),
+  column.accessor((item) => item.persona_id ?? "", {
+    id: "persona",
+    header: "Author persona",
+    cell: ({ getValue }) => <PersonaName id={getValue()} />,
+    filterFn: "arrHas",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((item) => Date.parse(updatedAt(item)) || 0, {
+    id: "updated_at",
+    header: "Updated",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(updatedAt(row.original)) || UNKNOWN,
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((item) => publishedTo(item).join(", "), {
+    id: "published_to",
+    header: "Published to",
+    cell: ({ getValue }) => getValue() || UNKNOWN,
     enableGlobalFilter: true,
   }),
   // Hidden at first, and searched: the old library found an article by its platform.
@@ -146,9 +200,10 @@ const STATUS_FACET = [
   },
 ];
 
-const HIDDEN_COLUMNS = ["platform"];
+// In the view menu, not on the screen at first: the library's columns are the goal's (D2 #233).
+const HIDDEN_COLUMNS = ["platform", "words", "seo", "created_at"];
 
-/** A row as a card under 640 px: the title, its status, then what it is and when it was made. */
+/** A row as a card under 640 px: the title, its status, then what it is and when it last changed. */
 function ContentRowCard({
   item,
   actions,
@@ -156,11 +211,10 @@ function ContentRowCard({
   item: ContentItem;
   actions: ReactNode;
 }) {
-  const words = item.content_metadata?.content_word_count;
+  const type = item.content_metadata?.content_type;
   const details = [
-    item.content_metadata?.content_type,
-    words ? `${words.toLocaleString("en-US")} words` : null,
-    dateFormat.short(item.created_at),
+    type ? typeLabel(type) : null,
+    dateFormat.short(updatedAt(item)),
   ].filter(Boolean);
   return (
     <div className="flex items-start gap-3">
@@ -220,21 +274,67 @@ export default function WorkspaceContentPage() {
     error,
   } = useAllContent(workspaceId);
 
-  const deleteContentMutation = useDeleteContent();
+  const { data: personaList } = usePersonas(workspaceId || null);
+  const personaNames = useMemo(
+    () =>
+      new Map(
+        (personaList?.personas ?? [])
+          .filter((persona) => persona.id)
+          .map((persona) => [persona.id as string, persona.name]),
+      ),
+    [personaList],
+  );
+
+  // Status from the backend's list; type from what the articles carry; persona from the workspace.
+  const facets = useMemo(() => {
+    const types = [
+      ...new Set(
+        content
+          .map((item) => item.content_metadata?.content_type)
+          .filter((type): type is string => Boolean(type)),
+      ),
+    ].sort();
+    return [
+      ...STATUS_FACET,
+      {
+        column: "type",
+        title: "Type",
+        options: types.map((value) => ({ value, label: typeLabel(value) })),
+      },
+      {
+        column: "persona",
+        title: "Persona",
+        options: [...personaNames].map(([value, label]) => ({
+          value,
+          label,
+        })),
+      },
+    ];
+  }, [content, personaNames]);
+
+  const trashContentMutation = useTrashContent();
   const { confirm, ConfirmationComponent } = useConfirmation();
 
-  const handleDelete = async (item: ContentItem) => {
+  // Asks first: there is no undo until the backend can restore from the trash (G45 #397).
+  const moveToTrash = async (items: ContentItem[], done?: () => void) => {
+    const one = items.length === 1;
     const confirmed = await confirm({
-      title: "Delete this article?",
-      description: `"${item.title || "Untitled"}" is removed from the library.`,
-      confirmText: "Delete",
+      title: one
+        ? "Move this article to the trash?"
+        : `Move ${items.length} articles to the trash?`,
+      description: one
+        ? `"${items[0].title || "Untitled"}" leaves the library.`
+        : "They leave the library.",
+      confirmText: "Move to trash",
+      cancelText: one ? "Keep article" : "Keep them",
       variant: "destructive",
     });
     if (!confirmed) return;
-    await deleteContentMutation.mutateAsync({
+    await trashContentMutation.mutateAsync({
       workspaceId,
-      contentId: item.id,
+      contentIds: items.map((item) => item.id),
     });
+    done?.();
   };
 
   const rowActions = (item: ContentItem): DataTableRowAction[] => [
@@ -245,30 +345,42 @@ export default function WorkspaceContentPage() {
     ...(canDeleteContent
       ? [
           {
-            label: "Delete",
+            label: "Move to trash",
             icon: Trash2,
             destructive: true,
-            onSelect: () => void handleDelete(item),
+            onSelect: () => void moveToTrash([item]),
           },
         ]
       : []),
   ];
 
+  const bulkActions = canDeleteContent
+    ? (selected: ContentItem[], clearSelection: () => void) => (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={trashContentMutation.isPending}
+          onClick={() => void moveToTrash(selected, clearSelection)}
+        >
+          <Trash2 />
+          Move to trash
+        </Button>
+      )
+    : undefined;
+
   const generateLink = canCreateContent ? (
     <Button asChild>
       <Link href={workspaceRoutes.generate_content(workspaceSlug) as Route}>
         <Plus />
-        Generate Content
+        Generate content
       </Link>
     </Button>
   ) : null;
 
   return (
     <ListPage
-      title="Generated Content"
-      description={`View, edit, and manage AI-generated content for ${
-        workspace?.name || "this workspace"
-      }.`}
+      title="Content"
+      description={`Every article in ${workspace?.name || "this workspace"}: drafts, scheduled and published.`}
       actions={generateLink}
     >
       {/* Inline loader inside the layout */}
@@ -300,44 +412,47 @@ export default function WorkspaceContentPage() {
             </Card>
           }
         >
-          <DataTable
-            caption="Content"
-            columns={columns}
-            data={content}
-            getRowId={(item) => item.id}
-            getRowLabel={(item) => item.title || "Untitled"}
-            state={tableState}
-            isLoading={isContentLoading}
-            error={
-              error ? (
-                <Notice tone="danger" title="Content didn't load">
-                  Reload the page to try again.
-                </Notice>
-              ) : undefined
-            }
-            emptyState={
-              <EmptyState
-                title="No content yet"
-                description="Articles you generate in this workspace appear here."
-                action={
-                  canCreateContent
-                    ? {
-                        label: "Generate content",
-                        href: workspaceRoutes.generate_content(workspaceSlug),
-                      }
-                    : undefined
-                }
-              />
-            }
-            search={{ placeholder: "Search content" }}
-            facets={STATUS_FACET}
-            viewOptions
-            hiddenColumns={HIDDEN_COLUMNS}
-            rowActions={rowActions}
-            renderCard={(item, { actions }) => (
-              <ContentRowCard item={item} actions={actions} />
-            )}
-          />
+          <PersonaNames.Provider value={personaNames}>
+            <DataTable
+              caption="Content"
+              columns={columns}
+              data={content}
+              getRowId={(item) => item.id}
+              getRowLabel={(item) => item.title || "Untitled"}
+              state={tableState}
+              isLoading={isContentLoading}
+              error={
+                error ? (
+                  <Notice tone="danger" title="Content didn't load">
+                    Reload the page to try again.
+                  </Notice>
+                ) : undefined
+              }
+              emptyState={
+                <EmptyState
+                  title="No content yet"
+                  description="Articles you generate in this workspace appear here."
+                  action={
+                    canCreateContent
+                      ? {
+                          label: "Generate content",
+                          href: workspaceRoutes.generate_content(workspaceSlug),
+                        }
+                      : undefined
+                  }
+                />
+              }
+              search={{ placeholder: "Search content" }}
+              facets={facets}
+              viewOptions
+              hiddenColumns={HIDDEN_COLUMNS}
+              rowActions={rowActions}
+              bulkActions={bulkActions}
+              renderCard={(item, { actions }) => (
+                <ContentRowCard item={item} actions={actions} />
+              )}
+            />
+          </PersonaNames.Provider>
           {ConfirmationComponent}
         </PermissionGuard>
       )}
