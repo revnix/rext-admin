@@ -4,7 +4,6 @@ import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle2,
-  FileText,
   Loader2,
   X,
 } from "lucide-react";
@@ -480,15 +479,15 @@ export function BackgroundGenerationDock() {
   return (
     <section
       aria-label="Background generation activity"
-      className="sticky bottom-0 z-40 border-t border-border bg-background"
+      className="sticky bottom-(--bottom-bar-height) z-(--z-sticky) border-t border-border bg-surface-raised lg:bottom-0"
     >
-      <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 lg:px-6">
+      <div className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 md:px-6">
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
-            pending && "text-primary",
-            completed && "text-emerald-500",
-            job.status === "failed" && "text-destructive",
+            "flex size-8 shrink-0 items-center justify-center",
+            pending && "text-foreground",
+            completed && "text-success-600",
+            job.status === "failed" && "text-danger-600",
           )}
         >
           {pending ? (
@@ -500,11 +499,9 @@ export function BackgroundGenerationDock() {
           )}
         </div>
 
-        <FileText className="hidden h-4 w-4 shrink-0 text-muted-foreground sm:block" />
-
-        <div className="min-w-0 flex-1 basis-[220px]">
+        <div className="min-w-0 flex-1 basis-56">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">
+            <p className="truncate text-body font-medium text-foreground">
               {job.title}
             </p>
             {otherJobs.length > 0 && (
@@ -516,7 +513,7 @@ export function BackgroundGenerationDock() {
                 onClick={() => setExpanded((open) => !open)}
                 aria-expanded={expanded}
                 aria-controls="background-generation-others"
-                className="shrink-0 rounded-md text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="num shrink-0 rounded-sm text-caption text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 +{otherJobs.length} more
               </button>
@@ -526,32 +523,13 @@ export function BackgroundGenerationDock() {
             role="status"
             aria-live="polite"
             className={cn(
-              "truncate text-xs text-muted-foreground",
-              job.status === "failed" && "text-destructive",
+              "truncate text-caption text-muted-foreground",
+              job.status === "failed" && "text-danger-600",
             )}
           >
-            {job.error ?? job.stage}
+            {job.error ?? (pending ? `${job.stage}…` : job.stage)}
           </p>
         </div>
-
-        {/* Spinner / check + status text — replaces the old percentage bar */}
-        {pending && (
-          <div className="flex items-center gap-2 min-w-[170px] flex-1 basis-[220px] sm:max-w-sm">
-            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
-            <span className="truncate text-sm text-muted-foreground animate-pulse">
-              {job.stage}
-              <span className="tracking-widest">…</span>
-            </span>
-          </div>
-        )}
-        {completed && (
-          <div className="flex items-center gap-2 min-w-[170px] flex-1 basis-[220px] sm:max-w-sm">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-            <span className="truncate text-sm text-emerald-500 font-medium">
-              {job.stage}
-            </span>
-          </div>
-        )}
 
         <div className="flex shrink-0 items-center gap-1">
           {!isOnResultPage && (
@@ -597,7 +575,7 @@ export function BackgroundGenerationDock() {
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground"
+              className="size-8 text-muted-foreground"
               aria-label={`Dismiss ${job.title}`}
               onClick={() => dismissJob(job)}
             >
@@ -610,50 +588,37 @@ export function BackgroundGenerationDock() {
       {expanded && otherJobs.length > 0 && (
         <ul
           id="background-generation-others"
-          className="max-h-48 divide-y divide-border overflow-y-auto border-t border-border px-4 lg:px-6"
+          className="max-h-48 divide-y divide-border overflow-y-auto border-t border-border px-4 md:px-6"
         >
           {otherJobs.map((other) => (
             <li
               key={other.threadId}
-              className="flex items-center gap-3 py-2 text-sm"
+              className="flex items-center gap-3 py-2 text-body"
             >
               {isPending(other) ? (
-                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
+                <Loader2 className="size-4 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
               ) : other.status === "completed" ? (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="size-4 shrink-0 text-success-600" />
               ) : (
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <AlertCircle className="size-4 shrink-0 text-danger-600" />
               )}
               <span className="min-w-0 flex-1 truncate">{other.title}</span>
-              <span className="hidden shrink-0 truncate text-xs text-muted-foreground sm:block">
-                {other.error ?? other.stage}
-              </span>
-
               {/* Fixed-width slot so rows stay column-aligned whether or not
                   this generation is still running. */}
-              <div className="w-32 shrink-0 flex items-center gap-1.5">
-                {isPending(other) ? (
-                  <>
-                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
-                    <span className="truncate text-xs text-muted-foreground animate-pulse">
-                      {other.stage}
-                    </span>
-                  </>
-                ) : other.status === "completed" ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-500" />
-                    <span className="truncate text-xs text-emerald-500">
-                      {other.stage}
-                    </span>
-                  </>
-                ) : null}
-              </div>
+              <span
+                className={cn(
+                  "hidden w-40 shrink-0 truncate text-caption text-muted-foreground sm:block",
+                  other.status === "failed" && "text-danger-600",
+                )}
+              >
+                {other.error ?? other.stage}
+              </span>
 
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 shrink-0"
+                className="h-8 shrink-0"
                 onClick={() => openJob(other)}
               >
                 {other.status === "completed" && other.awaitingInput
@@ -679,7 +644,7 @@ export function BackgroundGenerationDock() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground"
+                    className="size-8 shrink-0 text-muted-foreground"
                     aria-label={`Cancel ${other.title}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -690,7 +655,7 @@ export function BackgroundGenerationDock() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground"
+                  className="size-8 shrink-0 text-muted-foreground"
                   aria-label={`Dismiss ${other.title}`}
                   onClick={() => dismissJob(other)}
                 >

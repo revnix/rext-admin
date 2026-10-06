@@ -68,6 +68,21 @@ export const workspaceQueries = {
 };
 
 // ============================================================================
+// DASHBOARD QUERIES
+// ============================================================================
+
+export const dashboardQueries = {
+  /** The workspace's counts; the home page and the sidebar's drafts badge share this entry. */
+  stats: (workspaceId: string) =>
+    queryOptions({
+      queryKey: ["dashboard-stats", workspaceId] as const,
+      queryFn: () => apiClient.dashboard.getStats(workspaceId),
+      enabled: !!workspaceId,
+      staleTime: 30 * 1000,
+    }),
+};
+
+// ============================================================================
 // WORKSPACE MEMBER QUERIES
 // ============================================================================
 

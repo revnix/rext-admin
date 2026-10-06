@@ -16,7 +16,7 @@ import {
  */
 export default function WorkspaceNotFound() {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
+    <div className="flex flex-1 items-center justify-center px-4 py-16">
       <Card className="max-w-md w-full">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
