@@ -13,10 +13,6 @@
     "stock-palette": 9,
     "small-type": 9
   },
-  "components/notifications-drawer.tsx": {
-    "stock-palette": 24,
-    "dark-class": 2
-  },
   "components/permission/locked-feature-tooltip.tsx": {
     "stock-palette": 3
   },

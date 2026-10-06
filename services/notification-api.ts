@@ -107,6 +107,18 @@ export async function fetchNotifications(options?: {
         type: mapApiNotificationToUiType(n.status, n.type),
         read: n.is_read,
         createdAt: n.created_at,
+        // The drawer's icon (by `source`, the backend's kind) and link (`href`, or a finished
+        // article's page from `contentId` in its workspace).
+        metadata: {
+          source: n.type,
+          category: n.category,
+          href: n.action_url ?? undefined,
+          contentId:
+            typeof n.payload?.content_id === "string"
+              ? n.payload.content_id
+              : undefined,
+          workspaceId: n.workspace_id ?? undefined,
+        },
       }));
 
       cachedNotifications = mapped;

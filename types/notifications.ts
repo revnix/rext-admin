@@ -7,6 +7,11 @@ export interface ApiNotification {
   status: ApiNotificationStatus;
   is_read: boolean;
   created_at: string;
+  workspace_id?: string | null;
+  /** What the notification is about: a finished article's `content_id`, a run's `thread_id`. */
+  payload?: Record<string, unknown> | null;
+  /** Where it leads, when the backend set one. */
+  action_url?: string | null;
 }
 
 export const NOTIFICATION_TYPE_VALUES = [
