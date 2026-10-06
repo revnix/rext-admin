@@ -69,11 +69,15 @@ export function Notice({
       className={cn(noticeVariants({ tone }), className)}
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {title && <p className="font-medium">{title}</p>}
-        {children && <div className="text-foreground/80">{children}</div>}
+      {/* The action sits beside the words while they keep 16 rem, and goes under them when the
+          notice is narrower (a phone, a dialog, a card's column). */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex min-w-0 grow basis-64 flex-col gap-0.5">
+          {title && <p className="font-medium">{title}</p>}
+          {children && <div className="text-foreground/80">{children}</div>}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
-      {action && <div className="shrink-0 self-center">{action}</div>}
       {onDismiss && (
         <Button
           type="button"
