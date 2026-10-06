@@ -2,7 +2,7 @@ import { createLoader, parseAsArrayOf, parseAsString } from "nuqs/server";
 import {
   dataTableParams,
   parseAsFacet,
-  parseAsSort,
+  parseAsSortOf,
 } from "@/components/ui/data-table/url-state";
 
 /**
@@ -39,9 +39,23 @@ export const CONTENT_LIST_STATUS_LABELS: Record<ContentListStatus, string> = {
   archived: "Archived",
 };
 
+/** The library's columns a link may sort by; an older link's Type, Words or Platform sort falls back. */
+export const CONTENT_LIST_SORTS = [
+  "title",
+  "status",
+  "persona",
+  "updated_at",
+  "published_to",
+  "seo",
+  "created_at",
+] as const;
+
 export const contentListParams = {
   ...dataTableParams,
-  sort: parseAsSort.withDefault({ id: "updated_at", desc: true }),
+  sort: parseAsSortOf(CONTENT_LIST_SORTS).withDefault({
+    id: "updated_at",
+    desc: true,
+  }),
   status: parseAsFacet(CONTENT_LIST_STATUSES),
   // An open set: the workspace's persona ids.
   persona: parseAsArrayOf(parseAsString).withDefault([]),
