@@ -40,8 +40,9 @@ function currentSection(pathname: string, sections: SettingsSection[]) {
 
 /**
  * Account and workspace settings (design/app-language.md §6): the list of sections on the left from
- * 768 px (a select on a phone) and one section at a time beside it, each with its own Save. Rendered
- * by the settings area's layout.tsx, so the list stays put while the sections change.
+ * 768 px (a select on a phone) and one section at a time beside it, each with its own Save, no wider
+ * than a settings form reads well (48 rem). Rendered by the settings area's layout.tsx, so the list
+ * stays put while the sections change.
  */
 export function SettingsPage({
   sections,
@@ -93,7 +94,10 @@ export function SettingsPage({
             </div>
           </>
         )}
-        <div data-slot="settings-section" className="min-w-0 flex-1">
+        <div
+          data-slot="settings-section"
+          className="min-w-0 flex-1 md:max-w-3xl"
+        >
           {children}
         </div>
       </PageBody>

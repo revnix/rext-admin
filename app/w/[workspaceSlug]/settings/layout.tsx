@@ -15,7 +15,7 @@ export default function WorkspaceSettingsLayout({
       description="Manage workspace configuration and preferences"
       sections={[]}
     >
-      <div className="lg:max-w-3xl">{children}</div>
+      {children}
     </SettingsPage>
   );
 }
