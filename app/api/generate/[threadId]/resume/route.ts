@@ -6,6 +6,7 @@ import {
   getGenerationClient,
   requireThreadOwner,
 } from "@/lib/generate-content/thread-access";
+import { leanChunk } from "@/lib/generate-content/lean-stream-chunk";
 
 const ASSISTANT_ID = "agent";
 
@@ -103,7 +104,7 @@ export async function POST(
             );
             runAnnounced = true;
           }
-          const data = `data: ${JSON.stringify(chunk)}\n\n`;
+          const data = `data: ${JSON.stringify(leanChunk(chunk))}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
         if (signal.aborted) return;

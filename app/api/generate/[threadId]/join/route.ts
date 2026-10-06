@@ -5,6 +5,7 @@ import {
   getGenerationClient,
   requireThreadOwner,
 } from "@/lib/generate-content/thread-access";
+import { leanChunk } from "@/lib/generate-content/lean-stream-chunk";
 
 // Reconnect to the live SSE stream of an already-running server-owned run so a
 // user returning to an in-progress generation sees tokens render live instead
@@ -53,7 +54,7 @@ export async function POST(
         for await (const chunk of stream) {
           if (signal.aborted) break;
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`),
+            encoder.encode(`data: ${JSON.stringify(leanChunk(chunk))}\n\n`),
           );
         }
         if (signal.aborted) return;
