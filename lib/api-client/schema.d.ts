@@ -7145,6 +7145,22 @@ export interface components {
             max_members_per_workspace?: number | null;
         };
         /**
+         * CatalogRefund
+         * @description The refund rule: the whole payment back within the window, under the credit limit.
+         */
+        CatalogRefund: {
+            /**
+             * Window Days
+             * @description Days after a payment a refund can be asked for
+             */
+            window_days: number;
+            /**
+             * Credit Limit
+             * @description A full refund if fewer than this many credits were used since the payment
+             */
+            credit_limit: number;
+        };
+        /**
          * CatalogTrial
          * @description The trial every new account starts on.
          */
@@ -10069,6 +10085,7 @@ export interface components {
             plans: components["schemas"]["CatalogPlan"][];
             trial?: components["schemas"]["CatalogTrial"] | null;
             credits: components["schemas"]["CatalogCredits"];
+            refund: components["schemas"]["CatalogRefund"];
             offer?: components["schemas"]["CatalogOffer"] | null;
         };
         /**
@@ -10539,6 +10556,12 @@ export interface components {
         /**
          * RefundRequestCreate
          * @description Body for a customer raising a refund request.
+         *
+         *     There is no amount: under the refund rule a request is always for the whole
+         *     remaining payment. An admin logging an emailed request may ask for part of
+         *     one (AdminRefundRequestCreate). Unknown fields are refused, so a client still
+         *     sending the old `requested_amount` gets a 422 instead of a request for the
+         *     whole payment it didn't ask for.
          */
         RefundRequestCreate: {
             /**
@@ -10551,11 +10574,6 @@ export interface components {
              * @description Why the customer wants a refund
              */
             reason: string;
-            /**
-             * Requested Amount
-             * @description Cents the customer is asking for, when they want part of the order back. Omit for the whole remaining refundable balance. Refused if it exceeds what is still refundable.
-             */
-            requested_amount?: number | null;
         };
         /**
          * RefundRequestListResponse
