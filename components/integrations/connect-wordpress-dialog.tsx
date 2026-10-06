@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -57,6 +57,8 @@ export function ConnectWordPressDialog({
 }) {
   const connect = useConnectWordPress(workspaceId);
   const [refusal, setRefusal] = useState<string | null>(null);
+  // The endpoint this dialog last filled in; one the person typed themselves is never replaced.
+  const suggested = useRef("");
   const form = useZodForm(wordPressSiteSchema, { defaultValues: EMPTY });
   const { isSubmitting } = form.formState;
 
@@ -64,18 +66,25 @@ export function ConnectWordPressDialog({
     if (!next) {
       form.reset(EMPTY);
       setRefusal(null);
+      suggested.current = "";
     }
     onOpenChange(next);
   };
 
-  // The endpoint is nearly always the address plus the plugin's path: fill it in once the address is.
+  // The endpoint is nearly always the address plus the plugin's path: fill it in once the address is,
+  // and follow a corrected address while the endpoint is still the one filled in.
   const suggestEndpoint = () => {
-    if (form.getValues("api_endpoint")) return;
+    const current = form.getValues("api_endpoint");
+    if (current && current !== suggested.current) return;
     const endpoint = pluginEndpointFor(
       form.getValues("site_url"),
       WORDPRESS_PLUGIN_PATH,
     );
-    if (endpoint) form.setValue("api_endpoint", endpoint);
+    if (!endpoint || endpoint === current) return;
+    suggested.current = endpoint;
+    form.setValue("api_endpoint", endpoint, {
+      shouldValidate: form.getFieldState("api_endpoint").isTouched,
+    });
   };
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -106,7 +115,7 @@ export function ConnectWordPressDialog({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Connect WordPress</DialogTitle>
           <DialogDescription>
