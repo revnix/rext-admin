@@ -6,12 +6,9 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
-import { useReducedMotion } from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 
 export interface SingleSelectCardProps {
@@ -35,9 +32,6 @@ export interface SingleSelectCardProps {
 
   /** Custom class name */
   className?: string;
-
-  /** Animation delay */
-  delay?: number;
 }
 
 export function SingleSelectCard({
@@ -48,26 +42,16 @@ export function SingleSelectCard({
   icon,
   disabled = false,
   className,
-  delay = 0,
 }: SingleSelectCardProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      transition={{ delay }}
-      className={className}
-    >
+    <div className={className}>
       <Button
         variant="outline"
         onClick={onSelect}
         disabled={disabled}
         className={cn(
           "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
-          "border transition-all duration-150 rounded-md",
+          "border transition-colors rounded-md",
           "hover:border-foreground/40",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
@@ -78,7 +62,7 @@ export function SingleSelectCard({
         {/* Selection indicator */}
         <div
           className={cn(
-            "absolute top-4 right-4 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center shadow-sm",
+            "absolute top-4 right-4 w-5 h-5 rounded-full border-2 transition-[scale,background-color,border-color] flex items-center justify-center shadow-sm",
             selected
               ? "border-primary bg-primary text-primary-foreground scale-110"
               : "border-muted-foreground/30 bg-background",
@@ -125,7 +109,7 @@ export function SingleSelectCard({
           </div>
         </div>
       </Button>
-    </motion.div>
+    </div>
   );
 }
 

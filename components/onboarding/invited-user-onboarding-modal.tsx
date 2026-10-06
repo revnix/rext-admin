@@ -6,11 +6,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  getMotionVariants,
-  stepChangeVariants,
-  useReducedMotion,
-} from "@/lib/animations";
+import { stepChangeVariants, useMotionVariants } from "@/lib/animations";
 import {
   Dialog,
   DialogContent,
@@ -68,10 +64,7 @@ export function InvitedUserOnboardingModal({
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
-  const stepVariants = getMotionVariants(
-    stepChangeVariants,
-    useReducedMotion(),
-  );
+  const stepVariants = useMotionVariants(stepChangeVariants);
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {

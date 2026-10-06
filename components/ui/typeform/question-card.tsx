@@ -7,14 +7,7 @@
 
 "use client";
 
-import { motion } from "motion/react";
 import * as React from "react";
-import { useReducedMotion } from "@/lib/animations";
-import {
-  questionContentVariants,
-  questionItemVariants,
-  useTypeformMotionVariants,
-} from "./motion";
 import { cn } from "@/lib/utils";
 import type { QuestionCardProps } from "@/types/typeform";
 
@@ -34,10 +27,6 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
     },
     ref,
   ) => {
-    const _prefersReducedMotion = useReducedMotion();
-    const contentVariants = useTypeformMotionVariants(questionContentVariants);
-    const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
     const autoId = React.useId();
     const titleId = `${questionId ?? autoId}-title`;
     const descriptionId = `${questionId ?? autoId}-description`;
@@ -54,7 +43,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
     }, [description, error, helpText, descriptionId, errorId, helpId]);
 
     return (
-      <motion.fieldset
+      <fieldset
         ref={ref}
         className={cn(
           "w-full max-w-6xl mx-auto",
@@ -64,16 +53,6 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
           description && description.length > 100 ? "lg:py-4" : "lg:py-3",
           className,
         )}
-        style={{
-          // CSS custom properties for responsive spacing
-          "--question-spacing-base": "1rem",
-          "--question-spacing-md": "1.5rem",
-          "--question-spacing-lg": "2rem",
-        }}
-        variants={contentVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
         aria-labelledby={titleId}
         aria-describedby={ariaDescribedBy}
         {...props}
@@ -81,7 +60,7 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
         {/* Progress indicator moved to top in QuestionRenderer */}
 
         {/* Question Title */}
-        <motion.legend
+        <legend
           id={titleId}
           className={cn(
             // Standardized heading hierarchy with responsive sizing
@@ -91,7 +70,6 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
             "text-foreground",
             error ? "text-destructive" : "",
           )}
-          variants={itemVariants}
           tabIndex={-1} // Allow programmatic focus for screen readers
         >
           {title}
@@ -101,11 +79,11 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
             </span>
           )}
           {required && <span className="sr-only">(required)</span>}
-        </motion.legend>
+        </legend>
 
         {/* Question Description */}
         {description && (
-          <motion.p
+          <p
             id={descriptionId}
             className={cn(
               // Standardized description typography
@@ -113,15 +91,14 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
               // Responsive margin based on content length
               "mb-2 sm:mb-3 md:mb-4",
             )}
-            variants={itemVariants}
           >
             {description}
-          </motion.p>
+          </p>
         )}
 
         {/* Error Message */}
         {error && (
-          <motion.div
+          <div
             id={errorId}
             role="alert"
             aria-live="polite"
@@ -131,37 +108,34 @@ const QuestionCard = React.forwardRef<HTMLFieldSetElement, QuestionCardProps>(
               "bg-destructive/10 border border-destructive/20",
               "text-sm sm:text-base text-destructive font-medium",
             )}
-            variants={itemVariants}
           >
             <span className="sr-only">Error: </span>
             {error}
-          </motion.div>
+          </div>
         )}
 
         {/* Question Content */}
-        <motion.div
+        <div
           className={cn(
             // Responsive content spacing
             "mb-2 sm:mb-3 md:mb-4",
             // Consistent spacing across all question types
             "[&>*]:mb-3 [&>*:last-child]:mb-0",
           )}
-          variants={itemVariants}
         >
           {children}
-        </motion.div>
+        </div>
 
         {/* Help Text */}
         {helpText && (
-          <motion.div
+          <div
             id={helpId}
             className={cn("text-sm text-muted-foreground leading-relaxed")}
-            variants={itemVariants}
           >
             {helpText}
-          </motion.div>
+          </div>
         )}
-      </motion.fieldset>
+      </fieldset>
     );
   },
 );

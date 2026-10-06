@@ -2,8 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback } from "react";
-import { stepChangeVariants } from "@/lib/animations";
-import { useTypeformMotionVariants } from "@/components/ui/typeform/motion";
+import { stepChangeVariants, useMotionVariants } from "@/lib/animations";
 import type { TopicBuilderFormData } from "@/types/topic-builder";
 import type { QuestionRendererProps } from "@/types/topic-builder-components";
 import { QuestionStep } from "./QuestionStep";
@@ -34,7 +33,7 @@ export const QuestionRenderer = memo(function QuestionRenderer({
   isInEditMode = false,
   saveAndReturnToReview,
 }: QuestionRendererProps) {
-  const motionVariants = useTypeformMotionVariants(stepChangeVariants);
+  const motionVariants = useMotionVariants(stepChangeVariants);
 
   // Handle auto-advance for single-select questions
   const handleQuestionChange = useCallback(

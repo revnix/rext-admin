@@ -1,8 +1,6 @@
 import {
   createReducedMotionVariants,
   DURATION,
-  questionContentVariants,
-  questionItemVariants,
   stepChangeVariants,
 } from "@/lib/animations";
 
@@ -20,14 +18,6 @@ describe("the motion presets (design/app-language.md §10)", () => {
     expect(stepChangeVariants.exit).toMatchObject({
       transition: { duration: 0 },
     });
-  });
-
-  it("moves a question's content and items in no state, so nothing enters or staggers", () => {
-    for (const variants of [questionContentVariants, questionItemVariants]) {
-      for (const state of Object.values(variants)) {
-        expect(state).toEqual({});
-      }
-    }
   });
 
   it("shows the finished state at once under reduced motion", () => {
