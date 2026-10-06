@@ -79,19 +79,15 @@ function ToolCallCard({
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18 }}
-      className={`relative rounded-md border overflow-hidden transition-colors ${
-        isRunning
-          ? "bg-amber-500/5 border-amber-500/20"
-          : "bg-emerald-500/4 border-emerald-500/15"
-      }`}
+      className="relative rounded-md border border-border bg-card overflow-hidden transition-colors"
     >
       <div
-        className={`absolute left-0 top-0 bottom-0 w-0.5 ${isRunning ? "bg-amber-400" : "bg-emerald-500/60"}`}
+        className={`absolute left-0 top-0 bottom-0 w-0.5 ${isRunning ? "bg-foreground" : "bg-border"}`}
       />
 
       <div className="flex items-start gap-2 pl-3 pr-2.5 py-2">
         <div
-          className={`shrink-0 mt-0.5 ${isRunning ? "text-amber-500" : "text-emerald-500"}`}
+          className={`shrink-0 mt-0.5 ${isRunning ? "text-foreground" : "text-success-600"}`}
         >
           {isRunning ? (
             <Loader2 size={10} className="animate-spin" />
@@ -103,18 +99,18 @@ function ToolCallCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <Icon size={8} className="text-muted-foreground/50 shrink-0" />
-            <span className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-wider">
+            <span className="text-caption font-medium text-muted-foreground">
               {getToolLabel(tc.name)}
             </span>
           </div>
-          <div className="text-[10px] text-foreground/70 leading-snug">
+          <div className="text-caption text-foreground/70">
             <span className="text-muted-foreground/35">"</span>
             {tc.query.length > 42 ? `${tc.query.slice(0, 42)}…` : tc.query}
             <span className="text-muted-foreground/35">"</span>
           </div>
           {tc.status === "done" && tc.resultCount !== undefined && (
             <div className="flex items-center justify-between mt-1">
-              <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
+              <div className="text-caption text-success-600 font-medium flex items-center gap-0.5">
                 <Zap size={8} />
                 {tc.resultCount} result{tc.resultCount !== 1 ? "s" : ""}
               </div>
@@ -122,7 +118,7 @@ function ToolCallCard({
                 <button
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
-                  className="text-[8px] text-muted-foreground/40 hover:text-foreground flex items-center gap-0.5 transition-colors"
+                  className="text-caption text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors"
                 >
                   {expanded ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
                   {expanded ? "hide" : "view"}
@@ -142,7 +138,7 @@ function ToolCallCard({
             transition={{ duration: 0.18 }}
             className="overflow-hidden"
           >
-            <div className="mx-2 mb-2 p-1.5 rounded-md bg-background/60 border border-border/40 text-[9px] text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+            <div className="mx-2 mb-2 p-1.5 rounded-md bg-background/60 border border-border/40 text-caption text-muted-foreground font-mono whitespace-pre-wrap max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
               {tc.output}
             </div>
           </motion.div>
@@ -186,7 +182,7 @@ export function AgentActivityPanel({
           transition={{ type: "spring", stiffness: 320, damping: 30 }}
           className="fixed bottom-5 right-5 z-50 w-[290px] select-none"
         >
-          <div className="rounded-md border border-border/80 bg-card/98 backdrop-blur-2xl shadow-black/20 overflow-hidden ring-1 ring-white/5">
+          <div className="rounded-md border border-border/80 bg-card/98 backdrop-blur-2xl shadow-overlay overflow-hidden">
             {/* ── Header ─────────────────────────────────────────────────────── */}
             <button
               type="button"
@@ -197,17 +193,17 @@ export function AgentActivityPanel({
                 <div className="relative shrink-0">
                   <Bot size={13} className="text-foreground" />
                   {activeToolCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-foreground animate-ping" />
                   )}
                   {activeToolCount === 0 && currentStep && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse" />
                   )}
                 </div>
-                <span className="text-[10px] font-bold text-foreground tracking-[0.12em] uppercase">
+                <span className="text-caption font-semibold text-foreground tracking-[0.12em] uppercase">
                   Agent Activity
                 </span>
                 {activeToolCount > 0 && (
-                  <span className="text-[9px] bg-amber-400/15 text-amber-500 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-bold border border-amber-400/20">
+                  <span className="text-caption bg-surface-inset text-foreground px-1.5 py-0.5 rounded-full font-medium border border-border">
                     {activeToolCount} active
                   </span>
                 )}
@@ -232,18 +228,18 @@ export function AgentActivityPanel({
                 >
                   {/* ── Current Step ──────────────────────────────────────────── */}
                   {(currentStep || activePipelineStep) && (
-                    <div className="px-3.5 pt-2.5 pb-2 border-b border-border/40 bg-amber-500/3">
+                    <div className="px-3.5 pt-2.5 pb-2 border-b border-border/40">
                       <div className="flex items-start gap-2">
                         <Loader2
                           size={10}
-                          className="text-amber-500 animate-spin shrink-0 mt-0.5"
+                          className="text-foreground animate-spin shrink-0 mt-0.5"
                         />
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold text-foreground leading-tight">
+                          <div className="text-caption font-semibold text-foreground">
                             {currentStep || activePipelineStep?.label}
                           </div>
                           {stepDescription && (
-                            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-2">
+                            <div className="text-caption text-muted-foreground mt-0.5 line-clamp-2">
                               {stepDescription}
                             </div>
                           )}
@@ -255,7 +251,7 @@ export function AgentActivityPanel({
                   {/* ── Pipeline Steps ────────────────────────────────────────── */}
                   {pipelineSteps.length > 0 && (
                     <div className="px-3.5 pt-2.5 pb-2 border-b border-border/40">
-                      <div className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.18em] mb-2">
+                      <div className="text-caption font-medium text-muted-foreground uppercase tracking-[0.18em] mb-2">
                         Pipeline
                       </div>
                       <div className="space-y-0">
@@ -268,9 +264,9 @@ export function AgentActivityPanel({
                               <div
                                 className={`w-2 h-2 rounded-full border shrink-0 mt-0.5 transition-all duration-300 ${
                                   step.status === "done"
-                                    ? "bg-emerald-500 border-emerald-500"
+                                    ? "bg-success-600 border-success-600"
                                     : step.status === "active"
-                                      ? "bg-amber-400 border-amber-400"
+                                      ? "bg-foreground border-foreground"
                                       : "bg-transparent border-border/50"
                                 }`}
                               />
@@ -278,7 +274,7 @@ export function AgentActivityPanel({
                                 <div
                                   className={`w-px flex-1 mt-0.5 mb-0.5 min-h-[10px] ${
                                     step.status === "done"
-                                      ? "bg-emerald-500/30"
+                                      ? "bg-success-200"
                                       : "bg-border/30"
                                   }`}
                                 />
@@ -288,7 +284,7 @@ export function AgentActivityPanel({
                               className={`flex-1 pb-2 pt-0.5 ${idx === pipelineSteps.length - 1 ? "pb-0" : ""}`}
                             >
                               <span
-                                className={`text-[10px] leading-tight ${
+                                className={`text-caption ${
                                   step.status === "done"
                                     ? "text-muted-foreground/35 line-through"
                                     : step.status === "active"
@@ -309,11 +305,11 @@ export function AgentActivityPanel({
                   {toolCalls.length > 0 && (
                     <div className="px-3 pt-2.5 pb-3">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.18em]">
+                        <div className="text-caption font-medium text-muted-foreground uppercase tracking-[0.18em]">
                           Research
                         </div>
-                        <div className="flex items-center gap-1 text-[9px]">
-                          <span className="text-emerald-500 font-bold">
+                        <div className="flex items-center gap-1 text-caption">
+                          <span className="text-success-600 font-medium">
                             {doneToolCount}
                           </span>
                           <span className="text-muted-foreground/30">/</span>
@@ -347,7 +343,7 @@ export function AgentActivityPanel({
                   {toolCalls.length === 0 &&
                     !currentStep &&
                     pipelineSteps.length === 0 && (
-                      <div className="px-4 py-5 text-center text-[10px] text-muted-foreground/50">
+                      <div className="px-4 py-5 text-center text-caption text-muted-foreground">
                         Waiting for agent…
                       </div>
                     )}

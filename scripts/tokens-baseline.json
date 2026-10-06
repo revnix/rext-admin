@@ -273,47 +273,6 @@
   "components/forgot-password-form.tsx": {
     "stock-palette": 6
   },
-  "components/generate-content/agent-feed.tsx": {
-    "stock-palette": 26,
-    "small-type": 14,
-    "dark-class": 2,
-    "off-scale": 1
-  },
-  "components/generate-content/content.tsx": {
-    "stock-palette": 21,
-    "arbitrary-colour": 2,
-    "dark-class": 2,
-    "arbitrary-size": 6,
-    "small-type": 6
-  },
-  "components/generate-content/hero.tsx": {
-    "arbitrary-size": 3,
-    "stock-palette": 1,
-    "dark-class": 1
-  },
-  "components/generate-content/keyword.tsx": {
-    "arbitrary-size": 1
-  },
-  "components/generate-content/library-detail.tsx": {
-    "stock-palette": 11,
-    "dark-class": 10,
-    "small-type": 2
-  },
-  "components/generate-content/library-view.tsx": {
-    "stock-palette": 10,
-    "small-type": 3
-  },
-  "components/generate-content/outline.tsx": {
-    "small-type": 8,
-    "arbitrary-size": 3
-  },
-  "components/generate-content/selection-view.tsx": {
-    "stock-palette": 2,
-    "dark-class": 2
-  },
-  "components/generate-content/topics.tsx": {
-    "small-type": 4
-  },
   "components/impersonation/impersonation-banner.tsx": {
     "stock-palette": 21,
     "dark-class": 10

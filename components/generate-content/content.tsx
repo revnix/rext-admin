@@ -2,7 +2,6 @@ import type { WordPressPostStatus } from "@/types/content";
 import type {
   FinalContent,
   Outline,
-  // ReadabilityMeta,
   ReadabilityMetrics,
   SEORESULT,
   Issue,
@@ -117,16 +116,16 @@ marked.use({
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
 
-      return `<div class="relative group my-6 rounded-md overflow-hidden bg-[#0d1117] dark:bg-[#0d1117] border border-slate-800/80">
+      return `<div class="relative group my-6 rounded-md overflow-hidden bg-surface-inset border border-border">
         ${
           lang
-            ? `<div class="flex items-center justify-between px-4 py-2 bg-slate-800/40 border-b border-slate-800/80">
-                <span class="text-xs font-mono text-slate-400 font-medium">${lang}</span>
+            ? `<div class="flex items-center justify-between px-4 py-2 border-b border-border">
+                <span class="text-caption font-mono text-muted-foreground">${lang}</span>
               </div>`
             : ""
         }
-        <div class="px-4 py-4 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-          <pre class="!m-0 !p-0 !bg-transparent"><code class="${languageClass} text-[13px] leading-relaxed text-slate-200 font-mono tracking-wide">${escapedText}</code></pre>
+        <div class="px-4 py-4 overflow-x-auto">
+          <pre class="!m-0 !p-0 !bg-transparent"><code class="${languageClass} text-table font-mono text-foreground">${escapedText}</code></pre>
         </div>
       </div>`;
     },
@@ -202,25 +201,25 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 mb-0.5">
             <Icon size={8} className="text-muted-foreground/60 shrink-0" />
-            <span className="text-[10px] font-medium text-muted-foreground">
+            <span className="text-caption font-medium text-muted-foreground">
               Web Search
             </span>
           </div>
-          <div className="text-[10px] text-foreground/70 leading-snug break-words">
+          <div className="text-caption text-foreground/70 break-words">
             <span className="text-muted-foreground/40">"</span>
             {tc.query.length > 40 ? `${tc.query.slice(0, 40)}…` : tc.query}
             <span className="text-muted-foreground/40">"</span>
           </div>
           {tc.status === "done" && tc.resultCount !== undefined && (
             <div className="flex items-center justify-between mt-1">
-              <div className="text-[10px] text-foreground font-medium flex items-center gap-0.5">
+              <div className="text-caption text-foreground font-medium flex items-center gap-0.5">
                 {tc.resultCount}&nbsp;result{tc.resultCount !== 1 ? "s" : ""}
               </div>
               {hasOutput && (
                 <button
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
-                  className="cursor-pointer text-[8px] text-muted-foreground/50 hover:text-foreground flex items-center gap-0.5 transition-colors"
+                  className="cursor-pointer text-caption text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors"
                 >
                   {expanded ? <ChevronUp size={9} /> : <ChevronDown size={9} />}
                   {expanded ? "hide" : "view"}
@@ -231,69 +230,13 @@ function InlineToolCard({ tc }: { tc: ToolCall }) {
         </div>
       </div>
       {expanded && tc.output && (
-        <div className="mx-2 mb-2 p-2 rounded-md bg-background/60 border border-border/40 text-[9px] text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+        <div className="mx-2 mb-2 p-2 rounded-md bg-background/60 border border-border/40 text-caption text-muted-foreground font-mono whitespace-pre-wrap max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
           {tc.output}
         </div>
       )}
     </div>
   );
 }
-
-// function getReadabilityMeta(score: number): ReadabilityMeta {
-//   if (score >= 90) {
-//     return {
-//       label: "Very Easy",
-//       color: "text-emerald-600",
-//       barColor: "bg-emerald-500",
-//     };
-//   }
-
-//   if (score >= 80) {
-//     return {
-//       label: "Easy",
-//       color: "text-emerald-600",
-//       barColor: "bg-emerald-500",
-//     };
-//   }
-
-//   if (score >= 70) {
-//     return {
-//       label: "Fairly Easy",
-//       color: "text-emerald-600",
-//       barColor: "bg-emerald-500",
-//     };
-//   }
-
-//   if (score >= 60) {
-//     return {
-//       label: "Standard",
-//       color: "text-emerald-600",
-//       barColor: "bg-emerald-500",
-//     };
-//   }
-
-//   if (score >= 50) {
-//     return {
-//       label: "Fairly Difficult",
-//       color: "text-yellow-600",
-//       barColor: "bg-yellow-500",
-//     };
-//   }
-
-//   if (score >= 30) {
-//     return {
-//       label: "Difficult",
-//       color: "text-orange-600",
-//       barColor: "bg-orange-500",
-//     };
-//   }
-
-//   return {
-//     label: "Very Confusing",
-//     color: "text-red-600",
-//     barColor: "bg-red-500",
-//   };
-// }
 
 const slugify = (text: string) => {
   return text
@@ -409,8 +352,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     },
   );
   const score = readabilityScore?.flesch_reading_ease ?? 0;
-  // const { label, color, barColor } = getReadabilityMeta(score);
-  // const progressWidth = `${Math.min(Math.max(score, 0), 100).toFixed(1)}%`;
   const workspaceId = useCurrentWorkspaceId();
   const workspaceSlug = useCurrentWorkspaceSlug();
   const router = useRouter();
@@ -1187,13 +1128,13 @@ function ContentEditorInner(props: ContentEditorProps) {
                     Research
                   </h4>
                   <div className="flex gap-1">
-                    <div className="text-[12px] font-semibold text-foreground">
+                    <div className="text-caption font-semibold text-foreground">
                       {toolCalls.filter((t) => t.status === "done").length}
                     </div>
-                    <div className="text-[12px] text-muted-foreground/40">
+                    <div className="text-caption text-muted-foreground/40">
                       /
                     </div>
-                    <div className="text-[12px] text-muted-foreground/60">
+                    <div className="text-caption text-muted-foreground/60">
                       {toolCalls.length}
                     </div>
                   </div>
@@ -1216,23 +1157,6 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Performance & SEO
               </h4>
             </div>
-            {/* 
-            <div className="bg-card p-5 rounded-md border border-border space-y-4">
-              <h4 className="text-base font-semibold text-foreground">Readability</h4>
-
-              <div className="space-y-2">
-                <div className={`text-xl font-bold ${color}`}>
-                  {label} ({score.toFixed(1)})
-                </div>
-
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${barColor} transition-all`}
-                    style={{ width: progressWidth }}
-                  />
-                </div>
-              </div>
-            </div> */}
           </>
         ) : null}
 
@@ -1348,7 +1272,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                   className="text-muted-foreground shrink-0"
                 />
               </div>
-              <div className="text-[13px] text-muted-foreground font-medium">
+              <div className="text-label text-muted-foreground">
                 {getStatusMessage(trustScore.score ?? trustScore.trust_score)}
               </div>
             </div>
@@ -1469,7 +1393,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                     >
                       <span
                         className={cn(
-                          "text-[9px] font-bold tabular-nums shrink-0 w-5 text-right leading-none transition-colors",
+                          "text-caption font-bold tabular-nums shrink-0 w-5 text-right leading-none transition-colors",
                           sectionWritten
                             ? "text-muted-foreground"
                             : "text-muted-foreground/20",
@@ -1477,7 +1401,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                       >
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="relative truncate text-[12px] font-medium leading-snug flex-1">
+                      <span className="relative truncate text-caption font-medium flex-1">
                         {sec.heading}
                       </span>
                       {!isFinal && !sectionWritten && (
@@ -1579,7 +1503,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                         </h1>
 
                         {allContent?.meta_description && (
-                          <div className="text-base text-foreground/70 dark:text-foreground/60 leading-[1.85] font-normal border-l-2 border-border pl-6 my-8 italic py-1">
+                          <div className="text-base text-foreground/70 leading-[1.85] font-normal border-l-2 border-border pl-6 my-8 italic py-1">
                             {typedIntro}
                           </div>
                         )}
@@ -1682,13 +1606,13 @@ function ContentEditorInner(props: ContentEditorProps) {
             <div
               className={cn(
                 "w-16 h-16 rounded-full flex items-center justify-center",
-                statusModal.type === "success" ? "bg-muted" : "bg-red-500/10",
+                statusModal.type === "success" ? "bg-muted" : "bg-danger-50",
               )}
             >
               {statusModal.type === "success" ? (
                 <CheckCircle2 className="w-8 h-8 text-foreground" />
               ) : (
-                <AlertCircle className="w-8 h-8 text-red-500" />
+                <AlertCircle className="w-8 h-8 text-danger-600" />
               )}
             </div>
             <div className="space-y-2">
