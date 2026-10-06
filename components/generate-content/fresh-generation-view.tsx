@@ -15,7 +15,10 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
-import type { RunPhase } from "@/lib/generate-content/run-stages";
+import {
+  FIRST_ARTICLE_TOKEN,
+  type RunPhase,
+} from "@/lib/generate-content/run-stages";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
@@ -58,7 +61,7 @@ import {
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
-import type { ToolCall } from "@/components/generate-content/agent-feed";
+import type { ToolCall } from "@/types/generate-content";
 import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
@@ -77,10 +80,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
-import {
-  deriveActiveGenerationViewState,
-  type GenerationPipelineStep,
-} from "@/lib/generate-content/background-generation-view-state";
+import { deriveActiveGenerationViewState } from "@/lib/generate-content/background-generation-view-state";
 import {
   collectPendingInterrupts,
   deriveAwaitingInputStage,
@@ -379,9 +379,6 @@ export function FreshGenerationView({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
   const [enhancingDescription, setEnhancingDescription] = useState("");
-  const [pipelineSteps, setPipelineSteps] = useState<GenerationPipelineStep[]>(
-    [],
-  );
   const [pendingTargetWordCount, setPendingTargetWordCount] = useState<
     number | null
   >(null);
@@ -392,7 +389,6 @@ export function FreshGenerationView({
       setIsBackgroundGenerationActive(true);
       setEnhancingMsg(activeView.message);
       setEnhancingDescription(activeView.description);
-      setPipelineSteps(activeView.pipelineSteps);
     },
     [],
   );
@@ -592,7 +588,6 @@ export function FreshGenerationView({
     outline.resetStream();
     content.resetStream();
     setToolCalls([]);
-    setPipelineSteps([]);
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({
       type: "SET_LOADING_STATUS",
@@ -1038,31 +1033,6 @@ export function FreshGenerationView({
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
 
-  const CONTENT_PIPELINE = [
-    "Generating Content",
-    "Humanizing",
-    "Reviewing Content",
-  ];
-
-  // Advance pipeline: mark previous step done, set new step active
-  const advancePipeline = (activeLabel: string) => {
-    setPipelineSteps((prev) => {
-      // Initialize on first call
-      const base =
-        prev.length === 0
-          ? CONTENT_PIPELINE.map((label) => ({
-              label,
-              status: "pending" as const,
-            }))
-          : prev;
-      return base.map((step) => {
-        if (step.label === activeLabel) return { ...step, status: "active" };
-        if (step.status === "active") return { ...step, status: "done" };
-        return step;
-      });
-    });
-  };
-
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
   const contentParseTimerRef = useRef<number | null>(null);
@@ -1215,6 +1185,8 @@ export function FreshGenerationView({
     let settled = false;
     // The backend ended the run early (run.failed): its stages fail, they don't complete.
     let stopped = false;
+    // The first article token this stream reads ends Research (once per stream).
+    let writing = false;
 
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
@@ -1262,14 +1234,26 @@ export function FreshGenerationView({
           // biome-ignore lint/suspicious/noExplicitAny: custom event payload
           const d = chunk.data as any;
           if (d?.type === "token" && tokenTargetRef.current === "content") {
+            // The agent has stopped searching and writes: Research ends, Draft runs.
+            if (!writing) {
+              writing = true;
+              runStages.nodeDone(FIRST_ARTICLE_TOKEN);
+              setEnhancingMsg("Draft");
+              setEnhancingDescription(
+                "Writing the article from the approved outline and its sources.",
+              );
+              if (activeThreadId) {
+                updateBackgroundJob(activeThreadId, {
+                  status: "running",
+                  stage: "Draft",
+                });
+              }
+            }
             content.appendToken(d.content as string);
           } else if (d?.type === "tool_start") {
             const id = String(d.id ?? "");
             const name = String(d.name ?? "");
             const query = String(d.query ?? "");
-            if (name === "humanize_content") {
-              advancePipeline("Humanizing");
-            }
             if (id) {
               setToolCalls((prev) => {
                 if (prev.some((c) => c.id === id)) return prev;
@@ -1368,50 +1352,52 @@ export function FreshGenerationView({
 
         if (updates?.review_outline) {
           setIsEnhancing(true);
-          setEnhancingMsg("Generating Content...");
+          setEnhancingMsg("Research");
           setEnhancingDescription(
-            "Creating the first draft based on the approved outline...",
+            "Searching for sources for the approved outline.",
           );
-          advancePipeline("Generating Content");
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Drafting your article",
+              stage: "Research",
               progress: ARTICLE_PHASE_PROGRESS,
             });
           }
         }
 
         if (updates?.generate_content) {
-          advancePipeline("Humanizing");
+          setEnhancingMsg("Style pass");
+          setEnhancingDescription(
+            "Checking the draft against the outline and smoothing its wording and flow.",
+          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Refining tone and structure",
+              stage: "Style pass",
               progress: 58,
             });
           }
         }
 
         if (updates?.humanize_content) {
-          advancePipeline("Reviewing Content");
+          setEnhancingMsg("Checks");
+          setEnhancingDescription(
+            "Validation, readability, on-page SEO and trust.",
+          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Running quality checks",
+              stage: "Checks",
               progress: 78,
             });
           }
         }
 
         if (updates?.review_content) {
-          setPipelineSteps((prev) =>
-            prev.map((s) => ({ ...s, status: "done" as const })),
-          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Finalizing SEO and readability",
+              stage: "Checks",
               progress: 90,
             });
           }
@@ -1419,10 +1405,6 @@ export function FreshGenerationView({
 
         if (updates?.content_engine) {
           setIsEnhancing(false);
-          // Mark all pipeline steps done
-          setPipelineSteps((prev) =>
-            prev.map((s) => ({ ...s, status: "done" as const })),
-          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
@@ -1440,7 +1422,6 @@ export function FreshGenerationView({
           u.content_engine?.content,
           u.generate_content?.content,
           u.humanize_content?.content,
-          u.inject_eeat?.content,
           u.review_content?.content,
           u.calculate_readability?.content,
           u.calculate_on_page_seo?.content,
@@ -1872,9 +1853,9 @@ export function FreshGenerationView({
       title: parsedOutline?.title || primaryKeyword || "Untitled article",
       keyword: primaryKeyword,
       status: "running",
-      stage: "Drafting your article",
-      // Matches the derived "Drafting your article" milestone so the shared
-      // record keeps climbing from the research steps instead of rewinding.
+      stage: "Research",
+      // The article phase's first stage, at the derived article milestone, so
+      // the shared record keeps climbing from the earlier steps instead of rewinding.
       progress: ARTICLE_PHASE_PROGRESS,
       createdAt: now,
       updatedAt: now,
@@ -1993,7 +1974,6 @@ export function FreshGenerationView({
         tokenTargetRef.current = "content";
         content.resetStream();
         setToolCalls([]);
-        setPipelineSteps([]);
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         dispatch({
@@ -2346,7 +2326,6 @@ export function FreshGenerationView({
                 tokenTargetRef.current = "content";
                 content.resetStream();
                 setToolCalls([]);
-                setPipelineSteps([]);
                 dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
                 dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
                 dispatch({
@@ -2466,7 +2445,6 @@ export function FreshGenerationView({
             userKeyword={userKeyword}
             outline={parsedOutline}
             toolCalls={toolCalls}
-            pipelineSteps={pipelineSteps}
             onEditToggle={handleEditToggle}
             onContentChange={handleContentChange}
           />

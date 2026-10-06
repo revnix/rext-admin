@@ -15,10 +15,10 @@ const TYPICAL_MS: Record<string, number> = {
   titles: 12_000,
   "keyword-groups": 8_000,
   outline: 25_000,
-  draft: 150_000,
-  polish: 45_000,
-  checks: 30_000,
-  save: 8_000,
+  research: 40_000,
+  draft: 110_000,
+  style: 45_000,
+  checks: 40_000,
 };
 
 type Samples = Record<string, number[]>;

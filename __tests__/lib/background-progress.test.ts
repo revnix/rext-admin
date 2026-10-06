@@ -97,7 +97,7 @@ describe("deriveBackgroundProgress, the run component's stage", () => {
         "running",
         inside("content_engine", "humanize_content"),
       ).runStage,
-    ).toEqual({ phase: "article", id: "polish" });
+    ).toEqual({ phase: "article", id: "style" });
   });
 
   it("falls back to the container when the inner node is unknown", () => {
@@ -112,5 +112,46 @@ describe("deriveBackgroundProgress, the run component's stage", () => {
       deriveBackgroundProgress("pending", inside("serp_engine", "fetch_serp"))
         .runStage,
     ).toBeUndefined();
+  });
+});
+
+describe("deriveBackgroundProgress, the article's stage words", () => {
+  const running = (node: string, values?: object) => ({
+    next: ["content_engine"],
+    tasks: [
+      {
+        name: "content_engine",
+        state: { next: [node], tasks: [{ name: node }] },
+      },
+    ],
+    values,
+  });
+
+  it("says Draft while the agent writes", () => {
+    expect(
+      deriveBackgroundProgress("running", running("generate_content")).stage,
+    ).toBe("Draft");
+  });
+
+  it("says Style pass once the draft exists and before any check", () => {
+    expect(
+      deriveBackgroundProgress(
+        "running",
+        running("humanize_content", { content: { final_content: {} } }),
+      ).stage,
+    ).toBe("Style pass");
+  });
+
+  it("says Checks while a check runs, even with the draft there", () => {
+    expect(
+      deriveBackgroundProgress(
+        "running",
+        running("calculate_readability", { content: { final_content: {} } }),
+      ).stage,
+    ).toBe("Checks");
+    expect(
+      deriveBackgroundProgress("running", running("final_validate_content"))
+        .stage,
+    ).toBe("Checks");
   });
 });
