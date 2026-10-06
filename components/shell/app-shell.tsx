@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { BackgroundGenerationDock } from "@/components/background-generation-dock";
-import { TrialBanner } from "@/components/billing/trial-banner";
+import { ShellBillingBanner } from "@/components/billing/billing-action-notice";
 import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
 import { FirstLoginQuestions } from "@/components/onboarding/first-login-questions";
@@ -46,7 +46,8 @@ function Notifications() {
 /**
  * The frame every signed-in page sits in (design/app-language.md §5), mounted once by the route
  * layouts so it stays put while pages change: the sidebar (a sheet with a bottom bar under
- * 1024 px), the header, the page in `main`, and the background-generation dock.
+ * 1024 px), the header, a failed renewal's banner, the page in `main`, and the
+ * background-generation dock.
  */
 export function AppShell({
   defaultPreference,
@@ -84,7 +85,7 @@ export function AppShell({
       <SidebarInset className="pb-(--bottom-bar-height) lg:pb-0">
         <AppHeader />
         <ImpersonationBanner />
-        <TrialBanner />
+        <ShellBillingBanner />
         <main
           id="main-content"
           tabIndex={-1}

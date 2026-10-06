@@ -6,6 +6,7 @@ import { log } from "@/lib/logger";
  */
 
 import type {
+  BillingAction,
   BillingPeriod,
   CheckoutSessionResponse,
   CustomerPortalResponse,
@@ -304,6 +305,18 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     },
 
     /**
+     * The action for the person's unfinished subscription, or null (plan F11). It reads only the
+     * backend's database, so the shell can ask on every page.
+     */
+    getBillingAction: async (): Promise<{
+      billing_action: BillingAction | null;
+    }> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.billingAction, {
+        method: "GET",
+      });
+    },
+
+    /**
      * Pause the current subscription (billing and access both stop).
      */
     pauseSubscription: async (): Promise<unknown> => {
@@ -311,7 +324,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     },
 
     /**
-     * Resume a paused subscription.
+     * Resume a paused subscription, or un-cancel a cancelled one before its end.
      */
     resumeSubscription: async (): Promise<unknown> => {
       return client.request(ENDPOINTS.SUBSCRIPTIONS.resume, { method: "POST" });
