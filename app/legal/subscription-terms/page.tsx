@@ -49,7 +49,7 @@ export default function SubscriptionTermsPage() {
 
         <h2>3. Free Trial</h2>
         <p>
-          New subscribers may be eligible for a 14-day free trial. During the
+          New subscribers may be eligible for a 7-day free trial. During the
           trial:
         </p>
         <ul>
