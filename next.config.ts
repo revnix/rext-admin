@@ -1,5 +1,7 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
+// Validates the environment as the config loads: see env.ts.
+import "./env";
 
 // Configure bundle analyzer (enabled when ANALYZE=true)
 const bundleAnalyzer = withBundleAnalyzer({
