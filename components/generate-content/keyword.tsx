@@ -37,7 +37,9 @@ export function KeywordForm({
   onCountryChange: (val: string) => void;
 }) {
   const [value, setValue] = useState(userKeyword);
-  const { workspaceId } = useWorkspace();
+  // The workspace's id, not the address's slug in `workspaceId`, as the library and its permissions use.
+  const { workspace } = useWorkspace();
+  const workspaceId = workspace?.id ?? "";
   const { hasPermission: canGenerate, isLoading: isPermissionLoading } =
     useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
   const locked = !isPermissionLoading && !canGenerate;
