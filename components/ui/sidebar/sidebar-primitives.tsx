@@ -3,7 +3,7 @@
 import { Slot as SlotPrimitive } from "radix-ui";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,9 @@ function Sidebar({
 }) {
   const { isMobile, state, preference, openMobile, setOpenMobile } =
     useSidebar();
+  // The sheet opens from the bottom bar's More or from the shortcut, not from a Radix trigger,
+  // so Radix has nothing to return focus to on close. It returns to what opened it instead.
+  const openerRef = React.useRef<HTMLElement | null>(null);
 
   if (collapsible === "none") {
     return (
@@ -79,6 +82,20 @@ function Sidebar({
             "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
           }}
           side={side}
+          onOpenAutoFocus={() => {
+            openerRef.current =
+              document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            const opener = openerRef.current;
+            openerRef.current = null;
+            if (opener?.isConnected) {
+              event.preventDefault();
+              opener.focus();
+            }
+          }}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
@@ -412,7 +429,8 @@ function SidebarMenuButton({
       data-sidebar="menu-button"
       data-size={size}
       data-active={isActive}
-      aria-current={isActive ? "page" : undefined}
+      // A link is the current page; a button (a group's trigger) holds it, so it says only "true".
+      aria-current={isActive ? (asChild ? "page" : "true") : undefined}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       {...props}
     />
