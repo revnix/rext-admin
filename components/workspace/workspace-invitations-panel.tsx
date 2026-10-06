@@ -258,6 +258,8 @@ export function WorkspaceInvitationsPanel({
         }
         rowActions={rowActions}
         pageSizeOptions={[10, 25, 50]}
+        // Beside the members, in the same settings section: cards up to 1024 px, as they are.
+        cardsBelow="lg"
         renderCard={(invitation, { actions }) => {
           const status = statusOf(invitation);
           return (
