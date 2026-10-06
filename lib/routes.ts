@@ -43,13 +43,6 @@ export const workspaceRoutes = {
   root: (_workspaceSlug: string) => `/`,
 
   /**
-   * Topics routes
-   */
-  // Topics and knowledge are removed (E16); /topics and /knowledge redirect (next.config.ts).
-  // These two stay only until the sidebar drops its links to them.
-  topics: (workspaceSlug: string) => `/w/${workspaceSlug}/topics`,
-
-  /**
    * Content routes
    */
   content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
@@ -64,11 +57,6 @@ export const workspaceRoutes = {
    * Members route
    */
   members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
-
-  /**
-   * Knowledge routes
-   */
-  knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
 
   /**
    * Integrations route
