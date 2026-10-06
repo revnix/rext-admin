@@ -1,10 +1,33 @@
 #!/bin/sh
-# Run formatting first
-npm run format
+# Biome on what is being committed, and nothing project-wide: the type check, the full lint and the tests run
+# in CI (.github/workflows/pr-checks.yaml) and in check.sh, so a commit takes seconds and no memory to speak of.
+#
+# A file staged as a whole is formatted and lint-fixed, then staged again with its fixes. A file that also has
+# unstaged changes is only checked: staging its fixes would stage the part that was left out on purpose.
+set -e
 
-# Then run linting 
-npm run lint
-npm run lint:ui-comments
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -n "$staged" ] || exit 0
+unstaged=$(git diff --name-only)
 
-# Finally run type checking
-npx tsc --noEmit
+whole=""
+partly=""
+for file in $staged; do
+  if printf '%s\n' "$unstaged" | grep -qxF -- "$file"; then
+    partly="$partly $file"
+  else
+    whole="$whole $file"
+  fi
+done
+
+biome="pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true"
+if [ -n "$whole" ]; then
+  $biome --write $whole
+  git add -- $whole
+fi
+if [ -n "$partly" ]; then
+  $biome $partly
+fi
+
+# Warning comments (TODO, FIXME, …) stay out of the shared modules: a quick ripgrep, kept from the old hook.
+pnpm run --silent lint:ui-comments
