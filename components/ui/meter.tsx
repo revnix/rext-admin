@@ -19,14 +19,16 @@ export function Meter({
   label?: string;
   className?: string;
 }) {
-  const share = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+  // One clamped value for the bar and the meter's reading, so neither can say more than full.
+  const shown = Math.min(Math.max(value, 0), Math.max(max, 0));
+  const share = max > 0 ? shown / max : 0;
   const a11y = label
     ? {
         role: "meter",
         "aria-label": label,
         "aria-valuemin": 0,
         "aria-valuemax": max,
-        "aria-valuenow": value,
+        "aria-valuenow": shown,
       }
     : { "aria-hidden": true };
   return (
