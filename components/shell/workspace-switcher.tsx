@@ -32,10 +32,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
-import { workspaceQueries } from "@/lib/query-keys";
+import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
 import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
-import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
@@ -62,7 +61,7 @@ export function WorkspaceSwitcher({
   /** The workspace settings page, when the person may open it. */
   settingsUrl?: string | null;
 }) {
-  const { isMobile, state } = useSidebar();
+  const { isMobile, state, setOpenMobile } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -73,8 +72,6 @@ export function WorkspaceSwitcher({
   const setLastWorkspacePath = useWorkspaceStore(
     (state) => state.setLastWorkspacePath,
   );
-  const planName = useSubscriptionStore((state) => state.credits?.plan_name);
-
   const { data: workspaceListResponse, isLoading } = useQuery(
     workspaceQueries.list(),
   );
@@ -139,6 +136,8 @@ export function WorkspaceSwitcher({
 
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
+    // The shell stays mounted across workspaces, so the phone's sheet would stay open over the page.
+    setOpenMobile(false);
 
     // On a workspace page, open the same page in the other workspace; elsewhere, go home.
     const currentPageSegment = extractWorkspacePageSegment(pathname);
@@ -152,12 +151,19 @@ export function WorkspaceSwitcher({
   };
 
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
+  // The plan is the workspace owner's, so it is read for the workspace shown: the shell's credits
+  // are the signed-in person's own on account pages, which differ for a collaborator.
+  const { data: workspaceCredits, isError: planFailed } = useQuery({
+    ...subscriptionQueries.workspaceCredits(displayWorkspace?.id ?? ""),
+    enabled: Boolean(displayWorkspace?.id),
+  });
+  const planName = workspaceCredits?.plan_name;
   const name = isLoading
     ? "Loading…"
     : getWorkspaceDisplayTitle(displayWorkspace, "Choose a workspace");
   const detail = isLoading
     ? null
-    : (planName ?? siteHost(displayWorkspace?.url) ?? null);
+    : (planName ?? (planFailed ? siteHost(displayWorkspace?.url) : null));
   const cap = max !== null && used !== null ? `${used} of ${max}` : null;
   const createLocked = isLimitReached || isLimitLoading;
 
@@ -236,14 +242,22 @@ export function WorkspaceSwitcher({
             <DropdownMenuSeparator />
             {settingsUrl && (
               <DropdownMenuItem asChild>
-                <Link href={settingsUrl as Route} className="gap-2">
+                <Link
+                  href={settingsUrl as Route}
+                  onClick={() => setOpenMobile(false)}
+                  className="gap-2"
+                >
                   <Settings className="size-4 text-muted-foreground" />
                   Workspace settings
                 </Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <Link href="/w" className="gap-2">
+              <Link
+                href="/w"
+                onClick={() => setOpenMobile(false)}
+                className="gap-2"
+              >
                 <LayoutGrid className="size-4 text-muted-foreground" />
                 All workspaces
               </Link>
@@ -272,7 +286,11 @@ export function WorkspaceSwitcher({
               </Tooltip>
             ) : (
               <DropdownMenuItem asChild>
-                <Link href="/w/create" className="gap-2">
+                <Link
+                  href="/w/create"
+                  onClick={() => setOpenMobile(false)}
+                  className="gap-2"
+                >
                   <Plus className="size-4 text-muted-foreground" />
                   <span className="flex-1">Create workspace</span>
                   {cap && (

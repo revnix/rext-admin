@@ -1421,8 +1421,8 @@ function ContentEditorInner(props: ContentEditorProps) {
           </aside>
         )}
 
-        {/* Main Content Area */}
-        <main
+        {/* Main Content Area: a div, since the shell's main element is the page's landmark */}
+        <div
           ref={scrollRef}
           className="w-full min-w-0 flex-1 bg-background px-2 py-4 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
         >
@@ -1536,7 +1536,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               )}
             </div>
           </article>
-        </main>
+        </div>
 
         {/* Desktop Right Sidebar */}
         <aside className="hidden xl:flex w-72 border-l border-border bg-card flex-col shrink-0 min-h-0">
