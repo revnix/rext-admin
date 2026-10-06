@@ -71,6 +71,8 @@ const RadioGroup = React.forwardRef<
               ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
               : undefined,
             "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
+            // The radio itself is visually hidden: its card shows the keyboard focus.
+            "peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50",
           );
 
           const labelContent = (
