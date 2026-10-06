@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 import { usePermission } from "@/hooks/use-permission";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
@@ -65,11 +65,23 @@ export default function AuditLogsPage() {
 
   if (error) {
     return (
-      <ErrorPage
-        title="Failed to load audit logs"
-        message="Audit log data could not be loaded. Please check your connection and try again."
-        retry={() => void refetch()}
-      />
+      <ListPage
+        title="Audit Logs"
+        description="View and export all admin actions and system events"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load audit logs"
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          Audit log data could not be loaded. Please check your connection and
+          try again.
+        </Notice>
+      </ListPage>
     );
   }
 

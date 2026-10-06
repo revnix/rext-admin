@@ -9,7 +9,7 @@ export default function PricingError(props: {
   return (
     <RouteError
       {...props}
-      title="Pricing Error"
+      title="Pricing error"
       logContext="PricingError"
       navigationType="link"
       navigationLink="/"

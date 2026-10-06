@@ -15,12 +15,12 @@ export default function ForgotPasswordError(props: {
   return (
     <RouteError
       {...props}
-      title="Password Reset Error"
+      title="Password reset error"
       description="We encountered an error loading the password reset page. Please try again or return to login."
       logContext="ForgotPasswordError"
       navigationType="link"
       navigationLink="/login"
-      navigationLabel="Back to Login"
+      navigationLabel="Back to login"
       layout="fullscreen"
     />
   );

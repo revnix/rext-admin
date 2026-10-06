@@ -9,11 +9,12 @@ export default function BillingError(props: {
   return (
     <RouteError
       {...props}
-      title="Billing Error"
+      title="Billing error"
       logContext="BillingError"
       navigationType="link"
       navigationLink="/settings/subscription"
-      navigationLabel="Subscription Settings"
+      navigationLabel="Subscription settings"
+      layout="container"
     />
   );
 }

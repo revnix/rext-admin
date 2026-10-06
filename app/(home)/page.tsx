@@ -15,7 +15,7 @@ import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { PageLoader } from "@/components/ui/loading-states";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { Route } from "next";
 
 export default function DashboardPage() {
@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
-      <APIErrorBoundary>
+      <ErrorBoundary>
         <DetailPage
           title={currentWorkspace?.title || "Dashboard"}
           description={`Welcome to ${currentWorkspace?.title || "your workspace"}. Monitor your progress and manage your workspace.`}
@@ -125,7 +125,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </DetailPage>
-      </APIErrorBoundary>
+      </ErrorBoundary>
     </AuthGuard>
   );
 }
