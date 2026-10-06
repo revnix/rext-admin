@@ -1,8 +1,8 @@
-import { RouteLoading } from "@/components/ui/route-loading";
+import { PageSkeleton } from "@/components/layouts";
 
 /**
- * Workspace overview loading state
+ * Workspace pages loading state
  */
 export default function WorkspaceLoading() {
-  return <RouteLoading variant="workspace" statCards={4} />;
+  return <PageSkeleton />;
 }

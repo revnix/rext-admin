@@ -65,9 +65,6 @@
   "components/ui/dialog.tsx": {
     "stock-palette": 1
   },
-  "components/ui/error-boundary.tsx": {
-    "stock-palette": 6
-  },
   "components/ui/error-states.tsx": {
     "off-scale": 1,
     "stock-palette": 2

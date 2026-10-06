@@ -7,12 +7,11 @@ import { AuthGuard } from "@/components/auth-guard";
 import { MetricsCards } from "@/components/dashboard/revamp/metrics-cards";
 import { RecentContent } from "@/components/dashboard/revamp/recent-content";
 import { QuickActions } from "@/components/dashboard/revamp/quick-actions";
-import { DetailPage } from "@/components/layouts";
+import { DetailPage, PageSkeleton } from "@/components/layouts";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
-import { PageLoader } from "@/components/ui/loading-states";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -85,7 +84,7 @@ export default function DashboardPage() {
 
   // Show loading state while fetching workspaces
   if (isLoadingWorkspaces || isLoading) {
-    return <PageLoader message="Loading your workspace..." />;
+    return <PageSkeleton layout="detail" label="Loading your workspace..." />;
   }
 
   // Show empty state only if no workspaces exist

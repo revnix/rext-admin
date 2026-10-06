@@ -2,10 +2,9 @@
 
 import { ChevronLeft, ShieldX } from "lucide-react";
 import Link from "next/link";
-import { FormPage } from "@/components/layouts";
+import { FormPage, PageSkeleton } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/loading-states";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -46,7 +45,7 @@ export default function CreateWorkspacePage() {
   }
 
   if (isLimitLoading) {
-    return <PageLoader message="Checking workspace limits..." />;
+    return <PageSkeleton layout="form" label="Checking workspace limits..." />;
   }
 
   if (initialLimitReached.current) {

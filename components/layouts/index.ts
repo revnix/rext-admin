@@ -5,9 +5,14 @@
 export { DetailPage, type DetailPageProps } from "./detail-page";
 export { FormPage, type FormPageProps } from "./form-page";
 export { ListPage, type ListPageProps } from "./list-page";
-/** For loading.tsx files only: a skeleton in the same frame as the page it stands for. */
+/** For loading.tsx and error.tsx files only: a skeleton or an error in the same frame as the page. */
 export { PageFrame } from "./page-frame";
 export { PageHeader, type PageHeaderProps } from "./page-header";
+export {
+  PageSkeleton,
+  type PageSkeletonLayout,
+  SectionSkeleton,
+} from "./page-skeleton";
 export {
   SettingsPage,
   type SettingsPageProps,
