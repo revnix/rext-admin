@@ -128,7 +128,23 @@ export function WorkspaceCreateWizard() {
       }
     } catch (error) {
       log.error("[Workspace create] Failed to create the workspace", error);
-      toast.error((error as Error).message);
+      // The backend checks the name and that the website answers: say so beside the field.
+      const message = (error as Error).message;
+      if (/website|url|domain/i.test(message)) {
+        form.setError(
+          "url",
+          { type: "server", message },
+          { shouldFocus: true },
+        );
+      } else if (/name/i.test(message)) {
+        form.setError(
+          "name",
+          { type: "server", message },
+          { shouldFocus: true },
+        );
+      } else {
+        toast.error(message);
+      }
     }
   };
 
