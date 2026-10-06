@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SignupForm } from "@/components/signup-form";
@@ -49,7 +50,15 @@ jest.mock("@/lib/api-client", () => {
 const EMAIL = "new.writer@example.com";
 
 async function signUp() {
-  render(<SignupForm />);
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+      }
+    >
+      <SignupForm />
+    </QueryClientProvider>,
+  );
   await userEvent.type(screen.getByLabelText(/Full name/), "New Writer");
   await userEvent.type(screen.getByLabelText(/^\*?Email/), EMAIL);
   await userEvent.type(
@@ -125,7 +134,7 @@ describe("SignupForm, an account that must verify its email", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the same page when the login after sign-up is refused", async () => {
+  it("sends a verified account whose login was refused to the login form, saying so", async () => {
     register.mockResolvedValue({
       user: { id: "u1", email: EMAIL, email_verified: true },
       message: "ok",
@@ -134,10 +143,17 @@ describe("SignupForm, an account that must verify its email", () => {
     signIn.mockResolvedValue({ ok: true, error: "CredentialsSignin" });
     await signUp();
 
-    expect(
-      await screen.findByRole("heading", { name: "Check your email" }),
-    ).toBeInTheDocument();
+    await screen.findByRole("button", { name: "Create account" });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Your account is ready, but logging in didn't work. Log in to continue.",
+    );
+    expect(push).toHaveBeenCalledWith(
+      `/login?email=${encodeURIComponent(EMAIL)}`,
+    );
     expect(toast.success).not.toHaveBeenCalled();
-    expect(push).not.toHaveBeenCalled();
+    // No "check your email" for an account that is already verified.
+    expect(
+      screen.queryByRole("heading", { name: "Check your email" }),
+    ).toBeNull();
   });
 });

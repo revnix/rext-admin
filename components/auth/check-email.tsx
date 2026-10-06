@@ -1,14 +1,12 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
-
-type ResendState = "idle" | "sending" | "sent" | "failed";
 
 /**
  * What a new account sees after signing up (rext-control#461): login needs a verified email, so
@@ -16,18 +14,12 @@ type ResendState = "idle" | "sending" | "sent" | "failed";
  * it again. "Log in" carries the address to the login form.
  */
 export function CheckEmail({ email }: { email: string }) {
-  const [resend, setResend] = useState<ResendState>("idle");
-
-  const sendAgain = async () => {
-    setResend("sending");
-    try {
-      await apiClient.profile.resendVerification(email);
-      setResend("sent");
-    } catch (error) {
+  const resend = useMutation({
+    mutationFn: () => apiClient.profile.resendVerification(email),
+    onError: (error) => {
       log.error("[Signup] Couldn't resend the verification email", error);
-      setResend("failed");
-    }
-  };
+    },
+  });
 
   return (
     <div data-slot="check-email" className="flex flex-col gap-6">
@@ -56,10 +48,10 @@ export function CheckEmail({ email }: { email: string }) {
             type="button"
             variant="link"
             className="h-auto p-0 font-medium"
-            onClick={sendAgain}
-            disabled={resend === "sending"}
+            onClick={() => resend.mutate()}
+            disabled={resend.isPending}
           >
-            {resend === "sending" && (
+            {resend.isPending && (
               <Loader2 className="size-4 animate-spin" aria-hidden />
             )}
             resend the email
@@ -67,9 +59,9 @@ export function CheckEmail({ email }: { email: string }) {
           .
         </p>
         <p role="status" aria-live="polite">
-          {resend === "sent" &&
+          {resend.isSuccess &&
             `Sent again to ${email}. It can take a minute to arrive.`}
-          {resend === "failed" &&
+          {resend.isError &&
             "The email couldn't be sent again just now. Wait a minute and try again."}
         </p>
       </div>
