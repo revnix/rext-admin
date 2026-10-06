@@ -213,6 +213,16 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Onboarding Endpoints
+   * @note The questions asked once at first login (rext-backend src/api/routes/users/onboarding.py)
+   */
+  ONBOARDING: {
+    shouldShow: "/api/v1/onboarding/should-show",
+    marketing: "/api/v1/onboarding/marketing",
+    complete: "/api/v1/onboarding/complete",
+  },
+
+  /**
    * Admin Account Recovery Endpoints
    * @note Admin-reviewed account recovery queue (Account Recovery tab)
    */

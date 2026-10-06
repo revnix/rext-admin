@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { BackgroundGenerationDock } from "@/components/background-generation-dock";
 import { ImpersonationBanner } from "@/components/impersonation/impersonation-banner";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
+import { FirstLoginQuestions } from "@/components/onboarding/first-login-questions";
 import {
   type SidebarPreference,
   SidebarInset,
@@ -90,6 +91,8 @@ export function AppShell({
           {children}
         </main>
         <BackgroundGenerationDock />
+        {/* Asked once, at the first login of an organic sign-up (the backend decides). */}
+        <FirstLoginQuestions />
       </SidebarInset>
       <MobileBottomBar navigation={navigation} />
       <Notifications />
