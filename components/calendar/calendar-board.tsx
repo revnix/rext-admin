@@ -112,7 +112,7 @@ export function CalendarBoard({
   const library = workspaceRoutes.content(workspaceSlug);
 
   return (
-    <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+    <div className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto pb-2">
       {columns.map(({ status, items }) => (
         <section
           key={status}
