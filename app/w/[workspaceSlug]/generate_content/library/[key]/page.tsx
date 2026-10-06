@@ -34,15 +34,20 @@ export default function Page() {
   const { workspace, workspaceSlug } = useWorkspace();
   const { user } = useAuthSession();
   const workspaceId = workspace?.id ?? "";
+  // The research is read only by someone who may read the workspace's content, as on Generate.
+  const { hasPermission: canRead, isLoading: isPermissionLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.READ, workspaceId);
   const { hasPermission: canGenerate } = useWorkspacePermission(
     CONTENT_PERMISSIONS.CREATE,
     workspaceId,
   );
-  const item = useQuery(libraryQueries.item(workspaceId, user?.id ?? "", key));
+  const query = libraryQueries.item(workspaceId, user?.id ?? "", key);
+  const item = useQuery({ ...query, enabled: query.enabled && canRead });
   const [intent, setIntent] = useState<SearchIntent | "">("");
-  const showSkeleton = useShowAfter(item.isLoading || !workspaceId);
+  const loading = !workspaceId || isPermissionLoading || item.isLoading;
+  const showSkeleton = useShowAfter(loading);
 
-  if (item.isLoading || !workspaceId) {
+  if (loading) {
     return (
       <WorkingSurface title="Keyword">
         {showSkeleton && <Skeleton className="h-48 w-full" />}
@@ -51,6 +56,16 @@ export default function Page() {
   }
 
   const libraryHref = workspaceRoutes.keywordLibrary(workspaceSlug) as Route;
+  if (!canRead) {
+    return (
+      <WorkingSurface title="Keyword">
+        <EmptyState
+          title="You can't see this workspace's keywords"
+          description="Ask a workspace admin for access to its content."
+        />
+      </WorkingSurface>
+    );
+  }
   if (!item.data) {
     return (
       <WorkingSurface title="Keyword">

@@ -47,12 +47,16 @@ export function LibraryView() {
   const tableState = useDataTableUrlState(keywordLibraryParams);
   const workspaceId = workspace?.id ?? "";
   const userId = user?.id ?? "";
+  // The research is read only by someone who may read the workspace's content, as on Generate.
+  const { hasPermission: canRead, isLoading: isPermissionLoading } =
+    useWorkspacePermission(CONTENT_PERMISSIONS.READ, workspaceId);
   const { hasPermission: canGenerate } = useWorkspacePermission(
     CONTENT_PERMISSIONS.CREATE,
     workspaceId,
   );
 
-  const library = useQuery(libraryQueries.list(workspaceId, userId));
+  const query = libraryQueries.list(workspaceId, userId);
+  const library = useQuery({ ...query, enabled: query.enabled && canRead });
 
   const rows = useMemo<KeywordRow[]>(
     () =>
@@ -109,6 +113,15 @@ export function LibraryView() {
     },
   ];
 
+  if (!isPermissionLoading && workspaceId && !canRead) {
+    return (
+      <EmptyState
+        title="You can't see this workspace's keywords"
+        description="Ask a workspace admin for access to its content."
+      />
+    );
+  }
+
   return (
     <>
       {ConfirmationComponent}
@@ -117,7 +130,7 @@ export function LibraryView() {
         rows={rows}
         state={tableState}
         search={{ placeholder: "Search keywords" }}
-        isLoading={library.isLoading}
+        isLoading={isPermissionLoading || library.isLoading}
         error={
           library.error ? (
             <Notice tone="danger" title="Your keywords didn't load">
