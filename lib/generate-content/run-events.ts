@@ -36,3 +36,30 @@ export function readStoppedRun(values: unknown): string | null {
     ? content.error.trim()
     : FALLBACK_MESSAGE;
 }
+
+/**
+ * The graph's last nodes (rext-backend's `src/flow/engines/rext.py`): the
+ * article written, or a run the credit gate or an empty search ended. An
+ * update from one of them means the run is over.
+ */
+const LAST_NODES = ["content_engine", "insufficient_credits", "no_serp_data"];
+
+/**
+ * Whether a stream event shows the run reaching a point the page can show: a
+ * pause for the user (an interrupt), one of the graph's last nodes, or a
+ * failure the backend reported. A stream that closes before any of these left
+ * the run going on the server (a dropped connection, a proxy or server
+ * timeout), and the page has to catch up with it.
+ */
+export function settlesRun(chunk: { event?: string; data?: unknown }): boolean {
+  const name = chunk.event ?? "";
+  if (name === "custom" || name.startsWith("custom|")) {
+    return readRunFailedEvent(chunk.data) !== null;
+  }
+  if (!name.startsWith("updates")) return false;
+  const updates = chunk.data;
+  if (!updates || typeof updates !== "object") return false;
+  return (
+    "__interrupt__" in updates || LAST_NODES.some((node) => node in updates)
+  );
+}

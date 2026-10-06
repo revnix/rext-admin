@@ -1,6 +1,7 @@
 import {
   readRunFailedEvent,
   readStoppedRun,
+  settlesRun,
 } from "@/lib/generate-content/run-events";
 
 describe("readRunFailedEvent", () => {
@@ -66,5 +67,59 @@ describe("readStoppedRun", () => {
     { content: { error: "Something broke." } },
   ])("leaves other states to the restore path: %p", (values) => {
     expect(readStoppedRun(values)).toBeNull();
+  });
+});
+
+describe("settlesRun", () => {
+  it.each([
+    [
+      "a pause for the user",
+      { event: "updates", data: { __interrupt__: [{ value: {} }] } },
+    ],
+    [
+      "a pause inside a subgraph",
+      {
+        event: "updates|content_engine:1",
+        data: { __interrupt__: [{ value: { type: "outline_review" } }] },
+      },
+    ],
+    [
+      "the finished article",
+      { event: "updates", data: { content_engine: { content: {} } } },
+    ],
+    [
+      "the credit gate",
+      { event: "updates", data: { insufficient_credits: { content: {} } } },
+    ],
+    ["an empty search", { event: "updates", data: { no_serp_data: {} } }],
+    [
+      "a failure the backend reported",
+      {
+        event: "custom",
+        data: { type: "run", step: "run.failed", message: "No results." },
+      },
+    ],
+  ])("settles on %s", (_label, chunk) => {
+    expect(settlesRun(chunk)).toBe(true);
+  });
+
+  it.each([
+    ["run/created", { event: "run/created", data: { run_id: "r1" } }],
+    [
+      "a node inside the writing stage",
+      {
+        event: "updates|content_engine:1",
+        data: { generate_content: { content: {} } },
+      },
+    ],
+    ["a token", { event: "messages/partial", data: [{ content: "Hello" }] }],
+    [
+      "a progress event",
+      { event: "custom", data: { type: "tool_start", name: "web_search" } },
+    ],
+    ["metadata", { event: "metadata", data: { run_id: "r1" } }],
+    ["an empty update", { event: "updates", data: null }],
+  ])("leaves the run open on %s", (_label, chunk) => {
+    expect(settlesRun(chunk)).toBe(false);
   });
 });

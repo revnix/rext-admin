@@ -73,6 +73,7 @@ import { RunNotice } from "@/components/generate-content/run-notice";
 import {
   readRunFailedEvent,
   readStoppedRun,
+  settlesRun,
 } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
 import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
@@ -89,6 +90,7 @@ import {
 import {
   BACKGROUND_GENERATION_RESTORE_EVENT,
   type BackgroundGenerationRestoreDetail,
+  requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
 import {
   formatWordCountRange,
@@ -1142,18 +1144,25 @@ export function FreshGenerationView({
   // ─────────────────────────────────────────────────────────────────────────
   // processStream — UPDATED to handle both event types
   // ─────────────────────────────────────────────────────────────────────────
+  /**
+   * Reads a run's stream into the view. Resolves to whether the run reached a
+   * point the page can show (`settlesRun`): false means the stream closed while
+   * the run was still going on the server.
+   */
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     // `threadId` is still stale in this closure for the very first run (the
     // reducer dispatch has not re-rendered yet), so track it locally and let
     // `run/created` confirm it.
     let activeThreadId = threadId ?? backgroundThreadId ?? null;
+    let settled = false;
 
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
       for await (const chunk of stream) {
+        if (settlesRun(chunk)) settled = true;
         if (chunk.event === "run/created") {
           const runData = chunk.data as {
             run_id?: string;
@@ -1271,7 +1280,7 @@ export function FreshGenerationView({
               // Stop the run immediately; `finally` below resets the loading state
               cancelStream();
               openCreditsModal();
-              return;
+              return true;
             }
           }
           continue;
@@ -1535,6 +1544,7 @@ export function FreshGenerationView({
         dispatch({ type: "SET_LOADING_STEPS", payload: [] });
       }
     }
+    return settled;
   };
 
   // Keep a live handle so the background-restore effect (declared earlier) always
@@ -1562,6 +1572,7 @@ export function FreshGenerationView({
     }
     streamBusyRef.current = true;
     streamingThreadRef.current = null; // set to newThreadId once created below
+    let unsettledThreadId: string | null = null;
 
     try {
       cancelStream();
@@ -1649,6 +1660,7 @@ export function FreshGenerationView({
         from_library: isLibrary,
       });
 
+      runCreatedRef.current = false;
       const stream = streamFromSSE(
         `/api/generate/${newThreadId}/stream`,
         {
@@ -1672,11 +1684,19 @@ export function FreshGenerationView({
         signal,
       );
 
-      await processStream(stream);
+      const settled = await processStream(stream);
+      if (!settled && runCreatedRef.current && !signal.aborted) {
+        unsettledThreadId = newThreadId;
+      }
     } finally {
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
     }
+    // The stream closed while the run was still going (a dropped connection, a
+    // proxy or server timeout): the restore path reads the run's status,
+    // rejoins it and shows the step, article or error it ends on.
+    if (unsettledThreadId)
+      requestBackgroundGenerationRestore(unsettledThreadId);
   };
 
   /** Resolves to whether the server actually started a run for this step. */
@@ -1703,6 +1723,7 @@ export function FreshGenerationView({
     }
     streamBusyRef.current = true;
     streamingThreadRef.current = threadId;
+    let unsettled = false;
 
     try {
       dispatch({ type: "CLEAR_COMPLETED_NODES" });
@@ -1727,6 +1748,8 @@ export function FreshGenerationView({
       // hiccup, rejected run) leaves no run on the thread and nothing on
       // screen — the click simply vanishes. Retry once before reporting back.
       setRunError(null);
+      let settled = false;
+      let aborted = false;
       for (let attempt = 0; attempt < 2; attempt++) {
         cancelStream();
         const controller = new AbortController();
@@ -1743,16 +1766,21 @@ export function FreshGenerationView({
           },
           controller.signal,
         );
-        await processStream(stream);
+        settled = await processStream(stream);
+        aborted = controller.signal.aborted;
 
         // An abort is deliberate (cancelled generation, unmount, a newer
         // stream taking over) — never retry over it.
-        if (runCreatedRef.current || controller.signal.aborted) break;
+        if (runCreatedRef.current || aborted) break;
       }
+      unsettled = runCreatedRef.current && !settled && !aborted;
       return runCreatedRef.current;
     } finally {
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
+      // The stream closed while the run was still going: catch up with it
+      // through the restore path, as for the first stream.
+      if (unsettled) requestBackgroundGenerationRestore(threadId);
     }
   };
 
