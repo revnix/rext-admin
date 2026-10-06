@@ -101,7 +101,7 @@ One component each (design/app-language.md §8), in `components/ui/`:
 - `Badge` is a word: `neutral` by default, or one of the four status tints, text only. shadcn's variant names draw the same quiet badges;
 - `ConfirmationDialog` and `useConfirmation` ask before an action, with buttons that name it and its opposite ("Delete article", "Keep article"); a `Dialog` takes the whole screen under 640 px.
 
-`alert.tsx` and the name `APIErrorBoundary` stay only for the pages other tasks are rewriting (D6, D14, #416); each goes when its last user moves.
+`alert.tsx` stays only for `components/account-settings/privacy-settings.tsx`, which rext-admin#416 is rewriting; it goes when that last user moves (C5b #449).
 
 ## Data
 

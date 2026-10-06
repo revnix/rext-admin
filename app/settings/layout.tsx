@@ -1,6 +1,6 @@
 import { SettingsPage } from "@/components/layouts";
 import { ShellLayout } from "@/components/shell/shell-layout";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { settingsRoutes } from "@/lib/routes";
 
 /**
@@ -29,7 +29,7 @@ export default function SettingsLayout({
         description="Your profile, how you sign in, what you hear about, your plan and your data."
         sections={SECTIONS}
       >
-        <APIErrorBoundary>{children}</APIErrorBoundary>
+        <ErrorBoundary>{children}</ErrorBoundary>
       </SettingsPage>
     </ShellLayout>
   );

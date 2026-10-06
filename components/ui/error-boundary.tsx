@@ -75,6 +75,3 @@ export function ErrorBoundary({
     </QueryErrorResetBoundary>
   );
 }
-
-/** The older name, for the settings pages until D6 (#237) moves them; the same boundary. */
-export const APIErrorBoundary = ErrorBoundary;
