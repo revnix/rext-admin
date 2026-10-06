@@ -40,7 +40,7 @@ import type {
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
-import { TopicsSection } from "@/components/generate-content/topics";
+import { TitleStep } from "@/components/generate-content/title-step";
 import {
   OutlineDisplay,
   OutlineRejectSection,
@@ -2168,28 +2168,25 @@ export function FreshGenerationView({
       />
     ),
     topic: (
-      <TopicsSection
-        recommendedTopic={recommendedTopic}
+      <TitleStep
         instruction={displayedInstruction}
-        topics={topics}
-        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        titles={topics}
+        recommendedTitle={recommendedTopic}
+        gate={state.interrupt?.[0]?.value}
+        onContinue={(title) => handleWorkflow("TOPIC_SELECT", title)}
         onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
         isRegenerating={
           isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
         }
-        keyword={primaryKeyword}
-        intent={
+        // The content type the user picked, not the backend's suggestion, which can differ.
+        context={[
+          primaryKeyword,
           selectedIntent ||
-          (Array.isArray(seoResult?.intent)
-            ? seoResult.intent[0]
-            : (seoResult?.intent as string)) ||
-          ""
-        }
-        // The chip must reflect what the user actually picked on the content
-        // type step; `recommendedContentType` is only the backend's suggestion
-        // and can differ (e.g. user picks "comparison", backend suggested
-        // "best-tools").
-        contentContext={selectedContentType || recommendedContentType || ""}
+            (Array.isArray(seoResult?.intent)
+              ? seoResult.intent[0]
+              : (seoResult?.intent as string)),
+          selectedContentType || recommendedContentType,
+        ]}
       />
     ),
     content_type: (

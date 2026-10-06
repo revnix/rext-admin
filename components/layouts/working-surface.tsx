@@ -1,19 +1,10 @@
 "use client";
 
-import { PanelRight } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { PageBody, PageFrame } from "./page-frame";
 import { PageHeader, type PageHeaderProps } from "./page-header";
+import { WithSidePane } from "./side-pane";
 
 export interface WorkingSurfaceProps extends PageHeaderProps {
   /** The side pane: beside the main pane from 1024 px, a sheet behind a button on narrower screens. */
@@ -47,35 +38,10 @@ export function WorkingSurface({
     <PageFrame width="full" flush={flush}>
       {!ownHeading && <PageHeader {...header} />}
       {side ? (
-        <PageBody className="flex gap-6">
-          <div className="min-w-0 flex-1">{children}</div>
-          <aside
-            aria-label={sideTitle}
-            className="hidden w-80 shrink-0 lg:block"
-          >
-            {side}
-          </aside>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+--spacing(4))] z-(--z-sticky) lg:hidden"
-              >
-                <PanelRight />
-                {sideTitle}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>{sideTitle}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  The side pane of this page.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="px-4 pb-4">{side}</div>
-            </SheetContent>
-          </Sheet>
+        <PageBody>
+          <WithSidePane side={side} sideTitle={sideTitle}>
+            {children}
+          </WithSidePane>
         </PageBody>
       ) : (
         <PageBody>{children}</PageBody>
