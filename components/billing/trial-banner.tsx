@@ -6,9 +6,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
-import { useAuthSession } from "@/hooks/use-auth-session";
+import { useSession } from "next-auth/react";
+import { useNow } from "@/hooks/use-now";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { local, session } from "@/lib/storage";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 import { SubscriptionStatus } from "@/types/subscription";
 import { monthlyCreditsLeft } from "./billing-format";
 import { trialEndingTitle, trialState } from "./trial-state";
@@ -25,8 +27,10 @@ const endingKey = (userId: string) => `rext-trial-ending-dismissed-${userId}`;
  * owner's trial. A trial that has ended is the paywall's (F4), not this banner's.
  */
 export function TrialBanner() {
-  const { user } = useAuthSession();
-  const userId = user?.id;
+  // The plain session: useAuthSession tracks activity, which would re-render the shell on every move.
+  const { data: authSession } = useSession();
+  const userId = authSession?.user?.id;
+  const now = useNow();
   const current = useQuery({
     ...subscriptionQueries.current(),
     enabled: Boolean(userId),
@@ -52,21 +56,28 @@ export function TrialBanner() {
     setEndingDismissed(session.getBoolean(endingKey(userId)));
   }, [userId]);
 
+  // The stream's credit updates reach the store, not this query: the store's figures win when
+  // they're the person's own.
+  const storeCredits = useSubscriptionStore((store) => store.credits);
+  const liveCredits =
+    storeCredits && storeCredits.target_user_id === userId
+      ? storeCredits
+      : credits.data;
   const trialEnd = current.data?.subscription?.trial_end_date;
   const lowCredits = catalog.data?.credits.low_balance_threshold;
   const state = useMemo(
     () =>
-      onTrial && trialEnd && credits.data && lowCredits !== undefined
+      onTrial && trialEnd && liveCredits && lowCredits !== undefined
         ? trialState(
             {
               trialEnd,
-              creditsLeft: monthlyCreditsLeft(credits.data),
+              creditsLeft: monthlyCreditsLeft(liveCredits),
               lowCredits,
             },
-            new Date(),
+            now,
           )
         : null,
-    [onTrial, trialEnd, credits.data, lowCredits],
+    [onTrial, trialEnd, liveCredits, lowCredits, now],
   );
 
   const showIntro = Boolean(state && !state.ended && !introSeen);
