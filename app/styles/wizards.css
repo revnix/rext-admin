@@ -182,3 +182,15 @@
     scale: 0.96;
   }
 }
+
+/* The wizard's topic picker (components/content-creation/fields/topic-picker-modal.tsx) is wider
+   than a default dialog; the attribute keeps it above DialogContent's own max-width. */
+[data-slot="dialog-content"].topic-picker-dialog {
+  width: 71vw;
+  max-width: 71vw;
+
+  @variant xl {
+    width: 60vw;
+    max-width: 60vw;
+  }
+}
