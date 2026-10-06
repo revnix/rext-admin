@@ -2287,6 +2287,18 @@ export function FreshGenerationView({
               keywordClusters={keywordClusters}
             />
           </div>
+        ) : runError && !restoreError ? (
+          // A run that has stopped shows its notice in the step's place, under
+          // the search, instead of a step that will never fill in.
+          <RunNotice
+            title="The analysis stopped"
+            message={runError}
+            actionLabel="Start again"
+            onAction={() => {
+              setRunError(null);
+              onBack();
+            }}
+          />
         ) : (
           <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
@@ -2299,18 +2311,6 @@ export function FreshGenerationView({
           actionLabel="Start a new article"
           onAction={() => {
             setRestoreError(null);
-            onBack();
-          }}
-        />
-      )}
-
-      {runError && !restoreError && (
-        <RunNotice
-          title="The analysis stopped"
-          message={runError}
-          actionLabel="Start again"
-          onAction={() => {
-            setRunError(null);
             onBack();
           }}
         />
