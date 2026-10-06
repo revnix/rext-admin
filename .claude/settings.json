@@ -16,7 +16,11 @@
       "Bash(vercel *)",
       "Bash(npx vercel *)",
       "Bash(pnpm dlx vercel *)",
-      "Bash(pnpm exec vercel *)"
+      "Bash(pnpm exec vercel *)",
+      "Bash(git send-pack *)",
+      "Bash(gh workflow run *)",
+      "Bash(gh workflow * run *)",
+      "Bash(gh api *dispatches*)"
     ]
   },
   "hooks": {
