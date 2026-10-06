@@ -51,7 +51,7 @@ export function RecentKeywords() {
 
   if (library.isLoading) {
     return showSkeleton ? (
-      <div className="flex w-full flex-col gap-3" aria-hidden>
+      <div className="mt-6 flex w-full flex-col gap-3" aria-hidden>
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-40 w-full" />
       </div>
@@ -59,9 +59,11 @@ export function RecentKeywords() {
   }
   if (library.error) {
     return (
-      <Notice tone="danger" title="Your recent keywords didn't load">
-        Refresh the page to try again, or type the keyword above.
-      </Notice>
+      <div className="mt-6">
+        <Notice tone="danger" title="Your recent keywords didn't load">
+          Refresh the page to try again, or type the keyword above.
+        </Notice>
+      </div>
     );
   }
   const recent = (library.data ?? []).slice(0, RECENT);
@@ -73,7 +75,10 @@ export function RecentKeywords() {
     );
 
   return (
-    <section aria-labelledby={headingId} className="flex w-full flex-col gap-3">
+    <section
+      aria-labelledby={headingId}
+      className="mt-6 flex w-full flex-col gap-3"
+    >
       <div className="flex items-baseline justify-between gap-3">
         <h2 id={headingId} className="text-label text-muted-foreground">
           Recent keywords
