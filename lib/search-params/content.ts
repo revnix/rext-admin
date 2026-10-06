@@ -43,12 +43,11 @@ export const contentListParams = {
   ...dataTableParams,
   sort: parseAsSort.withDefault({ id: "updated_at", desc: true }),
   status: parseAsFacet(CONTENT_LIST_STATUSES),
-  // Open sets: the content types the articles carry, and the workspace's persona ids.
-  type: parseAsArrayOf(parseAsString).withDefault([]),
+  // An open set: the workspace's persona ids.
   persona: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
 /** The keys of `contentListParams` that are faceted filters on the table's columns. */
-export const CONTENT_LIST_FACETS = ["status", "type", "persona"] as const;
+export const CONTENT_LIST_FACETS = ["status", "persona"] as const;
 
 export const loadContentListParams = createLoader(contentListParams);
