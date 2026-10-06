@@ -200,15 +200,9 @@ export default function Page() {
         }
       >
         <div className="w-full">
-          {view === "selection" && (
-            <SelectionView
-              onStartFresh={handleStartFresh}
-              onPickFromLibrary={handlePickFromLibrary}
-              canCreate={canCreate}
-              isPermLoading={isCreatePermLoading}
-            />
-          )}
           {libraryStart === "missing" && !backgroundThreadId ? (
+            // A start that names no Library item shows only the notice: the
+            // start screen behind it would read as if nothing had happened.
             <RunNotice
               title="This keyword isn't in your Library"
               message="Search for it to research it, then start the article from the Library."
@@ -216,20 +210,30 @@ export default function Page() {
               onAction={handlePickFromLibrary}
             />
           ) : (
-            view === "fresh" && (
-              <FreshGenerationView
-                onBack={handleBackToSelection}
-                initialKeyword={selectedLibraryKeyword}
-                initialIntent={libraryIntent ?? undefined}
-                isLibrary={isLibrary}
-                libraryKey={
-                  libraryStart && libraryStart !== "missing"
-                    ? libraryStart.key
-                    : undefined
-                }
-                backgroundThreadId={backgroundThreadId ?? undefined}
-              />
-            )
+            <>
+              {view === "selection" && (
+                <SelectionView
+                  onStartFresh={handleStartFresh}
+                  onPickFromLibrary={handlePickFromLibrary}
+                  canCreate={canCreate}
+                  isPermLoading={isCreatePermLoading}
+                />
+              )}
+              {view === "fresh" && (
+                <FreshGenerationView
+                  onBack={handleBackToSelection}
+                  initialKeyword={selectedLibraryKeyword}
+                  initialIntent={libraryIntent ?? undefined}
+                  isLibrary={isLibrary}
+                  libraryKey={
+                    libraryStart && libraryStart !== "missing"
+                      ? libraryStart.key
+                      : undefined
+                  }
+                  backgroundThreadId={backgroundThreadId ?? undefined}
+                />
+              )}
+            </>
           )}
         </div>
       </PermissionGuard>
