@@ -28,6 +28,22 @@ function readEvent(event: SSEEvent): { step: string; outcome: string } {
   return { step, outcome: suffix ?? event.status };
 }
 
+/**
+ * The pipeline runs its steps one after another: a later step that starts or finishes means the
+ * earlier ones finished, whatever they reported (a reconnect can miss an event). A running one
+ * ends at that event's time, so its duration stops counting.
+ */
+function closeEarlier(stages: RunStage[], index: number, time?: number) {
+  for (const earlier of stages.slice(0, index)) {
+    if (earlier.state === "active") {
+      earlier.state = "complete";
+      earlier.endedAt = time;
+    } else if (earlier.state === "pending") {
+      earlier.state = "complete";
+    }
+  }
+}
+
 /** Where the operation's events put each stage; with no event yet, every stage waits. */
 export function workspaceRunStages(events: SSEEvent[]): RunStage[] {
   const stages: RunStage[] = WORKSPACE_ANALYSIS_STAGES.map((stage) => ({
@@ -59,18 +75,14 @@ export function workspaceRunStages(events: SSEEvent[]): RunStage[] {
     if (index === -1) continue;
     const stage = stages[index];
     if (outcome === "started" && stage.state === "pending") {
+      closeEarlier(stages, index, time);
       stage.state = "active";
       stage.startedAt = time;
     } else if (outcome === "completed") {
+      closeEarlier(stages, index, time);
       stage.state = "complete";
       stage.startedAt ??= time;
       stage.endedAt = time;
-      // A step that finished means the ones before it did, whatever they reported.
-      for (const earlier of stages.slice(0, index)) {
-        if (earlier.state === "pending" || earlier.state === "active") {
-          earlier.state = "complete";
-        }
-      }
     } else if (outcome === "failed") {
       stage.state = "failed";
       stage.endedAt = time;
