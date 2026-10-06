@@ -1,14 +1,12 @@
 name: pr-checks
 
 # The checks a pull request into staging runs. On every push: the route types, the type check, Biome, and the
-# token and layout checks once they exist.
-# With the label "build" on the pull request: Jest and the production build as well.
+# token and layout checks once they exist; and Jest and the production build, while the repository is public.
 #
-# The founder's decision (2026-10-06): GitHub's own runners, within the Free plan's 2,000 minutes a month that the
-# organisation's private repositories share with the deploy workflows. So the quick checks run on every push and
-# the slow ones on request; rext-control/scripts/app/check.sh still runs the tests locally before every merge, and
-# the build too when the change touches what the build depends on. One job, one install; a newer push cancels the
-# run before it.
+# Actions minutes cost nothing on a public repository. On a private one the organisation's Free plan shares 2,000
+# minutes a month with the deploy workflows, so there Jest and the build run only when the pull request has the label
+# "build" (the founder's decision of 2026-10-06), and rext-control/scripts/app/check.sh runs them before every merge.
+# One job, one install; a newer push cancels the run before it.
 
 on:
   pull_request:
@@ -33,7 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FULL: ${{ contains(github.event.pull_request.labels.*.name, 'build') }}
+      # Everything on a public repository; Jest and the build only with the label "build" on a private one.
+      FULL: ${{ github.event.repository.private == false || contains(github.event.pull_request.labels.*.name, 'build') }}
     steps:
       - uses: actions/checkout@v7
 
@@ -64,13 +63,13 @@ jobs:
             if grep -q "\"$script\":" package.json; then pnpm run "$script"; else echo "$script: not in package.json yet"; fi
           done
 
-      - name: Tests (label "build")
+      - name: Tests
         if: env.FULL == 'true'
         run: pnpm exec jest --ci --silent
         env:
           CI: "true"
 
-      - name: Restore the build cache (label "build")
+      - name: Restore the build cache
         if: env.FULL == 'true'
         uses: actions/cache@v6
         with:
@@ -79,7 +78,7 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      - name: Build (label "build")
+      - name: Build
         if: env.FULL == 'true'
         run: pnpm build
         env:
