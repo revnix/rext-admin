@@ -2,13 +2,6 @@
   "app/accept-admin-invitation/page.tsx": {
     "stock-palette": 16
   },
-  "app/checkout/cancel/page.tsx": {
-    "stock-palette": 9
-  },
-  "app/checkout/success/page.tsx": {
-    "stock-palette": 8,
-    "dark-class": 1
-  },
   "app/globals.css": {
     "arbitrary-size": 1
   },

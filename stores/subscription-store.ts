@@ -150,6 +150,8 @@ interface SubscriptionStore {
    * Patch current_credits in place (from live SSE update — no round-trip)
    */
   patchCredits: (currentCredits: number) => void;
+  /** A balance read elsewhere (the checkout's confirmation): the meters show it at once. */
+  setCredits: (credits: CreditBalance) => void;
 
   /**
    * Fetch available subscription plans
@@ -484,6 +486,12 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
 
         inFlightCreditsFetches.set(scopeKey, request);
         return request;
+      },
+
+      setCredits: (credits: CreditBalance) => {
+        // The person's own scope: the checkout pages are outside any workspace.
+        creditsFetchedAt.set("", Date.now());
+        set({ credits });
       },
 
       patchCredits: (currentCredits: number) => {
