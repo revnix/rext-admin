@@ -211,6 +211,16 @@ export const subscriptionQueries = {
       queryFn: () => apiClient.subscriptions.getTrialStatus(),
       staleTime: 5 * 60 * 1000,
     }),
+  /**
+   * The person's billing action (F11): the shell's banner and the plan grid read it. A webhook
+   * changes it, so it is read again when the window regains focus and after a minute.
+   */
+  billingAction: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "billing-action"] as const,
+      queryFn: () => apiClient.subscriptions.getBillingAction(),
+      staleTime: 60 * 1000,
+    }),
   /** The public plan catalogue; it changes with a release, not during a visit. */
   catalog: () =>
     queryOptions({

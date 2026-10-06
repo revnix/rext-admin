@@ -487,3 +487,19 @@ export interface OrderRow {
   /** Cents still refundable. Computed server-side; never re-derive it here. */
   refundable_amount: number;
 }
+
+/**
+ * What the person does about a subscription that isn't finished, instead of a new checkout
+ * (`GET /subscriptions/billing-action`; plan F11): `update_payment_method` for a failed renewal
+ * (past due while Lemon Squeezy retries, unpaid once the retries are over), `resume` for a paused
+ * subscription or a cancelled one before its end. The backend refuses a checkout while one is set.
+ */
+export interface BillingAction {
+  action: "update_payment_method" | "resume";
+  /** The subscription's status: past_due, unpaid, suspended, paused or cancelled. */
+  status: string;
+  /** When the failed renewal's episode began: the date the banner names. */
+  payment_failed_at: string | null;
+  /** A cancelled subscription's end. */
+  ends_at: string | null;
+}

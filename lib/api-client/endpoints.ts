@@ -301,6 +301,8 @@ export const ENDPOINTS = {
     orders: "/api/v1/subscriptions/orders",
     refundRequests: "/api/v1/subscriptions/refund-requests",
     billingUrls: "/api/v1/subscriptions/billing-urls",
+    /** What to do about an unfinished subscription (F11): update the card or resume. */
+    billingAction: "/api/v1/subscriptions/billing-action",
     pause: "/api/v1/subscriptions/pause",
     resume: "/api/v1/subscriptions/resume",
     history: "/api/v1/subscriptions/history",

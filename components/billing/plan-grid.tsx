@@ -5,6 +5,10 @@ import { Check } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  BillingActionNotice,
+  useBillingAction,
+} from "@/components/billing/billing-action-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,11 +70,14 @@ export function offerWords(offer: CatalogOffer) {
 }
 
 /**
- * The subscription states in which the backend refuses another checkout (subscription_service:
- * a paid plan that's running, or a renewal still unpaid): the person changes plan in Billing.
- * Expired and cancelled ones may check out again.
+ * The subscription states in which the person holds a plan of the grid: one that's running, or a
+ * renewal still unpaid. Expired ones may check out again; a paused one, or a cancelled one before
+ * its end, holds its plan through its billing action (useBillingAction).
  */
 const HOLDS_A_PLAN = new Set(["active", "past_due", "suspended", "unpaid"]);
+
+/** What a card offers instead of a checkout while the person's subscription isn't finished. */
+type Settle = { label: string; run: () => void; busy: boolean };
 
 /** The current time, moved on at the offer's next start or end, so the page follows its window. */
 function useOfferClock(offer: CatalogOffer | null | undefined) {
@@ -109,6 +116,7 @@ function PlanCard({
   checkoutPlan,
   isCurrent,
   hasPaidPlan,
+  settle,
 }: {
   plan: CatalogPlan;
   period: BillingPeriod;
@@ -117,6 +125,8 @@ function PlanCard({
   isCurrent: boolean;
   /** On a paid plan already: another plan is a change in Billing, not a second checkout. */
   hasPaidPlan: boolean;
+  /** A subscription that isn't finished: the backend refuses a checkout, so its action is offered. */
+  settle: Settle | null;
 }) {
   const yearly = period === BillingPeriod.YEARLY;
   const perMonth = yearly
@@ -170,7 +180,16 @@ function PlanCard({
         </ul>
       </CardContent>
       <CardFooter>
-        {isCurrent ? (
+        {settle ? (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={settle.run}
+            disabled={settle.busy}
+          >
+            {settle.label}
+          </Button>
+        ) : isCurrent ? (
           <Button variant="outline" className="w-full" disabled>
             Your plan
           </Button>
@@ -209,6 +228,7 @@ export function PlanGrid() {
   const catalog = useQuery(subscriptionQueries.catalog());
   const checkoutPlans = useQuery(subscriptionQueries.plans());
   const current = useQuery(subscriptionQueries.current());
+  const action = useBillingAction();
   const now = useOfferClock(catalog.data?.offer);
 
   if (catalog.isLoading) {
@@ -238,12 +258,17 @@ export function PlanGrid() {
       .map((p) => [p.name, p]),
   );
   // A plan of the grid that the person holds now; a trial isn't one of these plans, and an expired
-  // or cancelled subscription no longer holds one.
+  // subscription no longer holds one.
   const subscription = current.data?.subscription;
   const currentPlanId =
-    subscription && HOLDS_A_PLAN.has(subscription.status)
+    subscription &&
+    (HOLDS_A_PLAN.has(subscription.status) ||
+      subscription.status === action?.status)
       ? subscription.plan_id
       : undefined;
+  const settle = action
+    ? { label: action.label, run: action.run, busy: action.busy }
+    : null;
   const hasPaidPlan = Boolean(
     currentPlanId && [...byName.values()].some((p) => p.id === currentPlanId),
   );
@@ -264,7 +289,9 @@ export function PlanGrid() {
           </TabsList>
         </Tabs>
       </div>
-      {offer && (
+      {/* A failed renewal's notice is the shell's banner, on every page. */}
+      <BillingActionNotice kinds={["resume"]} />
+      {offer && !action && (
         <Notice tone="success" title={`${offer.label}: ${offerWords(offer)}`}>
           On any plan started before {offerEnd(offer)}.
         </Notice>
@@ -283,6 +310,7 @@ export function PlanGrid() {
                 currentPlanId && checkoutPlan?.id === currentPlanId,
               )}
               hasPaidPlan={hasPaidPlan}
+              settle={settle}
             />
           );
         })}

@@ -18,13 +18,16 @@
  * @module hooks/use-billing-actions
  */
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
+import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
 export function useBillingActions() {
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const openPaymentMethodDialog = useSubscriptionStore(
     (state) => state.openPaymentMethodDialog,
@@ -137,6 +140,14 @@ export function useBillingActions() {
         // The webhook is what actually updates our record; this refresh just
         // pulls in whatever has landed by now.
         await fetchSubscription();
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: subscriptionQueries.billingAction().queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: subscriptionQueries.current().queryKey,
+          }),
+        ]);
         toast.success(successMessage);
       } catch (error) {
         log.error(failureMessage, error);
@@ -145,7 +156,7 @@ export function useBillingActions() {
         setIsLoading(false);
       }
     },
-    [fetchSubscription],
+    [fetchSubscription, queryClient],
   );
 
   /** Pause billing and access. */
@@ -159,7 +170,7 @@ export function useBillingActions() {
     [runSubscriptionAction],
   );
 
-  /** Resume a paused subscription. */
+  /** Resume a paused subscription, or a cancelled one before its end. */
   const resumeSubscription = useCallback(
     () =>
       runSubscriptionAction(
