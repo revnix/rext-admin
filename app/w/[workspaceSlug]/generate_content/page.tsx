@@ -152,7 +152,9 @@ export default function Page() {
     }
 
     startOver();
-    if (backgroundThreadId && workspace?.slug) {
+    // A new article starts from a clean address: neither the run nor the library item it started
+    // from (a library start that failed before its run existed still names the item).
+    if ((backgroundThreadId || isLibrary) && workspace?.slug) {
       router.replace(workspaceRoutes.generate_content(workspace.slug) as Route);
     }
   };
