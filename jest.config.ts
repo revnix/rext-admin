@@ -131,7 +131,10 @@ const LEXICAL_FILES = [
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
 export default async () => {
-  const config = await createJestConfig(customJestConfig)();
+  // Typed here, not inferred: next/jest's types import @jest/types, which next
+  // doesn't depend on, and where the install doesn't hoist it (Vercel's build)
+  // the config is `any` and the build's type check fails.
+  const config: Config = await createJestConfig(customJestConfig)();
   const patterns = (config.transformIgnorePatterns ?? []).map((pattern) =>
     pattern
       .replace("(?!.pnpm)(?!(", `(?!.pnpm)(?!(${TRANSFORMED.npm}|`)
