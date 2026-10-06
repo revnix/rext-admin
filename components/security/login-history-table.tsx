@@ -11,6 +11,7 @@ import {
   useDataTableLocalState,
 } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
+import { usePermissionUser } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 
@@ -26,6 +27,10 @@ function Result({ signIn }: { signIn: SignIn }) {
   ) : (
     <Badge variant="danger">Failed</Badge>
   );
+}
+
+function deviceOf(signIn: SignIn) {
+  return signIn.device ?? signIn.browser ?? "";
 }
 
 function placeOf(signIn: SignIn) {
@@ -56,7 +61,7 @@ const columns = column.columns([
     ),
     enableSorting: false,
   }),
-  column.accessor((signIn) => signIn.device ?? signIn.browser ?? "", {
+  column.accessor((signIn) => deviceOf(signIn), {
     id: "device",
     header: "Device",
     cell: ({ getValue }) => (
@@ -74,16 +79,19 @@ const columns = column.columns([
  * 100 rows a request.
  */
 export function LoginHistoryTable() {
+  const user = usePermissionUser();
   const state = useDataTableLocalState({ pageSize: PAGE_SIZE });
   const { pageIndex, pageSize } = state.pagination;
 
   const query = useQuery({
-    queryKey: ["login-history", "mine", pageIndex, pageSize],
+    // Keyed by the person: after an impersonation starts, another account's rows never show.
+    queryKey: ["login-history", user?.id ?? null, pageIndex, pageSize],
     queryFn: () =>
       apiClient.security.getLoginHistory({
         limit: pageSize,
         offset: pageIndex * pageSize,
       }),
+    enabled: Boolean(user?.id),
     placeholderData: keepPreviousData,
     refetchInterval: 60000,
   });
@@ -101,7 +109,7 @@ export function LoginHistoryTable() {
       }
       state={state}
       manual={{ rowCount: query.data?.total_count ?? 0 }}
-      isLoading={query.isLoading}
+      isLoading={query.isLoading || !user}
       error={
         query.error ? (
           <div className="flex flex-col items-center gap-3">
@@ -131,6 +139,11 @@ export function LoginHistoryTable() {
           {placeOf(signIn) && (
             <p className="num text-sm text-muted-foreground">
               {placeOf(signIn)}
+            </p>
+          )}
+          {deviceOf(signIn) && (
+            <p className="line-clamp-2 break-all text-sm text-muted-foreground">
+              {deviceOf(signIn)}
             </p>
           )}
         </div>
