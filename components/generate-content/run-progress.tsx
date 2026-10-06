@@ -73,7 +73,8 @@ function stageTime(stage: RunStage, now: number, expected?: number): string {
 
 export interface RunProgressProps {
   stages: RunStage[];
-  /** "expanded": a row per stage. "compact": the active stage on one line over a thin bar (the dock). */
+  /** "expanded": a row per stage. "compact": the active stage and its time on one line over a thin bar,
+   *  for the dock's row, which shows the job's state icon itself. */
   variant?: "expanded" | "compact";
   /** The run hit LangGraph's time limit: said plainly, in place of the "still working" line. */
   timedOut?: boolean;
@@ -113,8 +114,8 @@ export function RunProgress({
   if (variant === "compact") {
     return (
       <div data-slot="run-progress" className={cn("space-y-1.5", className)}>
+        {/* No spinner of its own: the dock's row already shows the job's state. */}
         <div className="flex items-center gap-2 text-table">
-          {active && <StageIcon state="active" />}
           <span className="min-w-0 flex-1 truncate text-foreground">
             {timedOut
               ? "Timed out"
