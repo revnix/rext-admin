@@ -7,7 +7,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NotificationsDrawer } from "@/components/notifications-drawer";
-import { fetchNotifications } from "@/services/notification-api";
+import {
+  fetchNotifications,
+  markNotificationsAsRead,
+} from "@/services/notification-api";
 import { useNotificationStore } from "@/stores/notification-store";
 
 jest.mock("next/navigation", () => ({
@@ -77,5 +80,43 @@ describe("NotificationsDrawer, Try again", () => {
     expect(
       screen.queryByText("Your notifications didn't load"),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("NotificationsDrawer, a row without a link", () => {
+  it("is marked read when chosen", async () => {
+    (markNotificationsAsRead as jest.Mock).mockResolvedValue(undefined);
+    useNotificationStore.setState({
+      notifications: [
+        {
+          id: "n-1",
+          title: "Profile updated",
+          message: "Your profile has been successfully updated.",
+          type: "system",
+          createdAt: new Date().toISOString(),
+          read: false,
+        },
+      ],
+      unreadCount: 1,
+      isLoading: false,
+      fetchError: null,
+    });
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <NotificationsDrawer open onClose={() => {}} />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: /successfully updated.*mark as read/,
+      }),
+    );
+
+    expect(markNotificationsAsRead).toHaveBeenCalledWith(["n-1"]);
   });
 });
