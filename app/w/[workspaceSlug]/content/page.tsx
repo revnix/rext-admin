@@ -238,10 +238,12 @@ export default function WorkspaceContentPage() {
     }.`,
   );
 
-  // Every item: the table searches, filters and sorts them in the browser.
+  // Every item: the table searches, filters and sorts them in the browser. Pending, not loading:
+  // the query waits for the workspace, and a waiting query isn't loading, so the list would say
+  // "No content yet" before it had asked (D16a).
   const {
     data: content = NO_CONTENT,
-    isLoading: isContentLoading,
+    isPending: isContentPending,
     error,
   } = useAllContent(workspaceId);
 
@@ -382,7 +384,7 @@ export default function WorkspaceContentPage() {
               getRowId={(item) => item.id}
               getRowLabel={(item) => item.title || "Untitled"}
               state={tableState}
-              isLoading={isContentLoading}
+              isLoading={isContentPending}
               error={
                 error ? (
                   <Notice tone="danger" title="Content didn't load">

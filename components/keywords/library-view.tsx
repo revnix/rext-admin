@@ -130,7 +130,9 @@ export function LibraryView() {
         rows={rows}
         state={tableState}
         search={{ placeholder: "Search keywords" }}
-        isLoading={isPermissionLoading || library.isLoading}
+        // Pending, not loading: the list waits for the signed-in user, and a waiting query isn't
+        // loading, so it would say "No keywords yet" first (D16a).
+        isLoading={isPermissionLoading || (canRead && library.isPending)}
         error={
           library.error ? (
             <Notice tone="danger" title="Your keywords didn't load">

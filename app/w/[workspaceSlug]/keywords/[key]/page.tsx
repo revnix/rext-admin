@@ -56,7 +56,10 @@ export default function Page() {
   const query = libraryQueries.item(workspaceId, user?.id ?? "", key);
   const item = useQuery({ ...query, enabled: query.enabled && canRead });
   const [intent, setIntent] = useState<SearchIntent | "">("");
-  const loading = !workspaceId || isPermissionLoading || item.isLoading;
+  // Pending, not loading: the item waits for the signed-in user too, and a waiting query isn't
+  // loading (D16a). Without the right to read it never runs, so that case isn't waited for.
+  const loading =
+    !workspaceId || isPermissionLoading || (canRead && item.isPending);
   const showSkeleton = useShowAfter(loading);
 
   if (loading) {
