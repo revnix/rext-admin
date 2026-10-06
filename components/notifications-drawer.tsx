@@ -1,20 +1,22 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow, isSameDay, subDays } from "date-fns";
 import {
   AlertTriangle,
-  ArrowUpRight,
   Bell,
-  Check,
-  CheckCircle,
-  Info,
-  Mail,
+  CreditCard,
+  FileText,
+  type LucideIcon,
   Settings,
   User,
+  Users,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Notice } from "@/components/ui/notice";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -23,59 +25,103 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useNotificationStore } from "@/stores/notification-store";
+import { Skeleton } from "@/components/ui/skeleton";
 import { log } from "@/lib/logger";
-import type { OperationNotification } from "@/types/sse";
+import { workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 import {
   clearReadNotifications,
+  fetchNotifications,
   markAllNotificationsAsRead,
   markNotificationsAsRead,
 } from "@/services/notification-api";
-import type { Route } from "next";
+import { useNotificationStore } from "@/stores/notification-store";
+import type { OperationNotification } from "@/types/sse";
+import type { Workspace } from "@/types/workspace";
 
 interface NotificationsDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-const getNotificationIcon = (type: OperationNotification["type"]) => {
-  switch (type) {
-    case "success":
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
-    case "warning":
-      return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-    case "error":
-      return <AlertTriangle className="h-5 w-5 text-red-500" />;
-    case "info":
-      return <Info className="h-5 w-5 text-foreground" />;
-    case "user":
-      return <User className="h-5 w-5 text-foreground" />;
-    case "system":
-      return <Settings className="h-5 w-5 text-gray-500" />;
-    default:
-      return <Mail className="h-5 w-5 text-gray-500" />;
-  }
+/** One neutral icon per kind (design/app-language.md §2): what it's about, never a colour. */
+const KIND_ICON: Record<string, LucideIcon> = {
+  workspace: Users,
+  billing: CreditCard,
+  content: FileText,
+  generation: FileText,
+  system: Settings,
+  user: User,
 };
 
-const getNotificationBadgeColor = (type: OperationNotification["type"]) => {
-  switch (type) {
-    case "success":
-      return "bg-green-100 text-green-800";
-    case "warning":
-      return "bg-yellow-100 text-yellow-800";
-    case "error":
-      return "bg-red-100 text-red-800";
-    case "info":
-      return "bg-blue-100 text-blue-800";
-    case "user":
-      return "bg-purple-100 text-purple-800";
-    case "system":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
+function iconFor(notification: OperationNotification): LucideIcon {
+  if (notification.type === "error") return AlertTriangle;
+  const source = notification.metadata?.source;
+  if (typeof source === "string" && KIND_ICON[source]) return KIND_ICON[source];
+  return KIND_ICON[notification.type] ?? Bell;
+}
 
+/** "Today", "Yesterday", or the day itself: "Monday, October 5" (with the year when it isn't this one). */
+export function dayLabel(date: Date, now = new Date()) {
+  if (isSameDay(date, now)) return "Today";
+  if (isSameDay(date, subDays(now, 1))) return "Yesterday";
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
+  }).format(date);
+}
+
+/** The notifications by day, newest day first, in the order they came. */
+export function groupByDay(
+  notifications: OperationNotification[],
+  now = new Date(),
+) {
+  const groups: { label: string; items: OperationNotification[] }[] = [];
+  for (const notification of notifications) {
+    const label = dayLabel(new Date(notification.createdAt), now);
+    const group = groups.at(-1);
+    if (group?.label === label) group.items.push(notification);
+    else groups.push({ label, items: [notification] });
+  }
+  return groups;
+}
+
+/**
+ * Where a notification leads: the link it carries, or a finished article's page in its workspace.
+ * Only a path inside the app counts.
+ */
+export function notificationHref(
+  notification: OperationNotification,
+  workspaces: Pick<Workspace, "id" | "slug">[] = [],
+) {
+  const href = notification.metadata?.href;
+  if (typeof href === "string" && href.startsWith("/")) return href;
+  const { contentId, workspaceId } = notification.metadata ?? {};
+  if (typeof contentId !== "string" || typeof workspaceId !== "string") {
+    return null;
+  }
+  const workspace = workspaces.find((w) => w.id === workspaceId);
+  return workspace
+    ? workspaceRoutes.contentDetail(workspace.slug, contentId)
+    : null;
+}
+
+function relativeTime(timestamp: string) {
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The notifications drawer (plans/app/D-pages.md §2.8): a plain list in a Sheet, grouped by day.
+ * Each row is an icon for its kind, one sentence, when it came, and a link where it leads somewhere.
+ * There are no cards and no colours per kind.
+ */
 export function NotificationsDrawer({
   open,
   onClose,
@@ -85,7 +131,6 @@ export function NotificationsDrawer({
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const isLoading = useNotificationStore((state) => state.isLoading);
   const fetchError = useNotificationStore((state) => state.fetchError);
-
   const setNotificationRead = useNotificationStore(
     (state) => state.setNotificationRead,
   );
@@ -98,17 +143,21 @@ export function NotificationsDrawer({
   const mergeNotifications = useNotificationStore(
     (state) => state.mergeNotifications,
   );
+  const setFetchState = useNotificationStore((state) => state.setFetchState);
+  // A finished article links to its page, which needs its workspace's address.
+  const { data: workspaceList } = useQuery({
+    ...workspaceQueries.list(),
+    enabled: open,
+  });
+  const workspaces = workspaceList?.workspaces ?? [];
   const readCount = notifications.length - unreadCount;
 
   const handleMarkAsRead = async (id: string) => {
-    // Optimistic update
     setNotificationRead(id, true);
-
     try {
       await markNotificationsAsRead([id]);
     } catch (error) {
       log.error("Failed to mark notification as read", error);
-      // Revert
       setNotificationRead(id, false);
     }
   };
@@ -116,15 +165,11 @@ export function NotificationsDrawer({
   const handleMarkAllAsRead = async () => {
     const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
     if (unreadIds.length === 0) return;
-
-    // Optimistic update
     setAllNotificationsRead();
-
     try {
       await markAllNotificationsAsRead();
     } catch (error) {
       log.error("Failed to mark all notifications as read", error);
-      // Revert
       setAllNotificationsRead(unreadIds);
     }
   };
@@ -132,37 +177,19 @@ export function NotificationsDrawer({
   const handleClearRead = async () => {
     const readItems = notifications.filter((n) => n.read);
     if (readItems.length === 0) return;
-
-    // Optimistic update
     for (const n of readItems) removeNotification(n.id);
-
     try {
       await clearReadNotifications();
     } catch {
-      // Revert
       mergeNotifications(readItems);
     }
   };
 
-  const getRelativeTime = (timestamp: string) => {
-    try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch {
-      return "";
-    }
-  };
-
-  const getNotificationHref = (notification: OperationNotification) => {
-    const href = notification.metadata?.href;
-    return typeof href === "string" && href.startsWith("/") ? href : null;
-  };
-
-  const handleOpenNotification = async (
-    notification: OperationNotification,
-  ) => {
-    const href = getNotificationHref(notification);
+  const handleOpen = async (notification: OperationNotification) => {
+    const href = notificationHref(notification, workspaces);
     if (!href) return;
     if (!notification.read) {
+      // A run's own notice lives only in this browser; the rest are the backend's.
       if (notification.metadata?.kind === "content_generation") {
         setNotificationRead(notification.id, true);
       } else {
@@ -173,136 +200,168 @@ export function NotificationsDrawer({
     router.push(href as Route);
   };
 
+  const retry = async () => {
+    setFetchState({ isLoading: true, fetchError: null });
+    mergeNotifications(await fetchNotifications({ force: true }));
+    setFetchState({ isLoading: false, fetchError: null });
+  };
+
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:w-96 sm:max-w-96 p-0 data-[state=closed]:duration-200 data-[state=open]:duration-300">
-        <SheetHeader className="p-6 pb-4">
-          <SheetTitle className="flex items-center gap-2">
-            Notifications
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="bg-red-100 text-red-800">
-                {unreadCount} new
-              </Badge>
-            )}
-          </SheetTitle>
-          <SheetDescription>
-            Stay updated with your latest notifications
-          </SheetDescription>
+      <SheetContent className="w-full gap-0 p-0 sm:max-w-md">
+        <SheetHeader className="gap-3 border-b p-4 pr-12">
+          <div className="flex flex-col gap-1">
+            <SheetTitle>Notifications</SheetTitle>
+            <SheetDescription>
+              {unreadCount > 0 ? `${unreadCount} unread` : "All read"}
+            </SheetDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+              disabled={unreadCount === 0}
+            >
+              Mark all read
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearRead}
+              disabled={readCount === 0}
+            >
+              Clear read
+            </Button>
+          </div>
         </SheetHeader>
 
-        <ScrollArea
-          aria-busy={isLoading}
-          className="h-[calc(100vh-180px)] px-6"
-        >
+        <ScrollArea aria-busy={isLoading} className="min-h-0 flex-1">
           {isLoading && notifications.length === 0 ? (
-            <div className="flex h-full items-center justify-center py-8 text-sm text-muted-foreground">
-              Loading notifications...
-            </div>
-          ) : fetchError ? (
-            <div className="flex h-full items-center justify-center py-8 text-sm text-destructive">
-              Failed to load notifications. Please try again.
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center text-muted-foreground">
-              <Bell className="h-10 w-10 text-muted-foreground/70" />
-              <div>
-                <p className="font-medium text-foreground">
-                  You're all caught up
-                </p>
-                <p className="text-sm">
-                  We'll let you know when new operations complete.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3 py-2">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-3 rounded-md border transition-all hover:bg-muted/50 ${
-                    !notification.read
-                      ? "bg-muted/40 border-border"
-                      : "bg-background border-border dark:bg-background dark:border-border"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4
-                          className={`text-sm font-medium ${
-                            !notification.read
-                              ? "text-foreground"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {notification.title}
-                        </h4>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${getNotificationBadgeColor(notification.type)}`}
-                        >
-                          {notification.type}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {getRelativeTime(notification.createdAt)}
-                        </span>
-                        {getNotificationHref(notification) ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenNotification(notification)}
-                            className="h-7 px-2 text-xs text-primary hover:text-primary"
-                          >
-                            Open
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          </Button>
-                        ) : !notification.read ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
-                          >
-                            <Check className="h-3 w-3 mr-1" />
-                            Mark as read
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
+            <div className="flex flex-col gap-4 p-4">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="flex gap-3">
+                  <Skeleton className="size-4 shrink-0" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-24" />
                   </div>
                 </div>
               ))}
             </div>
+          ) : fetchError ? (
+            <div className="p-4">
+              <Notice
+                tone="danger"
+                title="Your notifications didn't load"
+                action={
+                  <Button variant="outline" size="sm" onClick={retry}>
+                    Try again
+                  </Button>
+                }
+              >
+                Try again, or refresh the page.
+              </Notice>
+            </div>
+          ) : notifications.length === 0 ? (
+            <EmptyState
+              title="You're all caught up"
+              description="We'll tell you here when an article is ready or something needs you."
+              className="p-4"
+            />
+          ) : (
+            <div className="flex flex-col gap-6 p-4">
+              {groupByDay(notifications).map((group) => (
+                <section key={group.label} className="flex flex-col gap-1">
+                  <h3 className="text-label text-muted-foreground">
+                    {group.label}
+                  </h3>
+                  <ul className="flex flex-col">
+                    {group.items.map((notification) => (
+                      <NotificationRow
+                        key={notification.id}
+                        notification={notification}
+                        href={notificationHref(notification, workspaces)}
+                        onOpen={() => handleOpen(notification)}
+                        onMarkRead={() => handleMarkAsRead(notification.id)}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
           )}
         </ScrollArea>
-
-        <div className="border-t p-6 pt-4 flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => handleMarkAllAsRead()}
-            disabled={unreadCount === 0}
-          >
-            Mark All as Read ({unreadCount})
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => handleClearRead()}
-            disabled={readCount === 0}
-          >
-            Clear Read ({readCount})
-          </Button>
-        </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function NotificationRow({
+  notification,
+  href,
+  onOpen,
+  onMarkRead,
+}: {
+  notification: OperationNotification;
+  href: string | null;
+  onOpen: () => void;
+  onMarkRead: () => void;
+}) {
+  const Icon = iconFor(notification);
+  const sentence = notification.message || notification.title;
+  const body = (
+    <>
+      <Icon
+        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span
+          className={cn(
+            "text-sm",
+            notification.read ? "text-muted-foreground" : "text-foreground",
+          )}
+        >
+          {!notification.read && <span className="sr-only">Unread: </span>}
+          {sentence}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {relativeTime(notification.createdAt)}
+        </span>
+      </span>
+      {!notification.read && (
+        <span
+          aria-hidden
+          className="mt-1.5 size-2 shrink-0 rounded-full bg-primary"
+        />
+      )}
+    </>
+  );
+
+  return (
+    <li className="flex items-start gap-2">
+      {href ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="-mx-2 flex min-w-0 flex-1 items-start gap-3 rounded-sm px-2 py-2 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          {body}
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-start gap-3 py-2">{body}</div>
+      )}
+      {!href && !notification.read && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-1 shrink-0"
+          onClick={onMarkRead}
+        >
+          Mark read
+        </Button>
+      )}
+    </li>
   );
 }
