@@ -398,9 +398,24 @@ export function PrimitivesGallery() {
             />
           </Row>
           <Row label="input states">
-            <Input placeholder="Placeholder" className="w-48" />
-            <Input defaultValue="Disabled" disabled className="w-48" />
-            <Input defaultValue="Invalid" aria-invalid className="w-48" />
+            {/* Outside a FieldController, so each names itself: a field's name is never its placeholder. */}
+            <Input
+              placeholder="Placeholder"
+              aria-label="An empty field"
+              className="w-48"
+            />
+            <Input
+              defaultValue="Disabled"
+              aria-label="A disabled field"
+              disabled
+              className="w-48"
+            />
+            <Input
+              defaultValue="Invalid"
+              aria-label="An invalid field"
+              aria-invalid
+              className="w-48"
+            />
           </Row>
         </Section>
 
@@ -605,7 +620,7 @@ export function PrimitivesGallery() {
               {/* Fixture numbers: the real meter reads the plan's credits from the backend. */}
               <Meter value={412} max={1000} label="412 of 1,000 used" />
               <Meter value={880} max={1000} low label="880 of 1,000 used" />
-              <Progress value={60} />
+              <Progress value={60} aria-label="Sample progress" />
               <div className="flex flex-wrap gap-6">
                 <ScoreRing value={86} label="SEO score" />
                 <ScoreRing value={52} label="Readability" />
