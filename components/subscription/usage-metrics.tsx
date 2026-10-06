@@ -9,7 +9,7 @@
  * @module components/subscription/usage-metrics
  */
 
-import { AlertCircle, Calendar, Loader2, TrendingUp } from "lucide-react";
+import { AlertCircle, Calendar, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -70,20 +70,10 @@ export function UsageMetrics({
   // Get status badge
   const getStatusBadge = (percentage: number) => {
     if (percentage >= 90) {
-      return (
-        <Badge variant="destructive" className="gap-1">
-          <AlertCircle className="h-3 w-3" />
-          High Usage
-        </Badge>
-      );
+      return <Badge variant="danger">High usage</Badge>;
     }
     if (percentage >= 75) {
-      return (
-        <Badge variant="warning" className="gap-1">
-          <TrendingUp className="h-3 w-3" />
-          Moderate
-        </Badge>
-      );
+      return <Badge variant="warning">Moderate</Badge>;
     }
     return <Badge variant="neutral">Healthy</Badge>;
   };

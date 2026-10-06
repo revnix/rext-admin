@@ -9,7 +9,7 @@
  * @module app/checkout/success
  */
 
-import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -126,10 +126,7 @@ export default function CheckoutSuccessPage() {
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     {subscription?.subscription.plan_display_name}
                     {subscription?.subscription.status === "trial" && (
-                      <Badge variant="secondary">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Trial
-                      </Badge>
+                      <Badge>Trial</Badge>
                     )}
                     {subscription?.subscription.status === "active" && (
                       <Badge variant="default" className="bg-green-500">
