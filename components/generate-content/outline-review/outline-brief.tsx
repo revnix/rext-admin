@@ -3,7 +3,7 @@
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useId, useLayoutEffect, useState } from "react";
 
-import { RefreshCw, UserPlus } from "lucide-react";
+import { RefreshCw, UserPlus, X } from "lucide-react";
 import { PersonaDialog } from "@/components/personas/persona-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -173,26 +173,18 @@ export function OutlineBrief({
       </BriefGroup>
 
       <BriefGroup title="Search">
-        {outline.focus_keyphrase && (
-          <Fact label="Focus keyphrase">{outline.focus_keyphrase}</Fact>
-        )}
         {outline.schema_type && (
-          <Fact label="Schema type">{outline.schema_type}</Fact>
+          <Fact label="Content type">{outline.schema_type}</Fact>
         )}
-        {outline.keywords_to_include?.length > 0 && (
-          <Fact label="Keywords to include">
-            <span className="flex flex-wrap gap-1.5 pt-0.5">
-              {outline.keywords_to_include.map((keyword) => (
-                <span
-                  key={keyword}
-                  className="rounded-sm border border-border bg-surface-inset px-1.5 py-0.5 text-table text-foreground"
-                >
-                  {keyword}
-                </span>
-              ))}
-            </span>
-          </Fact>
-        )}
+        <KeywordsSetting
+          id={`${ids}-keywords`}
+          focus={outline.focus_keyphrase ?? ""}
+          keywords={outline.keywords_to_include ?? []}
+          disabled={!canEdit}
+          onChange={(keywords_to_include) =>
+            onUpdate?.({ ...outline, keywords_to_include })
+          }
+        />
       </BriefGroup>
 
       <BriefGroup title="Author">
@@ -463,6 +455,126 @@ function Fact({
     <div className="space-y-0.5">
       <p className="text-caption text-muted-foreground">{label}</p>
       <div className="text-body text-foreground">{children}</div>
+    </div>
+  );
+}
+
+/** As many keywords, and as long, as the backend takes at approval. */
+export const MAX_SECONDARY_KEYWORDS = 20;
+export const MAX_KEYWORD_LENGTH = 80;
+
+const sameKeyword = (a: string, b: string) =>
+  a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * The keywords the article is written for (FB2.18): the focus keyphrase, which is the search
+ * the article answers and so is fixed here, and the secondary keywords, which the user can
+ * remove and add to. The writer uses each secondary keyword at least once.
+ */
+function KeywordsSetting({
+  id,
+  focus,
+  keywords,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  focus: string;
+  keywords: string[];
+  disabled: boolean;
+  onChange: (keywords: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const secondary = keywords.filter(
+    (keyword) => keyword.trim() && !sameKeyword(keyword, focus),
+  );
+  const full = secondary.length >= MAX_SECONDARY_KEYWORDS;
+  // The focus keyphrase leads the list approval sends, as the backend keeps it.
+  const send = (next: string[]) => onChange(focus ? [focus, ...next] : next);
+  const add = () => {
+    const keyword = draft.replace(/\s+/g, " ").trim();
+    setDraft("");
+    if (
+      !keyword ||
+      full ||
+      keyword.length > MAX_KEYWORD_LENGTH ||
+      sameKeyword(keyword, focus) ||
+      secondary.some((existing) => sameKeyword(existing, keyword))
+    )
+      return;
+    send([...secondary, keyword]);
+  };
+  if (!focus && secondary.length === 0 && disabled) return null;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-label text-foreground">Keywords</p>
+      <ul
+        aria-label="Keywords the article uses"
+        className="flex flex-wrap gap-2"
+      >
+        {focus && (
+          <li className="inline-flex max-w-full items-center gap-2 rounded-md border border-primary bg-card px-2 py-1 text-label text-foreground">
+            <span className="break-words">{focus}</span>
+            <span className="shrink-0 text-caption text-muted-foreground">
+              Primary
+            </span>
+          </li>
+        )}
+        {secondary.map((keyword) => (
+          <li
+            key={keyword}
+            className="inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-card py-1 pr-1 pl-2 text-label text-foreground"
+          >
+            <span className="break-words">{keyword}</span>
+            {!disabled && (
+              <button
+                type="button"
+                aria-label={`Remove ${keyword}`}
+                onClick={() =>
+                  send(secondary.filter((existing) => existing !== keyword))
+                }
+                className="flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X aria-hidden className="size-3.5" />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {!disabled && (
+        <div className="flex gap-2">
+          <Input
+            id={id}
+            value={draft}
+            maxLength={MAX_KEYWORD_LENGTH}
+            disabled={full}
+            placeholder="Add a keyword"
+            aria-label="Add a keyword"
+            aria-describedby={`${id}-help`}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                add();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={full || !draft.trim()}
+            onClick={add}
+          >
+            Add
+          </Button>
+        </div>
+      )}
+      <p id={`${id}-help`} className="text-caption text-muted-foreground">
+        {full
+          ? `That's the most an article takes (${MAX_SECONDARY_KEYWORDS}). Remove one to add another.`
+          : "The primary keyword is the search this article answers. The article uses each of the others at least once."}
+      </p>
     </div>
   );
 }
