@@ -51,14 +51,17 @@ import {
   dropGaps,
   groupRows,
   type HeadingLevel,
+  insertLevelAt,
   levelRank,
   listLabel,
   listSummary,
   MAX_ADDED_SECTIONS,
   moveTarget,
   nearestGap,
+  placeBelow,
   type SectionPlan,
   sectionPlan,
+  siblingPlace,
   type TreeRow,
 } from "@/lib/generate-content/outline-review";
 import { cn } from "@/lib/utils";
@@ -527,13 +530,19 @@ function OutlineGroup({
               const end = blockEnd(listRows, index);
               const rank = levelRank(row);
               const next = listRows[index + 1];
+              const place = siblingPlace(listRows, index);
+              // The level a new row takes just above this one; none above an H4, where it would come
+              // between a subsection and its H4s.
+              const levelAbove = insertable
+                ? insertLevelAt(listRows, index)
+                : null;
               return (
                 <Fragment key={row.key}>
                   {addForm(index)}
                   <OutlineRow
                     row={row}
-                    index={index}
-                    total={listRows.length}
+                    position={place.position}
+                    setSize={place.size}
                     plan={sectionPlan(outline, row.id)}
                     editable={editable}
                     active={row.key === currentKey}
@@ -549,11 +558,11 @@ function OutlineGroup({
                         : null
                     }
                     insertHere={
-                      insertable
-                        ? rank > 2 && index > 0
-                          ? "Add a subsection here"
-                          : "Add a section here"
-                        : null
+                      levelAbove === "H3"
+                        ? "Add a subsection here"
+                        : levelAbove === "H2"
+                          ? "Add a section here"
+                          : null
                     }
                     actions={rowActions({
                       row,
@@ -600,14 +609,15 @@ function OutlineGroup({
                         ?.contains(focused);
                       if (focused === document.body || inRow) focusRow(row.key);
                     }}
-                    onInsertHere={() =>
-                      startAdd({
-                        gap: index,
-                        level: rank > 2 && index > 0 ? "H3" : "H2",
-                        atFoot: false,
-                        returnKey: null,
-                      })
-                    }
+                    onInsertHere={() => {
+                      if (levelAbove)
+                        startAdd({
+                          gap: index,
+                          level: levelAbove,
+                          atFoot: false,
+                          returnKey: null,
+                        });
+                    }}
                   />
                 </Fragment>
               );
@@ -750,8 +760,9 @@ function rowActions({
   onAdd: (gap: number, level: "H2" | "H3") => void;
   onRemove: () => void;
 }): DataTableRowAction[] {
-  const rank = levelRank(row);
   const addDisabled = canAdd ? false : ADD_CAP_REASON;
+  // After the row's whole block (an H2's subsections, an H3's H4s), at its own level.
+  const below = addable ? placeBelow(listRows, index) : null;
   return [
     {
       label: "Rename",
@@ -795,12 +806,15 @@ function rowActions({
             },
           ]
         : []),
-    ...(addable && rank < 4
+    ...(below
       ? [
           {
-            label: rank === 3 ? "Add subsection below" : "Add section below",
+            label:
+              below.level === "H3"
+                ? "Add subsection below"
+                : "Add section below",
             icon: Plus,
-            onSelect: () => onAdd(end, rank === 3 ? "H3" : "H2"),
+            onSelect: () => onAdd(below.gap, below.level),
             disabled: addDisabled,
           },
         ]
@@ -862,8 +876,8 @@ function LevelTag({ level }: { level: "H1" | HeadingLevel }) {
 
 function OutlineRow({
   row,
-  index,
-  total,
+  position,
+  setSize,
   plan,
   editable,
   active,
@@ -885,8 +899,9 @@ function OutlineRow({
   onInsertHere,
 }: {
   row: TreeRow;
-  index: number;
-  total: number;
+  /** Its place among the rows of its level under the same parent, and how many they are. */
+  position: number;
+  setSize: number;
   plan: SectionPlan | null;
   editable: boolean;
   /** The row the tree grid's one Tab stop lands on. */
@@ -950,8 +965,8 @@ function OutlineRow({
       ref={ref}
       role="row"
       aria-level={depth + 1}
-      aria-posinset={index + 1}
-      aria-setsize={total}
+      aria-posinset={position}
+      aria-setsize={setSize}
       // While its heading is a field, the row keeps the heading it had as its name.
       aria-label={renaming ? row.heading : undefined}
       aria-labelledby={renaming ? undefined : headingId}

@@ -207,6 +207,65 @@ function takesBlock(
   return !(rank > 2 && gap === 0 && start !== 0);
 }
 
+/**
+ * Whether a new row of `rank` may go in `gap`: never above a deeper row, which it would take from the
+ * section it belongs to (a new H3 above an H4 would make that H4 its own), and no subsection at the top.
+ */
+function takesNew(listRows: TreeRow[], gap: number, rank: number): boolean {
+  if (gap < 0 || gap > listRows.length) return false;
+  if (gap < listRows.length && levelRank(listRows[gap]) > rank) return false;
+  return !(rank > 2 && gap === 0);
+}
+
+/**
+ * The level a new row takes in `gap`, by the row it would sit above: a section above a section (or at
+ * the list's end), a subsection above a subsection. Null where neither fits: above an H4, a new row
+ * would come between a subsection and its H4s.
+ */
+export function insertLevelAt(
+  listRows: TreeRow[],
+  gap: number,
+): "H2" | "H3" | null {
+  const next = listRows[gap];
+  const level = next && levelRank(next) > 2 ? "H3" : "H2";
+  return takesNew(listRows, gap, LEVEL_RANK[level]) ? level : null;
+}
+
+/**
+ * Where "Add section below" and "Add subsection below" put a new row: after the row's whole block (an
+ * H2's subsections, an H3's H4s), at the row's own level. Null for an H4, which takes no row beside it.
+ */
+export function placeBelow(
+  listRows: TreeRow[],
+  index: number,
+): { gap: number; level: "H2" | "H3" } | null {
+  const rank = levelRank(listRows[index]);
+  if (rank > 3) return null;
+  return { gap: blockEnd(listRows, index), level: rank === 3 ? "H3" : "H2" };
+}
+
+/**
+ * A row's place among its siblings: the rows of its level under the same parent (the H3s of one H2;
+ * the H2s of the list). What a tree grid's `aria-posinset` and `aria-setsize` say, beside `aria-level`.
+ */
+export function siblingPlace(
+  listRows: TreeRow[],
+  index: number,
+): { position: number; size: number } {
+  const rank = levelRank(listRows[index]);
+  let position = 1;
+  for (let at = index - 1; at >= 0 && levelRank(listRows[at]) >= rank; at -= 1)
+    if (levelRank(listRows[at]) === rank) position += 1;
+  let size = position;
+  for (
+    let at = index + 1;
+    at < listRows.length && levelRank(listRows[at]) >= rank;
+    at += 1
+  )
+    if (levelRank(listRows[at]) === rank) size += 1;
+  return { position, size };
+}
+
 /** The places a row's block may be dropped (its own included), for the drag's drop line. */
 export function dropGaps(listRows: TreeRow[], start: number): number[] {
   const end = blockEnd(listRows, start);
@@ -466,7 +525,7 @@ let addedCount = 0;
 /**
  * A new section in `gap` of its list's shown rows (0 is the top, the list's length its end), at
  * `level` when the list has levels (an H2 unless said otherwise). The rows unchanged for a blank
- * heading, past the cap, or for a subsection at the top.
+ * heading, past the cap, for a subsection at the top, or above a deeper row (`takesNew`).
  */
 export function insertRow(
   rows: TreeRow[],
@@ -478,9 +537,8 @@ export function insertRow(
   const trimmed = heading.trim();
   const listRows = shownInList(rows, list);
   if (!trimmed || !canAddSection(rows) || listRows.length === 0) return rows;
-  if (gap < 0 || gap > listRows.length) return rows;
   const hasLevels = listRows.some((row) => row.level);
-  if (hasLevels && level !== "H2" && gap === 0) return rows;
+  if (!takesNew(listRows, gap, hasLevels ? LEVEL_RANK[level] : 2)) return rows;
   addedCount += 1;
   const added: TreeRow = {
     key: `added-${addedCount}`,
@@ -710,6 +768,28 @@ export function readOutlineFaqs(outline: unknown): string[] {
     if (questions.length > 0) return questions;
   }
   return [];
+}
+
+/**
+ * Whether read-only blocks already show the FAQ, so its questions aren't listed twice: the backend's
+ * `_render.blocks` often holds a block headed "Faqs" (its label for the outline's `faqs`), and a block
+ * under another heading may list every question.
+ */
+export function blocksShowFaqs(
+  blocks: OutlineRenderBlock[],
+  questions: string[],
+): boolean {
+  const same = (text: string) => text.trim().toLowerCase();
+  return blocks.some((block) => {
+    const heading = same(block.heading);
+    if (/\bfaqs?\b/.test(heading) || heading.includes("frequently asked"))
+      return true;
+    const labels = new Set(block.items.map((item) => same(item.label)));
+    return (
+      questions.length > 0 &&
+      questions.every((question) => labels.has(same(question)))
+    );
+  });
 }
 
 // ── What a row shows under its heading ──────────────────────────────────────

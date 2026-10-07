@@ -13,6 +13,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import {
   type BrandProminence,
+  blocksShowFaqs,
   buildOutlineApproval,
   canAddSection,
   canRestoreRow,
@@ -336,7 +337,7 @@ export function OutlineReview({
       {faqs.length > 0 && <FaqList questions={faqs} />}
     </div>
   ) : (
-    <ReadOnlyBlocks blocks={readOnlyBlocks(outline)} />
+    <ReadOnlyOutline blocks={readOnlyBlocks(outline)} faqs={faqs} />
   );
 
   return (
@@ -457,6 +458,27 @@ function FaqList({ questions }: { questions: string[] }) {
         </p>
       </div>
     </section>
+  );
+}
+
+/**
+ * An outline whose sections the gate offers no edits for, with its FAQ beneath unless the blocks
+ * already show it: the backend's blocks often hold one headed "Faqs", and the questions show once.
+ */
+function ReadOnlyOutline({
+  blocks,
+  faqs,
+}: {
+  blocks: OutlineRenderBlock[];
+  faqs: string[];
+}) {
+  const listFaqs = faqs.length > 0 && !blocksShowFaqs(blocks, faqs);
+  if (!listFaqs) return <ReadOnlyBlocks blocks={blocks} />;
+  return (
+    <div className="space-y-6">
+      <ReadOnlyBlocks blocks={blocks} />
+      <FaqList questions={faqs} />
+    </div>
   );
 }
 
