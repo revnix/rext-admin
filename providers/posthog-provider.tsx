@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef } from "react";
 import { registerPostHog } from "@/lib/analytics";
+import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
@@ -18,7 +19,8 @@ function PostHogPageView() {
     let url = window.origin + pathname;
     const qs = searchParams.toString();
     if (qs) url = `${url}?${qs}`;
-    posthog.capture("$pageview", { $current_url: url });
+    // An emailed link's token (or a sign-in page's email) never reaches analytics.
+    posthog.capture("$pageview", { $current_url: redactUrl(url) });
   }, [pathname, searchParams]);
 
   return null;
@@ -72,6 +74,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageleave: true,
       persistence: "localStorage",
       autocapture: false, // keep events intentional
+      // PostHog adds the current address to every event; redact the credentials in it.
+      before_send: redactEventUrls,
     });
 
     // Wire posthog into the analytics singleton so analytics.track() etc. work
