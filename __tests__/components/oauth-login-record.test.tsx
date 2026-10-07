@@ -13,11 +13,11 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
 }));
-const mockTakeOAuthLinking = jest.fn(() => false);
+const mockTakeOAuthLinking = jest.fn((_provider: string) => false);
 jest.mock("@/lib/analytics", () => ({
   analytics: { track: jest.fn() },
   registerPostHog: jest.fn(),
-  takeOAuthLinking: () => mockTakeOAuthLinking(),
+  takeOAuthLinking: (provider: string) => mockTakeOAuthLinking(provider),
 }));
 const useSession = jest.fn();
 jest.mock("next-auth/react", () => ({ useSession: () => useSession() }));
@@ -70,6 +70,7 @@ it("records no sign-in for a provider linked from the settings (C13b)", () => {
     data: { oauthLogin: { provider: "github", isNew: false, at: 1005 } },
   });
   render(<OAuthLoginRecord />);
+  expect(mockTakeOAuthLinking).toHaveBeenCalledWith("github");
   expect(track).not.toHaveBeenCalled();
 });
 

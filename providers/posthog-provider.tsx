@@ -84,7 +84,7 @@ export function OAuthLoginRecord() {
       // Storage refused: this page's set above still records it once.
     }
     // A provider linked from the settings is not a sign-in (markOAuthLinking); a new account still is.
-    if (takeOAuthLinking() && !login.isNew) return;
+    if (takeOAuthLinking(login.provider) && !login.isNew) return;
     analytics.track(login.isNew ? "user_signed_up" : "user_signed_in", {
       method: login.provider,
     });
