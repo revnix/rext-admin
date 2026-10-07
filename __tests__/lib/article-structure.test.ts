@@ -74,10 +74,53 @@ describe("articleStructure", () => {
     expect(
       articleStructure(body, [], false).map((e) => `${e.level} ${e.heading}`),
     ).toEqual(["2 Title again", "2 One", "3 Two"]);
+    expect(articleStructure(body, [], false)[0].title).toBe(true);
+  });
+});
+
+describe("articleStructure, headings that resemble one another", () => {
+  it("doesn't take a later heading for an earlier one it contains", () => {
+    const planned = [
+      { heading: "Benefits" },
+      { heading: "Costs" },
+      { heading: "Benefits of a co-host" },
+      { heading: "Next steps" },
+    ];
+    const entries = articleStructure("## Benefits\n\ntext", planned, true);
+    expect(entries.map((e) => `${e.heading}: ${e.state}`)).toEqual([
+      "Benefits: writing",
+      "Costs: waiting",
+      "Benefits of a co-host: waiting",
+      "Next steps: waiting",
+    ]);
+  });
+
+  it("matches a repeated heading in the outline's order", () => {
+    const planned = [
+      { heading: "Overview" },
+      { heading: "Setup" },
+      { heading: "Overview" },
+      { heading: "Wrap up" },
+    ];
+    const entries = articleStructure("## Overview\n\ntext", planned, true);
+    expect(entries.map((e) => e.heading)).toEqual([
+      "Overview",
+      "Setup",
+      "Overview",
+      "Wrap up",
+    ]);
   });
 });
 
 describe("writingPosition", () => {
+  it("leaves a body's own h1 out of the count", () => {
+    const body = "# The title again\n\n## Pick a show idea\n\nText";
+    expect(writingPosition(articleStructure(body, outline, true))).toEqual({
+      section: 1,
+      sections: 4,
+    });
+  });
+
   it("counts main sections: the one being written of all planned", () => {
     const body = "## Pick a show idea\n\nText.\n\n## Choose a format\n\nA solo";
     expect(writingPosition(articleStructure(body, outline, true))).toEqual({

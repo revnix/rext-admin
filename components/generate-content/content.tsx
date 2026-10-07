@@ -825,10 +825,10 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  // The article's actions, each named (D23), in one bar above the page (task 703): four across
-  // on a phone, in a row from 640 px.
+  // The article's actions, each named (D23), in one bar above the page (task 703): two by two
+  // on a phone, where four named buttons don't fit one row, and in a row from 640 px.
   const actionButtons = (
-    <div className="grid grid-cols-4 gap-2 sm:flex sm:justify-end">
+    <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
       <div>
         {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
         {canUpdate ? (

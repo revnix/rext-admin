@@ -10,6 +10,8 @@ export type StructureEntry = {
   level: 2 | 3;
   heading: string;
   state: StructureState;
+  /** A body's own h1 (rare: the title sits above the body). Listed, but not a section to count. */
+  title?: true;
 };
 
 type Planned = { heading: string; heading_level?: "H2" | "H3" };
@@ -29,9 +31,11 @@ const words = (heading: string) =>
 const clean = (heading: string) =>
   heading.replace(/[*_`~]|\[|\]\([^)]*\)/g, "").trim();
 
+// The same heading in two spellings (numbering, marks, case). Not containment: "Benefits" is not
+// "Benefits of X", which would take a later section for an earlier one.
 const same = (a: string, b: string) => {
   const [x, y] = [words(a), words(b)];
-  return x !== "" && y !== "" && (x === y || x.includes(y) || y.includes(x));
+  return x !== "" && x === y;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -89,9 +93,9 @@ export function articleStructure(
   writing: boolean,
 ): StructureEntry[] {
   const written = [...(body ?? "").matchAll(HEADING_LINE)].map((match) => ({
-    // A body's own h1 is rare (the title sits above it); it lists with the sections.
     level: (match[1].length === 3 ? 3 : 2) as 2 | 3,
     heading: clean(match[2]),
+    ...(match[1].length === 1 ? { title: true as const } : {}),
   }));
 
   const entries: StructureEntry[] = written.map((entry, index) => ({
@@ -102,10 +106,18 @@ export function articleStructure(
 
   // Still to come: the outline's headings after the last one the text already has. One the writer
   // reworded on the way is taken as written, not listed as waiting for ever.
+  // Matched in the outline's order: each planned heading is looked for after the last match, so a
+  // heading repeated or resembling a later one can't jump the list ahead.
   let lastWritten = -1;
+  let from = 0;
   planned.forEach((section, index) => {
-    if (written.some((entry) => same(entry.heading, section.heading))) {
+    const at = written.findIndex(
+      (entry, position) =>
+        position >= from && same(entry.heading, section.heading),
+    );
+    if (at >= 0) {
       lastWritten = index;
+      from = at + 1;
     }
   });
   for (const section of planned.slice(lastWritten + 1)) {
@@ -121,7 +133,7 @@ export function articleStructure(
 
 /** Where the writing is, for the page's status line: "section 3 of 7", counting main sections. */
 export function writingPosition(entries: StructureEntry[]) {
-  const sections = entries.filter((entry) => entry.level === 2);
+  const sections = entries.filter((entry) => entry.level === 2 && !entry.title);
   const reached = sections.filter((entry) => entry.state !== "waiting").length;
   return { section: reached, sections: sections.length };
 }
