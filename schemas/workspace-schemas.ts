@@ -32,14 +32,25 @@ const urlSchema = z
     },
   );
 
+/**
+ * Any time zone the browser's Intl accepts. Not `Intl.supportedValuesOf("timeZone")`: that lists only
+ * canonical names, without "UTC", "Etc/UTC" or the aliases browsers still report (Asia/Calcutta,
+ * Europe/Kiev), and the create form's hidden time zone then refused those users silently (D22).
+ */
+export function isTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Timezone validation schema with IANA timezone support
 const timezoneSchema = z
   .string()
   .optional()
-  .refine(
-    (tz) => !tz || Intl.supportedValuesOf("timeZone").includes(tz),
-    "Please select a valid timezone",
-  );
+  .refine((tz) => !tz || isTimeZone(tz), "Please select a valid timezone");
 
 // Form validation constants
 export const WORKSPACE_CONSTRAINTS = {
