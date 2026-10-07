@@ -46,13 +46,21 @@ export function AccountDeactivation() {
     retry: false,
   });
 
+  const status = subscription?.subscription?.status;
+  // A trial Lemon Squeezy doesn't bill ends with the account: nothing to cancel and
+  // nothing renews, so it isn't asked about (D24, rext-control#580). The request
+  // still says to end it, which the backend needs for any plan that gives access.
+  const isLocalTrial =
+    status === SubscriptionStatus.TRIAL &&
+    !subscription?.subscription?.lemonsqueezy_subscription_id &&
+    !subscription?.billing_account?.lemonsqueezy_subscription_id;
   // A plan that renews counts, a past-due one too: Lemon Squeezy is still retrying
   // its payment, and closing the account stops that.
   const hasActiveSubscriptions =
-    subscription &&
-    (subscription?.subscription?.status === SubscriptionStatus.ACTIVE ||
-      subscription?.subscription?.status === SubscriptionStatus.TRIAL ||
-      subscription?.subscription?.status === SubscriptionStatus.PAST_DUE);
+    !isLocalTrial &&
+    (status === SubscriptionStatus.ACTIVE ||
+      status === SubscriptionStatus.TRIAL ||
+      status === SubscriptionStatus.PAST_DUE);
 
   // Convert single subscription to array format for easier rendering
   const subscriptions = hasActiveSubscriptions ? [subscription] : [];
@@ -107,7 +115,7 @@ export function AccountDeactivation() {
         password: values.password,
         cancel_subscriptions: hasActiveSubscriptions
           ? values.cancel_subscriptions
-          : false,
+          : isLocalTrial,
       })
       .catch(() => undefined);
   };
@@ -119,6 +127,13 @@ export function AccountDeactivation() {
         Deactivating your account is a serious action. Your account will be
         scheduled for permanent deletion in 14 days.
       </Notice>
+
+      {isLocalTrial && (
+        <Notice tone="info" title="Your trial ends now">
+          Closing your account ends your trial today. There&apos;s nothing to
+          cancel, and nothing renews.
+        </Notice>
+      )}
 
       {hasActiveSubscriptions && (
         <Notice tone="warning" title="Active subscriptions detected">
