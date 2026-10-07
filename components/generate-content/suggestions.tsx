@@ -9,7 +9,7 @@ import {
   KeywordTable,
 } from "@/components/keywords/keyword-table";
 import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
-import { WithSidePane } from "@/components/layouts";
+import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTimedOut } from "@/hooks/use-timed-out";
@@ -86,6 +86,9 @@ export function SuggestionsSection({
   );
 
   const serpTitles = useMemo(() => serpResultsFromGate(gate), [gate]);
+  // Under 1024 px the search results open from the step's own flow: a floating button covered the
+  // Analyze buttons at the end of the list (E29).
+  const resultsButton = serpTitles.length > 0 ? <SidePaneTrigger /> : null;
 
   const step = (
     <div className="flex w-full flex-col gap-6 pt-4 pb-4">
@@ -103,27 +106,33 @@ export function SuggestionsSection({
           }
         />
       ) : (
-        <p
-          role="status"
-          className="flex items-center gap-2 text-body text-muted-foreground"
-        >
-          {analysisTimedOut ? (
-            "The keyword analysis didn't return its data."
-          ) : (
-            <>
-              <Loader2
-                className="size-4 animate-spin motion-reduce:animate-none"
-                aria-hidden
-              />
-              Fetching the keyword's data...
-            </>
-          )}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p
+            role="status"
+            className="flex items-center gap-2 text-body text-muted-foreground"
+          >
+            {analysisTimedOut ? (
+              "The keyword analysis didn't return its data."
+            ) : (
+              <>
+                <Loader2
+                  className="size-4 animate-spin motion-reduce:animate-none"
+                  aria-hidden
+                />
+                Fetching the keyword's data...
+              </>
+            )}
+          </p>
+          {resultsButton}
+        </div>
       )}
 
       {seoResult && (
         <section aria-label="Other keywords" className="flex flex-col gap-3">
-          <h2 className="text-section text-foreground">Other keywords</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-section text-foreground">Other keywords</h2>
+            {resultsButton}
+          </div>
           <KeywordTable
             caption="Suggested keywords"
             rows={rows}
@@ -149,6 +158,7 @@ export function SuggestionsSection({
     <WithSidePane
       sideTitle="Top search results"
       showTitle
+      trigger="inline"
       side={<SerpSnapshot results={serpTitles} heading={null} />}
     >
       {step}

@@ -110,4 +110,22 @@ it("has no side pane when the run has no search results", () => {
 
   expect(mockShown).toEqual([]);
   expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Top search results" }),
+  ).not.toBeInTheDocument();
+});
+
+it("opens the search results from the Continue row under 1024 px, with nothing floating over Continue", async () => {
+  renderStep();
+
+  const buttons = screen.getAllByRole("button", { name: "Top search results" });
+  expect(buttons).toHaveLength(1);
+  expect(buttons[0]).not.toHaveClass("fixed");
+  const row = screen.getByRole("button", { name: /^continue/i }).parentElement;
+  expect(row?.firstElementChild).toBe(buttons[0]);
+
+  await userEvent.click(buttons[0]);
+  expect(
+    await screen.findByRole("dialog", { name: "Top search results" }),
+  ).toBeInTheDocument();
 });
