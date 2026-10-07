@@ -1110,10 +1110,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                   writing && structure.length > 0 ? (
                     // Before the first words arrive: the title, and below it the outline's
                     // sections where they will be written. No grey bars to watch (task 703).
-                    (displayTitle || outline?.title) && (
+                    // The title is the one the person chose (the outline's): what streams in
+                    // meanwhile is unfinished, and showed a section's heading as the title.
+                    (outline?.title || displayTitle) && (
                       <header>
                         {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
-                        <h1>{displayTitle || outline?.title}</h1>
+                        <h1>{outline?.title || displayTitle}</h1>
                       </header>
                     )
                   ) : (

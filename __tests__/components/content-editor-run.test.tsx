@@ -151,6 +151,8 @@ describe("ContentEditor while the article is written, as the page shows it (task
         isEnhancing: true,
         enhancingMsg: "Research",
         generatedContent: "",
+        // What streams in meanwhile is unfinished: the chosen title wins over it.
+        allContent: { title: "Export and validate" } as never,
         // A blog's outline keeps its sections a level down.
         outline: {
           title: "How to start a podcast",
