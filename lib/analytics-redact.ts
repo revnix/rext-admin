@@ -71,3 +71,47 @@ export function redactEventUrls<
   }
   return event;
 }
+
+/** What the provider needs of posthog-js to read and replace what it keeps in the browser. */
+interface StoredProperties {
+  get_property: (name: string) => unknown;
+  persistence?: { register: (properties: Record<string, unknown>) => unknown };
+}
+
+/** An address pair as posthog-js stores it: `u` is the page, `r` its referrer. */
+function redactedPair(pair: unknown): Record<string, unknown> | null {
+  if (!pair || typeof pair !== "object") return null;
+  const copy = { ...(pair as Record<string, unknown>) };
+  let changed = false;
+  for (const key of ["u", "r"]) {
+    const value = copy[key];
+    if (typeof value !== "string") continue;
+    const redacted = redactUrl(value);
+    if (redacted !== value) {
+      copy[key] = redacted;
+      changed = true;
+    }
+  }
+  return changed ? copy : null;
+}
+
+/**
+ * posthog-js keeps the first address and referrer of the person, and of each session, in the
+ * browser's storage, raw, before `before_send` sees any event. This replaces them with redacted
+ * copies. The provider calls it when the SDK starts (what an earlier visit left is cleaned too)
+ * and whenever a session begins.
+ */
+export function redactStoredAddresses(client: StoredProperties): void {
+  const person = redactedPair(client.get_property("$initial_person_info"));
+  if (person) client.persistence?.register({ $initial_person_info: person });
+
+  // The session's pair sits one level down, beside the session's id.
+  const session = client.get_property("$client_session_props");
+  if (!session || typeof session !== "object") return;
+  const props = redactedPair((session as { props?: unknown }).props);
+  if (props) {
+    client.persistence?.register({
+      $client_session_props: { ...session, props },
+    });
+  }
+}

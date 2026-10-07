@@ -20,6 +20,8 @@ jest.mock("posthog-js", () => ({
     },
     identify: () => mockCalls.push("identify"),
     reset: jest.fn(),
+    get_property: jest.fn(),
+    onSessionId: jest.fn(),
   },
 }));
 jest.mock("posthog-js/react", () => ({
