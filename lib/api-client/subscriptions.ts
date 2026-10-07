@@ -6,6 +6,7 @@ import { log } from "@/lib/logger";
  */
 
 import type {
+  BillingAction,
   BillingPeriod,
   CheckoutSessionResponse,
   CustomerPortalResponse,
@@ -20,9 +21,11 @@ import type {
   UserSubscription,
   CreditBalance,
 } from "@/types/subscription";
+import type { PlanCatalog } from "@/types/plan-catalog";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
+import type { OrderRow } from "@/types/subscription";
 
 export function createSubscriptionsNamespace(client: ApiClient) {
   return {
@@ -35,12 +38,22 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
       const response = await client.request<UserSubscription>(
-        ENDPOINTS.SUBSCRIPTIONS.mySubscription,
+        ENDPOINTS.SUBSCRIPTIONS.current,
         {
           method: "GET",
         },
       );
       return response;
+    },
+
+    /**
+     * The public plan catalogue (`GET /api/v1/plans`, no sign-in): what the pricing page and the
+     * paywall show. Checkout still takes a plan's id from `getPlans`.
+     */
+    getCatalog: async (): Promise<PlanCatalog> => {
+      return client.request<PlanCatalog>(ENDPOINTS.SUBSCRIPTIONS.catalog, {
+        method: "GET",
+      });
     },
 
     /**
@@ -261,15 +274,85 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     /**
      * Get invoices for the current user
      *
+     * @param limit - Maximum number of invoices to return (default: 1000000)
      * @returns List of invoices
      */
-    getInvoices: async (): Promise<InvoiceListResponse> => {
+    getInvoices: async (limit = 1000000): Promise<InvoiceListResponse> => {
       return client.request<InvoiceListResponse>(
-        ENDPOINTS.SUBSCRIPTIONS.invoices,
+        buildUrl(ENDPOINTS.SUBSCRIPTIONS.invoices, { limit }),
         {
           method: "GET",
         },
       );
+    },
+
+    /**
+     * Get LemonSqueezy's signed billing URLs for the current subscription.
+     *
+     * `update_payment_method` is frameable and belongs in the checkout overlay.
+     * `customer_portal` refuses framing, so it can only open in a new tab — it
+     * is only needed for tax IDs and billing addresses.
+     *
+     * Both expire after ~24h, so fetch on click rather than caching.
+     */
+    getBillingUrls: async (): Promise<{
+      update_payment_method: string | null;
+      customer_portal: string | null;
+    }> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.billingUrls, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * The action for the person's unfinished subscription, or null (plan F11). It reads only the
+     * backend's database, so the shell can ask on every page.
+     */
+    getBillingAction: async (): Promise<{
+      billing_action: BillingAction | null;
+    }> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.billingAction, {
+        method: "GET",
+      });
+    },
+
+    /**
+     * Pause the current subscription (billing and access both stop).
+     */
+    pauseSubscription: async (): Promise<unknown> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.pause, { method: "POST" });
+    },
+
+    /**
+     * Resume a paused subscription, or un-cancel a cancelled one before its end.
+     */
+    resumeSubscription: async (): Promise<unknown> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.resume, { method: "POST" });
+    },
+
+    /**
+     * Purchase history, read from our own orders table.
+     *
+     * Each row carries its refund-request state so the UI can render the right
+     * control rather than offering an action the server would refuse.
+     */
+    getOrders: async (): Promise<{ orders: OrderRow[]; count: number }> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.orders, { method: "GET" });
+    },
+
+    /**
+     * Ask an admin to refund an order. Creates a request; moves no money.
+     */
+    requestRefund: async (data: {
+      lemonsqueezy_order_id: string;
+      reason: string;
+      // No amount: a request is always the whole remaining payment (the refund rule).
+    }): Promise<unknown> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.refundRequests, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
     },
 
     // ============================================================================
@@ -323,10 +406,14 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     /**
      * Get current credit balance
      *
+     * @param workspaceId - Optional active workspace UUID to query against owner's credits
      * @returns Current credit balance and limits
      */
-    getCredits: async (): Promise<CreditBalance> => {
-      return client.request<CreditBalance>(ENDPOINTS.SUBSCRIPTIONS.credits, {
+    getCredits: async (workspaceId?: string): Promise<CreditBalance> => {
+      const url = workspaceId
+        ? `${ENDPOINTS.SUBSCRIPTIONS.credits}?workspace_id=${encodeURIComponent(workspaceId)}`
+        : ENDPOINTS.SUBSCRIPTIONS.credits;
+      return client.request<CreditBalance>(url, {
         method: "GET",
       });
     },

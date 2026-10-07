@@ -9,6 +9,7 @@ export const initialState: PageState = {
   step: "keyword",
   userKeyword: "",
   country: "us",
+  analyzedCountry: "",
   primaryKeyword: "",
   suggestedKeywords: [],
   generatedContent: "",
@@ -28,17 +29,18 @@ export const initialState: PageState = {
   contentTypes: [],
   loadingStatus: "",
   isManualLoading: false,
-  completedNodes: [],
   readabilityScore: null,
+  checklist: null,
   seoScore: null,
   trustScore: null,
   eeatData: null,
   allContent: null,
-  currentLoadingSteps: [],
+  run: null,
   keywordDifficulty: null,
   keywordClusters: [],
   recommendedContentType: null,
   recommendedTopic: null,
+  selectedContentType: null,
 };
 
 export function generationReducer(
@@ -72,6 +74,9 @@ export function generationReducer(
     case "SET_READABILITY_SCORE":
       if (state.readabilityScore === action.payload) return state;
       return { ...state, readabilityScore: action.payload };
+    case "SET_CHECKLIST":
+      if (state.checklist === action.payload) return state;
+      return { ...state, checklist: action.payload };
     case "SET_TRUST_SCORE":
       if (state.trustScore === action.payload) return state;
       return { ...state, trustScore: action.payload };
@@ -86,6 +91,9 @@ export function generationReducer(
       return { ...state, interrupt: action.payload };
     case "SET_RECOMMENDED_CONTENT_TYPE":
       return { ...state, recommendedContentType: action.payload };
+    case "SET_SELECTED_CONTENT_TYPE":
+      if (state.selectedContentType === action.payload) return state;
+      return { ...state, selectedContentType: action.payload };
     case "SET_RECOMMENDED_TOPIC":
       return { ...state, recommendedTopic: action.payload };
     case "SET_TOPICS":
@@ -103,20 +111,22 @@ export function generationReducer(
       };
     case "SET_KEYWORD_CLUSTERS":
       return { ...state, keywordClusters: action.payload };
-    case "SET_LOADING_STEPS":
-      return { ...state, currentLoadingSteps: action.payload };
+    case "SET_RUN_PHASE":
+      return {
+        ...state,
+        run: action.payload
+          ? {
+              phase: action.payload.phase,
+              joined: action.payload.joined ?? false,
+              stageId: action.payload.stageId,
+              seq: (state.run?.seq ?? 0) + 1,
+            }
+          : null,
+      };
     case "SET_LOADING_STATUS":
       return handleLoadingStatus(state, action.payload);
     case "SET_MANUAL_LOADING":
       return { ...state, isManualLoading: action.payload };
-    case "CLEAR_COMPLETED_NODES":
-      return { ...state, completedNodes: [] };
-    case "ADD_COMPLETED_NODE":
-      if (state.completedNodes.includes(action.payload)) return state;
-      return {
-        ...state,
-        completedNodes: [...state.completedNodes, action.payload],
-      };
     case "RESET_FOR_THREAD_SWITCH":
       // Clear all content-related state so a previously-viewed thread's final
       // article / scores / outline don't bleed into the new thread's view.
@@ -128,6 +138,28 @@ export function generationReducer(
         userKeyword: state.userKeyword,
         country: state.country,
       };
+    case "RESET_FOR_REANALYSIS":
+      // A keyword + country analysis is self-contained: when either changes,
+      // nothing derived from the previous pair (recommendations, metrics,
+      // clusters, later-step data) may remain visible or be diffed against the
+      // new result. The inputs themselves and the thread are kept.
+      return {
+        ...state,
+        analyzedCountry: "",
+        suggestedKeywords: [],
+        seoResult: null,
+        serp: null,
+        competitors: null,
+        keywordClusters: [],
+        keywordDifficulty: null,
+        interrupt: null,
+        topics: [],
+        contentTypes: [],
+        outline: null,
+        recommendedContentType: null,
+        recommendedTopic: null,
+        selectedContentType: null,
+      };
     case "UPDATE_FROM_STREAM":
       return handleStreamUpdate(state, action.payload);
     default:
@@ -136,19 +168,7 @@ export function generationReducer(
 }
 
 function handleLoadingStatus(state: PageState, nextStatus: string): PageState {
-  const prevStatus = state.loadingStatus;
-  const nextCompleted = [...state.completedNodes];
-  if (prevStatus?.endsWith("...") && prevStatus !== nextStatus) {
-    const finishedNode = prevStatus.slice(0, -3);
-    if (!nextCompleted.includes(finishedNode)) {
-      nextCompleted.push(finishedNode);
-    }
-  }
-  return {
-    ...state,
-    loadingStatus: nextStatus,
-    completedNodes: nextCompleted,
-  };
+  return { ...state, loadingStatus: nextStatus };
 }
 
 function handleStreamUpdate(
@@ -196,6 +216,14 @@ function handleStreamUpdate(
         }
         if (primaryKeyword && state.primaryKeyword !== primaryKeyword) {
           newState.primaryKeyword = primaryKeyword;
+          changed = true;
+        }
+        const analyzedCountry = interruptValue.Country;
+        if (
+          typeof analyzedCountry === "string" &&
+          state.analyzedCountry !== analyzedCountry
+        ) {
+          newState.analyzedCountry = analyzedCountry;
           changed = true;
         }
         if (

@@ -17,6 +17,7 @@ export interface AuditLog {
   resource_type: string;
   resource_id: string | null;
   workspace_id: string | null;
+  workspace_name?: string | null;
   ip_address: string | null;
   user_agent: string | null;
   request_id: string | null;
@@ -91,10 +92,40 @@ export const AuditActions = {
   INVITATION_ACCEPT: "invitation.accept",
   INVITATION_REVOKE: "invitation.revoke",
 
-  // Subscription actions
+  // Subscription actions (canonical past-tense)
+  SUBSCRIPTION_CREATED: "subscription.created",
+  SUBSCRIPTION_UPDATED: "subscription.updated",
+  SUBSCRIPTION_UPGRADED: "subscription.upgraded",
+  SUBSCRIPTION_DOWNGRADED: "subscription.downgraded",
+  SUBSCRIPTION_CANCELLED: "subscription.cancelled",
+  SUBSCRIPTION_RESUMED: "subscription.resumed",
+  SUBSCRIPTION_PAUSED: "subscription.paused",
+  SUBSCRIPTION_EXPIRED: "subscription.expired",
+  SUBSCRIPTION_RENEWED: "subscription.renewed",
+
+  // Subscription legacy aliases
   SUBSCRIPTION_CREATE: "subscription.create",
   SUBSCRIPTION_UPGRADE: "subscription.upgrade",
   SUBSCRIPTION_CANCEL: "subscription.cancel",
+
+  // Payment actions
+  PAYMENT_SUCCEEDED: "payment.succeeded",
+  PAYMENT_FAILED: "payment.failed",
+  PAYMENT_RECOVERED: "payment.recovered",
+  PAYMENT_REFUNDED: "payment.refunded",
+
+  // Refund actions
+  REFUND_REQUESTED: "refund.requested",
+  REFUND_APPROVED: "refund.approved",
+  REFUND_REJECTED: "refund.rejected",
+  REFUND_PROCESSED: "refund.processed",
+  REFUND_FAILED: "refund.failed",
+  REFUND_CANCELLED: "refund.cancelled",
+
+  // Admin actions
+  ADMIN_REFUND_CREATED: "admin.refund_created",
+  ADMIN_SUBSCRIPTION_EXTENDED: "admin.subscription_extended",
+  ADMIN_SUBSCRIPTION_CANCELLED: "admin.subscription_cancelled",
 } as const;
 
 /**
@@ -107,6 +138,11 @@ export const AuditResourceTypes = {
   WORKSPACE: "workspace",
   INVITATION: "invitation",
   SUBSCRIPTION: "subscription",
+  PAYMENT: "payment",
+  REFUND: "refund",
+  CHECKOUT: "checkout",
+  LICENSE: "license",
+  WEBHOOK: "webhook",
   SESSION: "session",
 } as const;
 
@@ -115,28 +151,58 @@ export const AuditResourceTypes = {
  */
 export function getActionDisplayName(action: string): string {
   const actionMap: Record<string, string> = {
-    "user.create": "Account Created",
-    "user.update": "Profile Updated",
-    "user.delete": "User Deleted",
-    "user.suspend": "User Suspended",
-    "user.activate": "User Activated",
-    "user.ban": "User Banned",
-    "user.deactivate": "User Deactivated",
-    "auth.login": "Login",
-    "auth.logout": "Logout",
-    "auth.password_reset": "Password Reset",
-    "auth.password_change": "Password Changed",
-    "role.assign": "Role Assigned",
-    "role.revoke": "Role Revoked",
-    "workspace.create": "Workspace Created",
-    "workspace.update": "Workspace Updated",
-    "workspace.delete": "Workspace Deleted",
-    "invitation.create": "Invitation Sent",
-    "invitation.accept": "Invitation Accepted",
-    "invitation.revoke": "Invitation Revoked",
-    "subscription.create": "Subscription Created",
-    "subscription.upgrade": "Subscription Upgraded",
-    "subscription.cancel": "Subscription Cancelled",
+    "user.create": "Account created",
+    "user.update": "Profile updated",
+    "user.delete": "User deleted",
+    "user.suspend": "User suspended",
+    "user.activate": "User activated",
+    "user.ban": "User banned",
+    "user.deactivate": "User deactivated",
+    "auth.login": "Signed in",
+    "auth.logout": "Signed out",
+    "auth.password_reset": "Password reset",
+    "auth.password_change": "Password changed",
+    "role.assign": "Role assigned",
+    "role.revoke": "Role revoked",
+    "workspace.create": "Workspace created",
+    "workspace.update": "Workspace updated",
+    "workspace.delete": "Workspace deleted",
+    "invitation.create": "Invitation sent",
+    "invitation.accept": "Invitation accepted",
+    "invitation.revoke": "Invitation revoked",
+    // Subscription
+    "subscription.created": "Subscription created",
+    "subscription.create": "Subscription created",
+    "subscription.updated": "Subscription updated",
+    "subscription.update": "Subscription updated",
+    "subscription.upgraded": "Subscription upgraded",
+    "subscription.upgrade": "Subscription upgraded",
+    "subscription.downgraded": "Subscription downgraded",
+    "subscription.downgrade": "Subscription downgraded",
+    "subscription.cancelled": "Subscription cancelled",
+    "subscription.cancel": "Subscription cancelled",
+    "subscription.resumed": "Subscription resumed",
+    "subscription.resume": "Subscription resumed",
+    "subscription.paused": "Subscription paused",
+    "subscription.pause": "Subscription paused",
+    "subscription.expired": "Subscription expired",
+    "subscription.renewed": "Subscription renewed",
+    // Payment
+    "payment.succeeded": "Payment succeeded",
+    "payment.failed": "Payment failed",
+    "payment.recovered": "Payment recovered",
+    "payment.refunded": "Payment refunded",
+    // Refund
+    "refund.requested": "Refund requested",
+    "refund.approved": "Refund approved",
+    "refund.rejected": "Refund rejected",
+    "refund.processed": "Refund processed",
+    "refund.failed": "Refund failed",
+    "refund.cancelled": "Refund cancelled",
+    // Admin
+    "admin.refund_created": "Admin refund created",
+    "admin.subscription_extended": "Subscription extended",
+    "admin.subscription_cancelled": "Subscription cancelled (admin)",
   };
 
   return actionMap[action] || action;
@@ -152,18 +218,31 @@ export function getActionVariant(
     action.includes("delete") ||
     action.includes("ban") ||
     action.includes("suspend") ||
-    action.includes("revoke")
+    action.includes("revoke") ||
+    action.includes("failed") ||
+    action.includes("reject")
   ) {
     return "destructive";
   }
   if (
     action.includes("create") ||
     action.includes("login") ||
-    action.includes("activate")
+    action.includes("activate") ||
+    action.includes("succeeded") ||
+    action.includes("approved") ||
+    action.includes("recovered") ||
+    action.includes("resumed")
   ) {
     return "default";
   }
-  if (action.includes("update") || action.includes("change")) {
+  if (
+    action.includes("update") ||
+    action.includes("change") ||
+    action.includes("upgraded") ||
+    action.includes("upgrade") ||
+    action.includes("renewed") ||
+    action.includes("processed")
+  ) {
     return "secondary";
   }
   return "outline";

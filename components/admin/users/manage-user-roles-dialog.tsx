@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, Plus, Shield, Star, Trash2 } from "lucide-react";
+import { Loader2, Plus, Shield, Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/lib/api-client";
 import type { User, UserRoleAssignment } from "@/lib/api-client/users";
 
@@ -39,40 +38,70 @@ interface AssignableRole {
   name: string;
   display_name: string;
   hierarchy_level: number;
+  is_workspace_role?: boolean;
 }
 
+/** Sentinel for the platform-wide (workspace_id = null) scope in the picker. */
+export const PLATFORM_SCOPE = "platform";
+
 /**
- * Roles still offerable as a platform-wide assignment, highest authority first.
+ * Roles still offerable in the chosen scope, highest authority first.
  *
- * Only *global* assignments disqualify a role: holding a role inside a
- * workspace is a separate assignment row, so the same role can still be
- * needed platform-wide.
+ * Only assignments in the *same* scope disqualify a role: holding a role
+ * platform-wide and inside a workspace are separate assignment rows, so the
+ * same role can still be needed in the other scope.
  */
+/**
+ * Rows role management never touches: the workspace owner (ownership lives
+ * on the workspace and only moves via transfer).
+ *
+ * The former platform-wide `user` floor role has been removed from the
+ * backend, so platform roles (admin, support) are all revocable and admins
+ * can be demoted.
+ */
+function immutableReason(assignment: {
+  role_name: string;
+  workspace_id: string | null;
+}): string | undefined {
+  if (assignment.role_name === "workspace_owner")
+    return "Transfer workspace ownership instead";
+  return undefined;
+}
+
 export function assignableRoles<T extends AssignableRole>(
   allRoles: T[],
   assigned: UserRoleAssignment[],
+  workspaceId: string | null = null,
 ): T[] {
-  const assignedGlobally = new Set(
-    assigned.filter((r) => !r.workspace_id).map((r) => r.role_id),
+  const takenInScope = new Set(
+    assigned
+      .filter((r) => (r.workspace_id ?? null) === workspaceId)
+      .map((r) => r.role_id),
   );
+  const isWorkspaceScope = workspaceId !== null;
   return allRoles
-    .filter((role) => !assignedGlobally.has(role.id))
+    .filter((role) => {
+      if (takenInScope.has(role.id) || role.name === "workspace_owner") {
+        return false;
+      }
+      const isWorkspaceRole = Boolean(role.is_workspace_role);
+      return isWorkspaceScope ? isWorkspaceRole : !isWorkspaceRole;
+    })
     .sort((a, b) => b.hierarchy_level - a.hierarchy_level);
 }
 
 /**
- * Admin dialog for viewing and changing a user's platform roles.
+ * Admin dialog for viewing and changing a user's roles.
  *
  * Backs onto GET/POST /api/v1/user/{id}/roles and
  * DELETE /api/v1/user/{id}/roles/{roleId}, all of which require
  * `user.manage_roles`.
  *
- * Assignment from this screen is platform-wide (workspace_id = null).
- * Workspace-scoped roles are assigned from the workspace's own Members
- * screen, because the backend rejects a workspace assignment unless the user
- * is already a member and there is no endpoint that lists another user's
- * workspaces. Existing workspace-scoped assignments are still listed and can
- * be revoked here, with their scope passed through correctly.
+ * Assignment is scoped: platform-wide (workspace_id = null) or to one of the
+ * workspaces the user belongs to, listed by GET /user/{id}/workspaces. The two
+ * scopes are separate rows and separate permission paths — a platform role
+ * grants nothing inside a workspace and never appears on a workspace's Members
+ * screen, which is why picking the scope here matters.
  */
 export function ManageUserRolesDialog({
   open,
@@ -81,12 +110,12 @@ export function ManageUserRolesDialog({
 }: ManageUserRolesDialogProps) {
   const queryClient = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState("");
-  const [isPrimary, setIsPrimary] = useState(false);
+  const [selectedScope, setSelectedScope] = useState<string>(PLATFORM_SCOPE);
 
   useEffect(() => {
     if (open) {
       setSelectedRoleId("");
-      setIsPrimary(false);
+      setSelectedScope(PLATFORM_SCOPE);
     }
   }, [open]);
 
@@ -108,21 +137,49 @@ export function ManageUserRolesDialog({
     enabled: open,
   });
 
+  // Workspaces this user belongs to — the valid scopes for an assignment.
+  // The backend rejects a workspace-scoped role for a non-member, so the
+  // picker only ever offers workspaces they are actually in.
+  const { data: userWorkspaces, isLoading: workspacesLoading } = useQuery({
+    queryKey: ["user-workspaces", user?.id],
+    queryFn: () => apiClient.users.listWorkspaces(user?.id ?? ""),
+    enabled: open && Boolean(user?.id),
+  });
+
   const assigned: UserRoleAssignment[] = useMemo(
     () => userRoles?.roles ?? [],
     [userRoles],
   );
 
+  const scopeWorkspaceId =
+    selectedScope === PLATFORM_SCOPE ? null : selectedScope;
+
   const availableRoles = useMemo(
-    () => assignableRoles(allRoles?.roles ?? [], assigned),
-    [allRoles, assigned],
+    () => assignableRoles(allRoles?.roles ?? [], assigned, scopeWorkspaceId),
+    [allRoles, assigned, scopeWorkspaceId],
   );
+
+  // One role per workspace: assigning here replaces whatever is held.
+  const heldInWorkspace = scopeWorkspaceId
+    ? assigned.find((r) => r.workspace_id === scopeWorkspaceId)
+    : undefined;
+
+  const isWorkspaceOwner =
+    Boolean(scopeWorkspaceId) &&
+    heldInWorkspace?.role_name === "workspace_owner";
 
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["user-roles", user?.id] }),
+      queryClient.invalidateQueries({
+        queryKey: ["user-workspaces", user?.id],
+      }),
       // display_role in the users table is derived from role assignments.
       queryClient.invalidateQueries({ queryKey: ["admin-users"] }),
+      // A workspace-scoped assignment changes what the workspace's Members
+      // screen shows. Prefix key — every cached workspace is refreshed, since
+      // this dialog does not know which one is currently on screen.
+      queryClient.invalidateQueries({ queryKey: ["workspace-members"] }),
     ]);
   };
 
@@ -132,14 +189,24 @@ export function ManageUserRolesDialog({
       if (!selectedRoleId) throw new Error("No role selected");
       return apiClient.users.assignRole(user.id, {
         role_id: selectedRoleId,
-        workspace_id: null,
-        is_primary: isPrimary,
+        workspace_id: scopeWorkspaceId,
+        // A platform-wide role only grants anything when is_primary is true:
+        // the global permission lookup filters on
+        // `workspace_id IS NULL AND is_primary IS TRUE` (AuthService). Sending
+        // false wrote a row that granted nothing. The workspace path does not
+        // filter on it at all, so true is correct for both scopes.
+        is_primary: true,
       });
     },
     onSuccess: async (data) => {
-      toast.success(`${data.role_display_name} assigned`);
+      toast.success(
+        data.workspace_name
+          ? heldInWorkspace
+            ? `${heldInWorkspace.role_display_name} replaced with ${data.role_display_name} in ${data.workspace_name}`
+            : `${data.role_display_name} assigned in ${data.workspace_name}`
+          : `${data.role_display_name} assigned platform-wide`,
+      );
       setSelectedRoleId("");
-      setIsPrimary(false);
       await invalidate();
     },
     onError: (error: Error) => {
@@ -180,7 +247,7 @@ export function ManageUserRolesDialog({
             Manage roles
           </DialogTitle>
           <DialogDescription>
-            Platform roles for <strong>{displayName}</strong> ({user.email})
+            Roles for <strong>{displayName}</strong> ({user.email})
           </DialogDescription>
         </DialogHeader>
 
@@ -195,15 +262,13 @@ export function ManageUserRolesDialog({
                 <Skeleton className="h-14 w-full" />
               </div>
             ) : rolesError ? (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {rolesError instanceof Error
-                    ? rolesError.message
-                    : "Could not load this user's roles."}
-                </AlertDescription>
-              </Alert>
+              <Notice tone="danger" title="This user's roles didn't load">
+                {rolesError instanceof Error
+                  ? rolesError.message
+                  : "Close this and open it again to retry."}
+              </Notice>
             ) : assigned.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center">
+              <div className="rounded-md border border-dashed p-6 text-center">
                 <p className="text-sm text-muted-foreground">
                   No roles assigned
                 </p>
@@ -212,7 +277,7 @@ export function ManageUserRolesDialog({
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border divide-y">
+              <div className="rounded-md border divide-y">
                 {assigned.map((assignment) => (
                   <div
                     key={assignment.id}
@@ -224,24 +289,21 @@ export function ManageUserRolesDialog({
                           {assignment.role_display_name}
                         </span>
                         {assignment.is_primary && (
-                          <Badge variant="default" className="text-[10px] h-5">
+                          <Badge variant="default" className="h-5">
                             <Star className="h-2.5 w-2.5 mr-1" />
                             Primary
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px] h-5">
+                        <Badge variant="outline" className="h-5">
                           {assignment.workspace_id
-                            ? (assignment.workspace_name ?? "Workspace")
+                            ? `Workspace: ${assignment.workspace_name ?? "Unknown"}`
                             : "Platform-wide"}
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-5 font-mono"
-                        >
+                        <Badge variant="secondary" className="h-5 font-mono">
                           L{assignment.hierarchy_level}
                         </Badge>
                       </div>
-                      <code className="text-[11px] text-muted-foreground">
+                      <code className="text-caption text-muted-foreground">
                         {assignment.role_name}
                       </code>
                     </div>
@@ -250,7 +312,8 @@ export function ManageUserRolesDialog({
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive flex-shrink-0"
-                      disabled={busy}
+                      disabled={busy || Boolean(immutableReason(assignment))}
+                      title={immutableReason(assignment)}
                       onClick={() => revokeMutation.mutate(assignment)}
                     >
                       {revokeMutation.isPending &&
@@ -271,78 +334,123 @@ export function ManageUserRolesDialog({
 
           {/* Assign a role */}
           <div className="space-y-3">
-            <Label htmlFor="role">Assign a platform role</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Select
-                value={selectedRoleId}
-                onValueChange={setSelectedRoleId}
-                disabled={allRolesLoading || busy}
-              >
-                <SelectTrigger id="role" className="flex-1">
-                  <SelectValue
-                    placeholder={
-                      allRolesLoading
-                        ? "Loading roles..."
-                        : availableRoles.length === 0
-                          ? "Every role is already assigned"
-                          : "Select a role"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRoles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      <span className="flex items-center gap-2">
-                        {role.display_name}
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {role.name}
-                        </span>
+            <Label htmlFor="scope">Scope</Label>
+            <Select
+              value={selectedScope}
+              onValueChange={(value) => {
+                setSelectedScope(value);
+                // A role valid in one scope may already be taken in the other.
+                setSelectedRoleId("");
+              }}
+              disabled={workspacesLoading || busy}
+            >
+              <SelectTrigger id="scope">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PLATFORM_SCOPE} className="px-0 ps-1">
+                  Platform-wide (all workspaces)
+                </SelectItem>
+                {(userWorkspaces?.workspaces ?? []).map((ws) => (
+                  <SelectItem
+                    key={ws.workspace_id}
+                    value={ws.workspace_id}
+                    className="px-0 ps-1"
+                  >
+                    <span className="flex items-center gap-2">
+                      {/* Labelled "Workspace:" because a workspace can be named
+                          after a person. Unlabelled, "Hasnat Hassan currently
+                          Workspace Owner" reads as a person holding the role
+                          rather than the workspace the role sits in. */}
+                      <span className="text-muted-foreground">Workspace:</span>
+                      {ws.workspace_name}
+                      <span className="text-xs text-muted-foreground">
+                        {ws.current_role_display_name
+                          ? `currently ${ws.current_role_display_name}`
+                          : "no role yet"}
                       </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                onClick={() => assignMutation.mutate()}
-                disabled={!selectedRoleId || busy}
-                className="sm:w-auto"
-              >
-                {assignMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Assign
-              </Button>
-            </div>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-              <div className="min-w-0">
-                <Label htmlFor="is-primary" className="text-sm">
-                  Set as primary role
+            {isWorkspaceOwner ? (
+              <Notice>
+                This user is the Workspace Owner of this workspace. Workspace
+                owner role cannot be changed here. Transfer workspace ownership
+                instead.
+              </Notice>
+            ) : (
+              <>
+                <Label htmlFor="role">
+                  {selectedScope === PLATFORM_SCOPE
+                    ? "Assign a platform role"
+                    : "Assign a role in this workspace"}
                 </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  The primary role is the one shown next to the user's name.
-                </p>
-              </div>
-              <Switch
-                id="is-primary"
-                checked={isPrimary}
-                onCheckedChange={setIsPrimary}
-                disabled={busy}
-              />
-            </div>
+                {heldInWorkspace && (
+                  <Notice tone="warning">
+                    This user already has the{" "}
+                    {heldInWorkspace.role_display_name} role in this workspace.
+                    Assigning a new role will replace it.
+                  </Notice>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select
+                    value={selectedRoleId}
+                    onValueChange={setSelectedRoleId}
+                    disabled={
+                      allRolesLoading || busy || availableRoles.length === 0
+                    }
+                  >
+                    <SelectTrigger id="role" className="flex-1 min-w-0">
+                      <SelectValue
+                        placeholder={
+                          allRolesLoading
+                            ? "Loading roles..."
+                            : availableRoles.length === 0
+                              ? "Every role is already assigned"
+                              : "Select a role"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          <span className="flex items-center gap-2">
+                            {role.display_name}
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {role.name}
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    onClick={() => assignMutation.mutate()}
+                    disabled={
+                      !selectedRoleId || busy || availableRoles.length === 0
+                    }
+                    className="shrink-0 sm:w-auto h-9"
+                  >
+                    {assignMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    {heldInWorkspace ? "Replace" : "Assign"}
+                  </Button>
+                </div>
 
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                Roles assigned here apply platform-wide. To give someone a role
-                inside a single workspace, use that workspace's Members screen —
-                the backend only accepts a workspace-scoped role for an existing
-                member of that workspace.
-              </AlertDescription>
-            </Alert>
+                <Notice>
+                  {selectedScope === PLATFORM_SCOPE
+                    ? "A platform-wide role applies everywhere but does not appear on any workspace's Members screen, and grants no workspace-level permissions. Pick a workspace above to do that."
+                    : "This role applies only inside the selected workspace and will show on its Members screen. It does not grant platform-level permissions."}
+                </Notice>
+              </>
+            )}
           </div>
         </div>
 

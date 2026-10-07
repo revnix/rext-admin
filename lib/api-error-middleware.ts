@@ -2,7 +2,7 @@
  * API Error Handling Middleware
  *
  * Centralized error handling middleware for all API operations including
- * workspace and knowledge management. Provides consistent error handling,
+ * workspace management. Provides consistent error handling,
  * logging, and user-friendly error messages.
  */
 
@@ -25,7 +25,6 @@ const ERROR_SEVERITY_MAP: Record<WorkspaceErrorCode, ErrorSeverity> = {
   SCRAPING_FAILED: "high",
   UPLOAD_FAILED: "high",
   PERMISSION_DENIED: "high",
-  KNOWLEDGE_NOT_FOUND: "high",
   INVALID_REQUEST: "medium",
   REQUEST_TIMEOUT: "medium",
   NETWORK_ERROR: "high",
@@ -52,7 +51,6 @@ const ERROR_MESSAGES: Record<WorkspaceErrorCode, string> = {
   UPLOAD_FAILED:
     "File upload failed. Please check your internet connection and try again.",
   PERMISSION_DENIED: "You don't have permission to perform this action.",
-  KNOWLEDGE_NOT_FOUND: "The knowledge item you're looking for doesn't exist.",
   INVALID_REQUEST:
     "The request contains invalid data. Please check your input and try again.",
   REQUEST_TIMEOUT: "The request took too long to complete. Please try again.",

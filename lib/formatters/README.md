@@ -287,9 +287,9 @@ function MyComponent({ item }) {
 }
 ```
 
-### Real-World Example: Knowledge Card
+### Real-World Example: The Content Library
 
-See `components/knowledge/web-knowledge-card.tsx` and `components/knowledge/text-knowledge-card.tsx` for complete migration examples.
+See `app/w/[workspaceSlug]/content/page.tsx`, whose table and phone cards use `dateFormat.short`.
 
 **Key improvements:**
 - Reduced imports from 2-3 lines to 1-2 lines
@@ -352,5 +352,3 @@ numberFormat.integer(stats.count) // Returns "0" if null
 
 ## Related
 
-- [useDeleteHandler Hook](../../hooks/useDeleteHandler.ts) - Centralized delete handling
-- [Knowledge Components](../../components/knowledge/) - Example usage

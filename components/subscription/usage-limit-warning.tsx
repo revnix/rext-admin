@@ -1,15 +1,15 @@
 "use client";
 
-import { AlertTriangle, TrendingUp, X } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Meter } from "@/components/ui/meter";
+import { Notice } from "@/components/ui/notice";
 import { useSubscriptionStore } from "@/stores/subscription-store";
-import type { UserSubscriptionDetail } from "@/types/subscription";
 import type { Route } from "next";
 import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscription-action-variants";
+import { settingsRoutes } from "@/lib/routes";
 
 /**
  * Usage Limit Warning Component
@@ -18,22 +18,22 @@ import { SUBSCRIPTION_ACTION_VARIANTS } from "@/components/subscription/subscrip
  *
  * Features:
  * - Automatic threshold detection (warning at 75%, critical at 90%)
- * - Multiple resource tracking (workspaces, topics, AI requests, etc.)
+ * - Workspaces, the one resource a plan caps
  * - Dismissible warnings
  * - Upgrade prompts
  * - Customizable thresholds
  */
 
+/**
+ * The resources a limit hook can check: workspaces, the one resource a plan caps.
+ */
+export type LimitedResource = "workspaces";
+
 interface UsageLimitWarningProps {
   /**
    * Resource type to monitor
    */
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage";
+  resource: "workspaces";
 
   /**
    * Show warning when usage reaches this percentage (0-100)
@@ -131,28 +131,8 @@ export function UsageLimitWarning({
   useEffect(() => {
     if (!usage || !subscription) return;
 
-    // Calculate usage percentage based on resource type
-    let current = 0;
-    let max = 0;
-
-    switch (resource) {
-      case "workspaces":
-        current = usage.workspaces.used;
-        max = usage.workspaces.limit ?? -1;
-        break;
-      case "knowledge_items":
-        current = usage.knowledge_items.used;
-        max = usage.knowledge_items.limit ?? -1;
-        break;
-      case "ai_requests":
-        current = usage.api_calls.used;
-        max = usage.api_calls.limit ?? -1;
-        break;
-      case "storage":
-        current = 0; // Storage tracking not yet implemented
-        max = -1; // Storage tracking not yet implemented
-        break;
-    }
+    const current = usage.workspaces.used;
+    const max = usage.workspaces.limit ?? -1;
 
     setCurrentUsage(current);
     setLimit(max);
@@ -163,7 +143,7 @@ export function UsageLimitWarning({
     } else {
       setUsagePercentage((current / max) * 100);
     }
-  }, [usage, subscription, resource]);
+  }, [usage, subscription]);
 
   const handleUpgrade = () => {
     router.push("/pricing" as Route);
@@ -202,156 +182,96 @@ export function UsageLimitWarning({
   const isCritical = usagePercentage >= criticalThreshold;
   const isExceeded = usagePercentage >= 100;
 
-  const getResourceLabel = () => {
-    switch (resource) {
-      case "workspaces":
-        return "Workspaces";
-      case "topics":
-        return "Topics";
-      case "knowledge_items":
-        return "Knowledge Items";
-      case "ai_requests":
-        return "AI Requests";
-      case "storage":
-        return "Storage";
-      default:
-        return resource;
-    }
-  };
+  const getResourceLabel = () => "Workspaces";
 
-  const getAlertVariant = () => {
-    if (isExceeded || isCritical) {
-      return "destructive";
-    }
-    return "default";
-  };
+  const tone = isExceeded || isCritical ? "danger" : "warning";
+  const label = getResourceLabel();
+  const dismiss = dismissible ? handleDismiss : undefined;
+  const dismissLabel = `Dismiss ${label.toLowerCase()} usage warning`;
 
-  const formatUsage = () => {
-    if (resource === "storage") {
-      const currentGB = (currentUsage / 1024).toFixed(2);
-      const limitGB = (limit / 1024).toFixed(2);
-      return `${currentGB} GB / ${limitGB} GB`;
-    }
-    return `${currentUsage} / ${limit}`;
-  };
+  const formatUsage = () => `${currentUsage} / ${limit}`;
 
   if (compact) {
     return (
-      <Alert variant={getAlertVariant()} className={className}>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="flex items-center justify-between">
-          <span className="text-sm">
-            <strong>{getResourceLabel()}:</strong> {formatUsage()} (
-            {usagePercentage.toFixed(0)}%)
-          </span>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handleUpgrade}>
-              Upgrade
-            </Button>
-            {dismissible && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleDismiss}
-                className="h-6 w-6 p-0"
-                aria-label={`Dismiss ${getResourceLabel().toLowerCase()} usage warning`}
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            )}
-          </div>
-        </AlertDescription>
-      </Alert>
+      <Notice
+        tone={tone}
+        className={className}
+        action={
+          <Button size="sm" variant="outline" onClick={handleUpgrade}>
+            Upgrade
+          </Button>
+        }
+        onDismiss={dismiss}
+        dismissLabel={dismissLabel}
+      >
+        <strong>{label}:</strong> {formatUsage()} ({usagePercentage.toFixed(0)}
+        %)
+      </Notice>
     );
   }
 
   return (
-    <Alert variant={getAlertVariant()} className={className}>
-      <AlertTriangle className="h-4 w-4" />
-      <div className="flex-1">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <AlertTitle>
-              {isExceeded
-                ? `${getResourceLabel()} Limit Exceeded`
-                : isCritical
-                  ? `${getResourceLabel()} Limit Almost Reached`
-                  : `${getResourceLabel()} Usage Warning`}
-            </AlertTitle>
-            <AlertDescription className="mt-2 space-y-3">
-              <div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>Current usage: {formatUsage()}</span>
-                  <span className="font-semibold">
-                    {usagePercentage.toFixed(1)}%
-                  </span>
-                </div>
-                {showProgress && (
-                  <Progress
-                    value={Math.min(usagePercentage, 100)}
-                    className={`h-2 ${
-                      isCritical
-                        ? "[&>div]:bg-destructive"
-                        : "[&>div]:bg-yellow-500"
-                    }`}
-                  />
-                )}
-              </div>
-
-              <p className="text-sm">
-                {isExceeded ? (
-                  <>
-                    You have exceeded your plan's{" "}
-                    {getResourceLabel().toLowerCase()} limit. Upgrade to
-                    continue using this feature.
-                  </>
-                ) : isCritical ? (
-                  <>
-                    You're almost at your {getResourceLabel().toLowerCase()}{" "}
-                    limit. Consider upgrading to avoid interruptions.
-                  </>
-                ) : (
-                  <>
-                    You've used {usagePercentage.toFixed(0)}% of your{" "}
-                    {getResourceLabel().toLowerCase()} limit. Consider upgrading
-                    for higher limits.
-                  </>
-                )}
-              </p>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
-                  onClick={handleUpgrade}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Upgrade Plan
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
-                  onClick={() => router.push("/subscription" as Route)}
-                >
-                  View Usage
-                </Button>
-              </div>
-            </AlertDescription>
+    <Notice
+      tone={tone}
+      className={className}
+      title={
+        isExceeded
+          ? `${label} limit exceeded`
+          : isCritical
+            ? `${label} limit almost reached`
+            : `${label} usage warning`
+      }
+      onDismiss={dismiss}
+      dismissLabel={dismissLabel}
+    >
+      <div className="mt-2 flex flex-col gap-3">
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <span>Current usage: {formatUsage()}</span>
+            <span className="font-semibold">{usagePercentage.toFixed(1)}%</span>
           </div>
+          {showProgress && <Meter value={currentUsage} max={limit} low />}
+        </div>
 
-          {dismissible && (
-            <Button
-              size="sm"
-              variant={SUBSCRIPTION_ACTION_VARIANTS.dismissTertiary}
-              onClick={handleDismiss}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <p>
+          {isExceeded ? (
+            <>
+              You have exceeded your plan's {label.toLowerCase()} limit. Upgrade
+              to continue using this feature.
+            </>
+          ) : isCritical ? (
+            <>
+              You're almost at your {label.toLowerCase()} limit. Consider
+              upgrading to avoid interruptions.
+            </>
+          ) : (
+            <>
+              You've used {usagePercentage.toFixed(0)}% of your{" "}
+              {label.toLowerCase()} limit. Consider upgrading for higher limits.
+            </>
           )}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
+            onClick={handleUpgrade}
+          >
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Upgrade plan
+          </Button>
+
+          <Button
+            size="sm"
+            variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
+            onClick={() => router.push(settingsRoutes.usage as Route)}
+          >
+            View usage
+          </Button>
         </div>
       </div>
-    </Alert>
+    </Notice>
   );
 }
 
@@ -359,27 +279,26 @@ export function UsageLimitWarning({
  * Hook to check if a resource limit is reached
  * Useful for preventing actions before they happen
  */
-export function useResourceLimit(
-  resource:
-    | "workspaces"
-    | "topics"
-    | "knowledge_items"
-    | "ai_requests"
-    | "storage",
-) {
+export function useResourceLimit(resource: LimitedResource) {
   const { usage, subscription, fetchUsage, fetchSubscription } =
     useSubscriptionStore();
   const [isLimitReached, setIsLimitReached] = useState(false);
   const [isLoadingLimit, setIsLoadingLimit] = useState(true);
   const [usagePercentage, setUsagePercentage] = useState(0);
+  // The count and the plan's cap (-1 for none), for "2 of 3" beside a create action.
+  const [counts, setCounts] = useState<{ used: number; max: number } | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (!usage) {
-      void fetchUsage();
-    }
-
+    // Both store actions single-flight their requests, so multiple mounted
+    // consumers (sidebar + switchers + usage warnings) share one fetch.
+    // fetchSubscription's burst already includes usage stats; the standalone
+    // fetchUsage only covers the case where the plan landed but usage failed.
     if (!subscription) {
       void fetchSubscription();
+    } else if (!usage) {
+      void fetchUsage();
     }
 
     if (!usage || !subscription) {
@@ -419,57 +338,9 @@ export function useResourceLimit(
         );
         break;
       }
-      case "topics": {
-        current = getNumber(
-          (usageData.topics as { used?: number } | undefined)?.used ??
-            (usageData as { current_topics?: number }).current_topics ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_topics ??
-            (usageData.topics as { limit?: number } | undefined)?.limit ??
-            (usageData as { max_topics?: number }).max_topics ??
-            -1,
-        );
-        break;
-      }
-      case "knowledge_items": {
-        current = getNumber(
-          (usageData.knowledge_items as { used?: number } | undefined)?.used ??
-            (usageData as { current_knowledge_items?: number })
-              .current_knowledge_items ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_knowledge_items ??
-            (usageData.knowledge_items as { limit?: number } | undefined)
-              ?.limit ??
-            (usageData as { max_knowledge_items?: number })
-              .max_knowledge_items ??
-            -1,
-        );
-        break;
-      }
-      case "ai_requests": {
-        current = getNumber(
-          (usageData.api_calls as { used?: number } | undefined)?.used ??
-            (usageData as { current_api_calls?: number }).current_api_calls ??
-            0,
-        );
-        max = getNumber(
-          planLimits?.max_api_calls_per_month ??
-            (usageData.api_calls as { limit?: number } | undefined)?.limit ??
-            (usageData as { max_api_calls_per_month?: number })
-              .max_api_calls_per_month ??
-            -1,
-        );
-        break;
-      }
-      case "storage":
-        current = 0;
-        max = -1;
-        break;
     }
+
+    setCounts({ used: current, max });
 
     if (max === -1) {
       setIsLimitReached(false);
@@ -485,6 +356,8 @@ export function useResourceLimit(
     isLimitReached,
     isLoading: isLoadingLimit,
     usagePercentage,
+    used: counts?.used ?? null,
+    max: counts && counts.max >= 0 ? counts.max : null,
     canCreate: !isLimitReached && !isLoadingLimit,
   };
 }

@@ -60,6 +60,8 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import {
+  createContext,
+  useContext,
   useState,
   useEffect,
   useCallback,
@@ -67,6 +69,10 @@ import {
   useRef,
   type JSX,
 } from "react";
+import {
+  PARAGRAPH_ESCAPE_TRANSFORMER,
+  tightenLooseLists,
+} from "@/lib/editor/markdown-compat";
 import { log } from "@/lib/logger";
 import {
   $getSelection,
@@ -146,35 +152,42 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 // ---------------------------------------------------------------------------
 // Theme
 // ---------------------------------------------------------------------------
-const theme = {
-  paragraph: "mb-2",
+/** The editor's theme, nodes and markdown transformers are exported for the
+ *  round-trip test (__tests__/components/lexical-round-trip.test.ts). */
+// The article's typography comes from `prose prose-app` on the content area (globals.css,
+// design/app-language.md §7), the same stylesheet for the preview and the editor; the theme
+// keeps only what the editor itself needs.
+export const theme = {
+  paragraph: "",
   heading: {
-    h1: "text-3xl font-bold mb-4 scroll-mt-20",
-    h2: "text-2xl font-bold mb-3 scroll-mt-20",
-    h3: "text-xl font-bold mb-2 scroll-mt-20",
+    h1: "scroll-mt-20",
+    h2: "scroll-mt-20",
+    h3: "scroll-mt-20",
   },
   list: {
-    ul: "list-disc ml-4 mb-2",
-    ol: "list-decimal ml-4 mb-2",
-    listitem: "ml-1",
+    // prose draws the markers: discs and numbers, in the muted colour.
+    ul: "",
+    ol: "",
+    listitem: "",
+    // Lexical wraps a nested list in an item of its own, which must not show a marker.
+    nested: { listitem: "list-none" },
   },
-  quote: "border-l-4 border-border pl-4 italic mb-2 text-muted-foreground",
-  code: "bg-muted p-1 rounded font-mono text-sm",
-  link: "text-primary hover:underline cursor-pointer",
+  quote: "",
+  code: "",
+  link: "cursor-pointer",
   text: {
-    bold: "font-bold",
+    bold: "",
     italic: "italic",
     underline: "underline",
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
   },
-  hr: "my-4 border-0 h-px bg-border",
-  table: "border-collapse w-full my-4",
+  hr: "",
+  table: "",
   tableRow: "",
-  tableCell:
-    "border border-border px-2 py-2 !pb-0 align-top min-w-0 w-auto relative outline-none text-sm",
-  tableCellHeader: "!pb-0 font-semibold",
-  tableScrollableWrapper: "overflow-x-auto my-4 w-full",
+  tableCell: "relative min-w-0 w-auto align-top outline-none",
+  tableCellHeader: "",
+  tableScrollableWrapper: "overflow-x-auto w-full",
 };
 
 const lexicalLog = log.forComponent("LexicalEditor");
@@ -189,6 +202,10 @@ const lexicalLog = log.forComponent("LexicalEditor");
 // target unresolved — the backend strips any leftover marker at publish time.
 // ---------------------------------------------------------------------------
 const IMAGE_PLACEHOLDER_SCHEME = "rext-placeholder:";
+
+// Lets a read-only editor ask its host page to switch into Edit mode (set when
+// the viewer may edit). Absent when they may not.
+const RequestEditContext = createContext<(() => void) | undefined>(undefined);
 
 function isImagePlaceholderSrc(src: string): boolean {
   return src.startsWith(IMAGE_PLACEHOLDER_SCHEME);
@@ -207,10 +224,16 @@ function ImagePlaceholderSlot({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const isEditable = editor.isEditable();
+  const onRequestEdit = useContext(RequestEditContext);
 
   const requireEditMode = useCallback(() => {
-    toast.info("Switch to Edit mode to add an image here.");
-  }, []);
+    if (onRequestEdit) {
+      onRequestEdit();
+      toast.info("Switched to Edit mode — choose your image.");
+      return;
+    }
+    toast.info("Editing requires Editor role or above.");
+  }, [onRequestEdit]);
 
   const applyImage = useCallback(
     (url: string, alt: string) => {
@@ -253,7 +276,10 @@ function ImagePlaceholderSlot({
       }
       setUploading(true);
       try {
-        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
         const uploadedSrc = toAbsoluteMediaUrl(media.public_url);
         if (!uploadedSrc) {
           toast.error("Upload succeeded but no image URL was returned.");
@@ -282,7 +308,7 @@ function ImagePlaceholderSlot({
   }, [editor, nodeKey, isEditable, requireEditMode]);
 
   return (
-    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
+    <span className="not-prose my-4 inline-flex w-full flex-col gap-2.5 rounded-md border border-dashed border-border bg-muted/30 px-4 py-4 text-sm align-top">
       <input
         ref={fileInputRef}
         type="file"
@@ -293,8 +319,8 @@ function ImagePlaceholderSlot({
       <span className="inline-flex items-start gap-2 text-muted-foreground">
         <ImageIcon size={16} className="mt-0.5 shrink-0" />
         <span>
-          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload
-          one here, or remove this slot and publish without it.
+          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
+          here, or remove this slot and publish without it.
         </span>
       </span>
       <span className="inline-flex items-center gap-2">
@@ -346,6 +372,12 @@ function ImageNodeComponent({
   width?: number;
   height?: number;
 }) {
+  // In read-only mode OnChangePlugin is not mounted, so a removal here would
+  // never reach the parent's body — the image would vanish from view, come
+  // back on the next remount, and still be published. Removal belongs to Edit
+  // mode, matching ImagePlaceholderSlot.
+  const isEditable = editor.isEditable();
+
   const handleRemove = useCallback(() => {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
@@ -355,29 +387,35 @@ function ImageNodeComponent({
 
   if (isImagePlaceholderSrc(src)) {
     return (
-      <ImagePlaceholderSlot editor={editor} nodeKey={nodeKey} altText={altText} />
+      <ImagePlaceholderSlot
+        editor={editor}
+        nodeKey={nodeKey}
+        altText={altText}
+      />
     );
   }
 
   return (
-    <span className="relative inline-block group my-2">
+    <span className="relative inline-block max-w-full group my-2">
       <Image
         src={src}
         alt={altText}
         width={width || 500}
         height={height || 300}
-        className="max-w-full rounded-md block"
+        className="max-w-full h-auto rounded-md block"
         style={{ maxHeight: 480 }}
         unoptimized
       />
-      <button
-        type="button"
-        title="Remove image"
-        onClick={handleRemove}
-        className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
-      >
-        <X size={13} />
-      </button>
+      {isEditable && (
+        <button
+          type="button"
+          title="Remove image"
+          onClick={handleRemove}
+          className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-destructive-foreground rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
+        >
+          <X size={13} />
+        </button>
+      )}
     </span>
   );
 }
@@ -447,6 +485,9 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   createDOM(_config: EditorConfig): HTMLElement {
     const span = document.createElement("span");
     span.style.display = "inline-block";
+    // An inline-block shrinks to its image, so without a cap a wide image runs past
+    // the article on a phone.
+    span.style.maxWidth = "100%";
     return span;
   }
 
@@ -526,7 +567,7 @@ export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> =
 // ---------------------------------------------------------------------------
 // Nodes list
 // ---------------------------------------------------------------------------
-const NODES = [
+export const NODES = [
   HeadingNode,
   QuoteNode,
   CodeNode,
@@ -740,13 +781,20 @@ const HORIZONTAL_RULE_TRANSFORMER: ElementTransformer = {
   type: "element",
 };
 
-const CUSTOM_TRANSFORMERS = [
+export const CUSTOM_TRANSFORMERS = [
   HORIZONTAL_RULE_TRANSFORMER,
   TABLE_TRANSFORMER,
   UNDERLINE_TRANSFORMER,
   IMAGE_TRANSFORMER,
   ...TRANSFORMERS,
+  PARAGRAPH_ESCAPE_TRANSFORMER,
 ];
+
+/** Loads an article's markdown into the editor, the one way the editor and the
+ *  round-trip test both import it. */
+export function $importArticleMarkdown(markdown: string) {
+  $convertFromMarkdownString(tightenLooseLists(markdown), CUSTOM_TRANSFORMERS);
+}
 
 // ---------------------------------------------------------------------------
 // ToolbarButton
@@ -771,7 +819,7 @@ const ToolbarButton = ({
     }}
     disabled={disabled}
     className={cn(
-      "p-2 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+      "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
       active ? "bg-muted text-foreground" : "text-muted-foreground",
     )}
     title={title}
@@ -863,7 +911,10 @@ function ImageInsertPopover() {
       setError(null);
       setUploading(true);
       try {
-        const media = await apiClient.media.uploadBlogImage(workspaceId, file);
+        const media = await apiClient.content.uploadBlogImage(
+          workspaceId,
+          file,
+        );
         const src = toAbsoluteMediaUrl(media.public_url);
         if (!src) {
           setError("Upload succeeded but no image URL was returned.");
@@ -908,7 +959,7 @@ function ImageInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors",
+            "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Image"
@@ -918,7 +969,10 @@ function ImageInsertPopover() {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-80 p-4 space-y-3" align="end">
+      <PopoverContent
+        className="w-80 p-4 space-y-3 max-h-[70vh] overflow-y-auto"
+        align="end"
+      >
         <div className="space-y-1">
           <h4 className="font-semibold text-sm leading-none">Insert Image</h4>
           <p className="text-xs text-muted-foreground">
@@ -1063,7 +1117,7 @@ function TableInsertPopover() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-2 rounded hover:bg-muted transition-colors",
+            "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
           )}
           title="Insert Table"
@@ -1440,7 +1494,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "p-2 rounded hover:bg-muted transition-colors",
+              "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
               isLink || isLinkPopoverOpen
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground",
@@ -1482,7 +1536,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
                   variant="outline"
                   size="sm"
                   onClick={removeLink}
-                  className="h-8 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 px-2 text-danger-600 hover:text-danger-700 hover:bg-danger-50"
                 >
                   <X size={14} className="mr-1" /> Remove
                 </Button>
@@ -1615,7 +1669,7 @@ function MarkdownUpdatePlugin({
   useEffect(() => {
     if (shouldUpdate) {
       editor.update(() => {
-        $convertFromMarkdownString(markdown, CUSTOM_TRANSFORMERS);
+        $importArticleMarkdown(markdown);
       });
       onUpdateComplete();
     }
@@ -1633,6 +1687,8 @@ interface LexicalEditorProps {
   readOnly?: boolean;
   showDebug?: boolean;
   toolbarClass?: string;
+  /** Called when a read-only editor needs Edit mode (e.g. image upload). */
+  onRequestEdit?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -1644,6 +1700,7 @@ export default function LexicalEditor({
   readOnly = false,
   showDebug = false,
   toolbarClass,
+  onRequestEdit,
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
@@ -1671,7 +1728,7 @@ export default function LexicalEditor({
         (editor as { update: (fn: () => void) => void }).update(() => {
           if (initialValue) {
             try {
-              $convertFromMarkdownString(initialValue, CUSTOM_TRANSFORMERS);
+              $importArticleMarkdown(initialValue);
             } catch (_e) {}
           }
         });
@@ -1775,58 +1832,58 @@ export default function LexicalEditor({
 
   return (
     <div className="space-y-6">
-      <LexicalComposer initialConfig={initialConfig}>
-        <MarkdownUpdatePlugin
-          markdown={markdownOutput}
-          shouldUpdate={shouldUpdateEditor}
-          onUpdateComplete={() => setShouldUpdateEditor(false)}
-        />
-        <div
-          className={cn(
-            "border rounded-md relative min-h-[200px] bg-background text-foreground flex flex-col",
-            readOnly
-              ? "border-none shadow-none bg-transparent"
-              : "border-border shadow-sm",
-          )}
-        >
-          {!readOnly && <ToolbarPlugin className={toolbarClass} />}
-          <div className="relative grow">
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable
-                  className={cn(
-                    "min-h-[150px] outline-none",
-                    readOnly ? "p-0 cursor-default" : "p-6",
-                  )}
-                />
-              }
-              placeholder={
-                !readOnly ? (
-                  <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
-                    Type here (Markdown supported)…
-                  </div>
-                ) : null
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <ListPlugin />
-            <LinkPlugin
-              attributes={{ target: "_blank", rel: "noopener noreferrer" }}
-            />
-            <TablePlugin hasHorizontalScroll />
-            <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-            {!readOnly && <NewTabLinkPlugin />}
-            {readOnly && <ReadOnlyLinkClickPlugin />}
-            {!readOnly && <OnChangePlugin onChange={handleChange} />}
+      <RequestEditContext.Provider value={onRequestEdit}>
+        <LexicalComposer initialConfig={initialConfig}>
+          <MarkdownUpdatePlugin
+            markdown={markdownOutput}
+            shouldUpdate={shouldUpdateEditor}
+            onUpdateComplete={() => setShouldUpdateEditor(false)}
+          />
+          <div
+            className={cn(
+              "border rounded-md relative min-h-[200px] bg-card text-foreground flex flex-col",
+              readOnly ? "border-none bg-transparent" : "border-border",
+            )}
+          >
+            {!readOnly && <ToolbarPlugin className={toolbarClass} />}
+            <div className="relative grow">
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable
+                    className={cn(
+                      "prose lg:prose-lg prose-app max-w-prose min-h-[150px] outline-none",
+                      readOnly ? "p-0 cursor-default" : "p-6",
+                    )}
+                  />
+                }
+                placeholder={
+                  !readOnly ? (
+                    <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
+                      Type here (Markdown supported)…
+                    </div>
+                  ) : null
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <HistoryPlugin />
+              <ListPlugin />
+              <LinkPlugin
+                attributes={{ target: "_blank", rel: "noopener noreferrer" }}
+              />
+              <TablePlugin hasHorizontalScroll />
+              <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
+              {!readOnly && <NewTabLinkPlugin />}
+              {readOnly && <ReadOnlyLinkClickPlugin />}
+              {!readOnly && <OnChangePlugin onChange={handleChange} />}
+            </div>
           </div>
-        </div>
-      </LexicalComposer>
+        </LexicalComposer>
+      </RequestEditContext.Provider>
 
       {showDebug && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-900 text-slate-100 p-4 rounded-md overflow-x-auto">
-            <h3 className="text-sm font-semibold mb-2 text-slate-400 uppercase tracking-wider">
+          <div className="bg-surface-inset text-foreground p-4 rounded-md overflow-x-auto">
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wider">
               Editor Configuration
             </h3>
             <pre className="text-xs font-mono">
@@ -1847,8 +1904,8 @@ export default function LexicalEditor({
               )}
             </pre>
           </div>
-          <div className="bg-slate-50 border rounded-md p-4">
-            <h3 className="text-sm font-semibold mb-2 text-slate-700 uppercase tracking-wider">
+          <div className="bg-surface-inset border rounded-md p-4">
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wider">
               Markdown Input / Output
             </h3>
             <Textarea

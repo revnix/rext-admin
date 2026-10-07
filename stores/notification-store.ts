@@ -191,7 +191,11 @@ export const useNotificationStore = create<NotificationStore>()(
         }),
 
         merge: (persisted, current) => {
-          const persistedState = persisted as Partial<NotificationStore>;
+          // `persisted` is undefined on a first visit (nothing stored yet).
+          // Throwing here aborts hydration, hasHydrated never flips, and the
+          // notification feed never loads or subscribes.
+          const persistedState = (persisted ??
+            {}) as Partial<NotificationStore>;
           const notifications =
             persistedState.notifications ?? current.notifications;
 

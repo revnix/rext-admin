@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, Network, Shield } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -27,30 +27,7 @@ interface PermissionDependencyViewProps {
   allPermissions: PermissionWithRoles[];
 }
 
-// Define common permission dependencies
-const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
-  "content.delete": ["content.read"],
-  "content.update": ["content.read"],
-  "content.publish": ["content.update", "content.read"],
-  "content.approve": ["content.read"],
-  "role.update": ["role.read"],
-  "role.delete": ["role.read"],
-  "role.manage_permissions": ["role.read", "permission.read"],
-  "permission.update": ["permission.read"],
-  "permission.delete": ["permission.read"],
-  "workspace.delete": ["workspace.read"],
-  "workspace.update": ["workspace.read"],
-  "workspace.manage_members": ["workspace.read"],
-  "workspace.manage_billing": ["workspace.read"],
-  "user.delete": ["user.read"],
-  "user.update": ["user.read"],
-  "user.manage_roles": ["user.read", "role.read"],
-  "topic.delete": ["topic.read"],
-  "topic.update": ["topic.read"],
-  "topic.approve": ["topic.read"],
-  "knowledge.delete": ["knowledge.read"],
-  "knowledge.update": ["knowledge.read"],
-};
+import { PERMISSION_DEPENDENCIES } from "@/lib/permission-dependencies";
 
 export function PermissionDependencyView({
   open,
@@ -143,13 +120,13 @@ export function PermissionDependencyView({
 
             {/* Required Dependencies */}
             {dependencies.length > 0 && (
-              <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+              <Card className="border-border bg-muted/40">
                 <CardHeader>
-                  <CardTitle className="text-base text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  <CardTitle className="text-base text-foreground flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     Required Dependencies
                   </CardTitle>
-                  <CardDescription className="text-blue-800 dark:text-blue-200">
+                  <CardDescription className="text-foreground">
                     These permissions should also be granted when granting this
                     permission
                   </CardDescription>
@@ -163,7 +140,7 @@ export function PermissionDependencyView({
                       return (
                         <div
                           key={depName}
-                          className="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded-md"
+                          className="flex items-center justify-between p-2 bg-card rounded-md"
                         >
                           <div>
                             <div className="font-mono text-sm">{depName}</div>
@@ -186,13 +163,13 @@ export function PermissionDependencyView({
 
             {/* Dependent Permissions */}
             {dependents.length > 0 && (
-              <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+              <Card className="border-warning-200 bg-warning-50">
                 <CardHeader>
-                  <CardTitle className="text-base text-orange-900 dark:text-orange-100 flex items-center gap-2">
+                  <CardTitle className="text-base text-warning-700 flex items-center gap-2">
                     <Info className="h-4 w-4" />
                     Dependent Permissions
                   </CardTitle>
-                  <CardDescription className="text-orange-800 dark:text-orange-200">
+                  <CardDescription className="text-warning-700">
                     These permissions require this permission as a prerequisite
                   </CardDescription>
                 </CardHeader>
@@ -205,7 +182,7 @@ export function PermissionDependencyView({
                       return (
                         <div
                           key={depName}
-                          className="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded-md"
+                          className="flex items-center justify-between p-2 bg-card rounded-md"
                         >
                           <div>
                             <div className="font-mono text-sm">{depName}</div>
@@ -241,14 +218,14 @@ export function PermissionDependencyView({
                   {/* Read Permissions */}
                   {hierarchyGroups.read.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-green-700 dark:text-green-400">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">
                         📖 Read Permissions (Base Level)
                       </h4>
                       <div className="space-y-1">
                         {hierarchyGroups.read.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-green-50 dark:bg-green-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-surface-inset rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -263,14 +240,14 @@ export function PermissionDependencyView({
                   {/* Write Permissions */}
                   {hierarchyGroups.write.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-blue-700 dark:text-blue-400">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">
                         ✏️ Write Permissions (Intermediate Level)
                       </h4>
                       <div className="space-y-1">
                         {hierarchyGroups.write.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-blue-50 dark:bg-blue-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-surface-inset rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -285,14 +262,14 @@ export function PermissionDependencyView({
                   {/* Manage Permissions */}
                   {hierarchyGroups.manage.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-purple-700 dark:text-purple-400">
+                      <h4 className="text-sm font-semibold mb-2 text-foreground">
                         ⚙️ Management Permissions (Advanced Level)
                       </h4>
                       <div className="space-y-1">
                         {hierarchyGroups.manage.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-purple-50 dark:bg-purple-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-surface-inset rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -307,14 +284,14 @@ export function PermissionDependencyView({
                   {/* Delete Permissions */}
                   {hierarchyGroups.delete.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold mb-2 text-red-700 dark:text-red-400">
+                      <h4 className="text-sm font-semibold mb-2 text-danger-700">
                         🗑️ Delete Permissions (Destructive)
                       </h4>
                       <div className="space-y-1">
                         {hierarchyGroups.delete.map((p) => (
                           <div
                             key={p.id}
-                            className="flex items-center justify-between text-sm p-2 bg-red-50 dark:bg-red-950/20 rounded"
+                            className="flex items-center justify-between text-sm p-2 bg-danger-50 rounded-md"
                           >
                             <span className="font-mono">{p.name}</span>
                             <span className="text-xs text-muted-foreground">
@@ -330,15 +307,11 @@ export function PermissionDependencyView({
             </Card>
 
             {/* Best Practices Alert */}
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Best Practice:</strong> When assigning permissions,
-                always ensure dependent permissions are also assigned. For
-                example, before granting delete permissions, ensure read
-                permissions are already granted.
-              </AlertDescription>
-            </Alert>
+            <Notice title="Best practice">
+              When assigning permissions, always ensure dependent permissions
+              are also assigned. For example, before granting delete
+              permissions, ensure read permissions are already granted.
+            </Notice>
           </div>
         </ScrollArea>
       </DialogContent>

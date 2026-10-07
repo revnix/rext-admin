@@ -3,7 +3,7 @@
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
-import { PageLayout } from "@/components/page-layout";
+import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,10 @@ import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useContentDetail } from "@/hooks/use-content";
 import type { CONTENT, SEORESULT, Outline } from "@/types/generate-content";
 import { ContentEditor } from "@/components/generate-content/content";
@@ -34,17 +38,22 @@ type WorkspaceContentDetailPageProps = {
 export default function WorkspaceContentDetailPage({
   params,
 }: WorkspaceContentDetailPageProps) {
-  const { workspaceSlug, id } = use(params);
-  const { workspaceId } = useWorkspace();
+  const { id } = use(params);
+  const { workspace } = useWorkspace();
+  const workspaceError = useWorkspaceFailure();
   const router = useRouter();
 
-  // Fetch content details using hook
-  const {
-    data: contentResponse,
-    isLoading: isContentLoading,
-    error: fetchError,
-    refetch: refetchContent,
-  } = useContentDetail(workspaceId, id);
+  // Canonical workspace UUID — keeps the detail query key in the same cache
+  // family as the list page and the editor's invalidation (finding #10).
+  const workspaceId = workspace?.id || "";
+
+  // Fetch content details using hook. Until the workspace is known the query waits, so the page
+  // waits on `useAwaitingData`, not `isLoading`, or it would say "Content not found" (D16a).
+  const contentQuery = useContentDetail(workspaceId, id);
+  const isWaiting = useAwaitingData(contentQuery);
+  const { data: contentResponse, refetch: refetchContent } = contentQuery;
+  // A workspace that couldn't be read is this page's failure too: its query never runs.
+  const fetchError = contentQuery.error ?? workspaceError;
 
   const content = contentResponse?.content;
   const [isEditing, setIsEditing] = useState(false);
@@ -183,16 +192,16 @@ export default function WorkspaceContentDetailPage({
 
   const finalContent = advancedContent?.final_content;
 
-  if (isContentLoading) {
+  if (isWaiting) {
     return (
-      <PageLayout title="Loading..." description="Loading content details">
+      <WorkingSurface title="Loading..." description="Loading content details">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-foreground" />
             <p className="text-muted-foreground">Loading content...</p>
           </div>
         </div>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
@@ -206,7 +215,7 @@ export default function WorkspaceContentDetailPage({
 
     if (isNotFound) {
       return (
-        <PageLayout
+        <WorkingSurface
           title="Content Not Found"
           description="The requested content could not be found"
         >
@@ -217,21 +226,23 @@ export default function WorkspaceContentDetailPage({
             </p>
             <Button
               variant="outline"
-              className="h-10 px-4 rounded-xl border-slate-200"
+              className="h-10 px-4 rounded-md"
               onClick={() =>
-                router.push(workspaceRoutes.content(workspaceSlug) as Route)
+                router.push(
+                  workspaceRoutes.content(workspace?.slug || "") as Route,
+                )
               }
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Content
             </Button>
           </div>
-        </PageLayout>
+        </WorkingSurface>
       );
     }
 
     return (
-      <PageLayout
+      <WorkingSurface
         title="Error Loading Content"
         description="There was an error fetching the content"
       >
@@ -244,17 +255,23 @@ export default function WorkspaceContentDetailPage({
                 We encountered an error while trying to fetch the content
                 details. Please try again or contact support.
               </p>
-              <Button onClick={() => refetchContent()}>Retry Load</Button>
+              <Button
+                onClick={() =>
+                  workspaceError ? window.location.reload() : refetchContent()
+                }
+              >
+                Retry Load
+              </Button>
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
   if (!content) {
     return (
-      <PageLayout
+      <WorkingSurface
         title="Content Not Found"
         description="The requested content could not be found"
       >
@@ -267,7 +284,9 @@ export default function WorkspaceContentDetailPage({
               </p>
               <Button
                 onClick={() =>
-                  router.push(workspaceRoutes.content(workspaceSlug) as Route)
+                  router.push(
+                    workspaceRoutes.content(workspace?.slug || "") as Route,
+                  )
                 }
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -276,7 +295,7 @@ export default function WorkspaceContentDetailPage({
             </div>
           </CardContent>
         </Card>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
@@ -284,7 +303,7 @@ export default function WorkspaceContentDetailPage({
     <PermissionGuard
       permission={CONTENT_PERMISSIONS.READ}
       fallback={
-        <PageLayout title="Access Denied">
+        <WorkingSurface title="Access Denied">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive">Access Denied</CardTitle>
@@ -295,26 +314,21 @@ export default function WorkspaceContentDetailPage({
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   content.read
                 </code>
               </p>
             </CardContent>
           </Card>
-        </PageLayout>
+        </WorkingSurface>
       }
     >
-      <PageLayout
-        title={content.title}
-        description="Review and edit generated content"
-        fullWidth
-        className="!py-0"
-        hideTitle
-      >
+      {/* The editor draws the article's title as the page's h1. */}
+      <WorkingSurface title={content.title} flush ownHeading>
         {content.publishing_results &&
           content.publishing_results.length > 0 && (
             <div className="px-6 pt-4">
-              <div className="rounded-xl border border-border/50 bg-card p-4 mb-2">
+              <div className="rounded-md border border-border/50 bg-card p-4 mb-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
                   CMS Publishing Status
                 </p>
@@ -328,7 +342,7 @@ export default function WorkspaceContentDetailPage({
                     return (
                       <div
                         key={result.site_id}
-                        className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30"
+                        className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30"
                       >
                         <span className="text-sm font-semibold text-foreground flex-1 truncate">
                           {result.site_name || result.site_id}
@@ -336,8 +350,8 @@ export default function WorkspaceContentDetailPage({
                         <span
                           className={cn(
                             "text-[10px] font-bold px-2.5 py-1 rounded-full",
-                            isSuccess && "bg-green-100 text-green-700",
-                            isError && "bg-red-100 text-red-700",
+                            isSuccess && "bg-success-50 text-success-700",
+                            isError && "bg-danger-50 text-danger-700",
                             !isSuccess &&
                               !isError &&
                               "bg-muted text-muted-foreground",
@@ -374,6 +388,7 @@ export default function WorkspaceContentDetailPage({
             readabilityScore={
               advancedContent.review?.readability_metrics || null
             }
+            checklist={content.checklist ?? null}
             trustScore={advancedContent.review?.trust_score || null}
             generatedContent={contentMarkdown}
             seoScore={seoResult}
@@ -384,7 +399,7 @@ export default function WorkspaceContentDetailPage({
             onContentChange={setContentMarkdown}
           />
         )}
-      </PageLayout>
+      </WorkingSurface>
     </PermissionGuard>
   );
 }

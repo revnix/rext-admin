@@ -12,19 +12,22 @@ import {
   Trash2,
   User as UserIcon,
   Users as UsersIcon,
-  X,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
 import { UserStatusDialog } from "@/components/admin/users/user-status-dialog";
-import { DataTable } from "@/components/data-table";
+import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-table";
+import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
 import { ImpersonationStartDialog } from "@/components/impersonation/impersonation-start-dialog";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
+import { AdminGuard } from "@/components/permission/admin-guard";
 import { PermissionGuard } from "@/components/permission/permission-guard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,20 +37,34 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ErrorPage } from "@/components/ui/error-states";
-import { usePermission } from "@/hooks/use-permission";
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  useDataTableUrlState,
+} from "@/components/ui/data-table";
+import { Notice } from "@/components/ui/notice";
+import { useIsSuperAdmin, usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
-import type { User, UserStatusAction } from "@/lib/api-client/users";
-import { USER_PERMISSIONS } from "@/lib/permissions";
-import type { Column, RowAction } from "@/types/data-table";
+import type {
+  User,
+  UserRoleSummary,
+  UserStatusAction,
+} from "@/lib/api-client/users";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useDebounce } from "@/hooks/useDebounce";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { ROLES, USER_PERMISSIONS } from "@/lib/permissions";
+import {
+  ADMIN_USER_STATUSES,
+  ADMIN_USERS_FACETS,
+  adminUsersParams,
+} from "@/lib/search-params/admin-users";
 
-interface UserData extends Record<string, unknown> {
+interface UserData {
   id: string;
   name: string;
   email: string;
@@ -58,10 +75,15 @@ interface UserData extends Record<string, unknown> {
   initials: string;
   avatar_url: string | null | undefined;
   display_role: string;
+  roles: UserRoleSummary[];
+  is_super_admin: boolean;
   last_login_at: string | null | undefined;
   login_count: number;
   created_at: string | null | undefined;
 }
+
+type UsersTab = "all" | "deleted" | "recovery";
+const USERS_TAB_STORAGE_KEY = "admin-users-active-tab";
 
 type UsersDialogState =
   | { type: "closed" }
@@ -71,32 +93,206 @@ type UsersDialogState =
   | { type: "edit"; user: User }
   | { type: "delete"; user: User };
 
+// Never "Active" for a status the page doesn't know: it reads Unknown.
+const STATUS_BADGE: Record<
+  string,
+  { variant: BadgeProps["variant"]; text: string }
+> = {
+  active: { variant: "success", text: "Active" },
+  inactive: { variant: "neutral", text: "Inactive" },
+  suspended: { variant: "warning", text: "Suspended" },
+  banned: { variant: "danger", text: "Banned" },
+  pending: { variant: "info", text: "Pending" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const config = STATUS_BADGE[status] ?? {
+    variant: "neutral",
+    text: "Unknown",
+  };
+  return <Badge variant={config.variant}>{config.text}</Badge>;
+}
+
+function getUserInitials(user: User) {
+  const name = (user.display_name || user.full_name || "").trim();
+  if (name) {
+    const parts = name.split(/\s+/);
+    if (parts.length >= 2 && parts[0]?.[0] && parts[parts.length - 1]?.[0]) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+  if (user.email?.trim()) {
+    return user.email.trim().slice(0, 2).toUpperCase();
+  }
+  return "U";
+}
+
+function UserCell({ row }: { row: UserData }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <Avatar className="size-7 shrink-0">
+        {row.avatar_url && <AvatarImage src={row.avatar_url} alt="" />}
+        <AvatarFallback className="text-xs">{row.initials}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{row.name}</p>
+        <p className="truncate text-muted-foreground">{row.email}</p>
+      </div>
+    </div>
+  );
+}
+
+/** One badge per role, not per grant; the workspaces are in the tooltip. */
+function RoleBadges({ roles }: { roles: UserRoleSummary[] }) {
+  if (roles.length === 0) return <Badge variant="neutral">User</Badge>;
+  const platformRoles = roles.filter((r) => r.is_platform);
+  // A user owning five workspaces holds five workspace_owner rows and used to
+  // render five identical badges. Collapse by role.
+  const workspaceRoles = Array.from(
+    roles
+      .filter((r) => !r.is_platform)
+      .reduce((acc, r) => {
+        const entry = acc.get(r.role_id);
+        if (entry) entry.workspaces.push(r.workspace_name || "Unknown");
+        else
+          acc.set(r.role_id, {
+            role: r,
+            workspaces: [r.workspace_name || "Unknown"],
+          });
+        return acc;
+      }, new Map<string, { role: UserRoleSummary; workspaces: string[] }>())
+      .values(),
+  );
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {platformRoles.map((r) => (
+        <Tooltip key={`platform-${r.role_id}`}>
+          <TooltipTrigger asChild>
+            <Badge variant="neutral" className="cursor-default">
+              {r.display_name}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>Platform-wide role</TooltipContent>
+        </Tooltip>
+      ))}
+      {workspaceRoles.map(({ role: r, workspaces }) => (
+        <Tooltip key={`ws-${r.role_id}`}>
+          <TooltipTrigger asChild>
+            <Badge variant="neutral" className="cursor-default">
+              {r.display_name}
+              {workspaces.length > 1
+                ? ` in ${workspaces.length} workspaces`
+                : ""}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            {workspaces.length > 1
+              ? `${r.display_name} in ${workspaces.length} workspaces: ${workspaces.join(", ")}`
+              : `${r.display_name} in workspace: ${workspaces[0]}`}
+          </TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
+const column = createDataTableColumnHelper<UserData>();
+
+// The server searches, filters and pages; the table only draws the page.
+const columns = column.columns([
+  column.accessor("name", {
+    header: "User",
+    cell: ({ row }) => <UserCell row={row.original} />,
+    enableSorting: false,
+    enableHiding: false,
+  }),
+  column.accessor("display_role", {
+    id: "role",
+    header: "Role",
+    cell: ({ row }) => <RoleBadges roles={row.original.roles} />,
+    enableSorting: false,
+  }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+    enableSorting: false,
+  }),
+  column.accessor("email_verified", {
+    header: "Verified",
+    cell: ({ getValue }) =>
+      getValue() ? (
+        <Badge variant="success">Yes</Badge>
+      ) : (
+        <Badge variant="warning">No</Badge>
+      ),
+    enableSorting: false,
+  }),
+  column.accessor("last_login_at", {
+    header: "Last login",
+    meta: { align: "end", numeric: true },
+    cell: ({ row, getValue }) => (
+      <div className="min-w-0">
+        <p>{dateFormat.short(getValue()) || "Never"}</p>
+        {row.original.login_count > 0 && (
+          <p className="text-muted-foreground">
+            {row.original.login_count}{" "}
+            {row.original.login_count === 1 ? "login" : "logins"}
+          </p>
+        )}
+      </div>
+    ),
+    enableSorting: false,
+  }),
+]);
+
 export default function AdminUsersPage() {
   const [dialogState, setDialogState] = useState<UsersDialogState>({
     type: "closed",
   });
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(() => {
-    if (typeof window === "undefined") return 10;
+  // The search, the filters and the page live in the URL; the server applies them.
+  const tableState = useDataTableUrlState(adminUsersParams, {
+    facets: ADMIN_USERS_FACETS,
+  });
+  const { pageIndex, pageSize } = tableState.pagination;
+  const searchQuery = useDebounce(tableState.globalFilter, 300);
+  const facetValue = (id: string) => {
+    const value = tableState.columnFilters.find((f) => f.id === id)?.value;
+    return Array.isArray(value) ? (value[0] as string | undefined) : undefined;
+  };
+  const statusFilter = facetValue("status");
+  const roleFilter = facetValue("role");
+  const [activeTab, setActiveTab] = useState<UsersTab>(() => {
+    if (typeof window === "undefined") return "all";
     try {
-      const stored = localStorage.getItem("data-table-page-size-admin-users");
-      if (stored) {
-        const parsed = Number(stored);
-        if ([5, 10, 20, 25, 50, 100].includes(parsed)) return parsed;
+      const stored = localStorage.getItem(USERS_TAB_STORAGE_KEY);
+      if (stored === "deleted" || stored === "recovery" || stored === "all") {
+        return stored;
       }
     } catch {}
-    return 10;
+    return "all";
   });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+
+  // Only Super Admins can permanently delete a soft-deleted user; the Soft
+  // Deleted tab greys that one action out for everyone else.
+  const viewerIsSuperAdmin = useIsSuperAdmin();
+
+  const handleTabChange = (value: string) => {
+    const next = value as UsersTab;
+    setActiveTab(next);
+    try {
+      localStorage.setItem(USERS_TAB_STORAGE_KEY, next);
+    } catch {}
+  };
 
   const closeDialog = () => setDialogState({ type: "closed" });
 
   // Row actions are built from permissions rather than wrapped in a
   // PermissionGuard, because RowAction has no way to hide an entry.
   const canImpersonate = usePermission(USER_PERMISSIONS.IMPERSONATE);
-  const canUpdateUsers = usePermission(USER_PERMISSIONS.UPDATE);
+  // Cross-user admin actions (edit/suspend/ban) require user.manage, NOT the
+  // self-service user.update every account holds (SEC-RBAC-01/02).
+  const canManageUsers = usePermission(USER_PERMISSIONS.MANAGE);
   const canDeleteUsers = usePermission(USER_PERMISSIONS.DELETE);
   const canManageRoles = usePermission(USER_PERMISSIONS.MANAGE_ROLES);
 
@@ -107,10 +303,10 @@ export default function AdminUsersPage() {
   });
 
   // Fetch users with server-side pagination, search, and filters
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [
       "admin-users",
-      page,
+      pageIndex + 1,
       pageSize,
       searchQuery,
       statusFilter,
@@ -118,80 +314,23 @@ export default function AdminUsersPage() {
     ],
     queryFn: () =>
       apiClient.users.list({
-        page,
+        page: pageIndex + 1,
         per_page: pageSize,
         search: searchQuery || undefined,
-        status: statusFilter !== "all" ? statusFilter : undefined,
-        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter,
+        role: roleFilter,
       }),
   });
 
+  // A cached error from a previous visit replays on mount (status stays
+  // "error" in TanStack Query v5) while refetchOnMount already refires the
+  // query in the background. Treating that in-flight state as "failed" made
+  // a sub-second "Failed to load users" flash before the fresh data landed.
+  // Only an idle error is terminal; a refetching one is "recovering".
+  const isRecovering = !!error && isFetching;
+
   const findUser = (userId: string) =>
     data?.users.find((u) => u.id === userId) ?? null;
-
-  const getStatusBadge = (status: string, emailVerified?: boolean) => {
-    if (status === "active" && emailVerified === false) {
-      return (
-        <Badge
-          variant="outline"
-          className="text-xs font-medium px-2 py-0.5 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 whitespace-nowrap"
-        >
-          Pending Verification
-        </Badge>
-      );
-    }
-
-    const variants: Record<
-      string,
-      {
-        variant: "default" | "secondary" | "destructive" | "outline";
-        text: string;
-      }
-    > = {
-      active: { variant: "default", text: "Active" },
-      inactive: { variant: "secondary", text: "Inactive" },
-      suspended: { variant: "destructive", text: "Suspended" },
-      banned: { variant: "destructive", text: "Banned" },
-      pending: { variant: "outline", text: "Pending" },
-      pending_verification: {
-        variant: "outline",
-        text: "Pending Verification",
-      },
-    };
-
-    // Never fall back to "Active" — an unrecognised status must read as "Unknown".
-    const config = variants[status] || { variant: "outline", text: "Unknown" };
-    return <Badge variant={config.variant}>{config.text}</Badge>;
-  };
-
-  const getUserInitials = (user: User) => {
-    const name = (user.display_name || user.full_name || "").trim();
-    if (name) {
-      const parts = name.split(/\s+/);
-      if (parts.length >= 2 && parts[0]?.[0] && parts[parts.length - 1]?.[0]) {
-        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-      }
-      return name.slice(0, 2).toUpperCase();
-    }
-    if (user.email?.trim()) {
-      return user.email.trim().slice(0, 2).toUpperCase();
-    }
-    return "U";
-  };
-
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return "Never";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
 
   // Transform users data for DataTable
   const tableData: UserData[] = (data?.users || []).map((user) => {
@@ -215,6 +354,12 @@ export default function AdminUsersPage() {
       initials: validInitials,
       avatar_url: user.avatar_url,
       display_role: user.display_role || "User",
+      roles: user.roles || [],
+      is_super_admin:
+        user.is_super_admin ??
+        (user.roles || []).some(
+          (r) => r.is_platform && r.hierarchy_level >= 100,
+        ),
       last_login_at: user.last_login_at,
       login_count: user.login_count ?? 0,
       created_at: user.created_at,
@@ -223,7 +368,9 @@ export default function AdminUsersPage() {
 
   // Fetch all system roles to populate role filter dropdown
   const { data: systemRolesData } = useQuery({
-    queryKey: ["all-system-roles"],
+    // Same key as /admin/roles — one endpoint, one cache entry (finding #15:
+    // the old ["all-system-roles"] key refetched the same data per page).
+    queryKey: ["roles"],
     queryFn: () => apiClient.roles.list(true),
   });
 
@@ -242,215 +389,162 @@ export default function AdminUsersPage() {
     return combined.sort();
   }, [systemRolesData, tableData]);
 
-  // Define columns
-  const columns: Column<UserData>[] = [
+  // Super Admin accounts stay in the list but are shielded from every
+  // management action, for everyone — the backend enforces the same rule, this
+  // just greys the buttons out with a reason rather than letting them 403.
+  const protectedReason = (row: UserData): string | null =>
+    row.is_super_admin ? "Super Admin accounts are protected" : null;
+
+  // Impersonation is for verified users only — the backend rejects unverified
+  // targets, this greys the button out with the reason instead of a 403.
+  const impersonateDisabledReason = (row: UserData): string | null =>
+    protectedReason(row) ??
+    (row.email_verified
+      ? null
+      : "User hasn't verified their email address yet");
+
+  // Row actions, gated on the same permissions the backend enforces, so
+  // nothing shows that would only come back as a 403.
+  const rowActions = (row: UserData): DataTableRowAction[] => {
+    const user = findUser(row.id);
+    if (!user) return [];
+    const locked = protectedReason(row) ?? false;
+    const open = (state: UsersDialogState) => () => setDialogState(state);
+    return [
+      ...(canImpersonate
+        ? [
+            {
+              label: "Impersonate",
+              icon: UserIcon,
+              disabled: impersonateDisabledReason(row) ?? false,
+              onSelect: open({ type: "impersonate", user }),
+            },
+          ]
+        : []),
+      ...(canManageRoles
+        ? [
+            {
+              label: "Manage roles",
+              icon: Shield,
+              disabled: locked,
+              onSelect: open({ type: "manageRoles", user }),
+            },
+          ]
+        : []),
+      ...(canManageUsers
+        ? [
+            {
+              // SEC-RBAC-04: Super Admin rows are locked for edit too — the
+              // dialog can change email/password, and the backend refuses it.
+              label: "Edit details",
+              icon: Pencil,
+              disabled: locked,
+              onSelect: open({ type: "edit", user }),
+            },
+            {
+              label: "Activate",
+              icon: CheckCircle2,
+              disabled:
+                locked || (row.status === "active" ? "Already active" : false),
+              onSelect: open({ type: "status", user, action: "activate" }),
+            },
+            {
+              label: "Suspend",
+              icon: PauseCircle,
+              disabled:
+                locked ||
+                (row.status === "suspended" || row.status === "banned"
+                  ? "Already suspended or banned"
+                  : false),
+              onSelect: open({ type: "status", user, action: "suspend" }),
+            },
+            {
+              label: "Ban",
+              icon: Ban,
+              destructive: true,
+              disabled:
+                locked || (row.status === "banned" ? "Already banned" : false),
+              onSelect: open({ type: "status", user, action: "ban" }),
+            },
+          ]
+        : []),
+      ...(canDeleteUsers
+        ? [
+            {
+              label: "Delete user",
+              icon: Trash2,
+              destructive: true,
+              disabled: locked,
+              onSelect: open({ type: "delete", user }),
+            },
+          ]
+        : []),
+    ];
+  };
+
+  const userFacets = [
     {
-      key: "name",
-      header: "User",
-      width: "140px",
-      cell: (value, row) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <Avatar className="h-7 w-7 flex-shrink-0">
-            {row.avatar_url && (
-              <AvatarImage src={row.avatar_url} alt={row.name} />
-            )}
-            <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-semibold">
-              {row.initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="font-medium text-sm truncate">{value as string}</p>
-            {row.full_name &&
-              row.display_name &&
-              row.full_name !== row.display_name && (
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {row.full_name}
-                </p>
-              )}
-          </div>
-        </div>
-      ),
-      searchable: true,
+      column: "status",
+      title: "Status",
+      single: true,
+      options: ADMIN_USER_STATUSES.map((value) => ({
+        value,
+        label: STATUS_BADGE[value].text,
+      })),
     },
     {
-      key: "email",
-      header: "Email",
-      width: "140px",
-      cell: (value) => (
-        <span className="text-xs text-muted-foreground truncate block min-w-0">
-          {value as string}
-        </span>
-      ),
-      searchable: true,
-    },
-    {
-      key: "display_role",
-      header: "Role",
-      width: "90px",
-      cell: (value) => (
-        <Badge variant="outline" className="text-xs font-medium px-1.5 py-0.5">
-          {(value as string) || "User"}
-        </Badge>
-      ),
-      searchable: true,
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "130px",
-      cell: (value, row) => (
-        <div className="scale-90 origin-left">
-          {getStatusBadge(value as string, row.email_verified)}
-        </div>
-      ),
-    },
-    {
-      key: "email_verified",
-      header: "Verified",
-      width: "75px",
-      cell: (value) => {
-        const verified = value as boolean;
-        return verified ? (
-          <Badge
-            variant="outline"
-            className="text-[10px] text-green-600 border-green-600 px-1 py-0 h-5"
-          >
-            <ShieldCheck className="h-2.5 w-2.5 mr-1" />
-            Yes
-          </Badge>
-        ) : (
-          <Badge
-            variant="outline"
-            className="text-[10px] text-amber-600 border-amber-600 px-1 py-0 h-5"
-          >
-            No
-          </Badge>
-        );
-      },
-    },
-    {
-      key: "last_login_at",
-      header: "Last Login",
-      width: "105px",
-      cell: (value, row) => (
-        <div className="min-w-0">
-          <span className="text-xs text-muted-foreground block truncate">
-            {formatDate(value as string | null)}
-          </span>
-          {row.login_count > 0 && (
-            <span className="text-[10px] text-muted-foreground/70 block truncate">
-              {row.login_count} {row.login_count === 1 ? "login" : "logins"}
-            </span>
-          )}
-        </div>
-      ),
+      column: "role",
+      title: "Role",
+      single: true,
+      options: availableRoles.map((role) => ({ value: role, label: role })),
     },
   ];
 
-  // Define row actions.
-  // Gated on the same permissions the backend enforces, so nothing renders
-  // that would only come back as a 403.
-  const rowActions: RowAction<UserData>[] = [
-    ...(canImpersonate
-      ? [
-          {
-            label: "Impersonate",
-            icon: <UserIcon className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "impersonate", user });
-            },
-            primary: true,
-          },
-        ]
-      : []),
-    ...(canManageRoles
-      ? [
-          {
-            label: "Manage roles",
-            icon: <Shield className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "manageRoles", user });
-            },
-          },
-        ]
-      : []),
-    ...(canUpdateUsers
-      ? [
-          {
-            label: "Edit details",
-            icon: <Pencil className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "edit", user });
-            },
-          },
-          {
-            label: "Activate",
-            icon: <CheckCircle2 className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user)
-                setDialogState({ type: "status", user, action: "activate" });
-            },
-            disabled: (row: UserData) => row.status === "active",
-          },
-          {
-            label: "Suspend",
-            icon: <PauseCircle className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user)
-                setDialogState({ type: "status", user, action: "suspend" });
-            },
-            disabled: (row: UserData) =>
-              row.status === "suspended" || row.status === "banned",
-          },
-          {
-            label: "Ban",
-            icon: <Ban className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "status", user, action: "ban" });
-            },
-            variant: "destructive" as const,
-            disabled: (row: UserData) => row.status === "banned",
-          },
-        ]
-      : []),
-    ...(canDeleteUsers
-      ? [
-          {
-            label: "Delete user",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: (row: UserData) => {
-              const user = findUser(row.id);
-              if (user) setDialogState({ type: "delete", user });
-            },
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-  ];
-
-  if (error) {
+  // Error page only for an idle error — while a refetch is running the
+  // loading skeleton below shows instead of a failure screen (see
+  // isRecovering).
+  if (error && !isFetching) {
     return (
-      <ErrorPage
-        title="Failed to load users"
-        message="There was an error loading the user list. Please try again."
-        retry={() => refetch()}
-      />
+      <ListPage
+        title="User Management"
+        description="Manage system users and impersonation"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load users"
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          There was an error loading the user list. Please try again.
+        </Notice>
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="User Management"
       description="Manage system users and impersonation"
+      actions={
+        // Platform admins are invited, not created here; the invitations page is super admin only.
+        <AdminGuard superAdminOnly>
+          <Button variant="outline" asChild>
+            <Link href="/admin/platform/invitations">
+              <Mail className="h-4 w-4 mr-2" />
+              Admin invitations
+            </Link>
+          </Button>
+        </AdminGuard>
+      }
     >
       <PermissionGuard
-        permission={USER_PERMISSIONS.READ}
+        // user.manage is held only by admin/super_admin; the global support
+        // role additionally gets read-only visibility (list + view details).
+        // Write actions below stay gated on their own permissions.
+        anyRole={[ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.SUPPORT]}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
@@ -462,7 +556,9 @@ export default function AdminUsersPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">user.read</code>
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  user.read
+                </code>
               </p>
             </CardContent>
           </Card>
@@ -534,129 +630,98 @@ export default function AdminUsersPage() {
             </Card>
           </div>
 
-          {/* Users Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>All Users</CardTitle>
-              <CardDescription>
-                View and manage user accounts. Click "Impersonate" to view the
-                system as that user.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={tableData}
-                isLoading={isLoading}
-                rowActions={rowActions}
-                mobileCards
-                manualPagination
-                page={page}
-                totalCount={data?.total_count ?? 0}
-                onPageChange={setPage}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setPage(1);
-                }}
-                onSearchChange={(search) => {
-                  setSearchQuery(search);
-                  setPage(1);
-                }}
-                actions={
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Status Filter */}
-                    <div className="w-[140px]">
-                      <Select
-                        value={statusFilter}
-                        onValueChange={(val) => {
-                          setStatusFilter(val);
-                          setPage(1);
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-xs bg-background">
-                          <SelectValue placeholder="All Statuses" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="suspended">Suspended</SelectItem>
-                          <SelectItem value="banned">Banned</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+          {/* Tabs: All Users / Soft Deleted Users / Account Recovery */}
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList>
+              <TabsTrigger value="all">All Users</TabsTrigger>
+              <TabsTrigger value="deleted">Soft Deleted Users</TabsTrigger>
+              <TabsTrigger value="recovery">Account Recovery</TabsTrigger>
+            </TabsList>
 
-                    {/* Role Filter */}
-                    <div className="w-[140px]">
-                      <Select
-                        value={roleFilter}
-                        onValueChange={(val) => {
-                          setRoleFilter(val);
-                          setPage(1);
-                        }}
-                      >
-                        <SelectTrigger className="h-9 text-xs bg-background">
-                          <SelectValue placeholder="All Roles" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Roles</SelectItem>
-                          {availableRoles.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Clear Filters */}
-                    {(statusFilter !== "all" || roleFilter !== "all") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setStatusFilter("all");
-                          setRoleFilter("all");
-                          setPage(1);
-                        }}
-                        className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <X className="h-3.5 w-3.5 mr-1" />
-                        Reset
-                      </Button>
+            <TabsContent value="all" className="space-y-6 mt-4">
+              {/* Users Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Users</CardTitle>
+                  <CardDescription>
+                    View and manage user accounts. Click "Impersonate" to view
+                    the system as that user.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DataTable
+                    caption="All users"
+                    columns={columns}
+                    data={tableData}
+                    getRowId={(user) => user.id}
+                    getRowLabel={(user) => user.name}
+                    state={tableState}
+                    manual={{ rowCount: data?.total_count ?? 0 }}
+                    // isLoading is false while recovering from a cached
+                    // error (v5: isPending && isFetching, and an errored
+                    // query is not pending) — include isRecovering so the
+                    // skeleton shows instead of an empty table flash.
+                    isLoading={isLoading || isRecovering}
+                    surface="plain"
+                    search={{ placeholder: "Search by name or email" }}
+                    facets={userFacets}
+                    rowActions={rowActions}
+                    emptyState={
+                      <p className="py-8 text-center text-sm text-muted-foreground">
+                        No registered users yet.
+                      </p>
+                    }
+                    renderCard={(user, { actions }) => (
+                      <div className="flex items-start gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <UserCell row={user} />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={user.status} />
+                            <RoleBadges roles={user.roles} />
+                          </div>
+                        </div>
+                        {actions}
+                      </div>
                     )}
-                  </div>
-                }
-                emptyTitle="No users found"
-                emptyDescription="No registered users match the selected search or filters."
-                searchPlaceholder="Search by name or email..."
-                pageSize={pageSize}
-                pageSizeOptions={[10, 25, 50, 100]}
-                tableId="admin-users"
-              />
-            </CardContent>
-          </Card>
+                  />
+                </CardContent>
+              </Card>
 
-          {/* Info Card */}
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-            <CardHeader>
-              <CardTitle className="text-blue-900 dark:text-blue-100">
-                About Impersonation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-              <p>
-                <strong>Impersonation</strong> allows you to view the system as
-                another user for troubleshooting and support purposes.
-              </p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>All actions are performed as the impersonated user</li>
-                <li>Your session is logged for audit and security purposes</li>
-                <li>A yellow banner will display while impersonating</li>
-                <li>You can stop impersonation at any time</li>
-              </ul>
-            </CardContent>
-          </Card>
+              {/* Info Card */}
+              <Card className="border-border bg-muted/40">
+                <CardHeader>
+                  <CardTitle className="text-foreground">
+                    About Impersonation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-foreground">
+                  <p>
+                    <strong>Impersonation</strong> allows you to view the system
+                    as another user for troubleshooting and support purposes.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>All actions are performed as the impersonated user</li>
+                    <li>
+                      Your session is logged for audit and security purposes
+                    </li>
+                    <li>A yellow banner will display while impersonating</li>
+                    <li>You can stop impersonation at any time</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="deleted" className="mt-4">
+              <DeletedUsersTable
+                active={activeTab === "deleted"}
+                viewerIsSuperAdmin={viewerIsSuperAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="recovery" className="mt-4">
+              <AccountRecoveryTable active={activeTab === "recovery"} />
+            </TabsContent>
+          </Tabs>
 
           {/* Dialogs */}
           <ImpersonationStartDialog
@@ -688,6 +753,6 @@ export default function AdminUsersPage() {
           />
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

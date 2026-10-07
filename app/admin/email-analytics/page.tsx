@@ -3,10 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import { workspaceQueries } from "@/lib/query-keys";
 import { EmailFailuresTable } from "@/components/admin/email/email-failures-table";
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
+import { Button } from "@/components/ui/button";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
@@ -16,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 
 // Lazy load EmailVolumeChart component (uses recharts - heavy library ~400KB)
 const EmailVolumeChart = dynamic(
@@ -76,8 +78,10 @@ interface TemplateStats {
 interface TimelineData {
   date: string;
   sent: number;
+  delivered: number;
   opened: number;
   clicked: number;
+  failed: number;
 }
 
 interface EmailFailure {
@@ -96,12 +100,11 @@ export default function EmailAnalyticsPage() {
 
   // Fetch workspaces list (for filter dropdown)
   const { data: workspaces } = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: async () => {
-      const response = await apiClient.workspaces.list();
-      return response.workspaces as Array<{ id: string; name: string }>;
-    },
-    select: (data) => (Array.isArray(data) ? data : []),
+    ...workspaceQueries.list(),
+    select: (data) =>
+      Array.isArray(data?.workspaces)
+        ? (data.workspaces as Array<{ id: string; name: string }>)
+        : [],
   });
 
   // Build query params with optional workspace filter
@@ -172,17 +175,32 @@ export default function EmailAnalyticsPage() {
 
   if (overviewError) {
     return (
-      <ErrorPage
-        title="Failed to load email analytics"
-        message="Overview data could not be loaded. Please try again."
-        retry={() => void refetchOverview()}
-      />
+      <ListPage
+        title="Email Analytics"
+        description="Monitor email delivery, engagement, and performance"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load email analytics"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void refetchOverview()}
+            >
+              Try again
+            </Button>
+          }
+        >
+          Overview data could not be loaded. Please try again.
+        </Notice>
+      </ListPage>
     );
   }
 
   return (
     <AdminGuard>
-      <PageLayout
+      <ListPage
         title="Email Analytics"
         description="Monitor email delivery, engagement, and performance"
         actions={
@@ -260,7 +278,7 @@ export default function EmailAnalyticsPage() {
               </Card>
 
               {/* Email Health Score */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Email Health Score</CardTitle>
                   <CardDescription>
@@ -284,10 +302,10 @@ export default function EmailAnalyticsPage() {
                           <div
                             className={`h-full transition-all ${
                               calculateHealthScore(overviewData) >= 90
-                                ? "bg-green-500"
+                                ? "bg-success-600"
                                 : calculateHealthScore(overviewData) >= 70
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
+                                  ? "bg-warning-600"
+                                  : "bg-danger-600"
                             }`}
                             style={{
                               width: `${calculateHealthScore(overviewData)}%`,
@@ -298,7 +316,7 @@ export default function EmailAnalyticsPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
             </TabsContent>
 
             <TabsContent value="templates" className="space-y-4">
@@ -316,20 +334,7 @@ export default function EmailAnalyticsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
-}
-
-function calculateHealthScore(data: EmailOverview): number {
-  // Health score based on:
-  // - Delivery rate (50% weight)
-  // - Low bounce rate (30% weight)
-  // - Low complaint rate (20% weight)
-
-  const deliveryScore = data.delivery_rate * 0.5;
-  const bounceScore = (100 - data.bounce_rate) * 0.3;
-  const complaintScore = (100 - data.complaint_rate * 10) * 0.2; // Scale complaint rate
-
-  return Math.round(deliveryScore + bounceScore + complaintScore);
 }

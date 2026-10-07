@@ -9,7 +9,7 @@
  * 1. **Workspace-Scoped Resources**
  *    - Standard: `/api/v1/workspaces/{workspace_id}/{resource}`
  *    - Legacy (Query): `/api/v1/{resource}?workspace_id={id}`
- *      @see TOPICS, CONTENT
+ *      @see CONTENT
  *
  * 2. **User-Scoped Resources**
  *    - Standard: `/api/v1/user/{resource}`
@@ -17,7 +17,6 @@
  *
  * 3. **Platform-Level Resources**
  *    - Subscriptions: `/api/v1/subscriptions/{resource}`
- *    - Onboarding: `/api/v1/onboarding/{resource}`
  *    - Admin: `/api/v1/admin/{resource}`
  *
  * 4. **Public Resources**
@@ -40,6 +39,8 @@ export const ENDPOINTS = {
     bySlug: (slug: string) => `/api/v1/workspaces/slug/${slug}` as const,
     deleted: () => "/api/v1/workspaces/deleted" as const,
     restore: (id: string) => `/api/v1/workspaces/${id}/restore` as const,
+    transferOwnership: (id: string) =>
+      `/api/v1/workspaces/${id}/transfer-ownership` as const,
     permanentDelete: (id: string) =>
       `/api/v1/workspaces/${id}/permanent` as const,
 
@@ -96,6 +97,8 @@ export const ENDPOINTS = {
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
     delete: (workspaceId: string, personaId: string) =>
       `/api/v1/workspaces/${workspaceId}/personas/${personaId}` as const,
+    uploadAvatar: (workspaceId: string, personaId: string) =>
+      `/api/v1/workspaces/${workspaceId}/personas/${personaId}/avatar` as const,
   },
 
   /**
@@ -127,22 +130,6 @@ export const ENDPOINTS = {
   },
 
   /**
-   * Topic Endpoints
-   * @note Uses singular `topic` namespace (Inconsistent)
-   * @note Uses verb-based paths like `get-topics`, `save-topic` (RPC-style)
-   * @note Uses query parameter for workspace scoping
-   */
-  TOPICS: {
-    BASE: "/api/v1/topic",
-    list: "/api/v1/topic/get-topics",
-    get: (id: string) => `/api/v1/topic/get-topic/${id}` as const,
-    generate: "/api/v1/topic/generate-topic",
-    save: "/api/v1/topic/save-topic",
-    update: "/api/v1/topic/update-topic",
-    delete: "/api/v1/topic/delete-topic",
-  },
-
-  /**
    * Content Endpoints
    * @note Uses singular `content` namespace
    * @note Mixed REST and verb-based paths (`save`, `publish`, `retry`)
@@ -155,8 +142,29 @@ export const ENDPOINTS = {
     save_publish: "/api/v1/content/publish",
     publish: (id: string) => `/api/v1/content/${id}/publish` as const,
     retry: (id: string) => `/api/v1/content/${id}/retry` as const,
-    cancel_schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
+    // DELETE cancels a scheduled publish, PATCH moves it to another day.
+    schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
     calendar: "/api/v1/content/calendar",
+    uploadBlogImage: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
+  },
+
+  /**
+   * Integration Endpoints
+   * @note Legacy (Query): workspace scoped by `?workspace_id=`
+   * WordPress sites; Shopify is not offered yet.
+   */
+  INTEGRATIONS: {
+    WORDPRESS: {
+      base: "/api/v1/integrations/wordpress/",
+      byId: (id: string) => `/api/v1/integrations/wordpress/${id}` as const,
+      activate: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/activate` as const,
+      deactivate: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/deactivate` as const,
+      test: (id: string) =>
+        `/api/v1/integrations/wordpress/${id}/test` as const,
+    },
   },
 
   /**
@@ -187,13 +195,44 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/v1/user/delete/${id}` as const,
     update: (id: string) => `/api/v1/user/update/${id}` as const,
 
+    // Soft Deleted Users tab
+    deleted: "/api/v1/user/deleted",
+    restore: (id: string) => `/api/v1/user/restore/${id}` as const,
+    // Permanent deletion — Super Admin only
+    permanentDelete: (id: string) => `/api/v1/user/permanent/${id}` as const,
+
     // Admin role assignment (require user.manage_roles)
     roles: {
       list: (userId: string) => `/api/v1/user/${userId}/roles` as const,
       assign: (userId: string) => `/api/v1/user/${userId}/roles` as const,
       revoke: (userId: string, roleId: string) =>
         `/api/v1/user/${userId}/roles/${roleId}` as const,
+      // Workspaces this user belongs to, usable as an assignment scope.
+      workspaces: (userId: string) =>
+        `/api/v1/user/${userId}/workspaces` as const,
     },
+  },
+
+  /**
+   * Onboarding Endpoints
+   * @note The questions asked once at first login (rext-backend src/api/routes/users/onboarding.py)
+   */
+  ONBOARDING: {
+    shouldShow: "/api/v1/onboarding/should-show",
+    marketing: "/api/v1/onboarding/marketing",
+    complete: "/api/v1/onboarding/complete",
+  },
+
+  /**
+   * Admin Account Recovery Endpoints
+   * @note Admin-reviewed account recovery queue (Account Recovery tab)
+   */
+  ACCOUNT_RECOVERY: {
+    requests: "/api/v1/admin/account-recovery/requests",
+    approve: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/approve` as const,
+    reject: (id: string) =>
+      `/api/v1/admin/account-recovery/requests/${id}/reject` as const,
   },
 
   /**
@@ -218,7 +257,6 @@ export const ENDPOINTS = {
   ACCOUNT: {
     exportData: "/api/v1/user/export-data",
     deactivate: "/api/v1/user/deactivate",
-    delete: "/api/v1/user/delete",
     recoveryRequest: "/api/v1/user/account-recovery/request",
     recoveryVerify: "/api/v1/user/account-recovery/verify",
   },
@@ -231,6 +269,8 @@ export const ENDPOINTS = {
     notifications: {
       getPreferences: "/api/v1/user/preferences/notifications",
       updatePreferences: "/api/v1/user/preferences/notifications",
+      /** Needs no sign-in: the token in an email's unsubscribe link is the proof. */
+      unsubscribe: "/api/v1/user/email-preferences/unsubscribe",
     },
     sessions: {
       list: "/api/v1/user/sessions",
@@ -239,13 +279,8 @@ export const ENDPOINTS = {
       revokeAll: "/api/v1/user/sessions",
     },
     security: {
-      stats: "/api/v1/security/stats",
       loginHistory: "/api/v1/user/security/login-history",
       activeSessionsCount: "/api/v1/user/security/active-sessions-count",
-    },
-    preferences: {
-      get: "/api/v1/user/preferences",
-      update: "/api/v1/user/preferences",
     },
   },
 
@@ -255,7 +290,9 @@ export const ENDPOINTS = {
    */
   SUBSCRIPTIONS: {
     BASE: "/api/v1/subscriptions",
-    mySubscription: "/api/v1/subscriptions/my-subscription",
+    /** The public plan catalogue (F1): plans, the trial, an article's cost, the offer. */
+    catalog: "/api/v1/plans",
+    current: "/api/v1/subscriptions/current",
     plans: "/api/v1/subscriptions/plans",
     checkout: "/api/v1/subscriptions/checkout",
     portal: "/api/v1/subscriptions/portal",
@@ -263,6 +300,13 @@ export const ENDPOINTS = {
     downgrade: "/api/v1/subscriptions/downgrade",
     cancel: "/api/v1/subscriptions/cancel",
     invoices: "/api/v1/subscriptions/invoices",
+    orders: "/api/v1/subscriptions/orders",
+    refundRequests: "/api/v1/subscriptions/refund-requests",
+    billingUrls: "/api/v1/subscriptions/billing-urls",
+    /** What to do about an unfinished subscription (F11): update the card or resume. */
+    billingAction: "/api/v1/subscriptions/billing-action",
+    pause: "/api/v1/subscriptions/pause",
+    resume: "/api/v1/subscriptions/resume",
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
     credits: "/api/v1/subscriptions/credits",
@@ -270,26 +314,12 @@ export const ENDPOINTS = {
   },
 
   /**
-   * Onboarding Endpoints
-   * Managed via dedicated namespace
-   */
-  ONBOARDING: {
-    BASE: "/api/v1/onboarding",
-    update: "/api/v1/onboarding/update",
-    marketing: "/api/v1/onboarding/marketing",
-    complete: "/api/v1/onboarding/complete",
-    reset: "/api/v1/onboarding/reset",
-    shouldShow: "/api/v1/onboarding/should-show",
-  },
-  /**
    * Dashboard Endpoints
    * @note Non-standard workspace scoping: uses `/api/v1/dashboard/{id}` instead of `/api/v1/workspaces/{id}/dashboard`
    * @note Workspace ID in path but not a nested resource under workspaces
    */
   DASHBOARD: {
     stats: (workspaceId: string) => `/api/v1/dashboard/${workspaceId}` as const,
-    recentActivities: (workspaceId: string) =>
-      `/api/v1/recent-activities/${workspaceId}` as const,
   },
   /**
    * Admin Endpoints
@@ -310,23 +340,8 @@ export const ENDPOINTS = {
     audit: {
       myLogs: "/api/v1/audit-logs/user/my-logs",
       allLogs: "/api/v1/audit-logs/",
-      detail: (id: string) => `/api/v1/audit/${id}` as const,
-    },
-
-    // Email Templates (uses singular "workspace" - backend inconsistency)
-    emailTemplates: {
-      list: (workspaceId: string) =>
-        `/api/v1/workspace/email-templates/${workspaceId}` as const,
-      variables: (templateType: string) =>
-        `/api/v1/workspace/email-templates/variables/${templateType}` as const,
-      defaults: (templateType: string) =>
-        `/api/v1/workspace/email-templates/defaults/${templateType}` as const,
-      preview: "/api/v1/workspace/email-templates/preview",
-      create: "/api/v1/workspace/email-templates/",
-      update: (templateId: string) =>
-        `/api/v1/workspace/email-templates/${templateId}` as const,
-      delete: (templateId: string) =>
-        `/api/v1/workspace/email-templates/${templateId}` as const,
+      detail: (id: string) => `/api/v1/audit-logs/${id}` as const,
+      exportDownload: "/api/v1/audit-logs/export/download",
     },
 
     // Analytics
@@ -344,19 +359,27 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Account-Creation IP Allowlist
+   * @note Requires admin / super_admin role
+   */
+  ADMIN_ACCOUNT_ALLOWLIST: {
+    base: "/api/v1/admin/account-creation-allowlist",
+    list: "/api/v1/admin/account-creation-allowlist",
+    create: "/api/v1/admin/account-creation-allowlist",
+    detail: (id: string) =>
+      `/api/v1/admin/account-creation-allowlist/${id}` as const,
+  },
+
+  /**
    * Admin Analytics Endpoints
    * @note Platform-level analytics for subscriptions and invitations
    * @note Requires super admin role
    */
   ADMIN_ANALYTICS: {
     subscriptions: {
-      overview: "/api/v1/admin/subscriptions/stats/overview",
       revenue: "/api/v1/admin/subscriptions/stats/revenue",
       churn: "/api/v1/admin/subscriptions/stats/churn",
       trialConversion: "/api/v1/admin/subscriptions/stats/trial-conversion",
-    },
-    invitations: {
-      analytics: "/api/v1/admin/analytics/invitations/analytics",
     },
   },
 
@@ -370,6 +393,20 @@ export const ENDPOINTS = {
     get: (refundId: string) =>
       `/api/v1/admin/subscriptions/refunds/${refundId}` as const,
     create: "/api/v1/admin/subscriptions/refunds/create",
+    orders: "/api/v1/admin/subscriptions/refunds/orders",
+    requests: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: log a refund a customer asked for by email. */
+    createRequest: "/api/v1/admin/subscriptions/refunds/requests",
+    /** POST: take back an approval, returning the request to pending. */
+    unapproveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/unapprove` as const,
+    approveRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/approve` as const,
+    rejectRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/reject` as const,
+    /** Issues the money for an already-approved request. */
+    processRequest: (id: string) =>
+      `/api/v1/admin/subscriptions/refunds/requests/${id}/process` as const,
   },
 
   /**
@@ -417,45 +454,6 @@ export const ENDPOINTS = {
   },
 
   /**
-   * License Endpoints
-   * @note Manages license activation and validation
-   */
-  LICENSES: {
-    BASE: "/api/v1/licenses",
-    list: "/api/v1/licenses",
-    detail: (licenseId: string) => `/api/v1/licenses/${licenseId}` as const,
-    activations: (licenseId: string) =>
-      `/api/v1/licenses/${licenseId}/activations` as const,
-    activate: "/api/v1/licenses/activate",
-    deactivate: (licenseId: string) =>
-      `/api/v1/licenses/${licenseId}/deactivate` as const,
-    validate: "/api/v1/licenses/validate",
-  },
-  /**
-   * Media Endpoints
-   * @note Workspace-scoped media/file management
-   * @note Handles file uploads, storage, and usage tracking
-   */
-  MEDIA: {
-    base: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media` as const,
-    upload: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/upload` as const,
-    uploadBlogImage: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
-    detail: (workspaceId: string, mediaId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/${mediaId}` as const,
-    bulkDelete: (workspaceId: string) =>
-      `/api/v1/workspaces/${workspaceId}/media/bulk-delete` as const,
-    usage: {
-      stats: (workspaceId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/usage/stats` as const,
-      detail: (workspaceId: string, mediaId: string) =>
-        `/api/v1/workspaces/${workspaceId}/media/${mediaId}/usage` as const,
-    },
-  },
-
-  /**
    * Roles Endpoints
    * @note Platform-level role management
    */
@@ -485,8 +483,6 @@ export const ENDPOINTS = {
       `/api/v1/permissions/${permissionId}` as const,
     update: (permissionId: string) =>
       `/api/v1/permissions/${permissionId}` as const,
-    delete: (permissionId: string) =>
-      `/api/v1/permissions/${permissionId}` as const,
   },
 
   /**
@@ -501,9 +497,11 @@ export const ENDPOINTS = {
 
   /**
    * Keyword Library Endpoints
-   * @note Workspace-scoped keyword storage management
+   * @note The caller's own library in a workspace (rext-backend G78). Reads go to LangGraph's store,
+   * which answers only searches and gets; a removal goes through this app route.
    */
   KEYWORD_LIBRARY: {
-    base: "/store/items",
+    items: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/keyword-library/items` as const,
   },
 } as const;

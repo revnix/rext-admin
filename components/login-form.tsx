@@ -4,37 +4,42 @@ import Link from "next/link";
 import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
+import { FieldController } from "@/components/forms/field-controller";
+import { PasswordInput } from "@/components/forms/password-input";
+import { useZodForm } from "@/components/forms/use-zod-form";
+import { LegalAgreement } from "@/components/auth/legal-agreement";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
+import { classifyError } from "@/lib/error-utils";
+import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [hasInvalidCredentialsError, setHasInvalidCredentialsError] =
-    useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const form = useZodForm(loginSchema, {
+    defaultValues: { email: "", password: "" },
+  });
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const hydrated = useHydrated();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -49,6 +54,13 @@ export function LoginForm({
     error: invitationError,
   } = useInvitationValidation();
 
+  // Prefill email from the URL (e.g. redirected here from an invitation signup
+  // because the account already exists).
+  useEffect(() => {
+    const prefill = searchParams.get("email");
+    if (prefill) form.setValue("email", prefill);
+  }, [searchParams, form]);
+
   // Handle URL error parameters (e.g., session expired)
   useEffect(() => {
     const urlError = searchParams.get("error");
@@ -60,7 +72,7 @@ export function LoginForm({
         AccountSuspended:
           "Your account has been suspended. Contact support to have it reviewed.",
         AccountBanned:
-          "Your account has been permanently banned and cannot be used.",
+          "Your account has been banned. Please contact support for assistance.",
         OAuthSignin: "Error occurred during OAuth sign in.",
         OAuthCallback: "Error occurred during OAuth callback.",
         OAuthCreateAccount: "Could not create OAuth account.",
@@ -86,7 +98,11 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const attemptSignIn = async () => {
+  /** Whether it signed in: then it navigates, and the form stays busy until the next page shows. */
+  const attemptSignIn = async ({
+    email,
+    password,
+  }: LoginData): Promise<boolean> => {
     // Backend validated successfully, now use NextAuth for session creation.
     // There is deliberately no "confirm reactivation" flag here — a deactivated
     // account is only reactivated by opening the emailed link.
@@ -94,6 +110,10 @@ export function LoginForm({
       email,
       password,
       redirect: false,
+      // signIn() otherwise uses window.location.href, and reads `error` back
+      // from it — on /login?error=SessionExpired a successful login would
+      // report that stale error. Navigation is handled manually below.
+      redirectTo: "/",
       rememberMe: rememberMe.toString(),
     });
 
@@ -125,7 +145,7 @@ export function LoginForm({
             );
           }
         }
-        return;
+        return false;
       }
 
       // Use the error message from the backend if available (stored in result.code)
@@ -134,18 +154,32 @@ export function LoginForm({
         result.code && result.code !== "CredentialsSignin"
           ? result.code
           : "Authentication failed. Please check your credentials and try again.";
+      const classifiedError = classifyError(
+        new Error(result.code || result.error || "Authentication failed"),
+      );
+      const displayErrorMessage =
+        classifiedError.type === "network_error" ||
+        classifiedError.type === "server_error"
+          ? classifiedError.message
+          : errorMessage;
 
-      const isInvalidCredentials = errorMessage
+      const isInvalidCredentials = displayErrorMessage
         .toLowerCase()
         .includes("invalid email or password");
 
+      // Wrong details are the field's error, beside the field; anything else
+      // (the server, the network, a locked account) is a toast.
       if (isInvalidCredentials) {
-        setHasInvalidCredentialsError(true);
-        emailInputRef.current?.focus();
+        form.setError(
+          "password",
+          { type: "server", message: displayErrorMessage },
+          { shouldFocus: true },
+        );
+        return false;
       }
 
-      toast.error(errorMessage);
-      return;
+      toast.error(displayErrorMessage);
+      return false;
     }
 
     toast.success("Login successful!");
@@ -153,6 +187,9 @@ export function LoginForm({
     resetAuthRedirectState();
 
     if (hasValidInvitation && invitationToken) {
+      // Force a fresh auth-headers read before navigating so the accept page's
+      // very first request doesn't race the session hydration.
+      await getAuthHeaders(true);
       router.push(`/invitations/accept?token=${invitationToken}` as Route);
     } else {
       await getAuthHeaders(true);
@@ -173,27 +210,10 @@ export function LoginForm({
         router.push(redirect as Route);
       }
     }
+    return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setHasInvalidCredentialsError(false);
-
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    const hasEmail = trimmedEmail.length > 0;
-    const hasPassword = trimmedPassword.length > 0;
-
-    // Do not show credential errors for empty fields; only focus the first missing field.
-    if (!hasEmail || !hasPassword) {
-      if (!hasEmail) {
-        emailInputRef.current?.focus();
-      } else {
-        passwordInputRef.current?.focus();
-      }
-      return;
-    }
-
+  const onSubmit = async (values: LoginData) => {
     setIsLoading(true);
 
     // Clear any previous session invalidity flag
@@ -201,13 +221,21 @@ export function LoginForm({
       sessionStorage.removeItem("session_invalid");
     }
 
+    let signedIn = false;
     try {
-      await attemptSignIn();
+      signedIn = await attemptSignIn(values);
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
-      toast.error("An error occurred. Please try again.");
+      const classifiedError = classifyError(error);
+      toast.error(
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : "An error occurred. Please try again.",
+      );
     } finally {
-      setIsLoading(false);
+      // Signed in: the next page takes over; re-enabling the button meanwhile would invite a second login.
+      if (!signedIn) setIsLoading(false);
     }
   };
 
@@ -217,14 +245,14 @@ export function LoginForm({
       {/* Invitation Banner */}
       {hasValidInvitation && invitation && (
         <InvitationBanner
-          workspaceName={invitation.workspace.name}
-          workspaceSlug={invitation.workspace.slug}
+          workspaceName={invitation.workspace?.name}
+          workspaceSlug={invitation.workspace?.slug}
           inviterName={
-            invitation.invited_by.display_name ||
-            invitation.invited_by.full_name ||
+            invitation.invited_by?.display_name ||
+            invitation.invited_by?.full_name ||
             "Workspace Admin"
           }
-          roleName={invitation.role.display_name}
+          roleName={invitation.role?.display_name || invitation.role?.name}
           inviteeEmail={invitation.email}
           isLoading={isLoadingInvitation}
         />
@@ -232,153 +260,107 @@ export function LoginForm({
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg">
-          <p className="font-medium">Invitation Link Issue</p>
-          <p className="text-sm mt-1">
+        <div className="space-y-1 rounded-md border border-border bg-surface-inset p-4 text-body text-foreground">
+          <p className="font-medium">Invitation link issue</p>
+          <p>
             {invitationError ||
               "This invitation link is invalid or has expired."}
           </p>
-          <p className="text-sm mt-2">
+          <p>
             You can still log in, but you won't be automatically added to the
             workspace.
           </p>
         </div>
       )}
 
-      <div className="bg-transparent">
-        <div className="flex flex-col space-y-1.5 px-0 mb-6">
-          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
-            {hasValidInvitation
-              ? "Log in to join workspace"
-              : "Login to your account"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {hasValidInvitation
-              ? "Log in to accept your workspace invitation"
-              : "Enter your email below to login to your account"}
-          </p>
-        </div>
-        <div className="px-0">
-          <form onSubmit={handleSubmit}>
-            <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
-
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-3">
-                <Label htmlFor="email" className="ml-1">
-                  Email
-                </Label>
-                <Input
-                  ref={emailInputRef}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (hasInvalidCredentialsError) {
-                      setHasInvalidCredentialsError(false);
-                    }
-                  }}
-                  className={cn(
-                    "!shadow-none",
-                    hasInvalidCredentialsError &&
-                      "border-destructive focus-visible:ring-destructive/30",
-                  )}
-                />
-              </div>
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password" className="ml-1">
-                    Password
-                  </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    ref={passwordInputRef}
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (hasInvalidCredentialsError) {
-                        setHasInvalidCredentialsError(false);
-                      }
-                    }}
-                    className={cn(
-                      "!shadow-none pr-10",
-                      hasInvalidCredentialsError &&
-                        "border-destructive focus-visible:ring-destructive/30",
-                    )}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me for 30 days
-                </label>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="submit"
-                  className="w-full h-11 rounded-md text-base font-medium transition-all !shadow-none"
-                  disabled={isLoading || isLoadingInvitation}
-                >
-                  {isLoading
-                    ? hasValidInvitation
-                      ? "Logging in & joining workspace..."
-                      : "Logging in..."
-                    : hasValidInvitation
-                      ? "Login & Join Workspace"
-                      : "Login"}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href={
-                  invitationToken
-                    ? `/signup?token=${invitationToken}`
-                    : ("/signup" as Route)
-                }
-                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </div>
+      <div className="space-y-1">
+        {/* layout-ok: sign-in is outside the shell; its column carries the page's title */}
+        <h1 className="font-display text-page-title text-foreground">
+          {hasValidInvitation
+            ? "Log in to join the workspace"
+            : "Log in to your account"}
+        </h1>
+        <p className="text-body text-muted-foreground">
+          {hasValidInvitation
+            ? "Log in to accept your workspace invitation"
+            : "Enter your email below to log in to your account"}
+        </p>
       </div>
+
+      {/* Google or GitHub create an account for someone new: they agree to the same terms as sign-up. */}
+      <OAuthButtons
+        callbackUrl={searchParams.get("redirect") || "/"}
+        notice={<LegalAgreement action="continuing with Google or GitHub" />}
+      />
+
+      {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          <FieldController
+            control={form.control}
+            name="email"
+            label="Email"
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+              />
+            )}
+          </FieldController>
+          <div className="space-y-2">
+            <FieldController
+              control={form.control}
+              name="password"
+              label="Password"
+              required
+            >
+              {(field) => (
+                <PasswordInput {...field} autoComplete="current-password" />
+              )}
+            </FieldController>
+            <Link
+              href="/forgot-password"
+              className="inline-block text-body link"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked === true)}
+            />
+            <Label htmlFor="remember">Remember me for 30 days</Label>
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={!hydrated || isLoading || isLoadingInvitation}
+          >
+            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {hasValidInvitation ? "Log in and join the workspace" : "Log in"}
+          </Button>
+        </FieldGroup>
+      </form>
+
+      <p className="text-center text-body text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={
+            invitationToken
+              ? `/signup?token=${invitationToken}`
+              : ("/signup" as Route)
+          }
+          className="font-medium link"
+        >
+          Sign up
+        </Link>
+      </p>
     </div>
   );
 }

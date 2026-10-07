@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Edit,
-  History,
+  Eye,
   Key,
   LockKeyhole,
   Network,
@@ -17,7 +17,6 @@ import { useState } from "react";
 import { BulkAssignPermissionsDialog } from "@/components/admin/roles/bulk-assign-permissions-dialog";
 
 import { CreateRoleDialog } from "@/components/admin/roles/create-role-dialog";
-import { DeletePermissionDialog } from "@/components/admin/roles/delete-permission-dialog";
 import { DeleteRoleDialog } from "@/components/admin/roles/delete-role-dialog";
 import { EditPermissionDialog } from "@/components/admin/roles/edit-permission-dialog";
 import { EditRoleDialog } from "@/components/admin/roles/edit-role-dialog";
@@ -25,9 +24,7 @@ import { ManageRolePermissionsDialog } from "@/components/admin/roles/manage-rol
 import { PermissionBadge } from "@/components/admin/roles/permission-badge";
 import { PermissionDependencyView } from "@/components/admin/roles/permission-dependency-view";
 import { RoleBadge } from "@/components/admin/roles/role-badge";
-import { RolePermissionAuditLog } from "@/components/admin/roles/role-permission-audit-log";
-import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,25 +35,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ErrorPage } from "@/components/ui/error-states";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+} from "@/components/ui/data-table";
+import { Notice } from "@/components/ui/notice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
 import { usePermission } from "@/hooks/use-permission";
-import { ADMIN_PERMISSIONS, isProtectedRole } from "@/lib/permissions";
-import type { Column, RowAction } from "@/types/data-table";
+import {
+  ROLE_PERMISSIONS,
+  isProtectedRole,
+  isWorkspaceAssignablePermission,
+} from "@/lib/permissions";
 import type { PermissionWithRoles, RoleWithPermissions } from "@/types/role";
 
-interface RoleTableData extends Record<string, unknown> {
+interface RoleTableData {
   id: string;
   name: string;
   display_name: string;
-  hierarchy_level: number;
   is_system_role: boolean;
   permissions_count: number;
   description?: string;
 }
 
-interface PermissionTableData extends Record<string, unknown> {
+interface PermissionTableData {
   id: string;
   name: string;
   display_name: string;
@@ -64,7 +68,20 @@ interface PermissionTableData extends Record<string, unknown> {
   action: string;
   roles_count: number;
   description?: string;
+  is_system: boolean;
 }
+
+// Permissions offerable to custom roles: platform-scoped resources (user, role,
+// permission, audit, support, billing, security) are excluded — the same filter
+// CreateRoleDialog applies — but built-in roles still show them (read-only)
+// via the unfiltered list below.
+
+// The platform-wide `user` floor role has been removed from the backend
+// (own-account routes are authentication-gated; signup no longer assigns a
+// global role). This filter stays as transition safety so the role never
+// reappears on this page if this frontend deploys before the cleanup
+// migration runs; it becomes a no-op once the role is gone.
+const PLATFORM_FLOOR_ROLE = "user";
 
 type RolesDialogState =
   | { type: "closed" }
@@ -73,10 +90,99 @@ type RolesDialogState =
   | { type: "deleteRole"; role: RoleWithPermissions }
   | { type: "manageRolePermissions"; role: RoleWithPermissions }
   | { type: "editPermission"; permission: PermissionWithRoles }
-  | { type: "deletePermission"; permission: PermissionWithRoles }
   | { type: "bulkAssign" }
-  | { type: "dependencyView"; permission: PermissionWithRoles }
-  | { type: "auditLog" };
+  | { type: "dependencyView"; permission: PermissionWithRoles };
+
+const plural = (count: number, word: string) =>
+  `${count} ${word}${count === 1 ? "" : "s"}`;
+
+const roleColumn = createDataTableColumnHelper<RoleTableData>();
+
+const roleColumns = roleColumn.columns([
+  roleColumn.accessor("display_name", {
+    header: "Role",
+    cell: ({ row, getValue }) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium text-foreground">{getValue()}</span>
+        <RoleBadge
+          isSystemRole={row.original.is_system_role}
+          isBuiltIn={isProtectedRole(row.original)}
+        />
+      </div>
+    ),
+  }),
+  roleColumn.accessor("name", {
+    header: "Internal name",
+    cell: ({ getValue }) => (
+      <code className="rounded-sm bg-muted px-1.5 py-0.5 text-xs">
+        {getValue()}
+      </code>
+    ),
+  }),
+  roleColumn.accessor("permissions_count", {
+    header: "Permissions",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => plural(getValue(), "permission"),
+    enableGlobalFilter: false,
+  }),
+  roleColumn.accessor((role) => role.description ?? "", {
+    id: "description",
+    header: "Description",
+    cell: ({ getValue }) => (
+      <span className="line-clamp-2 text-muted-foreground">
+        {getValue() || "—"}
+      </span>
+    ),
+    enableSorting: false,
+  }),
+]);
+
+const permissionColumn = createDataTableColumnHelper<PermissionTableData>();
+
+const permissionColumns = permissionColumn.columns([
+  permissionColumn.accessor("display_name", {
+    header: "Permission",
+    cell: ({ getValue }) => (
+      <span className="font-medium text-foreground">{getValue()}</span>
+    ),
+  }),
+  permissionColumn.accessor("name", {
+    header: "Key",
+    cell: ({ row }) => (
+      <PermissionBadge
+        resource={row.original.resource}
+        action={row.original.action}
+      />
+    ),
+  }),
+  permissionColumn.accessor("resource", {
+    header: "Resource",
+    cell: ({ getValue }) => (
+      <Badge variant="neutral" className="capitalize">
+        {getValue()}
+      </Badge>
+    ),
+    filterFn: "arrHas",
+  }),
+  permissionColumn.accessor("action", {
+    header: "Action",
+    cell: ({ getValue }) => <span className="capitalize">{getValue()}</span>,
+    filterFn: "arrHas",
+    enableGlobalFilter: false,
+  }),
+  permissionColumn.accessor("roles_count", {
+    header: "Roles",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => plural(getValue(), "role"),
+    enableGlobalFilter: false,
+  }),
+]);
+
+// Resources and actions are read from the permissions themselves, so a new one shows up by itself.
+const PERMISSION_FACETS = [
+  { column: "resource", title: "Resource" },
+  { column: "action", title: "Action" },
+];
 
 export default function AdminRolesPage() {
   // Unified Dialog state
@@ -89,16 +195,15 @@ export default function AdminRolesPage() {
   // Row actions are gated on the same permissions the backend enforces on the
   // corresponding routes, so the UI never offers an action that would 403.
   // Declared before the early error return below to keep hook order stable.
-  const canUpdateRole = usePermission(ADMIN_PERMISSIONS.ROLE_UPDATE);
-  const canDeleteRole = usePermission(ADMIN_PERMISSIONS.ROLE_DELETE);
+  const canUpdateRole = usePermission(ROLE_PERMISSIONS.UPDATE);
+  const canDeleteRole = usePermission(ROLE_PERMISSIONS.DELETE);
   const canManageRolePermissions = usePermission(
-    ADMIN_PERMISSIONS.ROLE_MANAGE_PERMISSIONS,
+    ROLE_PERMISSIONS.MANAGE_PERMISSIONS,
   );
+  // Viewing a role's permissions is a read; editing them needs manage_permissions.
+  const canReadRole = usePermission(ROLE_PERMISSIONS.READ);
   const canUpdatePermission = usePermission(
-    ADMIN_PERMISSIONS.PERMISSION_UPDATE,
-  );
-  const canDeletePermission = usePermission(
-    ADMIN_PERMISSIONS.PERMISSION_DELETE,
+    ROLE_PERMISSIONS.MANAGE_PERMISSIONS,
   );
 
   // Fetch roles with permissions
@@ -122,282 +227,186 @@ export default function AdminRolesPage() {
     queryKey: ["permissions"],
     queryFn: () => apiClient.roles.listPermissions(undefined, true),
   });
+  const allPermissions = permissionsData?.permissions || [];
+  const customRolePermissions = allPermissions.filter(
+    isWorkspaceAssignablePermission,
+  );
+
+  // Roles shown in the table and passed to this page's dialogs. Excludes the
+  // platform floor role (see PLATFORM_FLOOR_ROLE above).
+  const visibleRoles = (rolesData?.roles || []).filter(
+    (role) => role.name !== PLATFORM_FLOOR_ROLE,
+  );
 
   if (rolesError || permissionsError) {
     return (
-      <ErrorPage
-        title="Failed to load roles and permissions"
-        message="We could not load role and permission data. Please retry."
-        retry={() => {
-          void refetchRoles();
-          void refetchPermissions();
-        }}
-      />
+      <ListPage
+        title="Roles & Permissions"
+        description="Configure system roles and assign permissions"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load roles and permissions"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                void refetchRoles();
+                void refetchPermissions();
+              }}
+            >
+              Try again
+            </Button>
+          }
+        >
+          We could not load role and permission data. Please retry.
+        </Notice>
+      </ListPage>
     );
   }
 
   // Transform roles data for DataTable
   // Only count permissions that are present in the permissionsData and common across the app
-  const systemPermissionIds = new Set(
-    (permissionsData?.permissions || []).map((p) => p.id),
+  const allPermissionIds = new Set(allPermissions.map((p) => p.id));
+  const customRolePermissionIds = new Set(
+    customRolePermissions.map((p) => p.id),
   );
 
-  const rolesTableData: RoleTableData[] = (rolesData?.roles || []).map(
-    (role) => {
-      const validPermissions =
-        role.permissions?.filter((p) => systemPermissionIds.has(p.id)) || [];
+  const rolesTableData: RoleTableData[] = visibleRoles.map((role) => {
+    const visibleIds = isProtectedRole(role)
+      ? allPermissionIds
+      : customRolePermissionIds;
+    const validPermissions =
+      role.permissions?.filter((p) => visibleIds.has(p.id)) || [];
 
-      return {
-        id: role.id,
-        name: role.name,
-        display_name: role.display_name,
-        hierarchy_level: role.hierarchy_level,
-        is_system_role: role.is_system_role,
-        permissions_count: validPermissions.length,
-        description: role.description,
-      };
-    },
-  );
+    return {
+      id: role.id,
+      name: role.name,
+      display_name: role.display_name,
+      is_system_role: role.is_system_role,
+      permissions_count: validPermissions.length,
+      description: role.description,
+    };
+  });
 
   // Transform permissions data for DataTable
-  const permissionsTableData: PermissionTableData[] = (
-    permissionsData?.permissions || []
-  ).map((permission) => ({
-    id: permission.id,
-    name: permission.name,
-    display_name: permission.display_name,
-    resource: permission.resource,
-    action: permission.action,
-    roles_count: permission.roles?.length || 0,
-    description: permission.description,
-  }));
-
-  // Role columns
-  const roleColumns: Column<RoleTableData>[] = [
-    {
-      key: "display_name",
-      header: "Role Name",
-      width: "200px",
-      cell: (value, row) => (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{value as string}</span>
-          <RoleBadge isSystemRole={row.is_system_role} />
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "name",
-      header: "Internal Name",
-      width: "180px",
-      cell: (value) => (
-        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-          {value as string}
-        </code>
-      ),
-      searchable: true,
-    },
-    {
-      key: "hierarchy_level",
-      header: "Level",
-      width: "100px",
-      cell: (value) => (
-        <Badge variant="outline" className="font-mono">
-          {value as number}
-        </Badge>
-      ),
-    },
-    {
-      key: "permissions_count",
-      header: "Permissions",
-      width: "120px",
-      cell: (value) => (
-        <Badge variant="secondary">
-          {value as number} permission{value !== 1 ? "s" : ""}
-        </Badge>
-      ),
-    },
-    {
-      key: "description",
-      header: "Description",
-      cell: (value) => (
-        <span className="text-sm text-muted-foreground line-clamp-1">
-          {value as string}
-        </span>
-      ),
-    },
-  ];
+  const permissionsTableData: PermissionTableData[] = allPermissions.map(
+    (permission) => ({
+      id: permission.id,
+      name: permission.name,
+      display_name: permission.display_name,
+      resource: permission.resource,
+      action: permission.action,
+      roles_count: permission.roles?.length || 0,
+      description: permission.description,
+      is_system: permission.is_system,
+    }),
+  );
 
   // Role actions
   //
   // Hidden entirely when the user lacks the backend permission for them, and
   // disabled on protected roles — the backend rejects update/delete for system
   // roles AND standard workspace roles, which carry is_system_role = false.
-  const roleActions: RowAction<RoleTableData>[] = [
-    ...(canManageRolePermissions
-      ? [
-          {
-            label: "Manage Permissions",
-            icon: <Settings className="h-4 w-4" />,
-            onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
-              if (role) {
-                setDialogState({ type: "manageRolePermissions", role });
-              }
+  const roleActions = (row: RoleTableData): DataTableRowAction[] => {
+    const role = visibleRoles.find((r) => r.id === row.id);
+    if (!role) return [];
+    const isProtected = isProtectedRole(row);
+    const lockedReason = (verb: string) =>
+      isProtected
+        ? row.is_system_role
+          ? `System roles cannot be ${verb}`
+          : `Standard workspace roles cannot be ${verb}`
+        : false;
+    const readOnly = isProtected || !canManageRolePermissions;
+    return [
+      ...(canManageRolePermissions || canReadRole
+        ? [
+            {
+              label: readOnly ? "View permissions" : "Manage permissions",
+              icon: readOnly ? Eye : Settings,
+              onSelect: () =>
+                setDialogState({ type: "manageRolePermissions", role }),
             },
-            primary: true,
-          },
-        ]
-      : []),
-    ...(canUpdateRole
-      ? [
-          {
-            label: "Edit",
-            icon: <Edit className="h-4 w-4" />,
-            onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
-              if (role && !isProtectedRole(role)) {
-                setDialogState({ type: "editRole", role });
-              }
+          ]
+        : []),
+      ...(canUpdateRole
+        ? [
+            {
+              label: "Edit",
+              icon: Edit,
+              disabled: lockedReason("edited"),
+              onSelect: () => setDialogState({ type: "editRole", role }),
             },
-            disabled: (row: RoleTableData) => isProtectedRole(row),
-          },
-        ]
-      : []),
-    ...(canDeleteRole
-      ? [
-          {
-            label: "Delete",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: (row: RoleTableData) => {
-              const role = rolesData?.roles.find((r) => r.id === row.id);
-              if (role && !isProtectedRole(role)) {
-                setDialogState({ type: "deleteRole", role });
-              }
+          ]
+        : []),
+      ...(canDeleteRole
+        ? [
+            {
+              label: "Delete",
+              icon: Trash2,
+              destructive: true,
+              disabled: lockedReason("deleted"),
+              onSelect: () => setDialogState({ type: "deleteRole", role }),
             },
-            variant: "destructive" as const,
-            disabled: (row: RoleTableData) => isProtectedRole(row),
-          },
-        ]
-      : []),
-  ];
+          ]
+        : []),
+    ];
+  };
 
-  // Permission columns
-  const permissionColumns: Column<PermissionTableData>[] = [
-    {
-      key: "display_name",
-      header: "Permission Name",
-      width: "220px",
-      cell: (value) => <span className="font-medium">{value as string}</span>,
-      searchable: true,
-    },
-    {
-      key: "name",
-      header: "Permission",
-      width: "200px",
-      cell: (_value, row) => (
-        <PermissionBadge resource={row.resource} action={row.action} />
-      ),
-      searchable: true,
-    },
-    {
-      key: "resource",
-      header: "Resource",
-      width: "150px",
-      cell: (value) => (
-        <Badge variant="outline" className="capitalize">
-          {value as string}
-        </Badge>
-      ),
-    },
-    {
-      key: "action",
-      header: "Action",
-      width: "120px",
-      cell: (value) => (
-        <Badge variant="secondary" className="capitalize">
-          {value as string}
-        </Badge>
-      ),
-    },
-    {
-      key: "roles_count",
-      header: "Roles",
-      width: "100px",
-      cell: (value) => (
-        <Badge variant="outline">
-          {value as number} role{value !== 1 ? "s" : ""}
-        </Badge>
-      ),
-    },
-  ];
-
-  // Permission actions — Edit/Delete hidden without the matching backend
+  // Permission actions — Edit hidden without the matching backend
   // permission. View Dependencies is derived from already-loaded data and
   // needs nothing beyond the permission.read this page already requires.
-  const permissionActions: RowAction<PermissionTableData>[] = [
-    {
-      label: "View Dependencies",
-      icon: <Network className="h-4 w-4" />,
-      onClick: (row) => {
-        const permission = permissionsData?.permissions.find(
-          (p) => p.id === row.id,
-        );
-        if (permission) {
-          setDialogState({ type: "dependencyView", permission });
-        }
+  const permissionActions = (
+    row: PermissionTableData,
+  ): DataTableRowAction[] => {
+    const permission = permissionsData?.permissions.find(
+      (p) => p.id === row.id,
+    );
+    if (!permission) return [];
+    return [
+      {
+        label: "View dependencies",
+        icon: Network,
+        onSelect: () => setDialogState({ type: "dependencyView", permission }),
       },
-      primary: true,
-    },
-    ...(canUpdatePermission
-      ? [
-          {
-            label: "Edit",
-            icon: <Edit className="h-4 w-4" />,
-            onClick: (row: PermissionTableData) => {
-              const permission = permissionsData?.permissions.find(
-                (p) => p.id === row.id,
-              );
-              if (permission) {
-                setDialogState({ type: "editPermission", permission });
-              }
+      ...(canUpdatePermission
+        ? [
+            {
+              label: "Edit",
+              icon: Edit,
+              onSelect: () =>
+                setDialogState({ type: "editPermission", permission }),
             },
-          },
-        ]
-      : []),
-    ...(canDeletePermission
-      ? [
-          {
-            label: "Delete",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: (row: PermissionTableData) => {
-              const permission = permissionsData?.permissions.find(
-                (p) => p.id === row.id,
-              );
-              if (permission) {
-                setDialogState({ type: "deletePermission", permission });
-              }
-            },
-            variant: "destructive" as const,
-          },
-        ]
-      : []),
-  ];
+          ]
+        : []),
+    ];
+  };
 
+  // Three buckets, not two. The seeded workspace roles (workspace_owner,
+  // workspace_admin, editor, viewer) carry is_system_role = false because that
+  // flag means "platform-scoped", not "built-in" — the backend still refuses to
+  // edit or delete them (RoleService._is_protected_role). Deriving custom as
+  // "everything that isn't a system role" therefore reported those four seeded
+  // roles as user-created ones that nobody ever created.
+  // Counts come from visibleRoles so they match the table; the platform floor
+  // role is excluded from all of them.
   const systemRolesCount =
-    rolesData?.roles?.filter((r) => r.is_system_role).length || 0;
-  const customRolesCount = (rolesData?.count || 0) - systemRolesCount;
+    visibleRoles.filter((r) => r.is_system_role).length || 0;
+  const builtInRolesCount =
+    visibleRoles.filter((r) => isProtectedRole(r) && !r.is_system_role)
+      .length || 0;
+  const customRolesCount =
+    visibleRoles.filter((r) => !isProtectedRole(r)).length || 0;
 
   return (
-    <PageLayout
+    <ListPage
       title="Roles & Permissions"
       description="Configure system roles and assign permissions"
     >
       <PermissionGuard
-        anyPermission={[
-          ADMIN_PERMISSIONS.ROLE_READ,
-          ADMIN_PERMISSIONS.PERMISSION_READ,
-        ]}
+        permission={ROLE_PERMISSIONS.READ}
         fallback={
           <Card className="border-destructive">
             <CardHeader>
@@ -409,9 +418,11 @@ export default function AdminRolesPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permissions:{" "}
-                <code className="text-xs bg-muted px-1 rounded">role:read</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  role:read
+                </code>{" "}
                 OR{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   permission:read
                 </code>
               </p>
@@ -430,11 +441,10 @@ export default function AdminRolesPage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {rolesData?.count || 0}
-                </div>
+                <div className="text-2xl font-bold">{visibleRoles.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  {systemRolesCount} system, {customRolesCount} custom
+                  {systemRolesCount} system, {builtInRolesCount} built-in,{" "}
+                  {customRolesCount} custom
                 </p>
               </CardContent>
             </Card>
@@ -512,29 +522,7 @@ export default function AdminRolesPage() {
                       </CardDescription>
                     </div>
                     <div className="w-full sm:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <Button
-                        variant="outline"
-                        className="w-full sm:w-auto"
-                        onClick={() => setDialogState({ type: "auditLog" })}
-                      >
-                        <History className="h-4 w-4 mr-2" />
-                        Audit Log
-                      </Button>
-                      <PermissionGuard
-                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
-                      >
-                        <Button
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          onClick={() => setDialogState({ type: "bulkAssign" })}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Bulk Assign
-                        </Button>
-                      </PermissionGuard>
-                      <PermissionGuard
-                        permission={ADMIN_PERMISSIONS.ROLE_CREATE}
-                      >
+                      <PermissionGuard permission={ROLE_PERMISSIONS.CREATE}>
                         <Button
                           onClick={() => setDialogState({ type: "createRole" })}
                           className="w-full sm:w-auto"
@@ -548,17 +536,40 @@ export default function AdminRolesPage() {
                 </CardHeader>
                 <CardContent>
                   <DataTable
+                    caption="Roles"
                     columns={roleColumns}
                     data={rolesTableData}
+                    getRowId={(role) => role.id}
+                    getRowLabel={(role) => role.display_name}
                     isLoading={rolesLoading}
+                    surface="plain"
+                    search={{ placeholder: "Search roles" }}
                     rowActions={roleActions}
-                    emptyTitle="No roles found"
-                    emptyDescription="Create your first custom role to get started"
-                    searchPlaceholder="Search by role name..."
-                    searchFields={["display_name", "name"]}
-                    pageSize={10}
                     pageSizeOptions={[10, 25, 50]}
-                    tableId="admin-roles"
+                    emptyState={
+                      <p className="py-8 text-center text-sm text-muted-foreground">
+                        No roles yet: create the first custom role.
+                      </p>
+                    }
+                    renderCard={(role, { actions }) => (
+                      <div className="flex items-start gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                          <p className="flex items-center gap-2 font-medium text-foreground">
+                            <span className="truncate">
+                              {role.display_name}
+                            </span>
+                            <RoleBadge
+                              isSystemRole={role.is_system_role}
+                              isBuiltIn={isProtectedRole(role)}
+                            />
+                          </p>
+                          <p className="num text-muted-foreground">
+                            {plural(role.permissions_count, "permission")}
+                          </p>
+                        </div>
+                        {actions}
+                      </div>
+                    )}
                   />
                 </CardContent>
               </Card>
@@ -575,21 +586,50 @@ export default function AdminRolesPage() {
                         Manage system permissions
                       </CardDescription>
                     </div>
+                    <PermissionGuard permission={ROLE_PERMISSIONS.CREATE}>
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => setDialogState({ type: "bulkAssign" })}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Bulk Assign
+                      </Button>
+                    </PermissionGuard>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <DataTable
+                    caption="Permissions"
                     columns={permissionColumns}
                     data={permissionsTableData}
+                    getRowId={(permission) => permission.id}
+                    getRowLabel={(permission) => permission.display_name}
                     isLoading={permissionsLoading}
+                    surface="plain"
+                    search={{ placeholder: "Search permissions" }}
+                    facets={PERMISSION_FACETS}
                     rowActions={permissionActions}
-                    emptyTitle="No permissions found"
-                    emptyDescription="Permissions are the building blocks of roles"
-                    searchPlaceholder="Search by name or resource..."
-                    searchFields={["display_name", "name", "resource"]}
-                    pageSize={10}
                     pageSizeOptions={[10, 25, 50, 100]}
-                    tableId="admin-permissions"
+                    emptyState={
+                      <p className="py-8 text-center text-sm text-muted-foreground">
+                        No permissions: they are the building blocks of roles.
+                      </p>
+                    }
+                    renderCard={(permission, { actions }) => (
+                      <div className="flex items-start gap-3">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <p className="truncate font-medium text-foreground">
+                            {permission.display_name}
+                          </p>
+                          <PermissionBadge
+                            resource={permission.resource}
+                            action={permission.action}
+                          />
+                        </div>
+                        {actions}
+                      </div>
+                    )}
                   />
                 </CardContent>
               </Card>
@@ -601,7 +641,7 @@ export default function AdminRolesPage() {
         <CreateRoleDialog
           open={dialogState.type === "createRole"}
           onOpenChange={closeDialog}
-          permissions={permissionsData?.permissions || []}
+          permissions={customRolePermissions}
         />
         <EditRoleDialog
           open={dialogState.type === "editRole"}
@@ -612,7 +652,7 @@ export default function AdminRolesPage() {
           open={dialogState.type === "deleteRole"}
           onOpenChange={closeDialog}
           role={dialogState.type === "deleteRole" ? dialogState.role : null}
-          roles={rolesData?.roles || []}
+          roles={visibleRoles}
         />
         <ManageRolePermissionsDialog
           open={dialogState.type === "manageRolePermissions"}
@@ -622,7 +662,13 @@ export default function AdminRolesPage() {
               ? dialogState.role
               : null
           }
-          allPermissions={permissionsData?.permissions || []}
+          allPermissions={
+            dialogState.type === "manageRolePermissions" &&
+            isProtectedRole(dialogState.role)
+              ? allPermissions
+              : customRolePermissions
+          }
+          canManage={canManageRolePermissions}
         />
 
         <EditPermissionDialog
@@ -634,20 +680,11 @@ export default function AdminRolesPage() {
               : null
           }
         />
-        <DeletePermissionDialog
-          open={dialogState.type === "deletePermission"}
-          onOpenChange={closeDialog}
-          permission={
-            dialogState.type === "deletePermission"
-              ? dialogState.permission
-              : null
-          }
-        />
         <BulkAssignPermissionsDialog
           open={dialogState.type === "bulkAssign"}
           onOpenChange={closeDialog}
-          roles={rolesData?.roles || []}
-          allPermissions={permissionsData?.permissions || []}
+          roles={visibleRoles}
+          allPermissions={customRolePermissions}
         />
         <PermissionDependencyView
           open={dialogState.type === "dependencyView"}
@@ -657,13 +694,9 @@ export default function AdminRolesPage() {
               ? dialogState.permission
               : null
           }
-          allPermissions={permissionsData?.permissions || []}
-        />
-        <RolePermissionAuditLog
-          open={dialogState.type === "auditLog"}
-          onOpenChange={closeDialog}
+          allPermissions={allPermissions}
         />
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

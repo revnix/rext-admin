@@ -70,33 +70,33 @@ export function PrivacySettings() {
   }> = [
     {
       id: "include_profile",
-      label: "Profile Information",
+      label: "Profile information",
       description: "Basic account details, email, username, and settings",
     },
     {
       id: "include_roles",
-      label: "Role Assignments",
+      label: "Role assignments",
       description: "All roles assigned to your account across workspaces",
     },
     {
       id: "include_workspaces",
-      label: "Workspace Memberships",
+      label: "Workspace memberships",
       description: "Workspaces you're a member of and your role in each",
     },
     {
       id: "include_activity",
-      label: "Activity Logs",
+      label: "Activity log",
       description: "Your account activity and action history",
     },
     {
       id: "include_billing",
-      label: "Subscription & Billing Data",
+      label: "Subscription and billing",
       description:
         "Subscription plans, billing history, and payment information",
     },
     {
       id: "include_usage",
-      label: "Usage Metrics",
+      label: "Usage",
       description:
         "Content creation stats, workspace usage, and activity metrics",
     },
@@ -118,7 +118,7 @@ export function PrivacySettings() {
                 control={form.control}
                 name={item.id}
                 render={({ field }) => (
-                  <FormItem className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <FormItem className="flex items-start space-x-3 p-3 border rounded-md">
                     <FormControl>
                       <Checkbox
                         id={item.id}
@@ -154,12 +154,12 @@ export function PrivacySettings() {
               {exportMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Preparing Export...
+                  Preparing the export…
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
-                  Request Data Export
+                  Request the export
                 </>
               )}
             </Button>

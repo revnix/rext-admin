@@ -12,11 +12,12 @@ export default function SettingsError(props: {
   return (
     <RouteError
       {...props}
-      title="Settings Error"
+      title="Settings error"
       logContext="SettingsError"
       navigationType="link"
       navigationLink="/"
       navigationLabel="Dashboard"
+      layout="inline"
     />
   );
 }

@@ -1,13 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowRight, Building2, Check, User, UserCog, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
-import { useReducedMotion } from "@/lib/animations";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,9 +19,6 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
 
-/** Number of CSS confetti particles to render. Set to 0 for reduced-motion users. */
-const CONFETTI_PIECE_COUNT = 50;
-
 interface WorkspaceWelcomeModalProps {
   open: boolean;
   onClose: () => void;
@@ -30,7 +26,6 @@ interface WorkspaceWelcomeModalProps {
   inviterName: string;
   roleName: string;
   rolePermissions?: string[];
-  onStartTour?: () => void;
 }
 
 /**
@@ -40,11 +35,10 @@ interface WorkspaceWelcomeModalProps {
  * - Celebration UI with animations
  * - Workspace and role information
  * - Quick permission summary
- * - Options to start exploring or take tour
+ * - A button to start exploring
  * - "Don't show again" checkbox
  *
- * Shown immediately after invitation acceptance, before
- * the invited user onboarding (if enabled).
+ * Shown right after an invitation is accepted.
  */
 export function WorkspaceWelcomeModal({
   open,
@@ -53,31 +47,15 @@ export function WorkspaceWelcomeModal({
   inviterName,
   roleName,
   rolePermissions = [],
-  onStartTour,
 }: WorkspaceWelcomeModalProps) {
   const router = useRouter();
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const prefersReducedMotion = useReducedMotion();
 
   // Default permissions based on role if not provided
   const permissions =
     rolePermissions.length > 0
       ? rolePermissions
       : getDefaultPermissions(roleName);
-
-  // Trigger confetti animation on mount
-  useEffect(() => {
-    if (open && !prefersReducedMotion) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [open, prefersReducedMotion]);
 
   const handleClose = () => {
     if (dontShowAgain) {
@@ -95,20 +73,10 @@ export function WorkspaceWelcomeModal({
     router.push(`/w/${workspace.slug}/generate_content` as Route);
   };
 
-  const handleTakeTour = () => {
-    handleClose();
-    if (onStartTour) {
-      onStartTour();
-    } else {
-      // Fallback: trigger invited user onboarding if available
-      router.push(`/w/${workspace.slug}?tour=true` as Route);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent
-        className="!max-w-2xl w-[95vw] p-0 overflow-hidden"
+        className="!max-w-2xl w-[95vw] p-0"
         showCloseButton={false}
       >
         {/* Accessible title and description */}
@@ -119,9 +87,6 @@ export function WorkspaceWelcomeModal({
             {roleName}
           </DialogDescription>
         </VisuallyHidden>
-
-        {/* Confetti Background Animation */}
-        {isAnimating && <ConfettiEffect />}
 
         {/* Close button */}
         <div className="absolute top-4 right-4 z-10">
@@ -161,10 +126,10 @@ export function WorkspaceWelcomeModal({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-4"
           >
-            <div className="rounded-lg border border-border/70 bg-muted/40 dark:bg-muted/20 p-5 sm:p-6 space-y-4">
+            <div className="rounded-md border border-border/70 bg-muted/40 p-5 sm:p-6 space-y-4">
               {/* Inviter */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground border border-border">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -175,7 +140,7 @@ export function WorkspaceWelcomeModal({
 
               {/* Role */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/20 dark:bg-primary/20 dark:border-primary/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground border border-border">
                   <UserCog className="h-5 w-5" />
                 </div>
                 <div>
@@ -187,9 +152,9 @@ export function WorkspaceWelcomeModal({
 
             {/* Permissions */}
             {permissions.length > 0 && (
-              <div className="rounded-lg border border-primary/15 bg-primary/5 dark:bg-primary/10 p-5 sm:p-6">
+              <div className="rounded-md border border-border bg-surface-inset p-5 sm:p-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
+                  <Building2 className="h-5 w-5 text-foreground" />
                   As {roleName}, you can:
                 </h3>
                 <ul className="space-y-2">
@@ -201,7 +166,7 @@ export function WorkspaceWelcomeModal({
                       transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                       className="flex items-center gap-2 text-sm"
                     >
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary border border-primary/25 dark:bg-primary/20 dark:border-primary/30 shrink-0">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-foreground border border-border shrink-0">
                         <Check className="h-3 w-3" />
                       </div>
                       <span>{permission}</span>
@@ -227,14 +192,6 @@ export function WorkspaceWelcomeModal({
               >
                 Start Exploring
                 <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleTakeTour}
-                variant="outline"
-                size="lg"
-                className="flex-1"
-              >
-                Take a Quick Tour
               </Button>
             </div>
 
@@ -263,56 +220,6 @@ export function WorkspaceWelcomeModal({
 }
 
 /**
- * Confetti effect using CSS animations
- * Creates floating particles across the screen
- * Renders nothing if the user prefers reduced motion
- */
-function ConfettiEffect() {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return null;
-  }
-
-  const colors = [
-    "bg-red-500",
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-yellow-500",
-    "bg-purple-500",
-    "bg-pink-500",
-  ];
-
-  const confettiPieces = Array.from(
-    { length: CONFETTI_PIECE_COUNT },
-    (_, i) => ({
-      id: i,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      left: `${Math.random() * 100}%`,
-      animationDelay: `${Math.random() * 3}s`,
-      animationDuration: `${3 + Math.random() * 2}s`,
-    }),
-  );
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-      {confettiPieces.map((piece) => (
-        <div
-          key={piece.id}
-          className={`absolute w-2 h-2 ${piece.color} rounded-full animate-confetti-fall`}
-          style={{
-            left: piece.left,
-            top: "-10px",
-            animationDelay: piece.animationDelay,
-            animationDuration: piece.animationDuration,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/**
  * Get default permissions display based on role name
  */
 function getDefaultPermissions(roleName: string): string[] {
@@ -336,7 +243,6 @@ function getDefaultPermissions(roleName: string): string[] {
     case "editor":
       return [
         "Create and edit content",
-        "Manage topics and knowledge base",
         "Collaborate with team members",
         "No team management access",
       ];
@@ -344,7 +250,6 @@ function getDefaultPermissions(roleName: string): string[] {
     default:
       return [
         "View all workspace content",
-        "Browse knowledge base",
         "See team member profiles",
         "Read-only access",
       ];

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "css": {
     "parser": {
       "cssModules": true,
@@ -22,7 +22,9 @@
       "!app/tasks",
       "!app/api/tasks",
       "!scripts",
-      "!public"
+      "!public",
+      "!api/openapi.json",
+      "!lib/api-client/schema.d.ts"
     ]
   },
   "formatter": {

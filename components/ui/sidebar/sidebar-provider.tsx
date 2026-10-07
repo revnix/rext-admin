@@ -1,18 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsCompact, useIsMobile } from "@/hooks/use-mobile";
 import { log } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  SIDEBAR_COOKIE_NAME,
+  type SidebarPreference,
+} from "./sidebar-preference";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 export const SIDEBAR_WIDTH = "16rem";
 export const SIDEBAR_WIDTH_MOBILE = "18rem";
-export const SIDEBAR_WIDTH_ICON = "3rem";
+export const SIDEBAR_WIDTH_ICON = "3.5rem";
 
 interface CookieStore {
   set(options: {
@@ -24,27 +27,38 @@ interface CookieStore {
 }
 
 export type SidebarContextProps = {
+  /** What the sidebar shows now: icons only ("collapsed") or labels. */
   state: "expanded" | "collapsed";
+  preference: SidebarPreference;
   open: boolean;
   setOpen: (open: boolean) => void;
   openMobile: boolean;
   setOpenMobile: (open: boolean) => void;
+  /** Under 1024 px, where the sidebar is a sheet. */
   isMobile: boolean;
   toggleSidebar: () => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
-function setCookie(name: string, value: string, maxAge: number): void {
-  if (typeof document !== "undefined") {
-    const cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    const cookieDescriptor =
+function saveCookie(value: string): void {
+  try {
+    if ("cookieStore" in window) {
+      void (window as Window & { cookieStore: CookieStore }).cookieStore.set({
+        name: SIDEBAR_COOKIE_NAME,
+        value,
+        path: "/",
+        maxAge: SIDEBAR_COOKIE_MAX_AGE,
+      });
+      return;
+    }
+    const cookie = `${SIDEBAR_COOKIE_NAME}=${value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`;
+    const descriptor =
       Object.getOwnPropertyDescriptor(Document.prototype, "cookie") ||
       Object.getOwnPropertyDescriptor(HTMLDocument.prototype, "cookie");
-
-    if (cookieDescriptor?.set) {
-      cookieDescriptor.set.call(document, cookieString);
-    }
+    descriptor?.set?.call(document, cookie);
+  } catch (error) {
+    log.warn("Failed to set sidebar cookie:", error);
   }
 }
 
@@ -57,54 +71,31 @@ export function useSidebar() {
 }
 
 export function SidebarProvider({
-  defaultOpen = true,
-  open: openProp,
-  onOpenChange: setOpenProp,
+  defaultPreference = "auto",
   className,
   style,
   children,
   ...props
 }: React.ComponentProps<"div"> & {
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  defaultPreference?: SidebarPreference;
 }) {
   const isMobile = useIsMobile();
+  const isCompact = useIsCompact();
   const [openMobile, setOpenMobile] = React.useState(false);
-  const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  const [preference, setPreference] =
+    React.useState<SidebarPreference>(defaultPreference);
 
-  const setOpen = React.useCallback(
-    (value: boolean | ((value: boolean) => boolean)) => {
-      const openState = typeof value === "function" ? value(open) : value;
-      if (setOpenProp) setOpenProp(openState);
-      else _setOpen(openState);
+  const open = preference === "auto" ? !isCompact : preference === "expanded";
 
-      try {
-        if (typeof window !== "undefined" && "cookieStore" in window) {
-          (window as Window & { cookieStore: CookieStore }).cookieStore.set({
-            name: SIDEBAR_COOKIE_NAME,
-            value: String(openState),
-            path: "/",
-            maxAge: SIDEBAR_COOKIE_MAX_AGE,
-          });
-        } else {
-          setCookie(
-            SIDEBAR_COOKIE_NAME,
-            String(openState),
-            SIDEBAR_COOKIE_MAX_AGE,
-          );
-        }
-      } catch (error) {
-        log.warn("Failed to set sidebar cookie:", error);
-      }
-    },
-    [open, setOpenProp],
-  );
+  const setOpen = React.useCallback((value: boolean) => {
+    setPreference(value ? "expanded" : "collapsed");
+    saveCookie(String(value));
+  }, []);
 
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((v) => !v) : setOpen((v) => !v);
-  }, [isMobile, setOpen]);
+    if (isMobile) setOpenMobile((value) => !value);
+    else setOpen(!open);
+  }, [isMobile, open, setOpen]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -121,11 +112,17 @@ export function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
+  // Leaving phone width closes the sheet, so it is not open behind the desktop sidebar.
+  React.useEffect(() => {
+    if (!isMobile) setOpenMobile(false);
+  }, [isMobile]);
+
   const state: "expanded" | "collapsed" = open ? "expanded" : "collapsed";
 
   const value = React.useMemo(
     () => ({
       state,
+      preference,
       open,
       setOpen,
       openMobile,
@@ -133,13 +130,14 @@ export function SidebarProvider({
       isMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, openMobile, isMobile, toggleSidebar],
+    [state, preference, open, setOpen, openMobile, isMobile, toggleSidebar],
   );
 
   return (
     <SidebarContext.Provider value={value}>
       <TooltipProvider delayDuration={0}>
         <div
+          data-slot="sidebar-wrapper"
           style={{
             "--sidebar-width": SIDEBAR_WIDTH,
             "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,

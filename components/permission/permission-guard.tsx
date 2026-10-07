@@ -1,5 +1,5 @@
 import type React from "react";
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   useAnyRole,
   usePermissionDecision,
@@ -122,6 +122,12 @@ export function PermissionGuard({
   tooltipMessage,
   requiredRole,
 }: PermissionGuardProps) {
+  // Track hydration: render loading on both server & client until mounted
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   // 1. Determine Workspace ID (Try providers, then props)
   const permissionWsId = useCurrentWorkspaceId();
   const workspaceContext = useWorkspaceOptional();
@@ -181,11 +187,16 @@ export function PermissionGuard({
 
   if (invert) hasAccess = !hasAccess;
 
-  // Show loading state while permissions are being fetched
-  if (isLoading && showLoading) {
-    return (
-      <PermissionLoading variant={loadingVariant} message={loadingMessage} />
-    );
+  // Show loading state while permissions are being fetched or before hydration
+  // This ensures server and client render the same loading UI to prevent hydration mismatches
+  // If showLoading is false, render null instead of prematurely displaying the fallback (Access Denied)
+  if (!hasMounted || isLoading) {
+    if (showLoading) {
+      return (
+        <PermissionLoading variant={loadingVariant} message={loadingMessage} />
+      );
+    }
+    return null;
   }
 
   // Permission check failed - show fallback

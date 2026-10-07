@@ -1,0 +1,542 @@
+[
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "{\"topics\":[{\"title\":\"Cold",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "brew",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "at",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "home\",\"reason\":\"High",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "intent\"}]}",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d158-7630-bd9d-f6ac6d915e16",
+        "tool_call_chunks": [],
+        "chunk_position": "last"
+      },
+      {
+        "langgraph_step": 1,
+        "langgraph_node": "topic_generation",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|topic_generation:5cefd7cd-a45a-7b28-a5fa-57c607d8ecfe",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "{\"title\":\"Cold",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "brew",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "at",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "home\",\"brief\":\"A",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "short",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "guide.\",\"sections\":[{\"heading\":\"What",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "you",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "need\",\"description\":\"Gear\",\"key_points\":[\"A",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "jar\",\"Coarse",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "grounds\"]}],\"target_audience\":[\"Home",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": " ",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": null
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  },
+  {
+    "event": "messages|content_engine:44903a43-defa-fdec-390e-f7513d225669",
+    "data": [
+      {
+        "content": "baristas\"],\"tone\":\"Friendly\"}",
+        "type": "AIMessageChunk",
+        "id": "lc_run--01a11122-d453-7e51-8cb1-1fd4138abecb",
+        "tool_call_chunks": [],
+        "chunk_position": "last"
+      },
+      {
+        "langgraph_step": 2,
+        "langgraph_node": "generate_outline",
+        "langgraph_checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669|generate_outline:28d4059c-1076-af5e-2999-7ad26f9dfe77",
+        "checkpoint_ns": "content_engine:44903a43-defa-fdec-390e-f7513d225669"
+      }
+    ]
+  }
+]

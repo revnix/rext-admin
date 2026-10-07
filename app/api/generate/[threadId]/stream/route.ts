@@ -1,9 +1,13 @@
 import type { NextRequest } from "next/server";
 
+import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
+import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
   getGenerationClient,
+  streamErrorPayload,
   requireThreadOwner,
 } from "@/lib/generate-content/thread-access";
+import { leanChunk } from "@/lib/generate-content/lean-stream-chunk";
 
 const ASSISTANT_ID = "agent";
 
@@ -26,15 +30,30 @@ export async function POST(
     });
   }
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
   let createdRunId: string | undefined;
 
+  // The run works in the thread's own workspace, whatever the body names: the
+  // backend checks content.create there (rext-backend E17), so the input must
+  // not point the work at another one.
+  const workspaceId = access.thread?.metadata?.workspace_id;
+  const serpPayload = body.input?.serp_payload;
+  const input =
+    serpPayload && typeof serpPayload === "object"
+      ? {
+          ...body.input,
+          serp_payload: { ...serpPayload, workspace_id: workspaceId },
+        }
+      : body.input;
+
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
-    input: body.input,
-    streamMode: ["updates", "messages", "custom"],
+    input,
+    metadata: { workspace_id: workspaceId },
+    streamMode: GENERATION_STREAM_MODES,
     streamSubgraphs: true,
     streamResumable: true,
     onDisconnect: "continue",
+    ...runWebhookOption,
     onRunCreated: ({ run_id }) => {
       createdRunId = run_id;
     },
@@ -59,7 +78,7 @@ export async function POST(
             );
             runAnnounced = true;
           }
-          const data = `data: ${JSON.stringify(chunk)}\n\n`;
+          const data = `data: ${JSON.stringify(leanChunk(chunk))}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
         if (signal.aborted) return;
@@ -67,9 +86,10 @@ export async function POST(
         controller.close();
       } catch (error) {
         if (signal.aborted) return;
-        const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),
+          encoder.encode(
+            `data: ${JSON.stringify(streamErrorPayload(error))}\n\n`,
+          ),
         );
         controller.close();
       }

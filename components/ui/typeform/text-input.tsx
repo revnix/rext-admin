@@ -87,7 +87,7 @@ const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
             maxLength={maxLength}
             className={cn(
               "text-lg h-12 transition-all duration-150",
-              "border-2 focus:border-primary",
+              "border-2 focus:border-ring",
               "placeholder:text-muted-foreground/50",
               icon && "pl-10",
               error && "border-destructive focus:border-destructive",
@@ -109,7 +109,7 @@ const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
             <p
               className={cn(
                 "text-xs text-muted-foreground",
-                value.length > maxLength * 0.9 && "text-amber-600",
+                value.length > maxLength * 0.9 && "text-warning-600",
                 value.length === maxLength && "text-destructive",
               )}
             >

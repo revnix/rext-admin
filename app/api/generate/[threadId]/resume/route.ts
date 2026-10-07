@@ -1,9 +1,13 @@
 import type { NextRequest } from "next/server";
 
+import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
+import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
   getGenerationClient,
+  streamErrorPayload,
   requireThreadOwner,
 } from "@/lib/generate-content/thread-access";
+import { leanChunk } from "@/lib/generate-content/lean-stream-chunk";
 
 const ASSISTANT_ID = "agent";
 
@@ -29,15 +33,21 @@ export async function POST(
     });
   }
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
+  // A resume carries no input, so the run names its workspace in its metadata:
+  // the thread's own, stamped when it was created. The backend refuses the run
+  // unless the caller may still create content there (rext-backend E17).
+  const runMetadata = { workspace_id: access.thread?.metadata?.workspace_id };
 
   if (body.background) {
     try {
       const run = await client.runs.create(threadId, ASSISTANT_ID, {
         command: { resume: body.payload },
-        streamMode: ["updates", "messages", "custom"],
+        metadata: runMetadata,
+        streamMode: GENERATION_STREAM_MODES,
         streamSubgraphs: true,
         streamResumable: true,
+        ...runWebhookOption,
       });
 
       return Response.json(
@@ -65,10 +75,12 @@ export async function POST(
 
   const stream = client.runs.stream(threadId, ASSISTANT_ID, {
     command: { resume: body.payload },
-    streamMode: ["updates", "messages", "custom"],
+    metadata: runMetadata,
+    streamMode: GENERATION_STREAM_MODES,
     streamSubgraphs: true,
     streamResumable: true,
     onDisconnect: "continue",
+    ...runWebhookOption,
     onRunCreated: ({ run_id }) => {
       createdRunId = run_id;
     },
@@ -93,7 +105,7 @@ export async function POST(
             );
             runAnnounced = true;
           }
-          const data = `data: ${JSON.stringify(chunk)}\n\n`;
+          const data = `data: ${JSON.stringify(leanChunk(chunk))}\n\n`;
           controller.enqueue(encoder.encode(data));
         }
         if (signal.aborted) return;
@@ -101,9 +113,10 @@ export async function POST(
         controller.close();
       } catch (error) {
         if (signal.aborted) return;
-        const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),
+          encoder.encode(
+            `data: ${JSON.stringify(streamErrorPayload(error))}\n\n`,
+          ),
         );
         controller.close();
       }

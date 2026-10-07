@@ -64,8 +64,7 @@ const ERROR_MAPPINGS: Record<
   },
   parsing_error: {
     severity: "medium",
-    userMessage:
-      "We received an unexpected response. Please try generating topics again.",
+    userMessage: "We received an unexpected response. Please try again.",
     recoveryActions: ["retry", "go_back"],
   },
   validation_error: {
@@ -138,9 +137,9 @@ export function classifyError(
       errorType = "abort_error";
     } else if (error.name === "TimeoutError") {
       errorType = "timeout_error";
-    } else if (error.message.includes("fetch")) {
+    } else if (error.message.toLowerCase().includes("fetch")) {
       errorType = "network_error";
-    } else if (error.message.includes("CORS")) {
+    } else if (error.message.toLowerCase().includes("cors")) {
       errorType = "cors_error";
     }
 
@@ -340,7 +339,7 @@ export function getContextualErrorMessage(
   switch (operation) {
     case "topic_generation":
       if (error.type === "timeout_error") {
-        return "Topic generation is taking longer than expected. This sometimes happens with complex requests.";
+        return "This is taking longer than expected. This sometimes happens with complex requests.";
       }
       if (error.type === "server_error") {
         return "Our AI service is temporarily unavailable. Your form data has been saved and you can try again shortly.";
@@ -400,7 +399,7 @@ export function getFallbackBehavior(operation: string): {
         showCachedData: false,
         allowRetry: true,
         message:
-          "Topic generation requires an active connection. Please check your internet and try again.",
+          "This needs an active connection. Please check your internet and try again.",
       };
     default:
       return {

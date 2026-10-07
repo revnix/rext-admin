@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -67,15 +67,11 @@ export function DeleteUserDialog({
         </DialogHeader>
 
         <div className="py-2 space-y-3">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Warning</AlertTitle>
-            <AlertDescription className="text-xs">
-              This action soft-deletes the user account, revokes all workspace
-              memberships, and invalidates active sessions. There is no
-              automated restore option from the UI.
-            </AlertDescription>
-          </Alert>
+          <Notice tone="warning">
+            This action soft-deletes the user account, revokes all workspace
+            memberships, and invalidates active sessions. There is no automated
+            restore option from the UI.
+          </Notice>
 
           {user?.email && (
             <div className="p-3 bg-muted/50 rounded-md text-xs space-y-1">

@@ -5,8 +5,7 @@ import { Download, FileText, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
-import { PageLayout } from "@/components/page-layout";
-import { AdminGuard } from "@/components/permission/admin-guard";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
+import { usePermission } from "@/hooks/use-permission";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
-import { ADMIN_PERMISSIONS } from "@/lib/permissions";
+import { AUDIT_PERMISSIONS } from "@/lib/permissions";
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(0);
@@ -38,6 +38,7 @@ export default function AuditLogsPage() {
     null,
   );
   const debouncedSearch = useDebounce(search, 300);
+  const canReadAuditLogs = usePermission(AUDIT_PERMISSIONS.READ);
 
   // Fetch audit logs
   const { data, isLoading, error, refetch } = useQuery({
@@ -59,15 +60,28 @@ export default function AuditLogsPage() {
         resource_type: resourceTypeFilter || undefined,
       });
     },
+    enabled: canReadAuditLogs,
   });
 
   if (error) {
     return (
-      <ErrorPage
-        title="Failed to load audit logs"
-        message="Audit log data could not be loaded. Please check your connection and try again."
-        retry={() => void refetch()}
-      />
+      <ListPage
+        title="Audit Logs"
+        description="View and export all admin actions and system events"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load audit logs"
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          Audit log data could not be loaded. Please check your connection and
+          try again.
+        </Notice>
+      </ListPage>
     );
   }
 
@@ -101,11 +115,11 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <PageLayout
+    <ListPage
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
-        <PermissionGuard permission={ADMIN_PERMISSIONS.AUDIT_READ}>
+        <PermissionGuard permission={AUDIT_PERMISSIONS.EXPORT}>
           <Button variant="outline" onClick={() => handleExport("csv")}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -117,7 +131,27 @@ export default function AuditLogsPage() {
         </PermissionGuard>
       }
     >
-      <AdminGuard>
+      <PermissionGuard
+        permission={AUDIT_PERMISSIONS.READ}
+        fallback={
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to view audit logs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Required permission:{" "}
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  audit.read
+                </code>
+              </p>
+            </CardContent>
+          </Card>
+        }
+      >
         {/* Filters */}
         <Card>
           <CardHeader>
@@ -127,7 +161,7 @@ export default function AuditLogsPage() {
           <CardContent className="space-y-4">
             {/* Search by email */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="z-10 pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by user email..."
                 value={search}
@@ -137,14 +171,14 @@ export default function AuditLogsPage() {
             </div>
 
             {/* Filters row */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Select
                 value={actionFilter || "all"}
                 onValueChange={(value) =>
                   setActionFilter(value === "all" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Actions" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,7 +198,7 @@ export default function AuditLogsPage() {
                   setResourceTypeFilter(value === "all" ? null : value)
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="All Resources" />
                 </SelectTrigger>
                 <SelectContent>
@@ -180,6 +214,7 @@ export default function AuditLogsPage() {
               {(actionFilter || resourceTypeFilter || search) && (
                 <Button
                   variant="ghost"
+                  className="ms-auto sm:ms-0"
                   size="sm"
                   onClick={() => {
                     setActionFilter(null);
@@ -193,7 +228,7 @@ export default function AuditLogsPage() {
             </div>
           </CardContent>
         </Card>
-
+        <br />
         {/* Audit Logs Table */}
         <Card>
           <CardHeader>
@@ -215,7 +250,7 @@ export default function AuditLogsPage() {
             />
           </CardContent>
         </Card>
-      </AdminGuard>
-    </PageLayout>
+      </PermissionGuard>
+    </ListPage>
   );
 }

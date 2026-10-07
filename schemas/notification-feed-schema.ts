@@ -16,9 +16,10 @@ const apiNotificationSchema = z.object({
   status: z.enum(NOTIFICATION_STATUS_VALUES),
   is_read: z.boolean(),
   created_at: z.string(),
+  workspace_id: z.string().nullish(),
+  payload: z.record(z.string(), z.unknown()).nullish(),
+  action_url: z.string().nullish(),
 });
-
-const apiNotificationListSchema = z.array(apiNotificationSchema);
 
 export function parseApiNotifications(payload: unknown): ApiNotification[] {
   if (!payload || !Array.isArray(payload)) {
@@ -26,12 +27,16 @@ export function parseApiNotifications(payload: unknown): ApiNotification[] {
     return [];
   }
 
-  try {
-    return apiNotificationListSchema.parse(payload);
-  } catch (error) {
-    log.error("[parseApiNotifications] Zod error:", error);
-    // Return empty array instead of throwing to avoid application-wide crashes
-    // if the notification format changes on the backend.
-    return [];
-  }
+  // Validate per item so one unrecognized record doesn't blank the whole feed.
+  return payload.flatMap((item) => {
+    const result = apiNotificationSchema.safeParse(item);
+    if (!result.success) {
+      log.error("[parseApiNotifications] Dropping invalid notification:", {
+        item,
+        error: result.error,
+      });
+      return [];
+    }
+    return [result.data];
+  });
 }

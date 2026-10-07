@@ -10,7 +10,7 @@ import {
   type SSEEvent,
   SSE_ERROR_CODES,
 } from "@/types/sse";
-import { SSEEventSchema } from "@/schemas/sse-schemas";
+import { parseOperationEvent } from "@/lib/sse-message";
 import {
   createContext,
   type ReactNode,
@@ -171,7 +171,6 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
       let retryCount = 0;
       let abortController = new AbortController();
 
-      markOperationCompleted(operationId);
       const baseEndpoint = resolvedBaseUrl || resolveApiBaseUrl();
 
       const buildUrl = () =>
@@ -269,114 +268,60 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
                   return;
                 }
 
-                // Debug: Log the raw message structure
-                sseLogger.debug("Raw SSE message", {
+                const parsedMessage = parseOperationEvent(message);
+                if ("error" in parsedMessage) {
+                  // Skip an event that is not JSON or fails the schema, and keep the
+                  // connection open for the next one.
+                  sseLogger.warn(
+                    "Skipped an SSE event that could not be read",
+                    {
+                      operationId,
+                      eventName: message.event,
+                      error: parsedMessage.error,
+                      dataLength: message.data.length,
+                      dataPreview: message.data.substring(0, 100),
+                    },
+                  );
+                  return;
+                }
+
+                const { event } = parsedMessage;
+
+                sseLogger.debug("Received SSE event", {
                   operationId,
-                  hasEvent: "event" in message,
-                  hasId: "id" in message,
-                  messageKeys: Object.keys(message),
-                  dataType: typeof message.data,
-                  dataLength: message.data?.length,
+                  eventName: message.event,
+                  nestedFrame: parsedMessage.nested,
+                  event: {
+                    step: event.step,
+                    status: event.status,
+                    progress: event.progress,
+                  },
                 });
 
-                try {
-                  const parsed = JSON.parse(message.data);
-                  const validationResult = SSEEventSchema.safeParse(parsed);
+                onEvent(event);
 
-                  if (!validationResult.success) {
-                    sseLogger.warn("SSE event failed schema validation", {
-                      operationId,
-                      errors: validationResult.error.issues.map(
-                        (i) => `${i.path.join(".")}: ${i.message}`,
-                      ),
-                      dataPreview: message.data?.substring(0, 100),
-                    });
-                    return; // Skip invalid events rather than passing them to handlers
-                  }
+                const terminalStep =
+                  TERMINAL_STEPS.has(event.step) ||
+                  event.step.endsWith(".failed");
 
-                  const event = validationResult.data as SSEEvent;
+                if (terminalStep || event.status === "failed") {
+                  // Mark operation as completed to prevent reconnection
+                  markOperationCompleted(operationId);
 
-                  sseLogger.debug("Received SSE event", {
-                    operationId,
-                    event: {
-                      step: event.step,
-                      status: event.status,
-                      progress: event.progress,
-                    },
-                  });
-
-                  onEvent(event);
-
-                  const terminalStep =
-                    TERMINAL_STEPS.has(event.step) ||
-                    event.step.endsWith(".failed");
-
-                  if (terminalStep || event.status === "failed") {
-                    // Mark operation as completed to prevent reconnection
-                    markOperationCompleted(operationId);
-
-                    const errorMessage =
-                      typeof event.payload?.error === "string"
-                        ? event.payload.error
-                        : event.status === "failed"
-                          ? event.message
-                          : undefined;
-
-                    // For successful completion, don't pass an error
-                    if (event.status === "completed") {
-                      stop({
-                        connected: false,
-                        retryCount,
-                        error: undefined,
-                      });
-                    } else {
-                      stop({
-                        connected: false,
-                        retryCount,
-                        error: errorMessage,
-                      });
-                    }
-
-                    // Return early to prevent the connection from being treated as closed unexpectedly
-                    return;
-                  }
-                } catch (error) {
-                  // Log the parse error but don't stop the connection
                   const errorMessage =
-                    error instanceof Error ? error.message : String(error);
+                    typeof event.payload?.error === "string"
+                      ? event.payload.error
+                      : event.status === "failed"
+                        ? event.message
+                        : undefined;
 
-                  // Try to extract the actual data if it looks like SSE format
-                  let actualData = message.data;
-                  if (
-                    typeof actualData === "string" &&
-                    actualData.includes("\ndata: ")
-                  ) {
-                    const dataMatch = actualData.match(/\ndata: (.+)/);
-                    if (dataMatch) {
-                      actualData = dataMatch[1];
-                      // Try parsing the extracted data with Zod validation
-                      try {
-                        const parsedFallback = JSON.parse(actualData);
-                        const fallbackValidation =
-                          SSEEventSchema.safeParse(parsedFallback);
-
-                        if (fallbackValidation.success) {
-                          onEvent(fallbackValidation.data as SSEEvent);
-                          return;
-                        }
-                      } catch (_retryError) {
-                        // Continue to log the original error
-                      }
-                    }
-                  }
-
-                  sseLogger.error("Failed to parse SSE event", {
-                    operationId,
-                    error: errorMessage,
-                    dataLength: message.data?.length,
-                    dataPreview: message.data?.substring(0, 100),
+                  // For successful completion, don't pass an error
+                  stop({
+                    connected: false,
+                    retryCount,
+                    error:
+                      event.status === "completed" ? undefined : errorMessage,
                   });
-                  // Don't throw the error - continue processing other events
                 }
               },
               onclose: () => {
@@ -442,7 +387,13 @@ export function SSEProvider({ children, baseUrl }: SSEProviderProps) {
               error: errorMessage,
             });
 
-            if (retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES) {
+            // The per-user notification channel lives as long as the page, so
+            // it keeps retrying (at the capped delay) through backend restarts
+            // instead of going silent until a reload.
+            if (
+              !operationId.startsWith("user-notifications-") &&
+              retryCount >= NOTIFICATION_CONSTANTS.SSE_MAX_RETRIES
+            ) {
               stop({
                 connected: false,
                 retryCount,

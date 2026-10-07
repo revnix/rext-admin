@@ -17,12 +17,12 @@ interface PersonaCardProps {
  */
 export function PersonaCard({ persona }: PersonaCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-            <User className="w-6 h-6 text-primary" />
+          <div className="flex-shrink-0 w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+            <User className="w-6 h-6 text-foreground" />
           </div>
 
           {/* Name and Title */}

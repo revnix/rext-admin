@@ -7,33 +7,15 @@ interface PermissionBadgeProps {
   className?: string;
 }
 
-const resourceColors: Record<string, string> = {
-  user: "bg-blue-100 text-blue-800 border-blue-200",
-  role: "bg-purple-100 text-purple-800 border-purple-200",
-  permission: "bg-pink-100 text-pink-800 border-pink-200",
-  workspace: "bg-green-100 text-green-800 border-green-200",
-  content: "bg-orange-100 text-orange-800 border-orange-200",
-  topic: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  knowledge: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  subscription: "bg-teal-100 text-teal-800 border-teal-200",
-  audit: "bg-gray-100 text-gray-800 border-gray-200",
-  member: "bg-cyan-100 text-cyan-800 border-cyan-200",
-};
-
+// A permission's resource is an attribute, not a status: one neutral badge for all
+// (design/app-language.md §2), the resource and action in the monospace face.
 export function PermissionBadge({
   resource,
   action,
   className,
 }: PermissionBadgeProps) {
-  const colorClass =
-    resourceColors[resource.toLowerCase()] ||
-    "bg-gray-100 text-gray-800 border-gray-200";
-
   return (
-    <Badge
-      variant="outline"
-      className={cn("font-mono text-xs", colorClass, className)}
-    >
+    <Badge variant="neutral" className={cn("font-mono text-xs", className)}>
       {resource}.{action}
     </Badge>
   );

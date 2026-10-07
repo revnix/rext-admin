@@ -1,29 +1,27 @@
 // components/generate-content/fresh-generation-view.tsx
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
-import { AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { LoadingIndicatorVariants } from "@/components/ui/content/loading-indicator-variants";
+import { motion, AnimatePresence } from "motion/react";
+import { RunProgress } from "@/components/generate-content/run-progress";
+import { useRunStages } from "@/hooks/use-run-stages";
+import {
+  FIRST_ARTICLE_TOKEN,
+  type RunPhase,
+  type RunStage,
+  timedOutStages as stagesWhereTimedOut,
+} from "@/lib/generate-content/run-stages";
+import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
   CommonOutput,
   ContentOutline,
-  BrandVoicePromotion,
   ContentSection,
   FinalContent,
-  InternalLinkSuggestion,
   Interrupt,
   NodeOutput,
   ResumeOptions,
@@ -33,26 +31,22 @@ import type {
   WREXT,
   WorkflowStep,
 } from "@/types/generate-content";
-import {
-  INITIAL_ANALYSIS_STEPS,
-  KEYWORD_SELECTION_STEPS,
-  TOPIC_GENERATION_STEPS,
-  TOPIC_REGENERATION_STEPS,
-  CONTENT_TYPE_STEPS,
-  FINAL_GENERATION_STEPS,
-} from "@/constants/loading-steps";
 import { HeroSection } from "@/components/generate-content/hero";
 import { KeywordForm } from "@/components/generate-content/keyword";
+import { RecentKeywords } from "@/components/generate-content/recent-keywords";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
-import { TopicsSection } from "@/components/generate-content/topics";
+import { TitleStep } from "@/components/generate-content/title-step";
+import { serpResultsFromGate } from "@/lib/keywords/serp-results";
+import { StepColumn } from "@/components/layouts";
 import {
-  OutlineDisplay,
   OutlineRejectSection,
-} from "@/components/generate-content/outline";
+  OutlineReview,
+} from "@/components/generate-content/outline-review";
 import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { useCreditGate } from "@/hooks/use-credit-gate";
 import { useCurrentWorkspaceId } from "@/stores/workspace/use-workspace-context-store";
 import {
@@ -61,22 +55,33 @@ import {
 } from "@/lib/generate-content/generation-reducer";
 import {
   createThread,
+  RunStreamError,
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
-import type { ToolCall } from "@/components/generate-content/agent-feed";
+import type { ToolCall } from "@/types/generate-content";
 import { analytics } from "@/lib/analytics";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { useWorkspace } from "@/providers/workspace-provider";
-import { Button } from "@/components/ui/button";
+import { RunNotice } from "@/components/generate-content/run-notice";
+import {
+  GENERATION_STREAM_MODES,
+  isOutlineToken,
+  readMessageToken,
+  readRunFailedEvent,
+  readStoppedRun,
+  reloadsAfterResume,
+  resumeAttemptIsFinal,
+  runIsGoing,
+  settlesRun,
+  TOO_MANY_RUNS,
+} from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
+import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
-import {
-  deriveActiveGenerationViewState,
-  type GenerationPipelineStep,
-} from "@/lib/generate-content/background-generation-view-state";
+import { deriveActiveGenerationViewState } from "@/lib/generate-content/background-generation-view-state";
 import {
   collectPendingInterrupts,
   deriveAwaitingInputStage,
@@ -84,6 +89,7 @@ import {
 import {
   BACKGROUND_GENERATION_RESTORE_EVENT,
   type BackgroundGenerationRestoreDetail,
+  requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
 import {
   formatWordCountRange,
@@ -103,6 +109,8 @@ interface FreshGenerationViewProps {
   initialKeyword?: string;
   initialIntent?: string;
   isLibrary?: boolean;
+  /** The Library item a Library start names (its store key); the backend loads its research. */
+  libraryKey?: string;
   backgroundThreadId?: string;
 }
 
@@ -140,7 +148,7 @@ const extractJsonStringFieldPartial = (raw: string, field: string) => {
 };
 
 const normalizeEscapedJsonish = (raw: string) => {
-  // Sometimes `messages/partial` streams a JSON string with quotes escaped:
+  // Sometimes the streamed article is a JSON string with quotes escaped:
   // {\"title\":\"...\",\"body_markdown\":\"...\"}
   // Normalize it so field extraction works.
   return raw.includes('\\"') ? raw.replace(/\\"/g, '"') : raw;
@@ -241,9 +249,13 @@ export function FreshGenerationView({
   initialKeyword: _initialKeyword = "",
   initialIntent: _initialIntent = "",
   isLibrary = false,
+  libraryKey,
   backgroundThreadId,
 }: FreshGenerationViewProps) {
   const [state, dispatch] = useReducer(generationReducer, initialState);
+  // The run on screen as named stages (RunProgress): started with each phase the page waits on,
+  // moved by the stream's node updates (processStream), cleared when the page stops waiting.
+  const runStages = useRunStages();
   const router = useRouter();
   const { user } = useAuthSession();
   const workspaceId = useCurrentWorkspaceId();
@@ -271,7 +283,7 @@ export function FreshGenerationView({
   const outline = useStreamingText(); // { streamedText, appendToken, resetStream }
   const content = useStreamingText();
 
-  // Which buffer should receive `messages/partial` tokens right now?
+  // Which buffer should receive streamed tokens right now?
   const tokenTargetRef = useRef<"none" | "outline" | "content">("none");
   const [tokenTarget, setTokenTarget] = useState<
     "none" | "outline" | "content"
@@ -279,6 +291,7 @@ export function FreshGenerationView({
   const {
     userKeyword,
     country,
+    analyzedCountry,
     primaryKeyword,
     suggestedKeywords,
     generatedContent,
@@ -293,33 +306,28 @@ export function FreshGenerationView({
     contentTypes,
     loadingStatus,
     isManualLoading,
-    completedNodes,
     isLoading,
     readabilityScore,
+    checklist,
     seoScore,
     trustScore,
     allContent,
-    currentLoadingSteps,
+    run: runState,
     keywordClusters,
     recommendedContentType,
+    selectedContentType,
     recommendedTopic,
   } = state;
 
-  const interruptInternalLinks = useMemo(
-    () =>
-      state.interrupt?.[0]?.value?.internal_links as
-        | InternalLinkSuggestion[]
-        | undefined,
-    [state.interrupt],
-  );
-
-  const interruptBrandVoicePromotion = useMemo(
-    () =>
-      state.interrupt?.[0]?.value?.brand_voice_promotion as
-        | BrandVoicePromotion
-        | undefined,
-    [state.interrupt],
-  );
+  const { start: startRunStages, clear: clearRunStages } = runStages;
+  useEffect(() => {
+    if (runState) {
+      startRunStages(runState.phase, {
+        joined: runState.joined,
+        at: runState.stageId,
+      });
+    } else clearRunStages();
+  }, [runState, startRunStages, clearRunStages]);
 
   const isEditingRef = useRef(isEditing);
   useEffect(() => {
@@ -342,21 +350,26 @@ export function FreshGenerationView({
   // current attempt. A resume that ends without it left nothing behind.
   const runCreatedRef = useRef(false);
 
+  // Set when the backend refused to start the current attempt's run (two already going,
+  // E27): nothing was sent, so a resume neither retries nor waits for a run.
+  const runRefusedRef = useRef(false);
+
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  // A restored run that hit the time limit: its stages as they stood, the running one failed (E22).
+  const [timedOutStages, setTimedOutStages] = useState<RunStage[] | null>(null);
+  // A run the backend ended early (no search results, a failed lookup).
+  const [runError, setRunError] = useState<string | null>(null);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
   const [enhancingDescription, setEnhancingDescription] = useState("");
-  const [pipelineSteps, setPipelineSteps] = useState<GenerationPipelineStep[]>(
-    [],
-  );
   const [pendingTargetWordCount, setPendingTargetWordCount] = useState<
     number | null
   >(null);
@@ -367,7 +380,6 @@ export function FreshGenerationView({
       setIsBackgroundGenerationActive(true);
       setEnhancingMsg(activeView.message);
       setEnhancingDescription(activeView.description);
-      setPipelineSteps(activeView.pipelineSteps);
     },
     [],
   );
@@ -375,6 +387,27 @@ export function FreshGenerationView({
   const cancelStream = () => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+  };
+
+  // The thread's latest run as the server has it, or null when it has none (or
+  // the check fails). The stream routes announce a run (`run/created`) with
+  // its first chunk, so a connection lost before that hides a run that goes on.
+  const readLatestRun = async (
+    runThreadId: string,
+  ): Promise<{ status?: string } | null> => {
+    try {
+      const response = await authenticatedFetch(
+        `/api/generate/${encodeURIComponent(runThreadId)}/status`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) return null;
+      const payload = (await response.json()) as {
+        run?: { status?: string } | null;
+      };
+      return payload.run ?? null;
+    } catch {
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -452,6 +485,9 @@ export function FreshGenerationView({
           type: "SET_READABILITY_SCORE",
           payload: review.readability_metrics,
         });
+      }
+      if (review?.checklist) {
+        dispatch({ type: "SET_CHECKLIST", payload: review.checklist });
       }
       if (review?.trust_score) {
         dispatch({
@@ -543,7 +579,6 @@ export function FreshGenerationView({
     outline.resetStream();
     content.resetStream();
     setToolCalls([]);
-    setPipelineSteps([]);
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({
       type: "SET_LOADING_STATUS",
@@ -555,19 +590,39 @@ export function FreshGenerationView({
 
     if (isArticlePhase(trackedJob?.progress)) {
       dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: FINAL_GENERATION_STEPS });
+      dispatch({
+        type: "SET_RUN_PHASE",
+        payload: {
+          phase: "article",
+          stageId:
+            trackedJob?.runStage?.phase === "article"
+              ? trackedJob.runStage.id
+              : undefined,
+          joined: true,
+        },
+      });
       restoreActiveGenerationView(trackedJob?.progress, trackedJob?.stage);
     } else {
       // Research phase — show the plain analysis loader, not the article editor.
-      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      dispatch({
+        type: "SET_RUN_PHASE",
+        payload: {
+          phase: trackedJob?.runStage?.phase ?? "analysis",
+          stageId: trackedJob?.runStage?.id,
+          joined: true,
+        },
+      });
       setIsBackgroundGenerationActive(false);
     }
     setRestoreError(null);
+    setTimedOutStages(null);
+    // A notice belongs to the run it came from, not to the next one opened.
+    setRunError(null);
 
     const restore = async () => {
       let terminalFailure = false;
       try {
-        const response = await fetch(
+        const response = await authenticatedFetch(
           `/api/generate/${encodeURIComponent(backgroundThreadId)}/status?includeState=true`,
           { cache: "no-store" },
         );
@@ -581,12 +636,53 @@ export function FreshGenerationView({
           stage?: string;
           error?: string;
           awaitingInput?: boolean;
+          runStage?: { phase: RunPhase; id: string };
         };
 
         if (!response.ok && response.status !== 202) {
           throw new Error(payload.error || "Unable to restore this article");
         }
         if (disposed) return;
+
+        // A run the backend ended on purpose (no search results, no titles) is
+        // a finished state, not a failure to restore: show the notice the live
+        // stream shows (its event is not replayed on a restore).
+        const stoppedMessage = readStoppedRun(payload.state?.values);
+        if (stoppedMessage) {
+          setRunError(stoppedMessage);
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "failed",
+            stage: "Generation stopped",
+            error: stoppedMessage,
+          });
+          return;
+        }
+
+        // The run hit the time limit: the run component's Timed out state, not the generic restore
+        // error (E22, rext-control#451). Where it stopped is the status's word, else the stage the
+        // dock's poll kept for the job.
+        const timedOutAt = payload.runStage ?? trackedJob?.runStage;
+        if (payload.run?.status === "timeout" && timedOutAt) {
+          setTimedOutStages(stagesWhereTimedOut(timedOutAt, Date.now()));
+          // The run the page joined while restoring is over: no stage stays active elsewhere.
+          clearRunStages();
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+          dispatch({ type: "SET_RUN_PHASE", payload: null });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "failed",
+            stage: payload.stage ?? "Generation failed",
+            error: payload.error,
+            runStage: timedOutAt,
+            timedOut: true,
+          });
+          return;
+        }
 
         if (
           payload.run?.status === "error" ||
@@ -617,7 +713,7 @@ export function FreshGenerationView({
           setIsEnhancing(false);
           dispatch({ type: "SET_MANUAL_LOADING", payload: false });
           dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-          dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+          dispatch({ type: "SET_RUN_PHASE", payload: null });
           updateBackgroundJob(backgroundThreadId, {
             status: "completed",
             stage: payload.stage ?? "Waiting for your input",
@@ -641,7 +737,7 @@ export function FreshGenerationView({
             setIsEnhancing(false);
             dispatch({ type: "SET_MANUAL_LOADING", payload: false });
             dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-            dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+            dispatch({ type: "SET_RUN_PHASE", payload: null });
             updateBackgroundJob(backgroundThreadId, {
               status: "completed",
               stage: "Article ready",
@@ -662,14 +758,21 @@ export function FreshGenerationView({
           stage: payload.stage ?? "Generating your article",
           progress: payload.progress ?? 24,
           awaitingInput: false,
+          runStage: payload.runStage,
         });
 
+        // The status names the stage the run is in: the stages start there, not
+        // at the phase's first one.
         dispatch({ type: "SET_MANUAL_LOADING", payload: true });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: inArticlePhase
-            ? FINAL_GENERATION_STEPS
-            : INITIAL_ANALYSIS_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: {
+            phase:
+              payload.runStage?.phase ??
+              (inArticlePhase ? "article" : "analysis"),
+            stageId: payload.runStage?.id,
+            joined: true,
+          },
         });
         if (inArticlePhase) {
           restoreActiveGenerationView(payload.progress, payload.stage);
@@ -791,6 +894,10 @@ export function FreshGenerationView({
 
   const showOutlineReview =
     instructionType === "outline_review" && tokenTarget !== "content";
+  // Regenerate's feedback form: the outline stays mounted under it, hidden, so Back returns to the
+  // tree with its edits (E7.3, rext-control#595).
+  const isOutlineFeedback =
+    instructionType === "outline_reject" && tokenTarget !== "content";
 
   const showContentStream =
     instructionType === "content" ||
@@ -945,31 +1052,6 @@ export function FreshGenerationView({
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
 
-  const CONTENT_PIPELINE = [
-    "Generating Content",
-    "Humanizing",
-    "Reviewing Content",
-  ];
-
-  // Advance pipeline: mark previous step done, set new step active
-  const advancePipeline = (activeLabel: string) => {
-    setPipelineSteps((prev) => {
-      // Initialize on first call
-      const base =
-        prev.length === 0
-          ? CONTENT_PIPELINE.map((label) => ({
-              label,
-              status: "pending" as const,
-            }))
-          : prev;
-      return base.map((step) => {
-        if (step.label === activeLabel) return { ...step, status: "active" };
-        if (step.status === "active") return { ...step, status: "done" };
-        return step;
-      });
-    });
-  };
-
   // If content tokens are JSON for FinalContent, parse as soon as valid so we can
   // show real markdown (and title/tags/etc) without waiting for an updates event.
   const contentParseTimerRef = useRef<number | null>(null);
@@ -1107,18 +1189,29 @@ export function FreshGenerationView({
   // ─────────────────────────────────────────────────────────────────────────
   // processStream — UPDATED to handle both event types
   // ─────────────────────────────────────────────────────────────────────────
+  /**
+   * Reads a run's stream into the view. Resolves to whether the run reached a
+   * point the page can show (`settlesRun`): false means the stream closed while
+   * the run was still going on the server.
+   */
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     // `threadId` is still stale in this closure for the very first run (the
     // reducer dispatch has not re-rendered yet), so track it locally and let
     // `run/created` confirm it.
     let activeThreadId = threadId ?? backgroundThreadId ?? null;
+    let settled = false;
+    // The backend ended the run early (run.failed): its stages fail, they don't complete.
+    let stopped = false;
+    // The first article token this stream reads ends Research (once per stream).
+    let writing = false;
 
     try {
       dispatch({ type: "SET_KEYWORD_DIFFICULTY", payload: 0 });
 
       for await (const chunk of stream) {
+        if (settlesRun(chunk)) settled = true;
         if (chunk.event === "run/created") {
           const runData = chunk.data as {
             run_id?: string;
@@ -1133,36 +1226,25 @@ export function FreshGenerationView({
               runId: runData.run_id,
               status: "running",
               awaitingInput: false,
+              runStage: undefined,
               completionNotified: false,
             });
           }
           continue;
         }
 
-        // ── messages/partial — raw LLM tokens ─────────────────────────────────
-        // Your SSE sends these token-by-token as the LLM writes text/JSON.
-        if (
-          chunk.event === "messages/partial" ||
-          chunk.event?.startsWith("messages/partial|")
-        ) {
-          // biome-ignore lint/suspicious/noExplicitAny: SSE chunk structure is dynamic
-          const msgData = (chunk.data as any)?.[0];
-          const raw = msgData?.content;
-          const token =
-            typeof raw === "string"
-              ? raw
-              : Array.isArray(raw)
-                ? raw.filter((p: unknown) => typeof p === "string").join("")
-                : "";
-
-          if (token) {
-            if (tokenTargetRef.current === "outline")
-              outline.appendToken(token);
-            else if (tokenTargetRef.current === "content") {
-              content.appendToken(token);
-            }
+        // ── messages — one model token per event (messages-tuple) ────────────
+        // Only the outline's model feeds a buffer here. The article's text
+        // arrives as `custom` token events, which generate_content writes.
+        const message = readMessageToken(chunk);
+        if (message) {
+          if (
+            message.token &&
+            tokenTargetRef.current === "outline" &&
+            isOutlineToken(message)
+          ) {
+            outline.appendToken(message.token);
           }
-
           continue;
         }
 
@@ -1171,14 +1253,26 @@ export function FreshGenerationView({
           // biome-ignore lint/suspicious/noExplicitAny: custom event payload
           const d = chunk.data as any;
           if (d?.type === "token" && tokenTargetRef.current === "content") {
+            // The agent has stopped searching and writes: Research ends, Draft runs.
+            if (!writing) {
+              writing = true;
+              runStages.nodeDone(FIRST_ARTICLE_TOKEN);
+              setEnhancingMsg("Draft");
+              setEnhancingDescription(
+                "Writing the article from the approved outline and its sources.",
+              );
+              if (activeThreadId) {
+                updateBackgroundJob(activeThreadId, {
+                  status: "running",
+                  stage: "Draft",
+                });
+              }
+            }
             content.appendToken(d.content as string);
           } else if (d?.type === "tool_start") {
             const id = String(d.id ?? "");
             const name = String(d.name ?? "");
             const query = String(d.query ?? "");
-            if (name === "humanize_content") {
-              advancePipeline("Humanizing");
-            }
             if (id) {
               setToolCalls((prev) => {
                 if (prev.some((c) => c.id === id)) return prev;
@@ -1206,6 +1300,20 @@ export function FreshGenerationView({
                 ),
               );
             }
+          } else if (d?.type === "run") {
+            const runFailed = readRunFailedEvent(d);
+            if (runFailed) {
+              stopped = true;
+              runStages.fail();
+              setRunError(runFailed.message);
+              if (activeThreadId) {
+                updateBackgroundJob(activeThreadId, {
+                  status: "failed",
+                  stage: "Generation stopped",
+                  error: runFailed.message,
+                });
+              }
+            }
           } else if (d?.type === "credits") {
             const credits = Number(d.current_credits ?? 0);
             const step = String(d.step ?? "credits.updated");
@@ -1224,7 +1332,7 @@ export function FreshGenerationView({
               // Stop the run immediately; `finally` below resets the loading state
               cancelStream();
               openCreditsModal();
-              return;
+              return true;
             }
           }
           continue;
@@ -1263,50 +1371,52 @@ export function FreshGenerationView({
 
         if (updates?.review_outline) {
           setIsEnhancing(true);
-          setEnhancingMsg("Generating Content...");
+          setEnhancingMsg("Research");
           setEnhancingDescription(
-            "Creating the first draft based on the approved outline...",
+            "Searching for sources for the approved outline.",
           );
-          advancePipeline("Generating Content");
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Drafting your article",
+              stage: "Research",
               progress: ARTICLE_PHASE_PROGRESS,
             });
           }
         }
 
         if (updates?.generate_content) {
-          advancePipeline("Humanizing");
+          setEnhancingMsg("Style pass");
+          setEnhancingDescription(
+            "Checking the draft against the outline and smoothing its wording and flow.",
+          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Refining tone and structure",
+              stage: "Style pass",
               progress: 58,
             });
           }
         }
 
         if (updates?.humanize_content) {
-          advancePipeline("Reviewing Content");
+          setEnhancingMsg("Checks");
+          setEnhancingDescription(
+            "Validation, readability, on-page SEO and trust.",
+          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Running quality checks",
+              stage: "Checks",
               progress: 78,
             });
           }
         }
 
         if (updates?.review_content) {
-          setPipelineSteps((prev) =>
-            prev.map((s) => ({ ...s, status: "done" as const })),
-          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Finalizing SEO and readability",
+              stage: "Checks",
               progress: 90,
             });
           }
@@ -1314,10 +1424,6 @@ export function FreshGenerationView({
 
         if (updates?.content_engine) {
           setIsEnhancing(false);
-          // Mark all pipeline steps done
-          setPipelineSteps((prev) =>
-            prev.map((s) => ({ ...s, status: "done" as const })),
-          );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
@@ -1335,11 +1441,11 @@ export function FreshGenerationView({
           u.content_engine?.content,
           u.generate_content?.content,
           u.humanize_content?.content,
-          u.inject_eeat?.content,
           u.review_content?.content,
           u.calculate_readability?.content,
           u.calculate_on_page_seo?.content,
           u.calculate_eeat_trust?.content,
+          u.persist_content?.content,
         ].filter((o): o is CommonOutput => !!o);
 
         for (const out of nodeOutputs) {
@@ -1383,6 +1489,8 @@ export function FreshGenerationView({
                 type: "SET_READABILITY_SCORE",
                 payload: review.readability_metrics,
               });
+            if (review.checklist)
+              dispatch({ type: "SET_CHECKLIST", payload: review.checklist });
           }
         }
 
@@ -1439,6 +1547,7 @@ export function FreshGenerationView({
         Object.keys(updates)
           .filter((k) => !k.startsWith("__"))
           .forEach((node) => {
+            runStages.nodeDone(node);
             dispatch({
               type: "SET_LOADING_STATUS",
               payload: `${formatNodeName(node)}...`,
@@ -1447,7 +1556,29 @@ export function FreshGenerationView({
       }
     } catch (_e) {
       const isAbort = _e instanceof DOMException && _e.name === "AbortError";
-      if (!isAbort) {
+      if (_e instanceof RunStreamError && _e.code === TOO_MANY_RUNS) {
+        // The backend refused to start the run (two already going, E27): nothing ran, so
+        // nothing failed. A resume leaves its step waiting; a new start leaves no dock job.
+        runRefusedRef.current = true;
+        if (activeThreadId && (await readLatestRun(activeThreadId))) {
+          updateBackgroundJob(activeThreadId, {
+            status: "completed",
+            awaitingInput: true,
+          });
+          toast.error(_e.message);
+        } else {
+          if (activeThreadId) removeBackgroundJob(activeThreadId);
+          setRunError(_e.message);
+        }
+      } else if (!isAbort && runCreatedRef.current) {
+        // The stream broke, not the run: it was started with onDisconnect
+        // "continue" and goes on on the server (leaving the page mid-run, a
+        // dropped connection). Keep the job running so the dock's status poll
+        // reports how it really ends, instead of a "network error" failure.
+        if (activeThreadId) {
+          updateBackgroundJob(activeThreadId, { status: "running" });
+        }
+      } else if (!isAbort) {
         analytics.track("content_generation_failed", {
           keyword: userKeyword,
           workspace_id: workspaceId ?? undefined,
@@ -1474,17 +1605,14 @@ export function FreshGenerationView({
         streamingThreadRef.current !== null &&
         streamingThreadRef.current !== activeThreadId;
       if (!superseded) {
-        if (loadingStatus?.endsWith("..."))
-          dispatch({
-            type: "ADD_COMPLETED_NODE",
-            payload: loadingStatus.slice(0, -3),
-          });
+        if (settled && !stopped) runStages.settle();
         await new Promise((r) => setTimeout(r, 1500));
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-        dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+        dispatch({ type: "SET_RUN_PHASE", payload: null });
       }
     }
+    return settled;
   };
 
   // Keep a live handle so the background-restore effect (declared earlier) always
@@ -1512,14 +1640,16 @@ export function FreshGenerationView({
     }
     streamBusyRef.current = true;
     streamingThreadRef.current = null; // set to newThreadId once created below
+    let unsettledThreadId: string | null = null;
 
     try {
       cancelStream();
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
 
-      dispatch({ type: "CLEAR_COMPLETED_NODES" });
-      dispatch({ type: "SET_LOADING_STEPS", payload: INITIAL_ANALYSIS_STEPS });
+      setRunError(null);
+      dispatch({ type: "RESET_FOR_REANALYSIS" });
+      dispatch({ type: "SET_RUN_PHASE", payload: { phase: "analysis" } });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       dispatch({ type: "SET_LOADING_STATUS", payload: "Creating session..." });
       setTokenTarget("none");
@@ -1527,7 +1657,22 @@ export function FreshGenerationView({
       outline.resetStream();
       content.resetStream();
 
-      const newThreadId = await createThread();
+      if (!workspaceId) {
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        return;
+      }
+      let newThreadId: string;
+      try {
+        newThreadId = await createThread(workspaceId);
+      } catch (error) {
+        // The server refused the run (a role without content.create) or could
+        // not start it: say so in the run notice instead of a spinner.
+        dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+        setRunError(
+          error instanceof Error ? error.message : "This run could not start.",
+        );
+        return;
+      }
       if (!newThreadId) {
         dispatch({ type: "SET_MANUAL_LOADING", payload: false });
         return;
@@ -1567,6 +1712,7 @@ export function FreshGenerationView({
         )}?thread=${encodeURIComponent(newThreadId)}`,
         completionNotified: false,
         awaitingInput: false,
+        runStage: undefined,
       });
 
       toast.info("Analyzing your keyword", {
@@ -1582,6 +1728,7 @@ export function FreshGenerationView({
         from_library: isLibrary,
       });
 
+      runCreatedRef.current = false;
       const stream = streamFromSSE(
         `/api/generate/${newThreadId}/stream`,
         {
@@ -1592,29 +1739,44 @@ export function FreshGenerationView({
               user_id: user?.id,
               workspace_id: workspaceId ?? undefined,
               is_library: isLibrary,
+              ...(isLibrary && libraryKey ? { library_key: libraryKey } : {}),
             },
             ...(selectedIntent || _initialIntent
               ? { final_intent_type: selectedIntent || _initialIntent }
               : {}),
           },
-          streamMode: ["updates", "messages", "custom"],
+          streamMode: GENERATION_STREAM_MODES,
           streamSubgraphs: true,
           onDisconnect: "continue",
         },
         signal,
       );
 
-      await processStream(stream);
+      const settled = await processStream(stream);
+      // A new thread has no other run: any run on it is this one.
+      if (
+        !settled &&
+        !signal.aborted &&
+        (runCreatedRef.current || (await readLatestRun(newThreadId)))
+      ) {
+        unsettledThreadId = newThreadId;
+      }
     } finally {
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
     }
+    // The stream closed while the run was still going (a dropped connection, a
+    // proxy or server timeout): the restore path reads the run's status,
+    // rejoins it and shows the step, article or error it ends on.
+    if (unsettledThreadId)
+      requestBackgroundGenerationRestore(unsettledThreadId);
   };
 
   /** Resolves to whether the server actually started a run for this step. */
   const resumeWorkflow = async ({
     payload,
     status: statusMsg,
+    restoresItsStep = false,
   }: ResumeOptions): Promise<boolean> => {
     if (!threadId) return false;
     // Mid-article: the earlier stages are already paid for, so only a fully
@@ -1635,9 +1797,10 @@ export function FreshGenerationView({
     }
     streamBusyRef.current = true;
     streamingThreadRef.current = threadId;
+    let unsettled = false;
+    let refused = false;
 
     try {
-      dispatch({ type: "CLEAR_COMPLETED_NODES" });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
       if (statusMsg)
         dispatch({ type: "SET_LOADING_STATUS", payload: statusMsg });
@@ -1651,6 +1814,7 @@ export function FreshGenerationView({
         runId: undefined,
         status: "running",
         awaitingInput: false,
+        runStage: undefined,
         completionNotified: false,
         ...(statusMsg ? { stage: statusMsg.replace(/\.+$/, "") } : {}),
       });
@@ -1658,32 +1822,59 @@ export function FreshGenerationView({
       // A resume that dies before `run/created` (aborted fetch, dev-server
       // hiccup, rejected run) leaves no run on the thread and nothing on
       // screen — the click simply vanishes. Retry once before reporting back.
+      setRunError(null);
+      let settled = false;
+      let aborted = false;
+      let runGoing = false;
       for (let attempt = 0; attempt < 2; attempt++) {
         cancelStream();
         const controller = new AbortController();
         abortControllerRef.current = controller;
         runCreatedRef.current = false;
+        runRefusedRef.current = false;
 
         const stream = streamFromSSE(
           `/api/generate/${threadId}/resume`,
           {
             payload,
-            streamMode: ["updates", "messages", "custom"],
+            streamMode: GENERATION_STREAM_MODES,
             streamSubgraphs: true,
             onDisconnect: "continue",
           },
           controller.signal,
         );
-        await processStream(stream);
+        settled = await processStream(stream);
+        aborted = controller.signal.aborted;
+        refused = runRefusedRef.current;
 
         // An abort is deliberate (cancelled generation, unmount, a newer
-        // stream taking over) — never retry over it.
-        if (runCreatedRef.current || controller.signal.aborted) break;
+        // stream taking over) — never retry over it; nor a refusal.
+        if (
+          resumeAttemptIsFinal({
+            created: runCreatedRef.current,
+            aborted,
+            settled,
+            refused,
+          })
+        )
+          break;
+        // No announcement, but the server may have started the run before the
+        // connection went: never resume a thread whose run is still going.
+        runGoing = runIsGoing((await readLatestRun(threadId))?.status);
+        if (runGoing) break;
       }
-      return runCreatedRef.current;
+      const started = runCreatedRef.current || runGoing;
+      unsettled = started && !settled && !aborted;
+      return started;
     } finally {
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
+      // The stream closed while the run was still going: catch up with it
+      // through the restore path, as for the first stream. A refused resume left
+      // the thread paused where it was, while the step's view had already moved
+      // on: the same path puts that step back as the server holds it.
+      if (reloadsAfterResume({ unsettled, refused, restoresItsStep }))
+        requestBackgroundGenerationRestore(threadId);
     }
   };
 
@@ -1710,15 +1901,16 @@ export function FreshGenerationView({
       title: parsedOutline?.title || primaryKeyword || "Untitled article",
       keyword: primaryKeyword,
       status: "running",
-      stage: "Drafting your article",
-      // Matches the derived "Drafting your article" milestone so the shared
-      // record keeps climbing from the research steps instead of rewinding.
+      stage: "Research",
+      // The article phase's first stage, at the derived article milestone, so
+      // the shared record keeps climbing from the earlier steps instead of rewinding.
       progress: ARTICLE_PHASE_PROGRESS,
       createdAt: now,
       updatedAt: now,
       resultUrl,
       completionNotified: false,
       awaitingInput: false,
+      runStage: undefined,
     });
 
     toast.info("Generating your article", {
@@ -1734,18 +1926,25 @@ export function FreshGenerationView({
   const handleWorkflow = (step: WorkflowStep, value: string) => {
     switch (step) {
       case "KEYWORD_SELECT": {
-        // A different keyword sends the SEO subgraph back through `seo_entry`
-        // (keyword_router) and pauses on this same step again with fresh
-        // metrics — so show the analysis steps, not the next step's.
-        const isReanalysis =
-          value.trim().toLowerCase() !== primaryKeyword.trim().toLowerCase();
+        // A different keyword or country sends the run back through the SERP
+        // engine (keyword_router) and pauses on this same step again with a
+        // fresh analysis — so show the analysis steps, not the next step's.
+        const isReanalysis = isKeywordReanalysis({
+          value,
+          primaryKeyword,
+          country,
+          analyzedCountry,
+        });
         setTokenTarget("none");
         tokenTargetRef.current = "none";
+        // A new keyword or country is billed (change_keyword): the paywall if it can't start.
+        if (isReanalysis && !ensureCredits("change_keyword")) return;
+        // Drop everything derived from the previous keyword/country so it can
+        // neither be shown nor reused while the new analysis runs.
+        if (isReanalysis) dispatch({ type: "RESET_FOR_REANALYSIS" });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: isReanalysis
-            ? INITIAL_ANALYSIS_STEPS
-            : KEYWORD_SELECTION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: isReanalysis ? "analysis" : "content-type" },
         });
         dispatch({ type: "SET_USER_KEYWORD", payload: value });
         dispatch({ type: "SET_PRIMARY_KEYWORD", payload: value });
@@ -1763,6 +1962,7 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: {
             "Primary Keyword": value,
+            country,
             ...(selectedIntent ? { intent: selectedIntent } : {}),
           },
           status: isReanalysis
@@ -1776,19 +1976,23 @@ export function FreshGenerationView({
         outline.resetStream();
         dispatch({ type: "SUBMIT_REJECT_REASON" });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: TOPIC_GENERATION_STEPS,
+          type: "SET_SELECTED_CONTENT_TYPE",
+          payload: value,
+        });
+        dispatch({
+          type: "SET_RUN_PHASE",
+          payload: { phase: "titles" },
         });
         return resumeWorkflow({
           payload: { "Selected Content Type": value },
-          status: "Topic Suggestions...",
+          status: "Suggesting titles...",
         });
       case "TOPIC_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: CONTENT_TYPE_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "outline" },
         });
         analytics.track("title_selected", {
           title: value,
@@ -1807,25 +2011,26 @@ export function FreshGenerationView({
         dispatch({ type: "SET_TOPICS", payload: [] });
         dispatch({ type: "SET_OUTLINE", payload: null });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: TOPIC_REGENERATION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "titles" },
         });
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
-          status: "Regenerating topics...",
+          status: "Regenerating titles...",
         });
 
       case "OUTLINE_APPROVE":
+        // The article's billed stages need their whole cost: checked before the view moves on.
+        if (!ensureCredits("generate")) return;
         setTokenTarget("content");
         tokenTargetRef.current = "content";
         content.resetStream();
         setToolCalls([]);
-        setPipelineSteps([]);
         dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
         dispatch({
-          type: "SET_LOADING_STEPS",
-          payload: FINAL_GENERATION_STEPS,
+          type: "SET_RUN_PHASE",
+          payload: { phase: "article" },
         });
         analytics.track("outline_approved", {
           keyword: primaryKeyword,
@@ -1856,6 +2061,8 @@ export function FreshGenerationView({
         dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
         return;
       case "OUTLINE_REJECT_REASON": {
+        // Writing the outline again is billed (regenerate_outline).
+        if (!ensureCredits("regenerate_outline")) return;
         const requestedTargetWordCount = extractRequestedTargetWordCount(value);
         if (
           requestedTargetWordCount !== null &&
@@ -1882,6 +2089,7 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value },
           status: "Regenerating outline...",
+          restoresItsStep: true,
         }).then((started) => {
           if (started) return;
           // Nothing was sent: hand the user back their feedback instead of an
@@ -1889,6 +2097,8 @@ export function FreshGenerationView({
           setPendingTargetWordCount(null);
           dispatch({ type: "SET_REJECTED_REASON", payload: value });
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+          // A refusal has already said why, with when to try again.
+          if (runRefusedRef.current) return;
           toast.error("We couldn't send your feedback", {
             description: "Please submit it again.",
           });
@@ -1917,7 +2127,7 @@ export function FreshGenerationView({
   // Suppress the loader in the library flow only when passively waiting for topics
   // (no steps dispatched). Once a topic is selected and steps are set, show the loader.
   const suppressLibraryTopicLoader =
-    isLibrary && isTopicLoading && currentLoadingSteps.length === 0;
+    isLibrary && isTopicLoading && runState === null;
 
   const handleEditToggle = useCallback(
     () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
@@ -1948,20 +2158,24 @@ export function FreshGenerationView({
       .jobs.find((j) => j.threadId === threadId);
     cancelStream();
     try {
-      await fetch(`/api/generate/${encodeURIComponent(threadId)}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runId: job?.runId }),
-      });
+      await authenticatedFetch(
+        `/api/generate/${encodeURIComponent(threadId)}/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ runId: job?.runId }),
+        },
+      );
     } catch {
       // Best-effort: the run may already be gone. The record cleanup below
       // still stops the UI from tracking work that will never finish.
     }
+    runStages.fail();
     removeBackgroundJob(threadId);
     announceBackgroundGenerationRemoval([threadId]);
     dispatch({ type: "SET_MANUAL_LOADING", payload: false });
     dispatch({ type: "SET_LOADING_STATUS", payload: "" });
-    dispatch({ type: "SET_LOADING_STEPS", payload: [] });
+    dispatch({ type: "SET_RUN_PHASE", payload: null });
     toast.info("Generation cancelled", {
       description: "Credits already used for this generation are not refunded.",
     });
@@ -1983,13 +2197,13 @@ export function FreshGenerationView({
             : "min-h-0 pt-2",
         )}
       >
-        <LoadingIndicatorVariants
-          step={instructionType}
-          isLoading={isLoading || isManualLoading}
-          loadingStatus={loadingStatus}
-          completedSteps={completedNodes}
-          steps={currentLoadingSteps}
-        />
+        {runStages.run && (
+          <RunProgress
+            stages={runStages.run.stages}
+            onCancel={_handleCancelGeneration}
+            className="max-w-md"
+          />
+        )}
       </div>
     );
   }
@@ -1998,9 +2212,10 @@ export function FreshGenerationView({
     instructionType === "keyword" || instructionType === "keyword Selection";
 
   const instructionViewMap: Record<string, React.ReactNode> = {
+    // The start screen: the recent keywords under the search (E4). Not while a run is restored.
+    keyword: isLibrary || backgroundThreadId ? null : <RecentKeywords />,
     "keyword Selection": isLibrary ? null : (
       <SuggestionsSection
-        instruction={displayedInstruction}
         primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
@@ -2008,32 +2223,35 @@ export function FreshGenerationView({
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
         keywordClusters={keywordClusters}
+        gate={state.interrupt?.[0]?.value}
       />
     ),
     topic: (
-      <TopicsSection
-        recommendedTopic={recommendedTopic}
+      <TitleStep
         instruction={displayedInstruction}
-        topics={topics}
-        onSelect={(selected) => handleWorkflow("TOPIC_SELECT", selected)}
+        titles={topics}
+        recommendedTitle={recommendedTopic}
+        gate={state.interrupt?.[0]?.value}
+        onContinue={(title) => handleWorkflow("TOPIC_SELECT", title)}
         onRegenerate={(fb) => handleWorkflow("TOPIC_REGENERATE", fb)}
         isRegenerating={
           isManualLoading && (loadingStatus?.includes("Regenerating") ?? false)
         }
-        keyword={primaryKeyword}
-        intent={
+        // The content type the user picked, not the backend's suggestion, which can differ.
+        context={[
+          primaryKeyword,
           selectedIntent ||
-          (Array.isArray(seoResult?.intent)
-            ? seoResult.intent[0]
-            : (seoResult?.intent as string)) ||
-          ""
-        }
-        contentContext={recommendedContentType || ""}
+            (Array.isArray(seoResult?.intent)
+              ? seoResult.intent[0]
+              : (seoResult?.intent as string)),
+          selectedContentType || recommendedContentType,
+        ]}
       />
     ),
     content_type: (
       <ContentType
         recommendedContentType={recommendedContentType}
+        gate={state.interrupt?.[0]?.value}
         instruction={displayedInstruction}
         contentTypes={contentTypes}
         keyword={primaryKeyword || userKeyword}
@@ -2060,6 +2278,11 @@ export function FreshGenerationView({
           dispatch({ type: "SET_REJECTED_REASON", payload: val })
         }
         onSubmit={() => handleWorkflow("OUTLINE_REJECT_REASON", rejectedReason)}
+        onBack={() => {
+          // Nothing was sent: the graph still waits at the outline, so the tree comes back as it was.
+          dispatch({ type: "SET_REJECTED_REASON", payload: "" });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
+        }}
       />
     ),
   };
@@ -2068,7 +2291,7 @@ export function FreshGenerationView({
     { id: "keyword", label: "Search Keyword" },
     { id: "keyword Selection", label: "Select Keyword" },
     { id: "content_type", label: "Content Type" },
-    { id: "topic", label: "Topic Selection", aliases: ["topic_selection"] },
+    { id: "topic", label: "Title", aliases: ["topic_selection"] },
     {
       id: "outline_review",
       label: "Content Outline",
@@ -2087,9 +2310,18 @@ export function FreshGenerationView({
 
   return (
     <div className="relative">
-      <div
+      <StepColumn
+        // A step with a side pane beside it (the search results, on the Select keyword and Title
+        // steps; the brief, on the outline step) gets the room for both.
+        withSidePane={
+          showOutlineReview ||
+          instructionType === "topic" ||
+          instructionType === "topic_selection" ||
+          (instructionType === "keyword Selection" &&
+            serpResultsFromGate(state.interrupt?.[0]?.value).length > 0)
+        }
         className={cn(
-          "max-w-3xl mx-auto w-full flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
+          "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
           instructionType === "keyword"
             ? "min-h-[70vh]"
             : !showContentStream
@@ -2132,6 +2364,20 @@ export function FreshGenerationView({
               userKeyword={userKeyword}
               country={country}
               disabled={isManualLoading}
+              restoreCountry={!backgroundThreadId}
+              // On the keyword step only a new keyword or country is billed.
+              run={
+                instructionType !== "keyword Selection"
+                  ? "analyze"
+                  : isKeywordReanalysis({
+                        value: userKeyword,
+                        primaryKeyword,
+                        country,
+                        analyzedCountry,
+                      })
+                    ? "change_keyword"
+                    : null
+              }
               // Step 2 already owns a thread paused on the keyword interrupt.
               // Re-analysing there must resume that thread — starting a new one
               // trips the "article already in progress" guard on its own job.
@@ -2150,113 +2396,126 @@ export function FreshGenerationView({
           )}
         </motion.div>
 
-        {showOutlineReview ? (
-          <div className="w-full mt-0">
-            <OutlineDisplay
-              outline={parsedOutline}
-              rawTokens={outline.streamedText}
-              isLoading={isManualLoading || isStreamingOutline}
-              pendingTargetWordCount={pendingTargetWordCount}
-              internalLinks={interruptInternalLinks}
-              brandVoicePromotion={interruptBrandVoicePromotion}
-              workspaceId={workspaceId}
-              onApprove={(selectedLinks, promoteBrand, selectedPersonaId) => {
-                setTokenTarget("content");
-                tokenTargetRef.current = "content";
-                content.resetStream();
-                setToolCalls([]);
-                setPipelineSteps([]);
-                dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
-                dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-                dispatch({
-                  type: "SET_LOADING_STEPS",
-                  payload: FINAL_GENERATION_STEPS,
-                });
-                analytics.track("outline_approved", {
-                  keyword: primaryKeyword,
-                  workspace_id: workspaceId ?? undefined,
-                  thread_id: threadId ?? undefined,
-                });
-                void startBackgroundWorkflow({
-                  payload: {
-                    action: "approve",
-                    ...(parsedOutline?.tone
-                      ? { tone: parsedOutline.tone }
-                      : {}),
-                    ...(parsedOutline?.target_audience?.length
-                      ? { target_audience: parsedOutline.target_audience }
-                      : {}),
-                    ...(parsedOutline?.target_word_count && {
-                      target_word_count: parsedOutline.target_word_count,
-                    }),
-                    ...(interruptInternalLinks?.length
-                      ? { selected_internal_links: selectedLinks }
-                      : {}),
-                    ...(interruptBrandVoicePromotion
-                      ? { promote_brand: promoteBrand }
-                      : {}),
-                    ...(selectedPersonaId
-                      ? { selected_persona_id: selectedPersonaId }
-                      : {}),
-                  },
-                  status: "Approving and generating content...",
-                });
-              }}
-              onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
-              onUpdate={(updatedOutline) => {
-                const requestedTargetWordCount =
-                  updatedOutline.target_word_count;
-                if (
-                  requestedTargetWordCount !== undefined &&
-                  outlineWordCountRange &&
-                  (requestedTargetWordCount < outlineWordCountRange.min ||
-                    requestedTargetWordCount > outlineWordCountRange.max)
-                ) {
-                  showWordCountRangeError(
-                    requestedTargetWordCount,
-                    parsedOutline?.schema_type,
-                    outlineWordCountRange,
-                  );
-                  return;
-                }
-                dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
-              }}
-              keywordClusters={keywordClusters}
-            />
-          </div>
-        ) : (
-          <div className="w-full">{instructionViewMap[instructionType]}</div>
-        )}
-      </div>
-
-      {restoreError && (
-        <div className="mx-auto my-8 flex w-full max-w-2xl items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              We could not restore this article
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">{restoreError}</p>
+        {timedOutStages && !restoreError ? (
+          // A restored run the time limit stopped: its stages as they stood, in the step's place.
+          <div className="w-full space-y-3">
+            <RunProgress stages={timedOutStages} timedOut />
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3"
               onClick={() => {
-                setRestoreError(null);
+                setTimedOutStages(null);
                 onBack();
               }}
             >
               Start a new article
             </Button>
           </div>
-        </div>
+        ) : showOutlineReview || isOutlineFeedback ? (
+          <div className="w-full mt-0">
+            {isOutlineFeedback && instructionViewMap.outline_reject}
+            <div hidden={isOutlineFeedback}>
+              <OutlineReview
+                outline={parsedOutline}
+                rawTokens={outline.streamedText}
+                isLoading={isManualLoading || isStreamingOutline}
+                gate={state.interrupt?.[0]?.value}
+                pendingTargetWordCount={pendingTargetWordCount}
+                wordCountRange={outlineWordCountRange}
+                workspaceId={workspaceId}
+                onApprove={(approval) => {
+                  if (!ensureCredits("generate")) return;
+                  setTokenTarget("content");
+                  tokenTargetRef.current = "content";
+                  content.resetStream();
+                  setToolCalls([]);
+                  dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
+                  dispatch({
+                    type: "SET_INSTRUCTION_TYPE",
+                    payload: "content",
+                  });
+                  dispatch({
+                    type: "SET_RUN_PHASE",
+                    payload: { phase: "article" },
+                  });
+                  analytics.track("outline_approved", {
+                    keyword: primaryKeyword,
+                    workspace_id: workspaceId ?? undefined,
+                    thread_id: threadId ?? undefined,
+                  });
+                  void startBackgroundWorkflow({
+                    payload: { action: "approve", ...approval },
+                    status: "Approving and generating content...",
+                  });
+                }}
+                onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
+                onUpdate={(updatedOutline) => {
+                  const requestedTargetWordCount =
+                    updatedOutline.target_word_count;
+                  if (
+                    requestedTargetWordCount !== undefined &&
+                    outlineWordCountRange &&
+                    (requestedTargetWordCount < outlineWordCountRange.min ||
+                      requestedTargetWordCount > outlineWordCountRange.max)
+                  ) {
+                    showWordCountRangeError(
+                      requestedTargetWordCount,
+                      parsedOutline?.schema_type,
+                      outlineWordCountRange,
+                    );
+                    return;
+                  }
+                  dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
+                }}
+                keywordClusters={keywordClusters}
+              />
+            </div>
+          </div>
+        ) : runError && !restoreError ? (
+          // A run that has stopped shows its notice in the step's place, under
+          // the search, instead of a step that will never fill in.
+          <RunNotice
+            title="The analysis stopped"
+            message={runError}
+            actionLabel="Start again"
+            onAction={() => {
+              setRunError(null);
+              onBack();
+            }}
+          />
+        ) : (
+          <div className="w-full">{instructionViewMap[instructionType]}</div>
+        )}
+      </StepColumn>
+
+      {restoreError && (
+        <RunNotice
+          title="We could not restore this article"
+          message={restoreError}
+          actionLabel="Start a new article"
+          onAction={() => {
+            setRestoreError(null);
+            onBack();
+          }}
+        />
       )}
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
-      {showContentStream && !restoreError && (
+      {showContentStream && !restoreError && !timedOutStages && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
+            // The article's run, while it runs: the same stages as every other
+            // phase, in the editor's side panel (the editor fills the page).
+            runProgress={
+              runStages.run?.phase === "article" &&
+              runStages.run.stages.some((stage) => stage.state === "active") ? (
+                <RunProgress
+                  stages={runStages.run.stages}
+                  onCancel={_handleCancelGeneration}
+                />
+              ) : null
+            }
             threadId={threadId ?? undefined}
             allContent={
               isContentFinal ? allContent : (allContent ?? streamedAllContent)
@@ -2265,6 +2524,7 @@ export function FreshGenerationView({
             enhancingMsg={enhancingMsg}
             enhancingDescription={enhancingDescription}
             readabilityScore={readabilityScore}
+            checklist={checklist}
             seoScore={seoScore}
             trustScore={trustScore}
             generatedContent={
@@ -2274,7 +2534,6 @@ export function FreshGenerationView({
             userKeyword={userKeyword}
             outline={parsedOutline}
             toolCalls={toolCalls}
-            pipelineSteps={pipelineSteps}
             onEditToggle={handleEditToggle}
             onContentChange={handleContentChange}
           />

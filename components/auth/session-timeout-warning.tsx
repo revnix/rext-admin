@@ -229,7 +229,9 @@ export function SessionTimeoutWarning() {
   useEffect(() => {
     if (!session?.user) return;
 
+    let lastCheckTime = 0;
     const checkActiveStatus = async () => {
+      lastCheckTime = Date.now();
       try {
         await apiClient.profile.get();
       } catch (err) {
@@ -241,10 +243,17 @@ export function SessionTimeoutWarning() {
       if (document.visibilityState === "visible") {
         void checkActiveStatus();
       }
-    }, 10000);
+      // 60s cadence: a 10s heartbeat measured ~360 profile GETs/hour/tab
+      // (verified 2026-09-30), duplicating data the ["profile"] query
+      // already caches. Remote suspension/ban detection stays within a minute.
+    }, 60000);
 
     const handleResume = () => {
-      if (document.visibilityState === "visible") {
+      // Avoid firing on rapid window focus/tab switches if checked within last 60s
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastCheckTime > 60000
+      ) {
         void checkActiveStatus();
       }
     };

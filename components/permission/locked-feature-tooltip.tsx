@@ -145,8 +145,7 @@ export function LockedFeatureTooltip({
       return "Workspace Admin or Owner";
     if (perm.includes("subscription") || perm.includes("billing"))
       return "Workspace Owner";
-    if (perm.includes("content.publish") || perm.includes("content.approve"))
-      return "Editor or Admin";
+    if (perm.includes("content.publish")) return "Editor or Admin";
     return null;
   };
 
@@ -192,10 +191,7 @@ export function LockedFeatureTooltip({
           )}
         </span>
       </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="max-w-xs bg-gray-900 text-white border-gray-700"
-      >
+      <TooltipContent side="top" className="max-w-xs">
         {getTooltipMessage()}
       </TooltipContent>
     </Tooltip>

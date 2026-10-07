@@ -10,11 +10,11 @@
  * @example
  * ```tsx
  * const updateTopic = useOptimisticMutation({
- *   mutationFn: (updated) => topicService.update(updated.id, updated),
- *   queryKey: ['topics', workspaceId],
- *   optimisticUpdater: (oldTopics, updated) =>
- *     oldTopics.map(t => t.id === updated.id ? { ...t, ...updated } : t),
- *   successMessage: "Topic updated!",
+ *   mutationFn: (updated) => personaService.update(updated.id, updated),
+ *   queryKey: ['personas', workspaceId],
+ *   optimisticUpdater: (oldPersonas, updated) =>
+ *     oldPersonas.map(p => p.id === updated.id ? { ...p, ...updated } : p),
+ *   successMessage: "Persona updated!",
  * });
  *
  * // Usage

@@ -77,11 +77,6 @@ export function WorkspaceProvider({
       workspaceId,
     );
 
-  // Load workspace permissions (Phase 1 integration)
-  // Triggers permission loading and Zustand store sync via internal hook effects.
-  // Permissions and role are consumed by WorkspacePermissionProvider and individual components.
-  useWorkspacePermissions(workspaceId);
-
   // Query workspace data using centralized query factory
   const {
     data: workspaceResponse,
@@ -106,6 +101,12 @@ export function WorkspaceProvider({
   });
 
   const workspace = workspaceResponse?.workspace;
+
+  // Load workspace permissions immediately using the identifier from route/props (slug or UUID).
+  // The backend supports resolving by slug or UUID, and useWorkspacePermissions caches under both
+  // keys once fetched. Fetching immediately eliminates the waterfall where permissions waited for
+  // the workspace detail query to resolve workspace.id.
+  useWorkspacePermissions(workspaceId);
 
   // Immediately set a preliminary workspace in store using the slug from URL
   // This ensures workspace context is available even before API call completes
@@ -209,7 +210,7 @@ export function WorkspaceProvider({
  *
  *   // ✅ workspaceSlug is IMMEDIATELY available (from URL)
  *   // Use for navigation without waiting for API
- *   const topicsUrl = workspaceRoutes.topicCreate(workspaceSlug);
+ *   const contentUrl = workspaceRoutes.content(workspaceSlug);
  *
  *   // ⏳ workspaceId (UUID) only available after isLoading = false
  *   if (isLoading) return <div>Loading workspace details...</div>;

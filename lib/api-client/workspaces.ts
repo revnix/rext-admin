@@ -235,6 +235,21 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Hand the workspace to another active member. Owner only.
+     */
+    transferOwnership: async (workspaceId: string, newOwnerUserId: string) => {
+      return client.request<{
+        workspace_id: string;
+        new_owner_user_id: string;
+        previous_owner_user_id: string;
+      }>(ENDPOINTS.WORKSPACES.transferOwnership(workspaceId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_owner_user_id: newOwnerUserId }),
+      });
+    },
+
+    /**
      * Delete workspace
      */
     delete: async (workspaceId: string) => {
@@ -360,24 +375,14 @@ export function createWorkspacesNamespace(client: ApiClient) {
         personas?: Persona[];
       },
     ) => {
-      const payload = {
-        brand_name: data.brand_name ?? "",
-        about: data.about ?? "",
-        customer_profile: data.customer_profile ?? "",
-        selling_position: data.selling_position ?? "",
-        target_audience: data.target_audience ?? [],
-        brand_voice: data.brand_voice ?? [],
-        competitors: data.competitors ?? [],
-        content_pillar: data.content_strategy ?? [],
-        personas: data.personas ?? [],
-      };
-
+      // toBrandVoicePayload maps content_strategy -> content_pillar; pass the
+      // caller's data straight in so that mapping happens exactly once.
       const response = await client.request<{
         brand_voice: BrandVoice;
       }>(ENDPOINTS.WORKSPACES.brandVoice(workspaceId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toBrandVoicePayload(payload)),
+        body: JSON.stringify(toBrandVoicePayload(data)),
       });
       return validateResponse(
         updateBrandVoiceResponseSchema,
@@ -389,7 +394,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Get current user's permissions in a specific workspace
      *
-     * Returns workspace-scoped permissions using dot notation (e.g., "topic.create")
+     * Returns workspace-scoped permissions using dot notation (e.g., "content.create")
      * Note: Response format updated to match Phase 1 backend changes
      */
     getPermissions: async (workspaceId: string) => {
@@ -397,7 +402,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
         workspace_id: string;
         workspace_slug: string;
         user_role: string; // Simplified: single role name instead of array
-        permissions: string[]; // Dot notation: "topic.create", "content.read", etc.
+        permissions: string[]; // Dot notation: "content.create", "content.read", etc.
       }>(ENDPOINTS.WORKSPACES.permissions.me(workspaceId), {
         method: "GET",
       });
@@ -476,7 +481,7 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Get workspace statistics for onboarding tracking
      *
-     * Returns real-time counts of topics, content, knowledge items, and members
+     * Returns real-time counts of content and members
      * Used for tracking onboarding progress on dashboard
      */
     getStats: async (workspaceId: string) => {

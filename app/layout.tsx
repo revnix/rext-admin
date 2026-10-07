@@ -1,36 +1,22 @@
-import type { Metadata } from "next";
-import { Outfit, Inter, Geist_Mono } from "next/font/google";
-import Script from "next/script";
+import type { Metadata, Viewport } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
+import { fontVariables } from "./fonts";
 import { Toaster } from "@/components/ui/sonner";
+import { LemonSqueezyProvider } from "@/components/subscription/lemonsqueezy-provider";
 import { UserNotificationsListener } from "@/components/user-notifications-listener";
 import { AuthProvider } from "@/providers/auth-provider";
-import { InvitedUserOnboardingGate } from "@/providers/invited-user-onboarding-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SSEProvider } from "@/providers/sse-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
-import { TooltipProvider } from "@/providers/tooltip-provider";
+import { MotionProvider } from "@/providers/motion-provider";
 import { WorkspaceWelcomeGate } from "@/providers/workspace-welcome-provider";
 import { auth } from "@/auth";
 
-// Design Tokens - Typography
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Light only (design/app-language.md §3): native controls and scrollbars stay light on a system set to dark.
+export const viewport: Viewport = {
+  colorScheme: "light",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -38,50 +24,34 @@ export const metadata: Metadata = {
     default: "Rext AI Admin - AI-Powered Content Management Platform",
   },
   description:
-    "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows. Create, organize, and optimize your content strategy with intelligent insights.",
+    "Research a keyword, choose a title and an outline, and get an article written in your brand voice, ready to edit and publish.",
   keywords: [
+    "keyword research",
+    "content generation",
     "content management",
-    "AI content generation",
-    "topic management",
-    "content flows",
-    "automation",
-    "admin dashboard",
+    "content calendar",
+    "WordPress publishing",
   ],
   authors: [{ name: "Rext AI Team" }],
   creator: "Rext AI",
   publisher: "Rext AI",
-  metadataBase: new URL("https://admin.wrext.com"),
+  metadataBase: new URL("https://app.rext.ai"),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://admin.wrext.com",
+    url: "https://app.rext.ai",
     title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
-      "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
+      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
     siteName: "Rext AI Admin",
   },
   twitter: {
     card: "summary_large_image",
     title: "Rext AI Admin - AI-Powered Content Management Platform",
     description:
-      "Comprehensive admin dashboard for managing AI-generated topics, content flows, and automation workflows.",
+      "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
     creator: "@RextAI",
   },
-  icons: {
-    icon: [
-      { url: "/favicons/favicon.ico" },
-      { url: "/favicons/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicons/favicon-96x96.png", type: "image/png", sizes: "96x96" },
-    ],
-    apple: [
-      {
-        url: "/favicons/apple-touch-icon.png",
-        sizes: "180x180",
-        type: "image/png",
-      },
-    ],
-  },
-  manifest: "/favicons/site.webmanifest",
   robots: {
     index: false, // Admin dashboard shouldn't be indexed
     follow: false,
@@ -99,37 +69,30 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${outfit.variable} ${inter.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
-        {/* LemonSqueezy Checkout Overlay Script */}
-        <Script
-          src="https://app.lemonsqueezy.com/js/lemon.js"
-          strategy="afterInteractive"
-        />
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        {/*
+          Loads lemon.js and owns the checkout overlay lifecycle, so a purchase
+          completes in place instead of navigating the user to LemonSqueezy.
+        */}
+        <LemonSqueezyProvider />
 
-        <ThemeProvider defaultTheme="system">
-          <AuthProvider session={session}>
-            <PostHogProvider>
-              <SSEProvider>
-                <UserNotificationsListener />
-                <QueryProvider>
-                  <TooltipProvider>
-                    {/* Welcome modal shows first, then invited user onboarding */}
-                    <WorkspaceWelcomeGate>
-                      <InvitedUserOnboardingGate>
-                        {children}
-                      </InvitedUserOnboardingGate>
-                    </WorkspaceWelcomeGate>
-                  </TooltipProvider>
-                </QueryProvider>
-              </SSEProvider>
-            </PostHogProvider>
-          </AuthProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AuthProvider session={session}>
+          <PostHogProvider>
+            <SSEProvider>
+              <UserNotificationsListener />
+              <QueryProvider>
+                <MotionProvider>
+                  <WorkspaceWelcomeGate>
+                    {/* URL search params as state (nuqs): filters survive a reload */}
+                    <NuqsAdapter>{children}</NuqsAdapter>
+                  </WorkspaceWelcomeGate>
+                </MotionProvider>
+              </QueryProvider>
+            </SSEProvider>
+          </PostHogProvider>
+        </AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

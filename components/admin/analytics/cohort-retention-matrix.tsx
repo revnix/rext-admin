@@ -42,11 +42,11 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
   }));
 
   const getRetentionColor = (retention: number) => {
-    if (retention >= 90) return "bg-green-100 text-green-900";
-    if (retention >= 80) return "bg-green-50 text-green-800";
-    if (retention >= 70) return "bg-yellow-50 text-yellow-800";
-    if (retention >= 60) return "bg-orange-50 text-orange-800";
-    return "bg-red-50 text-red-800";
+    if (retention >= 90) return "bg-success-200 text-success-700";
+    if (retention >= 80) return "bg-success-50 text-success-700";
+    if (retention >= 70) return "bg-warning-50 text-warning-700";
+    if (retention >= 60) return "bg-warning-200 text-warning-700";
+    return "bg-danger-50 text-danger-700";
   };
 
   return (
@@ -97,15 +97,15 @@ export function CohortRetentionMatrix({ cohorts }: CohortRetentionMatrixProps) {
       <div className="mt-4 flex items-center gap-2 text-xs">
         <span className="font-medium">Legend:</span>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-100 rounded" />
+          <div className="w-4 h-4 bg-success-200 rounded-md" />
           <span>90%+</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-yellow-50 rounded" />
+          <div className="w-4 h-4 bg-warning-50 rounded-md" />
           <span>70-90%</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-50 rounded" />
+          <div className="w-4 h-4 bg-danger-50 rounded-md" />
           <span>&lt;60%</span>
         </div>
       </div>

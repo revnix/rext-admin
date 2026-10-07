@@ -1,78 +1,32 @@
-"use client";
-
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle,
-  Edit3,
-  Eye,
-  Globe,
-  Loader2,
-  Trash2,
-  X,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { CONTENT_LIST_STATUS_LABELS } from "@/lib/search-params/content";
 import type { ContentStatus } from "@/types/content";
-import { CONTENT_STATUS_CONFIG } from "@/types/content";
 
-interface ContentStatusBadgeProps {
-  status: ContentStatus;
-  showIcon?: boolean;
-  className?: string;
+// The words for every status a row can hold (the backend's ten): the library's, and the trash's.
+const STATUS_LABELS: Readonly<Record<ContentStatus, string>> = {
+  ...CONTENT_LIST_STATUS_LABELS,
+  trashed: "In the trash",
+  deleted: "Deleted",
+};
+
+// A tint only for a status worth noticing (design/app-language.md §2); the rest stay neutral.
+const STATUS_TINT: Readonly<Record<string, BadgeProps["variant"]>> = {
+  published: "success",
+  scheduled: "info",
+  review: "warning",
+  failed: "danger",
+};
+
+/** The word for a content status, as the library and the calendar show it. */
+export function contentStatusLabel(status: string): string {
+  return STATUS_LABELS[status as ContentStatus] ?? status;
 }
 
-const ICON_COMPONENTS = {
-  Edit3,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  Globe,
-  Calendar,
-  Eye,
-  X,
-  Trash2,
-} as const;
-
-export function ContentStatusBadge({
-  status,
-  showIcon = true,
-  className,
-}: ContentStatusBadgeProps) {
-  const config = CONTENT_STATUS_CONFIG[status];
-
-  if (!config) {
-    return (
-      <Badge variant="outline" className={className}>
-        {status}
-      </Badge>
-    );
-  }
-
-  const IconComponent =
-    ICON_COMPONENTS[config.icon as keyof typeof ICON_COMPONENTS];
-
+/** A content item's status as a quiet badge, tinted only where it is worth noticing. */
+export function ContentStatusBadge({ status }: { status: string }) {
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "font-medium",
-        config.color,
-        config.bgColor,
-        config.borderColor,
-        className,
-      )}
-      title={config.description}
-    >
-      {showIcon && IconComponent && (
-        <IconComponent
-          className={cn(
-            "h-3 w-3 mr-1",
-            status === "generating" && "animate-spin",
-          )}
-        />
-      )}
-      {config.label}
+    <Badge variant={STATUS_TINT[status] ?? "neutral"}>
+      {contentStatusLabel(status)}
     </Badge>
   );
 }

@@ -13,8 +13,16 @@ export const SSEEventSchema = z.object({
   step: z.string(),
   status: z.enum(SSE_EVENT_STATUSES),
   message: z.string(),
-  progress: z.number().optional(),
-  payload: z.record(z.string(), z.unknown()).optional(),
+  // The backend serializes unset fields as null (e.g. every user
+  // notification has progress: null); treat null as absent.
+  progress: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? undefined),
+  payload: z
+    .record(z.string(), z.unknown())
+    .nullish()
+    .transform((v) => v ?? undefined),
   timestamp: z.string(),
 });
 

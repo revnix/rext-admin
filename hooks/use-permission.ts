@@ -35,6 +35,9 @@ export function usePermissionDecision({
   const isWorkspaceLoading = usePermissionStore(
     (state) => state.isWorkspaceLoading,
   );
+  const workspaceLoadingStates = usePermissionStore(
+    (state) => state.workspaceLoadingStates,
+  );
 
   return useMemo(() => {
     const isSessionLoading = status === "loading" && !session;
@@ -62,9 +65,23 @@ export function usePermissionDecision({
       return { hasAccess: true, isLoading: false };
     }
 
-    const loading = isWorkspaceLoading(workspaceId);
-    const wsPerms = workspacePermissions[workspaceId];
-    if (!wsPerms && loading) {
+    const loading =
+      isWorkspaceLoading(workspaceId) ||
+      (typeof workspaceId === "string"
+        ? isWorkspaceLoading(workspaceId.toLowerCase())
+        : false);
+    const wsPerms =
+      workspacePermissions[workspaceId] ||
+      (typeof workspaceId === "string"
+        ? workspacePermissions[workspaceId.toLowerCase()]
+        : undefined);
+    const isUninitialized =
+      workspaceLoadingStates[workspaceId] === undefined &&
+      (typeof workspaceId === "string"
+        ? workspaceLoadingStates[workspaceId.toLowerCase()] === undefined
+        : true);
+
+    if (!wsPerms && (loading || isUninitialized)) {
       return { hasAccess: false, isLoading: true };
     }
 
@@ -102,6 +119,7 @@ export function usePermissionDecision({
     user,
     workspacePermissions,
     isWorkspaceLoading,
+    workspaceLoadingStates,
   ]);
 }
 
@@ -280,6 +298,9 @@ export function useWorkspacePermission(
   const isWorkspaceLoading = usePermissionStore(
     (state) => state.isWorkspaceLoading,
   );
+  const workspaceLoadingStates = usePermissionStore(
+    (state) => state.workspaceLoadingStates,
+  );
 
   // Session still loading
   const isSessionLoading = status === "loading" && !session;
@@ -293,7 +314,11 @@ export function useWorkspacePermission(
   }
 
   // Check if workspace permissions are currently loading
-  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+  const isLoadingPermissions =
+    isWorkspaceLoading(workspaceId) ||
+    (typeof workspaceId === "string"
+      ? isWorkspaceLoading(workspaceId.toLowerCase())
+      : false);
 
   // Super admin has all permissions (no loading needed)
   if (isSuperAdmin(user)) {
@@ -301,10 +326,20 @@ export function useWorkspacePermission(
   }
 
   // Check workspace-specific permissions from store (reactive)
-  const wsPerms = workspacePermissions[workspaceId];
+  const wsPerms =
+    workspacePermissions[workspaceId] ||
+    (typeof workspaceId === "string"
+      ? workspacePermissions[workspaceId.toLowerCase()]
+      : undefined);
 
-  // If permissions not loaded yet and still loading, indicate loading state
-  if (!wsPerms && isLoadingPermissions) {
+  const isUninitialized =
+    workspaceLoadingStates[workspaceId] === undefined &&
+    (typeof workspaceId === "string"
+      ? workspaceLoadingStates[workspaceId.toLowerCase()] === undefined
+      : true);
+
+  // If permissions not loaded yet and still loading (or uninitialized), indicate loading state
+  if (!wsPerms && (isLoadingPermissions || isUninitialized)) {
     return { hasPermission: false, isLoading: true };
   }
 
@@ -341,6 +376,9 @@ export function useAnyWorkspacePermission(
   const isWorkspaceLoading = usePermissionStore(
     (state) => state.isWorkspaceLoading,
   );
+  const workspaceLoadingStates = usePermissionStore(
+    (state) => state.workspaceLoadingStates,
+  );
 
   const isSessionLoading = status === "loading" && !session;
 
@@ -351,17 +389,31 @@ export function useAnyWorkspacePermission(
     };
   }
 
-  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+  const isLoadingPermissions =
+    isWorkspaceLoading(workspaceId) ||
+    (typeof workspaceId === "string"
+      ? isWorkspaceLoading(workspaceId.toLowerCase())
+      : false);
 
   if (isSuperAdmin(user)) {
     return { hasPermission: true, isLoading: false };
   }
 
   // Check workspace permissions from store (reactive)
-  const wsPerms = workspacePermissions[workspaceId];
+  const wsPerms =
+    workspacePermissions[workspaceId] ||
+    (typeof workspaceId === "string"
+      ? workspacePermissions[workspaceId.toLowerCase()]
+      : undefined);
 
-  // If permissions not loaded yet and still loading, indicate loading state
-  if (!wsPerms && isLoadingPermissions) {
+  const isUninitialized =
+    workspaceLoadingStates[workspaceId] === undefined &&
+    (typeof workspaceId === "string"
+      ? workspaceLoadingStates[workspaceId.toLowerCase()] === undefined
+      : true);
+
+  // If permissions not loaded yet and still loading (or uninitialized), indicate loading state
+  if (!wsPerms && (isLoadingPermissions || isUninitialized)) {
     return { hasPermission: false, isLoading: true };
   }
 
@@ -399,6 +451,9 @@ export function useAllWorkspacePermissions(
   const isWorkspaceLoading = usePermissionStore(
     (state) => state.isWorkspaceLoading,
   );
+  const workspaceLoadingStates = usePermissionStore(
+    (state) => state.workspaceLoadingStates,
+  );
 
   const isSessionLoading = status === "loading" && !session;
 
@@ -409,17 +464,31 @@ export function useAllWorkspacePermissions(
     };
   }
 
-  const isLoadingPermissions = isWorkspaceLoading(workspaceId);
+  const isLoadingPermissions =
+    isWorkspaceLoading(workspaceId) ||
+    (typeof workspaceId === "string"
+      ? isWorkspaceLoading(workspaceId.toLowerCase())
+      : false);
 
   if (isSuperAdmin(user)) {
     return { hasPermission: true, isLoading: false };
   }
 
   // Check workspace permissions from store (reactive)
-  const wsPerms = workspacePermissions[workspaceId];
+  const wsPerms =
+    workspacePermissions[workspaceId] ||
+    (typeof workspaceId === "string"
+      ? workspacePermissions[workspaceId.toLowerCase()]
+      : undefined);
 
-  // If permissions not loaded yet and still loading, indicate loading state
-  if (!wsPerms && isLoadingPermissions) {
+  const isUninitialized =
+    workspaceLoadingStates[workspaceId] === undefined &&
+    (typeof workspaceId === "string"
+      ? workspaceLoadingStates[workspaceId.toLowerCase()] === undefined
+      : true);
+
+  // If permissions not loaded yet and still loading (or uninitialized), indicate loading state
+  if (!wsPerms && (isLoadingPermissions || isUninitialized)) {
     return { hasPermission: false, isLoading: true };
   }
 

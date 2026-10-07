@@ -2,7 +2,7 @@
  * Shared Server-Sent Events (SSE) types used across the frontend.
  *
  * These interfaces reflect the backend `OperationEvent` schema emitted by the
- * SSE service (see `wrext-backend/src/services/sse_service.py`).
+ * SSE service (see `rext-backend`'s `src/services/sse_service.py`).
  */
 
 export const SSE_EVENT_STATUSES = [

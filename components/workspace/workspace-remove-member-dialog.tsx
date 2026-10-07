@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, UserMinus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -14,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { apiClient } from "@/lib/api-client";
 
 interface WorkspaceMember {
@@ -24,6 +26,11 @@ interface WorkspaceMember {
   is_default: boolean;
   joined_at: string | null;
   last_activity_at: string | null;
+  role?: {
+    id?: string;
+    name?: string;
+    display_name: string;
+  } | null;
   user: {
     id: string;
     name: string;
@@ -47,6 +54,8 @@ export function WorkspaceRemoveMemberDialog({
   onRemoved,
 }: WorkspaceRemoveMemberDialogProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { user } = useAuthSession();
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Remove member mutation
@@ -64,6 +73,15 @@ export function WorkspaceRemoveMemberDialog({
         queryKey: ["workspace-members", variables.workspaceId],
       });
       onOpenChange(false);
+
+      // Removing yourself revokes your own membership — leave the workspace
+      // instead of refetching members on a page that will now 403.
+      if (member?.user_id && member.user_id === user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+        router.push("/w");
+        return;
+      }
+
       onRemoved?.(variables.memberId);
     },
     onError: (error: Error) => {

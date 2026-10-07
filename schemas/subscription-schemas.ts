@@ -11,9 +11,21 @@
 import { z } from "zod";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
 
-const InvoiceStatusSchema = z
-  .enum(["pending", "paid", "void", "refunded", "partial_refunded", "unknown"])
-  .catch("unknown");
+const InvoiceStatusSchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toLowerCase() : val),
+  z
+    .enum([
+      "pending",
+      "paid",
+      "failed",
+      "void",
+      "refunded",
+      "partial_refund",
+      "partial_refunded",
+      "unknown",
+    ])
+    .catch("unknown"),
+);
 const FeatureItemsSchema = z.array(z.string().trim().min(1));
 
 export const SubscriptionStatusSchema = z.enum(SubscriptionStatus);
@@ -90,12 +102,13 @@ export const UserSubscriptionSchema = z.object({
     .object({
       max_workspaces: z.number().int(),
       max_members_per_workspace: z.number().int(),
-      max_topics: z.number().int(),
-      max_knowledge_items: z.number().int(),
       max_api_calls_per_month: z.number().int(),
     })
     .optional(),
   customer_portal_url: z.string().nullable().optional(),
+  card_brand: z.string().nullable().optional(),
+  card_last_four: z.string().nullable().optional(),
+  card_last4: z.string().nullable().optional(),
 });
 
 /**
@@ -103,41 +116,130 @@ export const UserSubscriptionSchema = z.object({
  */
 
 export const PlanFeaturesSchema = z
-  .union([
-    z.object({ items: FeatureItemsSchema }),
-    z.object({ list: FeatureItemsSchema }),
-    z.record(z.string(), z.string()),
-  ])
+  .unknown()
   .transform((raw): { items: string[] } => {
-    if ("items" in raw) return { items: raw.items as string[] };
-    if ("list" in raw) return { items: (raw as { list: string[] }).list };
-    return { items: Object.values(raw as Record<string, string>) };
+    if (!raw) {
+      return { items: [] };
+    }
+    if (Array.isArray(raw)) {
+      return { items: raw.map((item) => String(item)) };
+    }
+    if (typeof raw === "object") {
+      const obj = raw as Record<string, unknown>;
+      if (Array.isArray(obj.items)) {
+        return { items: obj.items.map((item) => String(item)) };
+      }
+      if (Array.isArray(obj.list)) {
+        return { items: obj.list.map((item) => String(item)) };
+      }
+      const items: string[] = [];
+      for (const [key, val] of Object.entries(obj)) {
+        if (typeof val === "boolean") {
+          if (val) {
+            const label = key
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            items.push(label);
+          }
+        } else if (val !== null && val !== undefined && val !== false) {
+          const label = key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+          items.push(`${label}: ${val}`);
+        }
+      }
+      return { items };
+    }
+    if (typeof raw === "string") {
+      return { items: [raw] };
+    }
+    return { items: [] };
   });
 
 export const SubscriptionPlanSchema = z.object({
-  id: z.string().uuid("Invalid plan ID"),
-  name: z.string().min(1, "Plan name is required"),
-  display_name: z.string().min(1, "Display name is required"),
-  description: z.string().nullable(),
-  price_monthly: z.number().nonnegative(),
-  price_yearly: z.number().nonnegative(),
-  features: PlanFeaturesSchema,
-  max_workspaces: z.number().int(),
-  max_members_per_workspace: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
-  max_api_calls_per_month: z.number().int(),
-  credits_per_month: z.number().nullable().catch(null),
-  is_active: z.boolean(),
-  is_public: z.boolean(),
-  created_at: z.string(),
+  id: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
+  name: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
+  display_name: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
+  price_monthly: z
+    .number()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  price_yearly: z
+    .number()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  features: PlanFeaturesSchema.optional()
+    .nullable()
+    .transform((val) => val ?? { items: [] }),
+  max_workspaces: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_members_per_workspace: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  max_api_calls_per_month: z
+    .number()
+    .int()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? 0),
+  credits_per_month: z
+    .number()
+    .nullable()
+    .optional()
+    .transform((val) => val ?? null),
+  is_active: z
+    .boolean()
+    .optional()
+    .transform((val) => val ?? true),
+  is_public: z
+    .boolean()
+    .optional()
+    .transform((val) => val ?? true),
+  created_at: z
+    .string()
+    .optional()
+    .transform((val) => val ?? ""),
 });
+
 /**
  * Schema for subscription list response
  */
-export const SubscriptionListResponseSchema = z.object({
-  plans: z.array(SubscriptionPlanSchema),
-});
+export const SubscriptionListResponseSchema = z.union([
+  z.object({
+    plans: z.array(SubscriptionPlanSchema),
+  }),
+  z
+    .object({
+      data: z.object({
+        plans: z.array(SubscriptionPlanSchema),
+      }),
+    })
+    .transform((val) => ({ plans: val.data.plans })),
+  z.array(SubscriptionPlanSchema).transform((plans) => ({ plans })),
+]);
 
 // ============================================================================
 // USAGE SCHEMAS
@@ -152,18 +254,12 @@ export const UsageStatsSchema = z.object({
   billing_period: BillingPeriodSchema,
   // Current usage
   current_workspaces: z.number().int().nonnegative(),
-  current_topics: z.number().int().nonnegative(),
-  current_knowledge_items: z.number().int().nonnegative(),
   current_api_calls: z.number().int().nonnegative(),
   // Limits
   max_workspaces: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
   max_api_calls_per_month: z.number().int(),
   // Usage percentages
   workspaces_usage_percent: z.number().min(0).max(100),
-  topics_usage_percent: z.number().min(0).max(100),
-  knowledge_items_usage_percent: z.number().min(0).max(100),
   api_calls_usage_percent: z.number().min(0).max(100),
   // Reset date
   usage_reset_date: z.string(),
@@ -200,9 +296,9 @@ export const CreditBalanceSchema = z.object({
  */
 export const InvoiceItemSchema = z.object({
   description: z.string(),
-  quantity: z.number().int().positive(),
-  unit_price: z.number().nonnegative(),
-  total: z.number().nonnegative(),
+  quantity: z.number().int(),
+  unit_price: z.number(),
+  total: z.number(),
 });
 
 /**
@@ -210,27 +306,28 @@ export const InvoiceItemSchema = z.object({
  */
 export const InvoiceSchema = z.object({
   invoice_id: z.string().min(1, "Invoice ID is required"),
-  invoice_number: z.string().nullable(),
+  invoice_number: z.string().nullable().optional(),
+  subscription_id: z.string().nullable().optional(),
   status: InvoiceStatusSchema,
-  amount: z.number().nonnegative(),
-  currency: z.string().default("USD"),
-  tax: z.number().nullable(),
-  subtotal: z.number().nullable(),
-  invoice_url: z.string().url().nullable(),
+  amount: z.number(),
+  currency: z.string().default("USD").catch("USD"),
+  tax: z.number().nullable().optional(),
+  subtotal: z.number().nullable().optional(),
+  invoice_url: z.string().nullable().optional(),
   invoice_date: z.string(),
-  due_date: z.string().nullable(),
-  paid_at: z.string().nullable(),
-  customer_email: z.string().email().nullable(),
-  customer_name: z.string().nullable(),
-  items: z.array(InvoiceItemSchema).default([]),
+  due_date: z.string().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  customer_email: z.string().nullable().optional(),
+  customer_name: z.string().nullable().optional(),
+  items: z.array(InvoiceItemSchema).default([]).catch([]),
 });
 
 /**
  * Schema for invoice list response
  */
 export const InvoiceListResponseSchema = z.object({
-  invoices: z.array(InvoiceSchema),
-  count: z.number().int().nonnegative(),
+  invoices: z.array(InvoiceSchema).default([]),
+  count: z.number().int().optional().catch(0),
 });
 
 // ============================================================================
@@ -302,8 +399,6 @@ export const SubscriptionPlanCreateSchema = z.object({
   features: z.record(z.string(), z.unknown()).optional(),
   max_workspaces: z.number().int().optional(),
   max_members_per_workspace: z.number().int().optional(),
-  max_topics: z.number().int().optional(),
-  max_knowledge_items: z.number().int().optional(),
   max_api_calls_per_month: z.number().int().optional(),
   is_active: z.boolean().optional(),
   is_public: z.boolean().optional(),
@@ -355,4 +450,40 @@ export type SubscriptionUpgradeRequest = z.infer<
 >;
 export type SubscriptionCancelRequest = z.infer<
   typeof SubscriptionCancelRequestSchema
+>;
+
+/**
+ * A subscription plan as a super admin creates or edits it (the admin plans page). The internal
+ * name can't change after creation. -1 means unlimited and 0 turns a limit off.
+ */
+export const subscriptionPlanFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be less than 50 characters")
+    .regex(
+      /^[a-z0-9_]+$/,
+      "Name must be lowercase letters, numbers, and underscores only",
+    ),
+  display_name: z
+    .string()
+    .min(2, "Display name must be at least 2 characters")
+    .max(150, "Display name must be less than 150 characters"),
+  description: z.string().optional(),
+  price_monthly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  price_yearly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  max_workspaces: z.number().int(),
+  max_members_per_workspace: z.number().int(),
+  is_active: z.boolean(),
+  is_public: z.boolean(),
+});
+
+export type SubscriptionPlanFormValues = z.infer<
+  typeof subscriptionPlanFormSchema
 >;

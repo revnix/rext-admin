@@ -241,9 +241,9 @@ export function ChipInput({
   if (isFallbackMode) {
     return (
       <div className="space-y-2" data-chip-input data-fallback-mode>
-        <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md">
-          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <span className="text-sm text-amber-800 dark:text-amber-200">
+        <div className="flex items-center gap-2 p-2 bg-warning-50 border border-warning-200 rounded-md">
+          <AlertTriangle className="w-4 h-4 text-warning-600 shrink-0" />
+          <span className="text-sm text-warning-700">
             Using fallback text input mode. Enter comma-separated values.
           </span>
         </div>
@@ -296,7 +296,7 @@ export function ChipInput({
       <div
         className={cn(
           "relative min-h-12 p-3 border-2 rounded-md transition-all duration-200",
-          "focus-within:border-primary",
+          "focus-within:border-ring",
           (error || internalError) && "border-destructive",
           disabled && "opacity-50 cursor-not-allowed",
           className,
@@ -323,7 +323,7 @@ export function ChipInput({
               variant="default"
               className={cn(
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
-                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "bg-primary text-primary-foreground hover:bg-primary-hover",
                 focusedChipIndex === index &&
                   "ring-2 ring-primary ring-offset-1",
               )}
@@ -336,7 +336,7 @@ export function ChipInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-auto p-0 hover:bg-transparent focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                className="h-auto p-0 hover:bg-transparent focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 onClick={() => removeChip(index)}
                 onKeyDown={(e) => handleChipKeyDown(e, index)}
                 disabled={disabled}
@@ -370,7 +370,7 @@ export function ChipInput({
             type="button"
             variant="ghost"
             size="sm"
-            className="absolute right-2 top-2 h-8 w-8 p-0 focus:ring-2 focus:ring-primary focus:ring-offset-1"
+            className="absolute right-2 top-2 h-8 w-8 p-0 focus:ring-2 focus:ring-ring focus:ring-offset-1"
             onClick={() => addChip(inputValue)}
             disabled={disabled}
             aria-label={`Add "${inputValue}"`}
@@ -397,7 +397,7 @@ export function ChipInput({
           <output
             className={cn(
               "text-xs text-muted-foreground",
-              value.length > maxItems * 0.8 && "text-amber-600",
+              value.length > maxItems * 0.8 && "text-warning-600",
               value.length === maxItems && "text-destructive",
             )}
           >

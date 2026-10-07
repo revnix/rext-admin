@@ -9,7 +9,7 @@ export default function CheckoutError(props: {
   return (
     <RouteError
       {...props}
-      title="Checkout Error"
+      title="Checkout error"
       logContext="CheckoutError"
       navigationType="link"
       navigationLink="/pricing"

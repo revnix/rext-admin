@@ -1,339 +1,99 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { FieldController } from "@/components/forms/field-controller";
+import { FormShell } from "@/components/forms/form-shell";
+import { useZodForm } from "@/components/forms/use-zod-form";
+import { RunProgress } from "@/components/generate-content/run-progress";
 import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { ProgressBar, QuestionCard } from "@/components/ui/typeform";
-import {
-  WorkspaceBrandVoiceForm,
-  WorkspaceProgressTimeline,
-} from "@/components/workspace";
+import { Notice } from "@/components/ui/notice";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
-import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
-import { workspaceQueries } from "@/lib/query-keys";
+import { ApiError } from "@/lib/api-client/core";
 import { log } from "@/lib/logger";
+import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
+import {
+  findFailedEvent,
+  workspaceRunStages,
+} from "@/lib/workspace/workspace-run-stages";
 import { useSSE } from "@/providers/sse-provider";
 import {
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
-import type { BrandVoice, Persona } from "@/types/workspace";
 import type { Route } from "next";
 
 /**
- * Workspace Creation Wizard
- *
- * Four-step guided workspace creation with real-time SSE updates:
- * 1. Details Form - Title, URL, Description (creates workspace immediately)
- * 2. Live Progress - Real-time SSE progress tracking
- * 3. Review & Edit - Edit AI-extracted brand voice data
- * 4. Congratulations - Success screen
- *
- * Features:
- * - Immediate workspace creation with background processing
- * - Real-time progress updates via SSE
- * - AI-powered brand voice extraction
- * - Editable brand voice review
- * - TypeForm-style progressive disclosure
- * - Professional guided experience
+ * Creating a workspace (plans/app/D-pages.md §2.9): a name and the website, then the backend's
+ * analysis as the run component, fed by the operation's events. When it completes, the new
+ * workspace opens on its Brand voice section with the draft to review: the analysis has already
+ * saved the brand voice, the personas and the competitors. A failed analysis says what failed and
+ * opens the workspace anyway; a stream that stops before the end offers a retry. A workspace past
+ * the plan's limit (the backend's 429, or a limit the page learns of after it loaded) gets a
+ * notice with the way to a bigger plan, never a click that does nothing.
  */
-
-type WizardStep = "details" | "progress" | "review";
-
-const STEPS: Array<{
-  id: WizardStep;
-  title: string;
-  description: string;
-  progress: number;
-}> = [
-  {
-    id: "details",
-    title: "Workspace Details",
-    description: "Tell us about your workspace",
-    progress: 25,
-  },
-  {
-    id: "progress",
-    title: "Analysis",
-    description: "We're analyzing your website",
-    progress: 50,
-  },
-  {
-    id: "review",
-    title: "Review & Save",
-    description: "Review and edit brand information",
-    progress: 75,
-  },
-];
-
 export function WorkspaceCreateWizard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
-  const [currentStep, setCurrentStep] = useState<WizardStep>("details");
-
-  // Check workspace limit
   const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
-  // SSE-related state
   const [operationId, setOperationId] = useState<string | null>(null);
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [workspaceSlug, setWorkspaceSlug] = useState<string | null>(null);
-  const [extractedBrandVoice, setExtractedBrandVoice] =
-    useState<Partial<BrandVoice> | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(
-    null,
-  );
+  const [website, setWebsite] = useState("");
+  const [streamProblem, setStreamProblem] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+  const slugRef = useRef<string | null>(null);
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
 
-  // Form for details step
-  const form = useForm<WorkspaceFormData>({
-    resolver: zodResolver(workspaceFormSchema),
+  const form = useZodForm(workspaceFormSchema, {
     defaultValues: {
       name: "",
       url: "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
-    mode: "onChange",
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-  } = form;
-
-  // Memoize SSE callbacks to prevent infinite re-renders
-  const handleSSEComplete = useCallback((payload: unknown) => {
-    // Extract brand voice from payload
-    if (payload && typeof payload === "object" && "brand_voice" in payload) {
-      setExtractedBrandVoice(payload.brand_voice as Partial<BrandVoice>);
-    }
-
-    // Add delay before transitioning to review
-    // This gives time for finalization step to display (1-2 seconds)
-    setTimeout(() => {
-      setCurrentStep("review");
-      toast.success("Workspace analysis complete!");
-    }, 2000); // 2 second delay
-  }, []);
-
-  const handleSSEError = useCallback((error: string) => {
-    log.error("[Wizard] Pipeline failed", error);
-    toast.error(`Analysis failed: ${error}`);
-
-    // Could navigate back to details or show retry option
-    // For now, still allow user to proceed to review with partial data
-    setCurrentStep("review");
-  }, []);
-
-  // SSE Connection for progress tracking
-  const { events, latestEvent, isConnected, disconnect } = useSSEChannel(
-    operationId,
-    {
-      onComplete: handleSSEComplete,
-      onError: handleSSEError,
-      autoConnect: true,
+  const openBrandVoice = useCallback(
+    (drafted: boolean) => {
+      const slug = slugRef.current;
+      if (!slug) return;
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      router.push(
+        `/w/${slug}/settings/brand-voice${drafted ? "?drafted=1" : ""}` as Route,
+      );
     },
+    [queryClient, router],
   );
 
-  // Get current step info
-  const currentStepInfo =
-    STEPS.find((step) => step.id === currentStep) ?? STEPS[0];
-  const currentStepIndex = STEPS.findIndex((step) => step.id === currentStep);
+  const handleComplete = useCallback(() => {
+    toast.success("Your workspace is ready");
+    openBrandVoice(true);
+  }, [openBrandVoice]);
 
-  // Step 1: Handle details form submission (creates workspace immediately)
-  const handleDetailsSubmit = async (data: WorkspaceFormData) => {
-    // Check workspace limit before creating
-    if (!canCreate || isLimitReached || !checkLimit("create a workspace")) {
-      return;
-    }
+  // A failed step arrives as an event (shown from `events`); anything else here is the stream itself.
+  const handleError = useCallback((error: string) => {
+    log.error("[Workspace create] The analysis stream stopped", error);
+    setStreamProblem(error);
+  }, []);
 
-    // Capture before creation — workspaceList won't include the new workspace yet
-    const isFirstWorkspace = workspaceList.length === 0;
+  const { events, connect, disconnect } = useSSEChannel(operationId, {
+    onComplete: handleComplete,
+    onError: handleError,
+    autoConnect: true,
+  });
 
-    try {
-      // Real API call - returns workspace (operation_id is stored in currentOperation)
-      const workspace = await createWorkspace({
-        name: data.name,
-        url: data.url,
-        timezone: data.timezone,
-      });
-
-      // Store workspace IDs
-      setWorkspaceId(workspace.id);
-      setWorkspaceSlug(workspace.slug);
-
-      analytics.track(
-        isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
-        {
-          workspace_id: workspace.id,
-          workspace_slug: workspace.slug,
-        },
-      );
-
-      // Get operation_id from store (set by createWorkspace)
-      const operation = useWorkspaceCrudStore.getState().currentOperation;
-      if (operation?.operationId) {
-        setOperationId(operation.operationId); // Triggers SSE connection via useSSEChannel
-      }
-
-      // Move to progress screen
-      setCurrentStep("progress");
-
-      toast.success("Workspace created! Analyzing your website...");
-    } catch (error) {
-      log.error("[Wizard] Failed to create workspace", error);
-      toast.error((error as Error).message);
-    }
-  };
-
-  // Step 3: Handle brand voice save
-  const handleReviewSave = async (
-    editedData: Partial<BrandVoice> & {
-      selectedPersonaId?: string;
-      selectedPersona?: Persona;
-      selectedPersonaIds?: string[];
-      selectedPersonas?: Persona[];
-    },
-  ) => {
-    if (!workspaceId) {
-      toast.error("Workspace ID not found");
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-
-      // Extract selected persona(s) from editedData
-      const {
-        selectedPersonaId: personaId,
-        selectedPersona,
-        selectedPersonaIds,
-        selectedPersonas,
-        ...brandVoiceData
-      } = editedData;
-
-      // Update brand voice via API (include selected personas if provided)
-      await apiClient.workspaces.updateBrandVoice(workspaceId, {
-        brand_name: brandVoiceData.brand_name,
-        about: brandVoiceData.about,
-        customer_profile: brandVoiceData.customer_profile,
-        selling_position: brandVoiceData.selling_position,
-        target_audience: brandVoiceData.target_audience,
-        brand_voice: brandVoiceData.brand_voice,
-        competitors: brandVoiceData.competitors,
-        content_strategy:
-          brandVoiceData.content_strategy || brandVoiceData.content_pillar,
-        personas: selectedPersonas?.length
-          ? selectedPersonas
-          : selectedPersona
-            ? [selectedPersona]
-            : undefined,
-      });
-
-      // Manually save personas if they exist in the extracted data
-      // This is a workaround because the backend updateBrandVoice endpoint
-      // does not currently persist personas.
-      if (brandVoiceData.personas && brandVoiceData.personas.length > 0) {
-        log.info(
-          `[Wizard] Manually saving ${brandVoiceData.personas.length} personas`,
-        );
-
-        const toArray = (value: string | string[] | undefined): string[] => {
-          if (!value) return [];
-          if (Array.isArray(value)) return value;
-          return value
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean);
-        };
-
-        await Promise.all(
-          brandVoiceData.personas.map((persona: Persona) =>
-            apiClient.personas.create(workspaceId, {
-              name: persona.name,
-              description:
-                persona.description || persona.professional_title || "",
-              full_name: persona.full_name || persona.name,
-              professional_title: persona.professional_title,
-              areas_of_expertise: toArray(persona.areas_of_expertise),
-              tone_of_voice: persona.tone_of_voice,
-              bio: persona.bio,
-              linkedin_url: persona.linkedin_url,
-              demographics: persona.demographics,
-              pain_points: toArray(persona.pain_points),
-              goals: toArray(persona.goals),
-              behaviors: toArray(persona.behaviors),
-            }),
-          ),
-        );
-      }
-
-      // Log selected persona(s) for future API integration
-      const primaryPersonaId = selectedPersonaIds?.length
-        ? selectedPersonaIds[selectedPersonaIds.length - 1]
-        : personaId;
-
-      if (primaryPersonaId) {
-        // TODO(TASK-047): Add endpoint to associate selected persona with workspace.
-        // await apiClient.workspaces.setDefaultPersona(workspaceId, primaryPersonaId);
-      }
-
-      // Invalidate workspace queries to refresh data
-      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
-      queryClient.invalidateQueries({ queryKey: workspaceQueries.details() });
-
-      // Redirect directly to workspace generate content page
-      if (workspaceSlug) {
-        router.push(`/w/${workspaceSlug}/generate_content` as Route);
-      }
-
-      toast.success("Workspace setup complete!");
-    } catch (error) {
-      log.error("[Wizard] Failed to save brand voice", error);
-      toast.error("Failed to save changes. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Step 3: Handle skip (navigate without saving edits)
-  const handleSkipReview = () => {
-    // Invalidate workspace queries
-    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
-
-    // Redirect directly to workspace generate content page
-    if (workspaceSlug) {
-      router.push(`/w/${workspaceSlug}/generate_content` as Route);
-    }
-
-    toast.success("Workspace created!");
-  };
-
-  // Disconnect SSE when moving to review step
-  useEffect(() => {
-    if (currentStep === "review" && isConnected) {
-      disconnect();
-    }
-  }, [currentStep, isConnected, disconnect]);
-
-  // Cleanup SSE connection and clear completed operations on unmount
   useEffect(() => {
     return () => {
       if (operationId) {
@@ -343,228 +103,178 @@ export function WorkspaceCreateWizard() {
     };
   }, [operationId, disconnect, clearCompletedOperation]);
 
-  // Calculate overall progress from SSE events
-  const overallProgress = latestEvent?.progress || 0;
-
-  // Handle back navigation
-  const handleBack = () => {
-    if (currentStep === "review") {
-      setCurrentStep("progress");
+  const handleSubmit = async (data: WorkspaceFormData) => {
+    if (isLimitReached) {
+      setLimitReached(true);
+      return;
     }
-    // Note: Can't go back from details, progress, or congratulations steps
+    if (!canCreate || !checkLimit("create a workspace")) {
+      return;
+    }
+    setLimitReached(false);
+    // Before creation: the list doesn't hold the new workspace yet.
+    const isFirstWorkspace = workspaceList.length === 0;
+    try {
+      const workspace = await createWorkspace({
+        name: data.name,
+        url: data.url,
+        timezone: data.timezone,
+      });
+      slugRef.current = workspace.slug;
+      // The switcher's list stays cached for minutes; the sidebar needs the new workspace now.
+      setCurrentWorkspace(workspace);
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      // The plan's count above the form ("1 of 1 workspace on your plan") counts this one now.
+      queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.usage().queryKey,
+      });
+      analytics.track(
+        isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
+        { workspace_id: workspace.id, workspace_slug: workspace.slug },
+      );
+      setWebsite(data.url);
+      const operation = useWorkspaceCrudStore.getState().currentOperation;
+      if (operation?.operationId) {
+        setOperationId(operation.operationId);
+      } else {
+        // No analysis to follow: the workspace is there, its brand voice can be read later.
+        openBrandVoice(false);
+      }
+    } catch (error) {
+      log.error("[Workspace create] Failed to create the workspace", error);
+      if (error instanceof ApiError && error.statusCode === 429) {
+        // The plan's workspaces are all in use (another tab, or the plan changed): the count
+        // above the form reads the usage again.
+        setLimitReached(true);
+        queryClient.invalidateQueries({
+          queryKey: subscriptionQueries.usage().queryKey,
+        });
+        return;
+      }
+      // The backend checks the name and that the website answers: say so beside the field.
+      const message = (error as Error).message;
+      if (/website|url|domain/i.test(message)) {
+        form.setError(
+          "url",
+          { type: "server", message },
+          { shouldFocus: true },
+        );
+      } else if (/name/i.test(message)) {
+        form.setError(
+          "name",
+          { type: "server", message },
+          { shouldFocus: true },
+        );
+      } else {
+        toast.error(message);
+      }
+    }
   };
 
-  // Render step content
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case "details":
-        return (
-          <QuestionCard
-            title="Let's start with the basics"
-            description="Tell us about your workspace and website"
+  if (!operationId) {
+    return (
+      <div className="space-y-6">
+        {limitReached && (
+          <Notice
+            tone="warning"
+            title="Workspace limit reached"
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href={"/pricing" as Route}>View plans</Link>
+              </Button>
+            }
+          >
+            Every workspace on your plan is in use, so this one wasn't created.
+            A bigger plan adds more.
+          </Notice>
+        )}
+        <FormShell
+          form={form}
+          onSubmit={handleSubmit}
+          submitLabel="Create workspace"
+          cancel={{ onCancel: () => router.push("/") }}
+        >
+          <FieldController
+            control={form.control}
+            name="name"
+            label="Workspace name"
             required
-            className="p-0 sm:p-0 md:p-0 max-w-none mx-0"
           >
-            <form
-              onSubmit={handleSubmit(handleDetailsSubmit)}
-              className="space-y-6"
-            >
-              {/* Name Field */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-base font-medium">
-                  Workspace Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="e.g., My Company Workspace"
-                  {...register("name")}
-                  className={`text-base sm:text-lg h-12 ${errors.name ? "border-destructive" : ""}`}
-                  autoFocus
-                />
-                {errors.name && (
-                  <p className="text-sm text-destructive">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              {/* URL Field */}
-              <div className="space-y-2">
-                <Label htmlFor="url" className="text-base font-medium">
-                  Website URL <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="url"
-                  type="url"
-                  placeholder="https://your-company.com"
-                  {...register("url")}
-                  className={`text-base sm:text-lg h-12 ${errors.url ? "border-destructive" : ""}`}
-                />
-                {errors.url && (
-                  <p className="text-sm text-destructive">
-                    {errors.url.message}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  We'll analyze this website to understand your brand and
-                  content
-                </p>
-              </div>
-            </form>
-          </QuestionCard>
-        );
-
-      case "progress":
-        return (
-          <QuestionCard
-            title="Creating Your Workspace"
-            description="Please wait while we analyze your website and extract brand information"
-            className="p-0 sm:p-0 md:p-0 max-w-none mx-0"
-          >
-            <div className="space-y-4">
-              <WorkspaceProgressTimeline
-                events={events}
-                progress={overallProgress}
-              />
-
-              {/* Connection status indicator */}
-              {/* {isConnected && (
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span>Connected to server</span>
-                </div>
-              )} */}
-
-              {/* Note: No back button - workspace is already created */}
-              {/* <p className="text-xs text-center text-muted-foreground">
-                This may take 1-2 minutes. You can't go back, but you can close
-                this tab and return later.
-              </p> */}
-            </div>
-          </QuestionCard>
-        );
-
-      case "review":
-        return (
-          <QuestionCard
-            title="Review Brand Voice"
-            description="Review and edit the AI-extracted brand information"
-            className="px-4 sm:px-6 md:px-2 py-6 sm:py-2 mx-auto w-full overflow-x-hidden"
-          >
-            {extractedBrandVoice ? (
-              <WorkspaceBrandVoiceForm
-                workspaceId={workspaceId}
-                data={extractedBrandVoice}
-                onSave={handleReviewSave}
-                isLoading={isSaving}
-                selectedPersonaId={selectedPersonaId}
-                onPersonaSelect={setSelectedPersonaId}
-              />
-            ) : (
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">
-                    No brand voice data available
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    The analysis didn't complete successfully, but you can still
-                    proceed to your workspace and add brand information later.
-                  </p>
-                </div>
-
-                <Button onClick={handleSkipReview} size="lg" className="w-full">
-                  Continue to Workspace
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
+            {(field) => (
+              <Input {...field} maxLength={200} placeholder="e.g. My company" />
             )}
-          </QuestionCard>
-        );
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="url"
+            label="Website"
+            description="We read it to draft the workspace's brand voice, personas and competitors."
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="url"
+                inputMode="url"
+                placeholder="https://your-company.com"
+              />
+            )}
+          </FieldController>
+        </FormShell>
+      </div>
+    );
+  }
 
-      default:
-        return null;
-    }
-  };
-
+  const failed = findFailedEvent(events);
   return (
-    <div className="space-y-8">
-      {/* Progress Bar */}
-      <ProgressBar
-        progress={
-          currentStep === "details"
-            ? currentStepInfo.progress
-            : currentStep === "progress"
-              ? 25 + (overallProgress / 100) * 25
-              : currentStepInfo.progress
-        }
-        currentStep={currentStepIndex + 1}
-        totalSteps={STEPS.length}
-        showStepCounter
-        animated
-        onMilestone={(milestone) => {
-          if (milestone === 100) {
-            log.info("[Wizard] Wizard completed! 🎉");
+    <div className="space-y-4">
+      <p className="text-body text-muted-foreground">
+        Reading {website}. It usually takes one to two minutes. The workspace is
+        already created, so you can leave this page.
+      </p>
+      <RunProgress stages={workspaceRunStages(events)} />
+      {failed ? (
+        <Notice
+          tone="danger"
+          title="The analysis stopped"
+          action={
+            <Button size="sm" onClick={() => openBrandVoice(false)}>
+              Open the workspace
+            </Button>
           }
-        }}
-      />
-
-      {/* Step Content */}
-      <motion.div
-        key={currentStep}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Card className="p-6 md:p-8">{renderStepContent()}</Card>
-      </motion.div>
-
-      {/* Navigation Buttons */}
-      {currentStep !== "progress" && (
-        <div className="flex items-center justify-between pt-6 border-t">
-          {/* Back Button */}
-          {currentStep === "review" ? (
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="gap-2"
-              disabled={form.formState.isSubmitting}
+        >
+          {failed.message} Your workspace is created; you can read the website
+          again from its Brand voice settings.
+        </Notice>
+      ) : (
+        streamProblem && (
+          <Notice
+            tone="warning"
+            title="We lost touch with the analysis"
+            action={
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setStreamProblem(null);
+                  connect();
+                }}
+              >
+                Retry
+              </Button>
+            }
+          >
+            It may still be running. Retry to reconnect, or{" "}
+            <button
+              type="button"
+              className="font-medium underline underline-offset-4"
+              onClick={() => openBrandVoice(false)}
             >
-              <ArrowRight className="h-4 w-4 rotate-180" />
-              Back
-            </Button>
-          ) : (
-            <div /> // Empty div for spacing when no back button
-          )}
-
-          {/* Continue/Next Button */}
-          {currentStep === "details" && (
-            <Button
-              size="lg"
-              onClick={handleSubmit(handleDetailsSubmit)}
-              disabled={
-                !isValid ||
-                form.formState.isSubmitting ||
-                !canCreate ||
-                isLimitReached
-              }
-              className="gap-2 text-white"
-            >
-              {form.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  Create Workspace
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+              open the workspace
+            </button>
+            .
+          </Notice>
+        )
       )}
     </div>
   );

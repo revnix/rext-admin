@@ -13,11 +13,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * An AlertDialog that asks before an action (design/app-language.md §6). Its buttons name the action
+ * and its opposite, "Delete article" and "Keep article", so the confirm label is required: there is
+ * no "Continue" to fall back on.
+ */
 interface ConfirmationDialogProps {
   children: React.ReactNode; // Trigger element
   title?: string;
   description?: string;
-  confirmText?: string;
+  confirmText: string;
   cancelText?: string;
   variant?: "default" | "destructive";
   onConfirm: () => void;
@@ -28,7 +33,7 @@ export function ConfirmationDialog({
   children,
   title = "Are you sure?",
   description = "This action cannot be undone.",
-  confirmText = "Continue",
+  confirmText,
   cancelText = "Cancel",
   variant = "default",
   onConfirm,
@@ -93,7 +98,7 @@ export function useConfirmation() {
   const confirm = (options: {
     title?: string;
     description?: string;
-    confirmText?: string;
+    confirmText: string;
     cancelText?: string;
     variant?: "default" | "destructive";
   }) => {
@@ -101,7 +106,7 @@ export function useConfirmation() {
       setConfig({
         title: options.title ?? "Are you sure?",
         description: options.description ?? "This action cannot be undone.",
-        confirmText: options.confirmText ?? "Continue",
+        confirmText: options.confirmText,
         cancelText: options.cancelText ?? "Cancel",
         variant: options.variant ?? "default",
         onConfirm: () => resolve(true),

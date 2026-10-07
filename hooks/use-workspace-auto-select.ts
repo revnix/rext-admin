@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { useWorkspaceStore } from "@/stores/workspace";
 
 /**
@@ -47,9 +47,7 @@ export function useWorkspaceAutoSelect() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["workspaces"],
-    queryFn: () => apiClient.workspaces.list(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...workspaceQueries.list(),
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });

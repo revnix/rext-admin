@@ -6,12 +6,9 @@
 
 "use client";
 
-import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
-import { useReducedMotion } from "@/lib/animations";
-import { questionItemVariants, useTypeformMotionVariants } from "./motion";
 import { cn } from "@/lib/utils";
 
 export interface MultiSelectCardProps {
@@ -35,9 +32,6 @@ export interface MultiSelectCardProps {
 
   /** Custom class name */
   className?: string;
-
-  /** Animation delay */
-  delay?: number;
 }
 
 export function MultiSelectCard({
@@ -48,40 +42,27 @@ export function MultiSelectCard({
   icon,
   disabled = false,
   className,
-  delay = 0,
 }: MultiSelectCardProps) {
-  const _prefersReducedMotion = useReducedMotion();
-  const itemVariants = useTypeformMotionVariants(questionItemVariants);
-
   return (
-    <motion.div
-      variants={itemVariants}
-      initial="hidden"
-      animate="visible"
-      transition={{ delay }}
-      className={className}
-    >
+    <div className={className}>
       <Button
         variant="outline"
         onClick={onToggle}
         disabled={disabled}
         className={cn(
           "w-full h-auto min-h-[80px] p-4 text-left justify-start relative",
-          "border-2 transition-all duration-150 rounded-xl",
-          "hover:shadow-md hover:border-primary/50",
+          "border transition-colors rounded-md",
+          "hover:border-foreground/40",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
+          "focus:ring-2 focus:ring-ring/50 focus:ring-offset-2",
           "overflow-hidden", // Prevent content overflow
-          selected && [
-            "border-primary bg-primary/5 shadow-md",
-            "hover:border-primary hover:bg-primary/10",
-          ],
+          selected && "border-foreground hover:border-foreground",
         )}
       >
         {/* Selection indicator - Rounded checkbox style for multi-select */}
         <div
           className={cn(
-            "absolute top-4 right-4 w-5 h-5 rounded-lg border-2 transition-all flex items-center justify-center shadow-sm",
+            "absolute top-4 right-4 w-5 h-5 rounded-md border-2 transition-[scale,background-color,border-color] flex items-center justify-center shadow-sm",
             selected
               ? "border-primary bg-primary text-primary-foreground scale-110"
               : "border-muted-foreground/30 bg-background",
@@ -128,7 +109,7 @@ export function MultiSelectCard({
           </div>
         </div>
       </Button>
-    </motion.div>
+    </div>
   );
 }
 

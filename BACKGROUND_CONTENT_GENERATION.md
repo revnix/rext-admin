@@ -123,7 +123,7 @@ can track it the moment the user leaves:
 upsertBackgroundJob({
   threadId, workspaceId, workspaceSlug,
   title, keyword: primaryKeyword,
-  status: "running", stage: "Drafting your article", progress: 12,
+  status: "running", stage: "Research", progress: 42,
   createdAt: now, updatedAt: now, resultUrl, completionNotified: false,
 });
 ```
@@ -136,7 +136,7 @@ pipeline and research sidebar updating:
 
 ```ts
 streamFromSSE(`/api/generate/${threadId}/resume`, {
-  payload, streamMode: ["updates","messages","custom"], streamSubgraphs: true,
+  payload, streamMode: GENERATION_STREAM_MODES, streamSubgraphs: true,
   onDisconnect: "continue",   // ← run survives navigation
 }, signal);
 ```
@@ -153,7 +153,7 @@ safe to leave.
 
 1. The user navigates to another feature / another tab / closes the tab.
 2. The SSE reader aborts locally, but the **LangGraph run keeps executing**.
-3. The **global dock** (mounted in `PageLayout`, present on every workspace page)
+3. The **global dock** (mounted in the shell, `components/shell/app-shell.tsx`, present on every workspace page)
    takes over tracking — it polls `/status` and updates the record independently
    of the generation screen.
 
@@ -254,9 +254,9 @@ progress displays consistent. No WebSocket / BroadcastChannel needed.
 ## 10. Global progress bar (the "dock")
 
 [`components/background-generation-dock.tsx`](components/background-generation-dock.tsx),
-mounted in [`components/page-layout.tsx`](components/page-layout.tsx), so it
+mounted in the shell ([`components/shell/app-shell.tsx`](components/shell/app-shell.tsx)), so it
 appears across workspace pages (Content Calendar, Brand Voice, Integrations,
-Knowledge, Media, Members, …).
+Media, Members, …).
 
 - **Active job:** title, stage, progress track, %, `View progress`, count of
   other active jobs.
@@ -295,18 +295,21 @@ review results, and persisted errors.
 | 26 | Planning your article | inside `content_engine`, node unknown |
 | 28 | Preparing your topics | `content_type` / `topic_generation` active |
 | 34 | Building your outline | `generate_outline` / cluster mapping active |
-| 42 | Drafting your article | `generate_content` active |
-| 74 | Reviewing SEO and readability | final content exists or a review node active |
-| 84 | Running quality checks | 1 review result persisted |
-| 90 | Running quality checks | 2 review results persisted |
-| 96 | Running quality checks | all 3 review results persisted, run finishing |
+| 42 | Draft | `generate_content` active (the agent's searching and writing are one node, so the poll says Draft; the page's stream tells Research from Draft by the first token) |
+| 74 | Checks | a review node (or `final_validate_content`) active |
+| 74 | Style pass | final content exists and no check runs yet |
+| 84 | Checks | 1 review result persisted |
+| 90 | Checks | 2 review results persisted |
+| 96 | Checks | all 3 review results persisted, run finishing |
+
+The article's stage names are the run component's (rext-control #260): Research, Draft, Style pass (the humanize node, with the validation and repair before it), Checks (the final validation, readability, on-page SEO, trust). The page's stream says Research while the agent searches and Draft from its first token.
 | 100 | Article ready | run status `success` |
 
 `content_engine` and `seo_engine` are **subgraph containers**: at the top level
 they stay "active" for their entire phase, so the status route reads thread
 state with `subgraphs: true` and the derivation walks `tasks[].state` for the
 real node names. Without that, the whole content phase — topic selection,
-outline generation, outline review — reported "Drafting your article" at 42%,
+outline generation, outline review — reported the article stage at 42%,
 which put the outline steps in the article band and made the restore path join
 the stream as *content*, skipping outline approve/reject.
 
@@ -449,7 +452,7 @@ sequenceDiagram
 ## 18. Common scenarios
 
 - **Navigate to Content Calendar:** generation screen unmounts, local SSE
-  aborts, the run is unaffected (LangGraph owns it); the dock in `PageLayout`
+  aborts, the run is unaffected (LangGraph owns it); the dock in the shell
   keeps polling and showing progress.
 - **Switch tabs:** run continues; other tabs get localStorage updates; a tab
   refreshes status when it becomes visible.
@@ -518,7 +521,7 @@ returns an SSE stream; early in the stream you should see a
 
 ```json
 { "threadId": "…", "run": { "id": "…", "status": "running" },
-  "progress": 42, "stage": "Drafting your article" }
+  "progress": 42, "stage": "Draft" }
 ```
 
 **Re-join (return to a running run):**
@@ -533,7 +536,7 @@ success state contains `state.values.content.final_content` and
 thread <threadId>`. If missing, check `final_content`/thread id in state and the
 `langgraph_thread_id` column.
 
-**Bar not appearing:** page uses `PageLayout`; store has the job; `hasHydrated`
+**Bar not appearing:** the page is inside the shell (a workspace or account layout); store has the job; `hasHydrated`
 true; job matches current workspace; not pruned/dismissed.
 
 **Stuck at queued:** run/created arrived and `runId` stored; `/status` returns
@@ -570,7 +573,7 @@ pnpm build
 | `components/generate-content/fresh-generation-view.tsx` | Starts the run (live stream), re-joins a running run, restores completed state |
 | `stores/background-generation-store.ts` | Persists + syncs browser tracking records |
 | `components/background-generation-dock.tsx` | Polls active jobs, renders the top bar, creates notifications |
-| `components/page-layout.tsx` | Mounts the bar across workspace pages |
+| `components/shell/app-shell.tsx` | Mounts the bar across workspace pages |
 | `components/notifications-drawer.tsx` | Opens article links from generation notifications |
 | `app/w/[workspaceSlug]/generate_content/page.tsx` | Reads `?thread=` and enters restore mode |
 | `app/api/generate/threads/route.ts` | Creates a durable thread |

@@ -10,13 +10,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TimelineData {
   date: string;
   sent: number;
+  delivered: number;
   opened: number;
   clicked: number;
+  failed: number;
 }
 
 interface EmailVolumeChartProps {
@@ -44,8 +47,10 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
       day: "numeric",
     }),
     Sent: item.sent,
+    Delivered: item.delivered,
     Opened: item.opened,
     Clicked: item.clicked,
+    Failed: item.failed,
   }));
 
   return (
@@ -54,38 +59,54 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="date"
-          stroke="#888888"
+          stroke="var(--muted-foreground)"
           fontSize={12}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
-          stroke="#888888"
+          stroke="var(--muted-foreground)"
           fontSize={12}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `${value}`}
         />
-        <Tooltip />
-        <Legend />
+        <Tooltip itemSorter={inSeriesOrder} />
+        <Legend itemSorter={null} />
         <Line
           type="monotone"
           dataKey="Sent"
-          stroke="#667eea"
+          stroke="var(--primary)"
+          strokeWidth={2}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="Delivered"
+          stroke="var(--success-600)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Opened"
-          stroke="#22c55e"
+          stroke="var(--info-600)"
           strokeWidth={2}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="Clicked"
-          stroke="#f59e0b"
+          stroke="var(--neutral-500)"
+          // Dashed: with info neutral, Opened and Clicked are near greys, so the shape tells them apart.
+          strokeDasharray="5 3"
+          strokeWidth={2}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="Failed"
+          stroke="var(--danger-600)"
           strokeWidth={2}
           dot={false}
         />

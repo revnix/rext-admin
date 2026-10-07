@@ -114,7 +114,7 @@ function VerifyEmailContent() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
-            <CardTitle>Email Verification</CardTitle>
+            <CardTitle>Email verification</CardTitle>
             <CardDescription>
               {isVerifying
                 ? "Verifying your email address..."
@@ -126,13 +126,13 @@ function VerifyEmailContent() {
           <CardContent>
             {isVerifying && (
               <div className="flex justify-center py-6">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
               </div>
             )}
 
             {success && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                <div className="p-4 bg-success-50 border border-success-200 text-success-700 rounded-md">
                   <p className="font-medium">Email verified successfully!</p>
                   <p className="text-sm mt-1">
                     Your account is now active. Redirecting to login...
@@ -146,18 +146,18 @@ function VerifyEmailContent() {
 
             {error && !isVerifying && !resendSuccess && (
               <div className="space-y-4">
-                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                <div className="p-4 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                   <p className="font-medium">Verification Failed</p>
                   <p className="text-sm mt-1">{error}</p>
                 </div>
 
                 <div className="border-t pt-4">
                   <h3 className="text-sm font-medium mb-3">
-                    Request New Verification Link
+                    Request a new verification link
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <Label htmlFor="resend-email">Email Address</Label>
+                      <Label htmlFor="resend-email">Email address</Label>
                       <Input
                         id="resend-email"
                         type="email"
@@ -172,7 +172,7 @@ function VerifyEmailContent() {
                       className="w-full"
                       disabled={isResending}
                     >
-                      {isResending ? "Sending..." : "Resend Verification Email"}
+                      {isResending ? "Sending..." : "Resend verification email"}
                     </Button>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ function VerifyEmailContent() {
 
             {resendSuccess && (
               <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                <div className="p-4 bg-success-50 border border-success-200 text-success-700 rounded-md">
                   <p className="font-medium">Verification Email Sent!</p>
                   <p className="text-sm mt-1">
                     We've sent a new verification link to your email. Please

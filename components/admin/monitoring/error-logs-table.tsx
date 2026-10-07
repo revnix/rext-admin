@@ -37,7 +37,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
+import { SECURITY_PERMISSIONS } from "@/lib/permissions";
 
 interface ErrorLog {
   id: string;
@@ -92,6 +94,8 @@ export function ErrorLogsTable({
   onRefresh,
 }: ErrorLogsTableProps) {
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
+  // Viewing needs security.read (page gate); resolving is a write.
+  const canResolve = usePermission(SECURITY_PERMISSIONS.MANAGE);
 
   const resolveMutation = useMutation({
     mutationFn: async (logId: string) => {
@@ -213,10 +217,10 @@ export function ErrorLogsTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-x-auto">
         {logs.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-600 opacity-50" />
+            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-success-600" />
             <p>No errors found</p>
             <p className="text-sm">System is running smoothly</p>
           </div>
@@ -239,7 +243,7 @@ export function ErrorLogsTable({
                     {formatDate(log.timestamp)}
                   </TableCell>
                   <TableCell>{getSeverityBadge(log.severity)}</TableCell>
-                  <TableCell className="max-w-md">
+                  <TableCell className="max-w-sm">
                     <div className="truncate">{log.message}</div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground font-mono">
@@ -249,7 +253,7 @@ export function ErrorLogsTable({
                     {log.resolved ? (
                       <Badge
                         variant="outline"
-                        className="gap-1 text-green-600 border-green-600"
+                        className="gap-1 border-success-200 bg-success-50 text-success-700"
                       >
                         <CheckCircle className="h-3 w-3" />
                         Resolved
@@ -311,7 +315,7 @@ export function ErrorLogsTable({
       {/* Error Detail Dialog */}
       {selectedLog && (
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[85dvh] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/40 p-4">
             <DialogHeader>
               <DialogTitle>Error Details</DialogTitle>
               <DialogDescription>
@@ -335,7 +339,7 @@ export function ErrorLogsTable({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 <div>
                   <div className="font-medium">Timestamp</div>
                   <p className="mt-1 text-muted-foreground">
@@ -379,9 +383,9 @@ export function ErrorLogsTable({
               </div>
 
               {selectedLog.stack_trace && (
-                <div>
+                <div className="w-80 sm:w-full">
                   <div className="text-sm font-medium">Stack Trace</div>
-                  <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                  <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                     {selectedLog.stack_trace}
                   </pre>
                 </div>
@@ -389,16 +393,16 @@ export function ErrorLogsTable({
 
               {selectedLog.metadata &&
                 Object.keys(selectedLog.metadata).length > 0 && (
-                  <div>
+                  <div className="w-80 sm:w-full">
                     <div className="text-sm font-medium">Metadata</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
                   </div>
                 )}
 
               <div className="flex items-center gap-4 pt-4">
-                {!selectedLog.resolved && (
+                {!selectedLog.resolved && canResolve && (
                   <Button
                     onClick={() => resolveMutation.mutate(selectedLog.id)}
                     disabled={resolveMutation.isPending}

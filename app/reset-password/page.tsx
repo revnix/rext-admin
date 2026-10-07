@@ -21,11 +21,18 @@ import {
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
 import { checkPasswordBreach } from "@/lib/password-utils";
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import {
+  classifyError,
+  extractApiError,
+  safeParseErrorBody,
+} from "@/lib/error-utils";
+import { ApiError } from "@/lib/api-client/core";
+import { useHydrated } from "@/hooks/use-hydrated";
 import type { Route } from "next";
 
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -65,23 +72,6 @@ function ResetPasswordForm() {
     clearErrors("confirmPassword");
   }, [clearErrors, confirmPasswordValue, passwordValue, setFieldError]);
 
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { label: "", color: "" };
-
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    if (score <= 2) return { label: "Weak", color: "text-red-500" };
-    if (score <= 4) return { label: "Fair", color: "text-yellow-500" };
-    return { label: "Strong", color: "text-green-500" };
-  };
-
-  const passwordStrength = getPasswordStrength(passwordValue);
-
   const onSubmit = async (data: ResetPasswordData) => {
     if (!token) {
       setError("Reset token is missing");
@@ -115,7 +105,10 @@ function ResetPasswordForm() {
 
       if (!response.ok) {
         const errorData = await safeParseErrorBody(response);
-        throw new Error(extractApiError(errorData, "Password reset failed"));
+        throw new ApiError(
+          response.status,
+          extractApiError(errorData, "Password reset failed"),
+        );
       }
 
       setSuccess(true);
@@ -124,7 +117,15 @@ function ResetPasswordForm() {
         router.push("/login" as Route);
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Password reset failed");
+      const classifiedError = classifyError(err);
+      setError(
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : err instanceof Error
+            ? err.message
+            : "Password reset failed",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +137,7 @@ function ResetPasswordForm() {
         <div className="w-full max-w-sm">
           <Card>
             <CardHeader>
-              <CardTitle>Invalid Reset Link</CardTitle>
+              <CardTitle>Invalid reset link</CardTitle>
               <CardDescription>
                 The password reset link is invalid or has expired.
               </CardDescription>
@@ -161,20 +162,21 @@ function ResetPasswordForm() {
             <CardDescription>Enter your new password below</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+            <form method="post" onSubmit={handleSubmit(onSubmit)}>
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+                <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                   {error}
                 </div>
               )}
               {success && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+                <div className="mb-4 p-3 bg-success-50 border border-success-200 text-success-700 rounded-md">
                   Password reset successfully! Redirecting to login...
                 </div>
               )}
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="password">New Password</Label>
+                  <Label htmlFor="password">New password</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -199,26 +201,17 @@ function ResetPasswordForm() {
                       )}
                     </button>
                   </div>
-                  {passwordValue && (
-                    <p className="text-sm text-muted-foreground">
-                      Password strength:{" "}
-                      <span className={passwordStrength.color}>
-                        {passwordStrength.label}
-                      </span>
-                    </p>
-                  )}
                   <p className="text-sm text-muted-foreground">
-                    Must be at least 8 characters with uppercase, lowercase,
-                    number, and special character.
+                    At least 8 characters.
                   </p>
                   {errors.password && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-danger-600">
                       {errors.password.message}
                     </p>
                   )}
                 </div>
                 <div className="grid gap-3">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -244,7 +237,7 @@ function ResetPasswordForm() {
                     </button>
                   </div>
                   {errors.confirmPassword && (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-danger-600">
                       {errors.confirmPassword.message}
                     </p>
                   )}
@@ -253,13 +246,13 @@ function ResetPasswordForm() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading || success}
+                    disabled={!hydrated || isLoading || success}
                   >
                     {isLoading
-                      ? "Resetting Password..."
+                      ? "Resetting password..."
                       : success
                         ? "Password Reset!"
-                        : "Reset Password"}
+                        : "Reset password"}
                   </Button>
                 </div>
               </div>

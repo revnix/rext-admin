@@ -1,5 +1,7 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
+// Validates the environment as the config loads: see env.ts.
+import "./env";
 
 // Configure bundle analyzer (enabled when ANALYZE=true)
 const bundleAnalyzer = withBundleAnalyzer({
@@ -16,43 +18,22 @@ const nextConfig: NextConfig = {
   // See: https://nextjs.org/docs/app/api-reference/config/next-config-js/optimizePackageImports
   experimental: {
     optimizePackageImports: [
-      // Radix UI Components (NOT pre-optimized by default)
+      // Radix UI primitives, one package (NOT pre-optimized by default)
       // These are heavily used in the app and can save ~50-100KB
-      "@radix-ui/react-alert-dialog",
-      "@radix-ui/react-avatar",
-      "@radix-ui/react-checkbox",
-      "@radix-ui/react-collapsible",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-dropdown-menu",
-      "@radix-ui/react-icons",
-      "@radix-ui/react-label",
-      "@radix-ui/react-popover",
-      "@radix-ui/react-progress",
-      "@radix-ui/react-radio-group",
-      "@radix-ui/react-scroll-area",
-      "@radix-ui/react-select",
-      "@radix-ui/react-separator",
-      "@radix-ui/react-slider",
-      "@radix-ui/react-slot",
-      "@radix-ui/react-tabs",
-      "@radix-ui/react-toggle-group",
-      "@radix-ui/react-tooltip",
+      "radix-ui",
 
       // Icon & Date Libraries (Already optimized by default, but explicit is better)
       "lucide-react", // ~60KB savings
       "date-fns", // ~50KB savings
 
       // Heavy Animation & Chart Libraries (NOT pre-optimized)
-      "framer-motion", // ~80KB savings
+      "motion", // ~80KB savings
       "recharts", // ~400KB+ library, only load used charts
 
       // Form & UI Libraries
       "react-hook-form", // Tree-shake validators
       "react-day-picker", // Only load needed components
       "cmdk", // Command palette library
-
-      // Utilities
-      "canvas-confetti", // Only load when needed
     ],
   },
 
@@ -178,9 +159,140 @@ const nextConfig: NextConfig = {
   reactStrictMode: true, // Enable React strict mode for better error detection
   async redirects() {
     return [
+      // Billing is three account settings sections since F5 (Plan, Usage, Invoices):
+      // the old billing pages land on the section that does their job.
       {
         source: "/settings/billing",
-        destination: "/settings/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/settings/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/subscription",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        source: "/billing",
+        destination: "/settings/invoices",
+        permanent: false,
+      },
+      {
+        source: "/usage",
+        destination: "/settings/usage",
+        permanent: false,
+      },
+      {
+        // The topic-based content wizard is retired (articles start from
+        // keyword research): an old bookmark opens the keyword flow.
+        source: "/w/:workspaceSlug/content/create",
+        destination: "/w/:workspaceSlug/generate_content",
+        permanent: false,
+      },
+      {
+        // The Topic Builder is removed (E16): its pages open the keyword library.
+        source: "/w/:workspaceSlug/topics/:path*",
+        destination: "/w/:workspaceSlug/keywords",
+        permanent: false,
+      },
+      {
+        // The keyword library moved out of Generate to Keywords (D15): the list and each
+        // keyword's page keep their old addresses working.
+        source: "/w/:workspaceSlug/generate_content/library/:path*",
+        destination: "/w/:workspaceSlug/keywords/:path*",
+        permanent: false,
+      },
+      {
+        // Knowledge bases are removed (E16): their pages open the workspace's settings.
+        source: "/w/:workspaceSlug/knowledge/:path*",
+        destination: "/w/:workspaceSlug/settings",
+        permanent: false,
+      },
+      {
+        // Customer management was folded into User Management. Redirect rather
+        // than 404 so existing bookmarks and links keep working.
+        source: "/admin/customers",
+        destination: "/admin/users",
+        permanent: false,
+      },
+      {
+        source: "/admin/customers/:path*",
+        destination: "/admin/users",
+        permanent: false,
+      },
+      // Legacy pages removed on 2026-10-06 (D19): an old bookmark lands on the page
+      // that does the job now.
+      {
+        // Lifetime licences: no lifetime plan exists; the plan is in Plan.
+        source: "/licenses",
+        destination: "/settings/plan",
+        permanent: false,
+      },
+      {
+        // Sessions are part of Security and sessions.
+        source: "/settings/sessions",
+        destination: "/settings/security",
+        permanent: false,
+      },
+      {
+        // The profile is account settings' first section.
+        source: "/profile",
+        destination: "/settings",
+        permanent: false,
+      },
+      {
+        // The account's trash is part of Data and trash.
+        source: "/settings/trash",
+        destination: "/settings/data",
+        permanent: false,
+      },
+      {
+        // Brand voice and members are sections of workspace settings.
+        source: "/w/:workspaceSlug/brand_voice",
+        destination: "/w/:workspaceSlug/settings/brand-voice",
+        permanent: false,
+      },
+      {
+        source: "/w/:workspaceSlug/members",
+        destination: "/w/:workspaceSlug/settings/members",
+        permanent: false,
+      },
+      {
+        // Deleted workspaces are restored from the account's trash (Data and trash).
+        source: "/w/:workspaceSlug/settings/trash",
+        destination: "/settings/data",
+        permanent: false,
+      },
+      {
+        source: "/admin/analytics/subscriptions",
+        destination: "/admin/subscriptions",
+        permanent: false,
+      },
+      {
+        // Workspace invitation reporting (no navigation reached it) is retired with the
+        // other analytics pages; the overview is the nearest page.
+        source: "/admin/analytics/invitations",
+        destination: "/admin",
+        permanent: false,
+      },
+      {
+        source: "/admin/analytics",
+        destination: "/admin",
+        permanent: false,
+      },
+      {
+        source: "/admin/statistics",
+        destination: "/admin",
+        permanent: false,
+      },
+      {
+        // Email templates were never wired to a working API; email reporting stays.
+        source: "/admin/email-templates",
+        destination: "/admin/email-analytics",
         permanent: false,
       },
     ];

@@ -24,6 +24,7 @@ export interface Permission {
   resource: string;
   action: string;
   created_at: string;
+  is_system: boolean;
 }
 
 export interface PermissionWithRoles extends Permission {
@@ -69,7 +70,6 @@ export interface CreateRoleRequest {
   display_name: string;
   description?: string;
   hierarchy_level?: number;
-  is_system_role?: boolean;
   is_workspace_role?: boolean;
 }
 

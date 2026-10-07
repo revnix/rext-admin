@@ -1,8 +1,8 @@
-import { RouteLoading } from "@/components/ui/route-loading";
+import { PageSkeleton } from "@/components/layouts";
 
 /**
  * Content list loading state
  */
 export default function ContentLoading() {
-  return <RouteLoading variant="list" rows={8} title="Generated Content" />;
+  return <PageSkeleton />;
 }

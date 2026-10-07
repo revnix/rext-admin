@@ -120,7 +120,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
             step={step}
             className={cn(
               "text-lg h-12 transition-all duration-200",
-              "border-2 focus:border-primary",
+              "border-2 focus:border-ring",
               "placeholder:text-muted-foreground/50",
               "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
               icon && "pl-10",

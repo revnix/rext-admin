@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import type { RunPhase } from "@/lib/generate-content/run-stages";
 
 export const BACKGROUND_GENERATION_STORAGE_KEY = "rext-background-generations";
 
@@ -33,6 +34,12 @@ export interface BackgroundGenerationJob {
    * user, so the dock offers "Continue" rather than "Open article".
    */
   awaitingInput?: boolean;
+  /** While the run runs: the run component's phase and stage (from the status poll), and since when.
+   *  A run that timed out keeps the stage it stopped in. */
+  runStage?: { phase: RunPhase; id: string };
+  stageStartedAt?: string;
+  /** The run hit LangGraph's time limit: the run component shows its Timed out state (E22). */
+  timedOut?: boolean;
 }
 
 interface BackgroundGenerationStore {

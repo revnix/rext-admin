@@ -1,67 +1,68 @@
 "use client";
 
-import { Building2 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { PageLayout } from "@/components/page-layout";
-import { cn } from "@/lib/utils";
+import { SettingsPage, type SettingsSection } from "@/components/layouts";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import {
+  BRAND_VOICE_PERMISSIONS,
+  MEMBER_PERMISSIONS,
+  WORKSPACE_PERMISSIONS,
+} from "@/lib/permissions";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
-import type { Route } from "next";
 
-const settingsTabs = [
-  {
-    name: "Workspace",
-    href: "",
-    icon: Building2,
-  },
-];
-
+/**
+ * Workspace settings (plans/app/D-pages.md §2.6): one SettingsPage, a route per section. General is
+ * open to every member (read-only without workspace.update); the others are listed only for the
+ * people who may open them, as the sidebar does. The workspace's trash joins as a section with D13.
+ */
 export default function WorkspaceSettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { workspaceSlug } = useWorkspace();
-  const pathname = usePathname();
+  const { workspaceId, workspaceSlug } = useWorkspace();
+  const { hasPermission: canReadBrandVoice } = useWorkspacePermission(
+    BRAND_VOICE_PERMISSIONS.READ,
+    workspaceId,
+  );
+  const { hasPermission: canReadMembers } = useWorkspacePermission(
+    MEMBER_PERMISSIONS.READ,
+    workspaceId,
+  );
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    WORKSPACE_PERMISSIONS.DELETE,
+    workspaceId,
+  );
+
+  const sections: SettingsSection[] = [
+    { label: "General", href: workspaceRoutes.settings.root(workspaceSlug) },
+  ];
+  if (canReadBrandVoice) {
+    sections.push({
+      label: "Brand voice",
+      href: workspaceRoutes.settings.brandVoice(workspaceSlug),
+    });
+  }
+  if (canReadMembers) {
+    sections.push({
+      label: "Members",
+      href: workspaceRoutes.settings.members(workspaceSlug),
+    });
+  }
+  if (canDelete) {
+    sections.push({
+      label: "Danger zone",
+      href: workspaceRoutes.settings.dangerZone(workspaceSlug),
+    });
+  }
 
   return (
-    <PageLayout
-      title="Workspace Settings"
-      description="Manage workspace configuration and preferences"
+    <SettingsPage
+      title="Workspace settings"
+      description="The workspace's details, how its articles sound, and who works in it."
+      sections={sections}
     >
-      <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-        {/* Sidebar Navigation */}
-        <aside className="lg:w-1/5">
-          <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
-            {settingsTabs.map((tab) => {
-              const href = tab.href
-                ? `/w/${workspaceSlug}/settings/${tab.href}`
-                : `/w/${workspaceSlug}/settings`;
-              const isActive = pathname === href;
-              const Icon = tab.icon;
-
-              return (
-                <Link
-                  key={tab.name}
-                  href={href as Route}
-                  className={cn(
-                    "inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Content Area */}
-        <div className="flex-1 lg:max-w-3xl">{children}</div>
-      </div>
-    </PageLayout>
+      {children}
+    </SettingsPage>
   );
 }

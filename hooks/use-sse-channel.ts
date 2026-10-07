@@ -75,6 +75,11 @@ export interface UseSSEChannelOptions {
   onEvent?: (event: SSEEvent) => void;
   onComplete?: (payload?: unknown) => void;
   onError?: (error: string) => void;
+  /**
+   * The operation ended, with no word of how: the provider's answer for an operation that already
+   * ended (the 422 it handles) carries no result. Without it, that answer is only logged.
+   */
+  onEnded?: () => void;
   autoConnect?: boolean;
 }
 
@@ -99,7 +104,7 @@ export function useSSEChannel(
   options: UseSSEChannelOptions = {},
 ): UseSSEChannelReturn {
   const { subscribe } = useSSE();
-  const { onEvent, onComplete, onError, autoConnect = true } = options;
+  const { onEvent, onComplete, onError, onEnded, autoConnect = true } = options;
 
   const [events, setEvents] = useState<SSEEvent[]>([]);
   const [latestEvent, setLatestEvent] = useState<SSEEvent | null>(null);
@@ -111,17 +116,42 @@ export function useSSEChannel(
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const operationIdRef = useRef<string | null>(operationId);
   const latestEventRef = useRef<SSEEvent | null>(null);
+  // The operation whose end was reported: once each, however it was learned.
+  const reportedEndRef = useRef<string | null>(null);
 
   // Use refs for callbacks to avoid recreating them on every render
   const onEventRef = useRef(onEvent);
   const onCompleteRef = useRef(onComplete);
   const onErrorRef = useRef(onError);
+  const onEndedRef = useRef(onEnded);
 
   useEffect(() => {
     onEventRef.current = onEvent;
     onCompleteRef.current = onComplete;
     onErrorRef.current = onError;
-  }, [onEvent, onComplete, onError]);
+    onEndedRef.current = onEnded;
+  }, [onEvent, onComplete, onError, onEnded]);
+
+  /**
+   * An operation's end is reported once (D5b, rext-control#493): a reconnect can replay its
+   * completion, and the provider can answer that it already ended and then send a completion event
+   * of its own making for the same operation.
+   */
+  const reportComplete = useCallback((payload?: unknown) => {
+    const id = operationIdRef.current;
+    if (id && reportedEndRef.current === id) return;
+    reportedEndRef.current = id;
+    onCompleteRef.current?.(payload);
+  }, []);
+
+  /** The operation ended and nothing says whether it succeeded: never reported as a completion. */
+  const reportEnded = useCallback(() => {
+    const id = operationIdRef.current;
+    if (!onEndedRef.current) return;
+    if (id && reportedEndRef.current === id) return;
+    reportedEndRef.current = id;
+    onEndedRef.current();
+  }, []);
 
   const clearSubscription = useCallback(() => {
     if (unsubscribeRef.current) {
@@ -226,7 +256,7 @@ export function useSSEChannel(
         // Temporarily disabled to prevent excessive API calls.
         // Will revisit after implementing proper throttling/debouncing.
         // refreshNotificationsSafely();
-        onCompleteRef.current?.(event.payload);
+        reportComplete(event.payload);
       }
 
       if (
@@ -241,7 +271,7 @@ export function useSSEChannel(
         handleError(message);
       }
     },
-    [handleError],
+    [handleError, reportComplete],
   );
 
   const handleStatus = useCallback(
@@ -251,6 +281,12 @@ export function useSSEChannel(
         status: newStatus,
       });
       setStatus(newStatus);
+
+      // The provider's answer for an operation that already ended (the 422 it handles): it says
+      // nothing of the outcome, so it isn't a completion.
+      if (newStatus.code === SSE_ERROR_CODES.OPERATION_COMPLETED) {
+        reportEnded();
+      }
 
       // Only route actual errors/non-actionable status through error handler.
       // Success states (CONNECTION_ESTABLISHED) are not routed to error handler.
@@ -267,7 +303,7 @@ export function useSSEChannel(
         });
       }
     },
-    [handleError],
+    [handleError, reportEnded],
   );
 
   const connect = useCallback(() => {
@@ -285,8 +321,9 @@ export function useSSEChannel(
 
     sseChannelLogger.info("Connecting to SSE channel", { operationId });
 
-    unsubscribeRef.current = subscribe(operationId, handleEvent, handleStatus);
+    // Before subscribing: the provider answers an ended operation during subscribe().
     operationIdRef.current = operationId;
+    unsubscribeRef.current = subscribe(operationId, handleEvent, handleStatus);
   }, [clearSubscription, handleEvent, handleStatus, operationId, subscribe]);
 
   const disconnect = useCallback(() => {
@@ -352,12 +389,12 @@ export function useSSEChannel(
       // Check if still the same operation ID and no subscription exists
       if (operationId && !unsubscribeRef.current) {
         sseChannelLogger.info("Creating SSE subscription", { operationId });
+        operationIdRef.current = operationId;
         unsubscribeRef.current = subscribe(
           operationId,
           handleEvent,
           handleStatus,
         );
-        operationIdRef.current = operationId;
       }
     }, NOTIFICATION_CONSTANTS.SSE_SUBSCRIBE_DELAY_MS); // Small delay to prevent race conditions
 

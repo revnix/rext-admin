@@ -1,8 +1,8 @@
-import { RouteLoading } from "@/components/ui/route-loading";
+import { PageSkeleton } from "@/components/layouts";
 
 /**
  * Admin section loading state
  */
 export default function AdminLoading() {
-  return <RouteLoading variant="table" rows={10} columns={6} />;
+  return <PageSkeleton rows={10} />;
 }

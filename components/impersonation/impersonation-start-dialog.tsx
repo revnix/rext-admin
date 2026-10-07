@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, User2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -15,7 +17,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { apiClient } from "@/lib/api-client";
+import { AUTH_SESSION_TOKEN_SWAP_ACTION } from "@/lib/auth-utils";
 import { useAuthStore } from "@/stores/auth-store";
+import type { Route } from "next";
 
 interface User {
   id: string;
@@ -46,13 +50,25 @@ export function ImpersonationStartDialog({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { setTokens } = useAuthStore();
+  const { update } = useSession();
+  const [, startTransition] = useTransition();
 
   // Start impersonation mutation
   const startImpersonationMutation = useMutation({
     mutationFn: (userId: string) => apiClient.impersonation.start(userId),
-    onSuccess: (data) => {
-      // Update tokens to impersonated user
+    onSuccess: async (data) => {
+      // Bridge the moment until update() lands in React state (same pattern
+      // as the stop flow) — getAuthHeaders() prefers this store when set.
       setTokens(data.access_token, data.refresh_token);
+
+      // Swap the impersonation tokens into the NextAuth session too, so the
+      // session (and middleware) agree with the API tokens instead of staying
+      // split-brained on the admin's credentials.
+      await update({
+        authAction: AUTH_SESSION_TOKEN_SWAP_ACTION,
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      });
 
       toast.success(`Now impersonating ${data.impersonated_user_name}`, {
         description: "All actions will be performed as this user",
@@ -65,8 +81,14 @@ export function ImpersonationStartDialog({
       onOpenChange(false);
       onStarted?.();
 
-      // Refresh the page to update UI
-      router.refresh();
+      // Leave the admin area: the impersonated user cannot access admin
+      // pages, so staying here would just render a wall of 403s. The
+      // dashboard's shell shows the impersonation banner (with the "Stop
+      // Impersonation" button).
+      startTransition(() => {
+        router.push("/" as Route);
+        router.refresh();
+      });
     },
     onError: (error: Error) => {
       toast.error(`Failed to start impersonation: ${error.message}`);
@@ -112,11 +134,11 @@ export function ImpersonationStartDialog({
               <li>You can stop impersonation at any time</li>
             </ul>
 
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-800">
-              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+            <div className="p-3 bg-muted/40 rounded-md border border-border">
+              <p className="text-sm font-medium text-foreground">
                 ⚠️ This action is logged and monitored
               </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Impersonation sessions are recorded in audit logs for security
                 and compliance purposes.
               </p>

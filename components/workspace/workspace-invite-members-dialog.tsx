@@ -1,24 +1,19 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  AlertTriangle,
   CheckCircle,
   Mail,
   Send,
-  Shield,
   UserCheck,
   Users,
   UserX,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,15 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FieldController } from "@/components/forms/field-controller";
+import { useZodForm } from "@/components/forms/use-zod-form";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -47,13 +36,10 @@ import {
 } from "@/components/ui/select";
 import { TruncatedTooltipText } from "@/components/ui/truncated-tooltip-text";
 import { apiClient } from "@/lib/api-client";
-
-const inviteFormSchema = z.object({
-  role_id: z.string().min(1, "Please select a role"),
-  expires_in_days: z.number().int().min(1).max(30),
-});
-
-type InviteFormValues = z.infer<typeof inviteFormSchema>;
+import {
+  type InviteMembersValues,
+  inviteMembersSchema,
+} from "@/schemas/workspace-schemas";
 
 interface WorkspaceInviteMembersDialogProps {
   workspaceId: string;
@@ -114,7 +100,9 @@ export function WorkspaceInviteMembersDialog({
     staleTime: 2 * 60 * 1000,
   });
 
-  const roles = rolesResponse?.roles || [];
+  const roles = (rolesResponse?.roles || []).filter(
+    (r) => r.name.toLowerCase() !== "workspace_owner",
+  );
   const existingMembers = membersData?.members || [];
   const pendingInvitations = invitationsData?.invitations || [];
 
@@ -124,8 +112,7 @@ export function WorkspaceInviteMembersDialog({
     roles.find((r) => !r.is_system_role)?.id ||
     "";
 
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteFormSchema),
+  const form = useZodForm(inviteMembersSchema, {
     defaultValues: {
       role_id: "",
       expires_in_days: 7,
@@ -261,7 +248,7 @@ export function WorkspaceInviteMembersDialog({
 
   // Single/Bulk invitation mutation
   const createInvitationsMutation = useMutation({
-    mutationFn: async (data: InviteFormValues) => {
+    mutationFn: async (data: InviteMembersValues) => {
       const emails = validEmails.map((c) => c.email);
 
       if (emails.length === 0) {
@@ -342,7 +329,7 @@ export function WorkspaceInviteMembersDialog({
     },
   });
 
-  const onSubmit = async (data: InviteFormValues) => {
+  const onSubmit = async (data: InviteMembersValues) => {
     if (validEmails.length === 0) {
       toast.error("Please add at least one valid email address");
       return;
@@ -398,14 +385,14 @@ export function WorkspaceInviteMembersDialog({
                   className="flex items-start gap-2 p-3 rounded-md border"
                 >
                   {result.status === "pending" ? (
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{result.email}</p>
                     {result.status === "pending" ? (
-                      <p className="text-sm text-green-600">
+                      <p className="text-sm text-success-600">
                         Invitation sent successfully
                       </p>
                     ) : (
@@ -434,227 +421,213 @@ export function WorkspaceInviteMembersDialog({
           </div>
         ) : (
           // Show form
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Email Chips Input */}
-              <div className="space-y-3">
-                <FormLabel>Email Addresses</FormLabel>
-                <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-primary">
-                  <div className="flex flex-wrap gap-2">
-                    {/* Email chips */}
-                    {emailChips.map((chip, index) => (
-                      <TruncatedTooltipText
-                        key={chip.email}
-                        trigger={
-                          <Badge
-                            variant={getChipBadgeVariant(chip.status)}
-                            className="px-2 py-1 text-sm flex items-center gap-1"
+          <form
+            noValidate
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
+            {/* Email Chips Input */}
+            <div className="space-y-3">
+              <Label htmlFor="invite-emails">Email addresses</Label>
+              <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-ring">
+                <div className="flex flex-wrap gap-2">
+                  {/* Email chips */}
+                  {emailChips.map((chip, index) => (
+                    <TruncatedTooltipText
+                      key={chip.email}
+                      trigger={
+                        <Badge
+                          variant={getChipBadgeVariant(chip.status)}
+                          className="px-2 py-1 text-sm flex items-center gap-1"
+                        >
+                          {getChipIcon(chip.status)}
+                          <span>{chip.email}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 ml-1 hover:bg-transparent"
+                            onClick={() => removeEmailChip(index)}
                           >
-                            {getChipIcon(chip.status)}
-                            <span>{chip.email}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-0 ml-1 hover:bg-transparent"
-                              onClick={() => removeEmailChip(index)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </Badge>
-                        }
-                        content={chip.message ? <p>{chip.message}</p> : null}
-                      />
-                    ))}
-
-                    {/* Input field */}
-                    <input
-                      type="email"
-                      value={inputValue}
-                      onChange={(e) => {
-                        setInputValue(e.target.value);
-                      }}
-                      onKeyDown={handleInputKeyDown}
-                      onPaste={handlePaste}
-                      onBlur={() => {
-                        if (inputValue.trim()) {
-                          addEmailChip(inputValue);
-                        }
-                      }}
-                      placeholder={
-                        emailChips.length === 0
-                          ? "colleague@example.com or paste multiple emails"
-                          : "Add another email..."
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </Badge>
                       }
-                      disabled={isSubmitting || emailChips.length >= 50}
-                      className="border-0 p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 min-w-[200px] bg-transparent outline-none"
-                      autoComplete="email"
-                      name="email-input"
+                      content={chip.message ? <p>{chip.message}</p> : null}
                     />
-                  </div>
-                </div>
+                  ))}
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <p>
-                    Press Enter to add • Paste comma/newline-separated emails •
-                    Max 50
-                  </p>
-                  <p>
-                    {validEmails.length} valid{" "}
-                    {emailChips.length > validEmails.length && (
-                      <span className="text-amber-600">
-                        • {emailChips.length - validEmails.length} invalid
-                      </span>
-                    )}
-                  </p>
+                  {/* Input field */}
+                  <input
+                    type="email"
+                    value={inputValue}
+                    onChange={(e) => {
+                      setInputValue(e.target.value);
+                    }}
+                    onKeyDown={handleInputKeyDown}
+                    onPaste={handlePaste}
+                    onBlur={() => {
+                      if (inputValue.trim()) {
+                        addEmailChip(inputValue);
+                      }
+                    }}
+                    placeholder={
+                      emailChips.length === 0
+                        ? "colleague@example.com or paste multiple emails"
+                        : "Add another email..."
+                    }
+                    disabled={isSubmitting || emailChips.length >= 50}
+                    className="border-0 p-0 h-auto text-sm focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 min-w-[200px] bg-transparent outline-none"
+                    autoComplete="email"
+                    id="invite-emails"
+                    name="email-input"
+                  />
                 </div>
-
-                {emailChips.some((c) => c.status !== "valid") && (
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Some emails are invalid or already invited. Only valid
-                      emails will be sent invitations.
-                    </AlertDescription>
-                  </Alert>
-                )}
               </div>
 
-              {/* Role Selection */}
-              <FormField
-                control={form.control}
-                name="role_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isSubmitting || isLoadingRoles}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role">
-                            {field.value &&
-                              roles.find((r) => r.id === field.value)
-                                ?.display_name}
-                          </SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {roles
-                          .filter((role) => !role.is_system_role)
-                          .map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">
-                                    {role.display_name}
-                                  </span>
-                                  {role.is_system_role && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs gap-1"
-                                    >
-                                      <Shield className="h-3 w-3" />
-                                      System
-                                    </Badge>
-                                  )}
-                                </div>
-                                {role.description && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {role.description}
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {validEmails.length > 1
-                        ? "All invited members will receive this role"
-                        : "Choose the role for the invited member"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <p>
+                  Press Enter to add • Paste comma/newline-separated emails •
+                  Max 50
+                </p>
+                <p>
+                  {validEmails.length} valid{" "}
+                  {emailChips.length > validEmails.length && (
+                    <span className="text-warning-600">
+                      • {emailChips.length - validEmails.length} invalid
+                    </span>
+                  )}
+                </p>
+              </div>
 
-              {/* Expiration Days */}
-              <FormField
-                control={form.control}
-                name="expires_in_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Invitation Validity (Days)</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
-                      defaultValue={String(field.value)}
-                      disabled={isSubmitting}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select validity period" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">1 day</SelectItem>
-                        <SelectItem value="3">3 days</SelectItem>
-                        <SelectItem value="7">7 days (recommended)</SelectItem>
-                        <SelectItem value="14">14 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      How long the invitation{" "}
-                      {validEmails.length > 1 ? "links" : "link"} will remain
-                      valid
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {validEmails.length > 1 && (
-                <Alert>
-                  <Mail className="h-4 w-4" />
-                  <AlertDescription>
-                    Each person will receive a separate email invitation. Failed
-                    invitations (duplicates, invalid emails, existing members)
-                    will be reported after submission.
-                  </AlertDescription>
-                </Alert>
+              {emailChips.some((c) => c.status !== "valid") && (
+                <Notice tone="warning">
+                  Some emails are invalid or already invited. Only valid emails
+                  will be sent invitations.
+                </Notice>
               )}
+            </div>
 
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
+            {/* Role Selection */}
+            <FieldController
+              control={form.control}
+              name="role_id"
+              label="Role"
+              required
+              description={
+                validEmails.length > 1
+                  ? "Every invited member joins with this role."
+                  : "The role the invited member joins with."
+              }
+            >
+              {(field) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={isSubmitting || isLoadingRoles}
+                >
+                  <SelectTrigger
+                    id={field.id}
+                    aria-invalid={field["aria-invalid"]}
+                    aria-describedby={field["aria-describedby"]}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                  >
+                    <SelectValue placeholder="Choose a role">
+                      {field.value &&
+                        roles.find((r) => r.id === field.value)?.display_name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles
+                      .filter((role) => !role.is_system_role)
+                      .map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {role.display_name}
+                            </span>
+                            {role.description && (
+                              <span className="text-xs text-muted-foreground">
+                                {role.description}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </FieldController>
+
+            {/* Expiration Days */}
+            <FieldController
+              control={form.control}
+              name="expires_in_days"
+              label="Invitation valid for"
+              description={`How long the invitation ${validEmails.length > 1 ? "links stay" : "link stays"} valid.`}
+            >
+              {(field) => (
+                <Select
+                  value={String(field.value)}
+                  onValueChange={(value) => field.onChange(Number(value))}
                   disabled={isSubmitting}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || validEmails.length === 0}
-                >
-                  {isSubmitting ? (
-                    "Sending..."
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send{" "}
-                      {validEmails.length > 1
-                        ? `${validEmails.length} Invitations`
-                        : "Invitation"}
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+                  <SelectTrigger
+                    id={field.id}
+                    aria-invalid={field["aria-invalid"]}
+                    aria-describedby={field["aria-describedby"]}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                  >
+                    <SelectValue placeholder="Choose how long" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 day</SelectItem>
+                    <SelectItem value="3">3 days</SelectItem>
+                    <SelectItem value="7">7 days (recommended)</SelectItem>
+                    <SelectItem value="14">14 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </FieldController>
+
+            {validEmails.length > 1 && (
+              <Notice>
+                Each person will receive a separate email invitation. Failed
+                invitations (duplicates, invalid emails, existing members) will
+                be reported after submission.
+              </Notice>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || validEmails.length === 0}
+              >
+                {isSubmitting ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send{" "}
+                    {validEmails.length > 1
+                      ? `${validEmails.length} Invitations`
+                      : "Invitation"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         )}
       </DialogContent>
     </Dialog>

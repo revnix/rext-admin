@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Button } from "@/components/ui/button";
 
 interface RevenueChartProps {
@@ -65,28 +66,29 @@ export function RevenueChart({
           <XAxis dataKey="month" />
           <YAxis tickFormatter={formatCurrency} />
           <Tooltip
-            formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+            itemSorter={inSeriesOrder}
+            formatter={(value) => [`$${Number(value).toFixed(2)}`, ""]}
             labelFormatter={(label) => `Month: ${label}`}
           />
-          <Legend />
+          <Legend itemSorter={null} />
           <Line
             type="monotone"
             dataKey="mrr"
-            stroke="#8b5cf6"
+            stroke="var(--primary)"
             strokeWidth={2}
             name="MRR"
           />
           <Line
             type="monotone"
             dataKey="new_revenue"
-            stroke="#10b981"
+            stroke="var(--success-600)"
             strokeWidth={2}
             name="New Revenue"
           />
           <Line
             type="monotone"
             dataKey="churned_revenue"
-            stroke="#ef4444"
+            stroke="var(--danger-600)"
             strokeWidth={2}
             name="Churned Revenue"
           />

@@ -176,12 +176,23 @@ export class ApiClient {
 
       // Handle new consistent format: { success: true, data: {...}, meta: {...} }
       if (result && typeof result === "object" && "success" in result) {
-        if (result.success === false && "error" in result) {
+        // `success: false` is a failure even on an HTTP 200 and even when the
+        // body carries no structured `error` object — some endpoints report the
+        // problem only via a top-level `message`/`detail` (e.g. duplicate email
+        // on register). Without this, the caller sees a resolved promise and
+        // treats the failure as success.
+        if (result.success === false) {
+          const flatMessage =
+            typeof result.message === "string"
+              ? result.message
+              : typeof result.detail === "string"
+                ? result.detail
+                : undefined;
           throw new ApiError(
             result.error?.status_code || response.status,
-            result.error?.message || "Request failed",
+            result.error?.message || flatMessage || "Request failed",
             result.error?.code,
-            result.error?.details,
+            result.error?.details ?? result,
           );
         }
 

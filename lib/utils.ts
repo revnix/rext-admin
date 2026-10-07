@@ -1,8 +1,27 @@
 // File: lib/utils.ts
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 import { logger } from "@/lib/logger";
 import type { z } from "zod";
+
+// The type roles in app/globals.css are font sizes. Unregistered, tailwind-merge reads
+// `text-page-title` as a colour and drops it next to `text-foreground`.
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: [
+        "display",
+        "page-title",
+        "section",
+        "body",
+        "table",
+        "label",
+        "caption",
+        "data",
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

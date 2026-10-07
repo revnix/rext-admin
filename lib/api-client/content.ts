@@ -25,8 +25,35 @@ import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
 import { ENDPOINTS } from "./endpoints";
 
+export interface BlogImageUpload {
+  filename: string;
+  original_filename: string;
+  file_type: string;
+  file_size: number;
+  storage_backend: "minio";
+  storage_path: string;
+  storage_bucket: string;
+  public_url: string;
+  width: number | null;
+  height: number | null;
+}
+
 export function createContentNamespace(client: ApiClient) {
   return {
+    async uploadBlogImage(
+      workspaceId: string,
+      file: File,
+    ): Promise<BlogImageUpload> {
+      const formData = new FormData();
+      formData.append("file", file);
+      return client.request<BlogImageUpload>(
+        ENDPOINTS.CONTENT.uploadBlogImage(workspaceId),
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+    },
     /**
      * List content for workspace
      */
@@ -219,8 +246,28 @@ export function createContentNamespace(client: ApiClient) {
         status: string;
         cancelled_records: number;
       }>(
-        `${ENDPOINTS.CONTENT.cancel_schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        `${ENDPOINTS.CONTENT.schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
         { method: "DELETE" },
+      );
+    },
+
+    /**
+     * Move a pending scheduled publish to another day (`YYYY-MM-DD`, in the account's timezone).
+     * Every scheduled site keeps its time of day; nothing else about the content changes.
+     */
+    reschedule: async (workspaceId: string, contentId: string, day: string) => {
+      return client.request<{
+        content_id: string;
+        status: string;
+        scheduled_at: string;
+        rescheduled_records: number;
+      }>(
+        `${ENDPOINTS.CONTENT.schedule(contentId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ day }),
+        },
       );
     },
 

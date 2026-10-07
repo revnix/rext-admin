@@ -3,11 +3,11 @@
 import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
-import { SelectionView } from "@/components/generate-content/selection-view";
-import { PageLayout } from "@/components/page-layout";
+import { RunNotice } from "@/components/generate-content/run-notice";
+import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import {
   Card,
@@ -16,39 +16,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import { announceBackgroundGenerationRemoval } from "@/lib/generate-content/background-generation-sync";
+import {
+  findLibraryItem,
+  type LibraryStart,
+} from "@/lib/generate-content/library-item";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 
-type PageView = "selection" | "fresh" | "library";
+type PageView = "fresh" | "library";
 
 export default function Page() {
-  const { workspace, workspaceId } = useWorkspace();
+  const { workspace, workspaceId, workspaceSlug } = useWorkspace();
   const router = useRouter();
   const { isLoading: isPermLoading } = useWorkspacePermission(
     CONTENT_PERMISSIONS.READ,
     workspaceId,
   );
-  const { hasPermission: canCreate, isLoading: isCreatePermLoading } =
-    useWorkspacePermission(CONTENT_PERMISSIONS.CREATE, workspaceId);
+  const { user } = useAuthSession();
   const urlParams = useSearchParams();
-  const libraryKeyword = urlParams.get("library");
+  // `?library=` names a Library item by its store key (E17). The page reads the
+  // item before starting: its keyword is what the run starts from, and a key
+  // that isn't in the user's Library (or typed text) starts nothing.
+  const libraryKey = urlParams.get("library");
+  const [libraryStart, setLibraryStart] = useState<
+    LibraryStart | "missing" | null
+  >(null);
+  const libraryKeyword =
+    libraryStart && libraryStart !== "missing" ? libraryStart.keyword : null;
   const libraryIntent = urlParams.get("intent");
   const backgroundThreadId = urlParams.get("thread");
-  const isLibrary = libraryKeyword !== null;
+  const isLibrary = libraryKey !== null;
   const backgroundJobsHydrated = useBackgroundGenerationStore(
     (state) => state.hasHydrated,
   );
-  const [view, setView] = useState<PageView>(() =>
-    libraryKeyword || backgroundThreadId ? "fresh" : "selection",
-  );
+  // The page opens on the search, with the recent keywords beneath it (E4): no screen before it.
+  const [view, setView] = useState<PageView>("fresh");
+  // Bumped to start a new article: the generation view mounts afresh, with nothing of the last run.
+  const [startKey, setStartKey] = useState(0);
+  // Whether the address named a run, so that its going away (a cancel) starts a new article.
+  const hadThread = useRef(Boolean(backgroundThreadId));
   const [selectedLibraryKeyword, setSelectedLibraryKeyword] = useState<
     string | undefined
   >(libraryKeyword ?? undefined);
+
+  // The Library is kept under the workspace's id; `workspaceId` above is the address's slug.
+  const libraryWorkspaceId = workspace?.id;
+  useEffect(() => {
+    if (libraryKey === null || !user?.id || !libraryWorkspaceId) {
+      setLibraryStart(null);
+      return;
+    }
+    if (!libraryKey.trim()) {
+      setLibraryStart("missing");
+      return;
+    }
+    let cancelled = false;
+    void findLibraryItem(libraryKey, user.id, libraryWorkspaceId).then(
+      (item) => {
+        if (!cancelled) setLibraryStart(item ?? "missing");
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryKey, user?.id, libraryWorkspaceId]);
 
   useEffect(() => {
     if (libraryKeyword) {
@@ -57,15 +94,23 @@ export default function Page() {
     }
   }, [libraryKeyword]);
 
+  const startOver = () => {
+    hadThread.current = false;
+    setSelectedLibraryKeyword(undefined);
+    setView("fresh");
+    setStartKey((key) => key + 1);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: startOver only sets state
   useEffect(() => {
     if (backgroundThreadId) {
+      hadThread.current = true;
       setView("fresh");
-    } else if (!libraryKeyword) {
+    } else if (!libraryKeyword && hadThread.current) {
       // Cancelling replaces `?thread=...` with the blank generation route.
-      // Reset the mounted workflow as well so its loading/editor state cannot
+      // Start a new article as well so the run's loading/editor state cannot
       // remain visible after the URL changes.
-      setSelectedLibraryKeyword(undefined);
-      setView("selection");
+      startOver();
     }
   }, [backgroundThreadId, libraryKeyword]);
 
@@ -81,14 +126,9 @@ export default function Page() {
   // there is no reason to block a second one: the dock keeps every running job
   // visible and is the way back into any of them.
 
-  const handleStartFresh = () => {
-    setSelectedLibraryKeyword(undefined);
-    setView("fresh");
-  };
-
   const handlePickFromLibrary = () => {
     setView("library");
-    router.push(`/w/${workspace?.slug}/generate_content/library` as Route);
+    router.push(workspaceRoutes.keywordLibrary(workspaceSlug) as Route);
   };
 
   const handleBackToSelection = () => {
@@ -111,9 +151,10 @@ export default function Page() {
       announceBackgroundGenerationRemoval(discardedThreadIds);
     }
 
-    setView("selection");
-    setSelectedLibraryKeyword(undefined);
-    if (backgroundThreadId && workspace?.slug) {
+    startOver();
+    // A new article starts from a clean address: neither the run nor the library item it started
+    // from (a library start that failed before its run existed still names the item).
+    if ((backgroundThreadId || isLibrary) && workspace?.slug) {
       router.replace(workspaceRoutes.generate_content(workspace.slug) as Route);
     }
   };
@@ -128,25 +169,26 @@ export default function Page() {
   // permanent spinner while anything was still generating.
   const isResolvingActiveGeneration = !backgroundJobsHydrated;
 
-  if (!workspace?.id || isPermLoading || isResolvingActiveGeneration) {
+  const isResolvingLibraryItem = libraryKey !== null && libraryStart === null;
+
+  if (
+    !workspace?.id ||
+    isPermLoading ||
+    isResolvingActiveGeneration ||
+    isResolvingLibraryItem
+  ) {
     return (
-      <PageLayout title="Generate Content">
+      <WorkingSurface title="Generate" hidden>
         <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-foreground" />
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
-      </PageLayout>
+      </WorkingSurface>
     );
   }
 
   return (
-    <PageLayout
-      title="Generate Content"
-      hideTitle={true}
-      description={`View, edit, and manage AI-generated content for ${workspace?.name || "this workspace"}.`}
-      fullWidth
-      className="!py-0"
-    >
+    <WorkingSurface title="Generate" hidden flush>
       <PermissionGuard
         permission={CONTENT_PERMISSIONS.READ}
         showLoading={false}
@@ -161,8 +203,8 @@ export default function Page() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
-                  content:create
+                <code className="text-xs bg-muted px-1 rounded-md">
+                  {CONTENT_PERMISSIONS.READ}
                 </code>
               </p>
             </CardContent>
@@ -170,25 +212,34 @@ export default function Page() {
         }
       >
         <div className="w-full">
-          {view === "selection" && (
-            <SelectionView
-              onStartFresh={handleStartFresh}
-              onPickFromLibrary={handlePickFromLibrary}
-              canCreate={canCreate}
-              isPermLoading={isCreatePermLoading}
+          {libraryStart === "missing" && !backgroundThreadId ? (
+            // A start that names no Library item shows only the notice: the
+            // start screen behind it would read as if nothing had happened.
+            <RunNotice
+              title="This keyword isn't in your Library"
+              message="Search for it to research it, then start the article from the Library."
+              actionLabel="Open the Library"
+              onAction={handlePickFromLibrary}
             />
-          )}
-          {view === "fresh" && (
-            <FreshGenerationView
-              onBack={handleBackToSelection}
-              initialKeyword={selectedLibraryKeyword}
-              initialIntent={libraryIntent ?? undefined}
-              isLibrary={isLibrary}
-              backgroundThreadId={backgroundThreadId ?? undefined}
-            />
+          ) : (
+            view === "fresh" && (
+              <FreshGenerationView
+                key={startKey}
+                onBack={handleBackToSelection}
+                initialKeyword={selectedLibraryKeyword}
+                initialIntent={libraryIntent ?? undefined}
+                isLibrary={isLibrary}
+                libraryKey={
+                  libraryStart && libraryStart !== "missing"
+                    ? libraryStart.key
+                    : undefined
+                }
+                backgroundThreadId={backgroundThreadId ?? undefined}
+              />
+            )
           )}
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </WorkingSurface>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { Check } from "lucide-react";
 import * as React from "react";
 import {
@@ -62,15 +62,15 @@ const RadioGroup = React.forwardRef<
           const isDisabled = option.disabled;
 
           const labelClasses = cn(
-            "flex items-start gap-3 rounded-lg border-2 p-4 transition-all duration-200",
+            "flex items-start gap-3 rounded-md border-2 p-4 transition-all duration-200",
             isDisabled ? "cursor-not-allowed" : "cursor-pointer",
             isDisabled
               ? "border-border/70 bg-muted text-muted-foreground"
               : "border-border bg-background hover:bg-accent hover:text-accent-foreground hover:border-accent hover:shadow-sm",
-            isSelected
-              ? "bg-primary/10 border-primary ring-2 ring-primary/30 text-primary shadow-sm"
-              : undefined,
+            isSelected ? "bg-surface-inset border-primary" : undefined,
             "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
+            // The radio itself is visually hidden: its card shows the keyboard focus.
+            "peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50",
           );
 
           const labelContent = (
@@ -100,7 +100,7 @@ const RadioGroup = React.forwardRef<
                         isDisabled
                           ? "text-muted-foreground"
                           : isSelected
-                            ? "text-primary"
+                            ? "text-foreground"
                             : "text-muted-foreground",
                       )}
                     />
@@ -111,7 +111,7 @@ const RadioGroup = React.forwardRef<
                       isDisabled
                         ? "text-muted-foreground"
                         : isSelected
-                          ? "text-primary"
+                          ? "text-foreground"
                           : "text-foreground",
                     )}
                   >
@@ -125,7 +125,7 @@ const RadioGroup = React.forwardRef<
                       isDisabled
                         ? "text-muted-foreground"
                         : isSelected
-                          ? "text-primary/70"
+                          ? "text-muted-foreground"
                           : "text-muted-foreground",
                     )}
                   >

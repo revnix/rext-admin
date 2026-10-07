@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,12 +20,18 @@ import { apiClient } from "@/lib/api-client";
 import type { Permission } from "@/types/role";
 import { PermissionMultiSelect } from "./permission-multi-select";
 import { usePermissionStore } from "@/stores/permission-store";
+import { isWorkspaceAssignablePermission } from "@/lib/permissions";
 
 interface CreateRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   permissions: Permission[];
 }
+
+// Hierarchy level is no longer author-editable; new roles sit at the bottom of
+// the hierarchy, which the backend's escalation guard allows any role creator
+// to grant.
+const NEW_ROLE_HIERARCHY_LEVEL = 1;
 
 export function CreateRoleDialog({
   open,
@@ -37,13 +43,18 @@ export function CreateRoleDialog({
     name: "",
     display_name: "",
     description: "",
-    hierarchy_level: 1,
   });
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
     [],
   );
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
+  );
+  // Roles created here are always workspace roles, so platform-scoped
+  // resources are not offerable.
+  const workspacePermissions = useMemo(
+    () => permissions.filter(isWorkspaceAssignablePermission),
+    [permissions],
   );
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -52,8 +63,7 @@ export function CreateRoleDialog({
         name: formData.name.toLowerCase().replace(/\s+/g, "_"),
         display_name: formData.display_name,
         description: formData.description || undefined,
-        hierarchy_level: formData.hierarchy_level,
-        is_system_role: false,
+        hierarchy_level: NEW_ROLE_HIERARCHY_LEVEL,
         is_workspace_role: true,
       });
 
@@ -88,6 +98,10 @@ export function CreateRoleDialog({
           queryKey: ["workspace-available-roles"],
           refetchType: "all",
         }),
+        queryClient.invalidateQueries({
+          queryKey: ["audit-logs"],
+          refetchType: "all",
+        }),
       ]);
     },
     onError: (error: Error) => {
@@ -100,7 +114,6 @@ export function CreateRoleDialog({
       name: "",
       display_name: "",
       description: "",
-      hierarchy_level: 1,
     });
     setSelectedPermissionIds([]);
     onOpenChange(false);
@@ -109,18 +122,33 @@ export function CreateRoleDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.name || !formData.display_name) {
+    if (!formData.name.trim() || !formData.display_name.trim()) {
       toast.error("Name and display name are required");
       return;
     }
 
-    if (formData.hierarchy_level < 0 || formData.hierarchy_level > 100) {
-      toast.error("Hierarchy level must be between 0 and 100");
+    if (
+      !isValidRoleName(formData.name) ||
+      !isValidRoleName(formData.display_name)
+    ) {
+      toast.error(
+        "Role name can only contain letters, spaces, and underscores.",
+      );
+      return;
+    }
+
+    // A custom role with no permissions grants nothing and only clutters the
+    // role list — it must not be created.
+    if (selectedPermissionIds.length === 0) {
+      toast.error("Select at least one permission for the role");
       return;
     }
 
     createMutation.mutate();
+  };
+
+  const isValidRoleName = (name: string) => {
+    return /^[a-zA-Z_ ]+$/.test(name);
   };
 
   return (
@@ -146,7 +174,10 @@ export function CreateRoleDialog({
                 placeholder="e.g., Content Editor"
                 value={formData.display_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, display_name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    display_name: e.target.value.replace(/[0-9]/g, ""),
+                  })
                 }
                 required
               />
@@ -162,7 +193,10 @@ export function CreateRoleDialog({
                 placeholder="e.g., content_editor"
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    name: e.target.value.replace(/[0-9]/g, ""),
+                  })
                 }
                 required
               />
@@ -186,35 +220,20 @@ export function CreateRoleDialog({
               />
             </div>
 
-            {/* Hierarchy Level */}
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level (0-100)</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.hierarchy_level}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hierarchy_level: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                Higher numbers indicate higher authority. Super admin is 100.
-              </p>
-            </div>
-
             {/* Permissions */}
             <div className="space-y-2">
-              <Label>Permissions</Label>
+              <Label>
+                Permissions <span className="text-destructive">*</span>
+              </Label>
               <PermissionMultiSelect
-                permissions={permissions}
+                permissions={workspacePermissions}
                 selectedPermissionIds={selectedPermissionIds}
                 onChange={setSelectedPermissionIds}
               />
+              <p className="text-xs text-muted-foreground">
+                At least one permission is required — a role without permissions
+                cannot be created.
+              </p>
             </div>
           </div>
 
@@ -227,7 +246,12 @@ export function CreateRoleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createMutation.isPending || selectedPermissionIds.length === 0
+              }
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

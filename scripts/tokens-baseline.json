@@ -1,0 +1,60 @@
+{
+  "app/globals.css": {
+    "arbitrary-size": 1
+  },
+  "app/w/[workspaceSlug]/content/[id]/page.tsx": {
+    "small-type": 2
+  },
+  "components/ui/alert-dialog.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/button.tsx": {
+    "off-scale": 5
+  },
+  "components/ui/calendar.tsx": {
+    "off-scale": 1,
+    "arbitrary-size": 2
+  },
+  "components/ui/chart.tsx": {
+    "off-scale": 1,
+    "arbitrary-radius": 2
+  },
+  "components/ui/checkbox.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/command.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/input-group.tsx": {
+    "off-scale": 1,
+    "arbitrary-radius": 3
+  },
+  "components/ui/lexical-editor.tsx": {
+    "off-scale": 1,
+    "small-type": 1
+  },
+  "components/ui/popover.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/radio-group.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/scroll-area.tsx": {
+    "arbitrary-radius": 1
+  },
+  "components/ui/sonner.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/switch.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/tooltip.tsx": {
+    "arbitrary-radius": 1
+  },
+  "components/ui/typeform/multi-select-card.tsx": {
+    "off-scale": 1
+  },
+  "components/ui/typeform/single-select-card.tsx": {
+    "off-scale": 1
+  }
+}

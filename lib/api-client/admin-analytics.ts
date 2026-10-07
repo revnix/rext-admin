@@ -6,25 +6,11 @@
  */
 
 import type { ApiClient } from "./core";
-import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
-
-export interface AnalyticsOverview {
-  total_subscriptions: number;
-  active_subscriptions: number;
-  trialing_subscriptions: number;
-  suspended_subscriptions: number;
-  cancelled_subscriptions: number;
-  mrr: number;
-  arr: number;
-  churn_rate: number;
-  trial_conversion_rate: number;
-  avg_customer_ltv: number;
-}
 
 export interface RevenueMetrics {
   current_month: {
@@ -67,6 +53,7 @@ export interface TrialConversionMetrics {
   trials_converted: number;
   trials_expired: number;
   trials_active: number;
+  trials_cancelled?: number;
   conversion_rate: number;
   average_trial_length_days: number;
   conversion_by_plan?: Array<{
@@ -75,65 +62,10 @@ export interface TrialConversionMetrics {
     conversions: number;
     conversion_rate: number;
   }>;
-}
-
-export interface AnalyticsApiResponse<T> {
-  data: T;
-  message?: string;
-}
-
-// Invitation Analytics Types
-export interface InvitationAnalyticsSummary {
-  total_invitations: number;
-  accepted: number;
-  declined: number;
-  expired: number;
-  pending: number;
-  acceptance_rate: number;
-  decline_rate: number;
-  expiry_rate: number;
-  avg_time_to_acceptance_hours: number;
-}
-
-export interface TopInviter {
-  user_id: string;
-  name: string;
-  email: string;
-  invitation_count: number;
-}
-
-export interface PopularRole {
-  role_id: string;
-  name: string;
-  invitation_count: number;
-}
-
-export interface DailyTrend {
-  date: string;
-  total: number;
-  accepted: number;
-  pending: number;
-}
-
-export interface WorkspaceStat {
-  workspace_id: string;
-  name: string;
-  total_invitations: number;
-  accepted_invitations: number;
-  acceptance_rate: number;
-}
-
-export interface InvitationAnalyticsData {
-  summary: InvitationAnalyticsSummary;
-  top_inviters: TopInviter[];
-  popular_roles: PopularRole[];
-  daily_trend: DailyTrend[];
-  workspace_stats: WorkspaceStat[];
-  period: {
-    start_date: string;
-    end_date: string;
-    days: number;
-  };
+  funnel?: Array<{
+    stage: string;
+    count: number;
+  }>;
 }
 
 // ============================================================================
@@ -142,21 +74,6 @@ export interface InvitationAnalyticsData {
 
 export function createAdminAnalyticsNamespace(client: ApiClient) {
   return {
-    /**
-     * Get subscription analytics overview
-     * Includes MRR, ARR, churn rate, trial conversion, LTV
-     *
-     * @requires Super admin role
-     */
-    getOverview: async (): Promise<AnalyticsOverview> => {
-      return client.request<AnalyticsOverview>(
-        ENDPOINTS.ADMIN_ANALYTICS.subscriptions.overview,
-        {
-          method: "GET",
-        },
-      );
-    },
-
     /**
      * Get revenue metrics and breakdown
      * Includes current month revenue, revenue by plan, growth rate
@@ -196,29 +113,6 @@ export function createAdminAnalyticsNamespace(client: ApiClient) {
     getTrialConversion: async (): Promise<TrialConversionMetrics> => {
       return client.request<TrialConversionMetrics>(
         ENDPOINTS.ADMIN_ANALYTICS.subscriptions.trialConversion,
-        {
-          method: "GET",
-        },
-      );
-    },
-
-    /**
-     * Get invitation analytics
-     * Includes acceptance rates, top inviters, popular roles, daily trends
-     *
-     * @param days - Number of days to analyze (default 30)
-     * @param workspaceId - Optional workspace filter
-     * @requires audit.read permission
-     */
-    getInvitationAnalytics: async (
-      days = 30,
-      workspaceId?: string,
-    ): Promise<InvitationAnalyticsData> => {
-      return client.request<InvitationAnalyticsData>(
-        buildUrl(ENDPOINTS.ADMIN_ANALYTICS.invitations.analytics, {
-          days,
-          workspace_id: workspaceId,
-        }),
         {
           method: "GET",
         },

@@ -1,3 +1,6 @@
+import { NODE_STAGES, type RunPhase } from "@/lib/generate-content/run-stages";
+import { isStoppedRunCode } from "@/lib/generate-content/run-events";
+
 export type GenerationRunStatus =
   | "pending"
   | "running"
@@ -26,6 +29,8 @@ type GenerationThreadState = GenerationGraphState & {
   values?: {
     content?: {
       error?: string;
+      /** Why the backend ended the run; `STOPPED_RUN_CODES` (run-events.ts) lists those it ended on purpose. */
+      error_code?: string;
       final_content?: unknown;
       review?: {
         readability_metrics?: unknown;
@@ -39,12 +44,15 @@ type GenerationThreadState = GenerationGraphState & {
 export type BackgroundProgress = {
   progress: number;
   stage: string;
+  /** For a running run: the run component's phase and stage, from the nodes running now. */
+  runStage?: { phase: RunPhase; id: string };
   error?: string;
   /** The run finished by pausing for user input rather than by finishing the article. */
   awaitingInput?: boolean;
 };
 
 const REVIEW_STAGE_NAMES = new Set([
+  "final_validate_content",
   "review_content",
   "calculate_readability",
   "calculate_on_page_seo",
@@ -89,8 +97,8 @@ const AWAITING_INPUT_STAGES: Record<
 > = {
   "keyword Selection": { progress: 14, stage: "Keywords ready to review" },
   content_type: { progress: 26, stage: "Content types ready to review" },
-  topic: { progress: 32, stage: "Topics ready to review" },
-  topic_selection: { progress: 32, stage: "Topics ready to review" },
+  topic: { progress: 32, stage: "Titles ready to review" },
+  topic_selection: { progress: 32, stage: "Titles ready to review" },
   outline_review: { progress: 38, stage: "Outline ready to review" },
   outline_reject: { progress: 38, stage: "Outline ready to review" },
 };
@@ -141,7 +149,35 @@ const findPendingInterruptType = (state?: GenerationGraphState | null) => {
   return undefined;
 };
 
+/**
+ * The run component's stage for the nodes running now: the deepest running node that has one
+ * (a subgraph's own node sits under its container's name in the list).
+ */
+export function deriveRunStage(
+  state?: GenerationGraphState | null,
+): BackgroundProgress["runStage"] {
+  const active = collectActiveNodes(state);
+  for (let i = active.length - 1; i >= 0; i -= 1) {
+    const stage = NODE_STAGES[active[i]];
+    if (stage) return stage;
+  }
+  return undefined;
+}
+
 export function deriveBackgroundProgress(
+  runStatus: GenerationRunStatus,
+  state?: GenerationThreadState | null,
+): BackgroundProgress {
+  const progress = deriveProgressAndStage(runStatus, state);
+  // A running run's stage; and a timed-out run's, where the time limit stopped it (E22, rext-control#451).
+  if (runStatus === "timeout" || (runStatus === "running" && !progress.error)) {
+    const runStage = deriveRunStage(state);
+    return runStage ? { ...progress, runStage } : progress;
+  }
+  return progress;
+}
+
+function deriveProgressAndStage(
   runStatus: GenerationRunStatus,
   state?: GenerationThreadState | null,
 ): BackgroundProgress {
@@ -154,7 +190,11 @@ export function deriveBackgroundProgress(
   if (contentError) {
     return {
       progress: 100,
-      stage: "Generation failed",
+      // A run the backend ended on purpose (no search results, no titles) is
+      // not a failure of the system.
+      stage: isStoppedRunCode(content?.error_code)
+        ? "Generation stopped"
+        : "Generation failed",
       error: contentError,
     };
   }
@@ -202,17 +242,12 @@ export function deriveBackgroundProgress(
     review?.trust_score,
   ].filter(Boolean).length;
 
+  // The article's stages by the run component's names (rext-control #260): Research and Draft
+  // (one node, so the poll says Draft), Style pass, Checks.
   if (completedReviews > 0) {
     return {
       progress: Math.min(96, 78 + completedReviews * 6),
-      stage: "Running quality checks",
-    };
-  }
-
-  if (content?.final_content) {
-    return {
-      progress: 74,
-      stage: "Reviewing SEO and readability",
+      stage: "Checks",
     };
   }
 
@@ -221,14 +256,22 @@ export function deriveBackgroundProgress(
   if (activeNodes.some((node) => REVIEW_STAGE_NAMES.has(node))) {
     return {
       progress: 74,
-      stage: "Reviewing SEO and readability",
+      stage: "Checks",
+    };
+  }
+
+  // The draft exists and no check has run yet: the style pass.
+  if (content?.final_content) {
+    return {
+      progress: 74,
+      stage: "Style pass",
     };
   }
 
   if (activeNodes.includes("generate_content")) {
     return {
       progress: 42,
-      stage: "Drafting your article",
+      stage: "Draft",
     };
   }
 
@@ -241,7 +284,7 @@ export function deriveBackgroundProgress(
       return { progress: 34, stage: "Building your outline" };
     }
     if (activeNodes.some((node) => TOPIC_STAGE_NAMES.has(node))) {
-      return { progress: 28, stage: "Preparing your topics" };
+      return { progress: 28, stage: "Preparing your titles" };
     }
     return { progress: 26, stage: "Planning your article" };
   }
@@ -257,5 +300,29 @@ export function deriveBackgroundProgress(
   return {
     progress: 24,
     stage: "Preparing your article",
+  };
+}
+
+/**
+ * The words for a job that ended without an article, in the dock's toast and
+ * notification. A stopped run (a keyword with no search results, a cancelled
+ * run) is not a failure of the system, and its reason is more useful than the
+ * keyword it was for.
+ */
+export function describeFailedJob(job: {
+  title: string;
+  stage?: string;
+  error?: string;
+}): { title: string; description: string } {
+  if (job.stage === "Generation stopped") {
+    return {
+      title: "Generation stopped",
+      description:
+        job.error?.trim() || `"${job.title}" stopped before it finished.`,
+    };
+  }
+  return {
+    title: "Article generation failed",
+    description: `"${job.title}" could not be completed.`,
   };
 }

@@ -12,7 +12,10 @@ import { impersonationQueries } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth-store";
 import { log } from "@/lib/logger";
 import type { Route } from "next";
-import { AUTH_SESSION_TOKEN_SWAP_ACTION } from "@/lib/auth-utils";
+import {
+  AUTH_SESSION_TOKEN_SWAP_ACTION,
+  clearAuthHeadersCache,
+} from "@/lib/auth-utils";
 
 /**
  * Impersonation Banner Component
@@ -35,7 +38,12 @@ export function ImpersonationBanner() {
     isError,
   } = useQuery({
     ...impersonationQueries.status(),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // Only keep polling while impersonation is actually active. The old
+    // unconditional 30s interval polled forever for every non-impersonating
+    // user on every page (verified: 2 req/min/tab). Detection still works
+    // via the initial fetch and focus refetches.
+    refetchInterval: (query) =>
+      query.state.data?.is_impersonating ? 30000 : false,
     staleTime: 20000, // Consider stale after 20 seconds
     retry: false, // Don't retry if endpoint doesn't exist (404)
     // Gracefully handle errors (endpoint not implemented yet)
@@ -55,6 +63,9 @@ export function ImpersonationBanner() {
       // The Zustand store is only an impersonation override. Keeping the
       // restored token there would bypass future NextAuth refreshes forever.
       clearTokens();
+      // Purge the auth headers cache so getAuthHeaders() doesn't return the
+      // now-invalidated impersonation token on the next API call.
+      clearAuthHeadersCache();
 
       // Fetch and update original user profile
       try {
@@ -116,31 +127,31 @@ export function ImpersonationBanner() {
   }
 
   return (
-    <div className="w-full border-b border-amber-600 dark:border-amber-500 bg-amber-200 dark:bg-amber-950/20 px-4 py-3">
+    <div className="w-full border-b border-warning-200 bg-warning-50 px-4 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-start gap-3 min-w-0">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
+          <AlertTriangle className="h-4 w-4 text-warning-600 mt-0.5 shrink-0" />
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-6 min-w-0">
-            <span className="text-sm font-semibold text-yellow-900 dark:text-yellow-100 shrink-0">
+            <span className="text-sm font-semibold text-warning-700 shrink-0">
               Impersonating User
             </span>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">
-                <User className="h-4 w-4 text-yellow-700 dark:text-yellow-300 shrink-0" />
-                <span className="font-medium text-yellow-900 dark:text-yellow-100 truncate">
+                <User className="h-4 w-4 text-warning-600 shrink-0" />
+                <span className="font-medium text-warning-700 truncate">
                   {status.impersonated_user_name ||
                     status.impersonated_user_email}
                 </span>
                 {status.impersonated_user_name && (
-                  <span className="text-yellow-700 dark:text-yellow-300 truncate">
+                  <span className="text-warning-700 truncate">
                     ({status.impersonated_user_email})
                   </span>
                 )}
               </div>
 
               {status.started_at && (
-                <span className="text-yellow-700 dark:text-yellow-300 shrink-0">
+                <span className="text-warning-700 shrink-0">
                   Since {new Date(status.started_at).toLocaleTimeString()}
                 </span>
               )}
@@ -153,7 +164,7 @@ export function ImpersonationBanner() {
           size="sm"
           onClick={handleStopImpersonation}
           disabled={stopImpersonationMutation.isPending || isPendingRoute}
-          className="w-full sm:w-auto shrink-0 border-yellow-600 bg-yellow-100 hover:bg-yellow-100 dark:border-yellow-500 dark:hover:bg-yellow-900/30"
+          className="w-full sm:w-auto shrink-0"
         >
           <LogOut className="h-4 w-4 mr-2" />
           {stopImpersonationMutation.isPending || isPendingRoute

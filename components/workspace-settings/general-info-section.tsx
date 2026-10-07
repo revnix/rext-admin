@@ -1,81 +1,75 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import * as React from "react";
+
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import * as z from "zod";
-import { PermissionGuard } from "@/components/permission/permission-guard";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { apiClient } from "@/lib/api-client";
-import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
-import { useWorkspace } from "@/providers/workspace-provider";
-import { useWorkspaceStore } from "@/stores/workspace";
-import * as React from "react";
+
 import type { Route } from "next";
 
-const generalInfoSchema = z.object({
-  name: z.string().min(1, "Workspace name is required").max(200),
-  slug: z.string(),
-  description: z.string().max(500).optional(),
-  url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-});
+import { FieldController } from "@/components/forms/field-controller";
+import { FormSection, FormShell } from "@/components/forms/form-shell";
+import { useSavedStatus } from "@/components/forms/use-saved-status";
+import { useZodForm } from "@/components/forms/use-zod-form";
+import { WorkspaceFavicon } from "@/components/shell/workspace-favicon";
+import { Field, FieldDescription, FieldTitle } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import { apiClient } from "@/lib/api-client";
+import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { workspaceRoutes } from "@/lib/routes";
+import { useWorkspace } from "@/providers/workspace-provider";
+import {
+  type WorkspaceGeneralInfo,
+  workspaceGeneralInfoSchema,
+} from "@/schemas/workspace-schemas";
+import { useWorkspaceStore } from "@/stores/workspace";
 
-type GeneralInfoForm = z.infer<typeof generalInfoSchema>;
-
+/**
+ * Workspace settings, General: the name and the website, the slug and the icon shown. Every member
+ * sees them; changing them needs workspace.update, so without it the form is shown disabled.
+ */
 export function GeneralInfoSection() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { hasPermission: canUpdate, isLoading: isPermissionLoading } =
+    useWorkspacePermission(WORKSPACE_PERMISSIONS.UPDATE, workspaceId);
+
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
+
   const updateWorkspaceInList = useWorkspaceStore(
     (state) => state.updateWorkspaceInList,
   );
 
-  const form = useForm<GeneralInfoForm>({
-    resolver: zodResolver(generalInfoSchema),
-    values: {
-      name: workspace?.name || "",
-      slug: workspace?.slug || "",
-      url: workspace?.url || "",
-    },
+  const form = useZodForm(workspaceGeneralInfoSchema, {
+    defaultValues: { name: "", slug: "", url: "" },
   });
+  const { status, markSaved } = useSavedStatus(form.formState.isDirty);
 
-  // Reset form when workspace changes
+  // Follow the workspace as it loads and refetches, keeping what the person is typing.
   React.useEffect(() => {
-    if (workspace) {
-      form.reset({
+    if (!workspace) {
+      return;
+    }
+
+    form.reset(
+      {
         name: workspace.name || "",
         slug: workspace.slug || "",
         url: workspace.url || "",
-      });
-    }
+      },
+      { keepDirtyValues: true },
+    );
   }, [workspace, form]);
 
-  const onSubmit = async (data: GeneralInfoForm) => {
+  const onSubmit = async (data: WorkspaceGeneralInfo) => {
     try {
       if (!workspace?.id) {
-        throw new Error("Workspace data is not loaded yet. Please try again.");
+        throw new Error("The workspace hasn't loaded yet. Try again.");
       }
 
       const response = await apiClient.workspaces.update(workspace.id, {
@@ -83,129 +77,134 @@ export function GeneralInfoSection() {
         url: data.url,
       });
 
-      // Update local store immediately so UI reflects changes without waiting for refetch
+      // Update local store immediately.
       if (response?.workspace) {
         setCurrentWorkspace(response.workspace);
         updateWorkspaceInList(response.workspace);
+
+        // Update detail cache.
+        queryClient.setQueryData(
+          ["workspaces", "detail", response.workspace.slug],
+          response,
+        );
+
+        queryClient.setQueryData(
+          ["workspaces", "detail", response.workspace.id],
+          response,
+        );
+
+        if (workspace.slug && workspace.slug !== response.workspace.slug) {
+          queryClient.setQueryData(
+            ["workspaces", "detail", workspace.slug],
+            response,
+          );
+        }
       }
 
-      // Refresh the list and switcher caches so they stop serving the old name.
-      // The detail branch is deliberately excluded: its cache key IS the slug,
-      // and a rename kills the old slug - refetching it would 404 and bounce us
-      // out via WorkspaceProvider. Navigating below fetches under the new key.
+      // Refresh workspace-related caches.
       await queryClient.invalidateQueries({
         predicate: ({ queryKey }) =>
           queryKey[0] === "workspaces" &&
           (queryKey.length === 1 ||
             queryKey[1] === "list" ||
-            queryKey[1] === "switcher"),
+            queryKey[1] === "switcher" ||
+            queryKey[1] === "detail"),
       });
 
-      // A rename regenerates the slug, so the URL we are on no longer resolves.
-      const newSlug = response?.workspace?.slug;
+      markSaved();
+      const saved = response?.workspace;
+      form.reset({
+        name: saved?.name ?? data.name,
+        slug: saved?.slug ?? data.slug,
+        url: saved?.url ?? data.url,
+      });
+
+      // Rename can regenerate the workspace slug.
+      const newSlug = saved?.slug;
+
       if (newSlug && newSlug !== workspace.slug) {
-        router.replace(`/w/${newSlug}/settings` as Route);
+        router.replace(workspaceRoutes.settings.root(newSlug) as Route);
       } else {
         router.refresh();
       }
-
-      toast.success("Workspace settings have been saved successfully.");
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to update workspace settings";
-      toast.error(errorMessage);
+      form.setError("root.server", {
+        message:
+          error instanceof Error
+            ? error.message
+            : "The workspace couldn't be saved. Try again.",
+      });
     }
   };
 
+  const serverError = form.formState.errors.root?.server?.message;
+  const readOnly = !isPermissionLoading && !canUpdate;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>General Information</CardTitle>
-        <CardDescription>
-          Update your workspace name, and other basic information
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <PermissionGuard
-          permission={WORKSPACE_PERMISSIONS.UPDATE}
-          fallback={
-            <p className="text-sm text-muted-foreground">
-              You don't have permission to edit workspace settings.
-            </p>
+    <fieldset disabled={!workspace || !canUpdate} className="min-w-0">
+      <FormShell
+        form={form}
+        onSubmit={onSubmit}
+        submitLabel="Save changes"
+        status={status}
+      >
+        {serverError && (
+          <Notice tone="danger" title="Your changes weren't saved">
+            {serverError}
+          </Notice>
+        )}
+        <FormSection
+          title="General"
+          description={
+            readOnly
+              ? "Your role can see these settings but not change them."
+              : "The workspace's name and the website its articles are for."
           }
         >
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workspace Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="My Workspace" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      The display name for your workspace
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <FieldController
+            control={form.control}
+            name="name"
+            label="Workspace name"
+            required
+            description="Shown in the workspace switcher and on invitations."
+          >
+            {(field) => <Input {...field} placeholder="My workspace" />}
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="url"
+            label="Website"
+            required
+            description="The site the brand voice is read from."
+          >
+            {(field) => (
+              <Input {...field} type="url" placeholder="https://example.com" />
+            )}
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="slug"
+            label="Workspace address"
+            description="The workspace's part of its web addresses; it can't be changed."
+          >
+            {(field) => <Input {...field} readOnly disabled />}
+          </FieldController>
+          <Field>
+            <FieldTitle>Icon</FieldTitle>
+            <div className="flex items-center gap-3">
+              <WorkspaceFavicon
+                name={workspace?.name ?? ""}
+                src={workspace?.favicon_url}
               />
-
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workspace Slug</FormLabel>
-                    <FormControl>
-                      <Input placeholder="my-workspace" {...field} disabled />
-                    </FormControl>
-                    <FormDescription>
-                      Used in URLs. Cannot be changed after creation
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://example.com"
-                        type="url"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Your company or project website (optional)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full sm:w-auto"
-                disabled={
-                  form.formState.isSubmitting || !form.formState.isDirty
-                }
-              >
-                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </form>
-          </Form>
-        </PermissionGuard>
-      </CardContent>
-    </Card>
+              <FieldDescription>
+                {workspace?.favicon_url
+                  ? "Your website's icon, as the workspace switcher shows it."
+                  : "No icon could be read from your website, so the name's first letter stands in."}
+              </FieldDescription>
+            </div>
+          </Field>
+        </FormSection>
+      </FormShell>
+    </fieldset>
   );
 }

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  AlertCircle,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  XCircle,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,43 +68,35 @@ export function AuditLogsTable({
 
   const getStatusBadge = (status?: string | null) => {
     if (!status) status = "unknown";
-    const config: Record<
-      string,
-      {
-        variant: "default" | "secondary" | "destructive";
-        icon: React.ComponentType<{ className?: string }>;
-      }
-    > = {
-      success: { variant: "default", icon: CheckCircle },
-      failed: { variant: "destructive", icon: XCircle },
-      partial: { variant: "secondary", icon: AlertCircle },
+    // The outcome as a word. Success is the norm and stays neutral; only an outcome that needs a second look
+    // takes a status tint.
+    const variants: Record<string, "danger" | "warning"> = {
+      failed: "danger",
+      partial: "warning",
     };
 
-    const { variant, icon: Icon } = config[status] || config.partial;
     return (
-      <Badge variant={variant} className="gap-1">
-        <Icon className="h-3 w-3" />
+      <Badge variant={variants[status] ?? "neutral"}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
 
   const getActionBadge = (action: string) => {
-    const colors: Record<string, string> = {
-      create: "bg-green-100 text-green-800",
-      update: "bg-blue-100 text-blue-800",
-      delete: "bg-red-100 text-red-800",
-      impersonate: "bg-orange-100 text-orange-800",
+    // Most actions are routine and read as a neutral word; colour only for what needs a second look.
+    const attention: Record<string, "danger" | "warning"> = {
+      cancel: "danger",
+      cancelled: "danger",
+      delete: "danger",
+      deleted: "danger",
+      failed: "danger",
+      rejected: "danger",
+      impersonate: "warning",
     };
 
     const actionType = action.split(".").pop() || "";
-    const color = colors[actionType] || "bg-gray-100 text-gray-800";
 
-    return (
-      <Badge className={color} variant="outline">
-        {action}
-      </Badge>
-    );
+    return <Badge variant={attention[actionType] ?? "neutral"}>{action}</Badge>;
   };
 
   if (isLoading) {
@@ -139,7 +124,7 @@ export function AuditLogsTable({
   return (
     <div className="space-y-4">
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -240,7 +225,7 @@ export function AuditLogsTable({
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm font-medium">Action</div>
                   <div className="mt-1">
@@ -281,7 +266,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.metadata).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">Metadata</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
                   </div>
@@ -291,7 +276,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.old_values).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">Old Values</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.old_values, null, 2)}
                     </pre>
                   </div>
@@ -301,7 +286,7 @@ export function AuditLogsTable({
                 Object.keys(selectedLog.new_values).length > 0 && (
                   <div>
                     <div className="text-sm font-medium">New Values</div>
-                    <pre className="mt-1 p-4 bg-muted rounded-lg text-xs overflow-x-auto">
+                    <pre className="mt-1 p-4 bg-muted rounded-md text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.new_values, null, 2)}
                     </pre>
                   </div>

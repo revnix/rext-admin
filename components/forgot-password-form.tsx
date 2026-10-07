@@ -4,12 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { extractApiError, safeParseErrorBody } from "@/lib/error-utils";
+import {
+  classifyError,
+  extractApiError,
+  safeParseErrorBody,
+} from "@/lib/error-utils";
+import { ApiError } from "@/lib/api-client/core";
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/hooks/use-hydrated";
 import {
   type ForgotPasswordData,
   forgotPasswordSchema,
@@ -20,6 +26,7 @@ export function ForgotPasswordForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -49,15 +56,22 @@ export function ForgotPasswordForm({
 
       if (!response.ok) {
         const errorData = await safeParseErrorBody(response);
-        throw new Error(
+        throw new ApiError(
+          response.status,
           extractApiError(errorData, "Failed to send reset email"),
         );
       }
 
       setSuccess(true);
     } catch (err) {
+      const classifiedError = classifyError(err);
       setError(
-        err instanceof Error ? err.message : "Failed to send reset email",
+        classifiedError.type === "network_error" ||
+          classifiedError.type === "server_error"
+          ? classifiedError.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to send reset email",
       );
     } finally {
       setIsLoading(false);
@@ -68,6 +82,7 @@ export function ForgotPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="bg-transparent">
         <div className="flex flex-col space-y-1.5 px-0 mb-6">
+          {/* layout-ok: password reset is outside the shell; its card carries the page's title */}
           <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
             Reset your password
           </h1>
@@ -77,14 +92,15 @@ export function ForgotPasswordForm({
           </p>
         </div>
         <div className="px-0">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+          <form method="post" onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+              <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl">
+              <div className="mb-4 p-3 bg-success-50 border border-success-200 text-success-700 rounded-md">
                 Password reset email sent! Check your inbox for the reset link.
               </div>
             )}
@@ -107,22 +123,19 @@ export function ForgotPasswordForm({
                 <Button
                   type="submit"
                   className="w-full h-11 !shadow-none"
-                  disabled={isLoading || success}
+                  disabled={!hydrated || isLoading || success}
                 >
                   {isLoading
                     ? "Sending..."
                     : success
                       ? "Email Sent!"
-                      : "Send Reset Link"}
+                      : "Send reset link"}
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
               Remember your password?{" "}
-              <Link
-                href="/login"
-                className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
-              >
+              <Link href="/login" className="font-medium link">
                 Back to login
               </Link>
             </div>

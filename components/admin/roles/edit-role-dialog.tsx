@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Shield } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,7 +37,6 @@ export function EditRoleDialog({
   const [formData, setFormData] = useState({
     display_name: "",
     description: "",
-    hierarchy_level: 1,
   });
   const invalidateWorkspacePermissions = usePermissionStore(
     (state) => state.invalidateWorkspacePermissions,
@@ -47,7 +46,6 @@ export function EditRoleDialog({
       setFormData({
         display_name: role.display_name,
         description: role.description || "",
-        hierarchy_level: role.hierarchy_level,
       });
     }
   }, [role]);
@@ -59,7 +57,6 @@ export function EditRoleDialog({
       return await apiClient.roles.update(role.id, {
         display_name: formData.display_name,
         description: formData.description || undefined,
-        hierarchy_level: formData.hierarchy_level,
       });
     },
     onSuccess: async () => {
@@ -69,6 +66,7 @@ export function EditRoleDialog({
         queryClient.invalidateQueries({ queryKey: ["roles"] }),
         queryClient.invalidateQueries({ queryKey: ["permissions"] }),
         queryClient.invalidateQueries({ queryKey: ["workspace-permissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-logs"] }),
       ]);
       onOpenChange(false);
     },
@@ -83,11 +81,6 @@ export function EditRoleDialog({
     // Validation
     if (!formData.display_name) {
       toast.error("Display name is required");
-      return;
-    }
-
-    if (formData.hierarchy_level < 0 || formData.hierarchy_level > 100) {
-      toast.error("Hierarchy level must be between 0 and 100");
       return;
     }
 
@@ -111,14 +104,11 @@ export function EditRoleDialog({
 
           <div className="space-y-4 py-4">
             {isProtected && (
-              <Alert>
-                <Shield className="h-4 w-4" />
-                <AlertDescription>
-                  {role.is_system_role
-                    ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
-                    : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
-                </AlertDescription>
-              </Alert>
+              <Notice>
+                {role.is_system_role
+                  ? "This is a system role and cannot be modified. System roles are essential for the application to function properly."
+                  : "This is a standard workspace role and cannot be modified. It is required for workspace membership to function properly."}
+              </Notice>
             )}
 
             {/* Name (Read-only) */}
@@ -164,28 +154,6 @@ export function EditRoleDialog({
                 }
                 rows={3}
               />
-            </div>
-
-            {/* Hierarchy Level */}
-            <div className="space-y-2">
-              <Label htmlFor="hierarchy_level">Hierarchy Level (0-100)</Label>
-              <Input
-                id="hierarchy_level"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.hierarchy_level}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    hierarchy_level: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-                disabled={isProtected}
-              />
-              <p className="text-xs text-muted-foreground">
-                Higher numbers indicate higher authority
-              </p>
             </div>
           </div>
 

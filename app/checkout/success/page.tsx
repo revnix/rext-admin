@@ -1,307 +1,254 @@
 "use client";
 
-/**
- * Checkout Success Page
- *
- * Displays a success message after completing a subscription checkout.
- * Fetches updated subscription status and shows plan details.
- *
- * @module app/checkout/success
- */
-
-import confetti from "canvas-confetti";
-import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { Route } from "next";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { DetailPage } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Meter } from "@/components/ui/meter";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useSubscriptionStore } from "@/stores/subscription-store";
+  getPurchaseState,
+  isPurchaseSettled,
+  type PurchaseState,
+  useSubscriptionSync,
+} from "@/hooks/use-subscription-sync";
 import { analytics } from "@/lib/analytics";
-import type { Route } from "next";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { subscriptionQueries } from "@/lib/query-keys";
+import { settingsRoutes } from "@/lib/routes";
+import {
+  bonusWords,
+  monthlyCreditsLeft,
+} from "@/components/billing/billing-format";
+import { session } from "@/lib/storage";
+import { CHECKOUT_BASELINE_KEY } from "@/lib/storage-keys";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 
-// Polling configuration
-const POLL_INTERVAL_MS = 1500;
-const POLL_TIMEOUT_MS = 20_000;
-const READY_STATUSES = new Set(["active", "trial", "cancelled"]);
+type Phase = "confirming" | "confirmed" | "slow";
 
-export default function CheckoutSuccessPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isRefreshing, setIsRefreshing] = useState(true);
-  const [syncTimedOut, setSyncTimedOut] = useState(false);
-  const { subscription, fetchSubscription } = useSubscriptionStore();
+/** After the first wait, Lemon Squeezy's webhook is looked for this often, for this long. */
+const SLOW_POLL_MS = 15_000;
+const SLOW_WATCH_MS = 10 * 60_000;
 
-  const waitForSubscriptionSync = useCallback(
-    async (signal: AbortSignal): Promise<boolean> => {
-      const startedAt = Date.now();
+/** The subscription's status in words. */
+const STATUS_WORDS: Record<string, string> = {
+  active: "Active",
+  trial: "Trial",
+  on_trial: "Trial",
+  cancelled: "Cancelled",
+  past_due: "Payment due",
+};
 
-      while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
-        if (signal.aborted) return false;
-
-        await fetchSubscription();
-        const latest = useSubscriptionStore.getState().subscription;
-
-        if (latest && READY_STATUSES.has(latest?.subscription?.status || "")) {
-          return true;
-        }
-
-        await new Promise<void>((resolve) =>
-          setTimeout(resolve, POLL_INTERVAL_MS),
-        );
-      }
-
-      return false;
-    },
-    [fetchSubscription],
+/**
+ * The subscription as it was when the checkout opened: this tab's store, else what the tab kept
+ * through Lemon Squeezy's full-page return, else none (a first purchase, from a trial, has no
+ * Lemon Squeezy subscription to tell apart).
+ */
+function checkoutBaseline(): PurchaseState {
+  return (
+    useSubscriptionStore.getState().checkoutBaseline ??
+    session.getJSON<PurchaseState | null>(CHECKOUT_BASELINE_KEY, null) ??
+    getPurchaseState(null)
   );
+}
 
-  // Get query parameters from LemonSqueezy redirect
-  const checkoutId = searchParams.get("checkout_id");
-  const sessionId = searchParams.get("session_id");
+/**
+ * Where Lemon Squeezy's checkout returns after a payment (plans/app/F-billing.md F7), inside the
+ * shell. The payment succeeds before Lemon Squeezy's webhook reaches the backend, so the page waits
+ * until the subscription shows this purchase (a new Lemon Squeezy subscription or a new plan, not
+ * the one the person already had), then gives the plan and the new balance, read from the backend.
+ * A webhook later than the first wait is still looked for, lightly, for ten minutes. The in-app
+ * checkout confirms in place (lemonsqueezy-provider.tsx); this is the page a direct return lands on.
+ */
+export default function CheckoutSuccessPage() {
+  const searchParams = useSearchParams();
+  const reference =
+    searchParams.get("session_id") || searchParams.get("checkout_id");
+  const subscription = useSubscriptionStore(
+    (state) => state.subscription?.subscription,
+  );
+  const fetchSubscription = useSubscriptionStore(
+    (state) => state.fetchSubscription,
+  );
+  const setCredits = useSubscriptionStore((state) => state.setCredits);
+  const { waitForPurchaseSettled } = useSubscriptionSync();
+  const [phase, setPhase] = useState<Phase>("confirming");
 
-  // Track subscription purchased once the subscription status is confirmed
-  const trackedRef = useRef(false);
-  useEffect(() => {
-    if (trackedRef.current) return;
-    if (!subscription?.subscription) return;
-    const status = subscription.subscription.status ?? "";
-    if (!READY_STATUSES.has(status)) return;
-
-    trackedRef.current = true;
-    analytics.track("subscription_purchased", {
-      plan_name: subscription.subscription.plan_display_name ?? undefined,
-      billing_period: subscription.subscription.billing_period ?? undefined,
-      status,
-      checkout_id: checkoutId ?? undefined,
-      session_id: sessionId ?? undefined,
-    });
-  }, [subscription, checkoutId, sessionId]);
-
-  // Trigger confetti
-  useEffect(() => {
-    const triggerConfetti = () => {
-      const duration = 3000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-      const randomInRange = (min: number, max: number) => {
-        return Math.random() * (max - min) + min;
-      };
-
-      const interval = window.setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        });
-        confetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        });
-      }, 250);
-
-      return () => clearInterval(interval);
-    };
-
-    // Delay confetti slightly for better UX
-    const timeout = setTimeout(triggerConfetti, 500);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Fetch updated subscription after checkout using bounded polling
   useEffect(() => {
     const controller = new AbortController();
-
-    const refreshSubscription = async () => {
-      try {
-        setIsRefreshing(true);
-        setSyncTimedOut(false);
-        const synced = await waitForSubscriptionSync(controller.signal);
-        if (!synced && !controller.signal.aborted) {
-          setSyncTimedOut(true);
-        }
-      } catch {
-        // Keep page usable even if polling fails
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsRefreshing(false);
-        }
-      }
+    const baseline = checkoutBaseline();
+    const settled = () =>
+      isPurchaseSettled(
+        baseline,
+        getPurchaseState(useSubscriptionStore.getState().subscription),
+      );
+    const confirm = () => {
+      session.remove(CHECKOUT_BASELINE_KEY);
+      setPhase("confirmed");
     };
 
-    refreshSubscription();
+    (async () => {
+      // A failed request is a reason to keep looking, never to stop: the payment went through.
+      const first = await waitForPurchaseSettled(
+        baseline,
+        controller.signal,
+      ).catch(() => false);
+      if (first) {
+        confirm();
+        return;
+      }
+      if (controller.signal.aborted) return;
+      setPhase("slow");
+      const until = Date.now() + SLOW_WATCH_MS;
+      while (!controller.signal.aborted && Date.now() < until) {
+        await new Promise((resolve) => setTimeout(resolve, SLOW_POLL_MS));
+        if (controller.signal.aborted) return;
+        try {
+          await fetchSubscription({ force: true });
+        } catch {
+          continue;
+        }
+        if (settled()) {
+          confirm();
+          return;
+        }
+      }
+    })();
     return () => controller.abort();
-  }, [waitForSubscriptionSync]);
-  const handleGoToDashboard = () => {
-    router.push("/" as Route);
-  };
+  }, [waitForPurchaseSettled, fetchSubscription]);
 
-  const handleViewBilling = () => {
-    router.push("/settings/subscription" as Route);
-  };
+  // The balance only once this purchase shows, so the old plan's never passes for the new one.
+  const credits = useQuery({
+    ...subscriptionQueries.myCredits(),
+    enabled: phase === "confirmed",
+  });
+  useEffect(() => {
+    if (credits.data) setCredits(credits.data);
+  }, [credits.data, setCredits]);
+
+  // The purchase is counted once, when it's confirmed.
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (tracked.current || phase !== "confirmed" || !subscription) return;
+    tracked.current = true;
+    analytics.track("subscription_purchased", {
+      plan_name: subscription.plan_display_name ?? undefined,
+      billing_period: subscription.billing_period ?? undefined,
+      status: subscription.status ?? undefined,
+      checkout_id: searchParams.get("checkout_id") ?? undefined,
+      session_id: searchParams.get("session_id") ?? undefined,
+    });
+  }, [phase, subscription, searchParams]);
+
+  const planName =
+    credits.data?.plan_name ?? subscription?.plan_display_name ?? null;
+  const renews = subscription?.renews_at ?? subscription?.current_period_end;
+  const left = credits.data ? monthlyCreditsLeft(credits.data) : undefined;
+  const bonus = credits.data ? bonusWords(credits.data) : null;
+  const total = credits.data?.credits_per_month ?? null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-green-50 via-background to-blue-50 dark:from-green-950/20 dark:via-background dark:to-blue-950/20">
-      <Card className="max-w-2xl w-full">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 relative">
-            <div className="absolute inset-0 animate-ping">
-              <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto opacity-20" />
-            </div>
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto relative" />
-          </div>
-
-          <CardTitle className="text-3xl font-bold">
-            Welcome to Your Subscription!
-          </CardTitle>
-          <CardDescription className="text-lg mt-2">
-            Your payment was successful and your subscription is now active.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Subscription Details */}
-          {isRefreshing ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Activating your subscription...</span>
-            </div>
-          ) : subscription?.subscription ? (
-            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    {subscription?.subscription.plan_display_name}
-                    {subscription?.subscription.status === "trial" && (
-                      <Badge variant="secondary">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Trial
-                      </Badge>
-                    )}
-                    {subscription?.subscription.status === "active" && (
-                      <Badge variant="default" className="bg-green-500">
-                        Active
-                      </Badge>
-                    )}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Billing period:{" "}
-                    <span className="font-medium capitalize">
-                      {subscription?.subscription.billing_period}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground">Start Date</p>
-                  <p className="font-medium">
-                    {subscription?.subscription.start_date
-                      ? new Date(
-                          subscription?.subscription.start_date,
-                        ).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                </div>
-                {subscription?.subscription.trial_end_date && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Trial Ends</p>
-                    <p className="font-medium">
-                      {new Date(
-                        subscription?.subscription.trial_end_date,
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              <p>Your subscription is being activated...</p>
-              {syncTimedOut ? (
-                <p className="text-sm mt-2">
-                  Activation is taking longer than expected. You can continue
-                  and check your billing page in a moment.
-                </p>
+    <DetailPage
+      title={
+        phase === "confirming"
+          ? "Confirming your payment"
+          : phase === "confirmed" && planName
+            ? `You're on ${planName}`
+            : "Payment received"
+      }
+      description={
+        phase === "confirming"
+          ? "Lemon Squeezy has taken the payment; this waits for it to reach your account."
+          : "Thank you. A receipt is on its way to your email."
+      }
+      actions={
+        <>
+          <Button asChild variant="outline">
+            <Link href={settingsRoutes.plan as Route}>Plan</Link>
+          </Button>
+          <Button asChild>
+            <Link href={"/" as Route}>Go to home</Link>
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-6">
+        {phase === "slow" && (
+          <Notice tone="warning" title="Your plan isn't showing yet">
+            The payment went through, and Lemon Squeezy tells us within a few
+            minutes. This page keeps looking, and Plan in your account settings
+            shows it once it arrives; nothing needs to be paid again.
+          </Notice>
+        )}
+        {phase !== "slow" && (
+          <Card>
+            <CardContent className="flex flex-col gap-4 pt-6">
+              {phase === "confirming" ? (
+                <Skeleton className="h-20 w-full" />
               ) : (
-                <p className="text-sm mt-2">
-                  This may take a few moments. Please check your billing
-                  settings.
-                </p>
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-section">{planName ?? "Your plan"}</h2>
+                    {subscription?.status && (
+                      <Badge variant="success">
+                        {STATUS_WORDS[subscription.status] ??
+                          subscription.status}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {left === undefined ? (
+                      credits.isError ? (
+                        <p className="text-sm text-muted-foreground">
+                          Your balance didn't load; the header shows it in a
+                          moment.
+                        </p>
+                      ) : (
+                        <Skeleton className="h-8 w-40" />
+                      )
+                    ) : (
+                      <p className="num text-foreground">
+                        <span className="font-display text-page-title">
+                          {left.toLocaleString()}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {total !== null
+                            ? ` of ${total.toLocaleString()} credits`
+                            : " credits"}
+                        </span>
+                      </p>
+                    )}
+                    {left !== undefined && total !== null && total > 0 && (
+                      <Meter value={left} max={total} label="Credits" />
+                    )}
+                    {(renews || bonus) && (
+                      <p className="text-sm text-muted-foreground">
+                        {[
+                          renews ? `Renews ${dateFormat.short(renews)}.` : null,
+                          bonus,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
-            </div>
-          )}
-
-          {/* Transaction Info */}
-          {(checkoutId || sessionId) && (
-            <div className="text-center text-sm text-muted-foreground">
-              <p>
-                Reference:{" "}
-                <code className="bg-muted px-2 py-1 rounded text-xs">
-                  {sessionId || checkoutId}
-                </code>
-              </p>
-            </div>
-          )}
-
-          {/* Next Steps */}
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 space-y-2">
-            <h4 className="font-semibold text-sm">What's Next?</h4>
-            <ul className="text-sm space-y-1.5 text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  You'll receive a confirmation email with your subscription
-                  details
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  Your subscription features are now active and ready to use
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                <span>
-                  Manage your subscription anytime from your billing settings
-                </span>
-              </li>
-            </ul>
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex gap-3">
-          <Button onClick={handleGoToDashboard} className="flex-1">
-            Go to Dashboard
-          </Button>
-          <Button
-            onClick={handleViewBilling}
-            variant="outline"
-            className="flex-1"
-          >
-            View Billing
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            </CardContent>
+          </Card>
+        )}
+        {reference && (
+          <p className="text-sm text-muted-foreground">
+            Reference <span className="num font-mono">{reference}</span>
+          </p>
+        )}
+      </div>
+    </DetailPage>
   );
 }

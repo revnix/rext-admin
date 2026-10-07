@@ -1,6 +1,6 @@
 "use client";
 
-import * as ProgressPrimitive from "@radix-ui/react-progress";
+import { Progress as ProgressPrimitive } from "radix-ui";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ const Progress = React.forwardRef<
   >
     <ProgressPrimitive.Indicator
       className={cn(
-        "h-full w-full flex-1 bg-primary transition-all",
+        "h-full w-full flex-1 bg-primary transition-transform",
         indicatorClassName,
       )}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
@@ -103,7 +103,7 @@ const CircularProgress = React.memo<CircularProgressProps>(
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            className="text-primary transition-all duration-300 ease-in-out"
+            className="text-primary transition-[stroke-dashoffset] duration-(--duration-base)"
           />
         </svg>
         {showValue && (

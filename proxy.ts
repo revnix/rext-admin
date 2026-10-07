@@ -5,7 +5,11 @@ import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import { getToken } from "next-auth/jwt";
 import { getCSPHeader } from "@/lib/csp";
+import { devPagesOn } from "@/lib/dev-pages";
 import { ROLES } from "@/lib/permissions";
+
+/** The site's pricing page, where a signed-out visit to /pricing goes. */
+const SITE_PRICING_URL = "https://rext.ai/pricing";
 
 /**
  * Generate a cryptographically secure random nonce using Web Crypto API
@@ -79,6 +83,11 @@ async function readSessionWithoutWritingCookie(
 /**
  * Protected routes configuration
  *
+ * Value forms:
+ * - string: a single GLOBAL permission
+ * - string[]: ANY of these ROLES
+ * - { anyPermission / anyRole }: ANY of these permissions OR roles
+ *
  * NOTE:
  * - These are GLOBAL (user-level) permissions, NOT workspace-scoped.
  * - Workspace-scoped permissions are checked at the page/component level
@@ -89,11 +98,26 @@ async function readSessionWithoutWritingCookie(
  * so they are no longer enforced here to avoid mismatches with the new
  * `/permissions/me` API.
  */
-const PROTECTED_ROUTES: Record<string, string | string[]> = {
+const PROTECTED_ROUTES: Record<
+  string,
+  string | string[] | { anyPermission?: string[]; anyRole?: string[] }
+> = {
   "/admin": [ROLES.SUPER_ADMIN, ROLES.ADMIN],
-  "/admin/users": "user.read",
-  "/admin/monitoring": "audit.read",
-  "/admin/reports": "audit.read",
+  // user.manage = full management (admin/super_admin); the global support
+  // role gets read-only visibility. user.read cannot gate this route — it is
+  // the self-service permission every account holds.
+  "/admin/users": {
+    anyPermission: ["user.manage"],
+    anyRole: [ROLES.SUPPORT],
+  },
+  "/admin/monitoring": "security.read",
+  "/admin/email-analytics": "security.read",
+  "/admin/security": "security.read",
+  "/admin/audit-logs": "audit.read",
+  "/admin/reports": "billing.read",
+  "/admin/subscriptions": "billing.read",
+  "/admin/refunds": "billing.read",
+  "/admin/roles": "role.read",
 };
 
 const PROTECTED_ROUTE_ENTRIES = Object.entries(PROTECTED_ROUTES).sort(
@@ -110,8 +134,8 @@ function matchesRoute(pathname: string, routePattern: string): boolean {
  * so they're checked at the page level, not in middleware.
  *
  * Examples:
- * - /w/[workspaceSlug]/settings - requires workspace.update for THAT workspace
- * - /w/[workspaceSlug]/members - requires member.read for THAT workspace
+ * - /w/[workspaceSlug]/settings/brand-voice - requires brand_voice.read for THAT workspace
+ * - /w/[workspaceSlug]/settings/members - requires member.read for THAT workspace
  * - /w/[workspaceSlug]/content - requires content.read for THAT workspace
  *
  * Middleware only verifies user is authenticated for workspace routes.
@@ -123,12 +147,15 @@ function matchesRoute(pathname: string, routePattern: string): boolean {
 /**
  * Check if user has required permission or role
  * @param session - User session with permissions and role
- * @param requirement - Single permission string, or array of roles
+ * @param requirement - Single permission, array of roles, or any-of permissions/roles
  * @returns true if user has access, false otherwise
  */
 function checkAccess(
   session: Session | null,
-  requirement: string | string[],
+  requirement:
+    | string
+    | string[]
+    | { anyPermission?: string[]; anyRole?: string[] },
 ): boolean {
   if (!session?.user) return false;
 
@@ -138,6 +165,14 @@ function checkAccess(
 
   if (Array.isArray(requirement)) {
     return requirement.includes(user.role || "");
+  }
+
+  if (typeof requirement === "object") {
+    const byPermission = (requirement.anyPermission ?? []).some((permission) =>
+      user.permissions?.includes(permission),
+    );
+    const byRole = (requirement.anyRole ?? []).includes(user.role || "");
+    return byPermission || byRole;
   }
 
   return user.permissions?.includes(requirement) || false;
@@ -182,6 +217,12 @@ export default async function proxy(request: NextRequest) {
     // link must open without one. Kept out of AUTH_PAGE_PATHS so that someone
     // signed in as another account isn't bounced away from the link.
     "/account-recovery",
+    // Every email's unsubscribe link: it works without signing in (commercial-email law expects
+    // that), and the token in the link is the proof.
+    "/unsubscribe",
+    // The development pages read no data. They open signed out wherever they're on
+    // (lib/dev-pages.ts), so pr-checks' accessibility checks reach them.
+    ...(devPagesOn() ? ["/dev/"] : []),
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>
@@ -206,6 +247,12 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", nextUrl.origin));
   }
 
+  // Pricing is the app's for its accounts; a visitor who isn't signed in gets the site's
+  // (plans/app/F-billing.md §2 item 2).
+  if (!isLoggedIn && nextUrl.pathname === "/pricing") {
+    return NextResponse.redirect(SITE_PRICING_URL);
+  }
+
   // Redirect to login if not authenticated and trying to access protected route
   if (!isLoggedIn && !isPublicRoute) {
     const loginUrl = new URL("/login", nextUrl.origin);
@@ -227,7 +274,12 @@ export default async function proxy(request: NextRequest) {
         // Add required permission/role to help users understand what's needed
         const requiredLabel = Array.isArray(requirement)
           ? requirement.join(" or ")
-          : requirement;
+          : typeof requirement === "object"
+            ? [
+                ...(requirement.anyPermission ?? []),
+                ...(requirement.anyRole ?? []),
+              ].join(" or ")
+            : requirement;
         unauthorizedUrl.searchParams.set("required", requiredLabel);
 
         return NextResponse.redirect(unauthorizedUrl);
@@ -299,8 +351,11 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - the icons and the manifest app/ serves by Next's file conventions (favicon.ico, icon,
+     *   icon<n>, apple-icon, each with or without its extension, and manifest.webmanifest),
+     *   whole paths only, which the login page needs
+     * - brand/ (public/brand: the logo the emails load)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|favicons|logos).*)",
+    "/((?!api|_next/static|_next/image|brand/|(?:favicon\\.ico|icon\\d*(?:\\.\\w+)?|apple-icon(?:\\.\\w+)?|manifest\\.webmanifest)$).*)",
   ],
 };

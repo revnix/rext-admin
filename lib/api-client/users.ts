@@ -26,6 +26,17 @@ import type {
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
+/** Compact role summary returned inline with User from the list endpoint. */
+export interface UserRoleSummary {
+  role_id: string;
+  name: string;
+  display_name: string;
+  hierarchy_level: number;
+  workspace_id: string | null;
+  workspace_name: string | null;
+  is_platform: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -37,11 +48,22 @@ export interface User {
   language?: string;
   timezone?: string;
   display_role?: string;
+  /** All roles the user holds, sorted highest hierarchy first. */
+  roles?: UserRoleSummary[];
+  /**
+   * True when the user holds a platform-wide role at hierarchy >= 100.
+   * The admin UI greys out every management action on these rows unless the
+   * viewer is themselves a Super Admin (the backend enforces the same rule).
+   */
+  is_super_admin?: boolean;
   last_login_at?: string | null;
   login_count?: number;
   initials?: string;
   created_at?: string;
   updated_at?: string;
+  /** Soft-delete timestamp, present on rows from the Soft Deleted Users tab. */
+  deleted_at?: string | null;
+  deactivated_at?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -128,6 +150,18 @@ export interface UserRoleAssignment {
 
 export interface UserRolesListResponse {
   roles: UserRoleAssignment[];
+  count: number;
+}
+
+export interface UserWorkspaceScopeItem {
+  workspace_id: string;
+  workspace_name: string;
+  current_role_display_name: string | null;
+}
+
+export interface UserWorkspaceScopeListResponse {
+  user_id: string;
+  workspaces: UserWorkspaceScopeItem[];
   count: number;
 }
 
@@ -249,6 +283,48 @@ export function createUsersNamespace(client: ApiClient) {
     },
 
     /**
+     * List soft-deleted users (Soft Deleted Users tab).
+     * Requires `user.read`.
+     */
+    listDeleted: async (params?: {
+      page?: number;
+      per_page?: number;
+    }): Promise<UsersListResponse> => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set("page", String(params.page));
+      if (params?.per_page)
+        searchParams.set("per_page", String(params.per_page));
+      const query = searchParams.toString();
+      return client.request<UsersListResponse>(
+        query ? `${ENDPOINTS.USERS.deleted}?${query}` : ENDPOINTS.USERS.deleted,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Restore a soft-deleted user (admin). Requires `user.update`.
+     */
+    restoreUser: async (userId: string): Promise<User> => {
+      return client.request<User>(ENDPOINTS.USERS.restore(userId), {
+        method: "POST",
+      });
+    },
+
+    /**
+     * Permanently delete a soft-deleted user. **Super Admin only.**
+     *
+     * Irreversible: hard-deletes owned workspaces and their data, prunes
+     * sessions/tokens/OAuth/media, cancels subscriptions, then scrubs the
+     * account's PII. The account can never be recovered afterwards.
+     */
+    permanentlyDeleteUser: async (userId: string): Promise<{ id: string }> => {
+      return client.request<{ id: string }>(
+        ENDPOINTS.USERS.permanentDelete(userId),
+        { method: "DELETE" },
+      );
+    },
+
+    /**
      * List every role assigned to a user, global and workspace-scoped.
      */
     listRoles: async (
@@ -262,6 +338,25 @@ export function createUsersNamespace(client: ApiClient) {
         `${ENDPOINTS.USERS.roles.list(userId)}${query}`,
         { method: "GET" },
       );
+    },
+
+    /**
+     * Workspaces the user belongs to, for scoping a role assignment.
+     * Requires `user.manage_roles`.
+     *
+     * Each entry carries the role the user currently holds there, so the
+     * caller can show what an assignment would replace.
+     */
+    listWorkspaces: async (userId: string) => {
+      return client.request<{
+        user_id: string;
+        workspaces: Array<{
+          workspace_id: string;
+          workspace_name: string;
+          current_role_display_name: string | null;
+        }>;
+        count: number;
+      }>(ENDPOINTS.USERS.roles.workspaces(userId), { method: "GET" });
     },
 
     /**

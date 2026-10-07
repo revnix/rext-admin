@@ -8,28 +8,32 @@ import type { Route } from "next";
  */
 
 /**
- * Valid workspace page segments
+ * Valid workspace page segments: the pages the workspace switcher keeps open when it changes
+ * workspace. A settings section is a page of its own, so switching from Members opens Members.
  */
 export const WORKSPACE_PAGES = [
-  "topics",
   "content",
-  "members",
-  "knowledge",
-  "media",
+  "keywords",
   "integrations",
   "personas",
   "persona_create",
-  "brand_voice",
+  "settings",
+  "settings/brand-voice",
+  "settings/members",
+  "settings/danger-zone",
 ] as const;
 
 export type WorkspacePageSegment = (typeof WORKSPACE_PAGES)[number];
 
+/** Account settings: one SettingsPage, a route per section (Profile is the root). */
 export const settingsRoutes = {
   root: "/settings",
   security: "/settings/security",
-  trash: "/settings/trash",
-  billing: "/settings/billing",
-  subscription: "/settings/subscription",
+  notifications: "/settings/notifications",
+  plan: "/settings/plan",
+  usage: "/settings/usage",
+  invoices: "/settings/invoices",
+  data: "/settings/data",
 } as const satisfies Record<string, Route>;
 
 export type SettingsRoute =
@@ -47,44 +51,18 @@ export const workspaceRoutes = {
   root: (_workspaceSlug: string) => `/`,
 
   /**
-   * Topics routes
-   */
-  topics: (workspaceSlug: string) => `/w/${workspaceSlug}/topics`,
-  topicDetail: (workspaceSlug: string, topicId: string) =>
-    `/w/${workspaceSlug}/topics/${topicId}`,
-  topicCreate: (workspaceSlug: string) => `/w/${workspaceSlug}/topics/create`,
-
-  /**
    * Content routes
    */
   content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
   generate_content: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/generate_content`,
+  keywordLibrary: (workspaceSlug: string) => `/w/${workspaceSlug}/keywords`,
+  keywordLibraryItem: (workspaceSlug: string, key: string) =>
+    `/w/${workspaceSlug}/keywords/${encodeURIComponent(key)}`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/${contentId}`,
-  contentCreate: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/content/create`,
-  contentProgress: (workspaceSlug: string, contentId: string) =>
-    `/w/${workspaceSlug}/content/progress/${contentId}`,
   content_calendar: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/content/calendar`,
-
-  /**
-   * Members route
-   */
-  members: (workspaceSlug: string) => `/w/${workspaceSlug}/members`,
-
-  /**
-   * Knowledge routes
-   */
-  knowledge: (workspaceSlug: string) => `/w/${workspaceSlug}/knowledge`,
-  knowledgeDetail: (workspaceSlug: string, kbId: string) =>
-    `/w/${workspaceSlug}/knowledge/${kbId}`,
-
-  /**
-   * Media route
-   */
-  media: (workspaceSlug: string) => `/w/${workspaceSlug}/media`,
 
   /**
    * Integrations route
@@ -97,21 +75,21 @@ export const workspaceRoutes = {
   personas: (workspaceSlug: string) => `/w/${workspaceSlug}/personas`,
   persona_create: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/personas/create`,
+  persona: (workspaceSlug: string, personaId: string) =>
+    `/w/${workspaceSlug}/personas/${personaId}`,
+  persona_edit: (workspaceSlug: string, personaId: string) =>
+    `/w/${workspaceSlug}/personas/${personaId}/edit`,
 
   /**
-   * Brand Voice route
-   */
-  brand_voice: (workspaceSlug: string) => `/w/${workspaceSlug}/brand_voice`,
-
-  /**
-   * Settings routes
+   * Workspace settings: one SettingsPage, a route per section (General is the root).
    */
   settings: {
     root: (workspaceSlug: string) => `/w/${workspaceSlug}/settings`,
-    billing: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/billing`,
-    integrations: (workspaceSlug: string) =>
-      `/w/${workspaceSlug}/settings/integrations`,
-    trash: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/trash`,
+    brandVoice: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/settings/brand-voice`,
+    members: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/members`,
+    dangerZone: (workspaceSlug: string) =>
+      `/w/${workspaceSlug}/settings/danger-zone`,
   },
 } as const;
 
@@ -122,7 +100,7 @@ export const workspaceRoutes = {
  * @returns The workspace ID if found, null otherwise
  *
  * @example
- * extractWorkspaceId('/w/ws-123/topics') // 'ws-123'
+ * extractWorkspaceId('/w/ws-123/content') // 'ws-123'
  * extractWorkspaceId('/w/550e8400-e29b-41d4-a716-446655440000/content') // '550e8400-e29b-41d4-a716-446655440000'
  * extractWorkspaceId('/workspaces') // null
  */
@@ -138,7 +116,7 @@ export function extractWorkspaceId(pathname: string): string | null {
  * @returns True if the pathname starts with /w/
  *
  * @example
- * isWorkspacePath('/w/ws-123/topics') // true
+ * isWorkspacePath('/w/ws-123/content') // true
  * isWorkspacePath('/workspaces') // false
  */
 export function isWorkspacePath(pathname: string): boolean {
@@ -152,30 +130,35 @@ export function isWorkspacePath(pathname: string): boolean {
  * @returns The page segment if found and valid, null otherwise
  *
  * @example
- * extractWorkspacePageSegment('/w/ws-123/topics') // 'topics'
+ * extractWorkspacePageSegment('/w/ws-123/content') // 'content'
  * extractWorkspacePageSegment('/w/ws-123/content/123') // 'content'
+ * extractWorkspacePageSegment('/w/ws-123/settings/members') // 'settings/members'
  * extractWorkspacePageSegment('/w/ws-123') // null
  * extractWorkspacePageSegment('/workspaces') // null
  */
 export function extractWorkspacePageSegment(
   pathname: string,
 ): WorkspacePageSegment | null {
-  const match = pathname.match(/^\/w\/[^/]+\/([^/?]+)/);
-  const segment = match ? match[1] : null;
-  return segment && WORKSPACE_PAGES.includes(segment as WorkspacePageSegment)
-    ? (segment as WorkspacePageSegment)
-    : null;
+  const match = pathname.match(/^\/w\/[^/]+\/([^?#]+)/);
+  if (!match) return null;
+  const path = match[1].replace(/\/+$/, "");
+  // The longest page the path is in, so a settings section wins over settings.
+  let found: WorkspacePageSegment | null = null;
+  for (const page of WORKSPACE_PAGES) {
+    const inside = path === page || path.startsWith(`${page}/`);
+    if (inside && (!found || page.length > found.length)) found = page;
+  }
+  return found;
 }
 
 /**
  * Build workspace path for a given page segment
  *
  * @param workspaceSlug - The workspace slug
- * @param pageSegment - The page segment (topics, content, etc.)
+ * @param pageSegment - The page segment (content, settings, etc.)
  * @returns The full workspace path
  *
  * @example
- * buildWorkspacePath('my-workspace', 'topics') // '/w/my-workspace/topics'
  * buildWorkspacePath('my-workspace', 'content') // '/w/my-workspace/content'
  */
 export function buildWorkspacePath(
@@ -183,55 +166,19 @@ export function buildWorkspacePath(
   pageSegment: WorkspacePageSegment,
 ): string {
   const routeMap: Record<WorkspacePageSegment, (slug: string) => string> = {
-    topics: workspaceRoutes.topics,
     content: workspaceRoutes.content,
-    members: workspaceRoutes.members,
-    knowledge: workspaceRoutes.knowledge,
-    media: workspaceRoutes.media,
+    keywords: workspaceRoutes.keywordLibrary,
     integrations: workspaceRoutes.integrations,
     personas: workspaceRoutes.personas,
     persona_create: workspaceRoutes.persona_create,
-    brand_voice: workspaceRoutes.brand_voice,
+    settings: workspaceRoutes.settings.root,
+    "settings/brand-voice": workspaceRoutes.settings.brandVoice,
+    "settings/members": workspaceRoutes.settings.members,
+    "settings/danger-zone": workspaceRoutes.settings.dangerZone,
   };
 
   const routeFn = routeMap[pageSegment];
   return routeFn
     ? routeFn(workspaceSlug)
-    : workspaceRoutes.topics(workspaceSlug);
+    : workspaceRoutes.content(workspaceSlug);
 }
-
-/**
- * Validate workspace ID format (UUID v4)
- *
- * @param workspaceId - The workspace ID to validate
- * @returns True if valid UUID format
- */
-export function isValidWorkspaceId(workspaceId: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(workspaceId);
-}
-
-/**
- * Get workspace detail tab URL
- *
- * @param workspaceId - The workspace ID
- * @param tab - The tab name (overview, knowledge, members)
- * @returns The workspace detail URL with tab parameter
- */
-export function getWorkspaceTabUrl(
-  workspaceId: string,
-  tab: "overview" | "knowledge" | "members",
-): string {
-  return `/w/${workspaceId}?tab=${tab}`;
-}
-
-/**
- * Legacy route helpers for backward compatibility during migration
- * @deprecated Use workspaceRoutes instead
- */
-export const legacyRoutes = {
-  workspaceDetail: (workspaceId: string) => `/workspaces/${workspaceId}`,
-  topics: () => "/topics",
-  content: () => "/content",
-} as const;

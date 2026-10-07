@@ -58,12 +58,15 @@ node_modules/
 *.sw?
 # OS specific
 
-# Task files
-# tasks.json
-# tasks/
-
 # Backup files
 *.backup
 *.old
 *.tmp
 *~ 
+
+# The accessibility and performance checks (pnpm a11y, pnpm perf)
+/test-results/
+/playwright-report/
+/e2e/.auth/
+/.lighthouseci/
+/lighthouse-reports/

@@ -141,8 +141,6 @@ function findTsxFiles(dir, fileList = []) {
  */
 function extractCategory(filePath) {
   if (filePath.includes("/content/")) return "Content";
-  if (filePath.includes("/topics/")) return "Topics";
-  if (filePath.includes("/knowledge/")) return "Knowledge";
   if (filePath.includes("/media/")) return "Media";
   if (filePath.includes("/members/")) return "Members";
   if (filePath.includes("/settings/")) return "Settings";
@@ -215,25 +213,6 @@ function suggestPermission(label, category, onClick) {
       return "content.create";
     if (lower.includes("publish")) return "content.publish";
     if (lower.includes("export")) return "content.export";
-  }
-
-  // Topic permissions
-  if (category === "Topics") {
-    if (lower.includes("delete")) return "topic.delete";
-    if (lower.includes("edit") || lower.includes("update"))
-      return "topic.update";
-    if (lower.includes("create") || lower.includes("new"))
-      return "topic.create";
-    if (lower.includes("approve")) return "topic.approve";
-  }
-
-  // Knowledge permissions
-  if (category === "Knowledge") {
-    if (lower.includes("delete")) return "knowledge.delete";
-    if (lower.includes("edit") || lower.includes("update"))
-      return "knowledge.update";
-    if (lower.includes("create") || lower.includes("new"))
-      return "knowledge.create";
   }
 
   // Media permissions

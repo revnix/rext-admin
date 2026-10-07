@@ -1,10 +1,11 @@
 "use client";
 
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { PermissionGuard } from "@/components/permission/permission-guard";
+import type { Route } from "next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,211 +18,193 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Notice } from "@/components/ui/notice";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { WorkspaceDeleteDialog } from "@/components/workspace";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
+import { settingsRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
-import type { Route } from "next";
+import { SettingsGroup } from "@/components/settings/settings-group";
 
+/**
+ * Workspace settings, Danger zone: hand the workspace to another member, or delete it. Both are the
+ * owner's (workspace.delete); deleting asks for the typed name, and the workspace waits in the
+ * account's trash for 30 days.
+ */
 export function DangerZoneSection() {
-  const { workspace } = useWorkspace();
+  const { workspace, workspaceId } = useWorkspace();
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const queryClient = useQueryClient();
+  const { hasPermission: isOwner, isLoading: isPermissionLoading } =
+    useWorkspacePermission(WORKSPACE_PERMISSIONS.DELETE, workspaceId);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [newOwnerId, setNewOwnerId] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
 
-  const handleDelete = async () => {
-    if (!passwordConfirmation) {
-      toast.error("Please enter your password to confirm deletion.");
-      return;
-    }
+  // Only fetched while the transfer dialog is open; the owner row is excluded
+  // since it is the caller.
+  const { data: membersData, isLoading: membersLoading } = useQuery({
+    queryKey: ["workspace-members", workspace?.id],
+    queryFn: () => apiClient.members.list(workspace?.id ?? ""),
+    enabled: transferDialogOpen && Boolean(workspace?.id),
+  });
 
-    setIsDeleting(true);
+  const candidates = (membersData?.members ?? []).filter(
+    (m) => !m.is_owner && m.status === "active",
+  );
+  const newOwner = candidates.find((m) => m.user_id === newOwnerId);
+
+  const handleTransfer = async () => {
+    if (!workspace?.id || !newOwnerId) return;
+    setIsTransferring(true);
     try {
-      // First verify password
-      try {
-        await apiClient.request("/api/v1/user/verify-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: passwordConfirmation }),
-        });
-      } catch {
-        toast.error("The password you entered is incorrect.");
-        setIsDeleting(false);
-        return;
-      }
-
-      // Delete workspace
-      await apiClient.workspaces.delete(workspace?.id || "");
-
-      // Show success message with recovery info
+      await apiClient.workspaces.transferOwnership(workspace.id, newOwnerId);
       toast.success(
-        "The workspace has been deleted. You have 14 days to recover it.",
+        `${newOwner?.user.name ?? "The member you chose"} owns this workspace now; you're one of its admins.`,
       );
-
-      setDeleteDialogOpen(false);
-      setPasswordConfirmation("");
-      setShowPassword(false);
-      router.push("/" as Route);
+      setTransferDialogOpen(false);
+      setNewOwnerId("");
+      // Permissions, owner info and the Members table all changed.
+      await queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          queryKey[0] === "workspaces" ||
+          queryKey[0] === "workspace-members" ||
+          String(queryKey[0]).startsWith("workspace-permission"),
+      });
+      router.refresh();
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to delete workspace";
-      toast.error(errorMessage);
-      setIsDeleting(false);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "The workspace couldn't be transferred. Try again.",
+      );
+    } finally {
+      setIsTransferring(false);
     }
   };
 
+  if (!workspace?.id || isPermissionLoading) {
+    return <Skeleton className="h-48 w-full" />;
+  }
+
+  if (!isOwner) {
+    return (
+      <Notice title="Only the workspace's owner can do this">
+        Transferring and deleting the workspace are the owner's to do.
+      </Notice>
+    );
+  }
+
   return (
-    <Card className="border-destructive">
-      <CardHeader>
-        <CardTitle className="text-destructive">Danger Zone</CardTitle>
-        <CardDescription>
-          Irreversible actions that permanently affect your workspace
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <PermissionGuard
-          permission={WORKSPACE_PERMISSIONS.DELETE}
-          fallback={
-            <p className="text-sm text-muted-foreground">
-              Only workspace owners can delete the workspace.
-            </p>
-          }
-        >
-          <div className="space-y-4">
-            {/* Transfer Ownership - Future Feature */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg">
-              <div>
-                <h4 className="text-sm font-medium">Transfer Ownership</h4>
-                <p className="text-sm text-muted-foreground">
-                  Transfer workspace ownership to another member
-                </p>
-              </div>
-              <Button
-                className="w-full sm:w-auto"
-                variant="outline"
-                size="sm"
-                disabled
-              >
-                Coming Soon
+    <div className="flex flex-col gap-8">
+      <SettingsGroup
+        title="Transfer ownership"
+        description="Make another active member the owner. You stay in the workspace as an admin, and only the new owner can delete or transfer it."
+        action={
+          <AlertDialog
+            open={transferDialogOpen}
+            onOpenChange={(open) => {
+              setTransferDialogOpen(open);
+              if (!open) setNewOwnerId("");
+            }}
+          >
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" disabled={isTransferring}>
+                Transfer ownership
               </Button>
-            </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Transfer "{workspace.name}"?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  The member you choose becomes the owner. You become an admin
+                  and can no longer delete the workspace or transfer it again.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Field>
+                <FieldLabel htmlFor="new-owner">New owner</FieldLabel>
+                <Select
+                  value={newOwnerId}
+                  onValueChange={setNewOwnerId}
+                  disabled={membersLoading || isTransferring}
+                >
+                  <SelectTrigger id="new-owner" className="w-full">
+                    <SelectValue
+                      placeholder={
+                        membersLoading
+                          ? "Loading members…"
+                          : candidates.length === 0
+                            ? "No other active members"
+                            : "Choose a member"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {candidates.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.user.name}{" "}
+                        <span className="text-muted-foreground">
+                          {m.user.email}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isTransferring}>
+                  Keep ownership
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleTransfer();
+                  }}
+                  disabled={!newOwnerId || isTransferring}
+                >
+                  {isTransferring ? "Transferring…" : "Transfer ownership"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        }
+      />
 
-            {/* Delete Workspace */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-destructive rounded-lg">
-              <div>
-                <h4 className="text-sm font-medium">Delete Workspace</h4>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete this workspace and all its data
-                </p>
-              </div>
-              <AlertDialog
-                open={deleteDialogOpen}
-                onOpenChange={setDeleteDialogOpen}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className="w-full sm:w-auto"
-                    variant="destructive"
-                    size="sm"
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Workspace
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Delete "{workspace?.name}"?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will soft-delete the workspace. You'll have{" "}
-                      <strong>14 days</strong> to recover it before permanent
-                      deletion.
-                      <br />
-                      <br />
-                      All associated data will be preserved during the recovery
-                      period:
-                      <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Knowledge bases and content</li>
-                        <li>Topics and generations</li>
-                        <li>Team members and their access</li>
-                        <li>Settings and configurations</li>
-                      </ul>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-
-                  <div className="space-y-2 py-4">
-                    <Label htmlFor="password-confirm">
-                      Enter your password to confirm
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="password-confirm"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Your password"
-                        value={passwordConfirmation}
-                        onChange={(e) =>
-                          setPasswordConfirmation(e.target.value)
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && passwordConfirmation) {
-                            handleDelete();
-                          }
-                        }}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <AlertDialogFooter>
-                    <AlertDialogCancel
-                      onClick={() => {
-                        setPasswordConfirmation("");
-                        setShowPassword(false);
-                        setDeleteDialogOpen(false);
-                      }}
-                    >
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={!passwordConfirmation || isDeleting}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      {isDeleting ? "Deleting..." : "Delete workspace"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </PermissionGuard>
-      </CardContent>
-    </Card>
+      <SettingsGroup
+        title="Delete workspace"
+        description={
+          <>
+            Everyone loses access to the workspace at once. It waits in{" "}
+            <Link
+              href={settingsRoutes.data}
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              your account's trash
+            </Link>{" "}
+            for 30 days, where you can restore it, and is then deleted for good.
+          </>
+        }
+        action={
+          <WorkspaceDeleteDialog
+            workspace={workspace}
+            trigger={<Button variant="destructive">Delete workspace</Button>}
+            onDeleted={() => router.push("/" as Route)}
+            onRestored={() => router.refresh()}
+          />
+        }
+      />
+    </div>
   );
 }

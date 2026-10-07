@@ -38,23 +38,39 @@ export function validateAvatarFile(
   };
 }
 
+/** True for a timezone the browser knows by its IANA name ("UTC", "Asia/Karachi"). */
+export function isTimeZone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Account settings, Profile. The backend takes a name of up to 200 characters and a bio of up to
+ * 500 (UpdateProfileRequest), and stores any timezone string, so the form allows only real IANA
+ * names: scheduled publishing reads the person's timezone.
+ */
 export const profileSchema = z.object({
   full_name: z
     .string()
+    .trim()
     .min(2, "Full name must be at least 2 characters")
+    .max(200, "Full name must be 200 characters or fewer")
     .regex(/^[^0-9]*$/, "Name should not contain numbers")
-    .regex(/[a-zA-Z]/, "Name must contain at least one letter"),
-  display_name: z.preprocess((value) => {
-    if (typeof value !== "string") return value;
-    const trimmed = value.trim();
-    return trimmed.length === 0 ? undefined : trimmed;
-  }, z
+    .regex(/\p{L}/u, "Name must contain at least one letter"),
+  display_name: z
     .string()
-    .min(2, "Display name must be at least 2 characters")
-    .optional()),
-  bio: z.string().max(500).optional(),
-  language: z.string().optional(),
-  timezone: z.string().optional(),
+    .trim()
+    .max(100, "Display name must be 100 characters or fewer")
+    .refine(
+      (value) => value.length === 0 || value.length >= 2,
+      "Display name must be at least 2 characters",
+    ),
+  bio: z.string().max(500, "Bio must be 500 characters or fewer"),
+  timezone: z.string().refine(isTimeZone, "Choose a timezone from the list"),
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;

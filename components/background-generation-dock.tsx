@@ -4,22 +4,27 @@ import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle2,
-  FileText,
   Loader2,
   X,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { RunProgress } from "@/components/generate-content/run-progress";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useRefreshPersonaCountsOnFinishedRuns } from "@/hooks/use-personas";
+import { useRefreshAfterRuns } from "@/hooks/use-refresh-after-runs";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
 import {
   announceBackgroundGenerationRemoval,
   BACKGROUND_GENERATION_REMOVAL_STORAGE_KEY,
   requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
+import { describeFailedJob } from "@/lib/generate-content/background-progress";
+import { stagesAt, timedOutStages } from "@/lib/generate-content/run-stages";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
@@ -48,62 +53,41 @@ type GenerationStatusResponse = {
   stage?: string;
   error?: string;
   awaitingInput?: boolean;
+  runStage?: BackgroundGenerationJob["runStage"];
 };
 
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
-/** Progress bar + percentage for one generation. Used by the primary row and
- *  by every row in the expanded list, so they can never drift apart. */
-function GenerationProgress({
-  title,
-  progress,
-  compact = false,
-  className,
-}: {
-  title: string;
-  progress: number;
-  compact?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <div
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${title} generation progress`}
-        className={cn(
-          "relative flex-1 overflow-hidden rounded-full",
-          compact ? "h-1.5" : "h-2",
-        )}
-        style={{ backgroundColor: "rgb(52, 64, 84)" }}
-      >
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${progress}%`,
-            backgroundColor: "hsl(var(--primary))",
-          }}
-        />
-      </div>
-      <span
-        className={cn(
-          "text-right font-semibold tabular-nums text-foreground",
-          compact ? "w-8 text-xs" : "w-10 text-sm",
-        )}
-      >
-        {progress}%
-      </span>
-    </div>
-  );
-}
+/** Another job's button in the dock's list: "Continue" for a run waiting on the writer, else "Open". */
+const otherOpenLabel = (job: BackgroundGenerationJob) =>
+  job.status === "completed" && job.awaitingInput ? "Continue" : "Open";
 
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
+/**
+ * The dock's height as `--dock-height` on the page while it shows (D23), so the controls fixed to
+ * the bottom of a page (the article's Structure and Checklist, a side pane's button) sit above it
+ * instead of over its buttons. A callback ref: React runs the returned cleanup when the dock goes.
+ */
+function publishDockHeight(dock: HTMLElement | null) {
+  if (!dock) return;
+  const root = document.documentElement;
+  const publish = () =>
+    root.style.setProperty("--dock-height", `${dock.offsetHeight}px`);
+  publish();
+  const observer =
+    typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
+  observer?.observe(dock);
+  return () => {
+    observer?.disconnect();
+    root.style.removeProperty("--dock-height");
+  };
+}
+
 export function BackgroundGenerationDock() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   // The thread actually open on screen, if any. `?thread=` is the only
   // thing that identifies WHICH generation is being viewed — the pathname
@@ -115,7 +99,9 @@ export function BackgroundGenerationDock() {
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [showStages, setShowStages] = useState(false);
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
+  const jobsLoaded = useBackgroundGenerationStore((state) => state.hasHydrated);
   const updateJob = useBackgroundGenerationStore((state) => state.updateJob);
   const removeJob = useBackgroundGenerationStore((state) => state.removeJob);
   const mergeJobs = useBackgroundGenerationStore((state) => state.mergeJobs);
@@ -142,6 +128,9 @@ export function BackgroundGenerationDock() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // A run's pause, failure or article refreshes the balance and the article list it changed (D1a).
+  useRefreshAfterRuns();
 
   const visibleJobs = useMemo(
     () =>
@@ -269,7 +258,7 @@ export function BackgroundGenerationDock() {
             : "";
 
           try {
-            const response = await fetch(
+            const response = await authenticatedFetch(
               `/api/generate/${encodeURIComponent(job.threadId)}/status${runParam}`,
               { cache: "no-store" },
             );
@@ -283,10 +272,29 @@ export function BackgroundGenerationDock() {
               .jobs.find((item) => item.threadId === job.threadId);
             if (!latestJob) return;
 
+            // A timeout carries an error too: it keeps where it stopped, for the run component's
+            // Timed out state, before the generic failure below clears it.
+            if (payload.run.status === "timeout") {
+              updateJob(job.threadId, {
+                runId: payload.run.id,
+                status: "failed",
+                runStage: payload.runStage ?? latestJob.runStage,
+                timedOut: true,
+                stage: payload.stage ?? "Generation failed",
+                progress: 100,
+                error:
+                  payload.error ??
+                  "We could not finish this article. Open it to try again.",
+                updatedAt: payload.run.updatedAt,
+              });
+              return;
+            }
+
             if (payload.error) {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
+                runStage: undefined,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error: payload.error,
@@ -306,11 +314,17 @@ export function BackgroundGenerationDock() {
               );
               const nextStatus =
                 payload.run.status === "pending" ? "queued" : "running";
+              const nextRunStage = payload.runStage ?? latestJob.runStage;
+              // A new stage starts its clock now; the same one keeps its start.
+              const stageChanged =
+                nextRunStage?.phase !== latestJob.runStage?.phase ||
+                nextRunStage?.id !== latestJob.runStage?.id;
               if (
                 latestJob.runId === payload.run.id &&
                 latestJob.status === nextStatus &&
                 latestJob.stage === nextStage &&
-                latestJob.progress === nextProgress
+                latestJob.progress === nextProgress &&
+                !stageChanged
               ) {
                 return;
               }
@@ -319,6 +333,11 @@ export function BackgroundGenerationDock() {
                 status: nextStatus,
                 stage: nextStage,
                 progress: nextProgress,
+                runStage: nextRunStage,
+                timedOut: false,
+                ...(stageChanged && {
+                  stageStartedAt: new Date().toISOString(),
+                }),
               });
               return;
             }
@@ -330,6 +349,7 @@ export function BackgroundGenerationDock() {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "completed",
+                runStage: undefined,
                 stage: payload.stage ?? "Article ready",
                 progress: Math.max(latestJob.progress, payload.progress ?? 100),
                 awaitingInput: payload.awaitingInput === true,
@@ -340,12 +360,12 @@ export function BackgroundGenerationDock() {
 
             if (
               payload.run.status === "error" ||
-              payload.run.status === "timeout" ||
               payload.run.status === "interrupted"
             ) {
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
+                runStage: undefined,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error:
@@ -402,12 +422,12 @@ export function BackgroundGenerationDock() {
           ? awaiting
             ? job.stage
             : "Article ready"
-          : "Article generation failed",
+          : describeFailedJob(job).title,
         message: completed
           ? awaiting
             ? `"${job.title}" is ready for your next step.`
             : `"${job.title}" has finished generating.`
-          : `"${job.title}" could not be completed.`,
+          : describeFailedJob(job).description,
         type: completed ? "success" : "error",
         createdAt: new Date().toISOString(),
         read: false,
@@ -435,8 +455,9 @@ export function BackgroundGenerationDock() {
           },
         });
       } else {
-        toast.error("Article generation failed", {
-          description: job.title,
+        const failure = describeFailedJob(job);
+        toast.error(failure.title, {
+          description: failure.description,
           action: {
             label: "View details",
             onClick: () => openJob(job),
@@ -446,9 +467,12 @@ export function BackgroundGenerationDock() {
     }
   }, [jobs, openJob, updateJob]);
 
+  // A new article counts toward its author persona, in every open tab.
+  useRefreshPersonaCountsOnFinishedRuns(jobs, jobsLoaded);
+
   const cancelJob = async (target: BackgroundGenerationJob) => {
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `/api/generate/${encodeURIComponent(target.threadId)}/cancel`,
         {
           method: "POST",
@@ -490,15 +514,31 @@ export function BackgroundGenerationDock() {
     }
   };
 
-  if (!isMounted || visibleJobs.length === 0) return null;
+  const isViewingGenerationThread =
+    (pathname?.endsWith("/generate_content") ?? false) && Boolean(openThreadId);
 
-  const job = visibleJobs.find(isPending) ?? visibleJobs[0];
-  const otherJobs = visibleJobs.filter(
+  const displayedJobs = isViewingGenerationThread
+    ? visibleJobs.filter((job) => job.threadId !== openThreadId)
+    : visibleJobs;
+
+  if (!isMounted || displayedJobs.length === 0) return null;
+
+  const job = displayedJobs.find(isPending) ?? displayedJobs[0];
+  const otherJobs = displayedJobs.filter(
     (item) => item.threadId !== job.threadId,
   );
   const pending = isPending(job);
   const completed = job.status === "completed";
   const awaitingInput = completed && job.awaitingInput === true;
+  // The open button's words. Its accessible name adds the run's title, so it can't be confused with
+  // the step's own Continue on the page (E25).
+  const openLabel = awaitingInput
+    ? "Continue"
+    : completed
+      ? "Open article"
+      : pending
+        ? "View progress"
+        : "View details";
   // A run paused on an interrupt reads as `completed`, but the article is not
   // finished — the thread is still live and still blocks new generations. The
   // X must end it server-side, not just hide the dock. Only a genuinely
@@ -512,19 +552,34 @@ export function BackgroundGenerationDock() {
   // blank selection page — which hid Continue for a job that was waiting on the
   // user, leaving no way back into it.
   const isOnResultPage = openThreadId === job.threadId;
+  // The run component, for a run the poll has placed in a stage, and for one that timed out there
+  // (the running stage failed, the rest never ran); other jobs keep their sentence.
+  const timedOut = job.status === "failed" && job.timedOut === true;
+  const runStages = !job.runStage
+    ? null
+    : pending
+      ? stagesAt(
+          job.runStage.phase,
+          job.runStage.id,
+          job.stageStartedAt ? Date.parse(job.stageStartedAt) : undefined,
+        )
+      : timedOut
+        ? timedOutStages(job.runStage, Date.now())
+        : null;
 
   return (
     <section
+      ref={publishDockHeight}
       aria-label="Background generation activity"
-      className="sticky bottom-0 z-40 border-t border-border bg-background"
+      className="sticky bottom-(--bottom-bar-height) z-(--z-sticky) border-t border-border bg-surface-raised lg:bottom-0"
     >
-      <div className="flex min-h-14 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 lg:px-6">
+      <div className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 md:px-6">
         <div
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-            pending && "text-primary",
-            completed && "text-emerald-500",
-            job.status === "failed" && "text-destructive",
+            "flex size-8 shrink-0 items-center justify-center",
+            pending && "text-foreground",
+            completed && "text-success-600",
+            job.status === "failed" && "text-danger-600",
           )}
         >
           {pending ? (
@@ -536,11 +591,9 @@ export function BackgroundGenerationDock() {
           )}
         </div>
 
-        <FileText className="hidden h-4 w-4 shrink-0 text-muted-foreground sm:block" />
-
-        <div className="min-w-0 flex-1 basis-[220px]">
+        <div className="min-w-0 flex-1 basis-56">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">
+            <p className="truncate text-body font-medium text-foreground">
               {job.title}
             </p>
             {otherJobs.length > 0 && (
@@ -552,48 +605,57 @@ export function BackgroundGenerationDock() {
                 onClick={() => setExpanded((open) => !open)}
                 aria-expanded={expanded}
                 aria-controls="background-generation-others"
-                className="shrink-0 rounded text-xs text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="num shrink-0 rounded-sm text-caption text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 +{otherJobs.length} more
               </button>
             )}
           </div>
-          <p
-            role="status"
-            aria-live="polite"
-            className={cn(
-              "truncate text-xs text-muted-foreground",
-              job.status === "failed" && "text-destructive",
-            )}
-          >
-            {job.error ?? job.stage}
-          </p>
+          {runStages ? (
+            <RunProgress
+              variant="compact"
+              stages={runStages}
+              timedOut={timedOut}
+              className="mt-1 max-w-sm"
+            />
+          ) : (
+            <p
+              role="status"
+              aria-live="polite"
+              className={cn(
+                "truncate text-caption text-muted-foreground",
+                job.status === "failed" && "text-danger-600",
+              )}
+            >
+              {job.error ?? (pending ? `${job.stage}…` : job.stage)}
+            </p>
+          )}
         </div>
 
-        {pending && (
-          <GenerationProgress
-            title={job.title}
-            progress={job.progress}
-            className="min-w-[170px] flex-1 basis-[220px] sm:max-w-sm"
-          />
-        )}
-
         <div className="flex shrink-0 items-center gap-1">
+          {runStages && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              aria-expanded={showStages}
+              aria-controls="background-generation-stages"
+              onClick={() => setShowStages((open) => !open)}
+            >
+              {showStages ? "Hide steps" : "Steps"}
+            </Button>
+          )}
           {!isOnResultPage && (
             <Button
               type="button"
               variant={completed ? "default" : "outline"}
               size="sm"
               className="h-8 whitespace-nowrap"
+              aria-label={`${openLabel}: ${job.title}`}
               onClick={() => openJob(job)}
             >
-              {awaitingInput
-                ? "Continue"
-                : completed
-                  ? "Open article"
-                  : pending
-                    ? "View progress"
-                    : "View details"}
+              {openLabel}
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -622,7 +684,7 @@ export function BackgroundGenerationDock() {
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground"
+              className="size-8 text-muted-foreground"
               aria-label={`Dismiss ${job.title}`}
               onClick={() => dismissJob(job)}
             >
@@ -632,50 +694,57 @@ export function BackgroundGenerationDock() {
         </div>
       </div>
 
+      {showStages && runStages && (
+        <div
+          id="background-generation-stages"
+          className="border-t border-border px-4 py-3 md:px-6"
+        >
+          <RunProgress
+            stages={runStages}
+            timedOut={timedOut}
+            className="max-w-md"
+          />
+        </div>
+      )}
+
       {expanded && otherJobs.length > 0 && (
         <ul
           id="background-generation-others"
-          className="max-h-48 divide-y divide-border overflow-y-auto border-t border-border px-4 lg:px-6"
+          className="max-h-48 divide-y divide-border overflow-y-auto border-t border-border px-4 md:px-6"
         >
           {otherJobs.map((other) => (
             <li
               key={other.threadId}
-              className="flex items-center gap-3 py-2 text-sm"
+              className="flex items-center gap-3 py-2 text-body"
             >
               {isPending(other) ? (
-                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary motion-reduce:animate-none" />
+                <Loader2 className="size-4 shrink-0 animate-spin text-foreground motion-reduce:animate-none" />
               ) : other.status === "completed" ? (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="size-4 shrink-0 text-success-600" />
               ) : (
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <AlertCircle className="size-4 shrink-0 text-danger-600" />
               )}
               <span className="min-w-0 flex-1 truncate">{other.title}</span>
-              <span className="hidden shrink-0 truncate text-xs text-muted-foreground sm:block">
-                {other.error ?? other.stage}
-              </span>
-
               {/* Fixed-width slot so rows stay column-aligned whether or not
                   this generation is still running. */}
-              <div className="w-28 shrink-0">
-                {isPending(other) && (
-                  <GenerationProgress
-                    title={other.title}
-                    progress={other.progress}
-                    compact
-                  />
+              <span
+                className={cn(
+                  "hidden w-40 shrink-0 truncate text-caption text-muted-foreground sm:block",
+                  other.status === "failed" && "text-danger-600",
                 )}
-              </div>
+              >
+                {other.error ?? other.stage}
+              </span>
 
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 shrink-0"
+                className="h-8 shrink-0"
+                aria-label={`${otherOpenLabel(other)}: ${other.title}`}
                 onClick={() => openJob(other)}
               >
-                {other.status === "completed" && other.awaitingInput
-                  ? "Continue"
-                  : "Open"}
+                {otherOpenLabel(other)}
                 <ArrowUpRight className="h-3 w-3" />
               </Button>
 
@@ -696,7 +765,7 @@ export function BackgroundGenerationDock() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground"
+                    className="size-8 shrink-0 text-muted-foreground"
                     aria-label={`Cancel ${other.title}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -707,7 +776,7 @@ export function BackgroundGenerationDock() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground"
+                  className="size-8 shrink-0 text-muted-foreground"
                   aria-label={`Dismiss ${other.title}`}
                   onClick={() => dismissJob(other)}
                 >

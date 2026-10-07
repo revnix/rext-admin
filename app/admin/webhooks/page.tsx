@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   AlertDialog,
@@ -97,7 +97,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
     switch (status) {
       case "processed":
         return (
-          <Badge variant="default" className="bg-green-500">
+          <Badge variant="success">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Processed
           </Badge>
@@ -123,7 +123,13 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
 
   return (
     <>
-      <TableRow className={event.status === "failed" ? "bg-red-50" : ""}>
+      <TableRow
+        className={
+          event.status === "failed"
+            ? "bg-danger-50 transition-colors hover:bg-danger-200/40"
+            : "hover:bg-muted/50"
+        }
+      >
         <TableCell className="font-medium">{event.event_name}</TableCell>
         <TableCell>{getStatusBadge(event.status)}</TableCell>
         <TableCell className="text-sm text-muted-foreground">
@@ -164,7 +170,7 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
       </TableRow>
       {isExpanded && (
         <TableRow>
-          <TableCell colSpan={5} className="bg-gray-50 dark:bg-gray-800">
+          <TableCell colSpan={5} className="bg-surface-inset">
             <div className="space-y-4 p-4">
               {/* Event Details */}
               <div>
@@ -184,8 +190,8 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
               {/* Error Message */}
               {event.error_message && (
                 <div>
-                  <h4 className="font-semibold mb-2 text-red-600">Error</h4>
-                  <pre className="bg-red-100 p-3 rounded text-sm text-red-800 overflow-x-auto">
+                  <h4 className="font-semibold mb-2 text-danger-600">Error</h4>
+                  <pre className="bg-danger-50 border border-danger-200 p-3 rounded-md text-sm text-danger-700 overflow-x-auto">
                     {event.error_message}
                   </pre>
                 </div>
@@ -197,9 +203,9 @@ function WebhookEventRow({ event, onRetry, retrying }: WebhookEventRowProps) {
                 {payloadLoading ? (
                   <Skeleton className="h-24 w-full" />
                 ) : payloadError ? (
-                  <p className="text-sm text-red-600">{payloadError}</p>
+                  <p className="text-sm text-danger-600">{payloadError}</p>
                 ) : payload && Object.keys(payload).length > 0 ? (
-                  <pre className="bg-white dark:bg-gray-800 p-3 rounded border text-xs overflow-x-auto max-h-64">
+                  <pre className="bg-card max-w-270 p-3 rounded-md border text-xs overflow-x-auto max-h-64">
                     {JSON.stringify(payload, null, 2)}
                   </pre>
                 ) : (
@@ -253,7 +259,7 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold">
             {stats.processed_events ?? 0}
           </div>
           <p className="text-sm text-muted-foreground">Processed</p>
@@ -261,9 +267,7 @@ function StatsCards({ stats, loading }: StatsCardsProps) {
       </Card>
       <Card>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-red-600">
-            {stats.failed_events ?? 0}
-          </div>
+          <div className="text-2xl font-bold">{stats.failed_events ?? 0}</div>
           <p className="text-sm text-muted-foreground">Failed</p>
         </CardContent>
       </Card>
@@ -431,7 +435,7 @@ export default function WebhookMonitoringPage() {
 
   return (
     <AdminGuard superAdminOnly={true}>
-      <PageLayout
+      <ListPage
         title="Webhook Monitoring"
         description="Monitor and manage webhook events from LemonSqueezy"
         actions={
@@ -560,7 +564,7 @@ export default function WebhookMonitoringPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div>
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -636,7 +640,7 @@ export default function WebhookMonitoringPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }
