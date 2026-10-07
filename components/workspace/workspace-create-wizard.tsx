@@ -129,7 +129,14 @@ export function WorkspaceCreateWizard() {
       });
       slugRef.current = workspace.slug;
       idRef.current = workspace.id;
-      // The switcher's list stays cached for minutes; the sidebar needs the new workspace now.
+      // The switcher's list stays cached for minutes, and the switcher puts back the first
+      // workspace of that list when the current one isn't in it. The new workspace joins the
+      // list first, so the sidebar names it, and links to it, through the analysis and the review.
+      queryClient.setQueryData(workspaceQueries.list().queryKey, (list) =>
+        list && !list.workspaces.some((known) => known.id === workspace.id)
+          ? { ...list, workspaces: [workspace, ...list.workspaces] }
+          : list,
+      );
       setCurrentWorkspace(workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
       // The plan's count above the form ("1 of 1 workspace on your plan") counts this one now.
