@@ -28,6 +28,9 @@ const words = (heading: string) =>
     .trim()
     .replace(/^\d+\s+/, "");
 
+// A fenced code block's lines are code, whatever they start with ("# install" in a shell example).
+const FENCED = /^(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:^\1[ \t]*$|(?![\s\S]))/gm;
+
 const clean = (heading: string) =>
   heading.replace(/[*_`~]|\[|\]\([^)]*\)/g, "").trim();
 
@@ -92,7 +95,8 @@ export function articleStructure(
   planned: Planned[],
   writing: boolean,
 ): StructureEntry[] {
-  const written = [...(body ?? "").matchAll(HEADING_LINE)].map((match) => ({
+  const prose = (body ?? "").replace(FENCED, "");
+  const written = [...prose.matchAll(HEADING_LINE)].map((match) => ({
     level: (match[1].length === 3 ? 3 : 2) as 2 | 3,
     heading: clean(match[2]),
     ...(match[1].length === 1 ? { title: true as const } : {}),
@@ -119,6 +123,17 @@ export function articleStructure(
       lastWritten = index;
       from = at + 1;
     }
+  });
+  // By position too: the text's Nth main section stands for the outline's Nth, reworded or not, so
+  // a reworded heading (the last one above all, which no later match confirms) isn't listed twice.
+  const sectionsWritten = written.filter(
+    (entry) => entry.level === 2 && !("title" in entry),
+  ).length;
+  let seen = 0;
+  planned.forEach((section, index) => {
+    if (section.heading_level === "H3") return;
+    seen += 1;
+    if (seen <= sectionsWritten && index > lastWritten) lastWritten = index;
   });
   for (const section of planned.slice(lastWritten + 1)) {
     if (!section.heading?.trim()) continue;
