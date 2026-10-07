@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
+import { ApiError } from "@/lib/api-client/core";
 import { log } from "@/lib/logger";
 import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
 import {
@@ -33,7 +35,9 @@ import type { Route } from "next";
  * analysis as the run component, fed by the operation's events. When it completes, the new
  * workspace opens on its Brand voice section with the draft to review: the analysis has already
  * saved the brand voice, the personas and the competitors. A failed analysis says what failed and
- * opens the workspace anyway; a stream that stops before the end offers a retry.
+ * opens the workspace anyway; a stream that stops before the end offers a retry. A workspace past
+ * the plan's limit (the backend's 429, or a limit the page learns of after it loaded) gets a
+ * notice with the way to a bigger plan, never a click that does nothing.
  */
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -44,6 +48,7 @@ export function WorkspaceCreateWizard() {
   const [operationId, setOperationId] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
   const [streamProblem, setStreamProblem] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const slugRef = useRef<string | null>(null);
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
@@ -99,9 +104,14 @@ export function WorkspaceCreateWizard() {
   }, [operationId, disconnect, clearCompletedOperation]);
 
   const handleSubmit = async (data: WorkspaceFormData) => {
-    if (!canCreate || isLimitReached || !checkLimit("create a workspace")) {
+    if (isLimitReached) {
+      setLimitReached(true);
       return;
     }
+    if (!canCreate || !checkLimit("create a workspace")) {
+      return;
+    }
+    setLimitReached(false);
     // Before creation: the list doesn't hold the new workspace yet.
     const isFirstWorkspace = workspaceList.length === 0;
     try {
@@ -132,6 +142,15 @@ export function WorkspaceCreateWizard() {
       }
     } catch (error) {
       log.error("[Workspace create] Failed to create the workspace", error);
+      if (error instanceof ApiError && error.statusCode === 429) {
+        // The plan's workspaces are all in use (another tab, or the plan changed): the count
+        // above the form reads the usage again.
+        setLimitReached(true);
+        queryClient.invalidateQueries({
+          queryKey: subscriptionQueries.usage().queryKey,
+        });
+        return;
+      }
       // The backend checks the name and that the website answers: say so beside the field.
       const message = (error as Error).message;
       if (/website|url|domain/i.test(message)) {
@@ -154,39 +173,55 @@ export function WorkspaceCreateWizard() {
 
   if (!operationId) {
     return (
-      <FormShell
-        form={form}
-        onSubmit={handleSubmit}
-        submitLabel="Create workspace"
-        cancel={{ onCancel: () => router.push("/") }}
-      >
-        <FieldController
-          control={form.control}
-          name="name"
-          label="Workspace name"
-          required
+      <div className="space-y-6">
+        {limitReached && (
+          <Notice
+            tone="warning"
+            title="Workspace limit reached"
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href={"/pricing" as Route}>View plans</Link>
+              </Button>
+            }
+          >
+            Every workspace on your plan is in use, so this one wasn't created.
+            A bigger plan adds more.
+          </Notice>
+        )}
+        <FormShell
+          form={form}
+          onSubmit={handleSubmit}
+          submitLabel="Create workspace"
+          cancel={{ onCancel: () => router.push("/") }}
         >
-          {(field) => (
-            <Input {...field} maxLength={200} placeholder="e.g. My company" />
-          )}
-        </FieldController>
-        <FieldController
-          control={form.control}
-          name="url"
-          label="Website"
-          description="We read it to draft the workspace's brand voice, personas and competitors."
-          required
-        >
-          {(field) => (
-            <Input
-              {...field}
-              type="url"
-              inputMode="url"
-              placeholder="https://your-company.com"
-            />
-          )}
-        </FieldController>
-      </FormShell>
+          <FieldController
+            control={form.control}
+            name="name"
+            label="Workspace name"
+            required
+          >
+            {(field) => (
+              <Input {...field} maxLength={200} placeholder="e.g. My company" />
+            )}
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="url"
+            label="Website"
+            description="We read it to draft the workspace's brand voice, personas and competitors."
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="url"
+                inputMode="url"
+                placeholder="https://your-company.com"
+              />
+            )}
+          </FieldController>
+        </FormShell>
+      </div>
     );
   }
 
