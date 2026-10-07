@@ -182,14 +182,13 @@ export function TitleStep({
                     : "border-border bg-card hover:bg-surface-inset",
                 )}
               >
-                {/* Filled when checked: an obsidian ring around a lime dot. */}
                 <input
                   type="radio"
                   id={id}
                   name={group}
                   checked={isSelected}
                   onChange={() => setSelected(index)}
-                  className="mt-1 size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-border-strong bg-card checked:border-[5px] checked:border-primary checked:bg-primary-foreground"
+                  className="mt-1 size-4 shrink-0 cursor-pointer accent-primary"
                 />
                 <div className="min-w-0 flex-1 space-y-2">
                   {isEditing ? (
