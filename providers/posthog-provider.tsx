@@ -5,7 +5,6 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
-import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import {
   analytics,
   isImpersonating,
@@ -155,20 +154,17 @@ function resetIdentity(): void {
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   // Null until the person's answer is known and posthog-js runs (lib/analytics-consent.ts): in
-  // the EEA, the UK and Switzerland that is after they answer the prompt, and nothing is sent
-  // before. A child's effect runs before this one's, and posthog-js drops an identify or a capture
+  // the EEA, the UK and Switzerland that is after they answer the question in the shell
+  // (AnalyticsConsentPrompt), and nothing is sent before. A child's effect runs before this one's, and posthog-js drops an identify or a capture
   // made before init, so the page views, the auth sync and the OAuth record mount only once it is
   // set: the sync before the record, so that the record goes out under the person rather than an
   // anonymous id (siblings' effects run in order).
   const [mode, setMode] = useState<RunningMode | null>(null);
-  // Whether analytics is set up at all here; without it nobody is asked anything.
-  const [configured, setConfigured] = useState(false);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     // NEXT_PUBLIC_ANALYTICS_ENABLED=false turns all of it off, page views and identification too.
     if (!key || process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "false") return;
-    setConfigured(true);
 
     let started = false;
     let cancelled = false;
@@ -254,8 +250,6 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         )}
       </Suspense>
       {children}
-      {/* Asked once, after signing in, where the law asks for it and nothing is chosen yet. */}
-      {configured && <AnalyticsConsentPrompt />}
     </PHProvider>
   );
 }
