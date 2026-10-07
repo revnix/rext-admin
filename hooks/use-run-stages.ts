@@ -9,6 +9,7 @@ import {
   type RunFindings,
   reduceFindings,
   TITLE_MODEL_NODE,
+  textNode,
 } from "@/lib/generate-content/run-findings";
 import {
   failStages,
@@ -110,8 +111,9 @@ export function useRunStages() {
   /** A node finished; `data` is its update, read for what it found. */
   const nodeDone = useCallback((node: string, data?: unknown) => {
     // A model's text ends with its node: what it writes next (a regenerated outline) is new text.
-    if (node === TITLE_MODEL_NODE || node === OUTLINE_MODEL_NODE) {
-      delete texts.current[node];
+    const written = textNode(node);
+    if (written === TITLE_MODEL_NODE || written === OUTLINE_MODEL_NODE) {
+      delete texts.current[written];
     }
     setState((current) => {
       if (!current.run && data === undefined) return current;
@@ -137,7 +139,8 @@ export function useRunStages() {
 
   /** A model token (`readMessageToken`): the title and outline models' are read as they write. */
   const token = useCallback(
-    ({ token: piece, node }: MessageToken) => {
+    ({ token: piece, node: label }: MessageToken) => {
+      const node = textNode(label);
       if (
         !piece ||
         (node !== TITLE_MODEL_NODE && node !== OUTLINE_MODEL_NODE)

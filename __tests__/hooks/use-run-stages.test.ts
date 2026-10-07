@@ -107,6 +107,22 @@ describe("useRunStages", () => {
       expect(result.current.findings.siteCount).toBe(1);
     });
 
+    it("reads the title model's text under the gate's node name too, as the recorded stream labels it", () => {
+      const { result } = renderHook(() => useRunStages());
+      act(() => result.current.start("titles"));
+      for (const piece of tokens(TITLES_JSON)) {
+        act(() =>
+          result.current.token({ token: piece, node: "topic_generation" }),
+        );
+      }
+      expect(result.current.findings.drafts?.[0]).toMatchObject({
+        title: "Tea for Beginners",
+        complete: true,
+      });
+      expect(result.current.findings.draftsDone).toBe(true);
+      expect(states(result.current.run)).toEqual(["complete", "active"]);
+    });
+
     it("ends the writing of the titles when the model's text closes, and starts the checks", () => {
       const { result } = renderHook(() => useRunStages());
       act(() => result.current.start("titles"));

@@ -134,6 +134,15 @@ export const EMPTY_FINDINGS: RunFindings = {};
 export const TITLE_MODEL_NODE = "generate_topics";
 export const OUTLINE_MODEL_NODE = "generate_outline";
 
+/**
+ * The node a stream's token is read under. The title model's text comes labelled `generate_topics`
+ * since the model has a node of its own, and `topic_generation` (the gate's node, where the model
+ * call used to sit) in the recorded stream and on a run from before: both are the title model's.
+ */
+export function textNode(node: string): string {
+  return node === "topic_generation" ? TITLE_MODEL_NODE : node;
+}
+
 export type FindingsEvent =
   /** A phase starts: what it finds is cleared (a new keyword clears everything). */
   | { type: "phase"; phase: RunPhase }
