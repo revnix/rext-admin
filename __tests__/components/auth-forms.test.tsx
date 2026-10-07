@@ -97,6 +97,17 @@ describe("LoginForm", () => {
 });
 
 describe("SignupForm", () => {
+  it("says what creating an account agrees to, with the website's legal pages", () => {
+    render(<SignupForm />);
+    expect(screen.getByRole("link", { name: /^Terms/ })).toHaveAttribute(
+      "href",
+      "https://rext.ai/terms",
+    );
+    expect(
+      screen.getByRole("link", { name: /^Privacy Policy/ }),
+    ).toHaveAttribute("href", "https://rext.ai/privacy");
+  });
+
   it("asks for a length, not character rules", () => {
     render(<SignupForm />);
     expect(screen.getByText("At least 8 characters.")).toBeVisible();
