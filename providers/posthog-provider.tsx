@@ -4,7 +4,7 @@ import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, Suspense, useRef } from "react";
+import { useEffect, Suspense, useRef, useState } from "react";
 import { analytics, registerPostHog } from "@/lib/analytics";
 import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
 
@@ -93,6 +93,10 @@ export function OAuthLoginRecord() {
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  // Set once posthog-js is wired into `analytics`. A child's effect runs before this one's, and an
+  // event tracked before then never reaches PostHog, so the OAuth record mounts only after it.
+  const [registered, setRegistered] = useState(false);
+
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     if (!key) return;
@@ -115,6 +119,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture: (event, properties) => posthog.capture(event, properties),
       reset: () => posthog.reset(),
     });
+    setRegistered(true);
   }, []);
 
   return (
@@ -122,7 +127,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <PostHogPageView />
         <PostHogAuthSync />
-        <OAuthLoginRecord />
+        {registered && <OAuthLoginRecord />}
       </Suspense>
       {children}
     </PHProvider>
