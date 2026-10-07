@@ -1231,8 +1231,10 @@ function ContentEditorInner(props: ContentEditorProps) {
             ) : (
               // Images span the article's column at their own aspect, the featured one
               // included (the founder's feedback v2, #704); the editor's image nodes stay
-              // as they are in Edit.
-              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(>img)]:block">
+              // as they are in Edit. Each image's wrappers become blocks, the outer one over
+              // its inline `display: inline-block` (hence `!`), or a narrow image would stay
+              // at its own width (review round 1).
+              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
                 {!body?.trim() ? (
                   <div className="not-prose space-y-4">
                     <div className="flex flex-wrap gap-2">
