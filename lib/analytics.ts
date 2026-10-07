@@ -178,3 +178,32 @@ class Analytics {
 
 export const analytics = new Analytics();
 export type { AnalyticsEvent, EventProperties, AnalyticsUser };
+
+// ── Linking a provider ───────────────────────────────────────────────────────
+// Linking Google or GitHub from the settings goes through the same OAuth sign-in as logging in, so
+// the link button marks it in this tab's session storage (which the provider's round trip keeps), and
+// the login record (OAuthLoginRecord, providers/posthog-provider.tsx) records no sign-in for it.
+
+const OAUTH_LINKING_KEY = "rext-oauth-linking";
+/** A mark older than this is from a link that was abandoned, not the login now being recorded. */
+const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
+
+/** Called by the link button just before it starts the provider's sign-in. */
+export function markOAuthLinking(): void {
+  try {
+    window.sessionStorage.setItem(OAUTH_LINKING_KEY, String(Date.now()));
+  } catch {
+    // Storage refused: the link is recorded as a sign-in, as before.
+  }
+}
+
+/** Whether the login being recorded is a link started in this tab; clears the mark either way. */
+export function takeOAuthLinking(): boolean {
+  try {
+    const at = Number(window.sessionStorage.getItem(OAUTH_LINKING_KEY));
+    window.sessionStorage.removeItem(OAUTH_LINKING_KEY);
+    return at > 0 && Date.now() - at < OAUTH_LINKING_MAX_AGE_MS;
+  } catch {
+    return false;
+  }
+}
