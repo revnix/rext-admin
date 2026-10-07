@@ -75,6 +75,7 @@ import {
 } from "@/lib/content/publish-copy";
 import {
   articleStructure,
+  plannedSections,
   writingPosition,
 } from "@/lib/generate-content/article-structure";
 import { useConfirmation } from "../ui/confirmation-dialog";
@@ -415,7 +416,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   const writing = !isFinal && (!!isEnhancing || !!runProgress);
   // Its structure as layers, with what is written, being written and still to come (task 703).
   const structure = useMemo(
-    () => articleStructure(body ?? "", outline?.sections ?? [], writing),
+    () => articleStructure(body ?? "", plannedSections(outline), writing),
     [body, outline, writing],
   );
   const position = writingPosition(structure);
@@ -1106,26 +1107,39 @@ function ContentEditorInner(props: ContentEditorProps) {
               // at its own width (review round 1).
               <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
                 {!body?.trim() ? (
-                  <div className="not-prose space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {TAG_SKELETON_KEYS.map((key) => (
-                        <Skeleton key={key} className="h-6 w-16 rounded-full" />
+                  writing && structure.length > 0 ? (
+                    // Before the first words arrive: the title, and below it the outline's
+                    // sections where they will be written. No grey bars to watch (task 703).
+                    (displayTitle || outline?.title) && (
+                      <header>
+                        <h1>{displayTitle || outline?.title}</h1>
+                      </header>
+                    )
+                  ) : (
+                    <div className="not-prose space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {TAG_SKELETON_KEYS.map((key) => (
+                          <Skeleton
+                            key={key}
+                            className="h-6 w-16 rounded-full"
+                          />
+                        ))}
+                      </div>
+                      <div className="space-y-3 pb-4">
+                        <Skeleton className="h-10 w-4/5 rounded-md" />
+                        <Skeleton className="h-10 w-2/3 rounded-md" />
+                      </div>
+                      {allContent?.meta_description && (
+                        <div className="space-y-3 pb-4">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                        </div>
+                      )}
+                      {CONTENT_SKELETON_KEYS.map((key) => (
+                        <Skeleton key={key} className="h-4 rounded-md" />
                       ))}
                     </div>
-                    <div className="space-y-3 pb-4">
-                      <Skeleton className="h-10 w-4/5 rounded-md" />
-                      <Skeleton className="h-10 w-2/3 rounded-md" />
-                    </div>
-                    {allContent?.meta_description && (
-                      <div className="space-y-3 pb-4">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                      </div>
-                    )}
-                    {CONTENT_SKELETON_KEYS.map((key) => (
-                      <Skeleton key={key} className="h-4 rounded-md" />
-                    ))}
-                  </div>
+                  )
                 ) : (
                   <>
                     {/* Below 1280 px the side panel is a sheet: the checklist shows here, above

@@ -34,6 +34,38 @@ const same = (a: string, b: string) => {
   return x !== "" && y !== "" && (x === y || x.includes(y) || y.includes(x));
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const headingsOf = (list: unknown): Planned[] =>
+  (Array.isArray(list) ? list : []).filter(isRecord).flatMap((section) =>
+    typeof section.heading === "string" && section.heading.trim()
+      ? [
+          {
+            heading: section.heading,
+            heading_level: section.heading_level === "H3" ? "H3" : "H2",
+          } as Planned,
+        ]
+      : [],
+  );
+
+/**
+ * The outline's planned headings, wherever its schema keeps them: a flat `sections` list, or one
+ * nested a level down (a blog's `structure.sections`). An outline with neither (a how-to's steps,
+ * a glossary's terms) plans its page another way, and gives none.
+ */
+export function plannedSections(outline: unknown): Planned[] {
+  if (!isRecord(outline)) return [];
+  const flat = headingsOf(outline.sections);
+  if (flat.length > 0) return flat;
+  for (const value of Object.values(outline)) {
+    if (!isRecord(value)) continue;
+    const nested = headingsOf(value.sections);
+    if (nested.length > 0) return nested;
+  }
+  return [];
+}
+
 export function articleStructure(
   body: string,
   planned: Planned[],

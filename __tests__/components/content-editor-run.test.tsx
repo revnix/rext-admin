@@ -145,6 +145,43 @@ describe("ContentEditor while the article is written, as the page shows it (task
     expect(within(article).queryByText("Writing the draft")).toBeNull();
   });
 
+  it("shows the title and the outline's sections before the first words arrive, not grey bars", () => {
+    const { container } = render(
+      editor({
+        isEnhancing: true,
+        enhancingMsg: "Research",
+        generatedContent: "",
+        // A blog's outline keeps its sections a level down.
+        outline: {
+          title: "How to start a podcast",
+          structure: {
+            sections: [
+              { heading: "Pick a show idea", heading_level: "H2" },
+              { heading: "Choose one listener", heading_level: "H3" },
+            ],
+          },
+        } as never,
+      }),
+    );
+    const article = screen.getByRole("article");
+    expect(
+      within(article).getByRole("heading", {
+        level: 1,
+        name: "How to start a podcast",
+      }),
+    ).toBeInTheDocument();
+    expect(within(article).getAllByText("Still to come")).toHaveLength(2);
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeNull();
+    expect(
+      within(screen.getByRole("navigation", { name: "Structure" }))
+        .getAllByRole("listitem")
+        .map((row) => row.textContent),
+    ).toEqual([
+      "Still to come:H2Pick a show idea",
+      "Still to come:H3Choose one listener",
+    ]);
+  });
+
   it("shows the actions once the article is done, and no states in the structure", () => {
     render(
       editor({
