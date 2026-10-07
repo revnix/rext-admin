@@ -35,7 +35,7 @@ describe("Continue with nothing in progress", () => {
     render(<ContinueRow slug="acme" runs={[]} articles={[]} canGenerate />);
     expect(
       screen.getByRole("link", { name: "Start an article" }),
-    ).toHaveAttribute("href", "/w/acme/generate_content");
+    ).toHaveAttribute("href", "/w/acme/generate-content");
   });
 
   it("offers nothing to someone who may not", () => {

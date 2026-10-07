@@ -190,7 +190,7 @@ const nextConfig: NextConfig = {
         // The topic-based content wizard is retired (articles start from
         // keyword research): an old bookmark opens the keyword flow.
         source: "/w/:workspaceSlug/content/create",
-        destination: "/w/:workspaceSlug/generate_content",
+        destination: "/w/:workspaceSlug/generate-content",
         permanent: false,
       },
       {
@@ -205,6 +205,21 @@ const nextConfig: NextConfig = {
         source: "/w/:workspaceSlug/generate_content/library/:path*",
         destination: "/w/:workspaceSlug/keywords/:path*",
         permanent: false,
+      },
+      {
+        // One slug convention, kebab-case (FB2.2): Generate moved from generate_content to
+        // generate-content. Bookmarks, sent emails and the dock's saved links keep working, with
+        // their query (?thread=, ?library=). After the library's redirect above, which goes first.
+        source: "/w/:workspaceSlug/generate_content",
+        destination: "/w/:workspaceSlug/generate-content",
+        permanent: true,
+      },
+      {
+        // Deeper addresses under the old one, if any were ever shared. The exact address above
+        // goes first: through this rule it would gain a trailing slash and a second redirect.
+        source: "/w/:workspaceSlug/generate_content/:path*",
+        destination: "/w/:workspaceSlug/generate-content/:path*",
+        permanent: true,
       },
       {
         // Knowledge bases are removed (E16): their pages open the workspace's settings.

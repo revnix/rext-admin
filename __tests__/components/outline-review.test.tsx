@@ -589,7 +589,7 @@ describe("OutlineReview, the brief's settings", () => {
 });
 
 describe("OutlineReview, the approval", () => {
-  it("shows the article's cost and the balance it leaves on Approve", () => {
+  it("gives Approve's cost and the balance it leaves in its tooltip, not on the label", async () => {
     setCredits({
       current_credits: 4540,
       credits_per_month: 5000,
@@ -627,18 +627,21 @@ describe("OutlineReview, the approval", () => {
         },
       },
     });
+    const user = userEvent.setup();
     renderReview();
 
-    expect(
-      screen.getByRole("button", { name: /approve and generate/i }),
-    ).toHaveTextContent("· 12 credits · balance after 4,528");
-    expect(
-      screen.getByText("Balance after: 4,528 credits"),
-    ).toBeInTheDocument();
-    // Regenerate names its cost too (E7.3).
+    const approve = screen.getByRole("button", {
+      name: /approve and generate/i,
+    });
+    // FB2.11: the cost is in the tooltip, on hover or focus, not on the buttons.
+    expect(approve).not.toHaveTextContent(/credit/);
     expect(
       screen.getByRole("button", { name: /^regenerate/i }),
-    ).toHaveTextContent("· 1 credit");
+    ).not.toHaveTextContent(/credit/);
+    await user.hover(approve);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Balance after: 4,528 credits",
+    );
   });
 });
 
@@ -670,7 +673,7 @@ describe("The outline's feedback form (E7.3)", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("names Submit feedback's credit and sends it once", async () => {
+  it("keeps Submit feedback's credit off its label and sends it once", async () => {
     setCredits({
       current_credits: 40,
       credits_per_month: 400,
@@ -691,7 +694,7 @@ describe("The outline's feedback form (E7.3)", () => {
     const { onSubmit } = renderFeedback();
 
     const submit = screen.getByRole("button", { name: /submit feedback/i });
-    expect(submit).toHaveTextContent("· 1 credit");
+    expect(submit).not.toHaveTextContent(/credit/);
     await user.click(submit);
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });

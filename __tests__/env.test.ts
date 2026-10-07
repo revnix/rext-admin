@@ -92,4 +92,22 @@ describe("env", () => {
       ).rejects.toThrow("AUTH_SECRET");
     },
   );
+
+  it("takes the support chat's two settings together, or neither (#711)", async () => {
+    await expect(
+      loadEnv({
+        ...production,
+        NEXT_PUBLIC_CRISP_WEBSITE_ID: "website",
+        CRISP_TOKEN_SECRET: "secret",
+      }),
+    ).resolves.toBeDefined();
+    await expect(
+      loadEnv({ ...production, NEXT_PUBLIC_CRISP_WEBSITE_ID: "website" }),
+    ).rejects.toThrow(
+      "The support chat needs both NEXT_PUBLIC_CRISP_WEBSITE_ID and CRISP_TOKEN_SECRET, or neither",
+    );
+    await expect(
+      loadEnv({ ...production, CRISP_TOKEN_SECRET: "secret" }),
+    ).rejects.toThrow("or neither");
+  });
 });

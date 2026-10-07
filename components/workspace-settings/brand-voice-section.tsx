@@ -3,37 +3,34 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { Route } from "next";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { FieldController } from "@/components/forms/field-controller";
-import { FormSection, FormShell } from "@/components/forms/form-shell";
+import { FormShell } from "@/components/forms/form-shell";
 import { useSavedStatus } from "@/components/forms/use-saved-status";
 import { useZodForm } from "@/components/forms/use-zod-form";
-import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { usePersonas } from "@/hooks/use-personas";
-import { apiClient } from "@/lib/api-client";
 import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
-import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
-  BRAND_VOICE_LIMITS,
   type BrandVoiceFormValues,
   brandVoiceFormSchema,
-  splitLines,
   toBrandVoiceFormValues,
 } from "@/schemas/brand-voice-schemas";
 import { brandVoiceRefreshFor, useWorkspaceStore } from "@/stores/workspace";
 import { SettingsGroup } from "@/components/settings/settings-group";
-
-const ONE_PER_LINE = "One per line.";
+import {
+  BrandVoiceFields,
+  saveBrandVoice,
+} from "@/components/workspace-settings/brand-voice-fields";
+import {
+  DraftedNotice,
+  namedPeople,
+} from "@/components/workspace-settings/drafted-notice";
 
 /**
  * Workspace settings, Brand voice: the one place the brand voice is edited (plans/app/D-pages.md
@@ -89,29 +86,9 @@ export function BrandVoiceSection() {
   const onSubmit = async (values: BrandVoiceFormValues) => {
     if (!workspace?.id) return;
     try {
-      const response = await apiClient.workspaces.updateBrandVoice(
-        workspace.id,
-        {
-          brand_name: values.brand_name.trim(),
-          about: values.about.trim(),
-          customer_profile: values.customer_profile.trim(),
-          selling_position: values.selling_position.trim(),
-          target_audience: splitLines(values.target_audience),
-          brand_voice: splitLines(values.brand_voice),
-          competitors: splitLines(values.competitors),
-          content_strategy: splitLines(values.content_pillar),
-        },
-      );
+      const response = await saveBrandVoice(queryClient, workspace.id, values);
       markSaved();
       form.reset(toBrandVoiceFormValues(response.brand_voice));
-      queryClient.setQueryData(
-        workspaceQueries.brandVoice(workspace.id).queryKey,
-        response,
-      );
-      // The workspace detail carries the brand voice too.
-      await queryClient.invalidateQueries({
-        queryKey: ["workspaces", "detail"],
-      });
     } catch (error) {
       form.setError("root.server", {
         message:
@@ -196,97 +173,7 @@ export function BrandVoiceSection() {
                 {serverError}
               </Notice>
             )}
-            <FormSection title="The brand">
-              <FieldController
-                control={form.control}
-                name="brand_name"
-                label="Brand name"
-                maxLength={BRAND_VOICE_LIMITS.brand_name}
-                description="Written into articles exactly as you type it here."
-              >
-                {(field) => <Input {...field} placeholder="Acme" />}
-              </FieldController>
-              <FieldController
-                control={form.control}
-                name="about"
-                label="About"
-                maxLength={BRAND_VOICE_LIMITS.about}
-                description="What the brand does, in a few sentences."
-              >
-                {(field) => <Textarea {...field} rows={4} />}
-              </FieldController>
-              <FieldController
-                control={form.control}
-                name="selling_position"
-                label="What sets it apart"
-                maxLength={BRAND_VOICE_LIMITS.selling_position}
-                description="Why a customer chooses it over the others."
-              >
-                {(field) => <Textarea {...field} rows={3} />}
-              </FieldController>
-            </FormSection>
-
-            <FormSection title="Who it's for">
-              <FieldController
-                control={form.control}
-                name="customer_profile"
-                label="Customers"
-                maxLength={BRAND_VOICE_LIMITS.customer_profile}
-                description="Who buys from the brand, and what they need."
-              >
-                {(field) => <Textarea {...field} rows={3} />}
-              </FieldController>
-              <FieldController
-                control={form.control}
-                name="target_audience"
-                label="Audiences"
-                description={`The groups articles speak to. ${ONE_PER_LINE}`}
-              >
-                {(field) => (
-                  <Textarea
-                    {...field}
-                    rows={4}
-                    placeholder={"Small business owners\nMarketing managers"}
-                  />
-                )}
-              </FieldController>
-            </FormSection>
-
-            <FormSection title="How it sounds">
-              <FieldController
-                control={form.control}
-                name="brand_voice"
-                label="Voice"
-                description={`Words for the tone of the writing. ${ONE_PER_LINE}`}
-              >
-                {(field) => (
-                  <Textarea
-                    {...field}
-                    rows={4}
-                    placeholder={"Friendly\nPlain-spoken"}
-                  />
-                )}
-              </FieldController>
-              <FieldController
-                control={form.control}
-                name="content_pillar"
-                label="Content pillars"
-                description={`The themes articles come back to. ${ONE_PER_LINE}`}
-              >
-                {(field) => <Textarea {...field} rows={4} />}
-              </FieldController>
-            </FormSection>
-
-            <FormSection title="Competitors">
-              <FieldController
-                control={form.control}
-                name="competitors"
-                label="Competitors"
-                description={`Company names, ${ONE_PER_LINE.toLowerCase()} A name you add is checked for a live website when you save.`}
-              >
-                {(field) => <Textarea {...field} rows={4} />}
-              </FieldController>
-            </FormSection>
+            <BrandVoiceFields control={form.control} />
           </FormShell>
         </fieldset>
       )}
@@ -294,79 +181,5 @@ export function BrandVoiceSection() {
   );
 }
 
-const NAMES_SHOWN = 5;
-
-/** "Ana Ruiz, Ben Ode and 3 more": the people a workspace's personas were drafted from. */
-export function namedPeople(names: string[]): string {
-  const shown = names.slice(0, NAMES_SHOWN);
-  const more = names.length - shown.length;
-  const parts = more > 0 ? [...shown, `${more} more`] : shown;
-  return new Intl.ListFormat("en", { type: "conjunction" }).format(parts);
-}
-
-function siteName(website: string | undefined): string {
-  try {
-    return website ? new URL(website).host : "your website";
-  } catch {
-    return "your website";
-  }
-}
-
-/**
- * Arriving from a new workspace's analysis (WorkspaceCreateWizard): the draft is saved already. The
- * personas are drafted from the people named on the customer's own site, so the notice says so and
- * names them (E26): they're real people, and the user decides whether they stay.
- */
-export function DraftedNotice({
-  workspaceId,
-  workspaceSlug,
-  website,
-}: {
-  workspaceId: string;
-  workspaceSlug: string;
-  website?: string;
-}) {
-  const { data, isSuccess } = usePersonas(workspaceId);
-  // The personas as they were on arrival, the ones drafted from the site: a later change to the
-  // list (another tab, a refetch) doesn't change who the notice says came from the site.
-  const [names, setNames] = useState<string[] | null>(null);
-  if (isSuccess && names === null) {
-    setNames(
-      (data?.personas ?? [])
-        .map((persona) => persona.full_name || persona.name)
-        .filter(Boolean),
-    );
-  }
-  const personasLink = (
-    <Link
-      href={workspaceRoutes.personas(workspaceSlug) as Route}
-      className="font-medium text-foreground underline underline-offset-4"
-    >
-      Personas
-    </Link>
-  );
-
-  return (
-    <Notice tone="success" title="Your brand voice is drafted">
-      We read {siteName(website)} and saved this brand voice and its
-      competitors.{" "}
-      {names &&
-        (names.length > 0 ? (
-          <>
-            We also drafted{" "}
-            {names.length === 1
-              ? "an author persona"
-              : `${names.length} author personas`}{" "}
-            from the people named on your site: {namedPeople(names)}. Edit or
-            delete them in {personasLink}.{" "}
-          </>
-        ) : (
-          <>
-            No one is named on your site, so no author personas were drafted;
-            you can add them in {personasLink}.{" "}
-          </>
-        ))}
-      Review the fields below and save any change.
-    </Notice>
-  );
-}
+// The notice moved to its own file (the creation flow shows it too); kept importable from here.
+export { DraftedNotice, namedPeople };

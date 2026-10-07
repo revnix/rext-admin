@@ -820,7 +820,9 @@ const ToolbarButton = ({
     disabled={disabled}
     className={cn(
       "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-      active ? "bg-muted text-foreground" : "text-muted-foreground",
+      active
+        ? "bg-muted text-foreground ring-1 ring-inset ring-border-strong"
+        : "text-muted-foreground",
     )}
     title={title}
     type="button"

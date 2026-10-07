@@ -1,6 +1,11 @@
 "use client";
 
-import { Bell, CircleQuestionMark } from "lucide-react";
+import {
+  Bell,
+  BookOpen,
+  CircleQuestionMark,
+  MessageCircle,
+} from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
@@ -18,15 +23,21 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useSupportChat } from "@/hooks/use-support-chat";
 import { buildBreadcrumbs } from "@/lib/shell-breadcrumbs";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { CreditMeter } from "./credit-meter";
 
 const HELP_URL = "https://rext.ai/help";
 
@@ -107,6 +118,44 @@ function NotificationsButton() {
   );
 }
 
+/** Help: the help center, and the support chat where it's offered (#711). */
+function HelpMenu() {
+  const chat = useSupportChat();
+  if (!chat.available) return <HelpLink />;
+
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Help"
+              className={iconButton}
+            >
+              <CircleQuestionMark />
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Help</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuItem asChild>
+          <a href={HELP_URL} target="_blank" rel="noopener noreferrer">
+            <BookOpen />
+            Help center
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void chat.open()}>
+          <MessageCircle />
+          Chat with us
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function HelpLink() {
   return (
     <Tooltip>
@@ -129,7 +178,8 @@ function HelpLink() {
 
 /**
  * The header (design/app-language.md §5): 56 px on the page's surface with a hairline beneath;
- * the breadcrumb on the left, the credits meter, notifications and help on the right. No search
+ * the breadcrumb on the left, the credits meter, notifications and help (with the support chat,
+ * #711) on the right. No search
  * until there is one to offer (task C9), no theme toggle (light only, task B4).
  */
 export function AppHeader() {
@@ -145,9 +195,8 @@ export function AppHeader() {
       </Link>
       <ShellBreadcrumb />
       <div className="flex shrink-0 items-center gap-1">
-        <CreditMeter variant="header" className="hidden sm:flex" />
         <NotificationsButton />
-        <HelpLink />
+        <HelpMenu />
       </div>
     </header>
   );

@@ -164,10 +164,10 @@ safe to leave.
 Clicking **View progress** / **Open article** / the notification navigates to:
 
 ```text
-/w/{workspaceSlug}/generate_content?thread={threadId}
+/w/{workspaceSlug}/generate-content?thread={threadId}
 ```
 
-[`app/w/[workspaceSlug]/generate_content/page.tsx`](app/w/[workspaceSlug]/generate_content/page.tsx)
+[`app/w/[workspaceSlug]/generate-content/page.tsx`](app/w/[workspaceSlug]/generate-content/page.tsx)
 reads `?thread=` and passes `backgroundThreadId` to `FreshGenerationView`, which
 enters **restore mode**:
 
@@ -575,7 +575,7 @@ pnpm build
 | `components/background-generation-dock.tsx` | Polls active jobs, renders the top bar, creates notifications |
 | `components/shell/app-shell.tsx` | Mounts the bar across workspace pages |
 | `components/notifications-drawer.tsx` | Opens article links from generation notifications |
-| `app/w/[workspaceSlug]/generate_content/page.tsx` | Reads `?thread=` and enters restore mode |
+| `app/w/[workspaceSlug]/generate-content/page.tsx` | Reads `?thread=` and enters restore mode |
 | `app/api/generate/threads/route.ts` | Creates a durable thread |
 | `app/api/generate/[threadId]/stream/route.ts` | Initial generation stream (`onDisconnect: continue`, `streamResumable`) |
 | `app/api/generate/[threadId]/resume/route.ts` | Resume/approve stream; emits `run/created` |

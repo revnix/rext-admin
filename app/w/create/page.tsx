@@ -40,12 +40,19 @@ export default function CreateWorkspacePage() {
   // workspace exists, or a window refocus after a failed read) puts a query with no data back to
   // pending, and must not unmount the wizard mid-analysis.
   if (initialLimitReached.current === null) {
-    return <PageSkeleton layout="form" label="Checking workspace limits..." />;
+    return (
+      <PageSkeleton
+        layout="form"
+        centered
+        label="Checking workspace limits..."
+      />
+    );
   }
 
   if (initialLimitReached.current) {
     return (
       <FormPage
+        centered
         title="Create workspace"
         description="A workspace for one website: its brand voice, personas and content."
       >
@@ -66,6 +73,7 @@ export default function CreateWorkspacePage() {
 
   return (
     <FormPage
+      centered
       title="Create workspace"
       description="A workspace for one website: its brand voice, personas and content."
     >

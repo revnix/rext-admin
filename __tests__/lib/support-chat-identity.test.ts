@@ -1,0 +1,125 @@
+/**
+ * @jest-environment node
+ */
+/**
+ * Who the support chat says a user is (revnix/rext-control#711): the user the backend verifies
+ * the session's token for, never a claim read from the token; an unguessable session token;
+ * never while an admin impersonates someone; nothing when the chat isn't set up.
+ */
+import { createHmac } from "node:crypto";
+import type { Session } from "next-auth";
+
+import {
+  resolveSupportChatIdentity,
+  supportChatTokenId,
+} from "@/lib/support-chat/identity";
+
+const SECRET = "a-made-up-secret-for-the-test";
+
+function session(claims: Record<string, unknown> = {}): Session {
+  const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+  return {
+    user: { accessToken: `header.${payload}.signature` },
+    expires: "2099-01-01T00:00:00Z",
+  } as unknown as Session;
+}
+
+/** The backend: which user the token is, and whether it's an impersonation. */
+function backend({
+  ok = true,
+  impersonating = false,
+  profile = { id: "u-1", email: "ana@example.com", full_name: "Ana" },
+}: {
+  ok?: boolean;
+  impersonating?: boolean;
+  profile?: Record<string, unknown>;
+} = {}) {
+  return jest.fn(async (url: string) => {
+    if (!ok) return { ok: false, json: async () => ({}) } as Response;
+    const data = url.endsWith("/api/v1/user/impersonate/status")
+      ? { is_impersonating: impersonating }
+      : profile;
+    return { ok: true, json: async () => ({ data }) } as Response;
+  }) as unknown as typeof fetch;
+}
+
+describe("resolveSupportChatIdentity", () => {
+  it("gives the backend's user an unguessable token, the same every time", async () => {
+    const fetchImpl = backend();
+
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      fetchImpl,
+    );
+
+    expect(outcome).toEqual({
+      ok: true,
+      identity: {
+        tokenId: createHmac("sha256", SECRET)
+          .update("rext-support:u-1")
+          .digest("hex"),
+        userId: "u-1",
+        email: "ana@example.com",
+        name: "Ana",
+      },
+    });
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/v1\/user\/profile$/),
+      {
+        headers: { Authorization: expect.stringMatching(/^Bearer /) },
+        cache: "no-store",
+      },
+    );
+  });
+
+  it("ignores a user id written into the token: only the backend's check counts", async () => {
+    const outcome = await resolveSupportChatIdentity(
+      session({ id: "victim-id", is_impersonating: false }),
+      SECRET,
+      backend(),
+    );
+
+    expect(outcome.ok && outcome.identity.userId).toBe("u-1");
+  });
+
+  it("refuses a token the backend doesn't accept", async () => {
+    await expect(
+      resolveSupportChatIdentity(session(), SECRET, backend({ ok: false })),
+    ).resolves.toEqual({ ok: false, status: 401 });
+  });
+
+  it("refuses while an admin views as someone else", async () => {
+    await expect(
+      resolveSupportChatIdentity(
+        session(),
+        SECRET,
+        backend({ impersonating: true }),
+      ),
+    ).resolves.toEqual({ ok: false, status: 403 });
+  });
+
+  it("refuses a request with no signed-in user, without asking the backend", async () => {
+    const fetchImpl = backend();
+    await expect(
+      resolveSupportChatIdentity(null, SECRET, fetchImpl),
+    ).resolves.toEqual({ ok: false, status: 401 });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("offers nothing when the chat isn't set up", async () => {
+    await expect(
+      resolveSupportChatIdentity(session(), undefined, backend()),
+    ).resolves.toEqual({ ok: false, status: 404 });
+  });
+
+  it("gives another user, or another secret, another token", () => {
+    expect(supportChatTokenId("u-1", SECRET)).not.toBe(
+      supportChatTokenId("u-2", SECRET),
+    );
+    expect(supportChatTokenId("u-1", SECRET)).not.toBe(
+      supportChatTokenId("u-1", "another-secret"),
+    );
+    expect(supportChatTokenId("u-1", SECRET)).not.toContain("u-1");
+  });
+});

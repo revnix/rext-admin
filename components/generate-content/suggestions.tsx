@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { KeywordCard } from "@/components/keywords/keyword-card";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/lib/keywords/keyword-metrics";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
-import { StageCostLabel } from "./run-cost";
+import { StageCostTooltip } from "./run-cost";
 
 // No loading state on this step outlives this; then it says what is missing.
 const LOADING_TIMEOUT_MS = 30_000;
@@ -101,10 +101,12 @@ export function SuggestionsSection({
           intent={selectedIntent}
           onIntentChange={onIntentChange}
           action={
-            <Button onClick={() => onSelect(primaryKeyword)}>
-              Continue with this keyword
-              <StageCostLabel stage="title_generation" />
-            </Button>
+            <StageCostTooltip stage="title_generation">
+              <Button size="lg" onClick={() => onSelect(primaryKeyword)}>
+                Continue with this keyword
+                <ChevronRight />
+              </Button>
+            </StageCostTooltip>
           }
         />
       ) : (
