@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { ScoreRing } from "@/components/ui/score-ring";
+import type { ContentHealthCounts } from "@/lib/api-client/content";
 import {
   type ContentHealth,
   HEALTHY_SCORE,
@@ -9,15 +10,20 @@ import {
 
 /**
  * The published articles' on-page scores and the drafts going stale (FB2.27 #708, the founder's
- * option B), from the content list the home already loads.
+ * option B), from the content list the home already loads. `checks` are the two counts only the
+ * backend can make (FB2.27a #765); the card is whole without them, while they load or fail.
  */
 export function ContentHealthCard({
   health,
+  checks,
   libraryHref,
 }: {
   health: ContentHealth;
+  checks?: ContentHealthCounts;
   libraryHref: string;
 }) {
+  const noDescription = checks?.missing_meta_description ?? 0;
+  const noOwnLink = checks?.no_internal_links ?? 0;
   return (
     <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-5">
       <h3 className="text-section">Content health</h3>
@@ -53,6 +59,30 @@ export function ContentHealthCard({
               </p>
             )}
           </div>
+        </div>
+      )}
+      {(noDescription > 0 || noOwnLink > 0) && (
+        <div className="space-y-1 border-t border-border pt-3 text-sm text-muted-foreground">
+          {noDescription > 0 && (
+            <p>
+              <span className="num text-foreground">{noDescription}</span>{" "}
+              published without a meta description
+            </p>
+          )}
+          {noOwnLink > 0 && (
+            <p>
+              <span className="num text-foreground">{noOwnLink}</span> published
+              with no link to your own site
+            </p>
+          )}
+          <p>
+            <Link
+              href={`${libraryHref}?status=published` as Route}
+              className="link"
+            >
+              Open the published articles
+            </Link>
+          </p>
         </div>
       )}
       {health.staleDrafts > 0 && (

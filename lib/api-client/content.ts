@@ -24,6 +24,13 @@ import type {
 import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
 import { ENDPOINTS } from "./endpoints";
+import type { components } from "./schema";
+
+/** Counts over a workspace's published articles, from the backend's spec (api/openapi.json):
+ * how many have no meta description, and how many link to none of the workspace's own sites
+ * (null when the workspace has no site to look for). */
+export type ContentHealthCounts =
+  components["schemas"]["ContentHealthResponse"];
 
 export interface BlogImageUpload {
   filename: string;
@@ -277,6 +284,16 @@ export function createContentNamespace(client: ApiClient) {
     calendar: async (workspaceId: string, year: number, month: number) => {
       return client.request<import("@/types/content").CalendarResponse>(
         `${ENDPOINTS.CONTENT.calendar}?workspace_id=${encodeURIComponent(workspaceId)}&year=${year}&month=${month}`,
+        { method: "GET" },
+      );
+    },
+
+    /**
+     * Counts over the workspace's published articles, for Home's content health card
+     */
+    health: async (workspaceId: string) => {
+      return client.request<ContentHealthCounts>(
+        `${ENDPOINTS.CONTENT.health}?workspace_id=${encodeURIComponent(workspaceId)}`,
         { method: "GET" },
       );
     },

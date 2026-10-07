@@ -4512,6 +4512,73 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspace_id}/keyword-library/items": {
+      "delete": {
+        "tags": [
+          "Workspaces",
+          "workspaces",
+          "workspace-keyword-library"
+        ],
+        "summary": "Delete Library Item",
+        "description": "Remove one keyword, and the search results kept beside it, from the caller's library.",
+        "operationId": "delete_library_item_api_v1_workspaces__workspace_id__keyword_library_items_delete",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "The item's store key",
+              "title": "Key"
+            },
+            "description": "The item's store key"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_LibraryItemDeleted_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/members": {
       "get": {
         "tags": [
@@ -5626,6 +5693,62 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_ContentListResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/content/health": {
+      "get": {
+        "tags": [
+          "Content",
+          "content"
+        ],
+        "summary": "Content Health",
+        "description": "How many published articles lack a meta description or a link to the workspace's own\nsites (the home's content health card).",
+        "operationId": "content_health_api_v1_content_health_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ContentHealthResponse_"
                 }
               }
             }
@@ -8304,7 +8427,7 @@
           "subscriptions"
         ],
         "summary": "Resume Subscription",
-        "description": "Resume a paused subscription.\n\nThe subscription_resumed webhook updates our local record.",
+        "description": "Resume a paused subscription, or a cancelled one before it ends.\n\nIt resumes exactly the subscription the dashboard's Resume is for (billing_action()\non the unfinished one), never another of the user's rows: a settled duplicate or an\nolder subscription un-cancelled here would bill again.\n\nThe subscription_resumed / subscription_updated webhook updates our local record.",
         "operationId": "resume_subscription_api_v1_subscriptions_resume_post",
         "parameters": [
           {
@@ -8370,6 +8493,50 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Create Portal Session Api V1 Subscriptions Portal Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions/billing-action": {
+      "get": {
+        "tags": [
+          "Subscriptions",
+          "subscriptions"
+        ],
+        "summary": "Get Billing Action",
+        "description": "What the user does about a subscription that isn't finished, for the dashboard's banner.\n\n\"update_payment_method\" for a failed renewal, \"resume\" for a paused subscription or a\ncancelled one before its end, null otherwise. It reads only our database, never the\npayment provider, so the dashboard's shell can ask on every page.",
+        "operationId": "get_billing_action_api_v1_subscriptions_billing_action_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_BillingActionResponse_"
                 }
               }
             }
@@ -17361,6 +17528,66 @@
         ],
         "title": "BasicHealthResponse"
       },
+      "BillingAction": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payment_failed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Failed At"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "status"
+        ],
+        "title": "BillingAction",
+        "description": "What the customer does with a subscription that isn't finished, instead of a new checkout."
+      },
+      "BillingActionResponse": {
+        "properties": {
+          "billing_action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BillingAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "BillingActionResponse",
+        "description": "GET /subscriptions/billing-action: the action, or null when nothing is unfinished."
+      },
       "BillingNotifications": {
         "properties": {
           "payment_success": {
@@ -19415,6 +19642,38 @@
         ],
         "title": "ContentGenerationNotifications"
       },
+      "ContentHealthResponse": {
+        "properties": {
+          "published": {
+            "type": "integer",
+            "title": "Published"
+          },
+          "missing_meta_description": {
+            "type": "integer",
+            "title": "Missing Meta Description",
+            "description": "Published articles with no meta description"
+          },
+          "no_internal_links": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Internal Links",
+            "description": "Published articles that link to none of the workspace's own sites; null when the workspace has no website and no connected site"
+          }
+        },
+        "type": "object",
+        "required": [
+          "published",
+          "missing_meta_description"
+        ],
+        "title": "ContentHealthResponse",
+        "description": "Response for GET /content/health: counts over the workspace's published articles."
+      },
       "ContentListResponse": {
         "properties": {
           "content": {
@@ -19452,6 +19711,52 @@
         ],
         "title": "ContentListResponse",
         "description": "Response for GET /content/ (paginated list).\n\nMatches the dict returned by list_content endpoint:\n  {\"content\": [...], \"total_count\": N, \"workspace_id\": \"...\", \"limit\": N, \"offset\": N}"
+      },
+      "ContentPublishingResultSchema": {
+        "properties": {
+          "site_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Site Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "published, scheduled, draft, pending, failed, ..."
+          },
+          "external_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Url",
+            "description": "The article's address on the site"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At",
+            "description": "When the site was last asked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "status"
+        ],
+        "title": "ContentPublishingResultSchema",
+        "description": "One site an article was sent to, and how that went (the content list carries these)."
       },
       "ContentResponse": {
         "properties": {
@@ -19686,6 +19991,20 @@
                 "type": "null"
               }
             ]
+          },
+          "publishing_results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ContentPublishingResultSchema"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishing Results"
           }
         },
         "type": "object",
@@ -22842,6 +23161,20 @@
           "top_single_words"
         ],
         "title": "KeywordDensityResponse"
+      },
+      "LibraryItemDeleted": {
+        "properties": {
+          "deleted_key": {
+            "type": "string",
+            "title": "Deleted Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted_key"
+        ],
+        "title": "LibraryItemDeleted",
+        "description": "A keyword removed from the caller's library: its store key."
       },
       "LicenseItem": {
         "properties": {
@@ -30276,6 +30609,16 @@
                 "type": "null"
               }
             ]
+          },
+          "billing_action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BillingAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -31143,6 +31486,58 @@
           "success": true
         }
       },
+      "SuccessResponse_BillingActionResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BillingActionResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[BillingActionResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
       "SuccessResponse_BillingUrlsResponse_": {
         "properties": {
           "success": {
@@ -31859,6 +32254,58 @@
           "data"
         ],
         "title": "SuccessResponse[ContentDetailResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_ContentHealthResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ContentHealthResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[ContentHealthResponse]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",
@@ -33629,6 +34076,58 @@
           "data"
         ],
         "title": "SuccessResponse[KeywordDensityResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
+      "SuccessResponse_LibraryItemDeleted_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LibraryItemDeleted",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[LibraryItemDeleted]",
         "example": {
           "data": {},
           "message": "Operation completed successfully",

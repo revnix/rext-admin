@@ -53,6 +53,18 @@ export function useAllContent(workspaceId: string) {
   });
 }
 
+/** Home's content health counts (FB2.27a): missing meta descriptions, no link to the own site.
+ * Under the content key, so whatever refreshes the workspace's content refreshes these too. */
+export function useContentHealthCounts(workspaceId: string) {
+  return useQuery({
+    queryKey: ["content", workspaceId, "health"],
+    queryFn: () => apiClient.content.health(workspaceId),
+    enabled: !!workspaceId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 /**
  * Hook to get single content item
  */
