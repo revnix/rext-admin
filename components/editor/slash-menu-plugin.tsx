@@ -86,11 +86,12 @@ export function insertBlock(editor: LexicalEditor, id: BlockId) {
         line.insertBefore(rule);
         return;
       }
+      // Under a line with text, with a new line after it: typing goes on there, not into
+      // whatever came next (a heading, say).
+      const next = $createParagraphNode();
       line.insertAfter(rule);
-      if (rule.getNextSibling() === null) {
-        rule.insertAfter($createParagraphNode());
-      }
-      rule.selectNext();
+      rule.insertAfter(next);
+      next.select();
       return;
     }
   }
