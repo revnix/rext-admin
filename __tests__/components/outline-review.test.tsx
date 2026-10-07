@@ -128,10 +128,12 @@ function renderReview({
 }
 
 const sectionList = () => screen.getByRole("region", { name: "Sections" });
+// The tree grid's rows, in order, by the heading each is named after.
 const headings = () =>
-  within(sectionList())
-    .getAllByRole("listitem")
-    .map((item) => item.querySelector(".font-medium")?.textContent);
+  Array.from(
+    sectionList().querySelectorAll('[data-slot="outline-heading"]'),
+    (heading) => heading.textContent,
+  );
 
 async function chooseFromMenu(
   user: ReturnType<typeof userEvent.setup>,
@@ -156,7 +158,9 @@ describe("OutlineReview, the outline tree", () => {
       "Cushioning and support",
       "How to get fitted",
     ]);
-    expect(screen.getByText("~400 words")).toBeInTheDocument();
+    expect(
+      screen.getByRole("row", { name: "Cushioning and support" }),
+    ).toHaveAccessibleDescription("~400 words");
     expect(
       screen.queryByText("Why Cushioning and support?"),
     ).not.toBeInTheDocument();
@@ -505,6 +509,60 @@ describe("OutlineReview, the outline tree", () => {
     expect(within(list).getByText("How to get fitted")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /reorder|move/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  // FB2.15: the FAQ shows under a read-only outline too, once. The backend's blocks often hold one
+  // headed "Faqs" (its label for the outline's `faqs`), as a real how-to run's did.
+  const faqs = [
+    "How often should I replace them?",
+    "Do I need a gait analysis?",
+  ];
+  const stepsBlock = {
+    heading: "Steps",
+    items: [{ label: "Measure your foot", points: ["Late in the day"] }],
+  };
+  const renderReadOnly = (blocks: unknown[]) =>
+    renderReview({
+      gate: { type: "outline_review" },
+      current: { ...outline, faqs, _render: { blocks } } as unknown as Outline,
+    });
+
+  it("lists the FAQ under a read-only outline whose blocks don't hold it", () => {
+    renderReadOnly([stepsBlock]);
+
+    expect(screen.getByRole("region", { name: "Steps" })).toBeInTheDocument();
+    const faq = screen.getByRole("region", { name: "FAQ" });
+    expect(
+      within(faq)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(faqs.map((question, index) => `${index + 1}${question}`));
+    expect(
+      within(faq).getByText(/^Answered at the end of the article\./),
+    ).toBeInTheDocument();
+  });
+
+  it("lists the FAQ once when the read-only blocks already hold it", () => {
+    renderReadOnly([
+      stepsBlock,
+      {
+        heading: "Faqs",
+        items: faqs.map((label) => ({ label, points: [] })),
+      },
+    ]);
+
+    // The backend's own block shows the questions; no second list beneath.
+    const block = screen.getByRole("region", { name: "Faqs" });
+    for (const question of faqs) {
+      expect(within(block).getByText(question)).toBeInTheDocument();
+      expect(screen.getAllByText(question)).toHaveLength(1);
+    }
+    expect(
+      screen.queryByRole("region", { name: "FAQ" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/^Answered at the end of the article\./),
     ).not.toBeInTheDocument();
   });
 

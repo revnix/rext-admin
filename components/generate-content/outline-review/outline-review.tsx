@@ -1,7 +1,7 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
@@ -12,17 +12,27 @@ import { useWorkspacePermission } from "@/hooks/use-permission";
 import { usePersonas } from "@/hooks/use-personas";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import {
-  addRow,
-  addSubsection,
   type BrandProminence,
+  blocksShowFaqs,
   buildOutlineApproval,
+  canAddSection,
+  canRestoreRow,
+  changeLevel,
+  insertAnnouncement,
+  insertRow,
+  levelAnnouncement,
+  MAX_ADDED_SECTIONS,
+  moveAnnouncement,
+  moveBlockTo,
   moveRow,
   type OutlineApproval,
   readOnlyBlocks,
+  readOutlineFaqs,
   readOutlineGate,
+  removalAnnouncement,
   removeRow,
   renameRow,
-  replaceList,
+  restoreAnnouncement,
   restoreRow,
   rowsEdited,
   rowsFromGate,
@@ -39,7 +49,7 @@ import type {
 import { OutlineApproveBar } from "./approve-bar";
 import { OutlineBrief } from "./outline-brief";
 import { hasSources, OutlineSources } from "./outline-sources";
-import { OutlineTree, StreamingTree } from "./outline-tree";
+import { ADD_CAP_REASON, OutlineTree, StreamingTree } from "./outline-tree";
 
 export interface OutlineReviewProps {
   /** The parsed outline; null while it streams. */
@@ -60,10 +70,11 @@ export interface OutlineReviewProps {
 
 /**
  * Step 5, the outline (plans/app/E-workflow.md §4, design/app-language.md §6,
- * WorkingSurface): the outline as a tree the user reorders, renames and trims,
- * the brief beside it, and a Sources view of what the outline rests on. The
- * user's order and headings go back with the approval, and the article is
- * written in that order.
+ * WorkingSurface): the outline as a document's outline the user reorders,
+ * renames, re-levels, adds to and trims (rext-control#696), its FAQ read-only
+ * beneath, the brief beside it, and a Sources view of what the outline rests
+ * on. The user's order, headings and levels go back with the approval, and the
+ * article is written that way. A polite live region says what each edit did.
  */
 export function OutlineReview({
   outline,
@@ -150,10 +161,94 @@ export function OutlineReview({
     clusterHeadings: outline?.cluster_heading_map,
   };
   const edited = rowsEdited(rows, gate.sections);
+  const faqs = useMemo(() => readOutlineFaqs(outline), [outline]);
+
+  // What each edit did, for a screen reader. A new node each time, so the same words twice are
+  // announced twice.
+  const [announcement, setAnnouncement] = useState({ id: 0, text: "" });
+  const announce = (text: string) =>
+    setAnnouncement((current) => ({ id: current.id + 1, text }));
+  // The rows as they are when a toast's Undo is pressed, seconds after the toast was made.
+  const rowsRef = useRef(rows);
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+  const headingOf = (key: string) =>
+    rows.find((row) => row.key === key)?.heading ?? "The section";
+
+  const move = (key: string, offset: -1 | 1) => {
+    const next = moveRow(rows, key, offset);
+    if (next === rows) {
+      announce(`${headingOf(key)} can't move ${offset < 0 ? "up" : "down"}.`);
+      return false;
+    }
+    setRows(next);
+    announce(moveAnnouncement(rows, next, key));
+    return true;
+  };
+
+  const moveTo = (key: string, gap: number) => {
+    const next = moveBlockTo(rows, key, gap);
+    if (next === rows) return false;
+    setRows(next);
+    announce(moveAnnouncement(rows, next, key));
+    return true;
+  };
+
+  const setLevel = (key: string, level: "H2" | "H3") => {
+    const next = changeLevel(rows, key, level);
+    if (next === rows) {
+      announce(
+        levelRefusal(
+          rows.find((row) => row.key === key),
+          level,
+        ),
+      );
+      return false;
+    }
+    setRows(next);
+    announce(levelAnnouncement(next, key));
+    return true;
+  };
+
+  const insert = (
+    list: string,
+    gap: number,
+    heading: string,
+    level: "H2" | "H3",
+  ) => {
+    if (!canAddSection(rows)) {
+      announce(`${ADD_CAP_REASON}.`);
+      return false;
+    }
+    const next = insertRow(rows, list, gap, heading, level);
+    if (next === rows) return false;
+    setRows(next);
+    announce(insertAnnouncement(next, list, gap));
+    return true;
+  };
+
+  const restore = (removed: TreeRow, subsections: number) => {
+    const current = rowsRef.current;
+    if (!canRestoreRow(current, removed.key)) {
+      // Bringing it back would pass the backend's cap on added sections, which drops the rest unsaid.
+      const reason = `Can't undo: one approval adds at most ${MAX_ADDED_SECTIONS} sections. Remove one first.`;
+      toast(reason);
+      announce(reason);
+      return;
+    }
+    setRows(restoreRow(current, removed.key));
+    announce(restoreAnnouncement(removed.heading, subsections));
+  };
 
   const remove = (key: string) => {
     const { rows: next, removed, subsections } = removeRow(rows, key);
-    if (!removed) return;
+    if (!removed) {
+      announce(
+        `${headingOf(key)} can't be removed: an article keeps at least one section here.`,
+      );
+      return false;
+    }
     setRows(next);
     // An H2 takes its subsections with it: say so, since they vanish from the tree too.
     const withSubsections =
@@ -163,9 +258,11 @@ export function OutlineReview({
     toast(`Removed "${removed.heading}"${withSubsections}`, {
       action: {
         label: "Undo",
-        onClick: () => setRows((current) => restoreRow(current, removed.key)),
+        onClick: () => restore(removed, subsections),
       },
     });
+    announce(removalAnnouncement(removed.heading, subsections));
+    return true;
   };
 
   const approve = () =>
@@ -221,30 +318,26 @@ export function OutlineReview({
   const treePane = isDraft ? (
     <StreamingTree headings={streamedHeadings(rawTokens)} />
   ) : rows.length > 0 ? (
-    <OutlineTree
-      rows={rows}
-      outline={outline}
-      addableLists={gate.addableLists}
-      editable={editable}
-      onReorder={(list, listRows) =>
-        setRows((current) => replaceList(current, list, listRows))
-      }
-      onMove={(key, offset) =>
-        setRows((current) => moveRow(current, key, offset))
-      }
-      onRename={(key, heading) =>
-        setRows((current) => renameRow(current, key, heading))
-      }
-      onRemove={remove}
-      onAdd={(list, heading) =>
-        setRows((current) => addRow(current, list, heading))
-      }
-      onAddSubsection={(parentKey, heading) =>
-        setRows((current) => addSubsection(current, parentKey, heading))
-      }
-    />
+    <div className="space-y-6">
+      <OutlineTree
+        rows={rows}
+        outline={outline}
+        title={title || undefined}
+        addableLists={gate.addableLists}
+        editable={editable}
+        onMove={move}
+        onMoveTo={moveTo}
+        onChangeLevel={setLevel}
+        onRename={(key, heading) =>
+          setRows((current) => renameRow(current, key, heading))
+        }
+        onRemove={remove}
+        onInsert={insert}
+      />
+      {faqs.length > 0 && <FaqList questions={faqs} />}
+    </div>
   ) : (
-    <ReadOnlyBlocks blocks={readOnlyBlocks(outline)} />
+    <ReadOnlyOutline blocks={readOnlyBlocks(outline)} faqs={faqs} />
   );
 
   return (
@@ -278,7 +371,10 @@ export function OutlineReview({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setRows(rowsFromGate(gate.sections))}
+                  onClick={() => {
+                    setRows(rowsFromGate(gate.sections));
+                    announce("The sections are back as they were generated.");
+                  }}
                 >
                   <RotateCcw />
                   Reset sections
@@ -287,6 +383,11 @@ export function OutlineReview({
             </div>
             <TabsContent value="outline" className="mt-4">
               {treePane}
+              <div aria-live="polite" className="sr-only">
+                {announcement.text && (
+                  <span key={announcement.id}>{announcement.text}</span>
+                )}
+              </div>
             </TabsContent>
             {hasSources(sources) && (
               <TabsContent value="sources" className="mt-4">
@@ -303,6 +404,80 @@ export function OutlineReview({
           />
         </div>
       </WithSidePane>
+    </div>
+  );
+}
+
+/** What the live region says when a level can't change. */
+function levelRefusal(row: TreeRow | undefined, level: "H2" | "H3"): string {
+  if (!row) return "";
+  if (!row.level) return `${row.heading} has no heading level to change.`;
+  if (row.level === "H4") return `${row.heading} is an H4; it keeps its level.`;
+  if (row.level === level)
+    return `${row.heading} is already a ${level === "H2" ? "section" : "subsection"}.`;
+  return `${row.heading} can't be a subsection: it's the first section.`;
+}
+
+/**
+ * The FAQ's questions under the sections, read-only: they aren't body headings, and approval sends
+ * no edits to them (they feed the FAQ block and its structured data).
+ */
+function FaqList({ questions }: { questions: string[] }) {
+  const labelId = useId();
+  return (
+    <section aria-labelledby={labelId} className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 id={labelId} className="text-label text-muted-foreground">
+          FAQ
+        </h3>
+        <p className="text-caption text-muted-foreground num">
+          {questions.length} {questions.length === 1 ? "question" : "questions"}
+        </p>
+      </div>
+      <div className="rounded-md border border-border bg-card">
+        <ol className="divide-y divide-border">
+          {questions.map((question, index) => (
+            <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: a read-only list that never reorders, whose questions may repeat
+              key={`${index}-${question}`}
+              className="flex items-start gap-2.5 px-3 py-2.5 text-table text-foreground"
+            >
+              <span
+                aria-hidden="true"
+                className="w-5 shrink-0 text-right text-muted-foreground num"
+              >
+                {index + 1}
+              </span>
+              {question}
+            </li>
+          ))}
+        </ol>
+        <p className="border-t border-border px-3 py-2.5 text-caption text-muted-foreground">
+          Answered at the end of the article. To change them, regenerate with
+          feedback.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * An outline whose sections the gate offers no edits for, with its FAQ beneath unless the blocks
+ * already show it: the backend's blocks often hold one headed "Faqs", and the questions show once.
+ */
+function ReadOnlyOutline({
+  blocks,
+  faqs,
+}: {
+  blocks: OutlineRenderBlock[];
+  faqs: string[];
+}) {
+  const listFaqs = faqs.length > 0 && !blocksShowFaqs(blocks, faqs);
+  if (!listFaqs) return <ReadOnlyBlocks blocks={blocks} />;
+  return (
+    <div className="space-y-6">
+      <ReadOnlyBlocks blocks={blocks} />
+      <FaqList questions={faqs} />
     </div>
   );
 }
