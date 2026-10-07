@@ -13,12 +13,19 @@ import { STORAGE_STATE } from "../auth-state";
  * event stream forces one). A fresh context per page started every check from the token saved at sign-in,
  * which the backend had already rotated, so it read it as a replay and ended the session: the rest of the
  * run landed on /login (C10a, 2026-10-07). One context keeps the rotated token, and it's saved back for
- * the next width's worker.
+ * the next width's worker. Signed out (pr-checks), each page keeps Playwright's own fresh context.
  */
-export const test = base.extend<{ page: Page }, { shared: BrowserContext }>({
+export const test = base.extend<
+  { page: Page },
+  { shared: BrowserContext | null }
+>({
   shared: [
     async ({ browser }, use, workerInfo) => {
       const options = workerInfo.project.use as BrowserContextOptions;
+      if (!options.storageState) {
+        await use(null);
+        return;
+      }
       const context = await browser.newContext({
         baseURL: options.baseURL,
         viewport: options.viewport,
@@ -32,14 +39,13 @@ export const test = base.extend<{ page: Page }, { shared: BrowserContext }>({
         reducedMotion: "reduce",
       });
       await use(context);
-      if (options.storageState)
-        await context.storageState({ path: STORAGE_STATE });
+      await context.storageState({ path: STORAGE_STATE });
       await context.close();
     },
     { scope: "worker" },
   ],
-  page: async ({ shared }, use) => {
-    const page = await shared.newPage();
+  page: async ({ shared, context }, use) => {
+    const page = await (shared ?? context).newPage();
     await use(page);
     await page.close();
   },
