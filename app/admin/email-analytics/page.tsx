@@ -93,6 +93,9 @@ interface EmailFailure {
   sent_at: string;
 }
 
+const NO_TEMPLATES: TemplateStats[] = [];
+const NO_FAILURES: EmailFailure[] = [];
+
 export default function EmailAnalyticsPage() {
   const [dateRange, setDateRange] = useState("30d");
   const [period, setPeriod] = useState("daily");
@@ -211,7 +214,7 @@ export default function EmailAnalyticsPage() {
                 setWorkspaceId(value === "all" ? null : value)
               }
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px]" aria-label="Workspace">
                 <SelectValue placeholder="All workspaces" />
               </SelectTrigger>
               <SelectContent>
@@ -224,7 +227,7 @@ export default function EmailAnalyticsPage() {
               </SelectContent>
             </Select>
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" aria-label="Date range">
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
               <SelectContent>
@@ -259,7 +262,7 @@ export default function EmailAnalyticsPage() {
                     </CardDescription>
                   </div>
                   <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[140px]" aria-label="Group by">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -321,14 +324,14 @@ export default function EmailAnalyticsPage() {
 
             <TabsContent value="templates" className="space-y-4">
               <EmailPerformanceTable
-                data={templateData || []}
+                data={templateData ?? NO_TEMPLATES}
                 isLoading={templateLoading}
               />
             </TabsContent>
 
             <TabsContent value="failures" className="space-y-4">
               <EmailFailuresTable
-                data={failuresData || []}
+                data={failuresData ?? NO_FAILURES}
                 isLoading={failuresLoading}
               />
             </TabsContent>
