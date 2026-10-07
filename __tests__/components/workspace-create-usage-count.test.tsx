@@ -43,9 +43,6 @@ jest.mock("@/stores/workspace", () => {
 });
 
 describe("The plan's workspace count during setup (D22)", () => {
-  // The whole form is typed in; on a busy CI runner that outlasts Jest's default 5 s.
-  jest.setTimeout(15_000);
-
   it("is read again once the workspace exists, so it counts the new one", async () => {
     createWorkspace.mockResolvedValue({ id: "ws-1", slug: "acme" });
     const client = new QueryClient();
@@ -56,14 +53,13 @@ describe("The plan's workspace count during setup (D22)", () => {
       </QueryClientProvider>,
     );
 
-    await userEvent.type(
+    // Pasted, not typed key by key: typing the whole form took over 5 s on a busy CI runner.
+    await userEvent.click(
       screen.getByRole("textbox", { name: /Workspace name/ }),
-      "Acme",
     );
-    await userEvent.type(
-      screen.getByRole("textbox", { name: /Website/ }),
-      "https://acme.example",
-    );
+    await userEvent.paste("Acme");
+    await userEvent.click(screen.getByRole("textbox", { name: /Website/ }));
+    await userEvent.paste("https://acme.example");
     await userEvent.click(
       screen.getByRole("button", { name: "Create workspace" }),
     );
@@ -77,5 +73,5 @@ describe("The plan's workspace count during setup (D22)", () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ["subscriptions", "usage"],
     });
-  });
+  }, 15_000);
 });
