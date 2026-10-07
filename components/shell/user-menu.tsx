@@ -7,6 +7,7 @@ import {
   CreditCard,
   Gauge,
   LogOut,
+  MessageCircle,
   Receipt,
   UserRound,
 } from "lucide-react";
@@ -30,6 +31,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useSupportChat } from "@/hooks/use-support-chat";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { performLogout } from "@/lib/logout-utils";
 import { profileQueries } from "@/lib/query-keys";
@@ -59,6 +61,7 @@ export function UserMenu() {
   const { data: session, status } = useSession();
   const { isMobile, state, setOpenMobile } = useSidebar();
   const setDrawerOpen = useNotificationStore((store) => store.setDrawerOpen);
+  const chat = useSupportChat();
   const { data: profile } = useQuery({
     ...profileQueries.detail(),
     enabled: status === "authenticated",
@@ -133,6 +136,17 @@ export function UserMenu() {
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+              {chat.available && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setOpenMobile(false);
+                    void chat.open();
+                  }}
+                >
+                  <MessageCircle />
+                  Chat with us
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void performLogout("/login")}>
