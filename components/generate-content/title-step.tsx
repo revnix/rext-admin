@@ -18,6 +18,7 @@ import { WithSidePane } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Meter } from "@/components/ui/meter";
 import {
   comparePick,
   measureTitle,
@@ -512,24 +513,12 @@ function readGate(gate: unknown): {
  * what is wrong, at weight 500 beside a dash.
  */
 function ScoreLine({ score }: { score: TitleScore }) {
-  // One segment per check, the met ones first, so five scores compare at a glance.
-  const segments = [...score.checks].sort(
-    (a, b) => Number(b.met) - Number(a.met),
-  );
   return (
     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
       <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-        <span aria-hidden className="inline-flex gap-0.5">
-          {segments.map((check) => (
-            <span
-              key={check.id}
-              className={cn(
-                "h-1.5 w-3 rounded-full",
-                check.met ? "bg-foreground" : "border border-border-strong",
-              )}
-            />
-          ))}
-        </span>
+        {/* One part per check, the met ones first, so five scores compare at a glance; the count
+            beside it says the same in words. */}
+        <Meter value={score.met} max={score.total} segmented />
         <span className="num">
           {score.met} of {score.total} checks
         </span>

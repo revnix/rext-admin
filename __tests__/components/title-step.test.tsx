@@ -168,7 +168,7 @@ it("shows each score as a three-part meter, and a failing check at weight 500", 
 
   const meter = (title: string) =>
     Array.from(
-      card(title).querySelector("span[aria-hidden]")?.children ?? [],
+      card(title).querySelector('[data-slot="meter"]')?.children ?? [],
     ).map((segment) => segment.classList.contains("bg-foreground"));
   expect(meter(TITLES[1])).toEqual([true, true, true]);
   expect(meter(TITLES[3])).toEqual([true, true, false]);
