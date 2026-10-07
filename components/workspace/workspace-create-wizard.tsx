@@ -25,7 +25,6 @@ import {
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
-import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { Route } from "next";
 
@@ -116,10 +115,6 @@ export function WorkspaceCreateWizard() {
       setCurrentWorkspace(workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
       // The plan's count above the form ("1 of 1 workspace on your plan") counts this one now.
-      void useSubscriptionStore
-        .getState()
-        .fetchUsage()
-        .catch(() => undefined);
       queryClient.invalidateQueries({
         queryKey: subscriptionQueries.usage().queryKey,
       });
