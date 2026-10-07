@@ -190,9 +190,13 @@ export function blockEnd(listRows: TreeRow[], start: number): number {
 
 /**
  * Whether the block at `start` may land in `gap` (the place before `listRows[gap]`; the list's length
- * is its end). Its own place counts. An H2 lands only between whole sections, never inside one; an H3
- * never between an H3 and its H4s; and a subsection never opens the list (the backend would quietly
- * make it an H2).
+ * is its end). Its own place counts. Two rules keep every row under the kind of row it belongs to:
+ * - it never lands above a deeper row, which it would take from its own parent: an H2 lands only
+ *   between whole sections, an H3 never between an H3 and its H4s;
+ * - a row deeper than H2 lands only where the row before it is one level up or deeper: an H3 after any
+ *   row but never at the top of the list (the backend would quietly make it an H2), an H4 after an H3
+ *   or an H4, never straight after an H2.
+ * The drag (`dropGaps`), Alt+↑ and Alt+↓ and the menu (`moveTarget`) all go through here.
  */
 function takesBlock(
   listRows: TreeRow[],
@@ -202,9 +206,13 @@ function takesBlock(
 ): boolean {
   if (gap < 0 || gap > listRows.length || (gap > start && gap < end))
     return false;
+  if (gap === start || gap === end) return true;
   const rank = levelRank(listRows[start]);
   if (gap < listRows.length && levelRank(listRows[gap]) > rank) return false;
-  return !(rank > 2 && gap === 0 && start !== 0);
+  if (rank === 2) return true;
+  // Not its own place, so the row before the gap is outside the block: the row it will follow.
+  const before = listRows[gap - 1];
+  return before !== undefined && levelRank(before) >= rank - 1;
 }
 
 /**
@@ -297,7 +305,9 @@ export function nearestGap(
  * Where one step up or down takes the block at `start` (Alt+↑, Alt+↓, the menu's Move up and Move
  * down), or null when it can't go further. A block passes its neighbour's whole block, so an H2 moves
  * past whole sections. A subsection already first in its section goes up to the end of the section
- * before; one already last goes down to the start of the next section.
+ * before; one already last goes down to the start of the next section. An H4 does the same between
+ * the subsections of its section (up to the end of the H3 before, down to the start of the H3 after),
+ * and stops at the section's ends: it never lands straight under an H2 (`takesBlock`).
  */
 export function moveTarget(
   listRows: TreeRow[],
@@ -424,7 +434,9 @@ export function canChangeLevel(
 /**
  * A section made a subsection (H2 to H3) or a subsection a section (H3 to H2), in place. The outline
  * is a flat list with levels, so nothing moves: a new subsection's own subsections sit beside it under
- * the section above, and a new section takes the subsections after it in its old section.
+ * the section above, with their H4s still under them, and a new section takes the subsections after it
+ * in its old section. A subsection's own H4s go up a level with it and become the new section's
+ * subsections (removed ones too, for their Undo), so an H4 never sits straight under an H2.
  */
 export function changeLevel(
   rows: TreeRow[],
@@ -432,7 +444,21 @@ export function changeLevel(
   level: "H2" | "H3",
 ): TreeRow[] {
   if (!canChangeLevel(rows, key, level)) return rows;
-  return rows.map((row) => (row.key === key ? { ...row, level } : row));
+  const at = rows.findIndex((row) => row.key === key);
+  // The rows under an H3: the H4s right after it, up to the next row of its list no deeper than it.
+  let end = at + 1;
+  if (level === "H2")
+    while (
+      end < rows.length &&
+      rows[end].list === rows[at].list &&
+      levelRank(rows[end]) > 3
+    )
+      end += 1;
+  return rows.map((row, index) => {
+    if (index === at) return { ...row, level };
+    if (index > at && index < end) return { ...row, level: "H3" as const };
+    return row;
+  });
 }
 
 /**
@@ -673,10 +699,11 @@ export function levelAnnouncement(rows: TreeRow[], key: string): string {
   if (!place || !row) return "";
   if (place.parent)
     return `${row.heading} is now a subsection of ${place.parent.heading}.`;
+  // The rows under it now: the subsections after it in its old section, and its own H4s, a level up.
   const taken = place.subsections;
   return taken === 0
     ? `${row.heading} is now a section.`
-    : `${row.heading} is now a section, with the ${taken === 1 ? "subsection" : `${taken} subsections`} after it.`;
+    : `${row.heading} is now a section, with its ${taken === 1 ? "subsection" : `${taken} subsections`}.`;
 }
 
 /** "Removed Timing and its 2 subsections. Undo is in the notification." */
