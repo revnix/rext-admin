@@ -163,12 +163,7 @@ export function WorkspaceCreateWizard() {
           required
         >
           {(field) => (
-            <Input
-              {...field}
-              maxLength={200}
-              placeholder="e.g. My company"
-              autoFocus
-            />
+            <Input {...field} maxLength={200} placeholder="e.g. My company" />
           )}
         </FieldController>
         <FieldController
