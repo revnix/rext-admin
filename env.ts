@@ -41,6 +41,8 @@ const server = {
     .optional(),
   // "1" serves the /dev pages in a production build: pr-checks only (lib/dev-pages.ts).
   REXT_DEV_PAGES: z.enum(["1"]).optional(),
+  // The support chat's session-token secret (lib/support-chat/identity.ts); unset, no chat.
+  CRISP_TOKEN_SECRET: optional,
 };
 
 const client = {
@@ -51,6 +53,8 @@ const client = {
   NEXT_PUBLIC_POSTHOG_KEY: optional,
   NEXT_PUBLIC_POSTHOG_HOST: optional,
   NEXT_PUBLIC_ANALYTICS_ENABLED: optional,
+  // The Crisp website the support chat opens (lib/support-chat/chat.ts); unset, no chat.
+  NEXT_PUBLIC_CRISP_WEBSITE_ID: optional,
 };
 
 // Production builds, the staging and production deploys among them; not a
@@ -86,6 +90,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_ANALYTICS_ENABLED: process.env.NEXT_PUBLIC_ANALYTICS_ENABLED,
+    NEXT_PUBLIC_CRISP_WEBSITE_ID: process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID,
   },
   createFinalSchema: (shape, isServer) =>
     z.object(shape).superRefine((values, ctx) => {
