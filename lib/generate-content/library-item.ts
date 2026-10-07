@@ -96,15 +96,16 @@ export async function readLibraryItem(
   return value?.original_query ? { key, value } : null;
 }
 
-/** Removes one item from the caller's own Library, through the backend. */
+/**
+ * Removes one item from the caller's own Library, through the app's route (G78): LangGraph's store
+ * answers only searches and gets. The backend takes the user from the token.
+ */
 export async function deleteLibraryItem(
   key: string,
-  userId: string,
   workspaceId: string,
 ): Promise<void> {
-  const { namespace } = await libraryStore(userId, workspaceId);
   const { apiClient } = await import("@/lib/api-client");
-  await apiClient.keywordLibrary.delete(key, namespace);
+  await apiClient.keywordLibrary.delete(workspaceId, key);
 }
 
 /**
