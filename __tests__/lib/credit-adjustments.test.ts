@@ -1,7 +1,8 @@
 /**
  * A super admin's change to a user's credits (FB2.28): the line that says what will happen, the
  * body each action sends (no amount for a reset, an expiry only for an add), what the toast says
- * was really done, and the summary above the form.
+ * was really done, and the summary above the form. The most one change may carry is the backend's
+ * to say: these readings take it as an argument and hold no number of their own.
  */
 
 import { addDays, endOfDay, format } from "date-fns";
@@ -14,6 +15,7 @@ import {
   adjustmentRequest,
   type CreditAdjustmentFields,
   confirmationLine,
+  creditAmountError,
   creditsSummary,
   parseCreditAmount,
 } from "@/lib/billing/credit-adjustments";
@@ -21,6 +23,8 @@ import {
 const EMAIL = "x@example.com";
 // Noon, so "today" is the same day wherever the test runs.
 const NOW = new Date(2026, 9, 8, 12).getTime();
+/** `limits.amount_max` as an API answer might send it; nothing in the client says this number. */
+const AMOUNT_MAX = 2500;
 
 const fields = (
   values: Partial<CreditAdjustmentFields>,
@@ -34,20 +38,22 @@ const fields = (
 
 describe("confirmationLine", () => {
   it("says what an add will do", () => {
-    expect(confirmationLine(fields({}), EMAIL, 500, NOW)).toBe(
+    expect(confirmationLine(fields({}), EMAIL, 500, { now: NOW })).toBe(
       "Add 200 credits to x@example.com",
     );
-    expect(confirmationLine(fields({ amount: "1" }), EMAIL, 500, NOW)).toBe(
-      "Add 1 credit to x@example.com",
-    );
-    expect(confirmationLine(fields({ amount: "1,500" }), EMAIL, 500, NOW)).toBe(
-      "Add 1,500 credits to x@example.com",
-    );
+    expect(
+      confirmationLine(fields({ amount: "1" }), EMAIL, 500, { now: NOW }),
+    ).toBe("Add 1 credit to x@example.com");
+    expect(
+      confirmationLine(fields({ amount: "1,500" }), EMAIL, 500, { now: NOW }),
+    ).toBe("Add 1,500 credits to x@example.com");
   });
 
   it("names an add's expiry day", () => {
     expect(
-      confirmationLine(fields({ expires_at: "2026-10-31" }), EMAIL, 500, NOW),
+      confirmationLine(fields({ expires_at: "2026-10-31" }), EMAIL, 500, {
+        now: NOW,
+      }),
     ).toBe(
       "Add 200 credits to x@example.com, expiring at the end of Oct 31, 2026",
     );
@@ -59,7 +65,7 @@ describe("confirmationLine", () => {
         fields({ action: "deduct", amount: "50", expires_at: "2026-10-31" }),
         EMAIL,
         500,
-        NOW,
+        { now: NOW },
       ),
     ).toBe("Deduct 50 credits from x@example.com");
   });
@@ -74,15 +80,79 @@ describe("confirmationLine", () => {
   });
 
   it("says nothing while the amount or the expiry can't be sent", () => {
-    for (const amount of ["", "0", "100001", "12.5", "ten"]) {
-      expect(confirmationLine(fields({ amount }), EMAIL, 500, NOW)).toBeNull();
+    for (const amount of ["", "0", "12.5", "ten"]) {
       expect(
-        confirmationLine(fields({ action: "deduct", amount }), EMAIL, 500, NOW),
+        confirmationLine(fields({ amount }), EMAIL, 500, { now: NOW }),
+      ).toBeNull();
+      expect(
+        confirmationLine(fields({ action: "deduct", amount }), EMAIL, 500, {
+          now: NOW,
+        }),
       ).toBeNull();
     }
     expect(
-      confirmationLine(fields({ expires_at: "2026-10-07" }), EMAIL, 500, NOW),
+      confirmationLine(fields({ expires_at: "2026-10-07" }), EMAIL, 500, {
+        now: NOW,
+      }),
     ).toBeNull();
+  });
+
+  it("says nothing for more than the backend's ceiling, once it is known", () => {
+    const known = { amountMax: AMOUNT_MAX, now: NOW };
+    expect(
+      confirmationLine(fields({ amount: "2500" }), EMAIL, 500, known),
+    ).toBe("Add 2,500 credits to x@example.com");
+    expect(
+      confirmationLine(fields({ amount: "2501" }), EMAIL, 500, known),
+    ).toBeNull();
+    expect(
+      confirmationLine(
+        fields({ action: "deduct", amount: "2501" }),
+        EMAIL,
+        500,
+        known,
+      ),
+    ).toBeNull();
+    // Not known: the client has no ceiling of its own, and the backend refuses what is too much.
+    expect(
+      confirmationLine(fields({ amount: "2501" }), EMAIL, 500, { now: NOW }),
+    ).toBe("Add 2,501 credits to x@example.com");
+    expect(
+      confirmationLine(fields({ amount: "9,000,000" }), EMAIL, 500, {
+        now: NOW,
+      }),
+    ).toBe("Add 9,000,000 credits to x@example.com");
+  });
+});
+
+describe("creditAmountError", () => {
+  it.each([
+    ["", "Enter how many credits"],
+    ["   ", "Enter how many credits"],
+    ["12.5", "Use a whole number"],
+    ["-5", "Use a whole number"],
+    ["ten", "Use a whole number"],
+  ])("refuses %p, with or without a ceiling", (typed, message) => {
+    expect(creditAmountError(typed)).toBe(message);
+    expect(creditAmountError(typed, AMOUNT_MAX)).toBe(message);
+  });
+
+  it("keeps to the backend's ceiling when it is given, and names the range", () => {
+    expect(creditAmountError("1", AMOUNT_MAX)).toBeNull();
+    expect(creditAmountError("2,500", AMOUNT_MAX)).toBeNull();
+    expect(creditAmountError("2501", AMOUNT_MAX)).toBe(
+      "Enter a whole number from 1 to 2,500",
+    );
+    expect(creditAmountError("0", AMOUNT_MAX)).toBe(
+      "Enter a whole number from 1 to 2,500",
+    );
+  });
+
+  it("has no ceiling of its own: only a whole number of at least 1", () => {
+    expect(creditAmountError("1")).toBeNull();
+    expect(creditAmountError("2501")).toBeNull();
+    expect(creditAmountError("9,000,000")).toBeNull();
+    expect(creditAmountError("0")).toBe("Enter a whole number of at least 1");
   });
 });
 

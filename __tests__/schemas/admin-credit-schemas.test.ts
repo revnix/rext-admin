@@ -1,18 +1,23 @@
 /**
  * A super admin's change to a user's credits (FB2.28): the form refuses what the backend would,
- * an amount outside 1 to 100,000, a reason outside 3 to 500 characters, an expiry on a day that
- * has ended, and asks a reset for no amount.
+ * within the limits the backend sent (the most one change may carry, the reason's length), an
+ * expiry on a day that has ended, and asks a reset for no amount. Without those limits it keeps
+ * no ceiling and no length of its own.
  */
 
 import { addDays, format } from "date-fns";
-import {
-  CREDIT_AMOUNT_MAX,
-  CREDIT_REASON_MAX,
-} from "@/lib/billing/credit-adjustments";
+import type { AdminCreditLimits } from "@/lib/api-client/admin-credits";
 import {
   type AdminCreditAdjustmentValues,
   adminCreditAdjustmentSchema,
 } from "@/schemas/admin-schemas";
+
+/** `limits` as GET /admin/users/{id}/credits sends them. */
+const LIMITS: AdminCreditLimits = {
+  amount_max: 100000,
+  reason_min: 3,
+  reason_max: 500,
+};
 
 const day = (fromToday: number) =>
   format(addDays(new Date(), fromToday), "yyyy-MM-dd");
@@ -27,16 +32,20 @@ const values = (
   ...fields,
 });
 
-/** The messages the schema gives, by field. */
-function errors(fields: Partial<AdminCreditAdjustmentValues>) {
-  const result = adminCreditAdjustmentSchema.safeParse(values(fields));
+/** The messages the schema gives, by field: with these limits, or with none for `null`. */
+function errors(
+  fields: Partial<AdminCreditAdjustmentValues>,
+  limits: AdminCreditLimits | null = LIMITS,
+) {
+  const schema = adminCreditAdjustmentSchema(limits ?? undefined);
+  const result = schema.safeParse(values(fields));
   if (result.success) return {};
   return Object.fromEntries(
     result.error.issues.map((issue) => [issue.path.join("."), issue.message]),
   );
 }
 
-describe("adminCreditAdjustmentSchema", () => {
+describe("adminCreditAdjustmentSchema, with the API's limits", () => {
   it("accepts an add, a deduct and a reset that are filled in", () => {
     expect(errors({})).toEqual({});
     expect(errors({ action: "deduct", amount: "50" })).toEqual({});
@@ -45,7 +54,7 @@ describe("adminCreditAdjustmentSchema", () => {
 
   it.each([
     ["the smallest amount", "1"],
-    ["the largest amount", String(CREDIT_AMOUNT_MAX)],
+    ["the largest amount", String(LIMITS.amount_max)],
     ["an amount written with commas", "100,000"],
   ])("accepts %s", (_case, amount) => {
     expect(errors({ amount })).toEqual({});
@@ -58,7 +67,7 @@ describe("adminCreditAdjustmentSchema", () => {
     ["zero", "0", "Enter a whole number from 1 to 100,000"],
     [
       "one past the limit",
-      String(CREDIT_AMOUNT_MAX + 1),
+      String(LIMITS.amount_max + 1),
       "Enter a whole number from 1 to 100,000",
     ],
     ["a fraction", "12.5", "Use a whole number"],
@@ -76,8 +85,9 @@ describe("adminCreditAdjustmentSchema", () => {
 
   it("trims the reason", () => {
     expect(
-      adminCreditAdjustmentSchema.parse(values({ reason: "  Goodwill \n" }))
-        .reason,
+      adminCreditAdjustmentSchema(LIMITS).parse(
+        values({ reason: "  Goodwill \n" }),
+      ).reason,
     ).toBe("Goodwill");
   });
 
@@ -91,7 +101,7 @@ describe("adminCreditAdjustmentSchema", () => {
     ],
     [
       "a reason past the limit",
-      "x".repeat(CREDIT_REASON_MAX + 1),
+      "x".repeat(LIMITS.reason_max + 1),
       "Use at most 500 characters",
     ],
   ])("refuses %s", (_case, reason, message) => {
@@ -103,7 +113,23 @@ describe("adminCreditAdjustmentSchema", () => {
 
   it("accepts a reason at each end of the range", () => {
     expect(errors({ reason: "abc" })).toEqual({});
-    expect(errors({ reason: "x".repeat(CREDIT_REASON_MAX) })).toEqual({});
+    expect(errors({ reason: "x".repeat(LIMITS.reason_max) })).toEqual({});
+  });
+
+  it("follows whatever limits the API sends, not numbers of its own", () => {
+    const other: AdminCreditLimits = {
+      amount_max: 2500,
+      reason_min: 1,
+      reason_max: 12,
+    };
+    expect(errors({ amount: "2500", reason: "x" }, other)).toEqual({});
+    expect(errors({ amount: "2501", reason: "" }, other)).toEqual({
+      amount: "Enter a whole number from 1 to 2,500",
+      reason: "Give a reason of at least 1 character",
+    });
+    expect(errors({ reason: "x".repeat(13) }, other)).toEqual({
+      reason: "Use at most 12 characters",
+    });
   });
 
   it("refuses an expiry on a day that has ended", () => {
@@ -134,5 +160,43 @@ describe("adminCreditAdjustmentSchema", () => {
     expect(
       errors({ action: "reset", amount: "", expires_at: day(-1) }),
     ).toEqual({});
+  });
+});
+
+describe("adminCreditAdjustmentSchema, from an API that sends no limits", () => {
+  it("keeps no ceiling for the amount: the backend refuses what is too much", () => {
+    expect(errors({ amount: "100001" }, null)).toEqual({});
+    expect(errors({ action: "deduct", amount: "9,000,000" }, null)).toEqual({});
+  });
+
+  it("still asks for a whole number of at least 1", () => {
+    expect(errors({ amount: "" }, null)).toEqual({
+      amount: "Enter how many credits",
+    });
+    expect(errors({ amount: "0" }, null)).toEqual({
+      amount: "Enter a whole number of at least 1",
+    });
+    expect(errors({ amount: "12.5" }, null)).toEqual({
+      amount: "Use a whole number",
+    });
+  });
+
+  it("asks only that the reason is there, at any length", () => {
+    expect(errors({ reason: "" }, null)).toEqual({ reason: "Give a reason" });
+    expect(errors({ reason: "   " }, null)).toEqual({
+      reason: "Give a reason",
+    });
+    expect(errors({ reason: "ok" }, null)).toEqual({});
+    expect(errors({ reason: "x".repeat(501) }, null)).toEqual({});
+    expect(
+      adminCreditAdjustmentSchema().parse(values({ reason: "  ok \n" })).reason,
+    ).toBe("ok");
+  });
+
+  it("keeps the checks that are its own: a reset's amount and an add's expiry", () => {
+    expect(errors({ action: "reset", amount: "abc" }, null)).toEqual({});
+    expect(errors({ expires_at: "2020-01-01" }, null)).toEqual({
+      expires_at: "Choose today or a later day",
+    });
   });
 });
