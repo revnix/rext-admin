@@ -672,7 +672,7 @@ describe("changing a section's level", () => {
     expect(changed[2].level).toBe("H2");
     expect(rowPlace(changed, "s:3")?.parent?.heading).toBe("Sun hours");
     expect(levelAnnouncement(changed, "s:2")).toBe(
-      "Sun hours is now a section, with the subsection after it.",
+      "Sun hours is now a section, with its subsection.",
     );
     expect(levelAnnouncement(changeLevel(rows, "s:3", "H2"), "s:3")).toBe(
       "Soil is now a section.",
@@ -1164,6 +1164,262 @@ describe("read-only blocks that already show the FAQ", () => {
     expect(blocksShowFaqs([block("Facts", ["Sun"])], questions)).toBe(false);
     expect(blocksShowFaqs([steps], [])).toBe(false);
     expect(blocksShowFaqs([], questions)).toBe(false);
+  });
+});
+
+// A pillar outline with H4s in two sections:
+// Soil (Soil types (Clay, Sand), Drainage (Gravel), Mulch) · Watering (Hoses (Drip)).
+const deepRows = [
+  treeRow("soil", "Soil", "H2"),
+  treeRow("types", "Soil types", "H3"),
+  treeRow("clay", "Clay", "H4"),
+  treeRow("sand", "Sand", "H4"),
+  treeRow("drain", "Drainage", "H3"),
+  treeRow("gravel", "Gravel", "H4"),
+  treeRow("mulch", "Mulch", "H3"),
+  treeRow("water", "Watering", "H2"),
+  treeRow("hoses", "Hoses", "H3"),
+  treeRow("drip", "Drip", "H4"),
+];
+/** The H4s with no H3 or H4 before them: straight under an H2, or opening the list. */
+const strayH4s = (rows: TreeRow[]) => {
+  const list = groupRows(rows).flatMap((group) => group.rows);
+  return list
+    .filter(
+      (item, index) =>
+        item.level === "H4" &&
+        list[index - 1]?.level !== "H3" &&
+        list[index - 1]?.level !== "H4",
+    )
+    .map((item) => item.heading);
+};
+const levels = (rows: TreeRow[]) =>
+  groupRows(rows)
+    .flatMap((group) => group.rows)
+    .map((item) => `${item.heading} ${item.level}`);
+
+describe("an H4 stays under a subsection when it moves", () => {
+  it("doesn't move the first H4 of a section's first subsection up, above its H3", () => {
+    // One step up used to land "Clay" before "Soil types", straight under "Soil".
+    expect(moveTarget(deepRows, 2, -1)).toBeNull();
+    expect(moveRow(deepRows, "clay", -1)).toBe(deepRows);
+  });
+
+  it("takes the first H4 of a later subsection up to the end of the subsection before", () => {
+    const moved = moveRow(deepRows, "gravel", -1);
+    expect(shownHeadings(moved).slice(1, 7)).toEqual([
+      "Soil types",
+      "Clay",
+      "Sand",
+      "Gravel",
+      "Drainage",
+      "Mulch",
+    ]);
+    expect(rowPlace(moved, "gravel")?.parent?.heading).toBe("Soil types");
+    expect(moveAnnouncement(deepRows, moved, "gravel")).toBe(
+      "Moved Gravel to position 5 of 10, now a subsection of Soil types.",
+    );
+    // The subsection before may have no H4 yet: the H4 becomes its first.
+    const bare = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a2", "A two", "H3"),
+      treeRow("a21", "Deeper", "H4"),
+    ];
+    const joined = moveRow(bare, "a21", -1);
+    expect(shownHeadings(joined)).toEqual(["A", "A one", "Deeper", "A two"]);
+    expect(rowPlace(joined, "a21")?.parent?.heading).toBe("A one");
+  });
+
+  it("moves an H4 among the H4s of its subsection", () => {
+    const up = moveRow(deepRows, "sand", -1);
+    expect(shownHeadings(up).slice(1, 4)).toEqual([
+      "Soil types",
+      "Sand",
+      "Clay",
+    ]);
+    expect(shownHeadings(moveRow(deepRows, "clay", 1))).toEqual(
+      shownHeadings(up),
+    );
+  });
+
+  it("takes the last H4 of a subsection down into the subsection after, in the same section", () => {
+    const moved = moveRow(deepRows, "sand", 1);
+    expect(shownHeadings(moved).slice(1, 6)).toEqual([
+      "Soil types",
+      "Clay",
+      "Drainage",
+      "Sand",
+      "Gravel",
+    ]);
+    expect(rowPlace(moved, "sand")?.parent?.heading).toBe("Drainage");
+    // Into a subsection with no H4 of its own, too.
+    const under = moveRow(deepRows, "gravel", 1);
+    expect(shownHeadings(under).slice(4, 8)).toEqual([
+      "Drainage",
+      "Mulch",
+      "Gravel",
+      "Watering",
+    ]);
+    expect(rowPlace(under, "gravel")?.parent?.heading).toBe("Mulch");
+  });
+
+  it("stops an H4 at its section's end: never straight under the next H2", () => {
+    // "Gravel" under "Mulch", the section's last subsection; "Watering" comes next.
+    const last = moveRow(deepRows, "gravel", 1);
+    expect(moveRow(last, "gravel", 1)).toBe(last);
+    // And the list's last row has nowhere to go.
+    expect(moveRow(deepRows, "drip", 1)).toBe(deepRows);
+    const short = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a11", "Deeper", "H4"),
+      treeRow("b", "B", "H2"),
+      treeRow("b1", "B one", "H3"),
+    ];
+    expect(moveTarget(short, 2, 1)).toBeNull();
+    expect(moveRow(short, "a11", 1)).toBe(short);
+  });
+
+  it("offers a dragged H4 only the gaps after an H3 or an H4", () => {
+    // "Clay": its own place (2, 3), then after Sand, Drainage, Gravel, Mulch, Hoses and Drip;
+    // not the top, not after "Soil" (1) and not after "Watering" (8).
+    expect(dropGaps(deepRows, 2)).toEqual([2, 3, 4, 5, 6, 7, 9, 10]);
+    expect(moveBlockTo(deepRows, "clay", 0)).toBe(deepRows);
+    expect(moveBlockTo(deepRows, "clay", 1)).toBe(deepRows);
+    expect(moveBlockTo(deepRows, "clay", 8)).toBe(deepRows);
+    // Dropped under a subsection of another section, it is that subsection's.
+    const dropped = moveBlockTo(deepRows, "clay", 9);
+    expect(shownHeadings(dropped).slice(6)).toEqual([
+      "Watering",
+      "Hoses",
+      "Clay",
+      "Drip",
+    ]);
+    expect(rowPlace(dropped, "clay")?.parent?.heading).toBe("Hoses");
+  });
+
+  it("still takes a subsection, with its H4s, into the section beside it", () => {
+    const moved = moveRow(deepRows, "mulch", 1);
+    expect(shownHeadings(moved).slice(6)).toEqual([
+      "Watering",
+      "Mulch",
+      "Hoses",
+      "Drip",
+    ]);
+    // "Hoses" and its "Drip" go up to the end of the section before, after "Mulch".
+    const withH4s = moveRow(deepRows, "hoses", -1);
+    expect(shownHeadings(withH4s).slice(6)).toEqual([
+      "Mulch",
+      "Hoses",
+      "Drip",
+      "Watering",
+    ]);
+    expect(rowPlace(withH4s, "hoses")?.parent?.heading).toBe("Soil");
+  });
+
+  it("leaves no H4 without an H3 above it after any step or any drop", () => {
+    expect(strayH4s(deepRows)).toEqual([]);
+    for (const [index, item] of deepRows.entries()) {
+      for (const offset of [-1, 1] as const)
+        expect(strayH4s(moveRow(deepRows, item.key, offset))).toEqual([]);
+      for (const gap of dropGaps(deepRows, index))
+        expect(strayH4s(moveBlockTo(deepRows, item.key, gap))).toEqual([]);
+    }
+  });
+});
+
+describe("a subsection with H4s made a section", () => {
+  it("takes its H4s up a level with it, as its subsections", () => {
+    const promoted = changeLevel(deepRows, "types", "H2");
+    // Nothing moves; "Clay" and "Sand" go from H4 to H3, and the subsections after it come along.
+    expect(levels(promoted)).toEqual([
+      "Soil H2",
+      "Soil types H2",
+      "Clay H3",
+      "Sand H3",
+      "Drainage H3",
+      "Gravel H4",
+      "Mulch H3",
+      "Watering H2",
+      "Hoses H3",
+      "Drip H4",
+    ]);
+    expect(strayH4s(promoted)).toEqual([]);
+    expect(rowPlace(promoted, "clay")?.parent?.heading).toBe("Soil types");
+    expect(rowPlace(promoted, "drain")?.parent?.heading).toBe("Soil types");
+    expect(rowPlace(promoted, "gravel")?.parent?.heading).toBe("Drainage");
+    expect(levelAnnouncement(promoted, "types")).toBe(
+      "Soil types is now a section, with its 5 subsections.",
+    );
+    // What approval sends: each row's new level.
+    expect(
+      sectionEdits(promoted)
+        .slice(1, 4)
+        .map((edit) => edit.heading_level),
+    ).toEqual(["H2", "H3", "H3"]);
+  });
+
+  it("takes a removed H4 up too, so its Undo can't put an H4 under an H2", () => {
+    const removed = removeRow(deepRows, "sand").rows;
+    const promoted = changeLevel(removed, "types", "H2");
+    const restored = restoreRow(promoted, "sand");
+    expect(levels(restored).slice(1, 4)).toEqual([
+      "Soil types H2",
+      "Clay H3",
+      "Sand H3",
+    ]);
+    expect(strayH4s(restored)).toEqual([]);
+  });
+
+  it("leaves its old H4s as subsections beside it when it is made a subsection again", () => {
+    const promoted = changeLevel(deepRows, "types", "H2");
+    const back = changeLevel(promoted, "types", "H3");
+    // The round trip isn't the outline it started from: "Clay" and "Sand" stay H3, now beside it.
+    expect(levels(back)).toEqual([
+      "Soil H2",
+      "Soil types H3",
+      "Clay H3",
+      "Sand H3",
+      "Drainage H3",
+      "Gravel H4",
+      "Mulch H3",
+      "Watering H2",
+      "Hoses H3",
+      "Drip H4",
+    ]);
+    expect(strayH4s(back)).toEqual([]);
+    expect(rowPlace(back, "clay")?.parent?.heading).toBe("Soil");
+    expect(levelAnnouncement(back, "types")).toBe(
+      "Soil types is now a subsection of Soil.",
+    );
+  });
+
+  it("keeps the H4s under their subsections when a section becomes a subsection", () => {
+    const demoted = changeLevel(deepRows, "water", "H3");
+    expect(levels(demoted).slice(6)).toEqual([
+      "Mulch H3",
+      "Watering H3",
+      "Hoses H3",
+      "Drip H4",
+    ]);
+    expect(strayH4s(demoted)).toEqual([]);
+    expect(rowPlace(demoted, "drip")?.parent?.heading).toBe("Hoses");
+    expect(levelAnnouncement(demoted, "water")).toBe(
+      "Watering is now a subsection of Soil.",
+    );
+  });
+
+  it("changes only its own level when it has no H4", () => {
+    const promoted = changeLevel(deepRows, "mulch", "H2");
+    expect(levels(promoted).slice(5, 8)).toEqual([
+      "Gravel H4",
+      "Mulch H2",
+      "Watering H2",
+    ]);
+    expect(levelAnnouncement(promoted, "mulch")).toBe(
+      "Mulch is now a section.",
+    );
   });
 });
 

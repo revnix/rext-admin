@@ -607,7 +607,7 @@ describe("the outline's keyboard", () => {
     await focusRow("Sun hours");
     await user.keyboard("{Alt>}{ArrowLeft}{/Alt}");
     expect(rowOf("Sun hours")).toHaveAttribute("aria-level", "1");
-    expectSaid("Sun hours is now a section, with the subsection after it.");
+    expectSaid("Sun hours is now a section, with its subsection.");
     expect((await approve()).sections?.[2]).toEqual({
       id: `${LIST}:2`,
       heading: "Sun hours",
@@ -709,6 +709,118 @@ describe("the outline's keyboard", () => {
     expect(plan()).not.toBeInTheDocument();
     // A click leaves focus on the row, so the keys carry on from it.
     expect(rowOf("Soil")).toHaveFocus();
+  });
+});
+
+describe("a pillar outline's H4s, from the keyboard", () => {
+  // Soil (Soil types (Clay, Sand), Drainage (Gravel)) · Watering.
+  const DEEP: [string, Level, number][] = [
+    ["Soil", "H2", 300],
+    ["Soil types", "H3", 200],
+    ["Clay", "H4", 100],
+    ["Sand", "H4", 100],
+    ["Drainage", "H3", 200],
+    ["Gravel", "H4", 100],
+    ["Watering", "H2", 300],
+  ];
+  const levelsShown = () =>
+    DEEP.map(([heading]) => rowOf(heading).getAttribute("aria-level"));
+  const sentLevels = (approval: OutlineApproval) =>
+    approval.sections?.map((edit) => edit.heading_level);
+
+  it("keeps an H4 under a subsection on Alt+↑ and Alt+↓, and says when it can't go further", async () => {
+    const { user, approve } = renderOutline({ sections: DEEP });
+
+    // The first H4 of the section's first subsection: above it is its H3, then the H2.
+    await focusRow("Clay");
+    await user.keyboard("{Alt>}{ArrowUp}{/Alt}");
+    expectSaid("Clay can't move up.");
+    expect(headings()).toEqual(DEEP.map(([heading]) => heading));
+
+    // The first H4 of a later subsection goes to the end of the subsection before.
+    await focusRow("Gravel");
+    await user.keyboard("{Alt>}{ArrowUp}{/Alt}");
+    expect(headings()).toEqual([
+      "Soil",
+      "Soil types",
+      "Clay",
+      "Sand",
+      "Gravel",
+      "Drainage",
+      "Watering",
+    ]);
+    expect(rowOf("Gravel")).toHaveFocus();
+    expect(rowOf("Gravel")).toHaveAttribute("aria-level", "3");
+    expect(rowOf("Gravel")).toHaveAttribute("aria-posinset", "3");
+    expectSaid(
+      "Moved Gravel to position 5 of 7, now a subsection of Soil types.",
+    );
+    const moved = await approve();
+    expect(sentIds(moved)).toEqual([0, 1, 2, 3, 5, 4, 6]);
+    expect(moved.sections?.[4]).toEqual({
+      id: `${LIST}:5`,
+      heading: "Gravel",
+      heading_level: "H4",
+    });
+
+    // Down again: into the subsection after, then no further, since "Watering" is an H2.
+    await focusRow("Gravel");
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    expect(headings()).toEqual(DEEP.map(([heading]) => heading));
+    expectSaid(
+      "Moved Gravel to position 6 of 7, now a subsection of Drainage.",
+    );
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    expectSaid("Gravel can't move down.");
+    expect(headings()).toEqual(DEEP.map(([heading]) => heading));
+    expect(await approve()).not.toHaveProperty("sections");
+
+    // The menu says the same: no Move up for the H4 that can't go up.
+    await user.click(screen.getByRole("button", { name: "Actions for Clay" }));
+    expect(
+      await screen.findByRole("menuitem", { name: "Move up" }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(
+      screen.getByRole("menuitem", { name: "Move down" }),
+    ).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("takes a subsection's H4s up a level with it on Alt+←, so none is left under an H2", async () => {
+    const { user, approve } = renderOutline({ sections: DEEP });
+
+    await focusRow("Soil types");
+    await user.keyboard("{Alt>}{ArrowLeft}{/Alt}");
+
+    // "Soil types" is a section; "Clay" and "Sand" are its subsections, and "Drainage" came along.
+    expect(levelsShown()).toEqual(["1", "1", "2", "2", "2", "3", "1"]);
+    expect(within(rowOf("Clay")).getByText("H3")).toBeInTheDocument();
+    expect(within(rowOf("Sand")).getByText("H3")).toBeInTheDocument();
+    expect(rowOf("Soil types")).toHaveFocus();
+    expectSaid("Soil types is now a section, with its 4 subsections.");
+    expect(sentLevels(await approve())).toEqual([
+      "H2",
+      "H2",
+      "H3",
+      "H3",
+      "H3",
+      "H4",
+      "H2",
+    ]);
+
+    // Back to a subsection: its old H4s stay H3, beside it, and "Gravel" stays under "Drainage".
+    await focusRow("Soil types");
+    await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    expect(levelsShown()).toEqual(["1", "2", "2", "2", "2", "3", "1"]);
+    expectSaid("Soil types is now a subsection of Soil.");
+    expect(sentLevels(await approve())).toEqual([
+      "H2",
+      "H3",
+      "H3",
+      "H3",
+      "H3",
+      "H4",
+      "H2",
+    ]);
   });
 });
 
