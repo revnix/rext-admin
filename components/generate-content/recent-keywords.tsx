@@ -86,7 +86,7 @@ export function RecentKeywords() {
         </h2>
         <Link
           href={workspaceRoutes.keywordLibrary(workspaceSlug) as Route}
-          className="text-label text-primary underline-offset-4 hover:underline"
+          className="text-label link"
         >
           All keywords
         </Link>

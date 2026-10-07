@@ -24,26 +24,17 @@ export default function RefundPolicyPage() {
           </h2>
           <ul className="space-y-1 text-body">
             <li>
-              <Link
-                href={settingsRoutes.plan as Route}
-                className="text-primary hover:underline"
-              >
+              <Link href={settingsRoutes.plan as Route} className="link">
                 Cancel your plan
               </Link>
             </li>
             <li>
-              <Link
-                href="/legal/subscription-terms"
-                className="text-primary hover:underline"
-              >
+              <Link href="/legal/subscription-terms" className="link">
                 Subscription terms
               </Link>
             </li>
             <li>
-              <a
-                href="mailto:contact@rext.ai"
-                className="text-primary hover:underline"
-              >
+              <a href="mailto:contact@rext.ai" className="link">
                 Contact support
               </a>
             </li>

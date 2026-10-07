@@ -162,7 +162,7 @@ export default function SubscriptionTermsPage() {
         <h2>10. Data & Privacy</h2>
         <p>
           Your data privacy is important to us. See our{" "}
-          <Link href="/legal/privacy" className="text-primary underline">
+          <Link href="/legal/privacy" className="link">
             Privacy Policy
           </Link>{" "}
           for details on how we collect, use, and protect your data.

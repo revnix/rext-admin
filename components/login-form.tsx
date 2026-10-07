@@ -324,7 +324,7 @@ export function LoginForm({
             </FieldController>
             <Link
               href="/forgot-password"
-              className="inline-block text-body text-primary underline-offset-4 hover:underline"
+              className="inline-block text-body link"
             >
               Forgot your password?
             </Link>
@@ -356,7 +356,7 @@ export function LoginForm({
               ? `/signup?token=${invitationToken}`
               : ("/signup" as Route)
           }
-          className="font-medium text-primary underline-offset-4 hover:underline"
+          className="font-medium link"
         >
           Sign up
         </Link>
