@@ -48,7 +48,7 @@
     92.6% 0.144 125.8
   ); /* lime-400 #cff88a: only ever on the fill */
 
-  /* Status: Tailwind's green, amber, red and sky, only the steps the roles use. */
+  /* Status: Tailwind's green, amber and red, only the steps the roles use. Info is neutral (the roles below). */
   --positive-50: oklch(98.2% 0.018 155.826);
   --positive-200: oklch(92.5% 0.084 155.995);
   --positive-700: oklch(52.7% 0.154 150.069);
@@ -62,10 +62,6 @@
   --negative-600: oklch(57.7% 0.245 27.325);
   --negative-700: oklch(50.5% 0.213 27.518);
   --negative-800: oklch(44.4% 0.177 26.899);
-  --informative-50: oklch(97.7% 0.013 236.62);
-  --informative-200: oklch(90.1% 0.058 230.902);
-  --informative-700: oklch(50% 0.134 242.749);
-  --informative-800: oklch(44.3% 0.11 240.79);
 }
 
 :root {
@@ -102,10 +98,11 @@
   --danger-500: var(--negative-600);
   --danger-600: var(--negative-700);
   --danger-700: var(--negative-800);
-  --info-50: var(--informative-50);
-  --info-200: var(--informative-200);
-  --info-600: var(--informative-700);
-  --info-700: var(--informative-800);
+  /* Info is neutral (founder, 2026-10-07): the word and the icon carry it, so no blue is left. */
+  --info-50: var(--neutral-100);
+  --info-200: var(--neutral-200);
+  --info-600: var(--neutral-600);
+  --info-700: var(--neutral-800);
 
   /* shadcn's names, which components/ui reads, mapped onto the roles. */
   --background: var(--surface);
