@@ -5,7 +5,7 @@ import { Download, FileText, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 import { usePermission } from "@/hooks/use-permission";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
@@ -65,11 +65,23 @@ export default function AuditLogsPage() {
 
   if (error) {
     return (
-      <ErrorPage
-        title="Failed to load audit logs"
-        message="Audit log data could not be loaded. Please check your connection and try again."
-        retry={() => void refetch()}
-      />
+      <ListPage
+        title="Audit Logs"
+        description="View and export all admin actions and system events"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load audit logs"
+          action={
+            <Button size="sm" variant="outline" onClick={() => void refetch()}>
+              Try again
+            </Button>
+          }
+        >
+          Audit log data could not be loaded. Please check your connection and
+          try again.
+        </Notice>
+      </ListPage>
     );
   }
 
@@ -103,7 +115,7 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <PageLayout
+    <ListPage
       title="Audit Logs"
       description="View and export all admin actions and system events"
       actions={
@@ -132,7 +144,7 @@ export default function AuditLogsPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   audit.read
                 </code>
               </p>
@@ -149,7 +161,7 @@ export default function AuditLogsPage() {
           <CardContent className="space-y-4">
             {/* Search by email */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="z-10 pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by user email..."
                 value={search}
@@ -239,6 +251,6 @@ export default function AuditLogsPage() {
           </CardContent>
         </Card>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

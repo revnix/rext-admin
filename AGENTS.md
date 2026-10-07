@@ -1,417 +1,91 @@
-# Task Master AI - Agent Integration Guide
+<!-- BEGIN:nextjs-agent-rules -->
 
-## Essential Commands
+# This is NOT the Next.js you know
 
-### Core Workflow Commands
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-```bash
-# Project Setup
-task-master init                                    # Initialize Task Master in current project
-task-master parse-prd .taskmaster/docs/prd.txt      # Generate tasks from PRD document
-task-master models --setup                        # Configure AI models interactively
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
-# Daily Development Workflow
-task-master list                                   # Show all tasks with status
-task-master next                                   # Get next available task to work on
-task-master show <id>                             # View detailed task information (e.g., task-master show 1.2)
-task-master set-status --id=<id> --status=done    # Mark task complete
+<!-- END:nextjs-agent-rules -->
 
-# Task Management
-task-master add-task --prompt="description" --research        # Add new task with AI assistance
-task-master expand --id=<id> --research --force              # Break task into subtasks
-task-master update-task --id=<id> --prompt="changes"         # Update specific task
-task-master update --from=<id> --prompt="changes"            # Update multiple tasks from ID onwards
-task-master update-subtask --id=<id> --prompt="notes"        # Add implementation notes to subtask
+# Working on this repository
 
-# Analysis & Planning
-task-master analyze-complexity --research          # Analyze task complexity
-task-master complexity-report                      # View complexity analysis
-task-master expand --all --research               # Expand all eligible tasks
+The Rext AI dashboard (app.rext.ai): Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, shadcn on Radix, TanStack Query, Zustand, react-hook-form with zod, next-auth 5 (beta), Lexical for the editor. It holds no database: everything comes from the backend (`rextaihq/rext-backend`, FastAPI and LangGraph) over HTTP and server-sent events, so nothing past `/login` renders without it.
 
-# Dependencies & Organization
-task-master add-dependency --id=<id> --depends-on=<id>       # Add task dependency
-task-master move --from=<id> --to=<id>                       # Reorganize task hierarchy
-task-master validate-dependencies                            # Check for dependency issues
-task-master generate                                         # Update task markdown files (usually auto-called)
+Codex and Claude Code both read this file (`CLAUDE.md` imports it). Keep it under 150 lines; procedures live in skills, the map of the code in `ARCHITECTURE.md`. The rework's plan, rules and tasks are in the private repository `revnix/rext-control` (`app/BRIEF.md`, and the design language in `design/app-language.md`); a session working one of its tasks reads the brief before anything else. Its clone sits beside this one, so from a rework worktree its scripts are `../rext-control/scripts/app/`.
+
+## Branches
+
+- **`main` is what app.rext.ai runs.** Never branch from it, target it or push to it.
+- **`staging` is the base branch.** Every branch starts from `origin/staging` and every pull request targets `staging`. **A merge is a deploy:** a push to `staging` deploys the staging app (`.github/workflows/ci_cd.yaml`, a Vercel deploy with `--no-wait`), so a broken build shows in the Vercel dashboard, not in Actions.
+- One task, one branch, one pull request, kept small. Rework branches are named `app/<task>-<slug>`, each in a worktree of its own, and are merged by `../rext-control/scripts/app/merge.sh` (rebase and merge), never by hand.
+- The team merges here daily. Rebase on `origin/staging` before your checks and before your merge, push your own branch with `--force-with-lease`, and never rewrite a commit that is not yours. A rework clone keeps no tracking ref for a task branch, so the bare flag is refused as stale: name the head you last pushed (the pull request shows it), `git push --force-with-lease=<branch>:<that sha> origin <branch>`.
+- For Claude Code sessions, `.claude/settings.json` and the hooks in `.claude/hooks/` refuse reading an env file (every `.env` name and `.envrc` but `*.example`, through any tool or program; `test -s` and `grep -c` stay allowed), every `vercel` command, a push to `main`, `staging` or `stage` or of every branch, and a forced push other than `--force-with-lease`. They read each command as text, so they stop mistakes, not a program written to get round them.
+
+## Secrets and services
+
+- `.env` and `.env.local` hold the backend's address and keys. Never commit, print or paste a value from them; `test -s .env` checks that one exists, and `.env.example` lists the names. A variable starting with `NEXT_PUBLIC_` is compiled into the browser's code wherever client code reads it, so a secret never takes that prefix.
+- `env.ts` lists every variable the code reads, with its check (`@t3-oss/env-nextjs`); `next.config.ts` imports it, so `next build` stops on a missing or malformed one and names it. A new variable is added there first.
+- Rework sessions run against the local stack (the backend at `http://127.0.0.1:2024`), never a live service. Lemon Squeezy stays in sandbox mode. A real generation run spends the founder's OpenAI, DataForSEO and Tavily keys: run one only when the task is about the generation workflow.
+- No AI attribution anywhere: no co-author trailers, no "generated with" lines, no mention of AI tools in commits, pull requests, comments or code.
+
+## Commands
+
+Node 24 and pnpm 12; `pnpm-lock.yaml` is the lockfile.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm dev                     # needs the backend; rework sessions use ../rext-control/scripts/app/run.sh admin
+pnpm exec tsc --noEmit       # type check
+pnpm lint                    # biome check; pnpm format writes the fixes
+pnpm lint:imports            # biome, plus the stores import rule in stores/README.md
+pnpm test                    # jest; pnpm test:ci adds coverage
+pnpm build                   # production build; about 2 GB of memory
+pnpm tokens:check            # design values outside the tokens; a per-file ratchet (scripts/tokens-baseline.json)
+pnpm layout:check            # pages outside the five layouts, hand-written page widths, headings, tables, fields; a ratchet
+pnpm api:types               # lib/api-client/schema.d.ts from api/openapi.json, the backend's spec (ARCHITECTURE.md, the API client)
+pnpm a11y                    # axe, focus and reduced motion in Playwright, on a build started with REXT_DEV_PAGES=1 (playwright.config.ts)
+pnpm perf                    # Lighthouse CI's budgets on five pages, after a build (lighthouserc.json)
 ```
 
-## Key Files & Project Structure
-
-### Core Files
-
-- `.taskmaster/tasks/tasks.json` - Main task data file (auto-managed)
-- `.taskmaster/config.json` - AI model configuration (use `task-master models` to modify)
-- `.taskmaster/docs/prd.txt` - Product Requirements Document for parsing
-- `.taskmaster/tasks/*.txt` - Individual task files (auto-generated from tasks.json)
-- `.env` - API keys for CLI usage
-
-### Claude Code Integration Files
-
-- `CLAUDE.md` - Auto-loaded context for Claude Code (this file)
-- `.claude/settings.json` - Claude Code tool allowlist and preferences
-- `.claude/commands/` - Custom slash commands for repeated workflows
-- `.mcp.json` - MCP server configuration (project-specific)
-
-### Directory Structure
-
-```
-project/
-├── .taskmaster/
-│   ├── tasks/              # Task files directory
-│   │   ├── tasks.json      # Main task database
-│   │   ├── task-1.md      # Individual task files
-│   │   └── task-2.md
-│   ├── docs/              # Documentation directory
-│   │   ├── prd.txt        # Product requirements
-│   ├── reports/           # Analysis reports directory
-│   │   └── task-complexity-report.json
-│   ├── templates/         # Template files
-│   │   └── example_prd.txt  # Example PRD template
-│   └── config.json        # AI models & settings
-├── .claude/
-│   ├── settings.json      # Claude Code configuration
-│   └── commands/         # Custom slash commands
-├── .env                  # API keys
-├── .mcp.json            # MCP configuration
-└── CLAUDE.md            # This file - auto-loaded by Claude Code
-```
-
-## MCP Integration
-
-Task Master provides an MCP server that Claude Code can connect to. Configure in `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "task-master-ai": {
-      "command": "npx",
-      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
-      "env": {
-        "ANTHROPIC_API_KEY": "your_key_here",
-        "PERPLEXITY_API_KEY": "your_key_here",
-        "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
-        "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
-        "XAI_API_KEY": "XAI_API_KEY_HERE",
-        "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",
-        "MISTRAL_API_KEY": "MISTRAL_API_KEY_HERE",
-        "AZURE_OPENAI_API_KEY": "AZURE_OPENAI_API_KEY_HERE",
-        "OLLAMA_API_KEY": "OLLAMA_API_KEY_HERE"
-      }
-    }
-  }
-}
-```
-
-### Essential MCP Tools
-
-```javascript
-help; // = shows available taskmaster commands
-// Project setup
-initialize_project; // = task-master init
-parse_prd; // = task-master parse-prd
-
-// Daily workflow
-get_tasks; // = task-master list
-next_task; // = task-master next
-get_task; // = task-master show <id>
-set_task_status; // = task-master set-status
-
-// Task management
-add_task; // = task-master add-task
-expand_task; // = task-master expand
-update_task; // = task-master update-task
-update_subtask; // = task-master update-subtask
-update; // = task-master update
-
-// Analysis
-analyze_project_complexity; // = task-master analyze-complexity
-complexity_report; // = task-master complexity-report
-```
-
-## Claude Code Workflow Integration
-
-### Standard Development Workflow
-
-#### 1. Project Initialization
-
-```bash
-# Initialize Task Master
-task-master init
-
-# Create or obtain PRD, then parse it
-task-master parse-prd .taskmaster/docs/prd.txt
-
-# Analyze complexity and expand tasks
-task-master analyze-complexity --research
-task-master expand --all --research
-```
-
-If tasks already exist, another PRD can be parsed (with new information only!) using parse-prd with --append flag. This will add the generated tasks to the existing list of tasks..
-
-#### 2. Daily Development Loop
-
-```bash
-# Start each session
-task-master next                           # Find next available task
-task-master show <id>                     # Review task details
-
-# During implementation, check in code context into the tasks and subtasks
-task-master update-subtask --id=<id> --prompt="implementation notes..."
-
-# Complete tasks
-task-master set-status --id=<id> --status=done
-```
-
-#### 3. Multi-Claude Workflows
-
-For complex projects, use multiple Claude Code sessions:
-
-```bash
-# Terminal 1: Main implementation
-cd project && claude
-
-# Terminal 2: Testing and validation
-cd project-test-worktree && claude
-
-# Terminal 3: Documentation updates
-cd project-docs-worktree && claude
-```
-
-### Custom Slash Commands
-
-Create `.claude/commands/taskmaster-next.md`:
-
-```markdown
-Find the next available Task Master task and show its details.
-
-Steps:
-
-1. Run `task-master next` to get the next task
-2. If a task is available, run `task-master show <id>` for full details
-3. Provide a summary of what needs to be implemented
-4. Suggest the first implementation step
-```
-
-Create `.claude/commands/taskmaster-complete.md`:
-
-```markdown
-Complete a Task Master task: $ARGUMENTS
-
-Steps:
-
-1. Review the current task with `task-master show $ARGUMENTS`
-2. Verify all implementation is complete
-3. Run any tests related to this task
-4. Mark as complete: `task-master set-status --id=$ARGUMENTS --status=done`
-5. Show the next available task with `task-master next`
-```
-
-## Tool Allowlist Recommendations
-
-Add to `.claude/settings.json`:
-
-```json
-{
-  "allowedTools": [
-    "Edit",
-    "Bash(task-master *)",
-    "Bash(git commit:*)",
-    "Bash(git add:*)",
-    "Bash(npm run *)",
-    "mcp__task_master_ai__*"
-  ]
-}
-```
-
-## Configuration & Setup
-
-### API Keys Required
-
-At least **one** of these API keys must be configured:
-
-- `ANTHROPIC_API_KEY` (Claude models) - **Recommended**
-- `PERPLEXITY_API_KEY` (Research features) - **Highly recommended**
-- `OPENAI_API_KEY` (GPT models)
-- `GOOGLE_API_KEY` (Gemini models)
-- `MISTRAL_API_KEY` (Mistral models)
-- `OPENROUTER_API_KEY` (Multiple models)
-- `XAI_API_KEY` (Grok models)
-
-An API key is required for any provider used across any of the 3 roles defined in the `models` command.
-
-### Model Configuration
-
-```bash
-# Interactive setup (recommended)
-task-master models --setup
-
-# Set specific models
-task-master models --set-main claude-3-5-sonnet-20241022
-task-master models --set-research perplexity-llama-3.1-sonar-large-128k-online
-task-master models --set-fallback gpt-4o-mini
-```
-
-## Task Structure & IDs
-
-### Task ID Format
-
-- Main tasks: `1`, `2`, `3`, etc.
-- Subtasks: `1.1`, `1.2`, `2.1`, etc.
-- Sub-subtasks: `1.1.1`, `1.1.2`, etc.
-
-### Task Status Values
-
-- `pending` - Ready to work on
-- `in-progress` - Currently being worked on
-- `done` - Completed and verified
-- `deferred` - Postponed
-- `cancelled` - No longer needed
-- `blocked` - Waiting on external factors
-
-### Task Fields
-
-```json
-{
-  "id": "1.2",
-  "title": "Implement user authentication",
-  "description": "Set up JWT-based auth system",
-  "status": "pending",
-  "priority": "high",
-  "dependencies": ["1.1"],
-  "details": "Use bcrypt for hashing, JWT for tokens...",
-  "testStrategy": "Unit tests for auth functions, integration tests for login flow",
-  "subtasks": []
-}
-```
-
-## Claude Code Best Practices with Task Master
-
-### Context Management
-
-- Use `/clear` between different tasks to maintain focus
-- This CLAUDE.md file is automatically loaded for context
-- Use `task-master show <id>` to pull specific task context when needed
-
-### Iterative Implementation
-
-1. `task-master show <subtask-id>` - Understand requirements
-2. Explore codebase and plan implementation
-3. `task-master update-subtask --id=<id> --prompt="detailed plan"` - Log plan
-4. `task-master set-status --id=<id> --status=in-progress` - Start work
-5. Implement code following logged plan
-6. `task-master update-subtask --id=<id> --prompt="what worked/didn't work"` - Log progress
-7. `task-master set-status --id=<id> --status=done` - Complete task
-
-### Complex Workflows with Checklists
-
-For large migrations or multi-step processes:
-
-1. Create a markdown PRD file describing the new changes: `touch task-migration-checklist.md` (prds can be .txt or .md)
-2. Use Taskmaster to parse the new prd with `task-master parse-prd --append` (also available in MCP)
-3. Use Taskmaster to expand the newly generated tasks into subtasks. Consdier using `analyze-complexity` with the correct --to and --from IDs (the new ids) to identify the ideal subtask amounts for each task. Then expand them.
-4. Work through items systematically, checking them off as completed
-5. Use `task-master update-subtask` to log progress on each task/subtask and/or updating/researching them before/during implementation if getting stuck
-
-### Git Integration
-
-Task Master works well with `gh` CLI:
-
-```bash
-# Create PR for completed task
-gh pr create --title "Complete task 1.2: User authentication" --body "Implements JWT auth system as specified in task 1.2"
-
-# Reference task in commits
-git commit -m "feat: implement JWT auth (task 1.2)"
-```
-
-### Parallel Development with Git Worktrees
-
-```bash
-# Create worktrees for parallel task development
-git worktree add ../project-auth feature/auth-system
-git worktree add ../project-api feature/api-refactor
-
-# Run Claude Code in each worktree
-cd ../project-auth && claude    # Terminal 1: Auth work
-cd ../project-api && claude     # Terminal 2: API work
-```
-
-## Troubleshooting
-
-### AI Commands Failing
-
-```bash
-# Check API keys are configured
-cat .env                           # For CLI usage
-
-# Verify model configuration
-task-master models
-
-# Test with different model
-task-master models --set-fallback gpt-4o-mini
-```
-
-### MCP Connection Issues
-
-- Check `.mcp.json` configuration
-- Verify Node.js installation
-- Use `--mcp-debug` flag when starting Claude Code
-- Use CLI as fallback if MCP unavailable
-
-### Task File Sync Issues
-
-```bash
-# Regenerate task files from tasks.json
-task-master generate
-
-# Fix dependency issues
-task-master fix-dependencies
-```
-
-DO NOT RE-INITIALIZE. That will not do anything beyond re-adding the same Taskmaster core files.
-
-## Important Notes
-
-### AI-Powered Operations
-
-These commands make AI calls and may take up to a minute:
-
-- `parse_prd` / `task-master parse-prd`
-- `analyze_project_complexity` / `task-master analyze-complexity`
-- `expand_task` / `task-master expand`
-- `expand_all` / `task-master expand --all`
-- `add_task` / `task-master add-task`
-- `update` / `task-master update`
-- `update_task` / `task-master update-task`
-- `update_subtask` / `task-master update-subtask`
-
-### File Management
-
-- Never manually edit `tasks.json` - use commands instead
-- Never manually edit `.taskmaster/config.json` - use `task-master models`
-- Task markdown files in `tasks/` are auto-generated
-- Run `task-master generate` after manual changes to tasks.json
-
-### Claude Code Session Management
-
-- Use `/clear` frequently to maintain focused context
-- Create custom slash commands for repeated Task Master workflows
-- Configure tool allowlist to streamline permissions
-- Use headless mode for automation: `claude -p "task-master next"`
-
-### Multi-Task Updates
-
-- Use `update --from=<id>` to update multiple future tasks
-- Use `update-task --id=<id>` for single task updates
-- Use `update-subtask --id=<id>` for implementation logging
-
-### Research Mode
-
-- Add `--research` flag for research-based AI enhancement
-- Requires a research model API key like Perplexity (`PERPLEXITY_API_KEY`) in environment
-- Provides more informed task creation and updates
-- Recommended for complex technical tasks
-
----
-
-_This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._
+- The Husky pre-commit hook runs Biome on the staged files only (their fixes are staged with them); never skip it with `--no-verify`. The type check, the full lint and the tests run in CI (`pr-checks.yaml`) and in `check.sh`, not on commit.
+- `pnpm tokens:check` fails when a file gains a stock palette class, a colour literal, a `dark:` class or an off-scale radius, shadow or font size; mark a line that must stay with `tokens-ok: the reason`. After lowering a file's count, run `pnpm tokens:check --update` (it only ever lowers the baseline). `pnpm layout:check` works the same way (`layout-ok: the reason`, `--update`, `scripts/layout-baseline.json`).
+- A dev server takes over 1 GB of memory: stop it when you are done.
+
+## Code
+
+Read `ARCHITECTURE.md` before your first change: routes, the shell, the data layer, the generation stream, styling and the traps.
+
+- **Next.js:** read the guide in `node_modules/next/dist/docs/` for the API you are about to use. The route guard is `proxy.ts` (Next 16's replacement for middleware); a new public page is added to its `publicRoutes`. `typedRoutes` is on, so a computed path needs `as Route`.
+- **Styling:** Tailwind CSS v4, configured in `app/globals.css`. The rework (plan B) moves every colour, size, radius and shadow into tokens there and switches Tailwind's palette off. New and changed code follows that already: semantic classes (`bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary`, `text-destructive`), no stock palette class (`text-slate-900`, `bg-blue-600`), no `bg-[#…]` or other colour literal, no new `dark:` class (the rework retires dark mode; it returns later as one block of roles), no gradient, glow or coloured icon chip. A value with no token yet goes into `globals.css` through the token tasks, not into a component.
+- **Primitives:** `components/ui/` holds the shadcn-based primitives. The states are one each: `Notice` (info, warning, danger, success), `EmptyState`, `Skeleton` with `useShowAfter` (or a layout's `PageSkeleton` in a `loading.tsx`), `ErrorBoundary`, `RouteError` for `error.tsx`, `Meter`, `ScoreRing`, and `Badge` as a word with no icon. A confirmation's buttons name the action. Never import `alert.tsx`: it goes when its last users move. Before writing a component, look for one that already does the job; never add another copy.
+- **Pages:** the route layouts mount the shell (`components/shell/`: the sidebar, the header, the dock); a page never does. A page renders one of the five page layouts from `components/layouts/` (`ListPage`, `DetailPage`, `FormPage`, `SettingsPage`, `WorkingSurface`; `ARCHITECTURE.md` says which is for what), and sets no widths, paddings, heading sizes, card, table or field styles of its own. A new area outside these folders gets the shell by rendering `ShellLayout` from its `layout.tsx`.
+- **Filters in the URL:** a list's search, filters and page live in the URL through `nuqs` (the adapter is in `app/layout.tsx`), so a reload or a shared link keeps them. Each list's parsers are one module in `lib/search-params/` (a table's built from `dataTableParams`), read in the page by `useDataTableUrlState` (or `useQueryStates` outside a table) and by its `createLoader` on the server.
+- **Data:** server state through TanStack Query (`lib/query-keys.ts`, `lib/query-options/`, `hooks/mutations/`); UI state through Zustand (`stores/`; its README sets the import rule); the API client in `lib/api-client/`. New code never `fetch`es the backend from a component and never imports `@/services` (both older paths are being retired).
+- **Forms:** a zod schema in `schemas/`, `useZodForm(schema)` (validation on blur, then on change; focus to the first error), each field a `FieldController` on shadcn's Field, the whole a `FormShell` (sections, the submit row, the leave guard) in `components/forms/`; create and edit on pages, a dialog only for a single-purpose action of four fields or fewer. The older `components/ui/form.tsx` wrappers are being retired: don't use them in new code.
+- **Icons:** `lucide-react` only, 16 or 20 px, never inside a coloured square. It is the only icon library installed; lucide 1.x has no brand marks (draw one with lucide's `createLucideIcon` if a page needs it).
+- **Words:** sentence case in titles, buttons and navigation; no "AI" badges and no sparkle icons.
+- Match the code around your change: its naming, its structure, how much it comments.
+
+## Before a pull request
+
+1. The branch holds the current `origin/staging`, and `../rext-control/scripts/app/check.sh` passes (add `--build` for dependencies, `next.config.ts`, `app/globals.css`, the shell or a layout). Outside the rework, the commands above pass, the build included.
+2. You clicked through the pages you changed on the dev server at 390, 820 and 1440 px (rework sessions capture them with the `rext-app-visual-check` skill).
+3. The pull request body says what changed, why, how it was checked and what is not in it, and names the task.
+4. On GitHub, `pr-checks` (`.github/workflows/pr-checks.yaml`) runs the route types, the type check, Biome, `tokens:check` / `layout:check` (once they exist), Jest, the production build, and `pnpm a11y` and `pnpm perf` against that build on every push. If the repository goes private again, Jest, the build and the checks against it run only with the label `build`, since the Free plan's Actions minutes are then shared with the deploys.
+
+## Code Review Rules
+
+For the reviewer (Codex reads this section). Flag, in the lines a pull request adds or changes:
+
+- an auth or permission check moved after the work it guards, or a page or action that skips `proxy.ts`, `PermissionGuard` or the backend's own check;
+- a route handler or server action that trusts a user, workspace or role id sent by the client;
+- a secret or token in a log line, in a `NEXT_PUBLIC_` variable or in client code;
+- a request or response shape the backend does not have (`lib/api-client/endpoints.ts` lists the paths);
+- a component that fetches the backend directly instead of through `lib/api-client` and a query hook;
+- a price, a credit amount or a plan name typed into the code instead of read from the backend;
+- a colour, size, radius or shadow written as a literal, a stock palette class, or a `dark:` class;
+- a page that writes its own layout, table or field instead of the shared ones;
+- a change that would push or deploy to `main`.
+
+Do not repeat what Biome and the type check already enforce.

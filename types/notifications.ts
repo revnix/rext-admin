@@ -7,13 +7,16 @@ export interface ApiNotification {
   status: ApiNotificationStatus;
   is_read: boolean;
   created_at: string;
+  workspace_id?: string | null;
+  /** What the notification is about: a finished article's `content_id`, a run's `thread_id`. */
+  payload?: Record<string, unknown> | null;
+  /** Where it leads, when the backend set one. */
+  action_url?: string | null;
 }
 
 export const NOTIFICATION_TYPE_VALUES = [
   "workspace",
   "billing",
-  "knowledge",
-  "kb",
   "content",
   "generation",
   "system",
@@ -49,8 +52,6 @@ export const NOTIFICATION_CATEGORY_VALUES = [
   "billing_trial_ending",
   "billing_usage_limit_warning",
   "billing_usage_limit_exceeded",
-  "kb_processing_completed",
-  "kb_processing_failed",
   "in_app_notifications",
   "profile_update_failed",
   "avatar_uploaded",

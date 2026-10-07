@@ -15,12 +15,12 @@ export default function LoginError(props: {
   return (
     <RouteError
       {...props}
-      title="Login Error"
+      title="Login error"
       description="We encountered an error loading the login page. Please try again or contact support if the problem persists."
       logContext="LoginError"
       navigationType="link"
       navigationLink="/signup"
-      navigationLabel="Sign Up Instead"
+      navigationLabel="Sign up instead"
       layout="fullscreen"
     />
   );

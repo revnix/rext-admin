@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
+import type { components } from "@/lib/api-client/schema";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import {
@@ -651,6 +652,16 @@ export default {
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
+            // Whether this login created the account (AuthTokenResponse.is_new_user): analytics
+            // records a sign-up or a sign-in from it once the session exists, rather than guessing
+            // on the button's click.
+            const isNewUser: components["schemas"]["AuthTokenResponse"]["is_new_user"] =
+              oauthData.is_new_user === true;
+            token.oauthLogin = {
+              provider: account?.provider ?? "oauth",
+              isNew: isNewUser,
+              at: Date.now(),
+            };
             token.role = getPrimaryRole(oauthData.user);
             token.permissions =
               oauthData.user.permissions || oauthData.permissions || [];
@@ -818,6 +829,7 @@ export default {
           | number
           | undefined;
         session.error = token.error as string | undefined;
+        session.oauthLogin = token.oauthLogin;
       }
       return session;
     },

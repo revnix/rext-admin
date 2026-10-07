@@ -102,8 +102,6 @@ export const UserSubscriptionSchema = z.object({
     .object({
       max_workspaces: z.number().int(),
       max_members_per_workspace: z.number().int(),
-      max_topics: z.number().int(),
-      max_knowledge_items: z.number().int(),
       max_api_calls_per_month: z.number().int(),
     })
     .optional(),
@@ -201,18 +199,6 @@ export const SubscriptionPlanSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val ?? 0),
-  max_topics: z
-    .number()
-    .int()
-    .optional()
-    .nullable()
-    .transform((val) => val ?? 0),
-  max_knowledge_items: z
-    .number()
-    .int()
-    .optional()
-    .nullable()
-    .transform((val) => val ?? 0),
   max_api_calls_per_month: z
     .number()
     .int()
@@ -268,18 +254,12 @@ export const UsageStatsSchema = z.object({
   billing_period: BillingPeriodSchema,
   // Current usage
   current_workspaces: z.number().int().nonnegative(),
-  current_topics: z.number().int().nonnegative(),
-  current_knowledge_items: z.number().int().nonnegative(),
   current_api_calls: z.number().int().nonnegative(),
   // Limits
   max_workspaces: z.number().int(),
-  max_topics: z.number().int(),
-  max_knowledge_items: z.number().int(),
   max_api_calls_per_month: z.number().int(),
   // Usage percentages
   workspaces_usage_percent: z.number().min(0).max(100),
-  topics_usage_percent: z.number().min(0).max(100),
-  knowledge_items_usage_percent: z.number().min(0).max(100),
   api_calls_usage_percent: z.number().min(0).max(100),
   // Reset date
   usage_reset_date: z.string(),
@@ -419,8 +399,6 @@ export const SubscriptionPlanCreateSchema = z.object({
   features: z.record(z.string(), z.unknown()).optional(),
   max_workspaces: z.number().int().optional(),
   max_members_per_workspace: z.number().int().optional(),
-  max_topics: z.number().int().optional(),
-  max_knowledge_items: z.number().int().optional(),
   max_api_calls_per_month: z.number().int().optional(),
   is_active: z.boolean().optional(),
   is_public: z.boolean().optional(),
@@ -472,4 +450,40 @@ export type SubscriptionUpgradeRequest = z.infer<
 >;
 export type SubscriptionCancelRequest = z.infer<
   typeof SubscriptionCancelRequestSchema
+>;
+
+/**
+ * A subscription plan as a super admin creates or edits it (the admin plans page). The internal
+ * name can't change after creation. -1 means unlimited and 0 turns a limit off.
+ */
+export const subscriptionPlanFormSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be less than 50 characters")
+    .regex(
+      /^[a-z0-9_]+$/,
+      "Name must be lowercase letters, numbers, and underscores only",
+    ),
+  display_name: z
+    .string()
+    .min(2, "Display name must be at least 2 characters")
+    .max(150, "Display name must be less than 150 characters"),
+  description: z.string().optional(),
+  price_monthly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  price_yearly: z
+    .number()
+    .min(0, "Price must be positive")
+    .max(999999, "Price too large"),
+  max_workspaces: z.number().int(),
+  max_members_per_workspace: z.number().int(),
+  is_active: z.boolean(),
+  is_public: z.boolean(),
+});
+
+export type SubscriptionPlanFormValues = z.infer<
+  typeof subscriptionPlanFormSchema
 >;

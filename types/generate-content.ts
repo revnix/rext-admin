@@ -1,5 +1,6 @@
+import type { VolumeStatus } from "@/lib/generate-content/monthly-volume";
 import type { Message } from "@langchain/langgraph-sdk";
-import type { LoadingStep } from "@/constants/loading-steps";
+import type { RunPhase } from "@/lib/generate-content/run-stages";
 
 export type KeywordCluster = {
   cluster_name: string;
@@ -31,6 +32,8 @@ export type PersonaRecommendation = {
   name: string;
   /** Weighted 0-100 relevance across topic, title, search intent, content type. */
   score: number;
+  /** The persona's stated expertise covers the article's subject; only such a persona is recommended. */
+  fits_topic?: boolean;
   breakdown?: {
     topic?: number;
     title?: number;
@@ -53,6 +56,7 @@ export type Interrupt = {
     brand_voice_promotion?: BrandVoicePromotion;
     persona_recommendations?: PersonaRecommendation[];
     "Primary Keyword"?: string;
+    Country?: string;
     "Keyword Clusters"?: KeywordCluster[];
     [key: string]: unknown;
   };
@@ -423,8 +427,60 @@ export type ReadabilityMetrics = {
   dale_chall_score: number;
 };
 
+/**
+ * The checklist beside a finished article, as the backend builds it
+ * (`ContentChecklist` in rextaihq/rext-backend's src/api/schema/content_schema.py).
+ * The saved article sends it as `content.checklist`, a generation run as
+ * `content.review.checklist`. Articles saved before the validator's findings
+ * were kept have `validation: null` and no claims.
+ */
+export type ChecklistReadability = {
+  score: number;
+  /** very_easy, easy, fairly_easy, standard, fairly_difficult, difficult or very_difficult */
+  band: string;
+  label: string;
+};
+
+export type ChecklistDensity = {
+  value?: number | null;
+  /** ok, too_low, too_high or not_applicable */
+  status?: string | null;
+  occurrences?: number | null;
+  detail?: string | null;
+};
+
+export type ChecklistIssue = {
+  name: string;
+  severity?: string | null;
+  detail: string;
+};
+
+export type ChecklistValidation = {
+  passed: boolean;
+  /** True when the article was saved with checks still failing. */
+  gave_up: boolean;
+  stage?: string | null;
+  issues: ChecklistIssue[];
+  warnings: ChecklistIssue[];
+};
+
+export type ChecklistClaim = {
+  category: string;
+  sentence: string;
+  /** The part of the sentence no source supports. */
+  unsupported: string;
+};
+
+export type ContentChecklist = {
+  readability?: ChecklistReadability | null;
+  keyphrase_density?: ChecklistDensity | null;
+  validation?: ChecklistValidation | null;
+  claims_to_verify: ChecklistClaim[];
+};
+
 export type ContentReview = {
   seo_score: number;
+  checklist?: ContentChecklist | null;
   trust_score?: TrustScore;
   readability_metrics: ReadabilityMetrics;
   eeat_score?: number;
@@ -773,7 +829,9 @@ export type SEORESULT = {
   serp_features?: SERPFeatureImpactState;
   seo_strategy?: SEOStrategyState;
   seo_opportunity?: SEOOpportunityState;
-  volume?: string;
+  volume?: string | number | null;
+  /** Why `volume` is or is not a number (lib/generate-content/monthly-volume.ts). */
+  volume_status?: VolumeStatus | null;
   seo_health_score: number;
   issue_summary: IssueSummary;
   issues: Issue[];
@@ -836,6 +894,8 @@ export interface PageState {
   step: AppStep;
   userKeyword: string;
   country: string;
+  /** Country of the analysis currently shown (as confirmed by the backend). */
+  analyzedCountry: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   generatedContent: string;
@@ -855,13 +915,20 @@ export interface PageState {
   loadingStatus?: string;
   isLoading: boolean;
   isManualLoading: boolean;
-  completedNodes: string[];
   readabilityScore: ReadabilityMetrics | null;
+  checklist: ContentChecklist | null;
   seoScore: SEORESULT | null;
   trustScore: TrustScore | null;
   eeatData: EEATData | null;
   allContent: FinalContent | null;
-  currentLoadingSteps: LoadingStep[];
+  /** The run the page is waiting on, if any: its phase, whether it was picked up mid-way, and a counter that changes with each start. */
+  run: {
+    phase: RunPhase;
+    joined: boolean;
+    /** For a run picked up mid-way: the stage it is in (the status route's `runStage`). */
+    stageId?: string;
+    seq: number;
+  } | null;
   keywordDifficulty: number | null;
   keywordClusters: KeywordCluster[];
   recommendedContentType: string | null;
@@ -881,6 +948,7 @@ export type PageAction =
   | { type: "SET_GENERATED_CONTENT"; payload: string }
   | { type: "SET_ALL_CONTENT"; payload: FinalContent | null }
   | { type: "SET_READABILITY_SCORE"; payload: ReadabilityMetrics }
+  | { type: "SET_CHECKLIST"; payload: ContentChecklist }
   | { type: "SET_TRUST_SCORE"; payload: TrustScore }
   | { type: "SET_SEO_SCORE"; payload: SEORESULT }
   | { type: "SET_INSTRUCTION_TYPE"; payload: string }
@@ -892,16 +960,17 @@ export type PageAction =
   | { type: "SET_RECOMMENDED_TOPIC"; payload: string | null }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
-  | { type: "SET_LOADING_STEPS"; payload: LoadingStep[] }
+  | {
+      type: "SET_RUN_PHASE";
+      payload: { phase: RunPhase; joined?: boolean; stageId?: string } | null;
+    }
   | { type: "SET_MANUAL_LOADING"; payload: boolean }
-  | { type: "ADD_COMPLETED_NODE"; payload: string }
-  | { type: "ADD_COMPLETED_NODE"; payload: string }
-  | { type: "CLEAR_COMPLETED_NODES" }
   | { type: "SET_KEYWORD_DIFFICULTY"; payload: number }
   | { type: "SET_KEYWORD_CLUSTERS"; payload: KeywordCluster[] }
   | { type: "SET_TOPICS"; payload: string[] }
   | { type: "SET_OUTLINE"; payload: ContentOutline | null }
-  | { type: "RESET_FOR_THREAD_SWITCH" };
+  | { type: "RESET_FOR_THREAD_SWITCH" }
+  | { type: "RESET_FOR_REANALYSIS" };
 
 export type StreamInput = {
   serp_payload?: {
@@ -924,6 +993,12 @@ export type RunStreamEvent<T = unknown> = {
 export type ResumeOptions = {
   payload: Record<string, unknown>;
   status?: string;
+  /**
+   * The caller puts its own step back when the run doesn't start (the outline's
+   * feedback, which keeps what the user typed); otherwise a refused resume puts the
+   * paused step back from the server.
+   */
+  restoresItsStep?: boolean;
 };
 
 export type WorkflowStep =
@@ -944,7 +1019,8 @@ export interface StoredKeyword {
   seo_state: {
     keyword_difficulty: number | null;
     intent: string | string[];
-    volume: number | string;
+    volume?: number | string | null;
+    volume_status?: VolumeStatus | null;
     backlinks: number | null;
     referring_domains: number | null;
   };
@@ -956,7 +1032,8 @@ export interface LibraryItem {
   keyword: string;
   difficulty: string;
   difficultyScore: number | null;
-  volume: string | number;
+  volume?: string | number | null;
+  volumeStatus?: VolumeStatus | null;
   intent: string | string[];
   lastUpdated: string;
   rawData: StoredKeyword;
@@ -976,6 +1053,7 @@ export interface CommonOutput {
     on_page_metrics?: SEORESULT;
     trust_score?: TrustScore;
     readability_metrics?: ReadabilityMetrics;
+    checklist?: ContentChecklist | null;
   };
 }
 export interface NodeOutput {
@@ -992,5 +1070,17 @@ export interface NodeOutput {
   calculate_readability?: { content?: CommonOutput };
   calculate_on_page_seo?: { content?: CommonOutput };
   calculate_eeat_trust?: { content?: CommonOutput };
+  /** Saves the article and returns its checklist (content.review.checklist). */
+  persist_content?: { content?: CommonOutput };
   content_engine?: { content?: CommonOutput };
+}
+
+/** A search the article agent ran, from its `tool_start` / `tool_end` events (the editor's research feed). */
+export interface ToolCall {
+  id: string;
+  name: string;
+  query: string;
+  status: "running" | "done";
+  resultCount?: number;
+  output?: string;
 }

@@ -4,18 +4,19 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  "relative w-full rounded-md border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
   {
     variants: {
       variant: {
         default: "bg-background text-foreground border-border",
         destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive bg-destructive/5",
+          "border-destructive/50 text-destructive [&>svg]:text-destructive bg-destructive/5",
         success:
-          "border-green-200 text-green-800 dark:border-green-800 dark:text-green-300 bg-green-50 dark:bg-green-900/10 [&>svg]:text-green-600 dark:[&>svg]:text-green-400",
+          "border-success-200 text-success-700 bg-success-50 [&>svg]:text-success-600",
+        // Only destructive and success carry colour; other notices stay neutral.
         warning:
-          "border-yellow-200 text-yellow-800 dark:border-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/10 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400",
-        info: "border-blue-200 text-blue-800 dark:border-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/10 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400",
+          "border-border text-foreground bg-muted/40 [&>svg]:text-foreground",
+        info: "border-border text-foreground bg-muted/40 [&>svg]:text-foreground",
       },
     },
     defaultVariants: {

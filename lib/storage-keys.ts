@@ -6,18 +6,6 @@
  */
 
 export const ONBOARDING_STORAGE_KEYS = {
-  /** Whether the user dismissed the onboarding progress bar. Scoped per workspace. */
-  dismissed: (workspaceId?: string) =>
-    workspaceId
-      ? `onboarding-dismissed-${workspaceId}`
-      : "onboarding-dismissed-global",
-
-  /** Array of skipped milestone IDs. Scoped per workspace. */
-  skipped: (workspaceId?: string) =>
-    workspaceId
-      ? `onboarding-skipped-${workspaceId}`
-      : "onboarding-skipped-global",
-
   /**
    * Array of milestone IDs already reported via analytics.
    * Scoped per workspace — prevents re-firing `onboarding_milestone_completed`
@@ -28,9 +16,6 @@ export const ONBOARDING_STORAGE_KEYS = {
       ? `onboarding-tracked-milestones-${workspaceId}`
       : "onboarding-tracked-milestones-global",
 
-  /** Serialized InvitationContext stored after invitation acceptance. */
-  recentInvitationAcceptance: "recent_invitation_acceptance",
-
   /** Whether the workspace welcome modal was shown. Scoped per workspace. */
   welcomeShown: (workspaceId: string) =>
     `workspace_welcome_shown_${workspaceId}`,
@@ -38,3 +23,9 @@ export const ONBOARDING_STORAGE_KEYS = {
   /** Serialized WelcomeData in sessionStorage. Scoped per workspace. */
   welcomeData: (workspaceId: string) => `workspace_welcome_${workspaceId}`,
 } as const;
+
+/**
+ * The subscription as it was when a checkout opened, in sessionStorage, so /checkout/success can
+ * tell the new purchase from the plan the person already had after a full page load.
+ */
+export const CHECKOUT_BASELINE_KEY = "rext-checkout-baseline";

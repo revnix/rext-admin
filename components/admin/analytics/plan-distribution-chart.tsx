@@ -13,13 +13,14 @@ interface PlanDistributionChartProps {
   }>;
 }
 
+// Plans are categories, not statuses: the accent first, then the neutral steps.
 const COLORS = [
-  "#8b5cf6",
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#ec4899",
+  "var(--primary)",
+  "var(--neutral-700)",
+  "var(--neutral-500)",
+  "var(--neutral-400)",
+  "var(--neutral-300)",
+  "var(--info-600)",
 ];
 
 export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
@@ -54,7 +55,7 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
               labelLine={false}
               label={(entry) => `${entry.name}: ${entry.value}`}
               outerRadius={100}
-              fill="#8884d8"
+              fill="var(--primary)"
               dataKey="value"
             >
               {chartData.map((entry, index) => (
@@ -62,15 +63,14 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(
-                value: number,
-                _name: string,
-                props: { payload?: { percentage: number; name: string } },
-              ) => {
-                if (!props.payload) return [String(value), ""];
+              formatter={(value, _name, item) => {
+                const slice = item?.payload as
+                  | { percentage: number; name: string }
+                  | undefined;
+                if (!slice) return [String(value), ""];
                 return [
-                  `${value} subscriptions (${props.payload.percentage.toFixed(1)}%)`,
-                  props.payload.name,
+                  `${value} subscriptions (${slice.percentage.toFixed(1)}%)`,
+                  slice.name,
                 ];
               }}
             />
@@ -84,7 +84,7 @@ export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
           {safeData.map((plan, index) => (
             <div
               key={plan.plan_name}
-              className="flex items-center justify-between p-3 rounded-lg border"
+              className="flex items-center justify-between p-3 rounded-md border"
             >
               <div className="flex items-center gap-3">
                 <div

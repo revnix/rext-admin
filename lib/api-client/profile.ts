@@ -1,4 +1,3 @@
-import { log } from "@/lib/logger";
 /**
  * Profile & Account API Namespace
  *
@@ -76,22 +75,6 @@ export function createProfileNamespace(client: ApiClient) {
         throw new Error("Invalid update response: missing profile data");
       }
 
-      // Record audit log
-      try {
-        await client.request("/api/v1/audit-logs/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "user.update",
-            resource_type: "user",
-            resource_id: profile.id,
-            status: "success",
-          }),
-        });
-      } catch (e) {
-        log.error("[AuditLog] Failed to log user.update", e);
-      }
-
       return profile;
     },
 
@@ -99,19 +82,7 @@ export function createProfileNamespace(client: ApiClient) {
      * Change password
      */
     changePassword: async (data: ChangePasswordRequest) => {
-      // Fetch user ID for resource_id before tokens are potentially invalidated
-      let userId: string | undefined;
-      try {
-        const profileRes = await client.request<{
-          profile?: { id?: string };
-          id?: string;
-        }>(ENDPOINTS.PROFILE.get, { method: "GET" });
-        userId = profileRes?.profile?.id ?? profileRes?.id;
-      } catch {
-        // Proceed even if we can't get the ID
-      }
-
-      const response = await client.request<{ success?: boolean }>(
+      return client.request<{ success?: boolean }>(
         ENDPOINTS.PROFILE.changePassword,
         {
           method: "POST",
@@ -119,26 +90,6 @@ export function createProfileNamespace(client: ApiClient) {
           body: JSON.stringify(data),
         },
       );
-
-      // Record audit log — awaited to ensure it completes before returning
-      if (response.success !== false) {
-        try {
-          await client.request("/api/v1/audit-logs/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "auth.password_change",
-              resource_type: "user",
-              resource_id: userId,
-              status: "success",
-            }),
-          });
-        } catch (e) {
-          log.error("[AuditLog] Failed to log auth.password_change", e);
-        }
-      }
-
-      return response;
     },
 
     /**
@@ -204,19 +155,7 @@ export function createAccountNamespace(client: ApiClient) {
       password: string;
       cancel_subscriptions?: boolean;
     }) => {
-      // Fetch user ID for resource_id before tokens are potentially invalidated
-      let userId: string | undefined;
-      try {
-        const profileRes = await client.request<{
-          profile?: { id?: string };
-          id?: string;
-        }>(ENDPOINTS.PROFILE.get, { method: "GET" });
-        userId = profileRes?.profile?.id ?? profileRes?.id;
-      } catch {
-        // Proceed even if we can't get the ID
-      }
-
-      const response = await client.request<{
+      return client.request<{
         success?: boolean;
         message?: string;
       }>(ENDPOINTS.ACCOUNT.deactivate, {
@@ -224,76 +163,6 @@ export function createAccountNamespace(client: ApiClient) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
-      // Record audit log — awaited to ensure it completes before returning
-      if (response.success !== false) {
-        try {
-          await client.request("/api/v1/audit-logs/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "user.deactivate",
-              resource_type: "user",
-              resource_id: userId,
-              status: "success",
-            }),
-          });
-        } catch (e) {
-          log.error("[AuditLog] Failed to log user.deactivate", e);
-        }
-      }
-
-      return response;
-    },
-    /**
-     * Delete user account (soft delete)
-     */
-    delete: async (data: {
-      reason?: string;
-      confirm: boolean;
-      password: string;
-      cancel_subscriptions?: boolean;
-    }) => {
-      // Fetch user ID for resource_id before tokens are potentially invalidated
-      let userId: string | undefined;
-      try {
-        const profileRes = await client.request<{
-          profile?: { id?: string };
-          id?: string;
-        }>(ENDPOINTS.PROFILE.get, { method: "GET" });
-        userId = profileRes?.profile?.id ?? profileRes?.id;
-      } catch {
-        // Proceed even if we can't get the ID
-      }
-
-      const response = await client.request<{
-        success?: boolean;
-        message?: string;
-      }>(ENDPOINTS.ACCOUNT.delete, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      // Record audit log
-      if (response.success !== false) {
-        try {
-          await client.request("/api/v1/audit-logs/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "user.delete",
-              resource_type: "user",
-              resource_id: userId,
-              status: "success",
-            }),
-          });
-        } catch (e) {
-          log.error("[AuditLog] Failed to log user.delete", e);
-        }
-      }
-
-      return response;
     },
 
     /**

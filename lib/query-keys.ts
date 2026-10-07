@@ -13,6 +13,7 @@
 
 import { queryOptions } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import type { UsageReport } from "@/types/subscription";
 
 // ============================================================================
 // WORKSPACE QUERIES
@@ -49,6 +50,13 @@ export const workspaceQueries = {
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
     }),
+  /** The account's trash: the workspaces deleted and still restorable (Settings, Data and trash). */
+  deleted: () =>
+    queryOptions({
+      queryKey: [...workspaceQueries.all(), "deleted"] as const,
+      queryFn: () => apiClient.workspaces.getDeleted(),
+      staleTime: 30_000,
+    }),
   availableRoles: () =>
     queryOptions({
       queryKey: [...workspaceQueries.all(), "available-roles"] as const,
@@ -64,6 +72,21 @@ export const workspaceQueries = {
       queryFn: () => apiClient.workspaces.getBrandVoice(workspaceId),
       enabled: !!workspaceId,
       staleTime: 5 * 60 * 1000, // 5 minutes
+    }),
+};
+
+// ============================================================================
+// DASHBOARD QUERIES
+// ============================================================================
+
+export const dashboardQueries = {
+  /** The workspace's counts; the home page and the sidebar's drafts badge share this entry. */
+  stats: (workspaceId: string) =>
+    queryOptions({
+      queryKey: ["dashboard-stats", workspaceId] as const,
+      queryFn: () => apiClient.dashboard.getStats(workspaceId),
+      enabled: !!workspaceId,
+      staleTime: 30 * 1000,
     }),
 };
 
@@ -124,6 +147,21 @@ export const profileQueries = {
     }),
 };
 
+export const onboardingQueries = {
+  all: () => ["onboarding"] as const,
+  /**
+   * Whether the first-login questions are for this user; asked once a session. It keeps the
+   * client's retries (server errors and network failures), since nothing asks again this session.
+   */
+  shouldShow: () =>
+    queryOptions({
+      queryKey: [...onboardingQueries.all(), "should-show"] as const,
+      queryFn: () => apiClient.onboarding.shouldShow(),
+      staleTime: Number.POSITIVE_INFINITY,
+      refetchOnWindowFocus: false,
+    }),
+};
+
 // ============================================================================
 // SESSION & SECURITY QUERIES
 // ============================================================================
@@ -134,28 +172,6 @@ export const sessionQueries = {
     queryOptions({
       queryKey: sessionQueries.all(),
       queryFn: () => apiClient.sessions.list(),
-    }),
-};
-
-export const securityQueries = {
-  all: () => ["security"] as const,
-  stats: () =>
-    queryOptions({
-      queryKey: [...securityQueries.all(), "stats"] as const,
-      queryFn: () => apiClient.security.getStats(),
-    }),
-};
-
-// ============================================================================
-// PREFERENCES QUERIES
-// ============================================================================
-
-export const preferencesQueries = {
-  all: () => ["preferences"] as const,
-  detail: () =>
-    queryOptions({
-      queryKey: preferencesQueries.all(),
-      queryFn: () => apiClient.preferences.get(),
     }),
 };
 
@@ -192,6 +208,62 @@ export const subscriptionQueries = {
       queryKey: [...subscriptionQueries.all(), "plans"] as const,
       queryFn: () => apiClient.subscriptions.getPlans(),
     }),
+  /**
+   * The person's trial: whether it is over with nothing bought since (`trial_expired`) and its end,
+   * for the paywall's "Your trial ended on <date>".
+   */
+  trialStatus: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "trial-status"] as const,
+      queryFn: () => apiClient.subscriptions.getTrialStatus(),
+      staleTime: 5 * 60 * 1000,
+    }),
+  /**
+   * The person's billing action (F11): the shell's banner and the plan grid read it. A webhook
+   * changes it, so it is read again when the window regains focus and after a minute.
+   */
+  billingAction: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "billing-action"] as const,
+      queryFn: () => apiClient.subscriptions.getBillingAction(),
+      staleTime: 60 * 1000,
+      // A failed read is retried by Try again or on focus, not by each component that mounts:
+      // the plan grid mounts more readers once it knows, which would reset it to pending again.
+      retryOnMount: false,
+    }),
+  /** The public plan catalogue; it changes with a release, not during a visit. */
+  catalog: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "catalog"] as const,
+      queryFn: () => apiClient.subscriptions.getCatalog(),
+      staleTime: 10 * 60 * 1000,
+    }),
+  /** The person's usage against their plan's limits (workspaces, members). */
+  usage: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "usage"] as const,
+      queryFn: async () =>
+        (await apiClient.subscriptions.getUsageStats()) as unknown as UsageReport,
+    }),
+  /** The person's purchases, newest first, with each one's refund state. */
+  orders: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "orders"] as const,
+      queryFn: () => apiClient.subscriptions.getOrders(),
+    }),
+  /** The signed-in person's own credits and plan. */
+  myCredits: () =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "credits", "self"] as const,
+      queryFn: () => apiClient.subscriptions.getCredits(),
+    }),
+  /** One workspace's credits, which carry its owner's plan (the workspace switcher's plan line). */
+  workspaceCredits: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...subscriptionQueries.all(), "credits", workspaceId] as const,
+      queryFn: () => apiClient.subscriptions.getCredits(workspaceId),
+      staleTime: 60 * 1000,
+    }),
 };
 
 // ============================================================================
@@ -218,5 +290,57 @@ export const personaQueries = {
       queryFn: () => apiClient.personas.get(workspaceId, personaId),
       enabled: !!workspaceId && !!personaId,
       staleTime: 5 * 60 * 1000,
+    }),
+};
+
+// ============================================================================
+// KEYWORD LIBRARY QUERIES
+// ============================================================================
+
+export const libraryQueries = {
+  /**
+   * The caller's researched keywords in a workspace (the LangGraph store's Library, which is per
+   * user), newest first, one per keyword.
+   */
+  list: (workspaceId: string, userId: string) =>
+    queryOptions({
+      queryKey: ["library", workspaceId, userId] as const,
+      // Imported when first asked for, so the store's SDK stays out of every page's bundle.
+      queryFn: async () => {
+        const { searchLibrary } = await import(
+          "@/lib/generate-content/library-item"
+        );
+        return searchLibrary(userId, workspaceId);
+      },
+      enabled: !!workspaceId && !!userId,
+      // Research is saved by the run, which knows nothing of this key: ask again on every visit.
+      staleTime: 0,
+    }),
+  /** One researched keyword, by its store key; null when it isn't in the caller's Library. */
+  item: (workspaceId: string, userId: string, key: string) =>
+    queryOptions({
+      queryKey: ["library", workspaceId, userId, "item", key] as const,
+      queryFn: async () => {
+        const { readLibraryItem } = await import(
+          "@/lib/generate-content/library-item"
+        );
+        return readLibraryItem(key, userId, workspaceId);
+      },
+      enabled: !!workspaceId && !!userId && !!key,
+    }),
+};
+
+// ============================================================================
+// INTEGRATION QUERIES
+// ============================================================================
+
+export const integrationQueries = {
+  all: (workspaceId: string) =>
+    [...workspaceQueries.all(), workspaceId, "integrations"] as const,
+  list: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...integrationQueries.all(workspaceId), "list"] as const,
+      queryFn: () => apiClient.integrations.list(workspaceId),
+      enabled: !!workspaceId,
     }),
 };

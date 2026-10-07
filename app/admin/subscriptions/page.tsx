@@ -15,11 +15,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { CohortRetentionMatrix } from "@/components/admin/analytics/cohort-retention-matrix";
 import { RecentSubscriptionsTable } from "@/components/admin/analytics/recent-subscriptions-table";
 import { SubscriptionKPIs } from "@/components/admin/analytics/subscription-kpis";
 import { Badge } from "@/components/ui/badge";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -351,11 +352,11 @@ export default function SubscriptionAnalyticsPage() {
 
   if (overviewLoading) {
     return (
-      <PageLayout title="">
+      <ListPage title="Subscription Analytics">
         <div className="flex items-center justify-center h-96">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      </PageLayout>
+      </ListPage>
     );
   }
 
@@ -382,7 +383,7 @@ export default function SubscriptionAnalyticsPage() {
   }));
 
   return (
-    <PageLayout
+    <ListPage
       title="Subscription Analytics"
       description="Comprehensive insights into subscription performance and revenue metrics"
       actions={
@@ -406,7 +407,7 @@ export default function SubscriptionAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                <code className="text-xs bg-muted px-1 rounded">
+                <code className="text-xs bg-muted px-1 rounded-md">
                   subscription.read
                 </code>
               </p>
@@ -437,27 +438,27 @@ export default function SubscriptionAnalyticsPage() {
                       [
                         "New",
                         revenueMetrics?.current_month.new_revenue,
-                        "bg-emerald-50 text-emerald-600",
+                        "bg-surface-inset text-success-600",
                       ],
                       [
                         "Expansion",
                         revenueMetrics?.current_month.expansion_revenue,
-                        "bg-blue-50 text-blue-600",
+                        "bg-surface-inset text-success-600",
                       ],
                       [
                         "Contraction",
                         revenueMetrics?.current_month.contraction_revenue,
-                        "bg-orange-50 text-orange-600",
+                        "bg-surface-inset text-warning-600",
                       ],
                       [
                         "Churned",
                         revenueMetrics?.current_month.churned_revenue,
-                        "bg-red-50 text-red-600",
+                        "bg-surface-inset text-danger-600",
                       ],
                     ].map(([label, value, color]) => (
                       <div
                         key={label}
-                        className={`rounded-lg border-0 p-4 ${color}`}
+                        className={`rounded-md border-0 p-4 ${color}`}
                       >
                         <p className="text-sm font-medium">{label}</p>
                         <p className="text-2xl font-semibold">
@@ -502,7 +503,7 @@ export default function SubscriptionAnalyticsPage() {
                         />
                         <Bar
                           dataKey="revenue"
-                          fill="#3b82f6"
+                          fill="var(--primary)"
                           name={`${revenueDisplayPeriod === "monthly" ? "Monthly" : "Yearly"} revenue`}
                         />
                       </BarChart>
@@ -534,10 +535,7 @@ export default function SubscriptionAnalyticsPage() {
                     </span>
                     <span>
                       Conversions:{" "}
-                      <Badge
-                        variant="secondary"
-                        className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                      >
+                      <Badge variant="success">
                         {trialConversion?.trials_converted ?? 0}
                       </Badge>
                     </span>
@@ -579,16 +577,16 @@ export default function SubscriptionAnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip itemSorter={inSeriesOrder} />
+                        <Legend itemSorter={null} />
                         <Bar
                           dataKey="trials"
-                          fill="#f59e0b"
+                          fill="var(--neutral-400)"
                           name="Trial starts"
                         />
                         <Bar
                           dataKey="conversions"
-                          fill="#10b981"
+                          fill="var(--primary)"
                           name="Conversions"
                         />
                       </BarChart>
@@ -771,6 +769,6 @@ export default function SubscriptionAnalyticsPage() {
           </Tabs>
         </div>
       </PermissionGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

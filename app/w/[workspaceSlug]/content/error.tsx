@@ -12,7 +12,7 @@ export default function ContentError(props: {
   return (
     <RouteError
       {...props}
-      title="Content Error"
+      title="Content error"
       logContext="ContentError"
       layout="container"
       navigationType="back"

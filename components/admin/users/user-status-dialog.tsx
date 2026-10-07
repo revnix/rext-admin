@@ -1,16 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  Ban,
-  CheckCircle2,
-  Loader2,
-  PauseCircle,
-} from "lucide-react";
+import { Ban, CheckCircle2, Loader2, PauseCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -156,7 +150,7 @@ export function UserStatusDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Icon
-                className={`h-5 w-5 ${copy.destructive ? "text-destructive" : "text-green-600"}`}
+                className={`h-5 w-5 ${copy.destructive ? "text-destructive" : "text-success-600"}`}
               />
               {copy.title}
             </DialogTitle>
@@ -164,23 +158,18 @@ export function UserStatusDialog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="rounded-lg border p-3 bg-muted/50">
+            <div className="rounded-md border p-3 bg-muted/50">
               <p className="text-sm font-medium">{displayName}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Current status:{" "}
-                <code className="text-xs bg-background px-1 rounded">
+                <code className="text-xs bg-background px-1 rounded-md">
                   {user.status}
                 </code>
               </p>
             </div>
 
-            {copy.warning && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{copy.warning}</AlertDescription>
-              </Alert>
-            )}
+            {copy.warning && <Notice tone="warning">{copy.warning}</Notice>}
 
             <div className="space-y-2">
               <Label htmlFor="reason">

@@ -17,19 +17,13 @@
 
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { CheckoutDialog } from "@/components/subscription/checkout-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { PaymentMethodDialog } from "@/components/subscription/payment-method-dialog";
+import {
+  PurchaseCompleteDialog,
+  type PurchaseStatus,
+} from "@/components/subscription/purchase-complete-dialog";
 import {
   getPurchaseState,
   useSubscriptionSync,
@@ -42,14 +36,20 @@ import {
   setCheckoutEventHandler,
 } from "@/lib/lemonsqueezy/get-client";
 import type { Route } from "next";
+import { getQueryClient } from "@/lib/query-client";
+import { subscriptionQueries } from "@/lib/query-keys";
+import type { CreditBalance } from "@/types/subscription";
 
 export function LemonSqueezyProvider() {
   const router = useRouter();
   const { waitForPurchaseSettled } = useSubscriptionSync();
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
-  const [purchaseStatus, setPurchaseStatus] = useState<
-    "confirming" | "active" | "unconfirmed"
-  >("confirming");
+  const [purchaseStatus, setPurchaseStatus] =
+    useState<PurchaseStatus>("confirming");
+  // What the confirmation names once the purchase shows: the plan, and the new balance.
+  const [planName, setPlanName] = useState<string | null>(null);
+  const [credits, setCredits] = useState<CreditBalance | null>(null);
+  const [creditsFailed, setCreditsFailed] = useState(false);
   const purchaseSyncRef = useRef<AbortController | null>(null);
 
   const cancelPurchaseDialog = () => {
@@ -84,6 +84,9 @@ export function LemonSqueezyProvider() {
       const controller = new AbortController();
       purchaseSyncRef.current = controller;
       setPurchaseStatus("confirming");
+      setPlanName(null);
+      setCredits(null);
+      setCreditsFailed(false);
       setPurchaseDialogOpen(true);
 
       // Payment succeeds on LemonSqueezy's side before their webhook reaches
@@ -101,8 +104,29 @@ export function LemonSqueezyProvider() {
         .then((synced) => {
           if (controller.signal.aborted) return;
           if (synced) {
+            // The settings sections and the home read the subscription through the queries; this
+            // provider sits outside QueryProvider, so it reaches the one browser client directly.
+            const queryClient = getQueryClient();
             const latest =
               useSubscriptionStore.getState().subscription?.subscription;
+            setPlanName(latest?.plan_display_name ?? null);
+            // The new balance, read fresh now that the purchase shows (the old plan's never
+            // passes for the new one), and handed to the shell's meter too.
+            void queryClient
+              .invalidateQueries({ queryKey: subscriptionQueries.all() })
+              .then(() =>
+                queryClient.fetchQuery(subscriptionQueries.myCredits()),
+              )
+              .then((balance) => {
+                if (controller.signal.aborted) return;
+                setCredits(balance);
+                useSubscriptionStore.getState().setCredits(balance);
+              })
+              .catch((error) => {
+                if (controller.signal.aborted) return;
+                log.error("Failed to read the balance after checkout", error);
+                setCreditsFailed(true);
+              });
             analytics.track("subscription_purchased", {
               plan_name: latest?.plan_display_name ?? undefined,
               billing_period: latest?.billing_period ?? undefined,
@@ -145,42 +169,15 @@ export function LemonSqueezyProvider() {
       />
       <CheckoutDialog />
       <PaymentMethodDialog />
-      <Dialog
+      <PurchaseCompleteDialog
         open={purchaseDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) cancelPurchaseDialog();
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {purchaseStatus === "confirming" ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              ) : purchaseStatus === "active" ? (
-                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              ) : null}
-              {purchaseStatus === "confirming"
-                ? "Confirming your subscription"
-                : purchaseStatus === "active"
-                  ? "Subscription active"
-                  : "Payment received"}
-            </DialogTitle>
-            <DialogDescription>
-              {purchaseStatus === "confirming"
-                ? "Your payment was received. We're waiting for the subscription to activate."
-                : purchaseStatus === "active"
-                  ? "Your subscription is active and ready to use."
-                  : "Your payment was received, but activation could not be confirmed yet. Check your billing page in a moment."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={cancelPurchaseDialog}>
-              Cancel
-            </Button>
-            <Button onClick={goToDashboard}>Go to Dashboard</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        status={purchaseStatus}
+        planName={planName}
+        credits={credits}
+        creditsFailed={creditsFailed}
+        onClose={cancelPurchaseDialog}
+        onGoToDashboard={goToDashboard}
+      />
     </>
   );
 }

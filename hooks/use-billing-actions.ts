@@ -24,6 +24,8 @@ import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 
+// No query client here: the card dialog that reads the saved card renders above QueryProvider
+// (app/layout.tsx). useBillingAction re-reads the queries after a resume.
 export function useBillingActions() {
   const [isLoading, setIsLoading] = useState(false);
   const openPaymentMethodDialog = useSubscriptionStore(
@@ -135,8 +137,9 @@ export function useBillingActions() {
       try {
         await action();
         // The webhook is what actually updates our record; this refresh just
-        // pulls in whatever has landed by now.
-        await fetchSubscription();
+        // pulls in whatever has landed by now. Forced past the store's freshness
+        // guard, so the cards it renders change at once.
+        await fetchSubscription({ force: true });
         toast.success(successMessage);
       } catch (error) {
         log.error(failureMessage, error);
@@ -159,7 +162,7 @@ export function useBillingActions() {
     [runSubscriptionAction],
   );
 
-  /** Resume a paused subscription. */
+  /** Resume a paused subscription, or a cancelled one before its end. */
   const resumeSubscription = useCallback(
     () =>
       runSubscriptionAction(

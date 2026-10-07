@@ -24,3 +24,4 @@ export {
 } from "./sidebar-primitives";
 
 export { SidebarProvider, useSidebar } from "./sidebar-provider";
+export type { SidebarPreference } from "./sidebar-preference";

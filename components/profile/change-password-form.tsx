@@ -1,37 +1,42 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FieldController } from "@/components/forms/field-controller";
+import { FormShell } from "@/components/forms/form-shell";
+import { PasswordInput } from "@/components/forms/password-input";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { apiClient } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 import {
   type ChangePasswordFormData,
   changePasswordSchema,
 } from "@/schemas/profile-schemas";
 
-export function ChangePasswordForm() {
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const queryClient = useQueryClient();
+const RULES =
+  "At least 8 characters, with an uppercase and a lowercase letter, a number and a special character.";
 
-  // Form
-  const form = useForm<ChangePasswordFormData>({
-    resolver: zodResolver(changePasswordSchema),
+/** How strong a new password reads, by how many of the five rules it meets. */
+function strengthOf(password: string) {
+  const met = [
+    password.length >= 8,
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /[0-9]/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ].filter(Boolean).length;
+  if (met <= 2) return { label: "Weak", className: "text-danger-700" };
+  if (met <= 4) return { label: "Fair", className: "text-warning-700" };
+  return { label: "Strong", className: "text-success-700" };
+}
+
+/**
+ * The password change on Security (design/app-language.md §5): on the field set, checked when a
+ * field loses focus and then as it changes; the schema holds the rules and the match.
+ */
+export function ChangePasswordForm() {
+  const queryClient = useQueryClient();
+  const form = useZodForm(changePasswordSchema, {
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -39,191 +44,74 @@ export function ChangePasswordForm() {
     },
   });
 
-  // Change password mutation
-  const changePwdMutation = useMutation({
-    mutationFn: (data: {
-      current_password: string;
-      new_password: string;
-      confirm_password: string;
-    }) => apiClient.profile.changePassword(data),
+  const changePassword = useMutation({
+    mutationFn: (data: ChangePasswordFormData) =>
+      apiClient.profile.changePassword({
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+        confirm_password: data.confirmPassword,
+      }),
     onSuccess: () => {
-      toast.success("Password changed successfully");
+      toast.success("Password changed");
       form.reset();
       queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
     },
     onError: (error: Error) => {
-      toast.error(`Password change failed: ${error.message}`);
+      toast.error(`The password wasn't changed: ${error.message}`);
     },
   });
 
-  const onSubmit = (data: ChangePasswordFormData) => {
-    changePwdMutation.mutate({
-      current_password: data.currentPassword,
-      new_password: data.newPassword,
-      confirm_password: data.confirmPassword,
-    });
-  };
-
-  // Calculate password strength
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { score: 0, label: "", color: "" };
-
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    if (score <= 2) return { score, label: "Weak", color: "text-red-500" };
-    if (score <= 4) return { score, label: "Fair", color: "text-yellow-500" };
-    if (score === 5) return { score, label: "Strong", color: "text-green-500" };
-    return { score, label: "Strong", color: "text-green-500" };
+  const onSubmit = async (data: ChangePasswordFormData) => {
+    await changePassword.mutateAsync(data).catch(() => undefined);
   };
 
   const newPassword = form.watch("newPassword");
-  const confirmPassword = form.watch("confirmPassword");
-  const passwordStrength = getPasswordStrength(newPassword);
-
-  useEffect(() => {
-    if (!confirmPassword) {
-      form.clearErrors("confirmPassword");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      form.setError("confirmPassword", {
-        type: "manual",
-        message: "Passwords do not match",
-      });
-      return;
-    }
-
-    form.clearErrors("confirmPassword");
-  }, [confirmPassword, form, newPassword]);
+  const strength = strengthOf(newPassword);
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Current Password */}
-        <FormField
+    <FormShell form={form} onSubmit={onSubmit} submitLabel="Change password">
+      <div className="flex flex-col gap-4">
+        <FieldController
           control={form.control}
           name="currentPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Current Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showCurrentPassword ? "text" : "password"}
-                    placeholder="Enter current password"
-                    {...field}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showCurrentPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          label="Current password"
+          required
+        >
+          {(field) => (
+            <PasswordInput {...field} autoComplete="current-password" />
           )}
-        />
-
-        {/* New Password */}
-        <FormField
+        </FieldController>
+        <FieldController
           control={form.control}
           name="newPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>New Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="Enter new password"
-                    {...field}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </FormControl>
+          label="New password"
+          required
+          description={
+            <>
+              {RULES}
               {newPassword && (
-                <FormDescription>
-                  Password strength:{" "}
-                  <span className={passwordStrength.color}>
-                    {passwordStrength.label}
+                <>
+                  {" "}
+                  Strength:{" "}
+                  <span className={cn("font-medium", strength.className)}>
+                    {strength.label}
                   </span>
-                </FormDescription>
+                </>
               )}
-              <FormDescription>
-                Must be at least 8 characters with uppercase, lowercase, number,
-                and special character.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Confirm Password */}
-        <FormField
+            </>
+          }
+        >
+          {(field) => <PasswordInput {...field} autoComplete="new-password" />}
+        </FieldController>
+        <FieldController
           control={form.control}
           name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm New Password</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm new password"
-                    {...field}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button
-          className="w-full sm:w-auto"
-          type="submit"
-          disabled={changePwdMutation.isPending}
+          label="Confirm new password"
+          required
         >
-          {changePwdMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
-          Change password
-        </Button>
-      </form>
-    </Form>
+          {(field) => <PasswordInput {...field} autoComplete="new-password" />}
+        </FieldController>
+      </div>
+    </FormShell>
   );
 }

@@ -193,7 +193,7 @@ export function BulkAssignPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export function BulkAssignPermissionsDialog({
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)]">
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <Label className="text-sm font-medium">
                     Roles ({selectedRoleIds.length})
@@ -244,7 +244,7 @@ export function BulkAssignPermissionsDialog({
                       : "Select all"}
                   </Button>
                 </div>
-                <div className="max-h-[260px] overflow-y-auto space-y-2 rounded-md border bg-background/50 p-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div className="max-h-[260px] overflow-y-auto space-y-2 rounded-md border bg-background/50 p-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   {roles.length === 0 ? (
                     <p className="text-sm text-muted-foreground p-2">
                       No roles available.
@@ -279,23 +279,13 @@ export function BulkAssignPermissionsDialog({
                                 {role.display_name}
                               </span>
                               {role.is_system_role && (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px]"
-                                >
-                                  System
-                                </Badge>
+                                <Badge variant="secondary">System</Badge>
                               )}
                               {isProtected && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-500/50 text-[10px] text-amber-500"
-                                >
-                                  Protected
-                                </Badge>
+                                <Badge variant="warning">Protected</Badge>
                               )}
                             </div>
-                            <div className="truncate text-[11px] text-muted-foreground">
+                            <div className="truncate text-caption text-muted-foreground">
                               {role.name}
                             </div>
                           </div>
@@ -306,7 +296,7 @@ export function BulkAssignPermissionsDialog({
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-2 rounded-md border bg-muted/20 p-3">
                 <Label className="text-sm font-medium">
                   Permissions ({selectedPermissionIds.length})
                 </Label>
@@ -320,7 +310,7 @@ export function BulkAssignPermissionsDialog({
             </div>
 
             {selectedRoleIds.length > 0 && selectedPermissionIds.length > 0 && (
-              <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
+              <div className="rounded-md border border-dashed bg-muted/30 p-3 text-sm text-muted-foreground">
                 {operation === "add" ? "Adding" : "Removing"}{" "}
                 <span className="font-semibold text-foreground">
                   {selectedPermissionIds.length}

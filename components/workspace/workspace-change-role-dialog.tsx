@@ -1,11 +1,10 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Shield } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { FieldController } from "@/components/forms/field-controller";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,29 +15,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Notice } from "@/components/ui/notice";
 import { apiClient } from "@/lib/api-client";
+import {
+  type ChangeMemberRoleValues,
+  changeMemberRoleSchema,
+} from "@/schemas/workspace-schemas";
 import { usePermissionStore } from "@/stores/permission-store";
-
-const changeRoleFormSchema = z.object({
-  role_id: z.string().min(1, "Please select a role"),
-});
-
-type ChangeRoleFormValues = z.infer<typeof changeRoleFormSchema>;
 
 interface WorkspaceMember {
   id: string;
@@ -93,16 +82,14 @@ export function WorkspaceChangeRoleDialog({
     (state) => state.invalidateWorkspacePermissions,
   );
 
-  const form = useForm<ChangeRoleFormValues>({
-    resolver: zodResolver(changeRoleFormSchema),
-    defaultValues: {
-      role_id: currentRoleId || "",
-    },
+  // The current role isn't a new role to pick, so the choice starts empty.
+  const form = useZodForm(changeMemberRoleSchema, {
+    defaultValues: { role_id: "" },
   });
 
   // Change role mutation
   const changeRoleMutation = useMutation({
-    mutationFn: (data: ChangeRoleFormValues) => {
+    mutationFn: (data: ChangeMemberRoleValues) => {
       if (!member) throw new Error("Member not found");
       return apiClient.members.changeRole(
         member.workspace_id,
@@ -111,7 +98,7 @@ export function WorkspaceChangeRoleDialog({
       );
     },
     onSuccess: async () => {
-      toast.success("Role updated successfully");
+      toast.success("Role changed");
 
       const workspaceId = member?.workspace_id;
       if (workspaceId) {
@@ -132,14 +119,15 @@ export function WorkspaceChangeRoleDialog({
       onRoleChanged?.();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update role: ${error.message}`);
+      toast.error(`The role wasn't changed: ${error.message}`);
     },
   });
 
-  const onSubmit = async (data: ChangeRoleFormValues) => {
+  const onSubmit = async (data: ChangeMemberRoleValues) => {
     if (!member) return;
-    await changeRoleMutation.mutateAsync(data);
+    await changeRoleMutation.mutateAsync(data).catch(() => undefined);
   };
+  const submitting = form.formState.isSubmitting;
 
   if (!member) return null;
 
@@ -148,92 +136,84 @@ export function WorkspaceChangeRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Change Member Role
-          </DialogTitle>
+          <DialogTitle>Change role</DialogTitle>
           <DialogDescription>
-            Update the role for{" "}
-            <span className="font-semibold">{displayName}</span> (
+            The role of <span className="font-medium">{displayName}</span> (
             {member.user.email}) in this workspace.
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Role Selection */}
-            <FormField
-              control={form.control}
-              name="role_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Role</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={changeRoleMutation.isPending || isLoadingRoles}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {roles
-                        .filter(
-                          (role) =>
-                            !role.is_system_role && // Filter out system roles
-                            role.id !== currentRoleId, // The member's current role is not a valid "new" role
-                        )
-                        .map((role) => (
-                          <SelectItem
-                            key={role.id}
-                            value={role.id}
-                            // Description moves to a tooltip: rendering it as a
-                            // second line made every item tall enough that the
-                            // open dropdown overflowed the dialog's box.
-                            title={role.description || role.display_name}
-                          >
-                            <span className="font-medium">
-                              {role.display_name}
-                            </span>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Choose the new role for this workspace member
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="p-3 bg-muted rounded-md">
-              <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> Changing the member's role will
-                immediately update their permissions within this workspace. The
-                member will be notified of this change.
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={changeRoleMutation.isPending}
+        <form
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col gap-6"
+        >
+          <FieldController
+            control={form.control}
+            name="role_id"
+            label="New role"
+            required
+          >
+            {(field) => (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={submitting || isLoadingRoles}
               >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={changeRoleMutation.isPending}>
-                {changeRoleMutation.isPending ? "Updating..." : "Update Role"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <SelectTrigger
+                  id={field.id}
+                  aria-invalid={field["aria-invalid"]}
+                  aria-describedby={field["aria-describedby"]}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                >
+                  <SelectValue placeholder="Choose a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles
+                    .filter(
+                      (role) =>
+                        !role.is_system_role && // Filter out system roles
+                        role.id !== currentRoleId, // The member's current role is not a valid "new" role
+                    )
+                    .map((role) => (
+                      <SelectItem
+                        key={role.id}
+                        value={role.id}
+                        // Description moves to a tooltip: rendering it as a
+                        // second line made every item tall enough that the
+                        // open dropdown overflowed the dialog's box.
+                        title={role.description || role.display_name}
+                      >
+                        <span className="font-medium">{role.display_name}</span>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            )}
+          </FieldController>
+
+          <Notice tone="info">
+            The new role's permissions apply at once, and the member is told.
+          </Notice>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting && <Loader2 className="animate-spin" aria-hidden />}
+              Change role
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

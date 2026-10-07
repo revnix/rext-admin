@@ -4,11 +4,61 @@
  * React Query hook for fetching and managing personas
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
+import type { BackgroundGenerationJob } from "@/stores/background-generation-store";
 import type { Persona } from "@/types/workspace";
 import { toast } from "sonner";
 import { personaQueries } from "@/lib/query-keys";
+
+/**
+ * The persona list carries each persona's article count (rext-backend#818) and stays fresh for five
+ * minutes, so whatever adds or removes an article refreshes it: the count and its sort follow.
+ */
+export function refreshPersonaCounts(
+  queryClient: QueryClient,
+  workspaceId: string,
+) {
+  return queryClient.invalidateQueries({
+    queryKey: personaQueries.lists(workspaceId),
+  });
+}
+
+/**
+ * Refreshes the persona counts once for each article a run finishes, as this tab sees it. Each tab
+ * has its own query cache, and the jobs' cross-tab `completionNotified` flag may already be set by
+ * the tab the run finished in, so the refresh doesn't hang on it. The articles already finished
+ * when the jobs first load are counted in what the list fetches anyway.
+ */
+export function useRefreshPersonaCountsOnFinishedRuns(
+  jobs: BackgroundGenerationJob[],
+  loaded: boolean,
+) {
+  const queryClient = useQueryClient();
+  const seen = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const finished = jobs.filter(
+      (job) => job.status === "completed" && job.awaitingInput !== true,
+    );
+    if (!seen.current) {
+      seen.current = new Set(finished.map((job) => job.threadId));
+      return;
+    }
+    for (const job of finished) {
+      if (seen.current.has(job.threadId)) continue;
+      seen.current.add(job.threadId);
+      if (job.workspaceId) refreshPersonaCounts(queryClient, job.workspaceId);
+    }
+  }, [jobs, loaded, queryClient]);
+}
 
 /**
  * Hook to fetch all personas for a workspace

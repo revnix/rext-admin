@@ -32,14 +32,25 @@ const urlSchema = z
     },
   );
 
+/**
+ * Any time zone the browser's Intl accepts. Not `Intl.supportedValuesOf("timeZone")`: that lists only
+ * canonical names, without "UTC", "Etc/UTC" or the aliases browsers still report (Asia/Calcutta,
+ * Europe/Kiev), and the create form's hidden time zone then refused those users silently (D22).
+ */
+export function isTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Timezone validation schema with IANA timezone support
 const timezoneSchema = z
   .string()
   .optional()
-  .refine(
-    (tz) => !tz || Intl.supportedValuesOf("timeZone").includes(tz),
-    "Please select a valid timezone",
-  );
+  .refine((tz) => !tz || isTimeZone(tz), "Please select a valid timezone");
 
 // Form validation constants
 export const WORKSPACE_CONSTRAINTS = {
@@ -70,6 +81,37 @@ export const workspaceFormSchema = z.object({
 
   timezone: timezoneSchema,
 });
+
+/**
+ * Workspace settings, General section: the name and the website (the slug is shown, not edited).
+ * Unlike the create form's `urlSchema`, an http:// address is accepted here, as it always was.
+ */
+export const workspaceGeneralInfoSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Workspace name is required")
+    .max(200, "Workspace name must be 200 characters or less")
+    .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
+  slug: z.string(),
+  url: z
+    .string()
+    .trim()
+    .min(1, "Website URL is required")
+    .url("Must be a valid URL")
+    .refine((value) => {
+      try {
+        const hostname = new URL(value).hostname;
+        return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
+          hostname,
+        );
+      } catch {
+        return false;
+      }
+    }, "URL must include a valid domain extension"),
+});
+
+export type WorkspaceGeneralInfo = z.infer<typeof workspaceGeneralInfoSchema>;
 
 export const createWorkspaceRequestSchema = z.object({
   name: workspaceNameSchema,
@@ -137,24 +179,6 @@ export type UpdateWorkspaceRequest = z.infer<
  * Workspace analytics schema (nested under 'analytics' key)
  */
 export const workspaceAnalyticsSchema = z.object({
-  knowledge_counts: z
-    .object({
-      web_knowledge: z.number(),
-      files: z.number(),
-      text_knowledge: z.number(),
-      total_knowledge_items: z.number(),
-    })
-    .optional(),
-  content_metrics: z
-    .object({
-      total_words: z.number(),
-      web_content_words: z.number(),
-      file_content_words: z.number(),
-      avg_web_article_words: z.number(),
-      avg_file_words: z.number(),
-      estimated_reading_time_minutes: z.number(),
-    })
-    .optional(),
   team_metrics: z
     .object({
       total_members: z.number(),
@@ -210,6 +234,8 @@ export const workspaceSchema = z.object({
   slug: z.string(),
   timezone: z.string().optional(),
   url: z.string(),
+  // The site's favicon, kept by the backend (task G9); null until it was fetched.
+  favicon_url: z.string().nullish(),
   created_at: z.string(),
   updated_at: z.string().optional(),
   brand_voice: brandVoiceSchema.optional(),
@@ -277,11 +303,8 @@ export const availableRolesResponseSchema = z.object({
 
 export const workspaceStatsSchema = z.object({
   workspace_exists: z.boolean(),
-  topics_count: z.number(),
   content_count: z.number(),
-  knowledge_items_count: z.number(),
   members_count: z.number(),
-  has_topic_builder: z.boolean(),
   has_content_builder: z.boolean(),
 });
 
@@ -324,3 +347,18 @@ export type MemberPermissionsResponseSchemaType = z.infer<
 export type UpdateBrandVoiceResponseSchemaType = z.infer<
   typeof updateBrandVoiceResponseSchema
 >;
+
+/** Change a member's role (the members list's dialog): one role, picked from the workspace's. */
+export const changeMemberRoleSchema = z.object({
+  role_id: z.string().min(1, "Choose a role"),
+});
+
+export type ChangeMemberRoleValues = z.infer<typeof changeMemberRoleSchema>;
+
+/** Invite members (the members list's dialog): the role they join with and how long the links last. */
+export const inviteMembersSchema = z.object({
+  role_id: z.string().min(1, "Choose a role"),
+  expires_in_days: z.number().int().min(1).max(30),
+});
+
+export type InviteMembersValues = z.infer<typeof inviteMembersSchema>;

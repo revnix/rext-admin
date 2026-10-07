@@ -87,7 +87,7 @@ const TextAreaInput = React.forwardRef<HTMLTextAreaElement, TextAreaInputProps>(
             rows={rows}
             className={cn(
               "text-lg resize-none transition-all duration-200",
-              "border-2 focus:border-primary",
+              "border-2 focus:border-ring",
               "placeholder:text-muted-foreground/50",
               icon && "pl-10",
               error && "border-destructive focus:border-destructive",
@@ -109,7 +109,7 @@ const TextAreaInput = React.forwardRef<HTMLTextAreaElement, TextAreaInputProps>(
             <p
               className={cn(
                 "text-xs text-muted-foreground",
-                value.length > maxLength * 0.9 && "text-amber-600",
+                value.length > maxLength * 0.9 && "text-warning-600",
                 value.length === maxLength && "text-destructive",
               )}
             >

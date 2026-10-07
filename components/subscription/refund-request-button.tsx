@@ -13,6 +13,7 @@
  * @module components/subscription/refund-request-button
  */
 
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,11 +27,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldController } from "@/components/forms/field-controller";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { apiClient } from "@/lib/api-client";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { subscriptionQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
+import {
+  REFUND_REASON_MAX,
+  refundRequestSchema,
+} from "@/schemas/refund-schemas";
+import type { CatalogRefund } from "@/types/plan-catalog";
 import type { OrderRow } from "@/types/subscription";
 
 interface RefundRequestButtonProps {
@@ -51,9 +59,10 @@ export function RefundRequestButton({
   onSubmitted,
 }: RefundRequestButtonProps) {
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [amount, setAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  // The rule the request follows, from the plan catalogue (rext-backend#824). A backend without it
+  // still applies the old rule, whose refusals contradict the refund page, so no button until then.
+  const { data: catalog } = useQuery(subscriptionQueries.catalog());
+  const rule = catalog?.refund;
 
   // Eligibility is the server's answer, and it is checked before any status
   // badge. Deciding by status first hid the button whenever an earlier request
@@ -105,58 +114,7 @@ export function RefundRequestButton({
     return null;
   }
 
-  const remaining = order.refundable_amount ?? order.total ?? 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!reason.trim()) {
-      toast.error("Please tell us why you're requesting a refund");
-      return;
-    }
-
-    // Empty means "everything still refundable", which the server works out at
-    // the moment it is processed rather than from this screen.
-    const dollars = amount.trim() === "" ? null : Number.parseFloat(amount);
-    if (dollars !== null && (Number.isNaN(dollars) || dollars <= 0)) {
-      toast.error("Refund amount must be greater than $0");
-      return;
-    }
-
-    const cents = dollars === null ? undefined : Math.round(dollars * 100);
-    if (cents !== undefined && cents > remaining) {
-      toast.error(
-        `You can request up to ${formatAmount(remaining, order.currency)}`,
-      );
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      await apiClient.subscriptions.requestRefund({
-        lemonsqueezy_order_id: order.lemonsqueezy_order_id,
-        reason: reason.trim(),
-        requested_amount: cents,
-      });
-
-      toast.success("Refund request submitted", {
-        description: "We'll email you once it has been reviewed.",
-      });
-      setOpen(false);
-      setReason("");
-      setAmount("");
-      onSubmitted?.();
-    } catch (error) {
-      log.error("Failed to submit refund request", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit refund request",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  if (!rule) return null;
 
   return (
     <>
@@ -170,102 +128,138 @@ export function RefundRequestButton({
           Request refund
         </Button>
       </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>Request a refund</DialogTitle>
-            <DialogDescription>
-              This sends a request to our team. Nothing is refunded until an
-              admin reviews and processes it.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-2">
-              <div className="rounded-md border p-3 text-sm space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">
-                    {order.product_name ?? "Order"}
-                  </span>
-                  <span className="font-semibold">
-                    {formatAmount(order.total, order.currency)}
-                  </span>
-                </div>
-
-                {order.refunded_amount > 0 && (
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span>Refunded so far:</span>
-                    <span>
-                      {formatAmount(order.refunded_amount, order.currency)}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between gap-2 text-xs font-medium text-foreground pt-1 border-t">
-                  <span>Refundable Balance:</span>
-                  <span>{formatAmount(remaining, order.currency)}</span>
-                </div>
-
-                <p className="text-xs text-muted-foreground font-mono mt-1">
-                  Order: {order.lemonsqueezy_order_id}
-                  {order.ordered_at
-                    ? ` · ${new Date(order.ordered_at).toLocaleDateString()}`
-                    : ""}
-                </p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="refund-amount">
-                  How much are you asking for? — leave empty for the full{" "}
-                  {formatAmount(remaining, order.currency)}
-                </Label>
-                <Input
-                  id="refund-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder={`e.g. 25 (up to ${formatAmount(remaining, order.currency)})`}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="refund-reason">
-                  Why are you requesting a refund?
-                </Label>
-                <Textarea
-                  id="refund-reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Tell us what went wrong"
-                  rows={4}
-                  maxLength={2000}
-                  required
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting || !reason.trim()}>
-                {submitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Submit request
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <RefundRequestDialog
+        order={order}
+        rule={rule}
+        open={open}
+        onOpenChange={setOpen}
+        onSubmitted={onSubmitted}
+      />
     </>
+  );
+}
+
+/**
+ * The request itself (plans/app/F-billing.md F7): the whole remaining payment, as the refund rule
+ * has no partial refunds, and the reason. The rule's numbers come from the plan catalogue.
+ */
+function RefundRequestDialog({
+  order,
+  rule,
+  open,
+  onOpenChange,
+  onSubmitted,
+}: {
+  order: OrderRow;
+  rule: CatalogRefund;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmitted?: () => void;
+}) {
+  const remaining = order.refundable_amount ?? order.total ?? 0;
+  const form = useZodForm(refundRequestSchema, {
+    defaultValues: { reason: "" },
+  });
+  const { isSubmitting } = form.formState;
+
+  const close = (next: boolean) => {
+    if (!next) form.reset({ reason: "" });
+    onOpenChange(next);
+  };
+
+  const onSubmit = form.handleSubmit(async ({ reason }) => {
+    try {
+      await apiClient.subscriptions.requestRefund({
+        lemonsqueezy_order_id: order.lemonsqueezy_order_id,
+        reason,
+      });
+      toast.success("Refund requested", {
+        description: "We'll email you once it has been reviewed.",
+      });
+      close(false);
+      onSubmitted?.();
+    } catch (error) {
+      log.error("Failed to submit refund request", error);
+      toast.error("The request wasn't sent", {
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : "Try again in a moment.",
+      });
+    }
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Request a refund</DialogTitle>
+          <DialogDescription>
+            {`Within ${rule.window_days} days of a payment, the whole payment comes back if fewer than ${rule.credit_limit} credits were used since it.`}{" "}
+            Our team reviews the request; nothing is refunded before that.
+          </DialogDescription>
+        </DialogHeader>
+
+        <dl className="flex flex-col gap-1 rounded-md border border-border p-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">
+              {order.product_name ?? "Payment"}
+              {order.ordered_at && `, ${dateFormat.short(order.ordered_at)}`}
+            </dt>
+            <dd className="num">{formatAmount(order.total, order.currency)}</dd>
+          </div>
+          {order.refunded_amount > 0 && (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">Refunded so far</dt>
+              <dd className="num">
+                {formatAmount(order.refunded_amount, order.currency)}
+              </dd>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 border-t border-border pt-1 font-medium">
+            <dt>You'd get back</dt>
+            <dd className="num">{formatAmount(remaining, order.currency)}</dd>
+          </div>
+        </dl>
+
+        <form
+          id="refund-request"
+          onSubmit={onSubmit}
+          noValidate
+          className="flex flex-col gap-5"
+        >
+          <FieldController
+            control={form.control}
+            name="reason"
+            label="Why are you asking for a refund?"
+            required
+            maxLength={REFUND_REASON_MAX}
+          >
+            {(field) => (
+              <Textarea
+                {...field}
+                rows={4}
+                placeholder="What didn't work for you"
+              />
+            )}
+          </FieldController>
+        </form>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => close(false)}
+            disabled={isSubmitting}
+          >
+            Keep payment
+          </Button>
+          <Button type="submit" form="refund-request" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
+            Request refund
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

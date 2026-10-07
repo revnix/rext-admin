@@ -44,43 +44,6 @@ export interface LockedAccountsResponse {
 }
 
 // ============================================================================
-// SECURITY STATISTICS TYPES
-// ============================================================================
-
-export interface TopFailedLoginIP {
-  ip: string;
-  count: number;
-}
-
-export interface TopFailedLoginUser {
-  email: string;
-  count: number;
-}
-
-export interface SecurityStats {
-  // Failed login stats
-  failed_logins_last_24h: number;
-  failed_logins_last_7d: number;
-  failed_logins_last_30d: number;
-
-  // Locked accounts
-  currently_locked_accounts: number;
-  locked_accounts_last_24h: number;
-
-  // Password security
-  password_resets_last_24h: number;
-  password_changes_last_24h: number;
-
-  // Account activity
-  new_registrations_last_24h: number;
-  email_verifications_last_24h: number;
-
-  // Top offenders
-  top_failed_login_ips: TopFailedLoginIP[];
-  top_failed_login_users: TopFailedLoginUser[];
-}
-
-// ============================================================================
 // LOGIN HISTORY TYPES
 // ============================================================================
 

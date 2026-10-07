@@ -20,7 +20,7 @@ export async function POST(
   const access = await requireThreadOwner(threadId);
   if (!access.ok) return access.response;
 
-  const client = getGenerationClient();
+  const client = getGenerationClient(access.accessToken);
 
   try {
     const body = (await request.json().catch(() => ({}))) as { runId?: string };

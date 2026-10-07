@@ -6,6 +6,7 @@ import { log } from "@/lib/logger";
  */
 
 import type {
+  BillingAction,
   BillingPeriod,
   CheckoutSessionResponse,
   CustomerPortalResponse,
@@ -20,6 +21,7 @@ import type {
   UserSubscription,
   CreditBalance,
 } from "@/types/subscription";
+import type { PlanCatalog } from "@/types/plan-catalog";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
@@ -36,12 +38,22 @@ export function createSubscriptionsNamespace(client: ApiClient) {
      */
     getCurrentPlan: async (): Promise<UserSubscription> => {
       const response = await client.request<UserSubscription>(
-        ENDPOINTS.SUBSCRIPTIONS.mySubscription,
+        ENDPOINTS.SUBSCRIPTIONS.current,
         {
           method: "GET",
         },
       );
       return response;
+    },
+
+    /**
+     * The public plan catalogue (`GET /api/v1/plans`, no sign-in): what the pricing page and the
+     * paywall show. Checkout still takes a plan's id from `getPlans`.
+     */
+    getCatalog: async (): Promise<PlanCatalog> => {
+      return client.request<PlanCatalog>(ENDPOINTS.SUBSCRIPTIONS.catalog, {
+        method: "GET",
+      });
     },
 
     /**
@@ -293,6 +305,18 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     },
 
     /**
+     * The action for the person's unfinished subscription, or null (plan F11). It reads only the
+     * backend's database, so the shell can ask on every page.
+     */
+    getBillingAction: async (): Promise<{
+      billing_action: BillingAction | null;
+    }> => {
+      return client.request(ENDPOINTS.SUBSCRIPTIONS.billingAction, {
+        method: "GET",
+      });
+    },
+
+    /**
      * Pause the current subscription (billing and access both stop).
      */
     pauseSubscription: async (): Promise<unknown> => {
@@ -300,7 +324,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     },
 
     /**
-     * Resume a paused subscription.
+     * Resume a paused subscription, or un-cancel a cancelled one before its end.
      */
     resumeSubscription: async (): Promise<unknown> => {
       return client.request(ENDPOINTS.SUBSCRIPTIONS.resume, { method: "POST" });
@@ -322,8 +346,7 @@ export function createSubscriptionsNamespace(client: ApiClient) {
     requestRefund: async (data: {
       lemonsqueezy_order_id: string;
       reason: string;
-      /** Cents. Omit for the whole remaining refundable balance. */
-      requested_amount?: number;
+      // No amount: a request is always the whole remaining payment (the refund rule).
     }): Promise<unknown> => {
       return client.request(ENDPOINTS.SUBSCRIPTIONS.refundRequests, {
         method: "POST",

@@ -1,14 +1,15 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
-import { APIErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { Route } from "next";
 
 /**
  * Workspace Layout
  *
  * Wraps all workspace-scoped pages with authentication check and workspace context.
- * Each page uses PageLayout component for consistent admin layout with sidebar.
+ * The shell (sidebar, header, dock) comes from app/w/layout.tsx, so it stays mounted
+ * while the workspace's pages change.
  *
  * Features:
  * - Authentication check
@@ -33,7 +34,7 @@ export default async function WorkspaceLayout({
   // Provide workspace context to all child pages
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
-      <APIErrorBoundary>{children}</APIErrorBoundary>
+      <ErrorBoundary framed>{children}</ErrorBoundary>
     </WorkspaceProvider>
   );
 }

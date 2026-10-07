@@ -1,110 +1,82 @@
 "use client";
 
-import { DataTable } from "@/components/data-table";
-import { Badge } from "@/components/ui/badge";
-import type { Column } from "@/types/data-table";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  UNKNOWN,
+} from "@/components/ui/data-table";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 
-interface Subscription extends Record<string, unknown> {
+interface RecentSubscription {
   subscription_id: string;
   user_email_masked: string;
   user_name: string;
   plan_name: string;
   status: string;
   start_date: string | null;
-  formatted_date: string;
 }
 
 interface RecentSubscriptionsTableProps {
-  subscriptions: Array<{
-    subscription_id: string;
-    user_email_masked: string;
-    user_name: string;
-    plan_name: string;
-    status: string;
-    start_date: string | null;
-  }>;
+  subscriptions: RecentSubscription[];
 }
 
+const STATUS_TINT: Readonly<Record<string, BadgeProps["variant"]>> = {
+  active: "success",
+  trial: "info",
+  cancelled: "danger",
+};
+
+const column = createDataTableColumnHelper<RecentSubscription>();
+
+const columns = column.columns([
+  column.accessor("user_name", {
+    header: "User",
+    cell: ({ getValue }) => (
+      <span className="font-medium text-foreground">{getValue()}</span>
+    ),
+  }),
+  column.accessor("user_email_masked", { header: "Email" }),
+  column.accessor("plan_name", { header: "Plan" }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => {
+      const status = getValue();
+      return (
+        <Badge variant={STATUS_TINT[status] ?? "neutral"}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Badge>
+      );
+    },
+  }),
+  column.accessor((sub) => Date.parse(sub.start_date ?? "") || 0, {
+    id: "start_date",
+    header: "Start date",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(row.original.start_date) || UNKNOWN,
+    sortFn: "basic",
+  }),
+]);
+
+/** The latest activations, inside the subscriptions page's card. */
 export function RecentSubscriptionsTable({
   subscriptions,
 }: RecentSubscriptionsTableProps) {
-  const getStatusBadge = (status: string) => {
-    const variants: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline"
-    > = {
-      active: "default",
-      trial: "secondary",
-      cancelled: "destructive",
-      expired: "outline",
-    };
-
-    return (
-      <Badge variant={variants[status] || "outline"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  // Transform data for DataTable
-  const tableData: Subscription[] = subscriptions.map((sub) => ({
-    ...sub,
-    id: sub.subscription_id,
-    formatted_date: formatDate(sub.start_date),
-  }));
-
-  // Define columns
-  const columns: Column<Subscription>[] = [
-    {
-      key: "user_name",
-      header: "User",
-      width: "200px",
-      cell: (value) => <span className="font-medium">{value as string}</span>,
-      searchable: true,
-    },
-    {
-      key: "user_email_masked",
-      header: "Email",
-      width: "250px",
-      searchable: true,
-    },
-    {
-      key: "plan_name",
-      header: "Plan",
-      width: "150px",
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "120px",
-      cell: (value) => getStatusBadge(value as string),
-    },
-    {
-      key: "formatted_date",
-      header: "Start Date",
-      width: "150px",
-    },
-  ];
-
   return (
     <DataTable
+      caption="Recent subscriptions"
       columns={columns}
-      data={tableData}
-      emptyTitle="No recent subscriptions"
-      emptyDescription="No subscription activations found"
-      showSearch={false}
-      pageSize={10}
+      data={subscriptions}
+      getRowId={(sub) => sub.subscription_id}
+      getRowLabel={(sub) => sub.user_name}
+      surface="plain"
+      density="compact"
       pageSizeOptions={[10]}
-      tableId="recent-subscriptions"
+      emptyState={
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No subscription activations yet.
+        </p>
+      }
     />
   );
 }

@@ -92,9 +92,9 @@ export function SecurityBanner({
   return (
     <div
       className={cn(
-        "rounded-lg border",
+        "rounded-md border",
         isProminent
-          ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900"
+          ? "bg-success-50 border-success-200"
           : "bg-muted/50 border-border",
         className,
       )}
@@ -104,7 +104,7 @@ export function SecurityBanner({
           className={cn(
             "flex-shrink-0",
             isProminent
-              ? "h-5 w-5 text-green-600 dark:text-green-500"
+              ? "h-5 w-5 text-success-600"
               : "h-5 w-5 text-muted-foreground",
           )}
         />
@@ -112,9 +112,7 @@ export function SecurityBanner({
           <p
             className={cn(
               "font-semibold text-sm",
-              isProminent
-                ? "text-green-900 dark:text-green-100"
-                : "text-foreground",
+              isProminent ? "text-success-700" : "text-foreground",
             )}
           >
             Secure Payment Processing
@@ -122,9 +120,7 @@ export function SecurityBanner({
           <p
             className={cn(
               "text-xs mt-0.5",
-              isProminent
-                ? "text-green-700 dark:text-green-300"
-                : "text-muted-foreground",
+              isProminent ? "text-success-700" : "text-muted-foreground",
             )}
           >
             Your payment information is encrypted and processed securely by
@@ -134,9 +130,7 @@ export function SecurityBanner({
         <CheckCircle2
           className={cn(
             "flex-shrink-0 h-5 w-5",
-            isProminent
-              ? "text-green-600 dark:text-green-500"
-              : "text-muted-foreground",
+            isProminent ? "text-success-600" : "text-muted-foreground",
           )}
         />
       </div>
@@ -279,20 +273,20 @@ export function PaymentSecurityMessage({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Shield className="h-4 w-4 text-green-600 dark:text-green-500" />
+        <Shield className="h-4 w-4 text-success-600" />
         <span className="font-medium">Your payment is secure</span>
       </div>
       <ul className="space-y-1.5 text-xs text-muted-foreground">
         <li className="flex items-start gap-2">
-          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-green-600 dark:text-green-500 flex-shrink-0" />
+          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-success-600 flex-shrink-0" />
           <span>256-bit SSL encryption protects your payment information</span>
         </li>
         <li className="flex items-start gap-2">
-          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-green-600 dark:text-green-500 flex-shrink-0" />
+          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-success-600 flex-shrink-0" />
           <span>PCI DSS compliant payment processing</span>
         </li>
         <li className="flex items-start gap-2">
-          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-green-600 dark:text-green-500 flex-shrink-0" />
+          <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-success-600 flex-shrink-0" />
           <span>We never store your card details on our servers</span>
         </li>
       </ul>
@@ -309,25 +303,25 @@ function getConfig(variant: SecurityBadgeVariant) {
     ssl: {
       icon: Lock,
       text: "Secure SSL",
-      iconColor: "text-green-600 dark:text-green-500",
+      iconColor: "text-success-600",
       ariaLabel: "SSL secured connection",
     },
     "secure-payment": {
       icon: Shield,
       text: "Secure Payment",
-      iconColor: "text-green-600 dark:text-green-500",
+      iconColor: "text-success-600",
       ariaLabel: "Secure payment processing",
     },
     lemonsqueezy: {
       icon: CheckCircle2,
       text: "Powered by LemonSqueezy",
-      iconColor: "text-primary",
+      iconColor: "text-muted-foreground",
       ariaLabel: "Powered by LemonSqueezy payment processor",
     },
     "pci-compliant": {
       icon: Shield,
       text: "PCI Compliant",
-      iconColor: "text-blue-600 dark:text-blue-500",
+      iconColor: "text-info-600",
       ariaLabel: "PCI DSS compliant",
     },
   };

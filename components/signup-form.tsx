@@ -1,24 +1,21 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { LegalAgreement } from "@/components/auth/legal-agreement";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { CheckEmail } from "@/components/auth/check-email";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
+import { SignupTrialLine } from "@/components/auth/signup-trial-line";
+import { FieldController } from "@/components/forms/field-controller";
+import { PasswordInput } from "@/components/forms/password-input";
+import { useZodForm } from "@/components/forms/use-zod-form";
 import { Button } from "@/components/ui/button";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
@@ -27,6 +24,7 @@ import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { useToast } from "@/hooks/use-toast";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { checkPasswordBreach } from "@/lib/password-utils";
 import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
@@ -36,8 +34,9 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const hydrated = useHydrated();
+  // Set once the account exists but can't log in until its email is verified.
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -49,9 +48,12 @@ export function SignupForm({
     isValid: hasValidInvitation,
     error: invitationError,
   } = useInvitationValidation();
+  // An invitation counts until it's known to be invalid: while it's checked, Google and GitHub keep
+  // it, and the trial line waits rather than flashing.
+  const joinsWorkspace =
+    !!invitationToken && (hasValidInvitation || isLoadingInvitation);
 
-  const form = useForm<SignupFormData>({
-    resolver: zodResolver(signupFormSchema),
+  const form = useZodForm(signupFormSchema, {
     defaultValues: {
       full_name: "",
       email: "",
@@ -60,43 +62,19 @@ export function SignupForm({
     },
   });
 
-  const { handleSubmit, setValue } = form;
-  const passwordValue = form.watch("password") || "";
-  const confirmPasswordValue = form.watch("confirmPassword") || "";
+  const { setValue } = form;
+  const passwordValue = form.watch("password");
 
+  // A new password re-checks a confirmation already typed, so a mismatch shows
+  // (or clears) without leaving the field first.
   useEffect(() => {
-    if (!confirmPasswordValue) {
-      form.clearErrors("confirmPassword");
-      return;
+    if (
+      passwordValue !== undefined &&
+      form.getFieldState("confirmPassword").isTouched
+    ) {
+      void form.trigger("confirmPassword");
     }
-
-    if (passwordValue !== confirmPasswordValue) {
-      form.setError("confirmPassword", {
-        type: "manual",
-        message: "Passwords don't match",
-      });
-      return;
-    }
-
-    form.clearErrors("confirmPassword");
-  }, [confirmPasswordValue, form, passwordValue]);
-
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { label: "", color: "" };
-
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-    if (score <= 2) return { label: "Weak", color: "text-red-500" };
-    if (score <= 4) return { label: "Fair", color: "text-yellow-500" };
-    return { label: "Strong", color: "text-green-500" };
-  };
-
-  const passwordStrength = getPasswordStrength(passwordValue);
+  }, [passwordValue, form]);
 
   // Pre-fill email from invitation
   useEffect(() => {
@@ -152,14 +130,22 @@ export function SignupForm({
         method: isInvitationSignup ? "invitation" : "credentials",
       });
 
-      // Auto-login after successful registration
+      // Login needs a verified email (the backend's REQUIRE_EMAIL_VERIFICATION), so a new account
+      // that isn't verified can't be logged in yet: say where the link went instead of trying.
+      if (registerResult.user.email_verified === false) {
+        setVerifyEmail(data.email);
+        return;
+      }
+
+      // Auto-login after successful registration. next-auth answers a refused login with `ok`
+      // and an `error`, so both are read.
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
-      if (result?.ok) {
+      if (result?.ok && !result.error) {
         // Force refresh auth headers to ensure we have the new token
         await getAuthHeaders(true);
         toast.success("Account created successfully! Logging you in...");
@@ -191,28 +177,8 @@ export function SignupForm({
           }
         }
 
-        // Record account creation audit log
-        try {
-          // Attempt to get profile ID for the log
-          const profileRes = await apiClient.request<{
-            profile?: { id?: string };
-            id?: string;
-          }>("/api/v1/user/profile", { method: "GET" });
-          const userId = profileRes?.profile?.id ?? profileRes?.id;
-
-          await apiClient.request("/api/v1/audit-logs/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "user.create",
-              resource_type: "user",
-              resource_id: userId,
-              status: "success",
-            }),
-          });
-        } catch (e) {
-          log.error("[AuditLog] Failed to log user.create", e);
-        }
+        // No audit write here: the backend's register endpoints record user.create themselves,
+        // for an account that must verify its email too.
 
         // Fetch workspaces to determine redirect
         try {
@@ -236,10 +202,12 @@ export function SignupForm({
           router.push("/" as Route);
         }
       } else {
-        // If auto-login fails, redirect to login page
-        setTimeout(() => {
-          router.push("/login" as Route);
-        }, 2000);
+        // The account exists and is verified, but the login after sign-up was refused: say so
+        // and take the user to the login form with the address filled in.
+        toast.error(
+          "Your account is ready, but logging in didn't work. Log in to continue.",
+        );
+        router.push(`/login?email=${encodeURIComponent(data.email)}` as Route);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
@@ -281,6 +249,14 @@ export function SignupForm({
     }
   };
 
+  if (verifyEmail) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <CheckEmail email={verifyEmail} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {/* Invitation Banner */}
@@ -301,201 +277,131 @@ export function SignupForm({
 
       {/* Show invitation error if validation failed */}
       {invitationToken && !hasValidInvitation && !isLoadingInvitation && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg">
-          <p className="font-medium">Invitation Link Issue</p>
-          <p className="text-sm mt-1">
+        <div className="space-y-1 rounded-md border border-border bg-surface-inset p-4 text-body text-foreground">
+          <p className="font-medium">Invitation link issue</p>
+          <p>
             {invitationError ||
               "This invitation link is invalid or has expired."}
           </p>
-          <p className="text-sm mt-2">
+          <p>
             You can still create an account, but you won't be automatically
             added to the workspace.
           </p>
         </div>
       )}
 
-      <div className="bg-transparent">
-        <div className="flex flex-col space-y-1.5 px-0 mb-6">
-          <h1 className="text-fluid-2xl font-semibold tracking-tight-title">
-            {hasValidInvitation ? "Join Workspace" : "Create your account"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {hasValidInvitation
-              ? "Complete your profile to join the workspace"
-              : "Enter your details below to create your account"}
-          </p>
-        </div>
-        <div className="px-0">
-          <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground!">
-                      Full Name
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="John"
-                        type="text"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground!">
-                      Email
-                      {hasValidInvitation && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (from invitation)
-                        </span>
-                      )}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="m@example.com"
-                        type="email"
-                        disabled={isLoading}
-                        readOnly={hasValidInvitation}
-                        className={cn(
-                          hasValidInvitation &&
-                            "bg-muted cursor-not-allowed opacity-75",
-                        )}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground!">Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="Create a strong password"
-                          type={showPassword ? "text" : "password"}
-                          disabled={isLoading}
-                          className="pr-10"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    {passwordValue && (
-                      <p className="text-sm text-muted-foreground">
-                        Password strength:{" "}
-                        <span className={passwordStrength.color}>
-                          {passwordStrength.label}
-                        </span>
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      Must be at least 8 characters with uppercase, lowercase,
-                      number, and special character.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground!">
-                      Confirm Password
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="Confirm your password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          disabled={isLoading}
-                          className="pr-10"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowConfirmPassword((prev) => !prev)
-                          }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          aria-label={
-                            showConfirmPassword
-                              ? "Hide password"
-                              : "Show password"
-                          }
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                className="w-full h-11 shadow-none!"
-                disabled={isLoading || isLoadingInvitation}
-              >
-                {isLoading
-                  ? hasValidInvitation
-                    ? "Creating Account & Joining Workspace..."
-                    : "Creating Account..."
-                  : hasValidInvitation
-                    ? "Create Account & Join Workspace"
-                    : "Create Account"}
-              </Button>
-              <div className="mt-0! text-center text-sm">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="underline underline-offset-4 font-medium text-primary hover:text-primary/80"
-                >
-                  Sign in
-                </Link>
-              </div>
-            </form>
-          </Form>
-        </div>
+      <div className="space-y-1">
+        {/* layout-ok: sign-up is outside the shell; its column carries the page's title */}
+        <h1 className="font-display text-page-title text-foreground">
+          {hasValidInvitation ? "Join the workspace" : "Create your account"}
+        </h1>
+        <p className="text-body text-muted-foreground">
+          {hasValidInvitation
+            ? "Complete your profile to join the workspace"
+            : "Enter your details below to create your account"}
+        </p>
+        {/* An invitation joins a workspace that already has its plan: no trial to name. */}
+        {!joinsWorkspace && <SignupTrialLine />}
       </div>
+
+      {/* The same ways in as login, with the same terms; an invitation still lands on its accept page. */}
+      <OAuthButtons
+        callbackUrl={
+          joinsWorkspace && invitationToken
+            ? `/invitations/accept?token=${encodeURIComponent(invitationToken)}`
+            : "/"
+        }
+        notice={<LegalAgreement action="continuing with Google or GitHub" />}
+        signUp
+      />
+
+      {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          <FieldController
+            control={form.control}
+            name="full_name"
+            label="Full name"
+            required
+          >
+            {(field) => (
+              <Input {...field} autoComplete="name" disabled={isLoading} />
+            )}
+          </FieldController>
+
+          <FieldController
+            control={form.control}
+            name="email"
+            label="Email"
+            description={
+              hasValidInvitation ? "From your invitation" : undefined
+            }
+            required
+          >
+            {(field) => (
+              <Input
+                {...field}
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+                disabled={isLoading}
+                readOnly={hasValidInvitation}
+              />
+            )}
+          </FieldController>
+
+          <FieldController
+            control={form.control}
+            name="password"
+            label="Password"
+            description="At least 8 characters."
+            required
+          >
+            {(field) => (
+              <PasswordInput
+                {...field}
+                autoComplete="new-password"
+                disabled={isLoading}
+              />
+            )}
+          </FieldController>
+
+          <FieldController
+            control={form.control}
+            name="confirmPassword"
+            label="Confirm password"
+            required
+          >
+            {(field) => (
+              <PasswordInput
+                {...field}
+                autoComplete="new-password"
+                disabled={isLoading}
+              />
+            )}
+          </FieldController>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={!hydrated || isLoading || isLoadingInvitation}
+          >
+            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {hasValidInvitation
+              ? "Create account and join the workspace"
+              : "Create account"}
+          </Button>
+        </FieldGroup>
+      </form>
+
+      <LegalAgreement action="creating an account" />
+
+      <p className="text-center text-body text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium link">
+          Log in
+        </Link>
+      </p>
     </div>
   );
 }

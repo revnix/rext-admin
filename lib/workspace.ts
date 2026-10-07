@@ -1,4 +1,4 @@
-import type { WorkspaceData } from "@/types/data-table";
+import type { WorkspaceData } from "@/types/workspace";
 import type { Workspace } from "@/types/workspace";
 
 type WorkspaceWithName = Workspace & { name?: string | null };

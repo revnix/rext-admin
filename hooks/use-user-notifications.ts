@@ -15,7 +15,9 @@ async function refreshNotificationsWithState(): Promise<void> {
   store.setFetchState({ isLoading: true, fetchError: null });
 
   try {
-    const notifications = await fetchNotifications();
+    // The first read reports a failure, so the drawer offers Try again; a refresh after an event
+    // (refreshFeed) keeps the feed it has instead.
+    const notifications = await fetchNotifications({ throwOnError: true });
     store.mergeNotifications(notifications);
     store.setFetchState({ isLoading: false, fetchError: null });
   } catch (error) {
@@ -64,10 +66,13 @@ export function useUserNotifications() {
           useNotificationStore.getState().mergeNotifications(incoming);
         })
         .catch((error) => {
-          userNotificationsLogger.error("Failed to refresh user notifications", {
-            userId,
-            error,
-          });
+          userNotificationsLogger.error(
+            "Failed to refresh user notifications",
+            {
+              userId,
+              error,
+            },
+          );
         })
         .finally(() => {
           fetchInFlight = false;

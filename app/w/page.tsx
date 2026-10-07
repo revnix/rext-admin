@@ -1,35 +1,96 @@
 "use client";
 
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Check,
-  Eye,
-  Globe,
-  Plus,
-  RefreshCw,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Check, Plus, RefreshCw, Settings2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+} from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { WorkspaceDeleteDialog } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { apiClient } from "@/lib/api-client";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import { log } from "@/lib/logger";
 import { WORKSPACE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspaceStore } from "@/stores/workspace";
-import type { Column, RowAction, WorkspaceData } from "@/types/data-table";
-import type { Workspace, WorkspaceListResponse } from "@/types/workspace";
+import type {
+  Workspace,
+  WorkspaceData,
+  WorkspaceListResponse,
+} from "@/types/workspace";
 import type { Route } from "next";
+
+function WorkspaceName({ row }: { row: WorkspaceData }) {
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
+  const setCurrentWorkspace = useWorkspaceStore(
+    (state) => state.setCurrentWorkspace,
+  );
+  return (
+    <div className="min-w-0">
+      <p className="flex items-center gap-2">
+        <Link
+          // Opens the workspace dashboard (`/` renders the current
+          // workspace), so the row becomes current before navigating.
+          href={workspaceRoutes.root(row.slug) as Route}
+          // The user clicks at most one row, so prefetch on hover only.
+          prefetch={false}
+          className="truncate rounded-sm font-medium text-foreground underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
+        >
+          {row.title}
+        </Link>
+        {currentWorkspace?.id === row.id && (
+          <Badge variant="neutral">Current</Badge>
+        )}
+      </p>
+      {typeof row.timezone === "string" && row.timezone && (
+        <p className="truncate text-muted-foreground">{row.timezone}</p>
+      )}
+    </div>
+  );
+}
+
+const column = createDataTableColumnHelper<WorkspaceData>();
+
+const columns = column.columns([
+  column.accessor("title", {
+    header: "Name",
+    cell: ({ row }) => <WorkspaceName row={row.original} />,
+    sortFn: "text",
+    enableHiding: false,
+  }),
+  column.accessor((ws) => ws.url ?? "", {
+    id: "url",
+    header: "Website",
+    cell: ({ getValue }) => (
+      <span className="block truncate text-muted-foreground">
+        {getValue() || UNKNOWN}
+      </span>
+    ),
+  }),
+  column.accessor((ws) => Date.parse(ws.created_at) || 0, {
+    id: "created_at",
+    header: "Created",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(row.original.created_at) || UNKNOWN,
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+]);
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -43,12 +104,11 @@ export default function WorkspacePage() {
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
-  const _deleteWorkspace = useWorkspaceStore((state) => state.deleteWorkspace);
 
   // Update page title
   usePageTitle(
     "Workspaces",
-    "Manage your workspaces, organize knowledge, and configure brand voice settings for AI-powered content creation.",
+    "Manage your workspaces and configure their brand voice for content creation.",
   );
 
   // Query workspaces from API
@@ -72,7 +132,6 @@ export default function WorkspacePage() {
     url: workspace.url,
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
-    knowledge_stats: workspace.knowledge_stats,
     brand_voice: workspace.brand_voice,
     status: "active", // Default status
     // Flatten some fields for easier global search
@@ -120,207 +179,107 @@ export default function WorkspacePage() {
     }
   };
 
-  // Define columns for the DataTable
-  const columns: Column<WorkspaceData>[] = [
-    {
-      key: "title",
-      header: "Name",
-      width: "200px",
-      searchable: true,
-      cell: (value: unknown, row: WorkspaceData) => (
-        <div className="flex items-start gap-2 min-w-[150px]">
-          <div className="flex-shrink-0 mt-0.5">
-            <div className="h-5 w-5 rounded bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-              {String(value || "W")
-                .charAt(0)
-                .toUpperCase()}
-            </div>
-          </div>
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                href={`/w/${row.slug}/settings` as Route}
-                // Every visible row prefetched its settings page on viewport;
-                // the user clicks at most one row, so prefetch on hover only.
-                prefetch={false}
-                className="font-medium hover:text-primary hover:underline transition-colors cursor-pointer truncate"
-                onClick={() => setCurrentWorkspace(row as unknown as Workspace)}
-              >
-                {String(value || "")}
-              </Link>
-              {currentWorkspace?.id === row.id && (
-                <Badge variant="default" className="text-[10px] px-1 py-0 h-4">
-                  Current
-                </Badge>
-              )}
-            </div>
-            {row.timezone ? (
-              <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
-                {String(row.timezone)}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "url",
-      header: "Website",
-      width: "150px",
-      searchable: true,
-      cell: (value: unknown) => (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-          <Globe className="h-4 w-4 flex-shrink-0" />
-          <span className="truncate">{String(value || "")}</span>
-        </div>
-      ),
-    },
-    // {
-    //   key: "knowledge_stats",
-    //   header: "Knowledge",
-    //   width: "100px",
-    //   cell: (_value: unknown, row: WorkspaceData) => {
-    //     const stats = row.knowledge_stats;
-    //     const total = stats?.total || 0;
-    //     return (
-    //       <div className="flex items-center gap-1 text-sm whitespace-nowrap">
-    //         <FileText className="h-4 w-4 text-muted-foreground" />
-    //         <span>{total} items</span>
-    //       </div>
-    //     );
-    //   },
-    // },
-    // {
-    //   key: "status",
-    //   header: "Status",
-    //   width: "80px",
-    //   searchable: true,
-    //   cell: (value: unknown) => (
-    //     <Badge
-    //       variant={String(value) === "active" ? "default" : "secondary"}
-    //       className="text-[10px] px-1.5 py-0"
-    //     >
-    //       {String(value || "active")}
-    //     </Badge>
-    //   ),
-    // },
-    {
-      key: "created_at",
-      header: "Created",
-      width: "100px",
-      cell: (value: unknown) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {new Date(String(value)).toLocaleDateString()}
-        </span>
-      ),
-    },
-  ];
-
-  // Define empty state actions
-  const emptyActions = [
-    {
-      label: "Create Workspace",
-      icon: <Plus className="h-4 w-4" />,
-      href: "/w/create",
-    },
-  ];
-
-  // Define table actions
   const tableActions = (
-    <div className="flex items-center gap-2 w-full">
+    <>
       <Button
         variant="outline"
-        size="sm"
+        size="icon"
+        className="size-9"
         onClick={handleRefresh}
-        className="!w-[39%] sm:w-4"
         disabled={isLoading || isFetching || isRefreshing}
+        aria-label="Refresh workspaces"
       >
         <RefreshCw
-          className={`h-4 w-4 mr-2 ${isLoading || isFetching || isRefreshing ? "animate-spin" : ""}`}
+          className={
+            isLoading || isFetching || isRefreshing ? "animate-spin" : undefined
+          }
         />
-        Refresh
       </Button>
-
       {isLimitReached ? (
         <LockedFeatureTooltip message="Upgrade your plan to create more workspaces.">
-          <Button size="sm" className="" disabled>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button size="sm" className="h-9" disabled>
+            <Plus />
             Limit reached
           </Button>
         </LockedFeatureTooltip>
       ) : (
         <Button
           size="sm"
-          className="!w-[59%] sm:w-4"
+          className="h-9"
           onClick={() => router.push("/w/create" as Route)}
           disabled={isLimitLoading}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          {isLimitLoading ? "Checking plan..." : "New Workspace"}
+          <Plus />
+          {isLimitLoading ? "Checking plan…" : "New workspace"}
         </Button>
       )}
-    </div>
+    </>
   );
 
-  // Define row actions
-  const rowActions: RowAction<WorkspaceData>[] = [
+  const rowActions = (row: WorkspaceData): DataTableRowAction[] => [
     {
-      label: "Select",
-      icon: <Check className="h-4 w-4" />,
-      onClick: (row: WorkspaceData) => {
+      label: "Make current",
+      icon: Check,
+      disabled: currentWorkspace?.id === row.id ? "Already current" : false,
+      onSelect: () => {
         setCurrentWorkspace(row as unknown as Workspace);
         toast.success(`Switched to ${row.title}`);
       },
-      tooltip: "Set as current workspace",
-      primary: true,
-      // Hide select button if workspace is already current
-      disabled: (row: WorkspaceData) => currentWorkspace?.id === row.id,
     },
     {
-      label: "View",
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (row: WorkspaceData) => {
+      label: "Settings",
+      icon: Settings2,
+      disabled: canUpdateWorkspace[row.id]
+        ? false
+        : "You can't change this workspace's settings",
+      onSelect: () => {
         setCurrentWorkspace(row as unknown as Workspace);
-        router.push(`/w/${row.slug}/settings` as Route);
+        router.push(workspaceRoutes.settings.root(row.slug) as Route);
       },
-      tooltip: "View workspace details",
-      disabled: (row: WorkspaceData) => !canUpdateWorkspace[row.id],
     },
     {
       label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: (row: WorkspaceData) => {
-        setDeleteDialogWorkspace(row);
-      },
-      variant: "destructive" as const,
-      tooltip: "Delete workspace",
-      disabled: (row: WorkspaceData) => !canDeleteWorkspace[row.id],
+      icon: Trash2,
+      destructive: true,
+      disabled: canDeleteWorkspace[row.id]
+        ? false
+        : "You can't delete this workspace",
+      onSelect: () => setDeleteDialogWorkspace(row),
     },
   ];
 
   return (
-    <PageLayout
-      title="Workspaces"
-      description="Manage your workspaces and organize your knowledge base"
-    >
-      <div className="w-full lg:w-[68vw] xl:w-auto overflow-x-auto xl:overflow-hidden">
-        <DataTable<WorkspaceData>
-          columns={columns}
-          data={transformedWorkspaces}
-          emptyTitle="No workspaces yet"
-          emptyDescription="Create your first workspace to start organizing your knowledge, content, and brand voice."
-          emptyActions={emptyActions}
-          emptyIcon={<Users className="h-8 w-8 text-muted-foreground" />}
-          searchPlaceholder="Search workspaces by name, URL ..."
-          actions={tableActions}
-          rowActions={rowActions}
-          pageSize={10}
-          searchFields={["title", "url", "timezone", "status"]}
-          isLoading={isLoading}
-          searchWidth="md:w-[450px]"
-          tableId="workspaces"
-        />
-      </div>
+    <ListPage title="Workspaces" description="Manage your workspaces">
+      <DataTable
+        caption="Workspaces"
+        columns={columns}
+        data={transformedWorkspaces}
+        getRowId={(ws) => ws.id}
+        getRowLabel={(ws) => ws.title}
+        isLoading={isLoading}
+        search={{ placeholder: "Search by name or website" }}
+        actions={tableActions}
+        rowActions={rowActions}
+        pageSizeOptions={[10, 25, 50]}
+        emptyState={
+          <EmptyState
+            title="No workspaces yet"
+            description="Create your first workspace to set up its brand voice and start writing."
+            action={{ label: "Create workspace", href: "/w/create" }}
+          />
+        }
+        renderCard={(ws, { actions }) => (
+          <div className="flex items-start gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <WorkspaceName row={ws} />
+              <p className="truncate text-muted-foreground">
+                {ws.url || UNKNOWN}
+              </p>
+            </div>
+            {actions}
+          </div>
+        )}
+      />
 
       {/* Delete Dialog */}
       {deleteDialogWorkspace && (
@@ -358,6 +317,6 @@ export default function WorkspacePage() {
           }}
         />
       )}
-    </PageLayout>
+    </ListPage>
   );
 }

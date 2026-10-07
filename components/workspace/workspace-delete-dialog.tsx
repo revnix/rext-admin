@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -14,14 +14,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
-import type { WorkspaceData } from "@/types/data-table";
+import type { WorkspaceData } from "@/types/workspace";
 import type { Workspace } from "@/types/workspace";
 
 interface WorkspaceDeleteDialogProps {
@@ -62,9 +62,10 @@ interface WorkspaceDeleteDialogProps {
 /**
  * WorkspaceDeleteDialog Component
  *
- * A reusable confirmation dialog for workspace deletion with safety measures.
- * Requires users to type the workspace name to confirm deletion, preventing
- * accidental deletions. Integrates with the workspace store for deletion logic.
+ * A reusable confirmation dialog for workspace deletion: the person types the workspace's name
+ * (design/app-language.md §6, a typed name last). No password: the backend's delete doesn't ask
+ * for one, and an account that signs in with Google or GitHub has none to type. The workspace
+ * stays restorable for 30 days, with an Undo in the toast.
  */
 export function WorkspaceDeleteDialog({
   workspace,
@@ -78,8 +79,6 @@ export function WorkspaceDeleteDialog({
 }: WorkspaceDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [confirmationText, setConfirmationText] = useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const deleteWorkspace = useWorkspaceStore((state) => state.deleteWorkspace);
@@ -93,10 +92,7 @@ export function WorkspaceDeleteDialog({
   const workspaceName = getWorkspaceDisplayTitle(workspace);
   const isConfirmationValid = confirmationText.trim() === workspaceName?.trim();
   const canDelete =
-    isConfirmationValid &&
-    !!passwordConfirmation &&
-    !isDeleting &&
-    !loadingStates.deleting;
+    isConfirmationValid && !isDeleting && !loadingStates.deleting;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,36 +101,23 @@ export function WorkspaceDeleteDialog({
     setIsDeleting(true);
 
     try {
-      // Verify password before proceeding with deletion
-      try {
-        await apiClient.request("/api/v1/user/verify-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: passwordConfirmation }),
-        });
-      } catch {
-        toast.error("The password you entered is incorrect.");
-        setIsDeleting(false);
-        return;
-      }
-
       await deleteWorkspace(workspace.id);
 
-      // Success feedback - the workspace is soft-deleted and can be restored
-      // within 14 days via apiClient.workspaces.restore(workspace.id).
-      toast.success(`Workspace "${workspaceName}" has been deleted`, {
+      // The workspace is soft-deleted: the backend keeps it restorable for 30 days
+      // (apiClient.workspaces.restore), listed in the account's trash.
+      toast.success(`"${workspaceName}" was deleted`, {
         description:
-          "It's been moved to trash. You have 14 days to restore it before it's permanently removed.",
+          "It's in your account's trash for 30 days, where you can restore it.",
         action: {
           label: "Undo",
           onClick: async () => {
             try {
               await apiClient.workspaces.restore(workspace.id);
-              toast.success(`Workspace "${workspaceName}" restored`);
+              toast.success(`"${workspaceName}" was restored`);
               onRestored?.(workspace.id);
             } catch (restoreError) {
               log.error("Failed to restore workspace:", restoreError);
-              toast.error("Failed to restore workspace", {
+              toast.error("The workspace couldn't be restored", {
                 description:
                   restoreError instanceof Error
                     ? restoreError.message
@@ -148,8 +131,6 @@ export function WorkspaceDeleteDialog({
       // Close dialog and reset state
       setDialogOpen(false);
       setConfirmationText("");
-      setPasswordConfirmation("");
-      setShowPassword(false);
 
       // Notify parent component
       onDeleted?.(workspace.id);
@@ -159,7 +140,7 @@ export function WorkspaceDeleteDialog({
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
 
-      toast.error("Failed to delete workspace", {
+      toast.error("The workspace couldn't be deleted", {
         description: errorMessage,
       });
 
@@ -176,8 +157,6 @@ export function WorkspaceDeleteDialog({
     // Reset form when dialog closes
     if (!newOpen) {
       setConfirmationText("");
-      setPasswordConfirmation("");
-      setShowPassword(false);
       setIsDeleting(false);
     }
   };
@@ -188,16 +167,10 @@ export function WorkspaceDeleteDialog({
       size="sm"
       className="text-destructive hover:text-destructive"
     >
-      <Trash2 className="h-4 w-4 mr-2" />
-      Delete Workspace
+      <Trash2 />
+      Delete workspace
     </Button>
   );
-
-  const knowledgeCount =
-    workspace.knowledge_stats?.total ||
-    ((workspace as Workspace).websites?.length || 0) +
-      ((workspace as Workspace).knowledge_files?.length || 0) +
-      ((workspace as Workspace).text_knowledge?.length || 0);
 
   return (
     <AlertDialog open={dialogOpen} onOpenChange={handleOpenChange}>
@@ -209,47 +182,22 @@ export function WorkspaceDeleteDialog({
 
       <AlertDialogContent className="sm:max-w-[500px]">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-            <Trash2 className="h-5 w-5" />
-            Delete Workspace
-          </AlertDialogTitle>
+          <AlertDialogTitle>Delete "{workspaceName}"?</AlertDialogTitle>
           <AlertDialogDescription>
-            You are about to delete the workspace{" "}
-            <span className="font-semibold text-foreground">
-              "{workspaceName}"
-            </span>
-            .
-            {knowledgeCount > 0 && (
-              <>
-                {" "}
-                <span className="text-orange-600 dark:text-orange-400 font-medium">
-                  ⚠️ This includes {knowledgeCount} knowledge item
-                  {knowledgeCount === 1 ? "" : "s"}
-                  (websites, files, and text notes) associated with this
-                  workspace.
-                </span>
-              </>
-            )}{" "}
-            <span className="font-medium">
-              The workspace will be moved to trash and become inaccessible
-              immediately. You'll have 30 days to restore it before it's
-              permanently and irreversibly deleted.
-            </span>
+            Everyone loses access to it at once. It waits in your account's
+            trash for 30 days, where you can restore it, and is then deleted for
+            good.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="py-4">
           <div className="space-y-2">
-            <Label htmlFor="confirmation-input" className="text-sm font-medium">
-              To confirm deletion, type the workspace name below:
+            <Label htmlFor="confirmation-input">
+              Type <span className="font-mono">{workspaceName}</span> to confirm
             </Label>
-            <div className="text-xs text-muted-foreground font-mono bg-muted px-2 py-1 rounded">
-              {workspaceName}
-            </div>
             <Input
               id="confirmation-input"
               type="text"
-              placeholder="Enter workspace name to confirm"
               value={confirmationText}
               onChange={(e) => setConfirmationText(e.target.value)}
               disabled={isDeleting || loadingStates.deleting}
@@ -262,60 +210,25 @@ export function WorkspaceDeleteDialog({
             />
             {confirmationText && !isConfirmationValid && (
               <p className="text-sm text-destructive">
-                Workspace name does not match. Please type exactly: "
-                {workspaceName}"
+                That isn't the workspace's name yet.
               </p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="relative">
-              <Input
-                id="password-confirm"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password to confirm"
-                value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                disabled={isDeleting || loadingStates.deleting}
-                className="pr-10"
-                autoComplete="off"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
           </div>
         </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting || loadingStates.deleting}>
-            Cancel
+            Keep workspace
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={!canDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className={buttonVariants({ variant: "destructive" })}
           >
-            {isDeleting || loadingStates.deleting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Workspace
-              </>
+            {(isDeleting || loadingStates.deleting) && (
+              <Loader2 className="animate-spin" aria-hidden />
             )}
+            Delete workspace
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

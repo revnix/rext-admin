@@ -60,20 +60,23 @@ jest.mock("next/navigation", () => ({
 
 // Global test utilities - no suppression to show real issues
 
-// Mock window.matchMedia for components using media queries
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+// Mock window.matchMedia for components using media queries (a test that runs in
+// the node environment, for server code, has no window)
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
+}
 
 // Mock localStorage for Zustand persist tests
 const localStorageMock = {
@@ -203,6 +206,28 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
+
+// jsdom has no top layer, so no element is ever :modal, :popover-open or :fullscreen.
+// Floating UI, which positions every Radix popover, asks each ancestor for :modal and
+// :popover-open on every position update, and jsdom's selector engine answers :modal by
+// testing :fullscreen across the whole document: one open persona dropdown cost 62
+// million checks and about 18 s per test. Answer false directly, as jsdom would.
+const topLayerPseudoClasses = new Set([
+  ":modal",
+  ":popover-open",
+  ":fullscreen",
+]);
+if (typeof Element !== "undefined") {
+  const nativeMatches = Element.prototype.matches;
+  Element.prototype.matches = function matches(
+    this: Element,
+    selector: string,
+  ) {
+    return topLayerPseudoClasses.has(selector)
+      ? false
+      : nativeMatches.call(this, selector);
+  };
+}
 
 // Global test cleanup to prevent memory leaks
 afterEach(() => {

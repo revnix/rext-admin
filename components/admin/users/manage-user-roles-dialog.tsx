@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, Plus, Shield, Star, Trash2 } from "lucide-react";
+import { Loader2, Plus, Shield, Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -262,15 +262,13 @@ export function ManageUserRolesDialog({
                 <Skeleton className="h-14 w-full" />
               </div>
             ) : rolesError ? (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {rolesError instanceof Error
-                    ? rolesError.message
-                    : "Could not load this user's roles."}
-                </AlertDescription>
-              </Alert>
+              <Notice tone="danger" title="This user's roles didn't load">
+                {rolesError instanceof Error
+                  ? rolesError.message
+                  : "Close this and open it again to retry."}
+              </Notice>
             ) : assigned.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center">
+              <div className="rounded-md border border-dashed p-6 text-center">
                 <p className="text-sm text-muted-foreground">
                   No roles assigned
                 </p>
@@ -279,7 +277,7 @@ export function ManageUserRolesDialog({
                 </p>
               </div>
             ) : (
-              <div className="rounded-lg border divide-y">
+              <div className="rounded-md border divide-y">
                 {assigned.map((assignment) => (
                   <div
                     key={assignment.id}
@@ -291,24 +289,21 @@ export function ManageUserRolesDialog({
                           {assignment.role_display_name}
                         </span>
                         {assignment.is_primary && (
-                          <Badge variant="default" className="text-[10px] h-5">
+                          <Badge variant="default" className="h-5">
                             <Star className="h-2.5 w-2.5 mr-1" />
                             Primary
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px] h-5">
+                        <Badge variant="outline" className="h-5">
                           {assignment.workspace_id
                             ? `Workspace: ${assignment.workspace_name ?? "Unknown"}`
                             : "Platform-wide"}
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] h-5 font-mono"
-                        >
+                        <Badge variant="secondary" className="h-5 font-mono">
                           L{assignment.hierarchy_level}
                         </Badge>
                       </div>
-                      <code className="text-[11px] text-muted-foreground">
+                      <code className="text-caption text-muted-foreground">
                         {assignment.role_name}
                       </code>
                     </div>
@@ -357,7 +352,11 @@ export function ManageUserRolesDialog({
                   Platform-wide (all workspaces)
                 </SelectItem>
                 {(userWorkspaces?.workspaces ?? []).map((ws) => (
-                  <SelectItem key={ws.workspace_id} value={ws.workspace_id} className="px-0 ps-1">
+                  <SelectItem
+                    key={ws.workspace_id}
+                    value={ws.workspace_id}
+                    className="px-0 ps-1"
+                  >
                     <span className="flex items-center gap-2">
                       {/* Labelled "Workspace:" because a workspace can be named
                           after a person. Unlabelled, "Hasnat Hassan currently
@@ -377,14 +376,11 @@ export function ManageUserRolesDialog({
             </Select>
 
             {isWorkspaceOwner ? (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  This user is the Workspace Owner of this workspace. Workspace
-                  owner role cannot be changed here. Transfer workspace
-                  ownership instead.
-                </AlertDescription>
-              </Alert>
+              <Notice>
+                This user is the Workspace Owner of this workspace. Workspace
+                owner role cannot be changed here. Transfer workspace ownership
+                instead.
+              </Notice>
             ) : (
               <>
                 <Label htmlFor="role">
@@ -393,14 +389,11 @@ export function ManageUserRolesDialog({
                     : "Assign a role in this workspace"}
                 </Label>
                 {heldInWorkspace && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      This user already has the{" "}
-                      {heldInWorkspace.role_display_name} role in this
-                      workspace. Assigning a new role will replace it.
-                    </AlertDescription>
-                  </Alert>
+                  <Notice tone="warning">
+                    This user already has the{" "}
+                    {heldInWorkspace.role_display_name} role in this workspace.
+                    Assigning a new role will replace it.
+                  </Notice>
                 )}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Select
@@ -451,14 +444,11 @@ export function ManageUserRolesDialog({
                   </Button>
                 </div>
 
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    {selectedScope === PLATFORM_SCOPE
-                      ? "A platform-wide role applies everywhere but does not appear on any workspace's Members screen, and grants no workspace-level permissions. Pick a workspace above to do that."
-                      : "This role applies only inside the selected workspace and will show on its Members screen. It does not grant platform-level permissions."}
-                  </AlertDescription>
-                </Alert>
+                <Notice>
+                  {selectedScope === PLATFORM_SCOPE
+                    ? "A platform-wide role applies everywhere but does not appear on any workspace's Members screen, and grants no workspace-level permissions. Pick a workspace above to do that."
+                    : "This role applies only inside the selected workspace and will show on its Members screen. It does not grant platform-level permissions."}
+                </Notice>
               </>
             )}
           </div>

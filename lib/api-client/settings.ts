@@ -14,10 +14,14 @@ import type {
   SessionListResponse,
   UserSession,
 } from "@/types/user-session";
-import type { SecurityStats } from "@/types/security";
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
+import type { components } from "./schema";
+
+/** The backend's models for the unsubscribe link, from its OpenAPI spec. */
+type UnsubscribeRequest = components["schemas"]["UnsubscribeRequest"];
+type UnsubscribeResponse = components["schemas"]["UnsubscribeResponse"];
 
 // ============================================================================
 // NOTIFICATIONS
@@ -49,6 +53,22 @@ export function createNotificationsNamespace(client: ApiClient) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(preferences),
+        },
+      );
+    },
+
+    /**
+     * Unsubscribe with the token from an email's link; no sign-in needed. Without
+     * email types it turns every email off.
+     */
+    unsubscribe: async (token: string) => {
+      const body = { token, email_types: [] } satisfies UnsubscribeRequest;
+      return client.request<UnsubscribeResponse>(
+        ENDPOINTS.SETTINGS.notifications.unsubscribe,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         },
       );
     },
@@ -126,19 +146,9 @@ export function createSessionsNamespace(client: ApiClient) {
 // SECURITY
 // ============================================================================
 // User-scoped security endpoints for current authenticated user
-// Admin security monitoring endpoints are at /api/v1/security/* (admin-only)
 
 export function createSecurityNamespace(client: ApiClient) {
   return {
-    /**
-     * Get security stats for current user
-     */
-    getStats: async () => {
-      return client.request<SecurityStats>(ENDPOINTS.SETTINGS.security.stats, {
-        method: "GET",
-      });
-    },
-
     /**
      * Get login history for current user
      */
@@ -222,79 +232,6 @@ export function createSecurityNamespace(client: ApiClient) {
       }>(ENDPOINTS.SETTINGS.security.activeSessionsCount, {
         method: "GET",
       });
-    },
-  };
-}
-
-// ============================================================================
-// PREFERENCES
-// ============================================================================
-
-export interface UserPreferences {
-  id: string;
-  user_id: string;
-  theme: string;
-  date_format: string;
-  time_format: string;
-  items_per_page: number;
-  sidebar_collapsed: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export function createPreferencesNamespace(client: ApiClient) {
-  return {
-    /**
-     * Get user preferences
-     */
-    get: async () => {
-      const response = await client.request<
-        Partial<UserPreferences> & {
-          data?: { preferences?: Partial<UserPreferences> };
-          preferences?: Partial<UserPreferences>;
-        }
-      >(ENDPOINTS.SETTINGS.preferences.get, {
-        method: "GET",
-      });
-
-      // Handle the consistent format: { success, data: { message, preferences } }
-      // client.request already unwraps result.data if success: true.
-      // So response is typically { message, preferences }
-
-      let data = response;
-
-      // Defensively check for nested data
-      if (data && typeof data === "object" && "data" in data && data.data) {
-        data = data.data;
-      }
-
-      // Look for preferences property
-      if (data && typeof data === "object" && "preferences" in data) {
-        return data.preferences as UserPreferences;
-      }
-
-      // If none of the above, assume data is the preferences object itself
-      return data as UserPreferences;
-    },
-
-    /**
-     * Update user preferences
-     */
-    update: async (preferences: {
-      theme?: "system" | "light" | "dark";
-      date_format?: "iso" | "us" | "eu" | "relative";
-      time_format?: "24h" | "12h";
-      items_per_page?: number;
-      sidebar_collapsed?: boolean;
-    }) => {
-      return client.request<UserPreferences>(
-        ENDPOINTS.SETTINGS.preferences.update,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(preferences),
-        },
-      );
     },
   };
 }

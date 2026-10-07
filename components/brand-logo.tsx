@@ -1,71 +1,74 @@
-"use client";
+/**
+ * The brand's logo, drawn as the marketing site draws it (rext-site-v3 `Logo.tsx`, the founder's
+ * files of 2026-10-06; task B9d): a nib in two pieces and the name "Rext AI". The name and the
+ * nib's lower piece are the foreground ink; the upper piece is lime, the accent's on-fill colour,
+ * so the brand and the obsidian accent are one pair (DECISIONS 98b948d). The drawing is hidden
+ * from screen readers, which hear the name.
+ */
+import { cn } from "@/lib/utils";
 
-import Image from "next/image";
-import { useTheme } from "@/providers/theme-provider";
-import { useEffect, useState } from "react";
+/** The drawing's own size: its ratio sets the logo's width. */
+const VIEWBOX = { width: 154, height: 27 };
+/** The nib alone spans the drawing's first 27.3 units; the name starts at 34.5. */
+const MARK_WIDTH = 27.3;
 
-interface BrandLogoProps {
-  className?: string;
-  width?: number;
-  height?: number;
-  priority?: boolean;
-  variant?: "white" | "black";
+const NIB_LOWER =
+  "M8.74361 15.0583L6.2302 10.7998L2.39543 11.7757C1.41481 12.0254 0.70717 12.8792 0.644052 13.8892L0.00462004 24.1228C-0.0370101 24.7899 0.205354 25.4052 0.624346 25.8556L5.54194 20.9153C5.35281 20.6335 5.2425 20.2944 5.2425 19.9295C5.2425 18.9512 6.03562 18.158 7.01394 18.158C7.25725 18.158 7.48911 18.2071 7.70013 18.2958L8.78281 16.0988C8.94606 15.7676 8.93129 15.3764 8.74361 15.0583ZM5.99788 21.3808C6.28554 21.5825 6.63593 21.7009 7.01394 21.7009C7.99231 21.7009 8.78539 20.9079 8.78539 19.9295C8.78539 19.7477 8.75805 19.5724 8.70718 19.4073L11.1068 18.415C11.4318 18.2806 11.8016 18.3106 12.1008 18.4955L16.265 21.069L15.0735 24.8625L15.0433 24.9518C14.7151 25.8662 13.8507 26.4849 12.8727 26.4945L2.3542 26.5988L2.22818 26.5968C1.69233 26.5737 1.20491 26.3698 0.823553 26.046L5.99788 21.3808Z";
+const NIB_UPPER =
+  "M6.50059 8.70119L7.27412 9.15722L11.2926 11.5263C11.6859 11.7582 12.1754 11.7529 12.5637 11.5127L13.6462 10.843L19.2748 7.36065L15.8924 13.0979L15.2669 14.1589C15.035 14.5522 15.0403 15.0417 15.2805 15.43L17.7105 19.3577L18.3244 20.35L22.2772 24.2442C23.7965 25.7409 26.3706 24.7257 26.4592 22.5949L27.2918 2.56009C27.3491 1.17817 26.2584 0.0304817 24.8927 0L24.7598 0.000611791L4.23244 0.632456C2.07071 0.699101 1.04199 3.32338 2.58272 4.8413L6.50059 8.70119Z";
+const NAME =
+  "M67.3848 6.02051C69.4246 6.02051 71.159 6.50008 72.5869 7.45996C74.0148 8.41989 75.0709 9.76995 75.7549 11.5098C76.4389 13.2498 76.6796 15.2964 76.4756 17.6484H62.8262C62.9792 18.8149 63.3401 19.763 63.9111 20.4922C64.7031 21.4761 65.861 21.9677 67.3848 21.9678C68.3448 21.9678 69.1676 21.7579 69.8516 21.3379C70.5353 20.918 71.0571 20.3122 71.417 19.5205L76.3135 20.9238C75.5815 22.6998 74.4229 24.0805 72.8389 25.0645C71.267 26.0483 69.5447 26.54 67.6729 26.54C65.681 26.54 63.9233 26.1137 62.3994 25.2617C60.8874 24.3977 59.699 23.2158 58.835 21.7158C57.9831 20.2039 57.5576 18.476 57.5576 16.5322C57.5576 14.4083 57.9774 12.5603 58.8174 10.9883C59.6574 9.41632 60.8151 8.19798 62.291 7.33398C63.7669 6.45805 65.4649 6.02058 67.3848 6.02051ZM106.17 6.56055H111.785V10.3398H106.17V17.4678C106.17 18.2238 106.175 18.9085 106.188 19.5205C106.212 20.1202 106.338 20.6001 106.565 20.96C106.997 21.644 107.688 22.0162 108.636 22.0762C109.584 22.1361 110.633 22.0876 111.785 21.9316V26C110.441 26.2519 109.121 26.3602 107.825 26.3242C106.541 26.3002 105.389 26.0782 104.369 25.6582C103.361 25.2262 102.593 24.5358 102.065 23.5879C101.586 22.7 101.334 21.7996 101.31 20.8877C101.286 19.9638 101.273 18.9197 101.273 17.7559V10.3398H97.9619V6.56055H101.273V1.16016H106.17V6.56055ZM45.4639 0.0800781C45.7158 0.0800781 46.0518 0.0922239 46.4717 0.116211C46.9036 0.128211 47.288 0.163641 47.624 0.223633C49.1719 0.463619 50.4379 0.973984 51.4219 1.75391C52.4179 2.53391 53.1502 3.51805 53.6182 4.70605C54.0862 5.88205 54.3203 7.19645 54.3203 8.64844C54.3203 10.8203 53.7801 12.6806 52.7002 14.2285C52.0334 15.1768 51.1324 15.8994 49.999 16.3994L54.6797 26H49.1357L44.8789 17.2158H39.416V26H34.5195V0.0800781H45.4639ZM87.4688 12.3203L91.2842 6.56055H97.0439L90.2402 16.1719L97.2246 26H91.4648L87.4688 20.0244L83.4365 26H77.6768L84.624 16.1719L77.8203 6.56055H83.5801L87.4688 12.3203ZM144.673 26H139.633L137.966 20.5996H128.206L126.564 26H121.524L129.444 0.0800781H136.753L144.673 26ZM153.155 26H148.259V0.0800781H153.155V26ZM129.596 16.0283H136.555L133.048 4.66602L129.596 16.0283ZM67.6016 10.2686C65.9336 10.2686 64.7031 10.7779 63.9111 11.7979C63.4638 12.3759 63.1449 13.114 62.9541 14.0117H71.5205C71.3774 12.9605 71.098 12.1504 70.6797 11.582C70.0557 10.7061 69.0294 10.2686 67.6016 10.2686ZM39.416 12.6445H45.248C45.5 12.6445 45.7762 12.6324 46.0762 12.6084C46.3761 12.5844 46.6523 12.5359 46.9043 12.4639C47.5639 12.2839 48.0737 11.9842 48.4336 11.5645C48.7936 11.1325 49.0399 10.6576 49.1719 10.1416C49.3158 9.61389 49.3877 9.11621 49.3877 8.64844C49.3877 8.18044 49.3159 7.68787 49.1719 7.17188C49.0399 6.64397 48.7935 6.16994 48.4336 5.75C48.0736 5.31819 47.564 5.012 46.9043 4.83203C46.6523 4.76005 46.3761 4.71248 46.0762 4.68848C45.7762 4.66448 45.5 4.65234 45.248 4.65234H39.416V12.6445Z";
+
+function Nib() {
+  return (
+    <>
+      <path
+        d={NIB_LOWER}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        className="fill-foreground"
+      />
+      <path d={NIB_UPPER} className="fill-(--accent-on-fill)" />
+    </>
+  );
 }
 
-export function BrandLogo({
-  className = "",
-  width = 120,
-  height = 40,
-  priority = false,
-  variant,
-}: BrandLogoProps) {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+interface LogoProps {
+  /** Sizes the drawing; give it a height (`h-6`), the width follows the ratio. */
+  className?: string;
+}
 
-  // Avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    // Return a placeholder with the same dimensions to prevent layout shift
-    return (
-      <div
-        className={className}
-        style={{ width: `${width}px`, height: `${height}px` }}
-      />
-    );
-  }
-
-  // Select the appropriate logo
-  // rext_logo_dark.svg is WHITE (Use in Dark Mode or when variant is white)
-  // rext_logo_light.svg is BLACK (Use in Light Mode or when variant is black)
-  let logoSrc = "/logos/rext_logo_light.svg"; // Default to black/light mode
-
-  if (variant === "white") {
-    // White logo (for dark backgrounds)
-    logoSrc = "/logos/rext_logo_dark.svg";
-  } else if (variant === "black") {
-    // Black logo (for light backgrounds)
-    logoSrc = "/logos/rext_logo_light.svg";
-  } else {
-    // Theme based
-    // Dark mode -> White logo (rext_logo_dark.svg)
-    // Light mode -> Black logo (rext_logo_light.svg)
-    logoSrc =
-      resolvedTheme === "dark"
-        ? "/logos/rext_logo_dark.svg"
-        : "/logos/rext_logo_light.svg";
-  }
-
+/** The full logo: the nib and the name. */
+export function Logo({ className }: LogoProps) {
   return (
-    <Image
-      src={logoSrc}
-      alt="Rext Logo"
-      width={width}
-      height={height}
-      className={`object-contain ${className}`}
-      priority={priority}
-    />
+    <span className="inline-flex shrink-0">
+      <svg
+        viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
+        aria-hidden="true"
+        focusable="false"
+        className={cn("block h-6 w-auto", className)}
+      >
+        <Nib />
+        <path d={NAME} className="fill-foreground" />
+      </svg>
+      <span className="sr-only">Rext AI</span>
+    </span>
+  );
+}
+
+/** The nib alone, for the collapsed sidebar and the phone's top bar. */
+export function LogoMark({ className }: LogoProps) {
+  return (
+    <span className="inline-flex shrink-0">
+      <svg
+        viewBox={`0 0 ${MARK_WIDTH} ${VIEWBOX.height}`}
+        aria-hidden="true"
+        focusable="false"
+        className={cn("block size-5", className)}
+      >
+        <Nib />
+      </svg>
+      <span className="sr-only">Rext AI</span>
+    </span>
   );
 }

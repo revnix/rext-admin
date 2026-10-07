@@ -7,7 +7,8 @@ import { workspaceQueries } from "@/lib/query-keys";
 import { EmailFailuresTable } from "@/components/admin/email/email-failures-table";
 import { EmailOverviewKPIs } from "@/components/admin/email/email-overview-kpis";
 import { EmailPerformanceTable } from "@/components/admin/email/email-performance-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
+import { Button } from "@/components/ui/button";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import {
   Card,
@@ -17,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorPage } from "@/components/ui/error-states";
+import { Notice } from "@/components/ui/notice";
 
 // Lazy load EmailVolumeChart component (uses recharts - heavy library ~400KB)
 const EmailVolumeChart = dynamic(
@@ -174,17 +175,32 @@ export default function EmailAnalyticsPage() {
 
   if (overviewError) {
     return (
-      <ErrorPage
-        title="Failed to load email analytics"
-        message="Overview data could not be loaded. Please try again."
-        retry={() => void refetchOverview()}
-      />
+      <ListPage
+        title="Email Analytics"
+        description="Monitor email delivery, engagement, and performance"
+      >
+        <Notice
+          tone="danger"
+          title="Failed to load email analytics"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void refetchOverview()}
+            >
+              Try again
+            </Button>
+          }
+        >
+          Overview data could not be loaded. Please try again.
+        </Notice>
+      </ListPage>
     );
   }
 
   return (
     <AdminGuard>
-      <PageLayout
+      <ListPage
         title="Email Analytics"
         description="Monitor email delivery, engagement, and performance"
         actions={
@@ -286,10 +302,10 @@ export default function EmailAnalyticsPage() {
                           <div
                             className={`h-full transition-all ${
                               calculateHealthScore(overviewData) >= 90
-                                ? "bg-green-500"
+                                ? "bg-success-600"
                                 : calculateHealthScore(overviewData) >= 70
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
+                                  ? "bg-warning-600"
+                                  : "bg-danger-600"
                             }`}
                             style={{
                               width: `${calculateHealthScore(overviewData)}%`,
@@ -318,7 +334,7 @@ export default function EmailAnalyticsPage() {
             </TabsContent>
           </Tabs>
         </div>
-      </PageLayout>
+      </ListPage>
     </AdminGuard>
   );
 }

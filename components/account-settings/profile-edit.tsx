@@ -1,57 +1,71 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FieldController } from "@/components/forms/field-controller";
+import { FormSection, FormShell } from "@/components/forms/form-shell";
+import { useSavedStatus } from "@/components/forms/use-saved-status";
+import { useZodForm } from "@/components/forms/use-zod-form";
+import { SettingsGroup } from "@/components/settings/settings-group";
+import { TimezoneSelect } from "@/components/settings/timezone-select";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
+import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
+import { logger } from "@/lib/logger";
 import { profileQueries } from "@/lib/query-keys";
 import {
   AVATAR_ACCEPT_ATTRIBUTE,
   type ProfileFormData,
+  profileSchema,
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
-import { getAvatarErrorMessage } from "@/lib/error-messages/api-user-messages";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { logger } from "@/lib/logger";
+import type { UserProfile } from "@/types/profile";
+import { initials } from "@/lib/initials";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
   if (!avatarUrl) return null;
   if (avatarUrl.startsWith("http")) return avatarUrl;
-
   const baseUrl = resolveApiBaseUrl();
-
   return `${baseUrl}${avatarUrl}`;
 };
 
-const profileSchema = z.object({
-  full_name: z.string().min(1, "Full name is required").max(100),
-  display_name: z.string().max(100).optional(),
-  bio: z.string().max(500).optional(),
-  language: z.string().optional(),
-  timezone: z.string().optional(),
-});
+function toFormValues(profile?: UserProfile): ProfileFormData {
+  return {
+    full_name: profile?.full_name ?? "",
+    display_name: profile?.display_name ?? "",
+    bio: profile?.bio ?? "",
+    timezone: profile?.timezone || "UTC",
+  };
+}
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+/** The time it is now in a timezone, for the field's help text ("14:05"). */
+function timeIn(timeZone: string) {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    }).format(new Date());
+  } catch {
+    return null;
+  }
+}
 
+/**
+ * Account settings, Profile: the photo (saved on its own), then the name, display name, email, bio
+ * and timezone on the field set. The timezone is the one scheduled publishing reads; the language
+ * isn't asked, since nothing reads it.
+ */
 export function ProfileEdit() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,59 +73,39 @@ export function ProfileEdit() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const log = logger.forComponent("ProfileEdit");
 
-  // Fetch profile
-  const {
-    data: profile,
-    isLoading,
-    error,
-  } = useQuery({
-    ...profileQueries.detail(),
-    throwOnError: true,
-  });
+  const { data: profile, isLoading, error } = useQuery(profileQueries.detail());
 
-  // Initialize form with default values to prevent uncontrolled component warnings
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      full_name: "",
-      display_name: "",
-      bio: "",
-      language: "",
-      timezone: "",
-    },
-    values: profile
-      ? {
-          full_name: profile.full_name || "",
-          display_name: profile.display_name || "",
-          bio: profile.bio || "",
-          language: profile.language || "en",
-          timezone: profile.timezone || "UTC",
-        }
-      : undefined,
-  });
+  const form = useZodForm(profileSchema, { defaultValues: toFormValues() });
+  const { status, markSaved } = useSavedStatus(form.formState.isDirty);
 
-  // Update profile mutation
-  const updateMutation = useMutation({
-    mutationFn: (data: ProfileFormData) =>
-      apiClient.profile.update({
+  // Follow the profile as it loads and refetches, keeping what the person is typing.
+  useEffect(() => {
+    if (profile) form.reset(toFormValues(profile), { keepDirtyValues: true });
+  }, [profile, form]);
+
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      await apiClient.profile.update({
         full_name: data.full_name,
+        // An emptied display name is cleared, not left as it was.
         display_name: data.display_name,
         bio: data.bio,
-        language: data.language,
         timezone: data.timezone,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+      });
+      markSaved();
+      form.reset(data);
+      await queryClient.invalidateQueries({
         queryKey: profileQueries.detail().queryKey,
       });
-      toast.success("Profile updated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to update profile", {
-        description: error.message,
+    } catch (saveError) {
+      form.setError("root.server", {
+        message:
+          saveError instanceof Error
+            ? saveError.message
+            : "Your profile couldn't be saved. Try again.",
       });
-    },
-  });
+    }
+  };
 
   // Upload avatar mutation
   const uploadAvatarMutation = useMutation({
@@ -120,13 +114,13 @@ export function ProfileEdit() {
       queryClient.invalidateQueries({
         queryKey: profileQueries.detail().queryKey,
       });
-      toast.success("Avatar uploaded successfully");
+      toast.success("Your photo was saved");
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: unknown) => {
-      log.error("ProfileEdit avatar upload failed", error);
-      toast.error(getAvatarErrorMessage(error, "upload"));
+    onError: (uploadError: unknown) => {
+      log.error("ProfileEdit avatar upload failed", uploadError);
+      toast.error(getAvatarErrorMessage(uploadError, "upload"));
     },
   });
 
@@ -137,19 +131,28 @@ export function ProfileEdit() {
       queryClient.invalidateQueries({
         queryKey: profileQueries.detail().queryKey,
       });
-      toast.success("Avatar removed successfully");
+      toast.success("Your photo was removed");
       setAvatarPreview(null);
       setAvatarFile(null);
     },
-    onError: (error: unknown) => {
-      log.error("ProfileEdit avatar delete failed", error);
-      toast.error(getAvatarErrorMessage(error, "delete"));
+    onError: (deleteError: unknown) => {
+      log.error("ProfileEdit avatar delete failed", deleteError);
+      toast.error(getAvatarErrorMessage(deleteError, "delete"));
     },
   });
 
-  const onSubmit = (data: ProfileFormData) => {
-    updateMutation.mutate(data);
-  };
+  const resendMutation = useMutation({
+    mutationFn: () =>
+      apiClient.profile.resendVerification(profile?.email ?? ""),
+    onSuccess: (data) => {
+      toast.success(data.message || "The verification email is on its way");
+    },
+    onError: (resendError) => {
+      toast.error(
+        resendError.message || "The verification email couldn't be sent",
+      );
+    },
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -187,272 +190,175 @@ export function ProfileEdit() {
   };
 
   if (isLoading) {
+    return <Skeleton className="h-96 w-full" />;
+  }
+
+  if (error || !profile) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <Notice tone="danger" title="Your profile didn't load">
+        Refresh the page to try again.
+      </Notice>
     );
   }
 
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          Failed to load profile. Please try again.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  const currentAvatar = avatarPreview || getAvatarUrl(profile?.avatar_url);
+  const currentAvatar = avatarPreview || getAvatarUrl(profile.avatar_url);
+  const serverError = form.formState.errors.root?.server?.message;
+  const timezone = form.watch("timezone");
+  const now = timezone ? timeIn(timezone) : null;
 
   return (
-    <div className="space-y-6">
-      {/* Avatar Section */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-medium">Profile Picture</h3>
-          <p className="text-sm text-muted-foreground">
-            Upload a profile picture to personalize your account
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-          {/* Avatar Display */}
-          <div className="relative h-24 w-24 shrink-0 rounded-full overflow-hidden bg-muted mx-auto sm:mx-0">
+    <div className="flex flex-col gap-8">
+      <SettingsGroup
+        title="Photo"
+        description="Shown beside your name to the people you work with. JPG, PNG or GIF, up to 5 MB."
+      >
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-surface-inset">
             {currentAvatar ? (
               <img
                 src={currentAvatar}
-                alt="Profile"
-                className="object-cover w-full h-full"
+                alt=""
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted-foreground">
-                {profile?.full_name?.[0]}
+              <div className="flex h-full w-full items-center justify-center text-section text-muted-foreground">
+                {initials(profile.full_name)}
               </div>
             )}
           </div>
 
-          {/* Avatar Actions */}
-          <div className="flex flex-col gap-2 w-full sm:w-auto">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={AVATAR_ACCEPT_ATTRIBUTE}
-              onChange={handleFileChange}
-              className="hidden"
-            />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={AVATAR_ACCEPT_ATTRIBUTE}
+            onChange={handleFileChange}
+            className="hidden"
+            aria-label="Choose a photo"
+          />
 
-            {avatarPreview ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleUploadAvatar}
-                  disabled={uploadAvatarMutation.isPending}
-                >
-                  {uploadAvatarMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Save Avatar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCancelAvatarChange}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose Image
-                </Button>
-                {profile?.avatar_url && (
-                  <ConfirmationDialog
-                    title="Remove Avatar"
-                    description="Are you sure you want to remove your avatar?"
-                    confirmText="Remove"
-                    variant="destructive"
-                    onConfirm={() => deleteAvatarMutation.mutate()}
-                  >
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={deleteAvatarMutation.isPending}
-                    >
-                      {deleteAvatarMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <X className="mr-2 h-4 w-4" />
-                          Remove
-                        </>
-                      )}
-                    </Button>
-                  </ConfirmationDialog>
+          {avatarPreview ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={handleUploadAvatar}
+                disabled={uploadAvatarMutation.isPending}
+              >
+                {uploadAvatarMutation.isPending ? (
+                  <Loader2 className="animate-spin" aria-hidden />
+                ) : (
+                  <Upload aria-hidden />
                 )}
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground">
-              JPG, PNG or GIF. Max size 5MB.
-            </p>
-          </div>
+                Save photo
+              </Button>
+              <Button variant="ghost" onClick={handleCancelAvatarChange}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload aria-hidden />
+                Choose a photo
+              </Button>
+              {profile.avatar_url && (
+                <ConfirmationDialog
+                  title="Remove your photo?"
+                  description="Your initial is shown in its place."
+                  confirmText="Remove photo"
+                  variant="destructive"
+                  onConfirm={() => deleteAvatarMutation.mutate()}
+                >
+                  <Button
+                    variant="ghost"
+                    disabled={deleteAvatarMutation.isPending}
+                  >
+                    {deleteAvatarMutation.isPending ? (
+                      <Loader2 className="animate-spin" aria-hidden />
+                    ) : (
+                      <X aria-hidden />
+                    )}
+                    Remove
+                  </Button>
+                </ConfirmationDialog>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </SettingsGroup>
 
-      {/* Profile Form */}
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
+      <FormShell
+        form={form}
+        onSubmit={onSubmit}
+        submitLabel="Save profile"
+        status={status}
+      >
+        {serverError && (
+          <Notice tone="danger" title="Your profile wasn't saved">
+            {serverError}
+          </Notice>
+        )}
+        <FormSection title="Profile">
+          <FieldController
             control={form.control}
             name="full_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
+            label="Full name"
+            required
+          >
+            {(field) => <Input {...field} autoComplete="name" />}
+          </FieldController>
+          <FieldController
             control={form.control}
             name="display_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Name (Optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Johnny" {...field} />
-                </FormControl>
-                <FormDescription>
-                  This is how your name will be displayed across the app
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
+            label="Display name"
+            description="What the app calls you, if not your full name."
+          >
+            {(field) => <Input {...field} autoComplete="nickname" />}
+          </FieldController>
+          <Field>
+            <FieldLabel htmlFor="profile-email">Email</FieldLabel>
+            <Input id="profile-email" value={profile.email} readOnly disabled />
+            <FieldDescription>
+              {profile.email_verified ? (
+                "Verified. It's the address you sign in with."
+              ) : (
+                <>
+                  Not verified yet.{" "}
+                  <button
+                    type="button"
+                    className="font-medium text-foreground underline underline-offset-4 disabled:opacity-50"
+                    onClick={() => resendMutation.mutate()}
+                    disabled={resendMutation.isPending}
+                  >
+                    Send the verification email again
+                  </button>
+                </>
+              )}
+            </FieldDescription>
+          </Field>
+          <FieldController
             control={form.control}
             name="bio"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bio</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Tell us about yourself..."
-                    className="resize-none"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Brief description for your profile (max 500 characters)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-4 md:grid-cols-1">
-            {/* <FormField
-              control={form.control}
-              name="language"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Language</FormLabel>
-                    <Select
-                      key={`language-${field.value}`}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {PROFILE_LANGUAGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            /> */}
-
-            {/* <FormField
-              control={form.control}
-              name="timezone"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>Timezone</FormLabel>
-                    <Select
-                      key={`timezone-${field.value}`}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {PROFILE_TIMEZONE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            /> */}
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={updateMutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            label="Bio"
+            maxLength={500}
+          >
+            {(field) => <Textarea {...field} rows={3} />}
+          </FieldController>
+          <FieldController
+            control={form.control}
+            name="timezone"
+            label="Timezone"
+            description={
+              now
+                ? `Scheduled articles publish in this timezone. It's ${now} there now.`
+                : "Scheduled articles publish in this timezone."
+            }
+          >
+            {(field) => <TimezoneSelect {...field} />}
+          </FieldController>
+        </FormSection>
+      </FormShell>
     </div>
   );
 }

@@ -8,20 +8,12 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
-     * Backend API base URL for topic generation service
+     * Backend API base URL
      *
      * @example "http://127.0.0.1:2024" (development)
-     * @example "https://api.wrext.com" (production)
+     * @example "https://api.rext.ai" (production)
      */
     BACKEND_API_URL: string;
-
-    /**
-     * Content API authentication key for backend requests
-     * Must have NEXT_PUBLIC_ prefix to be available in browser
-     *
-     * @example "supersecretapikey"
-     */
-    NEXT_PUBLIC_CONTENT_API_KEY: string;
 
     /**
      * Node.js environment mode

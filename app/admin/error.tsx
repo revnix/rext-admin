@@ -12,11 +12,12 @@ export default function AdminError(props: {
   return (
     <RouteError
       {...props}
-      title="Admin Panel Error"
+      title="Admin panel error"
       logContext="AdminError"
       navigationType="link"
       navigationLink="/"
       navigationLabel="Dashboard"
+      layout="container"
     />
   );
 }

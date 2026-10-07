@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { inSeriesOrder } from "@/lib/charts";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -81,28 +82,28 @@ export function UsageCharts({
       value: stats?.user_activity.active_users || 0,
       description: `${stats?.user_activity.new_users || 0} new users`,
       icon: Users,
-      color: "text-blue-600",
+      color: "text-foreground",
     },
     {
       title: "Content Created",
       value: stats?.content_generation.total || 0,
       description: `${stats?.content_generation.successful || 0} successful`,
       icon: FileText,
-      color: "text-green-600",
+      color: "text-foreground",
     },
     {
       title: "API Calls",
       value: stats?.api_calls.total || 0,
       description: "Total requests",
       icon: Activity,
-      color: "text-purple-600",
+      color: "text-foreground",
     },
     {
       title: "Workspaces",
       value: stats?.user_activity.new_workspaces || 0,
       description: "New workspaces",
       icon: Layers,
-      color: "text-orange-600",
+      color: "text-foreground",
     },
   ];
 
@@ -170,26 +171,26 @@ export function UsageCharts({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
-              <Legend />
+              <Tooltip itemSorter={inSeriesOrder} />
+              <Legend itemSorter={null} />
               <Line
                 type="monotone"
                 dataKey="content_created"
-                stroke="#10b981"
+                stroke="var(--primary)"
                 strokeWidth={2}
                 name="Content Created"
               />
               <Line
                 type="monotone"
                 dataKey="active_users"
-                stroke="#3b82f6"
+                stroke="var(--neutral-700)"
                 strokeWidth={2}
                 name="Active Users"
               />
               <Line
                 type="monotone"
                 dataKey="workspaces_created"
-                stroke="#f59e0b"
+                stroke="var(--neutral-400)"
                 strokeWidth={2}
                 name="Workspaces"
               />
@@ -218,7 +219,7 @@ export function UsageCharts({
                   />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#8b5cf6" name="Requests" />
+                  <Bar dataKey="count" fill="var(--primary)" name="Requests" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -244,13 +245,13 @@ export function UsageCharts({
                 <span className="text-sm text-muted-foreground">
                   Successful
                 </span>
-                <span className="text-sm font-medium text-green-600">
+                <span className="text-sm font-medium text-success-600">
                   {stats?.content_generation.successful || 0}
                 </span>
               </div>
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-600"
+                  className="h-full bg-success-600"
                   style={{
                     width: `${((stats?.content_generation.successful || 0) / (stats?.content_generation.total || 1)) * 100}%`,
                   }}
@@ -260,13 +261,13 @@ export function UsageCharts({
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Failed</span>
-                <span className="text-sm font-medium text-red-600">
+                <span className="text-sm font-medium text-danger-600">
                   {stats?.content_generation.failed || 0}
                 </span>
               </div>
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-red-600"
+                  className="h-full bg-danger-600"
                   style={{
                     width: `${((stats?.content_generation.failed || 0) / (stats?.content_generation.total || 1)) * 100}%`,
                   }}

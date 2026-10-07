@@ -16,6 +16,9 @@ const apiNotificationSchema = z.object({
   status: z.enum(NOTIFICATION_STATUS_VALUES),
   is_read: z.boolean(),
   created_at: z.string(),
+  workspace_id: z.string().nullish(),
+  payload: z.record(z.string(), z.unknown()).nullish(),
+  action_url: z.string().nullish(),
 });
 
 export function parseApiNotifications(payload: unknown): ApiNotification[] {

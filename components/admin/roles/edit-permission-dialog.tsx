@@ -107,7 +107,7 @@ export function EditPermissionDialog({
 
           <div className="space-y-4 py-4">
             {/* Current Name */}
-            <div className="rounded-lg border p-3 bg-muted/50">
+            <div className="rounded-md border p-3 bg-muted/50">
               <span className="text-sm font-medium">
                 Permission Identifier:{" "}
               </span>
@@ -123,7 +123,7 @@ export function EditPermissionDialog({
                 disabled
                 className="bg-muted opacity-80 cursor-not-allowed"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Resource identifier is immutable after creation.
               </p>
             </div>
@@ -137,7 +137,7 @@ export function EditPermissionDialog({
                 disabled
                 className="bg-muted opacity-80 cursor-not-allowed"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Action identifier is immutable after creation.
               </p>
             </div>

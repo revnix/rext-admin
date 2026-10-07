@@ -58,6 +58,8 @@ const NOTIFICATIONS_CACHE_TTL_MS = 15_000;
 
 export async function fetchNotifications(options?: {
   force?: boolean;
+  /** Throw on a failed read instead of returning nothing (the drawer's Try again needs to know). */
+  throwOnError?: boolean;
 }): Promise<OperationNotification[]> {
   if (
     !options?.force &&
@@ -107,6 +109,18 @@ export async function fetchNotifications(options?: {
         type: mapApiNotificationToUiType(n.status, n.type),
         read: n.is_read,
         createdAt: n.created_at,
+        // The drawer's icon (by `source`, the backend's kind) and link (`href`, or a finished
+        // article's page from `contentId` in its workspace).
+        metadata: {
+          source: n.type,
+          category: n.category,
+          href: n.action_url ?? undefined,
+          contentId:
+            typeof n.payload?.content_id === "string"
+              ? n.payload.content_id
+              : undefined,
+          workspaceId: n.workspace_id ?? undefined,
+        },
       }));
 
       cachedNotifications = mapped;
@@ -116,6 +130,7 @@ export async function fetchNotifications(options?: {
       const normalizedError =
         err instanceof Error ? err : new Error(String(err));
       log.error("Error fetching notifications", { error: normalizedError });
+      if (options?.throwOnError) throw normalizedError;
       return []; // Return empty instead of throwing to avoid breaking the layout
     } finally {
       inFlightNotificationsFetch = null;

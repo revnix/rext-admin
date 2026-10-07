@@ -1,6 +1,6 @@
 "use client";
 
-import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { Avatar as AvatarPrimitive } from "radix-ui";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -60,10 +60,10 @@ function AvatarStatus({
   status?: "online" | "busy" | "away" | "offline";
 }) {
   const statusColor = {
-    online: "bg-green-500",
-    busy: "bg-red-500",
-    away: "bg-orange-500",
-    offline: "bg-gray-500",
+    online: "bg-success-600",
+    busy: "bg-danger-600",
+    away: "bg-warning-600",
+    offline: "bg-muted-foreground",
   };
 
   if (!status) return null;

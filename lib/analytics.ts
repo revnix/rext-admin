@@ -7,6 +7,7 @@ type AnalyticsEvent =
   // Auth events
   | "user_signed_in"
   | "user_signed_up"
+  | "oauth_started"
   | "email_verified"
   // Onboarding events
   | "onboarding_empty_dashboard_view"

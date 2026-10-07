@@ -27,12 +27,15 @@ import {
   InvoiceSchema,
   SubscriptionListResponseSchema,
 } from "@/schemas/subscription-schemas";
+import { withBalance } from "@/lib/billing/credits";
 import { ensureLemonSqueezy } from "@/lib/lemonsqueezy/get-client";
 import {
   getPurchaseState,
   type PurchaseState,
 } from "@/hooks/use-subscription-sync";
 import { log } from "@/lib/logger";
+import { session } from "@/lib/storage";
+import { CHECKOUT_BASELINE_KEY } from "@/lib/storage-keys";
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
 
 /**
@@ -150,6 +153,8 @@ interface SubscriptionStore {
    * Patch current_credits in place (from live SSE update — no round-trip)
    */
   patchCredits: (currentCredits: number) => void;
+  /** A balance read elsewhere (the checkout's confirmation): the meters show it at once. */
+  setCredits: (credits: CreditBalance) => void;
 
   /**
    * Fetch available subscription plans
@@ -486,18 +491,34 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         return request;
       },
 
+      setCredits: (credits: CreditBalance) => {
+        // The person's own scope: the checkout pages are outside any workspace.
+        creditsFetchedAt.set("", Date.now());
+        set({ credits });
+      },
+
       patchCredits: (currentCredits: number) => {
         const prev = useSubscriptionStore.getState().credits;
         if (!prev) return;
-        const articlesRemaining =
-          prev.credits_per_month !== null
-            ? Math.floor(currentCredits / 15)
-            : null;
+        // The buttons' balance-after and the gate follow the live balance, on the backend's costs.
+        const next = withBalance(prev, currentCredits);
+        // The backend spends a bonus before the plan's credits, and puts a refund back into
+        // the plan's: split the change the same way, so the meters that set the plan's own
+        // credits against its allowance stay right between fetches.
+        const spent = prev.current_credits - currentCredits;
+        const bonusLeft = prev.bonus?.credits ?? 0;
+        const fromBonus = spent > 0 ? Math.min(bonusLeft, spent) : 0;
+        const monthly =
+          prev.monthly_credits === undefined
+            ? undefined
+            : Math.max(0, prev.monthly_credits - (spent - fromBonus));
         set({
           credits: {
-            ...prev,
-            current_credits: currentCredits,
-            articles_remaining: articlesRemaining,
+            ...next,
+            monthly_credits: monthly,
+            bonus: prev.bonus
+              ? { ...prev.bonus, credits: bonusLeft - fromBonus }
+              : prev.bonus,
           },
         });
       },
@@ -715,9 +736,13 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
         // Ensure lemon.js script state setup
         ensureLemonSqueezy();
 
-        // Snapshot current subscription so post-payment sync can verify purchase
+        // Snapshot current subscription so post-payment sync can verify purchase.
+        // Kept for the tab too: Lemon Squeezy may return to /checkout/success with
+        // a full page load, which starts the store afresh.
+        const checkoutBaseline = getPurchaseState(get().subscription);
+        session.setJSON(CHECKOUT_BASELINE_KEY, checkoutBaseline);
         set({
-          checkoutBaseline: getPurchaseState(get().subscription),
+          checkoutBaseline,
           checkoutDialogOpen: true,
           checkoutUrl: checkoutUrl,
         });

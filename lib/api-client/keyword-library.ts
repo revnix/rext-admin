@@ -8,16 +8,14 @@ import { ENDPOINTS } from "./endpoints";
 export function createKeywordLibraryNamespace(client: ApiClient) {
   return {
     /**
-     * Delete a keyword from the library
+     * Removes one keyword, by its store key, from the caller's own library in a workspace. The
+     * backend takes the user from the token and also deletes the search results kept beside the
+     * item (E24). A key that isn't in the caller's library answers 404.
      */
-    delete: async (key: string, namespace: string[]) => {
+    delete: async (workspaceId: string, key: string) => {
       return client.request<{ deleted_key: string }>(
-        ENDPOINTS.KEYWORD_LIBRARY.base,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key, namespace }),
-        },
+        `${ENDPOINTS.KEYWORD_LIBRARY.items(workspaceId)}?key=${encodeURIComponent(key)}`,
+        { method: "DELETE" },
       );
     },
   };

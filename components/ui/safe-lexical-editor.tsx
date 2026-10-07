@@ -12,35 +12,9 @@ interface SafeLexicalEditorProps {
   onRequestEdit?: () => void;
 }
 
-function LexicalEditorFallback({
-  error,
-  resetError,
-}: {
-  error: Error;
-  resetError: () => void;
-  errorId: string;
-  requestId?: string;
-}) {
-  return (
-    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 space-y-2">
-      <p className="text-sm font-medium text-destructive">
-        Editor failed to load
-      </p>
-      <p className="text-xs text-muted-foreground">{error.message}</p>
-      <button
-        type="button"
-        onClick={resetError}
-        className="text-xs font-medium underline underline-offset-2"
-      >
-        Retry editor
-      </button>
-    </div>
-  );
-}
-
 export function SafeLexicalEditor(props: SafeLexicalEditorProps) {
   return (
-    <ErrorBoundary fallback={LexicalEditorFallback}>
+    <ErrorBoundary title="The editor didn't load">
       <LexicalEditor {...props} />
     </ErrorBoundary>
   );

@@ -1,118 +1,27 @@
 // Content management types
-import type { SchemaMarkup } from "./generate-content";
+import type { ContentChecklist, SchemaMarkup } from "./generate-content";
 
-export type ContentStatus =
-  | "draft"
-  | "generating"
-  | "generated"
-  | "failed"
-  | "published"
-  | "scheduled"
-  | "review"
-  | "cancelled"
-  | "trashed"
-  | "deleted";
+/**
+ * The states a content row can hold: the backend's, from its transition table
+ * (rext-backend `content_service.py` `_validate_status_transition`). The library
+ * lists all but the trash (`CONTENT_LIST_STATUSES`).
+ */
+export const CONTENT_STATUSES = [
+  "draft",
+  "generating",
+  "ready",
+  "review",
+  "scheduled",
+  "published",
+  "failed",
+  "archived",
+  "trashed",
+  "deleted",
+] as const;
+
+export type ContentStatus = (typeof CONTENT_STATUSES)[number];
 
 export type WordPressPostStatus = "publish" | "draft" | "pending";
-
-export interface ContentStatusInfo {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: string;
-  description: string;
-}
-
-export const CONTENT_STATUS_CONFIG: Record<ContentStatus, ContentStatusInfo> = {
-  draft: {
-    label: "Draft",
-    color: "text-gray-700",
-    bgColor: "bg-gray-100",
-    borderColor: "border-gray-200",
-    icon: "Edit3",
-    description: "Content is being created or edited",
-  },
-  generating: {
-    label: "Generating",
-    color: "text-blue-700",
-    bgColor: "bg-blue-100",
-    borderColor: "border-blue-200",
-    icon: "Loader2",
-    description: "AI is generating the content",
-  },
-  generated: {
-    label: "Generated",
-    color: "text-green-700",
-    bgColor: "bg-green-100",
-    borderColor: "border-green-200",
-    icon: "CheckCircle",
-    description: "Content has been generated and is ready for review",
-  },
-  failed: {
-    label: "Failed",
-    color: "text-red-700",
-    bgColor: "bg-red-100",
-    borderColor: "border-red-200",
-    icon: "AlertCircle",
-    description: "Content generation failed",
-  },
-  published: {
-    label: "Published",
-    color: "text-green-700",
-    bgColor: "bg-green-100",
-    borderColor: "border-green-200",
-    icon: "Globe",
-    description: "Content is live and published",
-  },
-  scheduled: {
-    label: "Scheduled",
-    color: "text-purple-700",
-    bgColor: "bg-purple-100",
-    borderColor: "border-purple-200",
-    icon: "Calendar",
-    description: "Content is scheduled for future publication",
-  },
-  review: {
-    label: "Review",
-    color: "text-orange-700",
-    bgColor: "bg-orange-100",
-    borderColor: "border-orange-200",
-    icon: "Eye",
-    description: "Content is under human review",
-  },
-  cancelled: {
-    label: "Cancelled",
-    color: "text-gray-700",
-    bgColor: "bg-gray-100",
-    borderColor: "border-gray-200",
-    icon: "X",
-    description: "Content generation was cancelled",
-  },
-  trashed: {
-    label: "Trashed",
-    color: "text-amber-700",
-    bgColor: "bg-amber-100",
-    borderColor: "border-amber-200",
-    icon: "Trash2",
-    description: "Content has been moved to trash",
-  },
-  deleted: {
-    label: "Deleted",
-    color: "text-red-700",
-    bgColor: "bg-red-100",
-    borderColor: "border-red-200",
-    icon: "Trash2",
-    description: "Content has been permanently deleted",
-  },
-};
-
-export const STATUS_FILTER_OPTIONS = Object.keys(CONTENT_STATUS_CONFIG).map(
-  (status) => ({
-    value: status,
-    label: CONTENT_STATUS_CONFIG[status as ContentStatus].label,
-  }),
-);
 
 // ============================================================================
 // API Request/Response Types
@@ -178,7 +87,6 @@ export interface CreateContentRequest {
   status?: ContentStatus;
   content_language?: string;
   content_format?: string;
-  topic_id?: string;
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
   images_data?: Record<string, unknown>;
@@ -200,7 +108,6 @@ export interface UpdateContentRequest {
   status?: ContentStatus;
   content_language?: string;
   assigned_to_user_id?: string;
-  topic_id?: string;
   langgraph_thread_id?: string; // LangGraph workflow thread ID for content generation tracking
   metadata?: ContentMetadataSchema;
   seo_data?: Omit<ContentSEODataSchema, "content_seo_score" | "eeat_data">;
@@ -237,8 +144,9 @@ export interface ContentItem {
   category?: string;
 
   // Relations
-  topic_id?: string;
   seo_data?: ContentSEODataSchema;
+  /** The author persona chosen in the outline step; null when none was. */
+  persona_id?: string | null;
   content_metadata?: ContentMetadataSchema;
 
   // Flow-generated structured data
@@ -256,6 +164,9 @@ export interface ContentItem {
 
   // CMS sync results per site
   publishing_results?: PublishingResult[];
+
+  // What the dashboard's checklist shows beside the article (detail responses only)
+  checklist?: ContentChecklist | null;
 
   // Timestamps
   created_at: string;
@@ -302,4 +213,6 @@ export interface CalendarEntry {
 export interface CalendarResponse {
   calendar: Record<string, CalendarEntry[]>;
   total_items: number;
+  /** The account's timezone, the one the days are counted in (UTC from a backend before D9). */
+  timezone?: string;
 }

@@ -32,8 +32,7 @@ interface WelcomeData {
  * Provider for workspace welcome modal
  *
  * Shows a celebration modal when user first visits a workspace
- * after accepting an invitation.  This appears BEFORE the invited
- * user onboarding, providing immediate positive feedback.
+ * after accepting an invitation.
  *
  * The welcome data is stored in sessionStorage by the invitation
  * acceptance flow and consumed here.
@@ -104,12 +103,6 @@ export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
     setWelcomeData(null);
   };
 
-  const handleStartTour = () => {
-    handleClose();
-    // The invited user onboarding provider will pick this up
-    // No additional action needed as it's already set to show
-  };
-
   if (!welcomeData) {
     return <>{children}</>;
   }
@@ -131,7 +124,6 @@ export function WorkspaceWelcomeGate({ children }: WorkspaceWelcomeGateProps) {
           inviterName={welcomeData.inviterName}
           roleName={welcomeData.roleName}
           rolePermissions={welcomeData.rolePermissions}
-          onStartTour={handleStartTour}
         />
       </ErrorBoundary>
     </>

@@ -1,15 +1,8 @@
-import { RouteLoading } from "@/components/ui/route-loading";
+import { PageSkeleton } from "@/components/layouts";
 
 /**
  * Admin subscriptions page loading state
  */
 export default function SubscriptionsLoading() {
-  return (
-    <RouteLoading
-      variant="table"
-      rows={12}
-      columns={8}
-      title="Subscription Analytics"
-    />
-  );
+  return <PageSkeleton rows={12} stats={4} />;
 }

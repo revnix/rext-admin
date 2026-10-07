@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
       ]}
       requireAll={false}
       fallback={
-        <PageLayout title="Access Denied" description="Admin access required">
+        <ListPage title="Access Denied" description="Admin access required">
           <Card className="border-destructive">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2">
@@ -143,10 +143,10 @@ export default function AdminDashboardPage() {
               </Button>
             </CardContent>
           </Card>
-        </PageLayout>
+        </ListPage>
       }
     >
-      <PageLayout
+      <ListPage
         title="Administration"
         description="Manage users, roles, and system settings"
       >
@@ -159,8 +159,8 @@ export default function AdminDashboardPage() {
                   <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                     <CardHeader>
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Icon className="h-6 w-6 text-primary" />
+                        <div className="p-2 rounded-md bg-muted">
+                          <Icon className="h-6 w-6 text-foreground" />
                         </div>
                         <CardTitle className="text-xl">{card.title}</CardTitle>
                       </div>
@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
                 </p>
                 {user?.permissions && user.permissions.length > 0 && (
                   <details className="mt-4">
-                    <summary className="cursor-pointer text-primary hover:underline">
+                    <summary className="cursor-pointer link">
                       View all permissions
                     </summary>
                     <ul className="mt-2 space-y-1 pl-4">
@@ -214,19 +214,20 @@ export default function AdminDashboardPage() {
           {(!user?.role ||
             !user?.permissions ||
             user.permissions.length === 0) && (
-            <Card className="border-yellow-200 bg-yellow-50/50">
+            <Card className="border-border bg-muted/40">
               <CardHeader>
-                <CardTitle className="text-yellow-800">
+                <CardTitle className="text-foreground">
                   <Users className="inline h-5 w-5 mr-2" />
                   Backend Integration Required
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-yellow-800">
+              <CardContent className="text-sm text-foreground">
                 <p>
                   The admin features will be fully functional once the backend
                   includes{" "}
-                  <code className="bg-yellow-100 px-1 rounded">role</code> and{" "}
-                  <code className="bg-yellow-100 px-1 rounded">
+                  <code className="bg-surface-inset px-1 rounded-md">role</code>{" "}
+                  and{" "}
+                  <code className="bg-surface-inset px-1 rounded-md">
                     permissions
                   </code>{" "}
                   in the JWT token during login.
@@ -240,7 +241,7 @@ export default function AdminDashboardPage() {
             </Card>
           )}
         </div>
-      </PageLayout>
+      </ListPage>
     </PermissionGuard>
   );
 }

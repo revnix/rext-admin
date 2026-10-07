@@ -1,24 +1,20 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Calendar,
-  Clock,
-  Copy,
-  Mail,
-  MailCheck,
-  MailX,
-  RefreshCw,
-  Send,
-  XCircle,
-} from "lucide-react";
+import { Copy, RefreshCw, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { DataTable } from "@/components/data-table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+} from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { apiClient } from "@/lib/api-client";
-import type { Column, RowAction } from "@/types/data-table";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { cn } from "@/lib/utils";
 
 interface WorkspaceInvitationsPanelProps {
   workspaceId: string;
@@ -38,18 +34,84 @@ interface Invitation {
   role_name?: string;
 }
 
-interface InvitationData extends Record<string, unknown> {
-  id: string;
-  email: string;
-  role_name: string;
-  status: string;
-  created_at: string;
-  expires_at: string;
-  expired: boolean;
-  expiration_text: string;
-  status_variant: "default" | "secondary" | "outline" | "destructive";
-  status_icon: React.ReactNode;
+const isExpired = (invitation: Invitation) =>
+  new Date(invitation.expires_at) < new Date();
+
+/** What the invitation is now: an expired one reads Expired whatever its stored status. */
+function statusOf(invitation: Invitation): {
+  label: string;
+  variant: BadgeProps["variant"];
+} {
+  if (isExpired(invitation)) return { label: "Expired", variant: "neutral" };
+  switch (invitation.status.toLowerCase()) {
+    case "pending":
+      return { label: "Pending", variant: "warning" };
+    case "accepted":
+      return { label: "Accepted", variant: "success" };
+    case "revoked":
+      return { label: "Revoked", variant: "neutral" };
+    default:
+      return { label: invitation.status, variant: "neutral" };
+  }
 }
+
+function expiresIn(invitation: Invitation) {
+  const days = Math.ceil(
+    (new Date(invitation.expires_at).getTime() - Date.now()) /
+      (1000 * 60 * 60 * 24),
+  );
+  if (days < 0) return "Expired";
+  if (days === 0) return "Expires today";
+  if (days === 1) return "Expires tomorrow";
+  return `Expires in ${days} days`;
+}
+
+const column = createDataTableColumnHelper<Invitation>();
+
+const columns = column.columns([
+  column.accessor("email", {
+    header: "Email",
+    cell: ({ row, getValue }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{getValue()}</p>
+        <p className="truncate text-muted-foreground">
+          {row.original.role_name || "Unknown role"}
+        </p>
+      </div>
+    ),
+  }),
+  column.accessor((invitation) => statusOf(invitation).label, {
+    id: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = statusOf(row.original);
+      return <Badge variant={status.variant}>{status.label}</Badge>;
+    },
+    enableGlobalFilter: false,
+  }),
+  column.accessor((invitation) => Date.parse(invitation.created_at) || 0, {
+    id: "created_at",
+    header: "Sent",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(row.original.created_at),
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((invitation) => Date.parse(invitation.expires_at) || 0, {
+    id: "expires_at",
+    header: "Expiration",
+    meta: { align: "end" },
+    cell: ({ row }) => (
+      <span className={cn(isExpired(row.original) && "text-destructive")}>
+        {expiresIn(row.original)}
+      </span>
+    ),
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+]);
+
+const NO_INVITATIONS: Invitation[] = [];
 
 export function WorkspaceInvitationsPanel({
   workspaceId,
@@ -57,11 +119,13 @@ export function WorkspaceInvitationsPanel({
   canRevoke = false,
 }: WorkspaceInvitationsPanelProps) {
   const queryClient = useQueryClient();
+  const { confirm, ConfirmationComponent } = useConfirmation();
 
-  // Fetch sent invitations
+  // The backend returns every sent invitation at once, so the table searches and sorts them here.
   const {
     data: invitationsResponse,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -69,8 +133,8 @@ export function WorkspaceInvitationsPanel({
     queryFn: () => apiClient.invitations.listSent(workspaceId),
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
-
-  const invitations = invitationsResponse?.invitations || [];
+  const invitations: Invitation[] =
+    invitationsResponse?.invitations ?? NO_INVITATIONS;
 
   // Revoke invitation mutation
   const revokeInvitationMutation = useMutation({
@@ -87,10 +151,6 @@ export function WorkspaceInvitationsPanel({
     },
   });
 
-  const handleRevokeInvitation = async (invitationId: string) => {
-    await revokeInvitationMutation.mutateAsync(invitationId);
-  };
-
   // Resend invitation mutation
   const resendInvitationMutation = useMutation({
     mutationFn: (invitationId: string) =>
@@ -106,273 +166,119 @@ export function WorkspaceInvitationsPanel({
     },
   });
 
-  const handleResendInvitation = async (invitationId: string) => {
-    await resendInvitationMutation.mutateAsync(invitationId);
-  };
-
-  // Copy invitation link
-  const handleCopyInvitationLink = (invitation: Invitation) => {
-    // Note: We don't have the token in the list response
-    // For security, tokens are not returned in list endpoints
-    // We'll copy the email instead and show a helpful message
+  // We don't have the token in the list response (list endpoints never return
+  // it), so this copies the email, and Resend sends a fresh link.
+  const copyEmail = (invitation: Invitation) => {
     navigator.clipboard.writeText(invitation.email);
     toast.info(
       "Email copied! Use 'Resend' to send a new invitation with a fresh link.",
     );
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
+  const revoke = async (invitation: Invitation) => {
+    const confirmed = await confirm({
+      title: "Revoke this invitation?",
+      description: `${invitation.email} will no longer be able to use its link.`,
+      confirmText: "Revoke",
+      variant: "destructive",
     });
+    if (confirmed) await revokeInvitationMutation.mutateAsync(invitation.id);
   };
 
-  // Check if invitation is expired
-  const isExpired = (expiresAt: string) => {
-    return new Date(expiresAt) < new Date();
+  // Resend and revoke are gated on member.invite, the permission their backend routes enforce.
+  const rowActions = (invitation: Invitation): DataTableRowAction[] => {
+    const open =
+      invitation.status.toLowerCase() === "pending" && !isExpired(invitation)
+        ? false
+        : "Only a pending invitation can change";
+    return [
+      ...(canResend
+        ? [
+            {
+              label: "Resend",
+              icon: Send,
+              disabled: open,
+              onSelect: () => resendInvitationMutation.mutate(invitation.id),
+            },
+          ]
+        : []),
+      {
+        label: "Copy email",
+        icon: Copy,
+        onSelect: () => copyEmail(invitation),
+      },
+      ...(canRevoke
+        ? [
+            {
+              label: "Revoke",
+              icon: XCircle,
+              destructive: true,
+              disabled: open,
+              onSelect: () => void revoke(invitation),
+            },
+          ]
+        : []),
+    ];
   };
-
-  // Get time until expiration
-  const getTimeUntilExpiration = (expiresAt: string) => {
-    const now = new Date();
-    const expiration = new Date(expiresAt);
-    const diffMs = expiration.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return "Expired";
-    if (diffDays === 0) return "Expires today";
-    if (diffDays === 1) return "Expires tomorrow";
-    return `Expires in ${diffDays} days`;
-  };
-
-  // Get status badge variant and icon
-  const getStatusDisplay = (invitation: Invitation) => {
-    if (isExpired(invitation.expires_at)) {
-      return {
-        variant: "outline" as const,
-        label: "Expired",
-        icon: <Clock className="h-3 w-3" />,
-      };
-    }
-
-    switch (invitation.status.toLowerCase()) {
-      case "pending":
-        return {
-          variant: "secondary" as const,
-          label: "Pending",
-          icon: <Send className="h-3 w-3" />,
-        };
-      case "accepted":
-        return {
-          variant: "default" as const,
-          label: "Accepted",
-          icon: <MailCheck className="h-3 w-3" />,
-        };
-      case "revoked":
-        return {
-          variant: "destructive" as const,
-          label: "Revoked",
-          icon: <MailX className="h-3 w-3" />,
-        };
-      default:
-        return {
-          variant: "secondary" as const,
-          label: invitation.status,
-          icon: <Mail className="h-3 w-3" />,
-        };
-    }
-  };
-
-  // Transform data for DataTable
-  const tableData: InvitationData[] = invitations.map(
-    (invitation: Invitation) => {
-      const statusDisplay = getStatusDisplay(invitation);
-      const expired = isExpired(invitation.expires_at);
-
-      return {
-        id: invitation.id,
-        email: invitation.email,
-        role_name: invitation.role_name || "Unknown Role",
-        status: statusDisplay.label,
-        created_at: formatDate(invitation.created_at),
-        expires_at: formatDate(invitation.expires_at),
-        expired,
-        expiration_text: getTimeUntilExpiration(invitation.expires_at),
-        status_variant: statusDisplay.variant,
-        status_icon: statusDisplay.icon,
-      };
-    },
-  );
-
-  // Define columns
-  const columns: Column<InvitationData>[] = [
-    {
-      key: "email",
-      header: "Email",
-      width: "300px",
-      cell: (value, row) => (
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Mail className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-medium truncate">{value as string}</p>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <span className="truncate">{row.role_name}</span>
-            </div>
-          </div>
-        </div>
-      ),
-      searchable: true,
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "120px",
-      cell: (value, row) => (
-        <Badge
-          variant={
-            row.status_variant as
-              | "default"
-              | "secondary"
-              | "outline"
-              | "destructive"
-          }
-          className="text-xs flex items-center gap-1 w-fit"
-        >
-          {row.status_icon}
-          {value as string}
-        </Badge>
-      ),
-    },
-    {
-      key: "created_at",
-      header: "Sent",
-      width: "150px",
-      cell: (value) => (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-26 xl:min-w-auto">
-          <Calendar className="h-3 w-3" />
-          <span>{value as string}</span>
-        </div>
-      ),
-    },
-    {
-      key: "expiration_text",
-      header: "Expiration",
-      width: "150px",
-      cell: (value, row) => (
-        <div
-          className={`flex items-center gap-1 text-sm min-w-30 xl:min-w-auto ${
-            row.expired ? "text-destructive" : "text-muted-foreground"
-          }`}
-        >
-          <Clock className="h-3 w-3" />
-          <span>{value as string}</span>
-        </div>
-      ),
-    },
-  ];
-
-  // Define row actions; resend/revoke are gated on member.invite, the
-  // permission their backend routes enforce.
-  const resendAction: RowAction<InvitationData> = {
-    label: "Resend",
-    icon: <Send className="h-4 w-4" />,
-    onClick: (row) => {
-      handleResendInvitation(row.id as string);
-    },
-    variant: "default",
-    disabled: (row) => {
-      const expired = row.expired as boolean;
-      const status = (row.status as string).toLowerCase();
-      return status !== "pending" || expired;
-    },
-  };
-  const copyEmailAction: RowAction<InvitationData> = {
-    label: "Copy Email",
-    icon: <Copy className="h-4 w-4" />,
-    onClick: (row) => {
-      const invitation = invitations.find(
-        (inv: Invitation) => inv.id === row.id,
-      );
-      if (invitation) {
-        handleCopyInvitationLink(invitation);
-      }
-    },
-    variant: "default",
-  };
-  const revokeAction: RowAction<InvitationData> = {
-    label: "Revoke",
-    icon: <XCircle className="h-4 w-4" />,
-    onClick: (row) => {
-      handleRevokeInvitation(row.id as string);
-    },
-    variant: "destructive",
-    requiresConfirmation: true,
-    confirmationTitle: "Revoke Invitation",
-    confirmationDescription:
-      "Are you sure you want to revoke this invitation? The recipient will no longer be able to use this link.",
-    disabled: (row) => {
-      const expired = row.expired as boolean;
-      const status = (row.status as string).toLowerCase();
-      return status !== "pending" || expired;
-    },
-  };
-  const rowActions: RowAction<InvitationData>[] = [
-    ...(canResend ? [resendAction] : []),
-    copyEmailAction,
-    ...(canRevoke ? [revokeAction] : []),
-  ];
-
-  const headerActions = (
-    <Button
-      variant="outline"
-      size="sm"
-      className="w-full sm:w-auto"
-      onClick={() => refetch()}
-      disabled={isLoading}
-    >
-      <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-    </Button>
-  );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-5 w-5" />
-            Sent Invitations
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="w-full lg:w-[68vw] xl:w-full">
-        <DataTable
-          columns={columns}
-          data={tableData}
-          isLoading={isLoading}
-          rowActions={rowActions}
-          emptyTitle="No invitations sent"
-          emptyDescription="Invitations you send will appear here"
-          emptyIcon={<Mail className="h-12 w-12" />}
-          emptyActions={[]}
-          searchPlaceholder="Search by email..."
-          searchFields={["email"]}
-          actions={headerActions}
-          pageSize={10}
-          pageSizeOptions={[10, 25, 50]}
-          tableId="workspace-invitations"
-        />
-
-        {error && (
-          <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-md text-sm text-destructive">
-            Failed to load invitations. Please try again.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <DataTable
+        caption="Sent invitations"
+        columns={columns}
+        data={invitations}
+        getRowId={(invitation) => invitation.id}
+        getRowLabel={(invitation) => invitation.email}
+        isLoading={isLoading}
+        error={
+          error ? (
+            <p className="rounded-(--card-radius) border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+              Failed to load invitations. Please try again.
+            </p>
+          ) : undefined
+        }
+        emptyState={
+          <EmptyState
+            title="No invitations sent"
+            description="Invitations you send will appear here."
+          />
+        }
+        search={{ placeholder: "Search by email" }}
+        actions={
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-9"
+            onClick={() => refetch()}
+            disabled={isLoading || isFetching}
+            aria-label="Refresh invitations"
+          >
+            <RefreshCw className={isFetching ? "animate-spin" : undefined} />
+          </Button>
+        }
+        rowActions={rowActions}
+        pageSizeOptions={[10, 25, 50]}
+        // Beside the members, in the same settings section: cards when they are.
+        cardsWhen="narrow"
+        renderCard={(invitation, { actions }) => {
+          const status = statusOf(invitation);
+          return (
+            <div className="flex items-start gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <p className="truncate font-medium text-foreground">
+                  {invitation.email}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                  <span>{expiresIn(invitation)}</span>
+                </div>
+              </div>
+              {actions}
+            </div>
+          );
+        }}
+      />
+      {ConfirmationComponent}
+    </>
   );
 }

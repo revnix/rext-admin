@@ -1,12 +1,40 @@
 import type { RunStreamEvent } from "@/types/generate-content";
 import { RunStreamEventSchema } from "@/schemas/sse-schemas";
+import { authenticatedFetch } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 
 const sseLogger = log.forComponent("sse-stream");
 
-export async function createThread(): Promise<string> {
-  const res = await fetch("/api/generate/threads", { method: "POST" });
-  if (!res.ok) throw new Error("Failed to create thread");
+/**
+ * A run's stream ended on an error the proxy route reported, with its code when the route gave one
+ * (`TOO_MANY_RUNS`: the backend refused to start the run).
+ */
+export class RunStreamError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "RunStreamError";
+  }
+}
+
+/**
+ * A new generation thread in the workspace. The backend refuses it unless the
+ * user may create content there; the error carries the server's words.
+ */
+export async function createThread(workspaceId: string): Promise<string> {
+  const res = await authenticatedFetch("/api/generate/threads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ workspace_id: workspaceId }),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(body?.error || "Failed to create thread");
+  }
   const json = await res.json();
   return json.data.thread_id;
 }
@@ -16,7 +44,7 @@ export async function* streamFromSSE(
   body: Record<string, unknown>,
   signal?: AbortSignal,
 ): AsyncGenerator<RunStreamEvent> {
-  const res = await fetch(url, {
+  const res = await authenticatedFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -60,7 +88,13 @@ export async function* streamFromSSE(
       // stream event: swallowing it as "malformed" is what makes a failed
       // resume look like a click that did nothing.
       const streamError = (parsed as { error?: unknown })?.error;
-      if (typeof streamError === "string") throw new Error(streamError);
+      if (typeof streamError === "string") {
+        const code = (parsed as { code?: unknown }).code;
+        throw new RunStreamError(
+          streamError,
+          typeof code === "string" ? code : undefined,
+        );
+      }
 
       const result = RunStreamEventSchema.safeParse(parsed);
 
@@ -78,9 +112,17 @@ export async function* streamFromSSE(
   }
 }
 
+// Words that must always render fully uppercase in node/tool labels.
+const UPPERCASE_WORDS = new Set(["seo", "serp", "eeat", "ai", "url", "llm"]);
+
 export function formatNodeName(name: string): string {
   return name
-    .split(/[_-]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((word) =>
+      UPPERCASE_WORDS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
     .join(" ");
 }

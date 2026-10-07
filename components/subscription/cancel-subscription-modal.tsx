@@ -1,9 +1,12 @@
 "use client";
 
-import { AlertCircle, AlertTriangle, Loader2, XCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, XCircle } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { subscriptionQueries } from "@/lib/query-keys";
+import { settingsRoutes } from "@/lib/routes";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { buildCancellationReason } from "@/lib/subscription/cancellation-feedback";
 
@@ -66,6 +71,12 @@ export function CancelSubscriptionModal({
   currentPeriodEnd,
 }: CancelSubscriptionModalProps) {
   const { cancelSubscription, fetchSubscription } = useSubscriptionStore();
+  // The refund rule, from the plan catalogue (rext-backend#824), in the refund dialog's words.
+  const { data: catalog } = useQuery({
+    ...subscriptionQueries.catalog(),
+    enabled: open,
+  });
+  const refund = catalog?.refund;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -169,22 +180,43 @@ export function CancelSubscriptionModal({
         <div className="flex-1 overflow-y-auto min-h-0 px-6 scrollbar-hide">
           <div className="space-y-4 py-4">
             {/* Warning Alert */}
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>What happens when you cancel:</strong>
-                <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-                  <li>
-                    {currentPeriodEnd
-                      ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
-                      : "Your access will end immediately"}
-                  </li>
-                  <li>All your data will be preserved for 14 days</li>
-                  <li>You can reactivate your subscription anytime</li>
-                  <li>No refunds for the current billing period</li>
-                </ul>
-              </AlertDescription>
-            </Alert>
+            <Notice tone="warning" title="What happens when you cancel">
+              <ul className="mt-1 list-inside list-disc space-y-1">
+                <li>
+                  {currentPeriodEnd
+                    ? `You'll have access until ${new Date(currentPeriodEnd).toLocaleDateString()}`
+                    : "Your access will end immediately"}
+                </li>
+                <li>All your data will be preserved for 14 days</li>
+                <li>You can reactivate your subscription anytime</li>
+                <li>
+                  {refund ? (
+                    <>
+                      {`Within ${refund.window_days} days of a payment, the whole payment comes back if fewer than ${refund.credit_limit} credits were used since it.`}{" "}
+                      Request it from{" "}
+                      <Link
+                        href={settingsRoutes.invoices as Route}
+                        className="font-medium text-foreground underline underline-offset-4"
+                      >
+                        Invoices
+                      </Link>
+                      .
+                    </>
+                  ) : (
+                    <>
+                      Refunds follow the{" "}
+                      <Link
+                        href={"/legal/refund-policy" as Route}
+                        className="font-medium text-foreground underline underline-offset-4"
+                      >
+                        refund policy
+                      </Link>
+                      .
+                    </>
+                  )}
+                </li>
+              </ul>
+            </Notice>
 
             {/* Feedback Section */}
             <div className="space-y-3">
@@ -224,7 +256,7 @@ export function CancelSubscriptionModal({
             </div>
 
             {/* Confirmation Checkbox */}
-            <div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
+            <div className="flex items-start space-x-2 p-4 bg-muted rounded-md">
               <Checkbox
                 id="confirm-cancel"
                 checked={confirmed}
@@ -245,12 +277,7 @@ export function CancelSubscriptionModal({
             </div>
 
             {/* Error Message */}
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            {error && <Notice tone="danger">{error}</Notice>}
           </div>
         </div>
 

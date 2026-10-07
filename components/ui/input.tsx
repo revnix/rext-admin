@@ -14,12 +14,12 @@ function Input({ className, type, error, success, ...props }: InputProps) {
         type={type}
         data-slot="input"
         className={cn(
-          "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 block h-11 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base transition-colors duration-200 outline-none text-ellipsis file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70 md:text-sm",
-          "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20",
+          "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground block h-11 w-full min-w-0 rounded-md border border-input bg-card px-3 py-1 text-base transition-colors duration-200 outline-none text-ellipsis file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-muted/50 disabled:opacity-70 md:text-sm",
+          "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20",
           "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
           error && "border-destructive focus-visible:ring-destructive/20",
           success &&
-            "border-green-500 focus-visible:border-green-500 focus-visible:ring-green-500/20",
+            "border-success-600 focus-visible:border-success-600 focus-visible:ring-success-600/20",
           className,
         )}
         {...props}

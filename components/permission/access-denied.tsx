@@ -132,7 +132,7 @@ export function AccessDenied({
 
       <CardHeader className="text-center pb-3">
         <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-          <AlertTriangle className="h-6 w-6 text-yellow-500" />
+          <AlertTriangle className="h-6 w-6 text-warning-600" />
           {getDefaultTitle()}
         </CardTitle>
         <CardDescription className="text-base">
@@ -143,11 +143,9 @@ export function AccessDenied({
       <CardContent className="space-y-4">
         {/* Attempted Route Context */}
         {attemptedRoute && (
-          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-3 rounded-md">
-            <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
-              You tried to access:
-            </p>
-            <p className="text-sm font-mono font-semibold text-amber-700 dark:text-amber-300">
+          <div className="bg-muted/40 border border-border p-3 rounded-md">
+            <p className="text-xs text-foreground mb-1">You tried to access:</p>
+            <p className="text-sm font-mono font-semibold text-muted-foreground">
               {attemptedRoute}
             </p>
           </div>
@@ -165,11 +163,9 @@ export function AccessDenied({
 
         {/* Role Hint */}
         {getRoleHint() && (
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-md">
-            <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
-              Who can access:
-            </p>
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+          <div className="bg-muted/40 border border-border p-3 rounded-md">
+            <p className="text-xs text-foreground mb-1">Who can access:</p>
+            <p className="text-sm font-semibold text-muted-foreground">
               {getRoleHint()}
             </p>
           </div>
@@ -177,7 +173,7 @@ export function AccessDenied({
 
         {/* Upgrade Prompt */}
         {showUpgrade && (
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 p-4 rounded-lg">
+          <div className="bg-muted/40 border border-border p-4 rounded-md">
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               <HelpCircle className="h-4 w-4" aria-hidden="true" />
               Need Access?

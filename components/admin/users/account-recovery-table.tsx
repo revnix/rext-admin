@@ -7,8 +7,7 @@ import {
   RecoveryReviewDialog,
   type RecoveryReviewAction,
 } from "@/components/admin/users/recovery-review-dialog";
-import { DataTable } from "@/components/data-table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -16,7 +15,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ErrorPage } from "@/components/ui/error-states";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+  useDataTableLocalState,
+} from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermission } from "@/hooks/use-permission";
 import { apiClient } from "@/lib/api-client";
@@ -24,24 +31,14 @@ import type {
   AccountRecoveryRequest,
   RecoveryRequestStatus,
 } from "@/lib/api-client/account-recovery";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import { USER_PERMISSIONS } from "@/lib/permissions";
-import type { Column, RowAction } from "@/types/data-table";
 
 interface AccountRecoveryTableProps {
   active: boolean;
 }
 
 type StatusFilter = RecoveryRequestStatus | "all";
-
-interface RecoveryRow extends Record<string, unknown> {
-  id: string;
-  email: string;
-  name: string;
-  status: RecoveryRequestStatus;
-  created_at: string | null;
-  reviewed_at: string | null;
-  reviewer: string | null;
-}
 
 type RecoveryDialogState =
   | { type: "closed" }
@@ -51,145 +48,122 @@ type RecoveryDialogState =
       action: RecoveryReviewAction;
     };
 
-function formatDate(dateStr?: string | null) {
-  if (!dateStr) return "—";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+const STATUS: Record<
+  RecoveryRequestStatus,
+  { variant: BadgeProps["variant"]; text: string }
+> = {
+  pending: { variant: "warning", text: "Pending" },
+  approved: { variant: "success", text: "Approved" },
+  rejected: { variant: "neutral", text: "Rejected" },
+};
 
-function statusBadge(status: RecoveryRequestStatus) {
-  const map: Record<
-    RecoveryRequestStatus,
-    {
-      variant: "default" | "secondary" | "destructive" | "outline";
-      text: string;
-    }
-  > = {
-    pending: { variant: "outline", text: "Pending" },
-    approved: { variant: "default", text: "Approved" },
-    rejected: { variant: "destructive", text: "Rejected" },
-  };
-  const cfg = map[status];
-  return <Badge variant={cfg.variant}>{cfg.text}</Badge>;
-}
+const requesterName = (r: AccountRecoveryRequest) =>
+  r.user?.display_name || r.user?.full_name || r.email;
+
+const column = createDataTableColumnHelper<AccountRecoveryRequest>();
+
+// The backend pages these requests and sorts them itself (newest first), so no column sorts.
+const columns = column.columns([
+  column.accessor(requesterName, {
+    id: "name",
+    header: "Requester",
+    cell: ({ row, getValue }) => (
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{getValue()}</p>
+        <p className="truncate text-muted-foreground">{row.original.email}</p>
+      </div>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => {
+      const status = STATUS[getValue()];
+      return <Badge variant={status.variant}>{status.text}</Badge>;
+    },
+    enableSorting: false,
+  }),
+  column.accessor("created_at", {
+    header: "Requested",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => dateFormat.short(getValue()) || UNKNOWN,
+    enableSorting: false,
+  }),
+  column.accessor("reviewed_at", {
+    header: "Reviewed",
+    meta: { align: "end", numeric: true },
+    cell: ({ row, getValue }) => {
+      const reviewer =
+        row.original.reviewed_by?.full_name || row.original.reviewed_by?.email;
+      return (
+        <div className="min-w-0">
+          <span className="block">
+            {dateFormat.short(getValue()) || UNKNOWN}
+          </span>
+          {reviewer && (
+            <span className="block truncate text-xs text-muted-foreground">
+              by {reviewer}
+            </span>
+          )}
+        </div>
+      );
+    },
+    enableSorting: false,
+  }),
+]);
+
+const NO_REQUESTS: AccountRecoveryRequest[] = [];
 
 export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const tableState = useDataTableLocalState({ pageSize: 10 });
+  const { pageIndex, pageSize } = tableState.pagination;
   const [dialogState, setDialogState] = useState<RecoveryDialogState>({
     type: "closed",
   });
 
   const canReview = usePermission(USER_PERMISSIONS.UPDATE);
 
+  // The server pages and filters this list: the table shows one page and its total.
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["admin-account-recovery", statusFilter, page, pageSize],
+    queryKey: ["admin-account-recovery", statusFilter, pageIndex + 1, pageSize],
     queryFn: () =>
       apiClient.accountRecovery.list({
         status: statusFilter,
-        page,
+        page: pageIndex + 1,
         per_page: pageSize,
       }),
     enabled: active,
   });
 
-  const requests = data?.requests ?? [];
+  const requests = data?.requests ?? NO_REQUESTS;
   const counts = data?.counts;
-  const findRequest = (id: string) => requests.find((r) => r.id === id) ?? null;
   const closeDialog = () => setDialogState({ type: "closed" });
 
-  const rows: RecoveryRow[] = requests.map((r) => ({
-    id: r.id,
-    email: r.email,
-    name: r.user?.display_name || r.user?.full_name || r.email,
-    status: r.status,
-    created_at: r.created_at,
-    reviewed_at: r.reviewed_at,
-    reviewer: r.reviewed_by?.full_name || r.reviewed_by?.email || null,
-  }));
-
-  const columns: Column<RecoveryRow>[] = [
-    {
-      key: "name",
-      header: "Requester",
-      cell: (value, row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{value as string}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {row.email}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: "110px",
-      cell: (value) => statusBadge(value as RecoveryRequestStatus),
-    },
-    {
-      key: "created_at",
-      header: "Requested",
-      width: "120px",
-      cell: (value) => (
-        <span className="text-xs text-muted-foreground">
-          {formatDate(value as string | null)}
-        </span>
-      ),
-    },
-    {
-      key: "reviewed_at",
-      header: "Reviewed",
-      width: "150px",
-      cell: (value, row) => (
-        <div className="min-w-0">
-          <span className="text-xs text-muted-foreground block">
-            {formatDate(value as string | null)}
-          </span>
-          {row.reviewer && (
-            <span className="text-[10px] text-muted-foreground/70 block truncate">
-              by {row.reviewer}
-            </span>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const rowActions: RowAction<RecoveryRow>[] = canReview
-    ? [
-        {
-          label: "Approve",
-          icon: <CheckCircle2 className="h-4 w-4" />,
-          primary: true,
-          disabled: (row: RecoveryRow) => row.status !== "pending",
-          onClick: (row: RecoveryRow) => {
-            const request = findRequest(row.id);
-            if (request)
-              setDialogState({ type: "review", request, action: "approve" });
-          },
-        },
-        {
-          label: "Reject",
-          icon: <XCircle className="h-4 w-4" />,
-          variant: "destructive" as const,
-          disabled: (row: RecoveryRow) => row.status !== "pending",
-          onClick: (row: RecoveryRow) => {
-            const request = findRequest(row.id);
-            if (request)
-              setDialogState({ type: "review", request, action: "reject" });
-          },
-        },
-      ]
-    : [];
+  const rowActions = (
+    request: AccountRecoveryRequest,
+  ): DataTableRowAction[] => {
+    if (!canReview) return [];
+    const decided =
+      request.status === "pending" ? false : "This request is already decided";
+    return [
+      {
+        label: "Approve",
+        icon: CheckCircle2,
+        disabled: decided,
+        onSelect: () =>
+          setDialogState({ type: "review", request, action: "approve" }),
+      },
+      {
+        label: "Reject",
+        icon: XCircle,
+        destructive: true,
+        disabled: decided,
+        onSelect: () =>
+          setDialogState({ type: "review", request, action: "reject" }),
+      },
+    ];
+  };
 
   const tabCount = (key: StatusFilter) => {
     if (!counts) return null;
@@ -199,11 +173,17 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
 
   if (error) {
     return (
-      <ErrorPage
+      <Notice
+        tone="danger"
         title="Failed to load recovery requests"
-        message="There was an error loading account recovery requests. Please try again."
-        retry={() => refetch()}
-      />
+        action={
+          <Button size="sm" variant="outline" onClick={() => void refetch()}>
+            Try again
+          </Button>
+        }
+      >
+        There was an error loading account recovery requests. Please try again.
+      </Notice>
     );
   }
 
@@ -222,7 +202,7 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
             value={statusFilter}
             onValueChange={(v) => {
               setStatusFilter(v as StatusFilter);
-              setPage(1);
+              tableState.onPaginationChange((p) => ({ ...p, pageIndex: 0 }));
             }}
           >
             <TabsList>
@@ -240,25 +220,39 @@ export function AccountRecoveryTable({ active }: AccountRecoveryTableProps) {
           </Tabs>
 
           <DataTable
+            caption="Account recovery requests"
             columns={columns}
-            data={rows}
+            data={requests}
+            getRowId={(request) => request.id}
+            getRowLabel={requesterName}
+            state={tableState}
+            manual={{ rowCount: data?.pagination?.total ?? 0 }}
             isLoading={isLoading}
+            surface="plain"
             rowActions={rowActions}
-            mobileCards
-            manualPagination
-            page={page}
-            totalCount={data?.pagination?.total ?? 0}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setPage(1);
-            }}
-            showSearch={false}
-            emptyTitle="No recovery requests"
-            emptyDescription="Nothing to review in this view."
-            pageSize={pageSize}
-            pageSizeOptions={[10, 25, 50, 100]}
-            tableId="admin-account-recovery"
+            emptyState={
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No recovery requests: nothing to review in this view.
+              </p>
+            }
+            renderCard={(request, { actions }) => (
+              <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <p className="truncate font-medium text-foreground">
+                    {requesterName(request)}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                    <Badge variant={STATUS[request.status].variant}>
+                      {STATUS[request.status].text}
+                    </Badge>
+                    <span className="num">
+                      {dateFormat.short(request.created_at) || UNKNOWN}
+                    </span>
+                  </div>
+                </div>
+                {actions}
+              </div>
+            )}
           />
         </CardContent>
       </Card>

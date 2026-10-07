@@ -5,15 +5,14 @@ To ensure clear boundaries and maintainable code, follow these import patterns f
 ## 1. Domain Barrel Imports
 Use grouped imports for stores within a specific functional domain:
 - `@/stores/workspace`
-- `@/stores/knowledge`
 
 ## 2. Direct Store Imports
 Import from the specific store file for standalone or independent stores:
 - `@/stores/auth-store`
 - `@/stores/permission-store`
 - `@/stores/subscription-store`
-- `@/stores/topic-builder-store`
 - `@/stores/notification-store`
+- `@/stores/generate-preferences-store`
 
 > [!IMPORTANT]
 > **Do not import from `@/stores` or `@/stores/index`.**

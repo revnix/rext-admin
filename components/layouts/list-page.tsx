@@ -1,65 +1,33 @@
-"use client";
-
 import type { ReactNode } from "react";
+import { PageBody, PageFrame } from "./page-frame";
+import { PageHeader, type PageHeaderProps } from "./page-header";
 
-interface ListPageProps {
-  title: string;
-  description?: string;
-  actions?: ReactNode;
-  filters?: ReactNode;
+export interface ListPageProps extends Omit<PageHeaderProps, "hidden"> {
+  /** Above the list: search, filters, the view toggle. */
+  toolbar?: ReactNode;
   children: ReactNode;
 }
 
 /**
- * Standard layout for list/table pages
- *
- * @example
- * ```tsx
- * <ListPage
- *   title="Content"
- *   description="Manage your content library"
- *   actions={
- *     <Button href="/content/new">
- *       <Plus className="mr-2 h-4 w-4" />
- *       Create Content
- *     </Button>
- *   }
- *   filters={
- *     <>
- *       <SearchInput />
- *       <FilterSelect />
- *     </>
- *   }
- * >
- *   <DataTable data={content} columns={columns} />
- * </ListPage>
- * ```
+ * A list of things: content, personas, keywords, members, invoices, logs (design/app-language.md §6).
+ * The header with its actions, an optional toolbar, then the table or the card grid, its empty state
+ * and its pagination as the children.
  */
-export function ListPage({
-  title,
-  description,
-  actions,
-  filters,
-  children,
-}: ListPageProps) {
+export function ListPage({ toolbar, children, ...header }: ListPageProps) {
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description && (
-            <p className="text-muted-foreground mt-1">{description}</p>
-          )}
-        </div>
-        {actions && <div className="flex gap-2">{actions}</div>}
-      </div>
-
-      {/* Filters */}
-      {filters && <div className="flex gap-4">{filters}</div>}
-
-      {/* Content */}
-      <div>{children}</div>
-    </div>
+    <PageFrame>
+      <PageHeader {...header} />
+      <PageBody className="flex flex-col gap-4">
+        {toolbar && (
+          <div
+            data-slot="list-toolbar"
+            className="flex flex-wrap items-center gap-2"
+          >
+            {toolbar}
+          </div>
+        )}
+        {children}
+      </PageBody>
+    </PageFrame>
   );
 }

@@ -1,138 +1,254 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
-import { PageLayout } from "@/components/page-layout";
-import { useWorkspace } from "@/providers/workspace-provider";
-import { workspaceRoutes } from "@/lib/routes";
-import { Button } from "@/components/ui/button";
-import { PersonaCard } from "@/components/personas/persona-card";
-import { PermissionGuard } from "@/components/permission/permission-guard";
-import type { Persona } from "@/types/workspace";
-import { PERSONA_PERMISSIONS } from "@/lib/permissions";
-import { useWorkspacePermission } from "@/hooks/use-permission";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import Link from "next/link";
-import { usePersonas } from "@/hooks/use-personas";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Route } from "next";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ListPage } from "@/components/layouts";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableRowAction,
+  UNKNOWN,
+  useDataTableUrlState,
+} from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkspacePermission } from "@/hooks/use-permission";
+import { useDeletePersona, usePersonas } from "@/hooks/use-personas";
+import { dateFormat } from "@/lib/formatters/date-formatters";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
+import { workspaceRoutes } from "@/lib/routes";
+import { personaListParams } from "@/lib/search-params/personas";
+import { useWorkspace } from "@/providers/workspace-provider";
+import type { Persona } from "@/types/workspace";
+import { initials } from "@/lib/initials";
 
-export default function PersonaForgePage() {
-  const { workspace, workspaceSlug, workspaceId } = useWorkspace();
-  const { data: personasData, isLoading } = usePersonas(workspace?.id || null);
-  const personas = personasData?.personas || [];
+type PersonaRow = Persona & { id: string };
 
-  const { isLoading: isPermLoading } = useWorkspacePermission(
-    PERSONA_PERMISSIONS.READ,
-    workspaceId,
+function PersonaCell({ persona }: { persona: PersonaRow }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <Avatar className="size-8 rounded-md">
+        <AvatarImage
+          src={persona.avatar_url || ""}
+          alt=""
+          className="object-cover"
+        />
+        <AvatarFallback className="rounded-md">
+          {initials(persona.name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{persona.name}</p>
+        {persona.full_name && persona.full_name !== persona.name && (
+          <p className="truncate text-muted-foreground">{persona.full_name}</p>
+        )}
+      </div>
+    </div>
   );
+}
+
+const column = createDataTableColumnHelper<PersonaRow>();
+const columns = column.columns([
+  // The search reads the name, the full name and the title; the cell shows the first two.
+  column.accessor(
+    (row) =>
+      [row.name, row.full_name, row.professional_title]
+        .filter(Boolean)
+        .join(" "),
+    {
+      id: "name",
+      header: "Persona",
+      cell: ({ row }) => <PersonaCell persona={row.original} />,
+      sortFn: "text",
+      enableHiding: false,
+    },
+  ),
+  column.accessor((row) => row.professional_title ?? "", {
+    id: "title",
+    header: "Title",
+    cell: ({ getValue }) => getValue() || UNKNOWN,
+    sortFn: "text",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((row) => row.article_count ?? -1, {
+    id: "articles",
+    header: "Articles",
+    meta: { align: "end", numeric: true },
+    // The backend counts them from rext-backend#818; until then the column says it doesn't know.
+    cell: ({ getValue }) => (getValue() >= 0 ? getValue() : UNKNOWN),
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+  column.accessor((row) => Date.parse(row.updated_at ?? "") || 0, {
+    id: "updated",
+    header: "Updated",
+    meta: { align: "end", numeric: true },
+    cell: ({ row }) => dateFormat.short(row.original.updated_at) || UNKNOWN,
+    sortFn: "basic",
+    enableGlobalFilter: false,
+  }),
+]);
+
+const NO_PERSONAS: PersonaRow[] = [];
+
+/**
+ * Personas (plans/app/D-pages.md §2.2): the workspace's author personas in the DataTable, the search,
+ * sort and page in the URL. A row opens the persona; its menu edits or deletes it.
+ */
+export default function PersonasPage() {
+  const { workspace, workspaceSlug, workspaceId } = useWorkspace();
+  const router = useRouter();
+  const tableState = useDataTableUrlState(personaListParams);
+  const { data, isLoading, error } = usePersonas(workspace?.id || null);
+  const deletePersona = useDeletePersona(workspace?.id || "");
+  // The row menu calls onSelect at once; a persona is deleted for good, so it asks first.
+  const { confirm, ConfirmationComponent } = useConfirmation();
+  const { hasPermission: canRead, isLoading: isPermissionLoading } =
+    useWorkspacePermission(PERSONA_PERMISSIONS.READ, workspaceId);
   const { hasPermission: canCreate } = useWorkspacePermission(
     PERSONA_PERMISSIONS.CREATE,
     workspaceId,
   );
+  const { hasPermission: canEdit } = useWorkspacePermission(
+    PERSONA_PERMISSIONS.UPDATE,
+    workspaceId,
+  );
+  const { hasPermission: canDelete } = useWorkspacePermission(
+    PERSONA_PERMISSIONS.DELETE,
+    workspaceId,
+  );
 
-  if (!workspace?.id || isPermLoading) {
+  const personas = (data?.personas.filter((p) => p.id) ??
+    NO_PERSONAS) as PersonaRow[];
+  const createHref = workspaceRoutes.persona_create(workspaceSlug) as Route;
+
+  const rowActions = (row: PersonaRow): DataTableRowAction[] => [
+    {
+      label: "Open",
+      icon: Eye,
+      href: workspaceRoutes.persona(workspaceSlug, row.id),
+    },
+    ...(canEdit
+      ? [
+          {
+            label: "Edit",
+            icon: Pencil,
+            href: workspaceRoutes.persona_edit(workspaceSlug, row.id),
+          },
+        ]
+      : []),
+    ...(canDelete
+      ? [
+          {
+            label: "Delete persona",
+            icon: Trash2,
+            destructive: true,
+            onSelect: async () => {
+              const confirmed = await confirm({
+                title: `Delete ${row.name}?`,
+                description: `It's deleted for good: a persona can't be restored. Articles written as ${row.name} keep their text and lose their author persona.`,
+                confirmText: "Delete persona",
+                cancelText: "Keep persona",
+                variant: "destructive",
+              });
+              if (confirmed) deletePersona.mutate(row.id);
+            },
+          },
+        ]
+      : []),
+  ];
+
+  const newPersona = canCreate ? (
+    <Button asChild>
+      <Link href={createHref}>
+        <Plus aria-hidden />
+        New persona
+      </Link>
+    </Button>
+  ) : null;
+
+  if (!workspace?.id || isPermissionLoading) {
     return (
-      <PageLayout title="Loading Permissions...">
-        <div className="space-y-4 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </PageLayout>
+      <ListPage title="Personas">
+        <Skeleton className="h-64 w-full" />
+      </ListPage>
     );
   }
 
   return (
-    <PageLayout
+    <ListPage
       title="Personas"
-      description={`${personas.length} personas created`}
-      fullWidth
-      actions={
-        canCreate ? (
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Link
-              className="w-full sm:w-auto"
-              href={workspaceRoutes.persona_create(workspaceSlug) as Route}
-            >
-              <Button className="w-full sm:w-auto">
-                <Plus size={16} className="mr-2" />
-                Create Persona
-              </Button>
-            </Link>
-          </div>
-        ) : null
-      }
+      description="The authors your articles are written as: their experience, their voice, who they write for."
+      actions={newPersona}
     >
-      <PermissionGuard
-        permission={PERSONA_PERMISSIONS.READ}
-        showLoading={false}
-        fallback={
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Access Denied</CardTitle>
-              <CardDescription>
-                You don't have permission to manage personas in this workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Required permission:{" "}
-                <code className="text-xs bg-muted px-1 rounded">
-                  persona.read
-                </code>
-              </p>
-            </CardContent>
-          </Card>
-        }
-      >
-        <div className="space-y-8 max-w-[1600px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {isLoading ? (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                Loading personas...
-              </div>
-            ) : (
-              personas
-                .filter((p) => p.id)
-                .map((persona) => (
-                  <PersonaCard
-                    key={persona.id}
-                    persona={persona as Persona & { id: string }}
-                  />
-                ))
-            )}
-
-            {/* Create New Placeholder — only shown when editor+ */}
-            {canCreate && (
+      {ConfirmationComponent}
+      {canRead ? (
+        <DataTable
+          caption="Personas"
+          columns={columns}
+          data={personas}
+          getRowId={(row) => row.id}
+          getRowLabel={(row) => row.name}
+          state={tableState}
+          isLoading={isLoading}
+          error={
+            error ? (
+              <Notice tone="danger" title="Personas didn't load">
+                Refresh the page to try again.
+              </Notice>
+            ) : undefined
+          }
+          emptyState={
+            <EmptyState
+              title="No personas yet"
+              description="A persona gives your articles an author with real experience and a voice of their own."
+              action={
+                canCreate
+                  ? { label: "New persona", href: createHref }
+                  : undefined
+              }
+            />
+          }
+          search={{ placeholder: "Search by name or title" }}
+          rowActions={rowActions}
+          onRowClick={(row) =>
+            router.push(workspaceRoutes.persona(workspaceSlug, row.id) as Route)
+          }
+          pageSizeOptions={[25, 50]}
+          renderCard={(row, { actions }) => (
+            <div className="flex items-start gap-3">
+              {/* A card is the row on a phone: tapping it opens the persona, as a row's click does. */}
               <Link
-                href={workspaceRoutes.persona_create(workspaceSlug) as Route}
-                className="contents"
+                href={workspaceRoutes.persona(workspaceSlug, row.id) as Route}
+                className="flex min-w-0 flex-1 flex-col gap-1"
               >
-                <Card className="border border-dashed border-border shadow-none hover:border-primary/50 hover:bg-accent/50 transition-all bg-transparent flex items-center justify-center min-h-[300px] cursor-pointer group rounded-2xl">
-                  <CardContent className="flex flex-col items-center justify-center text-center p-6 bg-transparent">
-                    <div className="h-14 w-14 rounded-2xl bg-card border border-border flex items-center justify-center mb-4 group-hover:scale-110 group-hover:border-primary/50 transition-all shadow-sm">
-                      <Plus
-                        className="text-muted-foreground group-hover:text-primary transition-colors"
-                        size={24}
-                      />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-1">
-                      Create New Persona
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Add a new author profile
-                    </p>
-                  </CardContent>
-                </Card>
+                <PersonaCell persona={row} />
+                <p className="text-muted-foreground">
+                  {[
+                    row.professional_title,
+                    row.article_count !== undefined
+                      ? `${row.article_count} article${row.article_count === 1 ? "" : "s"}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               </Link>
-            )}
-          </div>
-        </div>
-      </PermissionGuard>
-    </PageLayout>
+              {actions}
+            </div>
+          )}
+        />
+      ) : (
+        <Notice title="Personas are hidden from your role">
+          Ask the workspace's owner if you need to see them.
+        </Notice>
+      )}
+    </ListPage>
   );
 }

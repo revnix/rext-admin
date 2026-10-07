@@ -1,105 +1,84 @@
 "use client";
 
-import { ChevronLeft, ShieldX } from "lucide-react";
-import Link from "next/link";
-import { PageLayout } from "@/components/page-layout";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageLoader } from "@/components/ui/loading-states";
-import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
+import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
+import { FormPage, PageSkeleton } from "@/components/layouts";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Meter } from "@/components/ui/meter";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
-import { useRef } from "react";
+import { subscriptionQueries } from "@/lib/query-keys";
 
 /**
- * Create Workspace Page
- *
- * Multi-step wizard for comprehensive workspace creation including:
- * - Basic information collection
- * - URL analysis and content preview
- * - Brand voice extraction and processing
- * - Review and final workspace creation
- *
- * Features:
- * - Step-by-step guided workflow
- * - Progress indicator with milestone celebrations
- * - Real-time URL analysis and brand voice extraction
- * - Professional typeform-style UI
- * - Proper error handling and validation
+ * Creating a workspace (plans/app/D-pages.md §2.9): the plan's workspace count before the form,
+ * then the form and the analysis (WorkspaceCreateWizard). A plan already at its cap gets the
+ * way to a bigger one instead.
  */
 export default function CreateWorkspacePage() {
-  // Update page title
   usePageTitle(
-    "Create Workspace",
-    "Create a new workspace with guided setup for optimal content generation",
+    "Create workspace",
+    "A workspace for one website: its brand voice, personas and content",
   );
 
-  const { isLimitReached, isLoading: isLimitLoading } =
-    useResourceLimit("workspaces");
+  // The plan's workspaces, from GET /subscriptions/usage: the wizard refreshes it once the new
+  // workspace exists, so the count includes it during the analysis.
+  const usage = useQuery(subscriptionQueries.usage());
+  const workspaces = usage.data?.workspaces;
+  const used = workspaces?.used ?? null;
+  const max = workspaces && !workspaces.unlimited ? workspaces.limit : null;
+  const isLimitReached = used !== null && max !== null && used >= max;
   const initialLimitReached = useRef<boolean | null>(null);
 
-  // Only block entry based on the limit when this page first finishes loading.
-  // Creating the final allowed workspace updates usage while the wizard remains
-  // mounted; that update must not replace the in-progress wizard with this gate.
-  if (!isLimitLoading && initialLimitReached.current === null) {
+  // Only the first load decides the gate: creating the last allowed workspace updates the usage
+  // while the analysis runs, and that must not swap the run for this gate. If the usage can't be
+  // read, the form shows without a count; creating still checks the limit.
+  if (!usage.isPending && initialLimitReached.current === null) {
     initialLimitReached.current = isLimitReached;
   }
 
-  if (isLimitLoading) {
-    return <PageLoader message="Checking workspace limits..." />;
+  // The skeleton waits for the first decision only. A refetch afterwards (the wizard's, once the
+  // workspace exists, or a window refocus after a failed read) puts a query with no data back to
+  // pending, and must not unmount the wizard mid-analysis.
+  if (initialLimitReached.current === null) {
+    return <PageSkeleton layout="form" label="Checking workspace limits..." />;
   }
 
   if (initialLimitReached.current) {
     return (
-      <PageLayout
-        title="Workspace limit reached"
-        description="You have already reached the maximum number of workspaces allowed on your current plan."
+      <FormPage
+        title="Create workspace"
+        description="A workspace for one website: its brand voice, personas and content."
       >
-        <div className="max-w-2xl mx-auto py-12">
-          <Card className="p-8">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="rounded-full bg-destructive/10 p-4">
-                <ShieldX className="h-12 w-12 text-destructive" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold">Workspace limit reached</h2>
-                <p className="text-muted-foreground max-w-md">
-                  Your current plan has reached its workspace cap. Upgrade to
-                  create additional workspaces or manage your existing plan.
-                </p>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button asChild>
-                  <Link href="/subscription">View plans</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/">Back to Dashboard</Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </PageLayout>
+        <EmptyState
+          title="Workspace limit reached"
+          description={
+            max !== null
+              ? max === 1
+                ? "Your plan includes 1 workspace, and it's in use. A bigger plan adds more."
+                : `Your plan includes ${max} workspaces, and all of them are in use. A bigger plan adds more.`
+              : "Your plan's workspaces are all in use. A bigger plan adds more."
+          }
+          action={{ label: "View plans", href: "/pricing" }}
+        />
+      </FormPage>
     );
   }
 
   return (
-    <PageLayout
-      title="Create Workspace"
-      description="Set up a new workspace with guided configuration"
+    <FormPage
+      title="Create workspace"
+      description="A workspace for one website: its brand voice, personas and content."
     >
-      <div className="w-full mx-auto space-y-6">
-        {/* Back Navigation */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <ChevronLeft className="h-4 w-4" />
-          <Link href="/" className="hover:text-foreground transition-colors">
-            Back to Dashboard
-          </Link>
+      {used !== null && max !== null && (
+        <div className="mb-8 space-y-2">
+          <p className="num text-table text-muted-foreground">
+            {used} of {max} {max === 1 ? "workspace" : "workspaces"} on your
+            plan
+          </p>
+          <Meter value={used} max={max} low={used + 1 >= max} />
         </div>
-
-        {/* Multi-Step Wizard */}
-        <WorkspaceCreateWizard />
-      </div>
-    </PageLayout>
+      )}
+      <WorkspaceCreateWizard />
+    </FormPage>
   );
 }

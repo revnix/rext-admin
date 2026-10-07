@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Shield } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -115,17 +115,14 @@ export function DeleteRoleDialog({
 
         <div className="space-y-4 py-4">
           {isProtected ? (
-            <Alert variant="destructive">
-              <Shield className="h-4 w-4" />
-              <AlertDescription>
-                {role.is_system_role
-                  ? "This is a system role and cannot be deleted. System roles are essential for the application to function properly."
-                  : "This is a standard workspace role and cannot be deleted. It is required for workspace membership to function properly."}
-              </AlertDescription>
-            </Alert>
+            <Notice>
+              {role.is_system_role
+                ? "This is a system role and cannot be deleted. System roles are essential for the application to function properly."
+                : "This is a standard workspace role and cannot be deleted. It is required for workspace membership to function properly."}
+            </Notice>
           ) : (
             <>
-              <div className="rounded-lg border p-4 bg-muted/50">
+              <div className="rounded-md border p-4 bg-muted/50">
                 <div className="space-y-2">
                   <div>
                     <span className="text-sm font-medium">Role Name:</span>
@@ -166,14 +163,10 @@ export function DeleteRoleDialog({
                 </Select>
               </div>
 
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Warning:</strong> If this role is assigned to any
-                  users, the deletion will fail unless you pick a role above to
-                  reassign them to.
-                </AlertDescription>
-              </Alert>
+              <Notice tone="warning">
+                If this role is assigned to any users, the deletion will fail
+                unless you pick a role above to reassign them to.
+              </Notice>
             </>
           )}
         </div>

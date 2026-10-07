@@ -51,8 +51,12 @@ describe("PER-003 — display name is required and stands alone", () => {
     );
   });
 
-  it.each(["M", "te", "Mar"])("rejects the too-short name %s", (name) => {
-    expect(validatePersona({ name }).name).toContain("at least 4");
+  it.each(["M", "te"])("rejects the too-short name %s", (name) => {
+    expect(validatePersona({ name }).name).toContain("at least 3");
+  });
+
+  it("accepts a name at the minimum length", () => {
+    expect(validatePersona({ name: "Mar" }).name).toBeUndefined();
   });
 
   it("does not accept full_name in its place", () => {
@@ -65,20 +69,18 @@ describe("PER-003 — display name is required and stands alone", () => {
     ["name", "Mary-Jane O'Brien"],
     ["full_name", "Dr. Mary-Jane O'Brien"],
     ["name", "Anne Marie. "],
-  ] as const)(
-    "allows the supported name punctuation in %s",
-    (field, value) => {
-      expect(
-        validatePersona({ name: "Marketing Mary", [field]: value })[field],
-      ).toBeUndefined();
-    },
-  );
+  ] as const)("allows the supported name punctuation in %s", (field, value) => {
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toBeUndefined();
+  });
 
   it.each([
     ["name", "12345"],
     ["full_name", "!@#$%^&*()"],
   ] as const)("requires at least one letter in %s", (field, value) => {
-    const label = field === "name" ? "Persona display name" : "Persona full name";
+    const label =
+      field === "name" ? "Persona display name" : "Persona full name";
     expect(
       validatePersona({ name: "Marketing Mary", [field]: value })[field],
     ).toBe(`${label} must contain at least one letter`);
@@ -101,7 +103,9 @@ describe("PER-003 — display name is required and stands alone", () => {
   ] as const)("rejects unsupported punctuation in %s", (field, value) => {
     expect(
       validatePersona({ name: "Marketing Mary", [field]: value })[field],
-    ).toContain("may only contain letters, spaces, apostrophes, hyphens and periods");
+    ).toContain(
+      "may only contain letters, spaces, apostrophes, hyphens and periods",
+    );
   });
 
   it("no longer requires a professional title", () => {
@@ -156,8 +160,9 @@ describe("PER-003 — display name is required and stands alone", () => {
 
 describe("PER-011 — only words, no numbers, no symbols", () => {
   it("rejects symbols in the display name", () => {
-    expect(validatePersona({ name: "<script>alert(1)</script>" }).name)
-      .toBeTruthy();
+    expect(
+      validatePersona({ name: "<script>alert(1)</script>" }).name,
+    ).toBeTruthy();
   });
 
   it("allows hyphens in areas of expertise", () => {
@@ -213,8 +218,9 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
   it.each(["12345", "!@#$%^&*()"])(
     "rejects a short description containing no letters: %s",
     (description) => {
-      expect(validatePersona({ name: "Marketing Mary", description }).description)
-        .toBe("Short description must contain at least one letter");
+      expect(
+        validatePersona({ name: "Marketing Mary", description }).description,
+      ).toBe("Short description must contain at least one letter");
     },
   );
 
@@ -233,17 +239,24 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
     ["demographics", "12345"],
     ["demographics", "!@#$%^&*()"],
   ] as const)("requires letters in %s when given %s", (field, value) => {
-    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
-      .toBe(`${field === "bio" ? "Bio" : "Demographics"} must contain at least one letter`);
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toBe(
+      `${field === "bio" ? "Bio" : "Demographics"} must contain at least one letter`,
+    );
   });
 
   it.each([
     ["bio", "Bio 2026 & beyond!"],
     ["demographics", "Age: 25+, location @ NYC"],
-  ] as const)("allows numbers and punctuation in %s with letters", (field, value) => {
-    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
-      .toBeUndefined();
-  });
+  ] as const)(
+    "allows numbers and punctuation in %s with letters",
+    (field, value) => {
+      expect(
+        validatePersona({ name: "Marketing Mary", [field]: value })[field],
+      ).toBeUndefined();
+    },
+  );
 
   it.each([
     ["tone_of_voice", "12345"],
@@ -255,19 +268,35 @@ describe("PER-011 — only words, no numbers, no symbols", () => {
     ["behaviors", "12345"],
     ["behaviors", "!@#$%^&*()"],
   ] as const)("requires at least one letter in %s", (field, value) => {
-    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
-      .toBe(`${field.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase())} must contain at least one letter`);
+    expect(
+      validatePersona({ name: "Marketing Mary", [field]: value })[field],
+    ).toBe(
+      `${field.replaceAll("_", " ").replace(/^./, (c) => c.toUpperCase())} entries must each contain at least one letter`,
+    );
+  });
+
+  it("requires a letter in every entry of a list, not just one", () => {
+    expect(
+      validatePersona({
+        name: "Marketing Mary",
+        tone_of_voice: "Friendly, 2026",
+      }).tone_of_voice,
+    ).toBe("Tone of voice entries must each contain at least one letter");
   });
 
   it.each([
-    ["tone_of_voice", "Friendly & direct, 2026"],
+    ["tone_of_voice", "Friendly & direct, upbeat about 2026"],
     ["goals", "Increase sign-ups by 20%"],
     ["pain_points", "Budget: $5k / month"],
     ["behaviors", "Researches online, compares options (2–3 days)"],
-  ] as const)("allows punctuation and numbers in %s with letters", (field, value) => {
-    expect(validatePersona({ name: "Marketing Mary", [field]: value })[field])
-      .toBeUndefined();
-  });
+  ] as const)(
+    "allows punctuation and numbers in %s with letters",
+    (field, value) => {
+      expect(
+        validatePersona({ name: "Marketing Mary", [field]: value })[field],
+      ).toBeUndefined();
+    },
+  );
 
   it("takes tone of voice as a comma separated list", () => {
     expect(

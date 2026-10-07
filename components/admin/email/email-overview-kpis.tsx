@@ -103,10 +103,10 @@ export function EmailOverviewKPIs({ data, isLoading }: EmailOverviewKPIsProps) {
         const Icon = kpi.icon;
         const trendColor =
           kpi.trend === "positive"
-            ? "text-green-600"
+            ? "text-success-600"
             : kpi.trend === "negative"
-              ? "text-red-600"
-              : "text-yellow-600";
+              ? "text-danger-600"
+              : "text-warning-600";
 
         return (
           <Card key={kpi.title}>

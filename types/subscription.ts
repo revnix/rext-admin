@@ -71,8 +71,6 @@ export interface SubscriptionPlan extends Record<string, unknown> {
   features: PlanFeatures;
   max_workspaces: number;
   max_members_per_workspace: number;
-  max_topics: number;
-  max_knowledge_items: number;
   max_api_calls_per_month: number;
   credits_per_month: number | null;
   is_active: boolean;
@@ -89,9 +87,6 @@ export interface SubscriptionPlanCreate {
   features?: Record<string, unknown>;
   max_workspaces?: number;
   max_members_per_workspace?: number;
-  max_topics?: number;
-  max_knowledge_items?: number;
-  max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
   lemonsqueezy_product_id?: string;
@@ -107,9 +102,6 @@ export interface SubscriptionPlanUpdate {
   features?: Record<string, unknown>;
   max_workspaces?: number;
   max_members_per_workspace?: number;
-  max_topics?: number;
-  max_knowledge_items?: number;
-  max_api_calls_per_month?: number;
   is_active?: boolean;
   is_public?: boolean;
   lemonsqueezy_product_id?: string;
@@ -147,8 +139,6 @@ export interface UserSubscriptionDetail {
   plan_limits?: {
     max_workspaces: number;
     max_members_per_workspace: number;
-    max_topics: number;
-    max_knowledge_items: number;
     max_api_calls_per_month: number;
   };
   customer_portal_url?: string | null;
@@ -205,12 +195,6 @@ export interface UsageStats {
     percentage: number;
   };
 
-  knowledge_items: {
-    used: number;
-    limit: number;
-    percentage: number;
-  };
-
   api_calls: {
     used: number;
     limit: number;
@@ -225,27 +209,56 @@ export interface UsageStats {
 
   // Current usage
   current_workspaces: number;
-  current_topics: number;
-  current_knowledge_items: number;
   current_api_calls: number;
   current_members?: number;
 
   // Limits
   max_workspaces: number;
-  max_topics: number;
-  max_knowledge_items: number;
   max_api_calls_per_month: number;
   max_members?: number;
 
   // Usage percentages
   workspaces_usage_percent: number;
-  topics_usage_percent: number;
-  knowledge_items_usage_percent: number;
   api_calls_usage_percent: number;
   members_usage_percent?: number;
 
   // Reset date
   usage_reset_date: string;
+}
+
+/** A bonus grant's summary (rext-backend credit_grants.bonus_summary). */
+export interface CreditBonus {
+  label: string;
+  promotion: string | null;
+  /** Bonus credits left. */
+  credits: number;
+  /** Bonus credits granted. */
+  granted: number;
+  expires_at: string | null;
+}
+
+/** One limit in GET /subscriptions/usage; `limit` is null when unlimited. */
+export interface UsageMetric {
+  used: number;
+  limit: number | null;
+  percentage: number;
+  unlimited: boolean;
+}
+
+/**
+ * GET /subscriptions/usage as the backend sends it (usage_tracking_service.get_usage_stats). The
+ * older `UsageStats` above describes fields it doesn't send; the account settings' Usage reads this.
+ * `members` counts across all of the person's workspaces against a per-workspace limit, so only
+ * its limit is shown.
+ */
+export interface UsageReport {
+  workspaces: UsageMetric;
+  members: UsageMetric;
+  meta?: {
+    plan_name?: string | null;
+    billing_period?: string | null;
+    credit_bonus?: CreditBonus | null;
+  };
 }
 
 export interface TrialStatus {
@@ -259,12 +272,40 @@ export interface TrialStatus {
 // CREDITS
 // ============================================================================
 
+/** The buttons that start a billed run, by the backend's keys (`plan_catalog.RUN_STAGES`). */
+export type BilledRun =
+  | "analyze"
+  | "change_keyword"
+  | "regenerate_outline"
+  | "generate";
+
+/** What a billed button costs against the balance: the backend's figures, none computed here. */
+export interface RunCost {
+  cost: number;
+  /** The balance the run needs before it starts (a whole article's worth for a new run). */
+  minimum_balance: number;
+  can_run: boolean;
+  /** null when the balance is short of `minimum_balance`. */
+  balance_after: number | null;
+  /** The stages the run bills, each with its credits. */
+  stages: { key: string; credits: number }[];
+}
+
 export interface CreditBalance {
   current_credits: number;
   credits_per_month: number | null;
   credits_reset_date: string | null;
   articles_remaining: number | null;
   plan_name: string | null;
+  /** The plan's monthly credits left, without the bonus. */
+  monthly_credits?: number;
+  /** An unexpired bonus (the launch offer's): what's left of it and when it ends. */
+  bonus?: CreditBonus | null;
+  /** Whose credits these are: the workspace owner's when a workspace was asked for. */
+  target_user_id?: string;
+  is_workspace_credits?: boolean;
+  /** Each billed button's cost and the balance it leaves (`GET /subscriptions/credits`). */
+  runs?: Record<BilledRun, RunCost>;
 }
 
 // ============================================================================
@@ -445,4 +486,20 @@ export interface OrderRow {
   refunded_amount: number;
   /** Cents still refundable. Computed server-side; never re-derive it here. */
   refundable_amount: number;
+}
+
+/**
+ * What the person does about a subscription that isn't finished, instead of a new checkout
+ * (`GET /subscriptions/billing-action`; plan F11): `update_payment_method` for a failed renewal
+ * (past due while Lemon Squeezy retries, unpaid once the retries are over), `resume` for a paused
+ * subscription or a cancelled one before its end. The backend refuses a checkout while one is set.
+ */
+export interface BillingAction {
+  action: "update_payment_method" | "resume";
+  /** The subscription's status: past_due, unpaid, suspended, paused or cancelled. */
+  status: string;
+  /** When the failed renewal's episode began: the date the banner names. */
+  payment_failed_at: string | null;
+  /** A cancelled subscription's end. */
+  ends_at: string | null;
 }

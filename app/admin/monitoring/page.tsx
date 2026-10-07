@@ -5,7 +5,7 @@ import { AlertTriangle, BarChart3, Server } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ErrorLogsTable } from "@/components/admin/monitoring/error-logs-table";
-import { PageLayout } from "@/components/page-layout";
+import { ListPage } from "@/components/layouts";
 import { AdminGuard } from "@/components/permission/admin-guard";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -226,7 +226,7 @@ export default function MonitoringPage() {
     (usageTrendsData as UsageTrendsData | undefined)?.trends || [];
 
   return (
-    <PageLayout
+    <ListPage
       title="System Monitoring"
       description="Monitor system health, errors, and platform usage"
     >
@@ -273,8 +273,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.database?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.database?.status || "Unknown"}
@@ -351,8 +351,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.database?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.cache?.status || "Unknown"}
@@ -438,8 +438,8 @@ export default function MonitoringPage() {
                       <span
                         className={`text-sm font-medium ${
                           health?.api?.status === "healthy"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success-600"
+                            : "text-danger-600"
                         }`}
                       >
                         {health?.api?.status || "Unknown"}
@@ -552,6 +552,6 @@ export default function MonitoringPage() {
           </Tabs>
         </div>
       </AdminGuard>
-    </PageLayout>
+    </ListPage>
   );
 }

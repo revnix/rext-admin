@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -193,22 +193,18 @@ export default function AcceptInvitationPage() {
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-6 w-6" />
-              <CardTitle>Invalid Invitation</CardTitle>
+              <CardTitle>Invalid invitation</CardTitle>
             </div>
             <CardDescription>
               This invitation link is invalid or has expired.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Unable to load invitation</AlertTitle>
-              <AlertDescription>
-                The invitation token is invalid, has expired, or has already
-                been used. Please request a new invitation from your workspace
-                administrator.
-              </AlertDescription>
-            </Alert>
+            <Notice tone="danger" title="Unable to load invitation">
+              The invitation token is invalid, has expired, or has already been
+              used. Please request a new invitation from your workspace
+              administrator.
+            </Notice>
             <Button
               className="w-full"
               variant="outline"
@@ -228,11 +224,11 @@ export default function AcceptInvitationPage() {
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-warning-600">
               <Clock className="h-6 w-6" />
               <CardTitle>
                 Invitation{" "}
-                {invitation.status === "accepted" ? "Already Used" : "Expired"}
+                {invitation.status === "accepted" ? "Already used" : "Expired"}
               </CardTitle>
             </div>
             <CardDescription>
@@ -242,19 +238,18 @@ export default function AcceptInvitationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>
-                {invitation.status === "accepted"
+            <Notice
+              tone="info"
+              title={
+                invitation.status === "accepted"
                   ? "Already a member"
-                  : "Expired"}
-              </AlertTitle>
-              <AlertDescription>
-                {invitation.status === "accepted"
-                  ? `You are already a member of ${invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
-                  : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
-              </AlertDescription>
-            </Alert>
+                  : "Expired"
+              }
+            >
+              {invitation.status === "accepted"
+                ? `You are already a member of ${invitation.workspace?.name || "this workspace"}. You can access the workspace directly.`
+                : `This invitation expired on ${new Date(invitation.expires_at).toLocaleDateString()}. Please request a new invitation from your workspace administrator.`}
+            </Notice>
             {invitation.status === "accepted" && session ? (
               <Button
                 className="w-full"
@@ -283,25 +278,21 @@ export default function AcceptInvitationPage() {
       <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-warning-600">
               <AlertCircle className="h-6 w-6" />
-              <CardTitle>Wrong Account</CardTitle>
+              <CardTitle>Wrong account</CardTitle>
             </div>
             <CardDescription>
               This invitation is for a different email address.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Switch accounts to continue</AlertTitle>
-              <AlertDescription>
-                This invitation was sent to{" "}
-                <span className="font-semibold">{invitation.email}</span>, but
-                you're currently signed in as{" "}
-                <span className="font-semibold">{session?.user?.email}</span>.
-              </AlertDescription>
-            </Alert>
+            <Notice tone="warning" title="Switch accounts to continue">
+              This invitation was sent to{" "}
+              <span className="font-semibold">{invitation.email}</span>, but
+              you're currently signed in as{" "}
+              <span className="font-semibold">{session?.user?.email}</span>.
+            </Notice>
             <div className="space-y-2">
               <Button
                 className="w-full"
@@ -330,7 +321,7 @@ export default function AcceptInvitationPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-600 animate-pulse" />
+              <CheckCircle className="h-6 w-6 text-success-600 animate-pulse" />
               Accepting Invitation...
             </CardTitle>
             <CardDescription>
@@ -353,9 +344,9 @@ export default function AcceptInvitationPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-foreground">
             <Mail className="h-6 w-6" />
-            <CardTitle>Workspace Invitation</CardTitle>
+            <CardTitle>Workspace invitation</CardTitle>
           </div>
           <CardDescription>
             You've been invited to join a workspace
@@ -363,7 +354,7 @@ export default function AcceptInvitationPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Invitation Details */}
-          <div className="space-y-3 border rounded-lg p-4 bg-muted/50">
+          <div className="space-y-3 border rounded-md p-4 bg-muted/50">
             <div className="flex items-start gap-3">
               <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
@@ -423,25 +414,21 @@ export default function AcceptInvitationPage() {
           {/* Action Buttons */}
           {!session ? (
             <div className="space-y-3">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Authentication Required</AlertTitle>
-                <AlertDescription>
-                  {accountExists ? (
-                    <>
-                      An account already exists for{" "}
-                      <span className="font-semibold">{invitation.email}</span>.
-                      Sign in to accept this invitation.
-                    </>
-                  ) : (
-                    <>
-                      To accept this invitation, you need to either sign in to
-                      your existing account or create a new account with{" "}
-                      <span className="font-semibold">{invitation.email}</span>
-                    </>
-                  )}
-                </AlertDescription>
-              </Alert>
+              <Notice tone="info" title="Sign in required">
+                {accountExists ? (
+                  <>
+                    An account already exists for{" "}
+                    <span className="font-semibold">{invitation.email}</span>.
+                    Sign in to accept this invitation.
+                  </>
+                ) : (
+                  <>
+                    To accept this invitation, you need to either sign in to
+                    your existing account or create a new account with{" "}
+                    <span className="font-semibold">{invitation.email}</span>
+                  </>
+                )}
+              </Notice>
 
               <div className="space-y-2">
                 <Button className="w-full" onClick={handleLogin}>

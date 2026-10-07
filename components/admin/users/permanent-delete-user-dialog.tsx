@@ -1,10 +1,10 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Notice } from "@/components/ui/notice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -79,15 +79,11 @@ export function PermanentDeleteUserDialog({
         </DialogHeader>
 
         <div className="py-2 space-y-3">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>This cannot be undone</AlertTitle>
-            <AlertDescription className="text-xs">
-              Every workspace this user owns and its content, knowledge,
-              personas and media are permanently deleted. The account's personal
-              data is erased and it can never be recovered.
-            </AlertDescription>
-          </Alert>
+          <Notice tone="danger" title="This cannot be undone">
+            Every workspace this user owns and its content, personas and media
+            are permanently deleted. The account's personal data is erased and
+            it can never be recovered.
+          </Notice>
 
           {user?.email && (
             <div className="p-3 bg-muted/50 rounded-md text-xs space-y-1">
