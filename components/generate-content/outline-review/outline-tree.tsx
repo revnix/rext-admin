@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronRight,
+  CornerDownRight,
   GripVertical,
   Pencil,
   Plus,
@@ -38,6 +39,8 @@ export interface OutlineTreeProps {
   onRename: (key: string, heading: string) => void;
   onRemove: (key: string) => void;
   onAdd: (list: string, heading: string) => void;
+  /** A subsection (an H3) under an H2, in a list whose sections have levels (E31). */
+  onAddSubsection: (parentKey: string, heading: string) => void;
 }
 
 /**
@@ -57,49 +60,63 @@ export function OutlineTree({
   onRename,
   onRemove,
   onAdd,
+  onAddSubsection,
 }: OutlineTreeProps) {
   const groups = groupRows(rows);
   const named = groups.length > 1;
   return (
     <div className="space-y-6">
-      {groups.map((group) => (
-        <section
-          key={group.list}
-          aria-label={named ? listLabel(group.list) : "Sections"}
-        >
-          {named && (
-            <h3 className="mb-2 text-label text-muted-foreground">
-              {listLabel(group.list)}
-            </h3>
-          )}
-          <Reorder.Group
-            as="ol"
-            axis="y"
-            values={group.rows}
-            onReorder={(next: TreeRow[]) => onReorder(group.list, next)}
-            className="divide-y divide-border rounded-md border border-border bg-card"
+      {groups.map((group) => {
+        // A list whose sections have levels takes subsections under its H2s; one without (a How-To's
+        // Steps and Tools) doesn't.
+        const takesSubsections =
+          editable &&
+          addableLists.includes(group.list) &&
+          group.rows.some((row) => row.level);
+        return (
+          <section
+            key={group.list}
+            aria-label={named ? listLabel(group.list) : "Sections"}
           >
-            {group.rows.map((row, index) => (
-              <TreeRowItem
-                key={row.key}
-                row={row}
-                position={index + 1}
-                isFirst={index === 0}
-                isLast={index === group.rows.length - 1}
-                canRemove={canRemoveRow(rows, row.key)}
-                plan={sectionPlan(outline, row.id)}
-                editable={editable}
-                onMove={onMove}
-                onRename={onRename}
-                onRemove={onRemove}
-              />
-            ))}
-          </Reorder.Group>
-          {editable && addableLists.includes(group.list) && (
-            <AddSection onAdd={(heading) => onAdd(group.list, heading)} />
-          )}
-        </section>
-      ))}
+            {named && (
+              <h3 className="mb-2 text-label text-muted-foreground">
+                {listLabel(group.list)}
+              </h3>
+            )}
+            <Reorder.Group
+              as="ol"
+              axis="y"
+              values={group.rows}
+              onReorder={(next: TreeRow[]) => onReorder(group.list, next)}
+              className="divide-y divide-border rounded-md border border-border bg-card"
+            >
+              {group.rows.map((row, index) => (
+                <TreeRowItem
+                  key={row.key}
+                  row={row}
+                  position={index + 1}
+                  isFirst={index === 0}
+                  isLast={index === group.rows.length - 1}
+                  canRemove={canRemoveRow(rows, row.key)}
+                  plan={sectionPlan(outline, row.id)}
+                  editable={editable}
+                  onMove={onMove}
+                  onRename={onRename}
+                  onRemove={onRemove}
+                  onAddSubsection={
+                    takesSubsections && row.level === "H2"
+                      ? onAddSubsection
+                      : undefined
+                  }
+                />
+              ))}
+            </Reorder.Group>
+            {editable && addableLists.includes(group.list) && (
+              <AddSection onAdd={(heading) => onAdd(group.list, heading)} />
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -115,6 +132,7 @@ function TreeRowItem({
   onMove,
   onRename,
   onRemove,
+  onAddSubsection,
 }: {
   row: TreeRow;
   position: number;
@@ -126,8 +144,11 @@ function TreeRowItem({
   onMove: (key: string, offset: -1 | 1) => void;
   onRename: (key: string, heading: string) => void;
   onRemove: (key: string) => void;
+  /** Offered only for an H2 in a list with levels. */
+  onAddSubsection?: (parentKey: string, heading: string) => void;
 }) {
   const dragControls = useDragControls();
+  const [addingSubsection, setAddingSubsection] = useState(false);
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(row.heading);
@@ -248,6 +269,15 @@ function TreeRowItem({
                 onSelect: () => onMove(row.key, 1),
                 disabled: isLast,
               },
+              ...(onAddSubsection
+                ? [
+                    {
+                      label: "Add subsection",
+                      icon: CornerDownRight,
+                      onSelect: () => setAddingSubsection(true),
+                    },
+                  ]
+                : []),
               {
                 label: "Remove",
                 icon: Trash2,
@@ -261,6 +291,15 @@ function TreeRowItem({
           />
         )}
       </div>
+      {addingSubsection && onAddSubsection && (
+        <AddHeading
+          label="New subsection heading"
+          placeholder="The subsection's heading"
+          className="pb-2 pl-16 pr-1.5"
+          onAdd={(heading) => onAddSubsection(row.key, heading)}
+          onClose={() => setAddingSubsection(false)}
+        />
+      )}
       {hasPlan && open && plan && (
         <div
           id={planId}
@@ -300,11 +339,6 @@ function TreeRowItem({
 
 function AddSection({ onAdd }: { onAdd: (heading: string) => void }) {
   const [adding, setAdding] = useState(false);
-  const [heading, setHeading] = useState("");
-  const close = () => {
-    setHeading("");
-    setAdding(false);
-  };
   if (!adding) {
     return (
       <Button
@@ -320,8 +354,38 @@ function AddSection({ onAdd }: { onAdd: (heading: string) => void }) {
     );
   }
   return (
+    <AddHeading
+      label="New section heading"
+      placeholder="The new section's heading"
+      className="mt-2"
+      onAdd={onAdd}
+      onClose={() => setAdding(false)}
+    />
+  );
+}
+
+/** A heading typed in place, for a new section or a new subsection: Add, Cancel or Escape. */
+function AddHeading({
+  label,
+  placeholder,
+  className,
+  onAdd,
+  onClose,
+}: {
+  label: string;
+  placeholder: string;
+  className?: string;
+  onAdd: (heading: string) => void;
+  onClose: () => void;
+}) {
+  const [heading, setHeading] = useState("");
+  const close = () => {
+    setHeading("");
+    onClose();
+  };
+  return (
     <form
-      className="mt-2 flex items-center gap-2"
+      className={cn("flex items-center gap-2", className)}
       onSubmit={(event) => {
         event.preventDefault();
         if (heading.trim()) onAdd(heading);
@@ -330,8 +394,8 @@ function AddSection({ onAdd }: { onAdd: (heading: string) => void }) {
     >
       <Input
         autoFocus
-        aria-label="New section heading"
-        placeholder="The new section's heading"
+        aria-label={label}
+        placeholder={placeholder}
         value={heading}
         onChange={(event) => setHeading(event.target.value)}
         onKeyDown={(event) => {

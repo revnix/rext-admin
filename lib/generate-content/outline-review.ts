@@ -312,6 +312,38 @@ export function addRow(
   return replaceList(rows, list, [...listRows, added]);
 }
 
+/**
+ * A new subsection (an H3) under an H2, after that H2's shown subsections (E31, rext-control#599).
+ * Only an H2 takes one; the list's levels already say it has them. Removing the H2 takes it along,
+ * like any of its H3s (removalKeys).
+ */
+export function addSubsection(
+  rows: TreeRow[],
+  parentKey: string,
+  heading: string,
+): TreeRow[] {
+  const trimmed = heading.trim();
+  const parent = rows.find((row) => row.key === parentKey);
+  if (!trimmed || !parent || parent.level !== "H2" || !shown(parent))
+    return rows;
+  addedCount += 1;
+  const listRows = rows.filter((row) => row.list === parent.list && shown(row));
+  let at = listRows.indexOf(parent) + 1;
+  while (at < listRows.length && listRows[at].level === "H3") at += 1;
+  const added: TreeRow = {
+    key: `added-${addedCount}`,
+    id: null,
+    list: parent.list,
+    heading: trimmed,
+    level: "H3",
+  };
+  return replaceList(rows, parent.list, [
+    ...listRows.slice(0, at),
+    added,
+    ...listRows.slice(at),
+  ]);
+}
+
 /** Whether the rows differ from what the gate offered: order, headings, removals or additions. */
 export function rowsEdited(
   allRows: TreeRow[],

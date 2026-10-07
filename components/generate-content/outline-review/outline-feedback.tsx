@@ -1,10 +1,15 @@
-import { ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
+import { RunCostLabel, RunCostTooltip } from "../run-cost";
 
-/** What should change before the outline is written again: the feedback path of Regenerate. */
+/**
+ * What should change before the outline is written again: the feedback path of Regenerate. Back
+ * returns to the outline as it was, sending nothing and billing nothing (E7.3, rext-control#595);
+ * only Submit feedback writes it again, for its credit.
+ */
 export function OutlineRejectSection({
   instruction,
   rejectedReason,
@@ -12,6 +17,7 @@ export function OutlineRejectSection({
   wordCountRange,
   onChange,
   onSubmit,
+  onBack,
 }: {
   instruction: string;
   rejectedReason: string;
@@ -19,6 +25,7 @@ export function OutlineRejectSection({
   wordCountRange?: WordCountRange | null;
   onChange: (val: string) => void;
   onSubmit: () => void;
+  onBack: () => void;
 }) {
   return (
     <div className="mx-auto w-full max-w-2xl py-3">
@@ -39,11 +46,18 @@ export function OutlineRejectSection({
             {wordCountRange.max.toLocaleString()} words.
           </p>
         )}
-        <div className="mt-6 flex items-center justify-end">
-          <Button onClick={onSubmit}>
-            Submit feedback
-            <ChevronRight />
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft />
+            Back to the outline
           </Button>
+          <RunCostTooltip run="regenerate_outline">
+            <Button onClick={onSubmit}>
+              Submit feedback
+              <RunCostLabel run="regenerate_outline" />
+              <ChevronRight />
+            </Button>
+          </RunCostTooltip>
         </div>
       </div>
     </div>
