@@ -982,6 +982,8 @@ export interface OutlineApprovalInput {
   tone?: string;
   targetAudience?: string[];
   targetWordCount?: number;
+  /** The outline's keywords as the user left them, the focus keyphrase first. */
+  keywords?: string[];
   gate: OutlineGate;
   selectedLinks: InternalLinkSuggestion[];
   prominence: BrandProminence;
@@ -994,6 +996,7 @@ export interface OutlineApproval {
   tone?: string;
   target_audience?: string[];
   target_word_count?: number;
+  keywords_to_include?: string[];
   selected_internal_links?: InternalLinkSuggestion[];
   promote_brand?: boolean;
   brand_prominence?: BrandProminence;
@@ -1013,6 +1016,9 @@ export function buildOutlineApproval(
     ...(input.targetWordCount
       ? { target_word_count: input.targetWordCount }
       : {}),
+    // The list as the user left it, even with every secondary keyword removed (it then
+    // holds the focus keyphrase alone): the backend reads what is missing as removed.
+    ...(input.keywords?.length ? { keywords_to_include: input.keywords } : {}),
     ...(gate.internalLinks.length
       ? { selected_internal_links: input.selectedLinks }
       : {}),

@@ -305,6 +305,7 @@ export function OutlineReview({
         tone: outline?.tone,
         targetAudience: outline?.target_audience,
         targetWordCount: outline?.target_word_count,
+        keywords: outline?.keywords_to_include,
         gate,
         selectedLinks: sortedLinks.filter((link) => linkUrls.has(link.url)),
         prominence,
