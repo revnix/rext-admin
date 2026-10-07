@@ -5,6 +5,7 @@
 
 import {
   articleStructure,
+  plannedSections,
   writingPosition,
 } from "@/lib/generate-content/article-structure";
 
@@ -83,5 +84,39 @@ describe("writingPosition", () => {
       section: 2,
       sections: 4,
     });
+  });
+});
+
+describe("plannedSections", () => {
+  it("reads a flat list of sections, with their levels", () => {
+    expect(
+      plannedSections({
+        sections: [
+          { heading: "One" },
+          { heading: "Two", heading_level: "H3" },
+          { heading: "  " },
+          "not a section",
+        ],
+      }),
+    ).toEqual([
+      { heading: "One", heading_level: "H2" },
+      { heading: "Two", heading_level: "H3" },
+    ]);
+  });
+
+  it("finds a blog's sections a level down", () => {
+    expect(
+      plannedSections({
+        title: "x",
+        structure: { sections: [{ heading: "Gear", heading_level: "H2" }] },
+      }),
+    ).toEqual([{ heading: "Gear", heading_level: "H2" }]);
+  });
+
+  it("gives none for an outline planned another way, or no outline", () => {
+    expect(
+      plannedSections({ steps: { steps: [{ title: "Gather" }] } }),
+    ).toEqual([]);
+    expect(plannedSections(null)).toEqual([]);
   });
 });
