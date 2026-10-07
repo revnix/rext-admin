@@ -24,10 +24,13 @@ export function OutlineApproveBar({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-end gap-3">
         {start}
-        <Button variant="outline" onClick={onRegenerate} disabled={disabled}>
-          <RefreshCw />
-          Regenerate
-        </Button>
+        <RunCostTooltip run="regenerate_outline">
+          <Button variant="outline" onClick={onRegenerate} disabled={disabled}>
+            <RefreshCw />
+            Regenerate
+            <RunCostLabel run="regenerate_outline" />
+          </Button>
+        </RunCostTooltip>
         <RunCostTooltip run="generate">
           <Button onClick={onApprove} disabled={disabled}>
             <Check />

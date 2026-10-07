@@ -12,6 +12,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import {
   addRow,
+  addSubsection,
   type BrandProminence,
   buildOutlineApproval,
   moveRow,
@@ -217,6 +218,9 @@ export function OutlineReview({
       onRemove={remove}
       onAdd={(list, heading) =>
         setRows((current) => addRow(current, list, heading))
+      }
+      onAddSubsection={(parentKey, heading) =>
+        setRows((current) => addSubsection(current, parentKey, heading))
       }
     />
   ) : (

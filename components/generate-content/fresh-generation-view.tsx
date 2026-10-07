@@ -894,6 +894,10 @@ export function FreshGenerationView({
 
   const showOutlineReview =
     instructionType === "outline_review" && tokenTarget !== "content";
+  // Regenerate's feedback form: the outline stays mounted under it, hidden, so Back returns to the
+  // tree with its edits (E7.3, rext-control#595).
+  const isOutlineFeedback =
+    instructionType === "outline_reject" && tokenTarget !== "content";
 
   const showContentStream =
     instructionType === "content" ||
@@ -2274,6 +2278,11 @@ export function FreshGenerationView({
           dispatch({ type: "SET_REJECTED_REASON", payload: val })
         }
         onSubmit={() => handleWorkflow("OUTLINE_REJECT_REASON", rejectedReason)}
+        onBack={() => {
+          // Nothing was sent: the graph still waits at the outline, so the tree comes back as it was.
+          dispatch({ type: "SET_REJECTED_REASON", payload: "" });
+          dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_review" });
+        }}
       />
     ),
   };
@@ -2403,59 +2412,65 @@ export function FreshGenerationView({
               Start a new article
             </Button>
           </div>
-        ) : showOutlineReview ? (
+        ) : showOutlineReview || isOutlineFeedback ? (
           <div className="w-full mt-0">
-            <OutlineReview
-              outline={parsedOutline}
-              rawTokens={outline.streamedText}
-              isLoading={isManualLoading || isStreamingOutline}
-              gate={state.interrupt?.[0]?.value}
-              pendingTargetWordCount={pendingTargetWordCount}
-              wordCountRange={outlineWordCountRange}
-              workspaceId={workspaceId}
-              onApprove={(approval) => {
-                if (!ensureCredits("generate")) return;
-                setTokenTarget("content");
-                tokenTargetRef.current = "content";
-                content.resetStream();
-                setToolCalls([]);
-                dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
-                dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "content" });
-                dispatch({
-                  type: "SET_RUN_PHASE",
-                  payload: { phase: "article" },
-                });
-                analytics.track("outline_approved", {
-                  keyword: primaryKeyword,
-                  workspace_id: workspaceId ?? undefined,
-                  thread_id: threadId ?? undefined,
-                });
-                void startBackgroundWorkflow({
-                  payload: { action: "approve", ...approval },
-                  status: "Approving and generating content...",
-                });
-              }}
-              onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
-              onUpdate={(updatedOutline) => {
-                const requestedTargetWordCount =
-                  updatedOutline.target_word_count;
-                if (
-                  requestedTargetWordCount !== undefined &&
-                  outlineWordCountRange &&
-                  (requestedTargetWordCount < outlineWordCountRange.min ||
-                    requestedTargetWordCount > outlineWordCountRange.max)
-                ) {
-                  showWordCountRangeError(
-                    requestedTargetWordCount,
-                    parsedOutline?.schema_type,
-                    outlineWordCountRange,
-                  );
-                  return;
-                }
-                dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
-              }}
-              keywordClusters={keywordClusters}
-            />
+            {isOutlineFeedback && instructionViewMap.outline_reject}
+            <div hidden={isOutlineFeedback}>
+              <OutlineReview
+                outline={parsedOutline}
+                rawTokens={outline.streamedText}
+                isLoading={isManualLoading || isStreamingOutline}
+                gate={state.interrupt?.[0]?.value}
+                pendingTargetWordCount={pendingTargetWordCount}
+                wordCountRange={outlineWordCountRange}
+                workspaceId={workspaceId}
+                onApprove={(approval) => {
+                  if (!ensureCredits("generate")) return;
+                  setTokenTarget("content");
+                  tokenTargetRef.current = "content";
+                  content.resetStream();
+                  setToolCalls([]);
+                  dispatch({ type: "SET_GENERATED_CONTENT", payload: "" });
+                  dispatch({
+                    type: "SET_INSTRUCTION_TYPE",
+                    payload: "content",
+                  });
+                  dispatch({
+                    type: "SET_RUN_PHASE",
+                    payload: { phase: "article" },
+                  });
+                  analytics.track("outline_approved", {
+                    keyword: primaryKeyword,
+                    workspace_id: workspaceId ?? undefined,
+                    thread_id: threadId ?? undefined,
+                  });
+                  void startBackgroundWorkflow({
+                    payload: { action: "approve", ...approval },
+                    status: "Approving and generating content...",
+                  });
+                }}
+                onReject={() => handleWorkflow("OUTLINE_REJECT", "")}
+                onUpdate={(updatedOutline) => {
+                  const requestedTargetWordCount =
+                    updatedOutline.target_word_count;
+                  if (
+                    requestedTargetWordCount !== undefined &&
+                    outlineWordCountRange &&
+                    (requestedTargetWordCount < outlineWordCountRange.min ||
+                      requestedTargetWordCount > outlineWordCountRange.max)
+                  ) {
+                    showWordCountRangeError(
+                      requestedTargetWordCount,
+                      parsedOutline?.schema_type,
+                      outlineWordCountRange,
+                    );
+                    return;
+                  }
+                  dispatch({ type: "SET_OUTLINE", payload: updatedOutline });
+                }}
+                keywordClusters={keywordClusters}
+              />
+            </div>
           </div>
         ) : runError && !restoreError ? (
           // A run that has stopped shows its notice in the step's place, under

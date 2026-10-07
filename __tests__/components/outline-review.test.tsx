@@ -2,7 +2,10 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 
-import { OutlineReview } from "@/components/generate-content/outline-review";
+import {
+  OutlineRejectSection,
+  OutlineReview,
+} from "@/components/generate-content/outline-review";
 import type { OutlineApproval } from "@/lib/generate-content/outline-review";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { KeywordCluster, Outline } from "@/types/generate-content";
@@ -316,6 +319,107 @@ describe("OutlineReview, the outline tree", () => {
     });
   });
 
+  // E31: a subsection added by hand under an H2. The second section has one subsection already.
+  const withSubsection = {
+    ...baseGate,
+    section_additions: ["structure.sections"],
+    editable_sections: rows.map((row, index) =>
+      index === 2 ? { ...row, heading_level: "H3" } : row,
+    ),
+  };
+
+  it("adds a subsection under an H2, after its subsections, sent as a new H3", async () => {
+    const user = userEvent.setup();
+    const { approve } = renderReview({ gate: withSubsection });
+
+    await chooseFromMenu(user, "Cushioning and support", "Add subsection");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Heel drop{Enter}",
+    );
+
+    expect(headings()).toEqual([
+      "Why the right shoe matters",
+      "Cushioning and support",
+      "How to get fitted",
+      "Heel drop",
+    ]);
+    const approval = await approve(user);
+    expect(approval.sections?.[3]).toEqual({
+      new: true,
+      list: "structure.sections",
+      heading: "Heel drop",
+      heading_level: "H3",
+    });
+  });
+
+  it("puts a subsection right under an H2 that has none", async () => {
+    const user = userEvent.setup();
+    renderReview({ gate: withSubsection });
+
+    await chooseFromMenu(user, "Why the right shoe matters", "Add subsection");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Overpronation{Enter}",
+    );
+
+    expect(headings()[1]).toBe("Overpronation");
+  });
+
+  it("offers Add subsection only on an H2, and not in a list without levels", async () => {
+    const user = userEvent.setup();
+    renderReview({ gate: withSubsection });
+
+    await user.click(
+      screen.getByRole("button", { name: "Actions for How to get fitted" }),
+    );
+    expect(
+      screen.queryByRole("menuitem", { name: "Add subsection" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers no Add subsection when the sections have no levels", async () => {
+    const user = userEvent.setup();
+    renderReview({
+      gate: {
+        ...baseGate,
+        section_additions: ["structure.sections"],
+        editable_sections: rows.map(({ heading_level: _level, ...row }) => row),
+      },
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Actions for Why the right shoe matters",
+      }),
+    );
+    expect(
+      screen.queryByRole("menuitem", { name: "Add subsection" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("removes an added subsection with its H2, and Undo brings both back", async () => {
+    const user = userEvent.setup();
+    renderReview({ gate: withSubsection });
+    await chooseFromMenu(user, "Cushioning and support", "Add subsection");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Heel drop{Enter}",
+    );
+
+    await chooseFromMenu(user, "Cushioning and support", "Remove");
+    expect(headings()).toEqual(["Why the right shoe matters"]);
+
+    const [, options] = (toast as unknown as jest.Mock).mock.calls.at(-1);
+    act(() => options.action.onClick());
+    expect(headings()).toEqual([
+      "Why the right shoe matters",
+      "Cushioning and support",
+      "How to get fitted",
+      "Heel drop",
+    ]);
+  });
+
   it("rebuilds the tree when a regenerated outline changes only a level", async () => {
     const user = userEvent.setup();
     const onApprove = jest.fn<void, [OutlineApproval]>();
@@ -507,6 +611,65 @@ describe("OutlineReview, the approval", () => {
     expect(
       screen.getByText("Balance after: 4,528 credits"),
     ).toBeInTheDocument();
+    // Regenerate names its cost too (E7.3).
+    expect(
+      screen.getByRole("button", { name: /^regenerate/i }),
+    ).toHaveTextContent("· 1 credit");
+  });
+});
+
+describe("The outline's feedback form (E7.3)", () => {
+  function renderFeedback() {
+    const onBack = jest.fn();
+    const onSubmit = jest.fn();
+    render(
+      <OutlineRejectSection
+        instruction="What should change?"
+        rejectedReason="Shorter sections"
+        onChange={jest.fn()}
+        onSubmit={onSubmit}
+        onBack={onBack}
+      />,
+    );
+    return { onBack, onSubmit };
+  }
+
+  it("goes back to the outline without sending the feedback", async () => {
+    const user = userEvent.setup();
+    const { onBack, onSubmit } = renderFeedback();
+
+    await user.click(
+      screen.getByRole("button", { name: "Back to the outline" }),
+    );
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("names Submit feedback's credit and sends it once", async () => {
+    setCredits({
+      current_credits: 40,
+      credits_per_month: 400,
+      credits_reset_date: null,
+      articles_remaining: 2,
+      plan_name: "Starter",
+      runs: {
+        regenerate_outline: {
+          cost: 1,
+          minimum_balance: 1,
+          can_run: true,
+          balance_after: 39,
+          stages: [],
+        },
+      },
+    } as unknown as CreditBalance);
+    const user = userEvent.setup();
+    const { onSubmit } = renderFeedback();
+
+    const submit = screen.getByRole("button", { name: /submit feedback/i });
+    expect(submit).toHaveTextContent("· 1 credit");
+    await user.click(submit);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 });
 
