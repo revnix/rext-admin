@@ -313,9 +313,10 @@ export function addRow(
 }
 
 /**
- * A new subsection (an H3) under an H2, after that H2's shown subsections (E31, rext-control#599).
- * Only an H2 takes one; the list's levels already say it has them. Removing the H2 takes it along,
- * like any of its H3s (removalKeys).
+ * A new subsection (an H3) under an H2, after that H2's subsections (E31, rext-control#599). Only an
+ * H2 takes one; the list's levels already say it has them. It goes into the rows themselves, before
+ * the next H2 even when that H2 is removed and waiting on its Undo, so an Undo can't come back
+ * between the parent and its new subsection. Removing the H2 takes it along, like any of its H3s.
  */
 export function addSubsection(
   rows: TreeRow[],
@@ -323,13 +324,18 @@ export function addSubsection(
   heading: string,
 ): TreeRow[] {
   const trimmed = heading.trim();
-  const parent = rows.find((row) => row.key === parentKey);
+  const at0 = rows.findIndex((row) => row.key === parentKey);
+  const parent = rows[at0];
   if (!trimmed || !parent || parent.level !== "H2" || !shown(parent))
     return rows;
   addedCount += 1;
-  const listRows = rows.filter((row) => row.list === parent.list && shown(row));
-  let at = listRows.indexOf(parent) + 1;
-  while (at < listRows.length && listRows[at].level === "H3") at += 1;
+  let at = at0 + 1;
+  while (
+    at < rows.length &&
+    rows[at].list === parent.list &&
+    rows[at].level === "H3"
+  )
+    at += 1;
   const added: TreeRow = {
     key: `added-${addedCount}`,
     id: null,
@@ -337,11 +343,7 @@ export function addSubsection(
     heading: trimmed,
     level: "H3",
   };
-  return replaceList(rows, parent.list, [
-    ...listRows.slice(0, at),
-    added,
-    ...listRows.slice(at),
-  ]);
+  return [...rows.slice(0, at), added, ...rows.slice(at)];
 }
 
 /** Whether the rows differ from what the gate offered: order, headings, removals or additions. */
