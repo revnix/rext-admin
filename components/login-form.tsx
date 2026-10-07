@@ -287,9 +287,11 @@ export function LoginForm({
         </p>
       </div>
 
-      <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
       {/* Google or GitHub create an account for someone new: they agree to the same terms as sign-up. */}
-      <LegalAgreement action="continuing with Google or GitHub" />
+      <OAuthButtons
+        callbackUrl={searchParams.get("redirect") || "/"}
+        notice={<LegalAgreement action="continuing with Google or GitHub" />}
+      />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
