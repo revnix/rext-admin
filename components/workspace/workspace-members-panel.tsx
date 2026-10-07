@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { MEMBER_PERMISSIONS } from "@/lib/permissions";
 import type { Workspace } from "@/types/workspace";
+import { initials } from "@/lib/initials";
 
 interface WorkspaceMembersPanelProps {
   workspace: Workspace;
@@ -76,17 +77,6 @@ const STATUS_LABELS: Readonly<Record<string, string>> = {
   pending: "Pending",
   inactive: "Inactive",
 };
-
-function initials(name: string) {
-  return (
-    name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "?"
-  );
-}
 
 function MemberCell({ row }: { row: MemberRow }) {
   const avatar = row.member.user.avatar;

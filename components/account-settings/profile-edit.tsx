@@ -29,6 +29,7 @@ import {
   validateAvatarFile,
 } from "@/schemas/profile-schemas";
 import type { UserProfile } from "@/types/profile";
+import { initials } from "@/lib/initials";
 
 // Helper to convert relative avatar URLs to absolute URLs
 const getAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
@@ -221,7 +222,7 @@ export function ProfileEdit() {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-section text-muted-foreground">
-                {profile.full_name?.[0]}
+                {initials(profile.full_name)}
               </div>
             )}
           </div>

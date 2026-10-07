@@ -181,7 +181,11 @@ function NavRow({
         >
           {Icon && <Icon />}
           <span>{item.title}</span>
-          {badge ? <span className="sr-only">, {badge} drafts</span> : null}
+          {badge ? (
+            <span className="sr-only">
+              , {badge} {badge === 1 ? "draft" : "drafts"}
+            </span>
+          ) : null}
         </Link>
       </SidebarMenuButton>
       {badge ? (

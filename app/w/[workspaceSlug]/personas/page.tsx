@@ -26,19 +26,9 @@ import { workspaceRoutes } from "@/lib/routes";
 import { personaListParams } from "@/lib/search-params/personas";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Persona } from "@/types/workspace";
+import { initials } from "@/lib/initials";
 
 type PersonaRow = Persona & { id: string };
-
-function initials(name: string) {
-  return (
-    name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "?"
-  );
-}
 
 function PersonaCell({ persona }: { persona: PersonaRow }) {
   return (

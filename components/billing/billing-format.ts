@@ -69,3 +69,17 @@ export function creditsPlan(
   if (credits.credits_per_month === null) return "none";
   return "metered";
 }
+
+/**
+ * The status badge beside the plan's name, or none when it would only say the name again: the
+ * trial's plan is named "Trial", and its status is trial too.
+ */
+export function statusBesidePlan<T extends { label: string }>(
+  status: T | undefined,
+  planName: string,
+): T | undefined {
+  return status &&
+    status.label.trim().toLowerCase() !== planName.trim().toLowerCase()
+    ? status
+    : undefined;
+}

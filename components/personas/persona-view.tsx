@@ -29,17 +29,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import { splitList } from "@/lib/validation/persona-validation";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { Persona } from "@/types/workspace";
-
-function initials(name: string) {
-  return (
-    name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "?"
-  );
-}
+import { initials } from "@/lib/initials";
 
 /** A titled card in the main column, left out when it has nothing to show. */
 function Section({ title, children }: { title: string; children: ReactNode }) {

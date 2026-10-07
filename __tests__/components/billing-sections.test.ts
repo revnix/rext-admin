@@ -8,6 +8,7 @@ import {
   formatAmount,
   monthlyCreditsLeft,
   nextDate,
+  statusBesidePlan,
 } from "@/components/billing/billing-format";
 import {
   BillingPeriod,
@@ -109,5 +110,21 @@ describe("monthlyCreditsLeft and bonusWords", () => {
   it("reads the total when the backend sends no monthly figure, and no bonus", () => {
     expect(monthlyCreditsLeft({ current_credits: 300 })).toBe(300);
     expect(bonusWords({ bonus: null })).toBeNull();
+  });
+});
+
+describe("statusBesidePlan", () => {
+  const trial = { label: "Trial", tone: "neutral" };
+  const active = { label: "Active", tone: "success" };
+
+  it("leaves out a badge that only repeats the plan's name", () => {
+    expect(statusBesidePlan(trial, "Trial")).toBeUndefined();
+    expect(statusBesidePlan(trial, " trial ")).toBeUndefined();
+  });
+
+  it("keeps a badge that says something the name doesn't", () => {
+    expect(statusBesidePlan(active, "Growth")).toBe(active);
+    expect(statusBesidePlan(trial, "Growth")).toBe(trial);
+    expect(statusBesidePlan(undefined, "Growth")).toBeUndefined();
   });
 });
