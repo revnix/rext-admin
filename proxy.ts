@@ -351,8 +351,11 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - the icons and the manifest app/ serves by Next's file conventions (favicon.ico, icon,
+     *   icon<n>, apple-icon, each with or without its extension, and manifest.webmanifest),
+     *   whole paths only, which the login page needs
+     * - brand/ (public/brand: the logo the emails load)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|favicons|logos).*)",
+    "/((?!api|_next/static|_next/image|brand/|(?:favicon\\.ico|icon\\d*(?:\\.\\w+)?|apple-icon(?:\\.\\w+)?|manifest\\.webmanifest)$).*)",
   ],
 };
