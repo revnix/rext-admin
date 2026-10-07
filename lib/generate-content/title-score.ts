@@ -91,13 +91,40 @@ function forMatch(text: string): string {
 }
 
 /**
- * East Asian Wide and Fullwidth characters (Unicode's East_Asian_Width W and F, as Python's
- * `unicodedata.east_asian_width` reads them) in the scripts titles use: Hangul Jamo, CJK symbols
- * and punctuation, kana, CJK ideographs, Hangul syllables, fullwidth forms, the supplementary
- * ideographic planes, and the common emoji blocks.
+ * East Asian Wide and Fullwidth characters, as the backend's `title_width` reads them: every
+ * character whose `unicodedata.east_asian_width` is W or F under the backend's Python 3.11
+ * (Unicode 14.0.0), so emoji such as 🚀 count 2 there and here. A run of code points unassigned in
+ * Unicode 14 between two wide ranges is closed into them, so a newer emoji inside an emoji block
+ * counts 2 too, and so do the ideographic planes 2 and 3 whole. (Python reports an unassigned code
+ * point as F; outside those, no title holds one.) Generated:
+ *
+ *   ranges = []
+ *   for cp in range(0x110000):
+ *       if unicodedata.category(chr(cp)) not in ("Cn", "Cs")
+ *               and unicodedata.east_asian_width(chr(cp)) in ("W", "F"):
+ *           gap = range(ranges[-1][1] + 1, cp) if ranges else None
+ *           if gap is not None and all(unicodedata.category(chr(g)) in ("Cn", "Cs") for g in gap):
+ *               ranges[-1][1] = cp
+ *           else:
+ *               ranges.append([cp, cp])
+ *   ranges[-1][1] = 0x3FFFD  # planes 2 and 3 whole: kept for ideographs, all wide
  */
-const WIDE =
-  /[\u1100-\u115f\u2e80-\u303e\u3041-\u33ff\u3400-\u4dbf\u4e00-\u9fff\ua960-\ua97f\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6\u{1f300}-\u{1f64f}\u{1f900}-\u{1f9ff}\u{20000}-\u{3fffd}]/u;
+const WIDE_RANGES = String.raw`
+\u1100-\u115f\u231a\u231b\u2329\u232a\u23e9-\u23ec\u23f0\u23f3\u25fd\u25fe\u2614\u2615
+\u2648-\u2653\u267f\u2693\u26a1\u26aa\u26ab\u26bd\u26be\u26c4\u26c5\u26ce\u26d4\u26ea
+\u26f2\u26f3\u26f5\u26fa\u26fd\u2705\u270a\u270b\u2728\u274c\u274e\u2753-\u2755\u2757
+\u2795-\u2797\u27b0\u27bf\u2b1b\u2b1c\u2b50\u2b55\u2e80-\u303e\u3041-\u3247\u3250-\u4dbf
+\u4e00-\ua4c6\ua960-\ua97c\uac00-\ud7a3\uf900-\ufad9\ufe10-\ufe19\ufe30-\ufe6b
+\uff01-\uff60\uffe0-\uffe6\u{16fe0}-\u{1b2fb}\u{1f004}\u{1f0cf}\u{1f18e}
+\u{1f191}-\u{1f19a}\u{1f200}-\u{1f320}\u{1f32d}-\u{1f335}\u{1f337}-\u{1f37c}
+\u{1f37e}-\u{1f393}\u{1f3a0}-\u{1f3ca}\u{1f3cf}-\u{1f3d3}\u{1f3e0}-\u{1f3f0}\u{1f3f4}
+\u{1f3f8}-\u{1f43e}\u{1f440}\u{1f442}-\u{1f4fc}\u{1f4ff}-\u{1f53d}\u{1f54b}-\u{1f54e}
+\u{1f550}-\u{1f567}\u{1f57a}\u{1f595}\u{1f596}\u{1f5a4}\u{1f5fb}-\u{1f64f}
+\u{1f680}-\u{1f6c5}\u{1f6cc}\u{1f6d0}-\u{1f6d2}\u{1f6d5}-\u{1f6df}\u{1f6eb}\u{1f6ec}
+\u{1f6f4}-\u{1f6fc}\u{1f7e0}-\u{1f7f0}\u{1f90c}-\u{1f93a}\u{1f93c}-\u{1f945}
+\u{1f947}-\u{1f9ff}\u{1fa70}-\u{1faf6}\u{20000}-\u{3fffd}
+`.replace(/\s/g, "");
+const WIDE = new RegExp(`[${WIDE_RANGES}]`, "u");
 const THAI = /[\u0e00-\u0e7f]/u;
 const NO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}]/u;
 const LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
