@@ -25,6 +25,16 @@ describe("redactUrl", () => {
     expect(redacted).not.toContain("s1");
   });
 
+  it("replaces any parameter whose name ends in token: an invitation's, an OAuth provider's", () => {
+    const redacted = redactUrl(
+      "https://app.rext.ai/signup?invitation_token=inv-1&Access_Token=at-1&ref=pricing",
+    );
+
+    expect(redacted).not.toContain("inv-1");
+    expect(redacted).not.toContain("at-1");
+    expect(redacted).toContain("ref=pricing");
+  });
+
   it("leaves an address without secrets, and anything that isn't an address, as it was", () => {
     expect(redactUrl("https://app.rext.ai/w/acme?tab=all")).toBe(
       "https://app.rext.ai/w/acme?tab=all",
@@ -34,6 +44,18 @@ describe("redactUrl", () => {
 });
 
 describe("redactEventUrls", () => {
+  it("redacts an address an event of ours carries as url", () => {
+    const event = {
+      properties: { url: "https://app.rext.ai/verify-email?token=t9" },
+    };
+
+    redactEventUrls(event);
+
+    expect(event.properties.url).toBe(
+      "https://app.rext.ai/verify-email?token=redacted",
+    );
+  });
+
   it("redacts the addresses PostHog puts in an event, its $set and its $set_once", () => {
     const event = {
       properties: {

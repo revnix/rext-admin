@@ -5,16 +5,16 @@
  * to every event it sends, not only to page views (rext-control#541).
  */
 
-/** Query parameters whose values never go to analytics. */
-const SECRET_PARAMS = new Set([
-  "token",
-  "code",
-  "state",
-  "email",
-  "access_token",
-  "refresh_token",
-  "id_token",
-]);
+/**
+ * Query parameters whose values never go to analytics: these, and any whose name ends in "token"
+ * (invitation_token, access_token, refresh_token, id_token).
+ */
+const SECRET_PARAMS = new Set(["token", "code", "state", "email"]);
+
+function isSecretParam(key: string): boolean {
+  const name = key.toLowerCase();
+  return SECRET_PARAMS.has(name) || name.endsWith("token");
+}
 
 /**
  * The event properties PostHog fills with an address. The session-entry ones ride on every event
@@ -23,6 +23,8 @@ const SECRET_PARAMS = new Set([
  * campaign tag, never a query.
  */
 const URL_PROPERTIES = [
+  // Not PostHog's: an event of ours that carries the page's address in "url" gets the same care.
+  "url",
   "$current_url",
   "$referrer",
   "$initial_current_url",
@@ -41,7 +43,7 @@ export function redactUrl(url: string): string {
   }
   let changed = false;
   for (const key of [...parsed.searchParams.keys()]) {
-    if (SECRET_PARAMS.has(key.toLowerCase())) {
+    if (isSecretParam(key)) {
       parsed.searchParams.set(key, "redacted");
       changed = true;
     }

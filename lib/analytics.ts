@@ -1,6 +1,3 @@
-import { log } from "@/lib/logger";
-import { safeJsonParse } from "@/lib/utils";
-
 // ── Event catalog ─────────────────────────────────────────────────────────────
 
 type AnalyticsEvent =
@@ -87,12 +84,12 @@ export function registerPostHog(bridge: PostHogBridge): void {
 
 class Analytics {
   private enabled: boolean;
-  private user: AnalyticsUser | null = null;
 
   constructor() {
     this.enabled =
       process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "false" &&
       typeof window !== "undefined";
+    this.clearStoredEvents();
   }
 
   /**
@@ -101,7 +98,6 @@ class Analytics {
    */
   identify(user: AnalyticsUser) {
     if (!this.enabled) return;
-    this.user = user;
 
     if (user.id) {
       _posthog?.identify(user.id, {
@@ -112,23 +108,14 @@ class Analytics {
     }
   }
 
-  /** Track an analytics event. */
+  /**
+   * Track an analytics event, with the caller's properties only. PostHog adds the time, the person
+   * and the page's address itself, and that address goes out with its credentials redacted
+   * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
+   */
   track(event: AnalyticsEvent, properties?: EventProperties) {
     if (!this.enabled) return;
-
-    const eventData = {
-      event,
-      properties: {
-        ...properties,
-        timestamp: new Date().toISOString(),
-        url: typeof window !== "undefined" ? window.location.href : undefined,
-        user_id: this.user?.id,
-      },
-    };
-
-    _posthog?.capture(event, eventData.properties);
-
-    this.storeEventLocally(eventData);
+    _posthog?.capture(event, { ...properties });
   }
 
   /** Track a page view. */
@@ -138,41 +125,20 @@ class Analytics {
 
   /** Reset analytics state (e.g. on logout). */
   reset() {
-    this.user = null;
     _posthog?.reset();
   }
 
-  // ── Internal helpers ───────────────────────────────────────────────────────
-
-  private storeEventLocally(eventData: unknown) {
-    if (typeof window === "undefined") return;
-
-    try {
-      const key = "wrext_analytics_events";
-      const stored = localStorage.getItem(key);
-      const events = safeJsonParse<unknown[]>(stored, []) ?? [];
-
-      events.push(eventData);
-      const recentEvents = events.slice(-100);
-      localStorage.setItem(key, JSON.stringify(recentEvents));
-    } catch (error) {
-      log.warn("[Analytics] Failed to store event locally:", error);
-    }
-  }
-
-  getStoredEvents(): unknown[] {
-    if (typeof window === "undefined") return [];
-    try {
-      const stored = localStorage.getItem("wrext_analytics_events");
-      return safeJsonParse<unknown[]>(stored, []) ?? [];
-    } catch {
-      return [];
-    }
-  }
-
+  /**
+   * Removes the copy of recent events an earlier version kept in the browser. It held each event's
+   * raw address, so it is deleted when the app loads and again at sign-out.
+   */
   clearStoredEvents() {
     if (typeof window === "undefined") return;
-    localStorage.removeItem("wrext_analytics_events");
+    try {
+      window.localStorage.removeItem("wrext_analytics_events");
+    } catch {
+      // Storage can be unavailable (private mode, blocked site data): nothing is stored then.
+    }
   }
 }
 
