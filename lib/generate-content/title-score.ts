@@ -1,13 +1,20 @@
 /**
  * The Title step's small score (plans/app/E-workflow.md §4, step 4; research 04 §2.3): three checks a
  * reader can see the reason for. The first two are the backend's own title contract
- * (rext-backend `seo_title_rules.py`: the exact focus keyphrase, 50 to 59 characters), measured the
- * same way, so a title the backend would flag is flagged here before it is chosen.
+ * (rext-backend `seo_title_rules.py`: the exact focus keyphrase, 50 to 59 characters, or up to the
+ * keyphrase plus 20 for a long keyphrase, never over 75), measured the same way, so a title the
+ * backend would flag is flagged here before it is chosen.
  */
 
 /** The backend's title length, inclusive (`TITLE_MIN_CHARS`, `TITLE_MAX_CHARS`). */
 export const TITLE_MIN_CHARS = 50;
 export const TITLE_MAX_CHARS = 59;
+/**
+ * A long keyphrase leaves 59 characters little room beside it, so its titles may run to the
+ * keyphrase plus this, up to the ceiling (the backend's `title_max_chars`, G69).
+ */
+export const TITLE_ROOM_BESIDE_KEYPHRASE = 20;
+export const TITLE_MAX_CHARS_CEILING = 75;
 
 export type TitleCheckId = "keyphrase" | "length" | "clarity";
 
@@ -39,6 +46,18 @@ function forMatch(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()} `;
+}
+
+/**
+ * The longest a title for this keyphrase may be, as the backend measures it: 59, or the keyphrase
+ * (punctuation flattened) plus 20 when that is more, never over 75. A short keyphrase keeps 59.
+ */
+export function titleMaxChars(keyphrase?: string | null): number {
+  const length = forMatch(keyphrase ?? "").trim().length;
+  return Math.min(
+    TITLE_MAX_CHARS_CEILING,
+    Math.max(TITLE_MAX_CHARS, length + TITLE_ROOM_BESIDE_KEYPHRASE),
+  );
 }
 
 /**
@@ -97,13 +116,14 @@ export function scoreTitle(
   }
 
   const length = text.length;
-  const inRange = length >= TITLE_MIN_CHARS && length <= TITLE_MAX_CHARS;
+  const max = titleMaxChars(phrase);
+  const inRange = length >= TITLE_MIN_CHARS && length <= max;
   checks.push({
     id: "length",
     met: inRange,
     label: inRange
       ? `${length} characters`
-      : `${length} characters, ${length < TITLE_MIN_CHARS ? `under ${TITLE_MIN_CHARS}` : `over ${TITLE_MAX_CHARS}`}`,
+      : `${length} characters, ${length < TITLE_MIN_CHARS ? `under ${TITLE_MIN_CHARS}` : `over ${max}`}`,
   });
 
   const problem = clarityProblem(text);
