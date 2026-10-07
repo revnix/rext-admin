@@ -27,6 +27,10 @@ import {
   BrandVoiceFields,
   saveBrandVoice,
 } from "@/components/workspace-settings/brand-voice-fields";
+import {
+  DraftedNotice,
+  namedPeople,
+} from "@/components/workspace-settings/drafted-notice";
 
 /**
  * Workspace settings, Brand voice: the one place the brand voice is edited (plans/app/D-pages.md
@@ -177,4 +181,5 @@ export function BrandVoiceSection() {
   );
 }
 
-export { DraftedNotice, namedPeople } from "./drafted-notice";
+// The notice moved to its own file (the creation flow shows it too); kept importable from here.
+export { DraftedNotice, namedPeople };
