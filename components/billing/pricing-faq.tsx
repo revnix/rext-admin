@@ -60,7 +60,7 @@ function answers(catalog: PlanCatalog) {
             href={settingsRoutes.plan as Route}
             className="font-medium text-foreground underline underline-offset-4"
           >
-            Account settings → Billing
+            Account settings → Plan
           </Link>
           .
         </>
