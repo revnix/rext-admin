@@ -1197,11 +1197,15 @@ export function FreshGenerationView({
    */
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
+    // The thread a new start just created: `threadId` is still stale in this
+    // closure for it (the reducer dispatch has not re-rendered yet), and a start
+    // the backend refuses never sends the `run/created` that would name it.
+    // Without it, the refusal left the dock's job running and took this stream
+    // for a superseded one, so the loader never cleared over the notice (E27).
+    startedThreadId?: string,
   ): Promise<boolean> => {
-    // `threadId` is still stale in this closure for the very first run (the
-    // reducer dispatch has not re-rendered yet), so track it locally and let
-    // `run/created` confirm it.
-    let activeThreadId = threadId ?? backgroundThreadId ?? null;
+    let activeThreadId =
+      startedThreadId ?? threadId ?? backgroundThreadId ?? null;
     let settled = false;
     // The backend ended the run early (run.failed): its stages fail, they don't complete.
     let stopped = false;
@@ -1753,7 +1757,7 @@ export function FreshGenerationView({
         signal,
       );
 
-      const settled = await processStream(stream);
+      const settled = await processStream(stream, newThreadId);
       // A new thread has no other run: any run on it is this one.
       if (
         !settled &&
