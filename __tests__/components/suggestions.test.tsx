@@ -142,6 +142,59 @@ describe("SuggestionsSection", () => {
     expect(screen.queryByRole("complementary")).toBeNull();
   });
 
+  describe("the search results under 1024 px", () => {
+    const gate = {
+      type: "keyword Selection",
+      serp_titles: [
+        {
+          position: 1,
+          title: "Best SEO tools for 2026",
+          domain: "example.com",
+          url: "https://example.com/best",
+          format: "list",
+        },
+      ],
+    };
+
+    it("open from the Other keywords heading, not a button floating over Analyze", async () => {
+      const user = userEvent.setup();
+      renderSuggestions({ gate });
+
+      const buttons = screen.getAllByRole("button", {
+        name: "Top search results",
+      });
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0]).not.toHaveClass("fixed");
+      expect(
+        screen.getByRole("heading", { name: "Other keywords" }).parentElement,
+      ).toContainElement(buttons[0]);
+
+      await user.click(buttons[0]);
+      const sheet = await screen.findByRole("dialog", {
+        name: "Top search results",
+      });
+      expect(
+        within(sheet).getByRole("link", { name: "Best SEO tools for 2026" }),
+      ).toBeInTheDocument();
+    });
+
+    it("sit beside the status while the keyword's data is missing", () => {
+      renderSuggestions({ gate, seoResult: null, suggestedKeywords: [] });
+
+      const button = screen.getByRole("button", {
+        name: "Top search results",
+      });
+      expect(screen.getByRole("status").parentElement).toContainElement(button);
+    });
+
+    it("have no button without results", () => {
+      renderSuggestions({ gate: { type: "keyword Selection" } });
+      expect(
+        screen.queryByRole("button", { name: "Top search results" }),
+      ).toBeNull();
+    });
+  });
+
   it("says so when there is nothing to suggest", () => {
     renderSuggestions({ suggestedKeywords: ["seo tools"] });
     expect(

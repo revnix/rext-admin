@@ -11,7 +11,7 @@ import {
 import { useEffect, useId, useState } from "react";
 
 import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
-import { WithSidePane } from "@/components/layouts";
+import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -238,7 +238,11 @@ export function TitleStep({
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end">
+      {/* Under 1024 px the search results open from here: a floating button covered Continue (E29). */}
+      <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+        {serpTitles.length > 0 && (
+          <SidePaneTrigger size="default" className="mr-auto" />
+        )}
         <Button
           onClick={() => chosen && onContinue(chosen)}
           disabled={!chosen || isRegenerating}
@@ -256,6 +260,7 @@ export function TitleStep({
     <WithSidePane
       sideTitle="Top search results"
       showTitle
+      trigger="inline"
       side={<SerpSnapshot results={serpTitles} heading={null} />}
     >
       {list}
