@@ -886,4 +886,27 @@ describe("OutlineReview, an outline that came back empty", () => {
       screen.getByRole("button", { name: /approve and generate/i }),
     ).toBeEnabled();
   });
+
+  it("waits for the outline's own gate before saying so", () => {
+    // The step's update puts the outline on the page a moment before its gate opens; until then
+    // the page still holds the title step's gate, with no sections to read.
+    const props = {
+      rawTokens: "",
+      isLoading: false,
+      onApprove: jest.fn(),
+      onReject: jest.fn(),
+    };
+    const { rerender } = render(
+      <OutlineReview
+        {...props}
+        outline={outline}
+        gate={{ type: "topic_selection" }}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    rerender(<OutlineReview {...props} outline={outline} gate={baseGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sectionList()).toBeInTheDocument();
+  });
 });

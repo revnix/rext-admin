@@ -344,7 +344,7 @@ export function OutlineReview({
 
   // An outline that came back with nothing in it (task 783): say so, and offer only Regenerate.
   // A regenerated outline arrives as a new gate and takes this notice's place.
-  if (outlineIsEmpty(outline, gate.sections.length)) {
+  if (outlineIsEmpty(outline, gate)) {
     return (
       <div className="w-full space-y-6 py-3">
         <Notice tone="warning" title="The outline couldn't be drafted">
