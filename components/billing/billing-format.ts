@@ -101,6 +101,26 @@ export function bonusWords(
 }
 
 /**
+ * The credits Rext support added that are still live, beside the bonus: "Plus 200 credits added by
+ * Rext support; the soonest expiry is Oct 31, 2026." or null. Several adds are summed, so the date
+ * is the first of them to expire; with none, they last until they are spent.
+ */
+export function addedWords(
+  credits: Pick<CreditBalance, "added_credits">,
+): string | null {
+  const added = credits.added_credits;
+  if (!added || added.credits <= 0) return null;
+  const one = added.credits === 1;
+  return `Plus ${added.credits.toLocaleString()} ${
+    one ? "credit" : "credits"
+  } added by Rext support${
+    added.expires_at
+      ? `; the soonest expiry is ${dateFormat.short(added.expires_at)}`
+      : `, which ${one ? "doesn't" : "don't"} expire`
+  }.`;
+}
+
+/**
  * What the credits answer says about the plan behind them. The backend sends `articles_remaining`
  * null only for a plan with no monthly allowance ("unlimited"); with nothing that grants access it
  * sends no allowance and 0 articles ("none"). Any allowance is "metered".
