@@ -10,6 +10,9 @@ interface SafeLexicalEditorProps {
   showDebug?: boolean;
   toolbarClass?: string;
   onRequestEdit?: () => void;
+  toolbar?: boolean;
+  plugins?: React.ReactNode;
+  bare?: boolean;
 }
 
 export function SafeLexicalEditor(props: SafeLexicalEditorProps) {

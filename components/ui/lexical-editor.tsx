@@ -1691,6 +1691,12 @@ interface LexicalEditorProps {
   toolbarClass?: string;
   /** Called when a read-only editor needs Edit mode (e.g. image upload). */
   onRequestEdit?: () => void;
+  /** False for a page that brings its own tools (the full-screen editor): no fixed toolbar. */
+  toolbar?: boolean;
+  /** More Lexical plugins, mounted inside the composer while editing (a floating toolbar, a block menu). */
+  plugins?: React.ReactNode;
+  /** No frame or padding round the text: the page around it is the frame. */
+  bare?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -1703,6 +1709,9 @@ export default function LexicalEditor({
   showDebug = false,
   toolbarClass,
   onRequestEdit,
+  toolbar = true,
+  plugins,
+  bare = false,
 }: LexicalEditorProps) {
   const [markdownOutput, setMarkdownOutput] = useState(initialValue);
   const [shouldUpdateEditor, setShouldUpdateEditor] = useState(false);
@@ -1844,23 +1853,29 @@ export default function LexicalEditor({
           <div
             className={cn(
               "border rounded-md relative min-h-[200px] bg-card text-foreground flex flex-col",
-              readOnly ? "border-none bg-transparent" : "border-border",
+              readOnly || bare ? "border-none bg-transparent" : "border-border",
             )}
           >
-            {!readOnly && <ToolbarPlugin className={toolbarClass} />}
+            {!readOnly && toolbar && <ToolbarPlugin className={toolbarClass} />}
             <div className="relative grow">
               <RichTextPlugin
                 contentEditable={
                   <ContentEditable
                     className={cn(
                       "prose lg:prose-lg prose-app max-w-prose min-h-[150px] outline-none",
-                      readOnly ? "p-0 cursor-default" : "p-6",
+                      readOnly || bare ? "p-0" : "p-6",
+                      readOnly && "cursor-default",
                     )}
                   />
                 }
                 placeholder={
                   !readOnly ? (
-                    <div className="text-muted-foreground absolute top-6 left-6 pointer-events-none select-none text-sm">
+                    <div
+                      className={cn(
+                        "text-muted-foreground absolute pointer-events-none select-none text-sm",
+                        bare ? "top-0 left-0" : "top-6 left-6",
+                      )}
+                    >
                       Type here (Markdown supported)…
                     </div>
                   ) : null
@@ -1877,6 +1892,7 @@ export default function LexicalEditor({
               {!readOnly && <NewTabLinkPlugin />}
               {readOnly && <ReadOnlyLinkClickPlugin />}
               {!readOnly && <OnChangePlugin onChange={handleChange} />}
+              {!readOnly && plugins}
             </div>
           </div>
         </LexicalComposer>
