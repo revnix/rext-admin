@@ -118,7 +118,7 @@ it("scores each title against the gate's keyphrase", () => {
   expect(screen.getByText("52 characters")).toBeInTheDocument();
 });
 
-it("says the run's choices in one line on a phone only: wider, the steps above say them", () => {
+it("says the run's choices in one line at every width: the search intent has no other place", () => {
   render(
     <TitleStep
       instruction="Select a title"
@@ -132,7 +132,7 @@ it("says the run's choices in one line on a phone only: wider, the steps above s
 
   expect(
     screen.getByText("seo agency · commercial · how-to-guide"),
-  ).toHaveClass("md:hidden");
+  ).not.toHaveClass("md:hidden");
 });
 
 it("shows the search results' top ten beside the titles", () => {

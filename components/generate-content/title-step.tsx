@@ -108,10 +108,7 @@ export function TitleStep({
           it word for word.
         </p>
         {contextLine && (
-          // On a phone only: wider, the steps above say the choices under each step (FB2.12).
-          <p className="text-caption text-muted-foreground md:hidden">
-            {contextLine}
-          </p>
+          <p className="text-caption text-muted-foreground">{contextLine}</p>
         )}
       </div>
 
