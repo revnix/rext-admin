@@ -109,7 +109,7 @@ const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
             <p
               className={cn(
                 "text-xs text-muted-foreground",
-                value.length > maxLength * 0.9 && "text-amber-600",
+                value.length > maxLength * 0.9 && "text-warning-600",
                 value.length === maxLength && "text-destructive",
               )}
             >

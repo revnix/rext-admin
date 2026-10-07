@@ -191,10 +191,7 @@ export function LockedFeatureTooltip({
           )}
         </span>
       </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="max-w-xs bg-gray-900 text-white border-gray-700"
-      >
+      <TooltipContent side="top" className="max-w-xs">
         {getTooltipMessage()}
       </TooltipContent>
     </Tooltip>

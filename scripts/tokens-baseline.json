@@ -1,30 +1,15 @@
 {
-  "app/accept-admin-invitation/page.tsx": {
-    "stock-palette": 16
-  },
   "app/globals.css": {
     "arbitrary-size": 1
   },
   "app/w/[workspaceSlug]/content/[id]/page.tsx": {
-    "stock-palette": 5,
     "small-type": 2
   },
-  "components/permission/locked-feature-tooltip.tsx": {
-    "stock-palette": 3
-  },
   "components/ui/alert-dialog.tsx": {
-    "stock-palette": 1,
     "off-scale": 1
   },
-  "components/ui/alert.tsx": {
-    "stock-palette": 4
-  },
-  "components/ui/avatar.tsx": {
-    "stock-palette": 4
-  },
   "components/ui/button.tsx": {
-    "off-scale": 5,
-    "stock-palette": 1
+    "off-scale": 5
   },
   "components/ui/calendar.tsx": {
     "off-scale": 1,
@@ -41,21 +26,11 @@
   "components/ui/command.tsx": {
     "off-scale": 1
   },
-  "components/ui/detail-card.tsx": {
-    "stock-palette": 2
-  },
-  "components/ui/dialog.tsx": {
-    "stock-palette": 1
-  },
   "components/ui/input-group.tsx": {
     "off-scale": 1,
     "arbitrary-radius": 3
   },
-  "components/ui/input.tsx": {
-    "stock-palette": 3
-  },
   "components/ui/lexical-editor.tsx": {
-    "stock-palette": 9,
     "off-scale": 1,
     "small-type": 1
   },
@@ -68,25 +43,14 @@
   "components/ui/scroll-area.tsx": {
     "arbitrary-radius": 1
   },
-  "components/ui/security-badge.tsx": {
-    "stock-palette": 13
-  },
-  "components/ui/sheet.tsx": {
-    "stock-palette": 1
-  },
   "components/ui/sonner.tsx": {
-    "off-scale": 1,
-    "arbitrary-colour": 6
+    "off-scale": 1
   },
   "components/ui/switch.tsx": {
     "off-scale": 1
   },
   "components/ui/tooltip.tsx": {
-    "stock-palette": 4,
     "arbitrary-radius": 1
-  },
-  "components/ui/typeform/chip-input.tsx": {
-    "stock-palette": 5
   },
   "components/ui/typeform/multi-select-card.tsx": {
     "off-scale": 1
@@ -94,14 +58,7 @@
   "components/ui/typeform/single-select-card.tsx": {
     "off-scale": 1
   },
-  "components/ui/typeform/text-input.tsx": {
-    "stock-palette": 1
-  },
-  "components/ui/typeform/textarea-input.tsx": {
-    "stock-palette": 1
-  },
   "components/workspace/workspace-welcome-modal.tsx": {
-    "stock-palette": 6,
     "arbitrary-radius": 1
   }
 }

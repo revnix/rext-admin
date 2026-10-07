@@ -226,7 +226,7 @@ export default function WorkspaceContentDetailPage({
             </p>
             <Button
               variant="outline"
-              className="h-10 px-4 rounded-md border-slate-200"
+              className="h-10 px-4 rounded-md"
               onClick={() =>
                 router.push(
                   workspaceRoutes.content(workspace?.slug || "") as Route,
@@ -350,8 +350,8 @@ export default function WorkspaceContentDetailPage({
                         <span
                           className={cn(
                             "text-[10px] font-bold px-2.5 py-1 rounded-full",
-                            isSuccess && "bg-green-100 text-green-700",
-                            isError && "bg-red-100 text-red-700",
+                            isSuccess && "bg-success-50 text-success-700",
+                            isError && "bg-danger-50 text-danger-700",
                             !isSuccess &&
                               !isError &&
                               "bg-muted text-muted-foreground",
