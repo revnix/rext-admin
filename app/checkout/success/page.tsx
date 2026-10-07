@@ -23,6 +23,7 @@ import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
 import {
+  againstAllowance,
   bonusWords,
   monthlyCreditsLeft,
 } from "@/components/billing/billing-format";
@@ -152,6 +153,8 @@ export default function CheckoutSuccessPage() {
   const left = credits.data ? monthlyCreditsLeft(credits.data) : undefined;
   const bonus = credits.data ? bonusWords(credits.data) : null;
   const total = credits.data?.credits_per_month ?? null;
+  // Above the allowance the balance stands alone, with the bar full.
+  const against = left !== undefined ? againstAllowance(left, total) : null;
 
   return (
     <DetailPage
@@ -218,14 +221,18 @@ export default function CheckoutSuccessPage() {
                           {left.toLocaleString()}
                         </span>
                         <span className="text-sm text-muted-foreground">
-                          {total !== null
-                            ? ` of ${total.toLocaleString()} credits`
+                          {against && against.of !== null
+                            ? ` of ${against.of.toLocaleString()} credits`
                             : " credits"}
                         </span>
                       </p>
                     )}
-                    {left !== undefined && total !== null && total > 0 && (
-                      <Meter value={left} max={total} label="Credits" />
+                    {against?.meter && (
+                      <Meter
+                        value={against.meter.value}
+                        max={against.meter.max}
+                        label="Credits"
+                      />
                     )}
                     {(renews || bonus) && (
                       <p className="text-sm text-muted-foreground">

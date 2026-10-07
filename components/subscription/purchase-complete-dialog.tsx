@@ -10,6 +10,7 @@
 
 import { CheckCircle2, Loader2 } from "lucide-react";
 import {
+  balanceLine,
   bonusWords,
   monthlyCreditsLeft,
 } from "@/components/billing/billing-format";
@@ -36,12 +37,10 @@ function balanceWords(
       ? "Your balance didn't load; the header shows it in a moment."
       : "Loading your balance…";
   }
-  const left = monthlyCreditsLeft(credits).toLocaleString();
-  const total = credits.credits_per_month;
-  const balance =
-    total !== null
-      ? `Your balance is ${left} of ${total.toLocaleString()} credits.`
-      : `Your balance is ${left} credits.`;
+  const balance = `Your balance is ${balanceLine(
+    monthlyCreditsLeft(credits),
+    credits.credits_per_month,
+  )}.`;
   return [balance, bonusWords(credits)].filter(Boolean).join(" ");
 }
 

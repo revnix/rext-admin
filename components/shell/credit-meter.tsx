@@ -5,7 +5,12 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { monthlyCreditsLeft } from "@/components/billing/billing-format";
+import {
+  againstAllowance,
+  balanceLine,
+  breakdownWords,
+  monthlyCreditsLeft,
+} from "@/components/billing/billing-format";
 import {
   type TrialState,
   trialPillWords,
@@ -85,31 +90,36 @@ function useShellTrial(credits: CreditBalance | null): TrialState | null {
 }
 
 function describe(credits: CreditBalance) {
-  // The plan's own credits against its allowance; a bonus is Usage's to show.
-  const left = monthlyCreditsLeft(credits);
+  // All the person can spend now, against a month's allowance: the plan's credits plus any bonus.
+  // The bonus is spent first, so a meter of the plan's credits alone would stand still while
+  // they write. Above the allowance the balance stands alone, with the bar full (task 784).
+  const left = credits.current_credits;
   const total = credits.credits_per_month;
-  const share =
-    total && total > 0 ? Math.min(1, Math.max(0, left / total)) : null;
+  const { of, meter } = againstAllowance(left, total);
+  const share = meter ? meter.value / meter.max : null;
   const articles =
     credits.articles_remaining !== null
       ? `about ${credits.articles_remaining.toLocaleString()} articles`
       : null;
-  const label =
-    total !== null
-      ? `${left.toLocaleString()} of ${total.toLocaleString()} credits left`
-      : `${left.toLocaleString()} credits left`;
   return {
     left,
-    total,
-    share,
+    of,
+    meter,
     low: share !== null && share < LOW_SHARE,
-    label: [label, articles].filter(Boolean).join(", "),
+    label: [
+      `${balanceLine(left, total)} left`,
+      breakdownWords(credits),
+      articles,
+    ]
+      .filter(Boolean)
+      .join(", "),
   };
 }
 
 /**
  * The credits meter (design/app-language.md §5), in the sidebar's footer: the bar and "412 of
- * 1,000 credits", opening the usage page. The header no longer repeats it (FB2.4).
+ * 1,000 credits" (or "1,600 credits" while a bonus or added credits put the balance above the
+ * month's allowance), opening the usage page. The header no longer repeats it (FB2.4).
  */
 export function CreditMeter({ className }: { className?: string }) {
   // Like the sidebar's other links: on a phone the sheet closes as the meter opens usage, or it
@@ -119,7 +129,7 @@ export function CreditMeter({ className }: { className?: string }) {
   const trial = useShellTrial(credits);
   if (!credits) return null;
   const described = describe(credits);
-  const { left, total, share } = described;
+  const { left, of, meter } = described;
   const low = trial ? trial.ending : described.low;
   const label = trial ? trialPillWords(trial) : described.label;
 
@@ -134,17 +144,15 @@ export function CreditMeter({ className }: { className?: string }) {
         className,
       )}
     >
-      {share !== null && total !== null && (
-        <Meter value={left} max={total} low={low} />
-      )}
+      {meter && <Meter value={meter.value} max={meter.max} low={low} />}
       <span className="mt-2 block text-caption text-muted-foreground">
         <span className="num font-medium text-foreground">
           {left.toLocaleString()}
         </span>
-        {total !== null && (
+        {of !== null && (
           <>
             {" "}
-            of <span className="num">{total.toLocaleString()}</span>
+            of <span className="num">{of.toLocaleString()}</span>
           </>
         )}{" "}
         credits
