@@ -5,6 +5,9 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DragHandlePlugin } from "@/components/editor/drag-handle-plugin";
+import { FloatingToolbarPlugin } from "@/components/editor/floating-toolbar-plugin";
+import { SlashMenuPlugin } from "@/components/editor/slash-menu-plugin";
 import { useLeaveGuard } from "@/components/forms/use-leave-guard";
 import { WorkingSurface } from "@/components/layouts";
 import {
@@ -25,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAutosave, type SaveState } from "@/hooks/use-autosave";
 import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useAutosaveContent, useContentDetail } from "@/hooks/use-content";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { articleHtml } from "@/lib/content/article-html";
 import { deriveImagesData } from "@/lib/content/image-data";
@@ -198,6 +202,7 @@ function ArticleEditor({
   };
 
   const guard = useLeaveGuard(state !== "saved");
+  const isMobile = useIsMobile();
 
   const done = async () => {
     if (await saveNow()) router.push(articleHref);
@@ -283,7 +288,10 @@ function ArticleEditor({
           }
         }}
         onPointerDownCapture={(event) => {
-          if ((event.target as Element).closest("button")) edited();
+          // The tools' buttons and the block menu's options, wherever they are drawn.
+          if ((event.target as Element).closest('button, [role="option"]')) {
+            edited();
+          }
         }}
       >
         {/* The shared editor layout: its frame and gutters, and the article's own title as the h1. */}
@@ -291,13 +299,26 @@ function ArticleEditor({
           <article className="prose lg:prose-lg prose-app mx-auto w-full pt-8 pb-24">
             {/* layout-ok: the article's own title, in its prose (WorkingSurface's ownHeading) */}
             <h1>{title}</h1>
-            <SafeLexicalEditor
-              key={start.key}
-              readOnly={false}
-              initialValue={start.markdown}
-              onChange={handleChange}
-              toolbarClass="not-prose top-0 z-10"
-            />
+            {/* The gutter the drag handle sits in, where there is room for one. */}
+            <div data-drag-gutter className="relative lg:-ml-8 lg:pl-8">
+              <SafeLexicalEditor
+                key={start.key}
+                readOnly={false}
+                initialValue={start.markdown}
+                onChange={handleChange}
+                // The page's own tools (task 706): a bar over the selection, a "/" menu for
+                // blocks, a grip to drag them. No fixed toolbar, no frame round the text.
+                toolbar={false}
+                bare
+                plugins={
+                  <>
+                    <FloatingToolbarPlugin />
+                    <SlashMenuPlugin />
+                    {isMobile ? null : <DragHandlePlugin />}
+                  </>
+                }
+              />
+            </div>
           </article>
         </WorkingSurface>
       </main>
@@ -306,6 +327,9 @@ function ArticleEditor({
         <span className="num">
           {words.toLocaleString()} {words === 1 ? "word" : "words"} · {minutes}{" "}
           min read
+        </span>
+        <span className="hidden md:inline">
+          Type / for blocks · select text to format
         </span>
       </footer>
 
