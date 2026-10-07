@@ -24,7 +24,9 @@ app/
                             sections; /topics and /knowledge redirect (both features are removed)
   w/, w/create              all workspaces; create a workspace; w/layout.tsx mounts the shell for every /w page
   edit/[workspaceSlug]/[id] the full-screen article editor, outside the shell (a /w page always gets it): the article
-                            saves by itself (hooks/use-autosave.ts), with its text kept on the device until a save works
+                            saves by itself (hooks/use-autosave.ts), with its text kept on the device until a save works;
+                            the article page's "Edit article" opens it (workspaceRoutes.contentEdit), and the page
+                            itself no longer edits
   settings/                 account settings: Profile, security (and sessions), notifications, subscription (Billing),
                             data (export, the trash, closing the account); /profile, /settings/sessions and
                             /settings/trash redirect to their sections, billing to subscription
