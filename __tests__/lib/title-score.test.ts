@@ -184,6 +184,9 @@ describe("containsKeyphrase in any script, as the backend's", () => {
     ["İstanbul'da En İyi SEO Ajansları", "istanbul", true],
     ["ISTANBUL İÇİN SEO REHBERİ", "İstanbul", true],
     ["ıstanbul için seo", "istanbul", false],
+    // Greek: a capital Σ at a word's end lowercases to ς, which the user types as σ.
+    ["ΟΔΗΓΟΣ SEO ΓΙΑ ΜΙΚΡΕΣ ΕΠΙΧΕΙΡΗΣΕΙΣ", "οδηγοσ seo", true],
+    ["Οδηγός SEO για μικρές επιχειρήσεις", "οδηγός seo", true],
     // CJK ideographs beyond the first plane (Extension B on) are unspaced too.
     ["𠀀𠀁𠀂", "𠀁", true],
     ["2026年𠮷野家の店舗", "𠮷野家", true],

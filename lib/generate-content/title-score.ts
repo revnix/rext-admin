@@ -65,13 +65,15 @@ function charCount(text: string): number {
 /**
  * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
  * `_normalize_for_match`. A capital dotted İ lowercases to "i" plus a combining dot that no
- * lowercase i carries, so the dot goes: Turkish "İstanbul" is "istanbul" in lowercase.
+ * lowercase i carries, so the dot goes: Turkish "İstanbul" is "istanbul" in lowercase. A capital Σ
+ * lowercases to the final ς at a word's end, which a user types as σ: both are σ.
  */
 function forMatch(text: string): string {
   return ` ${text
     .normalize("NFC")
     .toLowerCase()
     .replace(/i\u0307/g, "i")
+    .replace(/ς/g, "σ")
     .replace(NON_WORD, " ")
     .trim()
     .replace(/\s+/g, " ")} `;
