@@ -70,7 +70,8 @@ function insertBlock(editor: LexicalEditor, id: BlockId) {
       editor.dispatchCommand(INSERT_TABLE_COMMAND, {
         rows: "3",
         columns: "3",
-        includeHeaders: true,
+        // A header row only, as the toolbar's own table and the Markdown round trip have it.
+        includeHeaders: { rows: true, columns: false },
       });
       return;
     case "divider":

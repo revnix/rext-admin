@@ -21,7 +21,13 @@ import {
   type LucideIcon,
   Quote,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -50,10 +56,14 @@ function Tool({
       type="button"
       aria-label={label}
       aria-pressed={active}
-      // Before the text loses its selection.
+      // By pointer: on the press, before the text loses its selection.
       onMouseDown={(event) => {
         event.preventDefault();
         onPick();
+      }}
+      // By keyboard (Enter or Space on the focused button): a click with no pointer behind it.
+      onClick={(event) => {
+        if (event.detail === 0) onPick();
       }}
       className={cn(
         "grid size-8 cursor-pointer place-items-center rounded-md text-foreground hover:bg-muted",
@@ -65,6 +75,17 @@ function Tool({
   );
 }
 
+/** The bar's centre, moved in from an edge it would cross (with the page's 16 px gutter kept). */
+const EDGE = 16;
+function withinWindow(centre: number, width: number) {
+  const half = width / 2;
+  const least = half + EDGE;
+  const most = window.innerWidth - half - EDGE;
+  return least > most
+    ? window.innerWidth / 2
+    : Math.min(Math.max(centre, least), most);
+}
+
 /**
  * The floating toolbar (task 706): select some text and a small bar appears over it, with bold,
  * italic, link, heading and quote. It follows the selection and goes when the selection does.
@@ -73,6 +94,13 @@ export function FloatingToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const [shown, setShown] = useState<Shown | null>(null);
   const [linking, setLinking] = useState<string | null>(null);
+  // The bar's own width, to keep all of it inside the window beside a narrow screen's edge.
+  const barRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: measured again when the bar's content changes
+  useLayoutEffect(() => {
+    setWidth(barRef.current?.offsetWidth ?? 0);
+  }, [shown === null, linking === null]);
 
   const read = useCallback(() => {
     editor.getEditorState().read(() => {
@@ -136,8 +164,9 @@ export function FloatingToolbarPlugin() {
     <div
       role="toolbar"
       aria-label="Format the selection"
-      style={{ top: shown.top, left: shown.left }}
-      className="not-prose fixed z-50 flex -translate-x-1/2 -translate-y-[calc(100%+8px)] items-center gap-0.5 rounded-md border bg-popover p-1 text-popover-foreground shadow-overlay"
+      ref={barRef}
+      style={{ top: shown.top, left: withinWindow(shown.left, width) }}
+      className="not-prose fixed z-50 -mt-2 flex -translate-x-1/2 -translate-y-full items-center gap-0.5 rounded-md border bg-popover p-1 text-popover-foreground shadow-overlay"
     >
       {linking === null ? (
         <>
