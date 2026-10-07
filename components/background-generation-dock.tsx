@@ -268,6 +268,24 @@ export function BackgroundGenerationDock() {
               .jobs.find((item) => item.threadId === job.threadId);
             if (!latestJob) return;
 
+            // A timeout carries an error too: it keeps where it stopped, for the run component's
+            // Timed out state, before the generic failure below clears it.
+            if (payload.run.status === "timeout") {
+              updateJob(job.threadId, {
+                runId: payload.run.id,
+                status: "failed",
+                runStage: payload.runStage ?? latestJob.runStage,
+                timedOut: true,
+                stage: payload.stage ?? "Generation failed",
+                progress: 100,
+                error:
+                  payload.error ??
+                  "We could not finish this article. Open it to try again.",
+                updatedAt: payload.run.updatedAt,
+              });
+              return;
+            }
+
             if (payload.error) {
               updateJob(job.threadId, {
                 runId: payload.run.id,
@@ -338,18 +356,12 @@ export function BackgroundGenerationDock() {
 
             if (
               payload.run.status === "error" ||
-              payload.run.status === "timeout" ||
               payload.run.status === "interrupted"
             ) {
-              const timedOut = payload.run.status === "timeout";
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
-                // A timed-out run keeps where it stopped, for the run component's Timed out state.
-                runStage: timedOut
-                  ? (payload.runStage ?? latestJob.runStage)
-                  : undefined,
-                timedOut,
+                runStage: undefined,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error:
