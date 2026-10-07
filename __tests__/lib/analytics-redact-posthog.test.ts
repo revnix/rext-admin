@@ -12,7 +12,11 @@
  */
 
 import posthog, { type CaptureResult, type PostHogConfig } from "posthog-js";
-import { redactEventUrls, redactStoredAddresses } from "@/lib/analytics-redact";
+import {
+  redactEventUrls,
+  redactStoredAddresses,
+  STORED_ADDRESS_OPTIONS,
+} from "@/lib/analytics-redact";
 
 const SECRETS = ["entry-secret", "referrer-secret"];
 
@@ -87,13 +91,15 @@ describe("posthog-js's own event properties", () => {
 });
 
 describe("what posthog-js keeps in the browser", () => {
+  // Both of the browser's stores: posthog-js writes to the tab's session storage as well.
   const stored = () =>
-    Object.keys(window.localStorage)
-      .map((key) => window.localStorage.getItem(key))
+    [window.localStorage, window.sessionStorage]
+      .flatMap((store) => Object.keys(store).map((key) => store.getItem(key)))
       .join("\n");
 
   function start(name: string, redact: boolean) {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     const client = posthog.init(
       "phc_test_not_a_real_key",
       {
@@ -105,6 +111,8 @@ describe("what posthog-js keeps in the browser", () => {
         disable_session_recording: true,
         advanced_disable_flags: true,
         before_send: () => null,
+        // As the provider does it.
+        ...(redact ? STORED_ADDRESS_OPTIONS : {}),
       },
       name,
     );
@@ -130,6 +138,7 @@ describe("what posthog-js keeps in the browser", () => {
   it("would hold them without the redaction (so the test above can see a leak)", () => {
     start("stored-raw", false);
 
-    expect(stored()).toContain("entry-secret");
+    const kept = stored();
+    for (const secret of SECRETS) expect(kept).toContain(secret);
   });
 });

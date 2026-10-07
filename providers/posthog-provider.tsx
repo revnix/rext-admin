@@ -10,6 +10,7 @@ import {
   redactEventUrls,
   redactStoredAddresses,
   redactUrl,
+  STORED_ADDRESS_OPTIONS,
 } from "@/lib/analytics-redact";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
@@ -123,6 +124,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       disable_session_recording: true,
       // PostHog adds the current address to every event; redact the credentials in it.
       before_send: redactEventUrls,
+      // And nothing raw in what the SDK stores in the tab (the referrer, on every event).
+      ...STORED_ADDRESS_OPTIONS,
     });
 
     // The SDK keeps the first address and referrer of the person and of each session in the
