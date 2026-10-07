@@ -1102,6 +1102,21 @@ export function FreshGenerationView({
     }
   }, [seoResult?.intent, selectedIntent]);
 
+  // What each stage of the run on screen found, for its progress box (rext-control#694): read from
+  // the stream, beside the keyword and the choices the page holds.
+  const runView = runStages.run
+    ? describeRun(runStages.run, runStages.findings, {
+        // The analysis is of the keyword typed; the later steps work on the one chosen.
+        keyword:
+          (runStages.run.phase === "analysis"
+            ? userKeyword || primaryKeyword
+            : primaryKeyword || userKeyword) || _initialKeyword,
+        country,
+        contentType: selectedContentType || recommendedContentType,
+        intent: selectedIntent || seoResult?.intent,
+      })
+    : null;
+
   // ── Tool call tracking for agent activity feed ────────────────────────────
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
 
@@ -2313,17 +2328,7 @@ export function FreshGenerationView({
         {runStages.run && (
           <RunProgress
             stages={runStages.run.stages}
-            // What each stage found, from the stream (rext-control#694).
-            {...describeRun(runStages.run, runStages.findings, {
-              // The analysis is of the keyword typed; the later steps work on the one chosen.
-              keyword:
-                (runStages.run.phase === "analysis"
-                  ? userKeyword || primaryKeyword
-                  : primaryKeyword || userKeyword) || _initialKeyword,
-              country,
-              contentType: selectedContentType || recommendedContentType,
-              intent: selectedIntent || seoResult?.intent,
-            })}
+            {...runView}
             onCancel={_handleCancelGeneration}
             className="max-w-2xl"
           />
