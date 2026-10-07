@@ -45,9 +45,6 @@ jest.mock("@/components/layouts", () => ({
 jest.mock("@/components/permission/permission-guard", () => ({
   PermissionGuard: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock("@/components/generate-content/selection-view", () => ({
-  SelectionView: () => <p>How would you like to start?</p>,
-}));
 jest.mock("@/components/generate-content/run-notice", () => ({
   RunNotice: ({ title }: { title: string }) => <p>{title}</p>,
 }));
