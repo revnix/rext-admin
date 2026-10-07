@@ -137,10 +137,15 @@ export function OutlineReview({
   const edited = rowsEdited(rows, gate.sections);
 
   const remove = (key: string) => {
-    const { rows: next, removed } = removeRow(rows, key);
+    const { rows: next, removed, subsections } = removeRow(rows, key);
     if (!removed) return;
     setRows(next);
-    toast(`Removed "${removed.heading}"`, {
+    // An H2 takes its subsections with it: say so, since they vanish from the tree too.
+    const withSubsections =
+      subsections === 0
+        ? ""
+        : ` and its ${subsections === 1 ? "subsection" : `${subsections} subsections`}`;
+    toast(`Removed "${removed.heading}"${withSubsections}`, {
       action: {
         label: "Undo",
         onClick: () => setRows((current) => restoreRow(current, removed.key)),

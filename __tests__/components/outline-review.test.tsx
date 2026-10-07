@@ -247,6 +247,34 @@ describe("OutlineReview, the outline tree", () => {
     expect(await approve(user)).not.toHaveProperty("sections");
   });
 
+  it("removes a section with its subsections, says so, and Undo brings all back", async () => {
+    const user = userEvent.setup();
+    const { approve } = renderReview({
+      gate: {
+        ...baseGate,
+        editable_sections: rows.map((row, index) =>
+          index === 2 ? { ...row, heading_level: "H3" } : row,
+        ),
+      },
+    });
+
+    await chooseFromMenu(user, "Cushioning and support", "Remove");
+    expect(headings()).toEqual(["Why the right shoe matters"]);
+    const [message, options] = (toast as unknown as jest.Mock).mock.calls[0];
+    expect(message).toBe('Removed "Cushioning and support" and its subsection');
+    const removed = await approve(user);
+    expect(
+      removed.sections?.map((edit) => ("id" in edit ? edit.id : null)),
+    ).toEqual(["structure.sections:0"]);
+
+    act(() => options.action.onClick());
+    expect(headings()).toEqual([
+      "Why the right shoe matters",
+      "Cushioning and support",
+      "How to get fitted",
+    ]);
+  });
+
   it("puts every section back with Reset sections", async () => {
     const user = userEvent.setup();
     renderReview();
