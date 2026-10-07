@@ -827,3 +827,63 @@ describe("OutlineReview, the sources", () => {
     expect(screen.getByText("shoe fitting")).toBeInTheDocument();
   });
 });
+
+describe("OutlineReview, an outline that came back empty", () => {
+  const emptyGate = { ...baseGate, editable_sections: [] } as Record<
+    string,
+    unknown
+  >;
+
+  it("says so, offers Regenerate as the one action, and no Approve", async () => {
+    const user = userEvent.setup();
+    const onReject = jest.fn();
+    const onApprove = jest.fn();
+    render(
+      <OutlineReview
+        outline={{} as Outline}
+        rawTokens=""
+        isLoading={false}
+        gate={emptyGate}
+        onApprove={onApprove}
+        onReject={onReject}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The outline couldn't be drafted",
+    );
+    expect(
+      screen.queryByRole("button", { name: /approve and generate/i }),
+    ).not.toBeInTheDocument();
+    // Nothing of the empty outline is on screen: no title placeholder, no tabs.
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Regenerate" }));
+    expect(onReject).toHaveBeenCalledTimes(1);
+    expect(onApprove).not.toHaveBeenCalled();
+  });
+
+  it("gives way to a regenerated outline: the tree and Approve are back", () => {
+    const props = {
+      rawTokens: "",
+      isLoading: false,
+      onApprove: jest.fn(),
+      onReject: jest.fn(),
+    };
+    const { rerender } = render(
+      <OutlineReview {...props} outline={{} as Outline} gate={emptyGate} />,
+    );
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    // While it is drafted again the outline is null: the streaming tree, no notice.
+    rerender(<OutlineReview {...props} outline={null} gate={emptyGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    rerender(<OutlineReview {...props} outline={outline} gate={baseGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sectionList()).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
+  });
+});
