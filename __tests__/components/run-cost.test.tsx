@@ -1,6 +1,7 @@
 /**
- * The billed buttons (E13) show the backend's cost and the balance after it, and the gate's
- * popup uses the same numbers: nothing about credits is typed in the dashboard.
+ * The billed buttons (E13) give the backend's cost and the balance after it in their tooltip
+ * (FB2.11), and the gate's popup uses the same numbers: nothing about credits is typed in the
+ * dashboard.
  */
 
 import {
@@ -12,11 +13,12 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import userEvent from "@testing-library/user-event";
 import {
-  RunBalance,
-  RunCostLabel,
-  StageCostLabel,
+  RunCostTooltip,
+  StageCostTooltip,
 } from "@/components/generate-content/run-cost";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCreditGate } from "@/hooks/use-credit-gate";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -87,77 +89,75 @@ const useBalance = (credits: CreditBalance | null) =>
     }),
   );
 
-describe("RunCostLabel", () => {
-  it("adds the run's cost and, on Approve, the balance after", () => {
+describe("RunCostTooltip (FB2.11: the cost in the tooltip, not on the label)", () => {
+  it("gives the run's cost and the balance it leaves on keyboard focus", async () => {
     useBalance(balance(4540));
-    const { rerender } = render(<RunCostLabel run="analyze" />);
-    expect(screen.getByText(/credit/)).toHaveTextContent("· 1 credit");
-    rerender(<RunCostLabel run="generate" showBalance />);
-    expect(screen.getByText(/credits/)).toHaveTextContent(
-      "· 12 credits · balance after 4,528",
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <RunCostTooltip run="generate">
+          <button type="button">Approve and generate</button>
+        </RunCostTooltip>
+      </TooltipProvider>,
     );
-  });
 
-  it("follows the backend's table when a cost changes", () => {
-    useBalance({
-      ...balance(4540),
-      runs: { ...balance(4540).runs, generate: run(14, 14, 4540) },
+    const button = screen.getByRole("button", {
+      name: "Approve and generate",
     });
-    render(<RunCostLabel run="generate" showBalance />);
-    expect(screen.getByText(/credits/)).toHaveTextContent(
-      "· 14 credits · balance after 4,526",
-    );
-  });
-
-  it("shows no balance on an unlimited plan, and nothing before the costs load", () => {
-    useBalance(balance(0, null));
-    const { container, rerender } = render(
-      <RunCostLabel run="generate" showBalance />,
-    );
-    expect(container).toHaveTextContent("· 12 credits");
-    expect(container).not.toHaveTextContent("balance after");
-    useBalance(null);
-    rerender(<RunCostLabel run="generate" showBalance />);
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("puts the balance after under the button on a phone", () => {
-    useBalance(balance(4540));
-    render(<RunBalance run="generate" />);
-    expect(screen.getByText(/Balance after/)).toHaveTextContent(
+    expect(button).not.toHaveTextContent(/credit/);
+    await user.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Balance after: 4,528 credits",
     );
   });
 });
 
-describe("StageCostLabel", () => {
-  it("adds the stage's credits from the plan catalogue once it loads", async () => {
-    render(<StageCostLabel stage="title_generation" />, {
-      wrapper: withQueries(),
-    });
-    expect(await screen.findByText(/credit/)).toHaveTextContent("· 1 credit");
+describe("StageCostTooltip", () => {
+  it("gives the stage's credits from the plan catalogue, and the balance after", async () => {
+    useBalance(balance(4540));
+    const user = userEvent.setup();
+    const Wrapper = withQueries();
+    render(
+      <Wrapper>
+        <TooltipProvider>
+          <StageCostTooltip stage="title_generation">
+            <button type="button">Continue with this keyword</button>
+          </StageCostTooltip>
+        </TooltipProvider>
+      </Wrapper>,
+    );
+    await waitFor(() =>
+      expect(apiClient.subscriptions.getCatalog).toHaveBeenCalled(),
+    );
+
+    await user.tab();
+    const tip = await screen.findByRole("tooltip");
+    expect(tip).toHaveTextContent("1");
+    expect(tip).toHaveTextContent("Balance after: 4,539 credits");
+    expect(
+      screen.getByRole("button", { name: "Continue with this keyword" }),
+    ).not.toHaveTextContent(/credit/);
   });
 
-  it("follows the catalogue when a stage's figure changes", async () => {
-    jest.mocked(apiClient.subscriptions.getCatalog).mockResolvedValueOnce({
-      credits: { stages: [{ key: "generate_outline", credits: 2 }] },
-    } as never);
-    render(<StageCostLabel stage="generate_outline" />, {
-      wrapper: withQueries(),
-    });
-    expect(await screen.findByText(/credits/)).toHaveTextContent("· 2 credits");
-  });
-
-  it("shows nothing for a stage the catalogue doesn't list", async () => {
+  it("leaves the button alone for a stage the catalogue doesn't list", async () => {
     const getCatalog = jest
       .mocked(apiClient.subscriptions.getCatalog)
       .mockResolvedValueOnce({ credits: { stages: [] } } as never);
-    const { container } = render(<StageCostLabel stage="title_generation" />, {
-      wrapper: withQueries(),
-    });
+    const user = userEvent.setup();
+    const Wrapper = withQueries();
+    render(
+      <Wrapper>
+        <TooltipProvider>
+          <StageCostTooltip stage="title_generation">
+            <button type="button">Continue</button>
+          </StageCostTooltip>
+        </TooltipProvider>
+      </Wrapper>,
+    );
     await waitFor(() => expect(getCatalog).toHaveBeenCalled());
     await act(async () => {});
-    expect(container).toBeEmptyDOMElement();
+    await user.tab();
+    expect(screen.queryByRole("tooltip")).toBeNull();
   });
 });
 

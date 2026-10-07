@@ -3,7 +3,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
-import { RunCostLabel, RunCostTooltip } from "../run-cost";
+import { RunCostTooltip } from "../run-cost";
 
 /**
  * What should change before the outline is written again: the feedback path of Regenerate. Back
@@ -54,7 +54,6 @@ export function OutlineRejectSection({
           <RunCostTooltip run="regenerate_outline">
             <Button onClick={onSubmit}>
               Submit feedback
-              <RunCostLabel run="regenerate_outline" />
               <ChevronRight />
             </Button>
           </RunCostTooltip>

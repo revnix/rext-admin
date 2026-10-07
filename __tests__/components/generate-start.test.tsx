@@ -40,10 +40,11 @@ jest.mock("@/lib/generate-content/library-item", () => ({
   libraryStartQuery: (key: string) => `library=${encodeURIComponent(key)}`,
 }));
 
-// The cost comes from the backend's cost table (E13); here it is a stand-in.
+// The cost comes from the backend's cost table (E13), in the tooltip (FB2.11); here a stand-in.
 jest.mock("@/components/generate-content/run-cost", () => ({
-  RunCostLabel: () => <span>· 1 credit</span>,
-  RunCostTooltip: ({ children }: { children: React.ReactNode }) => children,
+  RunCostTooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-cost-tooltip>{children}</div>
+  ),
 }));
 jest.mock("@/components/ui/country-dropdown", () => ({
   CountryDropdown: ({
@@ -197,11 +198,12 @@ describe("KeywordForm", () => {
     });
   });
 
-  it("puts the run's cost on Analyze", () => {
+  it("gives Analyze its run's cost in a tooltip, not on the label", () => {
     granted.add("content.create");
     const { onSubmit } = renderForm();
     const analyze = screen.getByRole("button", { name: /Analyze/ });
-    expect(analyze).toHaveTextContent("Analyze· 1 credit");
+    expect(analyze).toHaveTextContent(/^Analyze$/);
+    expect(analyze.closest("[data-cost-tooltip]")).not.toBeNull();
     fireEvent.click(analyze);
     expect(onSubmit).toHaveBeenCalled();
   });
