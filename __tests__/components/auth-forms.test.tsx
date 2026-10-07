@@ -53,6 +53,17 @@ describe("PasswordInput", () => {
 });
 
 describe("LoginForm", () => {
+  it("says what Google or GitHub agree to, since they create an account for someone new", () => {
+    render(<LoginForm />);
+    expect(
+      screen.getByText(/By continuing with Google or GitHub/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Terms/ })).toHaveAttribute(
+      "href",
+      "https://rext.ai/terms",
+    );
+  });
+
   it("names each empty field beside it and sends nothing", async () => {
     render(<LoginForm />);
     await userEvent.click(screen.getByRole("button", { name: "Log in" }));
