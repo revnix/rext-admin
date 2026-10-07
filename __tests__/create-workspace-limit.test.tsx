@@ -14,11 +14,17 @@ jest.mock("@/hooks/use-page-title", () => ({
 
 // The page reads GET /subscriptions/usage through its query; a request that never answers keeps
 // a query with no data pending, as a slow network does.
+const getUsageStats = jest.fn();
 jest.mock("@/lib/api-client", () => ({
   apiClient: {
-    subscriptions: { getUsageStats: () => new Promise(() => {}) },
+    subscriptions: { getUsageStats: () => getUsageStats() },
   },
 }));
+
+beforeEach(() => {
+  getUsageStats.mockReset();
+  getUsageStats.mockImplementation(() => new Promise(() => {}));
+});
 
 const usage = (used: number, limit: number | null): UsageReport => ({
   workspaces: {
@@ -104,6 +110,31 @@ describe("CreateWorkspacePage", () => {
     expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/workspace limit reached/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the wizard mounted when the usage is read again after a failed first read", async () => {
+    getUsageStats.mockRejectedValueOnce(new Error("Service unavailable"));
+    const { queryClient } = renderPage();
+    // The failed read decides the gate: the form shows, without a count.
+    expect(await screen.findByText(/workspace details/i)).toBeInTheDocument();
+    expect(screen.queryByText(/on your plan/)).not.toBeInTheDocument();
+
+    // The wizard's refresh once the workspace exists: a query with no data goes back to pending.
+    await act(async () => {
+      void queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.usage().queryKey,
+      });
+      // The query tells the page on the next tick: let it render that state.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(
+      queryClient.getQueryState(subscriptionQueries.usage().queryKey)?.status,
+    ).toBe("pending");
+    expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/checking workspace limits/i),
     ).not.toBeInTheDocument();
   });
 });
