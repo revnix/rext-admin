@@ -8,12 +8,14 @@ import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { CheckEmail } from "@/components/auth/check-email";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
+import { SignupTrialLine } from "@/components/auth/signup-trial-line";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
@@ -294,7 +296,19 @@ export function SignupForm({
             ? "Complete your profile to join the workspace"
             : "Enter your details below to create your account"}
         </p>
+        {/* An invitation joins a workspace that already has its plan: no trial to name. */}
+        {!invitationToken && <SignupTrialLine />}
       </div>
+
+      {/* The same ways in as login, with the same terms; an invitation still lands on its accept page. */}
+      <OAuthButtons
+        callbackUrl={
+          hasValidInvitation && invitationToken
+            ? `/invitations/accept?token=${encodeURIComponent(invitationToken)}`
+            : "/"
+        }
+        notice={<LegalAgreement action="continuing with Google or GitHub" />}
+      />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>

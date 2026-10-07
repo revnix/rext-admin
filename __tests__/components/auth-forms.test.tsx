@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -30,6 +31,19 @@ jest.mock("@/hooks/use-invitation-validation", () => ({
 
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
 
+// Sign-up's trial line reads the plan catalogue: these tests keep it loading.
+jest.mock("@/lib/api-client", () => ({
+  ...jest.requireActual("@/lib/api-client"),
+  apiClient: { subscriptions: { getCatalog: () => new Promise(() => {}) } },
+}));
+
+const renderSignup = () =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <SignupForm />
+    </QueryClientProvider>,
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -60,7 +74,7 @@ describe("LoginForm", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^Terms/ })).toHaveAttribute(
       "href",
-      "https://rext.ai/terms",
+      "https://rext.ai/terms-and-conditions",
     );
   });
 
@@ -109,24 +123,29 @@ describe("LoginForm", () => {
 
 describe("SignupForm", () => {
   it("says what creating an account agrees to, with the website's legal pages", () => {
-    render(<SignupForm />);
-    expect(screen.getByRole("link", { name: /^Terms/ })).toHaveAttribute(
-      "href",
-      "https://rext.ai/terms",
-    );
-    expect(
-      screen.getByRole("link", { name: /^Privacy Policy/ }),
-    ).toHaveAttribute("href", "https://rext.ai/privacy");
+    renderSignup();
+    expect(screen.getByText(/By creating an account/)).toBeInTheDocument();
+    for (const terms of screen.getAllByRole("link", { name: /^Terms/ })) {
+      expect(terms).toHaveAttribute(
+        "href",
+        "https://rext.ai/terms-and-conditions",
+      );
+    }
+    for (const privacy of screen.getAllByRole("link", {
+      name: /^Privacy Policy/,
+    })) {
+      expect(privacy).toHaveAttribute("href", "https://rext.ai/privacy-policy");
+    }
   });
 
   it("asks for a length, not character rules", () => {
-    render(<SignupForm />);
+    renderSignup();
     expect(screen.getByText("At least 8 characters.")).toBeVisible();
     expect(screen.queryByText(/uppercase/i)).toBeNull();
   });
 
   it("re-checks a typed confirmation when the password changes", async () => {
-    render(<SignupForm />);
+    renderSignup();
     const password = screen.getByLabelText(/^\*?Password/);
     const confirm = screen.getByLabelText(/Confirm password/);
     await userEvent.type(screen.getByLabelText(/Full name/), "Ada Lovelace");
