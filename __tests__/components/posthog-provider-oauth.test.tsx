@@ -38,6 +38,7 @@ jest.mock("posthog-js/react", () => ({
 jest.mock("next/navigation", () => ({
   usePathname: () => "/w/acme",
   useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ workspaceSlug: "acme" }),
 }));
 jest.mock("next-auth/react", () => ({
   useSession: () => ({

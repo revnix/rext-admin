@@ -94,6 +94,18 @@ describe("before the person's answer on analytics is known", () => {
     expect(capture).not.toHaveBeenCalled();
   });
 
+  it("holds nothing while the answer is no, so a later yes sends only what follows it", () => {
+    const { analytics, registerPostHog, unregisterPostHog } = loadAnalytics();
+    const capture = jest.fn();
+
+    unregisterPostHog();
+    analytics.track("keyword_selected", { keyword: "crm" });
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    analytics.track("title_selected");
+
+    expect(capture.mock.calls).toEqual([["title_selected", {}]]);
+  });
+
   it("holds a hundred at most", () => {
     const { analytics, registerPostHog } = loadAnalytics();
     const capture = jest.fn();

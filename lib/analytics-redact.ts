@@ -72,45 +72,43 @@ export function redactEventUrls<
   return event;
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** The path segment after each of these names a workspace, an article, a keyword, a person. */
-const NAMED_AFTER: Record<string, string> = {
-  w: ":workspace",
-  content: ":id",
-  keywords: ":keyword",
-  personas: ":id",
-  users: ":id",
-};
-/** Fixed pages that sit where a name would. */
-const FIXED_SEGMENTS = new Set(["create", "new", "edit", "accept"]);
+/** A page's route parameters, as Next's `useParams` gives them. */
+type RouteParams = Record<string, string | string[] | undefined>;
 
 /**
- * An address reduced to its route: no query, no fragment, and no workspace, article, keyword or
- * person in the path (`/w/acme/content/6f1c…` becomes `/w/:workspace/content/:id`). What analytics
+ * A page's path with every dynamic part replaced by its name: `/w/acme/content/6f1c…` with
+ * `{ workspaceSlug: "acme", id: "6f1c…" }` becomes `/w/:workspaceSlug/content/:id`. What analytics
  * may know of a page for someone who said no to being measured (lib/analytics-consent.ts): which
- * kind of page was opened, never whose.
+ * kind of page was opened, never whose. It comes from the route itself, so a new page needs no
+ * entry here; a fixed part that happens to equal a parameter's value is replaced too, the safe
+ * side.
  */
-export function anonymousAddress(address: string): string {
-  let parsed: URL | null = null;
-  try {
-    parsed = new URL(address);
-  } catch {
-    if (!address.startsWith("/")) return address;
+export function anonymousRoute(pathname: string, params: RouteParams): string {
+  const names = new Map<string, string>();
+  for (const [name, value] of Object.entries(params)) {
+    for (const part of Array.isArray(value) ? value : [value]) {
+      if (!part) continue;
+      // The path is encoded; the parameter may be either way.
+      names.set(part, `:${name}`);
+      names.set(encodeURIComponent(part), `:${name}`);
+      try {
+        names.set(decodeURIComponent(part), `:${name}`);
+      } catch {
+        // Not an encoded value: the two forms above cover it.
+      }
+    }
   }
-  const path = parsed ? parsed.pathname : address.split(/[?#]/)[0];
-  const segments = path.split("/");
-  const route = segments.map((segment, index) => {
-    if (!segment) return segment;
-    const named = NAMED_AFTER[segments[index - 1]];
-    if (named && !FIXED_SEGMENTS.has(segment)) return named;
-    return UUID.test(segment) || /^\d+$/.test(segment) ? ":id" : segment;
-  });
-  return (parsed ? parsed.origin : "") + route.join("/");
+  return pathname
+    .split("/")
+    .map((segment) => names.get(segment) ?? segment)
+    .join("/");
 }
 
 /**
  * PostHog's before_send for someone who said no: only page views and page leaves are kept, each
- * with its addresses reduced to routes and with nothing that describes the person.
+ * with the page's route for an address (`route`, from `anonymousRoute`) and with nothing that
+ * describes the person. Every other address the library adds (the session's first page, the
+ * referrer) is removed; without a route the event is dropped.
  */
 export function anonymousEvent<
   T extends {
@@ -119,24 +117,27 @@ export function anonymousEvent<
     $set?: PropertyBag;
     $set_once?: PropertyBag;
   },
->(event: T | null): T | null {
+>(event: T | null, route: string | null): T | null {
   if (!event) return event;
   if (event.event !== "$pageview" && event.event !== "$pageleave") return null;
+  if (route === null) return null;
   delete event.$set;
   delete event.$set_once;
   const bag = event.properties;
   if (!bag) return event;
   for (const key of Object.keys(bag)) {
-    const value = bag[key];
-    if (key === "$set" || key === "$set_once") {
-      delete bag[key];
-    } else if (
-      typeof value === "string" &&
-      (URL_PROPERTIES.includes(key) || key.endsWith("pathname"))
+    if (
+      key === "$set" ||
+      key === "$set_once" ||
+      URL_PROPERTIES.includes(key) ||
+      key.endsWith("pathname")
     ) {
-      bag[key] = anonymousAddress(value);
+      delete bag[key];
     }
   }
+  const host = typeof bag.$host === "string" ? bag.$host : "";
+  bag.$current_url = host ? `https://${host}${route}` : route;
+  bag.$pathname = route;
   return event;
 }
 
