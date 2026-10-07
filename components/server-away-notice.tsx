@@ -7,6 +7,7 @@ import {
   isServerAway,
   reportServerBack,
   serverAnswers,
+  stopWatchingServer,
   subscribeServerAway,
 } from "@/lib/api-client/server-away";
 
@@ -19,7 +20,8 @@ const WATCH_TRIES = 36;
  * Says so when the API is away (task 759): a backend deploy restarts it for about a minute, and the
  * API client reports it once a request's retries have run out. One notice, kept until the API
  * answers again; then whatever failed to load meanwhile loads again by itself. After three minutes
- * without an answer the watch stops and the notice goes: the pages' own errors say the rest.
+ * without an answer the watch stops and the notice goes: the pages' own errors say the rest, and
+ * the notice stays away until a request is answered again.
  */
 export function ServerAwayNotice() {
   const away = useSyncExternalStore(
@@ -51,7 +53,7 @@ export function ServerAwayNotice() {
           predicate: (query) => query.state.status === "error",
         });
       } else if (tries >= WATCH_TRIES) {
-        reportServerBack();
+        stopWatchingServer();
       }
     }, WATCH_EVERY_MS);
 

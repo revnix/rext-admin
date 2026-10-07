@@ -7,8 +7,9 @@ import { act, render } from "@testing-library/react";
 import { ServerAwayNotice } from "@/components/server-away-notice";
 import {
   isServerAway,
+  noteServerAnswered,
   reportServerAway,
-  reportServerBack,
+  stopWatchingServer,
 } from "@/lib/api-client/server-away";
 
 jest.mock("sonner", () => ({
@@ -38,10 +39,14 @@ function mount() {
   return invalidate;
 }
 
+// Each test starts a day after the last: the quiet minute after the API answered ends with it.
+let clock = Date.UTC(2026, 9, 8);
 beforeEach(() => {
-  jest.useFakeTimers();
+  clock += 24 * 60 * 60 * 1000;
+  jest.useFakeTimers({ now: clock });
   jest.clearAllMocks();
-  act(() => reportServerBack());
+  act(() => stopWatchingServer());
+  noteServerAnswered();
 });
 afterEach(() => {
   jest.useRealTimers();
@@ -100,4 +105,9 @@ it("stops watching after three minutes without an answer, and takes the notice a
   expect(isServerAway()).toBe(false);
   expect(toast.dismiss).toHaveBeenCalled();
   expect(invalidate).not.toHaveBeenCalled();
+
+  // A long outage: the notice doesn't come back with the next failed request.
+  act(() => reportServerAway());
+  expect(isServerAway()).toBe(false);
+  expect(toast.info).toHaveBeenCalledTimes(1);
 });

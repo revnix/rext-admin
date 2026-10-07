@@ -6,9 +6,12 @@ import { ApiClient, ApiError } from "@/lib/api-client/core";
 import {
   alreadyRetried,
   isServerAway,
+  noteServerAnswered,
+  reportServerAway,
   reportServerBack,
   SERVER_UNREACHABLE,
   SERVER_UNREACHABLE_MESSAGE,
+  stopWatchingServer,
 } from "@/lib/api-client/server-away";
 import { isTransientError } from "@/lib/retry/transient-retry";
 
@@ -61,10 +64,15 @@ const settle = <T>(request: Promise<T>) =>
 const online = (value: boolean) =>
   Object.defineProperty(navigator, "onLine", { value, configurable: true });
 
+// Each test starts a day after the last, so nothing one left behind (the quiet minute after the
+// API answered) reaches the next.
+let clock = Date.UTC(2026, 9, 8);
 beforeEach(() => {
-  jest.useFakeTimers();
+  clock += 24 * 60 * 60 * 1000;
+  jest.useFakeTimers({ now: clock });
   send.mockReset();
-  reportServerBack();
+  stopWatchingServer();
+  noteServerAnswered();
   online(true);
 });
 afterEach(() => {
@@ -181,6 +189,40 @@ describe("a request that changes nothing", () => {
 
     expect((await done).value).toEqual({ ok: true, status: 200 });
     expect(send).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("the report that the server is away", () => {
+  it("says nothing new for a minute after the API answered, so one failing request can't bring the notice back in a loop", () => {
+    reportServerAway();
+    expect(isServerAway()).toBe(true);
+    reportServerBack();
+    expect(isServerAway()).toBe(false);
+
+    reportServerAway();
+    expect(isServerAway()).toBe(false);
+    jest.advanceTimersByTime(59_999);
+    reportServerAway();
+    expect(isServerAway()).toBe(false);
+
+    jest.advanceTimersByTime(1);
+    reportServerAway();
+    expect(isServerAway()).toBe(true);
+  });
+
+  it("stays quiet after the watch gave up, until a request is answered again", async () => {
+    reportServerAway();
+    stopWatchingServer();
+    expect(isServerAway()).toBe(false);
+
+    jest.advanceTimersByTime(10 * 60 * 1000);
+    reportServerAway();
+    expect(isServerAway()).toBe(false);
+
+    send.mockResolvedValueOnce(api(200, { ok: true }));
+    await new ApiClient().request("/api/v1/personas");
+    reportServerAway();
+    expect(isServerAway()).toBe(true);
   });
 });
 
