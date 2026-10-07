@@ -8,6 +8,9 @@ import { PersonaDialog } from "@/components/personas/persona-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useShowAfter } from "@/hooks/use-show-after";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import type { BrandProminence } from "@/lib/generate-content/outline-review";
 import type {
@@ -52,6 +55,12 @@ export interface OutlineBriefProps {
   /** Reload the workspace's personas, for one made in another tab or page (FB2.20). */
   onRefreshPersonas?: () => void;
   refreshingPersonas?: boolean;
+  /** The first load of the personas: no list yet, so neither the picker nor "none yet". */
+  personasLoading?: boolean;
+  /** The personas couldn't be loaded and none are held from before. */
+  personasFailed?: boolean;
+  /** The user's role may create a persona (persona.create); without it, no Create persona. */
+  canCreatePersona?: boolean;
   brandPromotion: BrandVoicePromotion | null;
   /** The level the gate preselects, marked "recommended". */
   recommendedProminence: BrandProminence | null;
@@ -81,6 +90,9 @@ export function OutlineBrief({
   onPersonaChange,
   onRefreshPersonas,
   refreshingPersonas = false,
+  personasLoading = false,
+  personasFailed = false,
+  canCreatePersona = false,
   brandPromotion,
   recommendedProminence,
   prominence,
@@ -90,6 +102,7 @@ export function OutlineBrief({
   onToggleLink,
 }: OutlineBriefProps) {
   const ids = useId();
+  const showPersonasSkeleton = useShowAfter(personasLoading);
   const targetWords = pendingTargetWordCount ?? outline.target_word_count;
   const audience = outline.target_audience?.join(", ") ?? "";
   // Every persona scored, and none whose expertise covers the subject (E26).
@@ -175,7 +188,35 @@ export function OutlineBrief({
       </BriefGroup>
 
       <BriefGroup title="Author">
-        {personas.length > 0 ? (
+        {personasLoading ? (
+          showPersonasSkeleton && (
+            <Skeleton
+              role="status"
+              aria-label="Loading personas"
+              className="h-9 w-full"
+            />
+          )
+        ) : personasFailed ? (
+          <Notice
+            tone="danger"
+            title="Your personas didn't load"
+            action={
+              onRefreshPersonas && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={refreshingPersonas}
+                  onClick={onRefreshPersonas}
+                >
+                  Try again
+                </Button>
+              )
+            }
+          >
+            Try again to choose the article's author.
+          </Notice>
+        ) : personas.length > 0 ? (
           <div className="space-y-1.5">
             <label
               htmlFor={`${ids}-persona`}
@@ -228,18 +269,20 @@ export function OutlineBrief({
             <p className="text-table text-muted-foreground">
               No author persona yet. The article is written without one.
             </p>
-            <PersonaDialog
-              trigger={
-                <Button type="button" variant="outline">
-                  <UserPlus aria-hidden />
-                  Create persona
-                </Button>
-              }
-              onCreated={(id) => {
-                onRefreshPersonas?.();
-                if (id) onPersonaChange(id);
-              }}
-            />
+            {canCreatePersona && (
+              <PersonaDialog
+                trigger={
+                  <Button type="button" variant="outline">
+                    <UserPlus aria-hidden />
+                    Create persona
+                  </Button>
+                }
+                onCreated={(id) => {
+                  onRefreshPersonas?.();
+                  if (id) onPersonaChange(id);
+                }}
+              />
+            )}
           </div>
         )}
       </BriefGroup>

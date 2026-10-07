@@ -87,12 +87,15 @@ export function PersonaForm({
   persona,
   onSaved,
   onCancel,
+  onDirtyChange,
 }: {
   persona?: Persona;
   /** In a dialog (PersonaDialog): called with the saved persona's id instead of opening its page. */
   onSaved?: (personaId: string | undefined) => void;
   /** In a dialog: Cancel closes it instead of going back. */
   onCancel?: () => void;
+  /** In a dialog: whether anything is unsaved, so closing it some other way can ask first. */
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
@@ -130,6 +133,10 @@ export function PersonaForm({
     editing && persona?.avatar_url && isUploadedPhoto(persona.avatar_url),
   );
   const [removePhoto, setRemovePhoto] = useState(false);
+  const unsaved = form.formState.isDirty || Boolean(avatarFile) || removePhoto;
+  useEffect(() => {
+    onDirtyChange?.(unsaved);
+  }, [unsaved, onDirtyChange]);
 
   useEffect(() => {
     if (!avatarPreview) return;
