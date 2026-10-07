@@ -126,7 +126,7 @@ describe("RecentKeywords", () => {
     expect(searchLibrary).toHaveBeenCalledWith("u1", "w1");
   });
 
-  it("starts an article from the saved research on Use", async () => {
+  it("starts an article from the keyword on Use", async () => {
     granted.add("content.read");
     granted.add("content.create");
     searchLibrary.mockResolvedValue([
