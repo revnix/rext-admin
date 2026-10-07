@@ -59,7 +59,8 @@ export function PersonaDialog({
         onOpenChange={(next) => (next ? setOpen(true) : requestClose())}
       >
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-2xl">
+        {/* The shared dialog sets the height: 90% of the window from 640 px, the whole screen under it. */}
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create persona</DialogTitle>
             <DialogDescription>
