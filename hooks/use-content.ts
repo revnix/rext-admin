@@ -138,6 +138,33 @@ export function useUpdateContent() {
 }
 
 /**
+ * Saves an article without a word: the full-screen editor's autosave (task 706), which shows its own
+ * save state and retries by itself (hooks/use-autosave.ts), so there is no toast and no retry here.
+ * The caches that hold the article are refreshed as after any update.
+ */
+export function useAutosaveContent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      contentId,
+      data,
+    }: {
+      workspaceId: string;
+      contentId: string;
+      data: UpdateContentRequest;
+    }) => apiClient.content.update(workspaceId, contentId, data),
+    retry: false,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["content", variables.workspaceId],
+      });
+    },
+  });
+}
+
+/**
  * Hook to schedule content for future publication
  */
 export function useScheduleContent() {
