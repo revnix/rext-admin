@@ -39,6 +39,7 @@ import { Badge } from "../ui/badge";
 import { SafeLexicalEditor } from "../ui/safe-lexical-editor";
 import { deriveImagesData } from "@/lib/content/image-data";
 import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { integrationQueries, profileQueries } from "@/lib/query-keys";
@@ -67,6 +68,7 @@ import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { articleHtml } from "@/lib/content/article-html";
 import { cn } from "@/lib/utils";
+import { workspaceRoutes } from "@/lib/routes";
 import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
 import {
   PUBLISH_RESULT_COPY,
@@ -179,12 +181,9 @@ type ContentEditorProps = {
   checklist?: ContentChecklist | null;
   trustScore: TrustScore | null;
   generatedContent: string;
-  isEditing: boolean;
   seoScore: SEORESULT | null;
   userKeyword: string;
   outline: Outline | null;
-  onEditToggle: () => void;
-  onContentChange: (val: string) => void;
   // Agent activity (shown in right sidebar while generating)
   toolCalls?: ToolCall[];
   /** The run component while the article is written, at the top of the side panel. */
@@ -209,11 +208,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     trustScore,
     generatedContent,
     seoScore: rawSeoScore,
-    isEditing,
     userKeyword,
     outline,
-    onEditToggle,
-    onContentChange,
     toolCalls = [],
     runProgress,
     steps,
@@ -255,7 +251,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   // State
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isOpeningEditor, setIsOpeningEditor] = useState(false);
   const [statusModal, setStatusModal] = useState<{
     title: string;
     isOpen: boolean;
@@ -669,46 +665,38 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  const saveContent = async () => {
-    if (!isFinal || !workspaceId) return;
+  // "Edit article" (task 706) opens the full-screen editor, which works on the saved article. One
+  // written just now is saved first: the backend keeps one row for a run, so this is that row.
+  const openEditor = async () => {
+    if (!isFinal || !workspaceId || !workspaceSlug || isOpeningEditor) return;
+    const open = (id: string) =>
+      router.push(workspaceRoutes.contentEdit(workspaceSlug, id) as Route);
+    if (contentSavedId) {
+      open(contentSavedId);
+      return;
+    }
     try {
-      setIsSaving(true);
-      setStatusModal({
-        title: "Saving Content...",
-        isOpen: true,
-        type: "success",
-        action: "save",
-        message: "Saving content to your workspace...",
-      });
-      const payload = getContentPayload();
-      const response = contentSavedId
-        ? await apiClient.content.update(workspaceId, contentSavedId, payload)
-        : await apiClient.content.save(workspaceId, payload);
-
-      if (!contentSavedId && response.id) {
-        setContentSavedId(response.id);
-      }
+      setIsOpeningEditor(true);
+      const response = await apiClient.content.save(
+        workspaceId,
+        getContentPayload(),
+      );
+      if (!response.id) throw new Error("The save returned no article");
+      setContentSavedId(response.id);
       invalidateContentCache();
-      setStatusModal({
-        title: "Content Saved Successfully!",
-        isOpen: true,
-        type: "success",
-        action: "save",
-        message:
-          response.message ||
-          "Your changes have been saved successfully to the workspace.",
-      });
+      open(response.id);
     } catch (error) {
-      const err = error as Error;
+      log.error("Saving the article before editing failed", error);
       setStatusModal({
-        title: "Failed to Save Content",
+        title: "The editor couldn't be opened",
         isOpen: true,
         type: "error",
         action: "save",
-        message: err.message || "Failed to save content. Please try again.",
+        message:
+          "The article has to be saved first, and that didn't work. Try again.",
       });
     } finally {
-      setIsSaving(false);
+      setIsOpeningEditor(false);
     }
   };
 
@@ -825,59 +813,35 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  // The article's actions, each named (D23), in one bar above the page (task 703): two by two
-  // on a phone, where four named buttons don't fit one row, and in a row from 640 px.
+  // The article's actions, each named (D23), in one bar above the page (task 703). "Edit article"
+  // leads (task 706); Copy and Publish are menus beside it. On a phone the lead takes a row of
+  // its own and the two menus share the next; from 640 px they are one row.
   const actionButtons = (
     <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
-      <div>
+      <div className="col-span-2 sm:col-auto">
         {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
         {canUpdate ? (
           <Button
-            variant="secondary"
             size="sm"
             className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-            onClick={onEditToggle}
-            disabled={!isFinal}
+            onClick={openEditor}
+            disabled={!isFinal || isOpeningEditor || isPublishing}
           >
-            {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
-            {isEditing ? "Preview" : "Edit"}
+            <Pencil
+              size={16}
+              className={isOpeningEditor ? "animate-pulse" : ""}
+            />
+            {isOpeningEditor ? "Opening…" : "Edit article"}
           </Button>
         ) : (
           <LockedFeatureTooltip message="Editing requires Editor role or above">
             <Button
-              variant="secondary"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
               disabled
             >
               <Pencil size={16} />
-              Edit
-            </Button>
-          </LockedFeatureTooltip>
-        )}
-      </div>
-      <div>
-        {canUpdate ? (
-          <Button
-            onClick={saveContent}
-            disabled={!isFinal || isSaving || isPublishing}
-            variant="secondary"
-            size="sm"
-            className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-          >
-            <Save size={16} className={isSaving ? "animate-pulse" : ""} />
-            {isSaving ? "Saving…" : "Save"}
-          </Button>
-        ) : (
-          <LockedFeatureTooltip message="Saving requires Editor role or above">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-              disabled
-            >
-              <Save size={16} />
-              Save
+              Edit article
             </Button>
           </LockedFeatureTooltip>
         )}
@@ -914,6 +878,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                variant="secondary"
                 size="sm"
                 className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
               >
@@ -927,21 +892,21 @@ function ContentEditorInner(props: ContentEditorProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem
-                disabled={!isFinal || isPublishing || isSaving}
+                disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("publish")}
               >
                 <Send size={13} className="mr-2" />
                 Publish
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={!isFinal || isPublishing || isSaving}
+                disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("draft")}
               >
                 <Save size={13} className="mr-2" />
                 Save as Draft
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={!isFinal || isPublishing || isSaving}
+                disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => openPublishConfirmation("pending")}
               >
                 <Eye size={13} className="mr-2" />
@@ -949,7 +914,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                disabled={!isFinal || isPublishing || isSaving}
+                disabled={!isFinal || isPublishing || isOpeningEditor}
                 onClick={() => setScheduleDialogOpen(true)}
               >
                 <Clock size={13} className="mr-2" />
@@ -960,6 +925,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         ) : (
           <LockedFeatureTooltip message="Publishing requires a role above Editor">
             <Button
+              variant="secondary"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
               disabled
@@ -1081,137 +1047,113 @@ function ContentEditorInner(props: ContentEditorProps) {
         >
           {steps && <div className="pt-4 md:pt-6">{steps}</div>}
           {/* The article is one prose container (design/app-language.md §7): the title,
-              the intro and the body share its measure and its type, in the preview and
-              in the editor. overflow-clip (not overflow-hidden) still contains wide
-              tables and images, but unlike `hidden` it does not create a scroll
-              container, so the editor toolbar's `sticky top-0` keeps working against
-              the real page scroller. The top space is the article's, not the column's
-              padding, so that toolbar sticks flush to the column's top edge. */}
+              the intro and the body share its measure and its type. overflow-clip (not
+              overflow-hidden) contains wide tables and images without making a scroll
+              container of the article. */}
           <article className="prose lg:prose-lg prose-app mx-auto w-full overflow-clip pt-6 pb-16 md:pt-8">
-            {isEditing ? (
-              <>
-                <h1>{displayTitle}</h1>
-                <div className="min-h-[600px]">
-                  <SafeLexicalEditor
-                    readOnly={false}
-                    key={`editor-${contentId ?? "new"}-${isEditing}`}
-                    initialValue={body}
-                    onChange={onContentChange}
-                    toolbarClass="not-prose top-0 z-50"
-                  />
-                </div>
-              </>
-            ) : (
-              // Images span the article's column at their own aspect, the featured one
-              // included (the founder's feedback v2, #704); the editor's image nodes stay
-              // as they are in Edit. Each image's wrappers become blocks, the outer one over
-              // its inline `display: inline-block` (hence `!`), or a narrow image would stay
-              // at its own width (review round 1).
-              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
-                {!body?.trim() ? (
-                  writing && structure.length > 0 ? (
-                    // Before the first words arrive: the title, and below it the outline's
-                    // sections where they will be written. No grey bars to watch (task 703).
-                    // The title is the one the person chose (the outline's): what streams in
-                    // meanwhile is unfinished, and showed a section's heading as the title.
-                    (outline?.title || displayTitle) && (
-                      <header>
-                        {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
-                        <h1>{outline?.title || displayTitle}</h1>
-                      </header>
-                    )
-                  ) : (
-                    <div className="not-prose space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {TAG_SKELETON_KEYS.map((key) => (
-                          <Skeleton
-                            key={key}
-                            className="h-6 w-16 rounded-full"
-                          />
-                        ))}
-                      </div>
-                      <div className="space-y-3 pb-4">
-                        <Skeleton className="h-10 w-4/5 rounded-md" />
-                        <Skeleton className="h-10 w-2/3 rounded-md" />
-                      </div>
-                      {allContent?.meta_description && (
-                        <div className="space-y-3 pb-4">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-5/6" />
-                        </div>
-                      )}
-                      {CONTENT_SKELETON_KEYS.map((key) => (
-                        <Skeleton key={key} className="h-4 rounded-md" />
-                      ))}
-                    </div>
+            {/* Images span the article's column at their own aspect, the featured one
+                included (the founder's feedback v2, #704). Each image's wrappers become
+                blocks, the outer one over its inline `display: inline-block` (hence `!`), or
+                a narrow image would stay at its own width (review round 1). */}
+            <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
+              {!body?.trim() ? (
+                writing && structure.length > 0 ? (
+                  // Before the first words arrive: the title, and below it the outline's
+                  // sections where they will be written. No grey bars to watch (task 703).
+                  // The title is the one the person chose (the outline's): what streams in
+                  // meanwhile is unfinished, and showed a section's heading as the title.
+                  (outline?.title || displayTitle) && (
+                    <header>
+                      {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
+                      <h1>{outline?.title || displayTitle}</h1>
+                    </header>
                   )
                 ) : (
-                  <>
-                    {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
-                        the article, instead of behind its button (#704). */}
-                    <div className="not-prose mb-8 xl:hidden">
-                      <ArticleChecklist
-                        seoScore={seoScore}
-                        checklist={checklist}
-                        trustScore={trustScore}
-                      />
-                    </div>
-                    <header>
-                      {tags.length > 0 && (
-                        <div className="not-prose mb-4 flex flex-wrap gap-2">
-                          {tags.map((t) => (
-                            <Badge key={t} variant="neutral">
-                              {t}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      <h1>{displayTitle}</h1>
-                      {allContent?.meta_description && (
-                        <p className="lead">{allContent.meta_description}</p>
-                      )}
-                    </header>
-                    <SafeLexicalEditor
-                      readOnly={true}
-                      key={`editor-${contentId ?? "new"}-${isEditing}`}
-                      initialValue={body}
-                      onChange={onContentChange}
-                      toolbarClass="not-prose top-0 z-50"
-                      onRequestEdit={
-                        canUpdate && isFinal ? onEditToggle : undefined
-                      }
-                    />
-                  </>
-                )}
-                {/* The sections still to come, where they will be written: no overlay, and
-                    nothing moves but the text itself (task 703). */}
-                {writing && structure.some((e) => e.state === "waiting") && (
-                  <ol className="not-prose mt-10 space-y-3">
-                    {structure
-                      .filter((entry) => entry.state === "waiting")
-                      .map((entry, index) => (
-                        <li
-                          // biome-ignore lint/suspicious/noArrayIndexKey: two sections may share a heading
-                          key={`${index}-${entry.heading}`}
-                          className={cn(
-                            "rounded-md border border-dashed border-border px-4 py-3 text-muted-foreground",
-                            entry.level === 3 && "ml-6",
-                          )}
-                        >
-                          <p
-                            className={
-                              entry.level === 2 ? "text-section" : "text-body"
-                            }
-                          >
-                            {entry.heading}
-                          </p>
-                          <p className="text-caption">Still to come</p>
-                        </li>
+                  <div className="not-prose space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {TAG_SKELETON_KEYS.map((key) => (
+                        <Skeleton key={key} className="h-6 w-16 rounded-full" />
                       ))}
-                  </ol>
-                )}
-              </div>
-            )}
+                    </div>
+                    <div className="space-y-3 pb-4">
+                      <Skeleton className="h-10 w-4/5 rounded-md" />
+                      <Skeleton className="h-10 w-2/3 rounded-md" />
+                    </div>
+                    {allContent?.meta_description && (
+                      <div className="space-y-3 pb-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                      </div>
+                    )}
+                    {CONTENT_SKELETON_KEYS.map((key) => (
+                      <Skeleton key={key} className="h-4 rounded-md" />
+                    ))}
+                  </div>
+                )
+              ) : (
+                <>
+                  {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
+                        the article, instead of behind its button (#704). */}
+                  <div className="not-prose mb-8 xl:hidden">
+                    <ArticleChecklist
+                      seoScore={seoScore}
+                      checklist={checklist}
+                      trustScore={trustScore}
+                    />
+                  </div>
+                  <header>
+                    {tags.length > 0 && (
+                      <div className="not-prose mb-4 flex flex-wrap gap-2">
+                        {tags.map((t) => (
+                          <Badge key={t} variant="neutral">
+                            {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <h1>{displayTitle}</h1>
+                    {allContent?.meta_description && (
+                      <p className="lead">{allContent.meta_description}</p>
+                    )}
+                  </header>
+                  <SafeLexicalEditor
+                    readOnly={true}
+                    key={`editor-${contentId ?? "new"}`}
+                    initialValue={body}
+                    onRequestEdit={
+                      canUpdate && isFinal ? openEditor : undefined
+                    }
+                  />
+                </>
+              )}
+              {/* The sections still to come, where they will be written: no overlay, and
+                    nothing moves but the text itself (task 703). */}
+              {writing && structure.some((e) => e.state === "waiting") && (
+                <ol className="not-prose mt-10 space-y-3">
+                  {structure
+                    .filter((entry) => entry.state === "waiting")
+                    .map((entry, index) => (
+                      <li
+                        // biome-ignore lint/suspicious/noArrayIndexKey: two sections may share a heading
+                        key={`${index}-${entry.heading}`}
+                        className={cn(
+                          "rounded-md border border-dashed border-border px-4 py-3 text-muted-foreground",
+                          entry.level === 3 && "ml-6",
+                        )}
+                      >
+                        <p
+                          className={
+                            entry.level === 2 ? "text-section" : "text-body"
+                          }
+                        >
+                          {entry.heading}
+                        </p>
+                        <p className="text-caption">Still to come</p>
+                      </li>
+                    ))}
+                </ol>
+              )}
+            </div>
           </article>
         </div>
 

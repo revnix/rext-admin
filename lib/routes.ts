@@ -61,6 +61,9 @@ export const workspaceRoutes = {
     `/w/${workspaceSlug}/keywords/${encodeURIComponent(key)}`,
   contentDetail: (workspaceSlug: string, contentId: string) =>
     `/w/${workspaceSlug}/content/${contentId}`,
+  /** The full-screen article editor: outside `/w`, so it gets no app shell. */
+  contentEdit: (workspaceSlug: string, contentId: string) =>
+    `/edit/${workspaceSlug}/${contentId}`,
   content_calendar: (workspaceSlug: string) =>
     `/w/${workspaceSlug}/content/calendar`,
 

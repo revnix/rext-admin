@@ -85,11 +85,8 @@ const editor = () => (
       trustScore={{ score: 70 } as never}
       seoScore={{ seo_health_score: 90, issues: [] } as never}
       generatedContent="Body"
-      isEditing={false}
       userKeyword="start a podcast"
       outline={null}
-      onEditToggle={jest.fn()}
-      onContentChange={jest.fn()}
     />
   </QueryClientProvider>
 );

@@ -38,11 +38,8 @@ const editor = (props: Partial<React.ComponentProps<typeof ContentEditor>>) => (
       trustScore={null}
       seoScore={null}
       generatedContent=""
-      isEditing={false}
       userKeyword="headless cms"
       outline={null}
-      onEditToggle={jest.fn()}
-      onContentChange={jest.fn()}
       {...props}
     />
   </QueryClientProvider>
@@ -73,8 +70,12 @@ describe("ContentEditor while the article is written", () => {
 describe("ContentEditor's toolbar", () => {
   it("names each of the article's actions (D23)", () => {
     render(editor({}));
-    for (const name of ["Edit", "Save", "Copy", "Publish"]) {
+    for (const name of ["Edit article", "Copy", "Publish"]) {
       expect(screen.getAllByRole("button", { name }).length).toBeGreaterThan(0);
+    }
+    // Editing is the full-screen editor's now (task 706): no Edit or Save in the page itself.
+    for (const name of ["Edit", "Save", "Preview"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
 });
@@ -116,7 +117,7 @@ describe("ContentEditor while the article is written, as the page shows it (task
     expect(
       screen.getByText("Writing the article").parentElement,
     ).toHaveTextContent("Writing the article · Draft · section 2 of 3");
-    for (const name of ["Edit", "Save", "Copy", "Publish"]) {
+    for (const name of ["Edit article", "Copy", "Publish"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });
@@ -196,7 +197,7 @@ describe("ContentEditor while the article is written, as the page shows it (task
         seoScore: { seo_health_score: 90, issues: [] } as never,
       }),
     );
-    for (const name of ["Edit", "Save", "Copy", "Publish"]) {
+    for (const name of ["Edit article", "Copy", "Publish"]) {
       expect(screen.getAllByRole("button", { name }).length).toBeGreaterThan(0);
     }
     const nav = screen.getByRole("navigation", { name: "Structure" });

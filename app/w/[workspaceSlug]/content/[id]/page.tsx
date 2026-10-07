@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,6 @@ export default function WorkspaceContentDetailPage({
   const fetchError = contentQuery.error ?? workspaceError;
 
   const content = contentResponse?.content;
-  const [isEditing, setIsEditing] = useState(false);
   const [contentMarkdown, setContentMarkdown] = useState("");
 
   useEffect(() => {
@@ -74,10 +73,6 @@ export default function WorkspaceContentDetailPage({
       }
     }
   }, [content?.body_markdown]);
-
-  const handleEditToggle = useCallback(() => {
-    setIsEditing((prev) => !prev);
-  }, []);
 
   const seoResult = useMemo<SEORESULT | null>(() => {
     if (!content?.seo_data?.seo_details) return null;
@@ -392,11 +387,8 @@ export default function WorkspaceContentDetailPage({
             trustScore={advancedContent.review?.trust_score || null}
             generatedContent={contentMarkdown}
             seoScore={seoResult}
-            isEditing={isEditing}
             userKeyword={content.seo_data?.focus_keyphrase || ""}
             outline={outline}
-            onEditToggle={handleEditToggle}
-            onContentChange={setContentMarkdown}
             isLive={content.status === "published"}
           />
         )}
