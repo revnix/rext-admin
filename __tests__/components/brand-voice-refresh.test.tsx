@@ -185,7 +185,7 @@ function renderControl(workspaceId: string) {
     </QueryClientProvider>
   );
   const view = render(control());
-  return { invalidate, rerender: () => view.rerender(control()) };
+  return { client, invalidate, rerender: () => view.rerender(control()) };
 }
 
 /** A run of workspace A's, started before its section mounted. */
@@ -422,5 +422,40 @@ describe("the pipeline's record", () => {
       "Your website is being read already",
     );
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("says a run completed once, when the record and then the stream report it", async () => {
+    // Review round 2: the record's read shows the run completed first; the stream's completion
+    // arrives after it.
+    api.workspaces.refreshBrandVoice.mockResolvedValue({
+      operation_id: "op-2",
+    });
+    recordShows({ status: "running", operation_id: "op-2" });
+    const view = renderControl("ws-a");
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Read the website again" }),
+      );
+    });
+    await screen.findByRole("dialog", { name: "Reading your website" });
+
+    recordShows({ status: "completed", operation_id: "op-2" });
+    await act(async () => {
+      await view.client.invalidateQueries({ queryKey: ["workspaces"] });
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    await act(async () => {
+      await mockStreamOptions.onComplete?.();
+    });
+
+    // Besides the start's own "Reading your website…".
+    expect(
+      toast.success.mock.calls.filter(
+        ([message]) =>
+          message === "The brand voice was read from your website again",
+      ),
+    ).toHaveLength(1);
   });
 });

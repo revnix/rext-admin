@@ -102,6 +102,13 @@ export function BrandVoiceRefreshControl({
   );
   const startingRef = useRef(false);
   const startedOperationRef = useRef<string | null>(null);
+  // A run's end is handled once: the stream and the pipeline's record (G20) can both report it.
+  const settledRef = useRef<string | null>(null);
+  const settleOnce = useCallback((id: string | null) => {
+    if (!id || settledRef.current === id) return false;
+    settledRef.current = id;
+    return true;
+  }, []);
 
   // A run started here opens its dialog at once; one found on mount is picked up quietly.
   useEffect(() => {
@@ -148,16 +155,19 @@ export function BrandVoiceRefreshControl({
     {
       autoConnect: true,
       onComplete: async () => {
+        if (!settleOnce(operationId)) return;
         toast.success("The brand voice was read from your website again");
         await reloadBrandVoice();
         closeDialog();
       },
       // Ended while nobody listened, outcome unknown: read the brand voice again, no success toast.
       onEnded: async () => {
+        if (!settleOnce(operationId)) return;
         await reloadBrandVoice();
         closeDialog();
       },
       onError: (errorMessage) => {
+        if (!settleOnce(operationId)) return;
         toast.error(errorMessage || "The website couldn't be read");
         setBrandVoiceRefreshState(workspaceId, {
           refreshError: errorMessage,
@@ -175,11 +185,9 @@ export function BrandVoiceRefreshControl({
     { poll: Boolean(operationId) },
   );
   const outcome = pipelineOutcome(pipeline, operationId);
-  const settledRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!operationId || settledRef.current === operationId) return;
     if (outcome !== "completed" && outcome !== "stopped") return;
-    settledRef.current = operationId;
+    if (!settleOnce(operationId)) return;
     if (outcome === "completed" && isDialogOpen) {
       toast.success("The brand voice was read from your website again");
     }
@@ -193,6 +201,7 @@ export function BrandVoiceRefreshControl({
     operationId,
     outcome,
     reloadBrandVoice,
+    settleOnce,
   ]);
 
   const handleDialogOpenChange = useCallback(
