@@ -1,0 +1,87 @@
+/**
+ * The article's structure beside it (task 703): heading levels, and what is written, being
+ * written and still to come.
+ */
+
+import {
+  articleStructure,
+  writingPosition,
+} from "@/lib/generate-content/article-structure";
+
+const outline = [
+  { heading: "Pick a show idea" },
+  { heading: "Choose one listener", heading_level: "H3" as const },
+  { heading: "Choose a format" },
+  { heading: "The gear you need" },
+  { heading: "Microphones under $100", heading_level: "H3" as const },
+  { heading: "Questions beginners ask" },
+];
+
+describe("articleStructure", () => {
+  it("lists a finished article's headings with their levels, all done", () => {
+    const body =
+      "Intro.\n\n## Pick a show idea\n\nText.\n\n### Choose one listener\n\nText.\n\n## Choose a format\n";
+    expect(articleStructure(body, outline, false)).toEqual([
+      { level: 2, heading: "Pick a show idea", state: "done" },
+      { level: 3, heading: "Choose one listener", state: "done" },
+      { level: 2, heading: "Choose a format", state: "done" },
+    ]);
+  });
+
+  it("marks the last heading as being written, and lists the outline's rest as waiting", () => {
+    const body =
+      "Intro.\n\n## 1. Pick a show idea\n\nText.\n\n### Choose one listener\n\nText.\n\n## **Choose a format**\n\nA solo";
+    const entries = articleStructure(body, outline, true);
+    expect(entries.map((e) => `${e.level} ${e.heading}: ${e.state}`)).toEqual([
+      "2 1. Pick a show idea: done",
+      "3 Choose one listener: done",
+      "2 Choose a format: writing",
+      "2 The gear you need: waiting",
+      "3 Microphones under $100: waiting",
+      "2 Questions beginners ask: waiting",
+    ]);
+  });
+
+  it("shows the whole outline as waiting before the first heading is written", () => {
+    const entries = articleStructure("An opening line", outline, true);
+    expect(entries).toHaveLength(6);
+    expect(entries.every((e) => e.state === "waiting")).toBe(true);
+  });
+
+  it("takes a reworded heading as written once a later one has arrived", () => {
+    const body =
+      "## Find your show idea\n\nText.\n\n## Choose a format\n\nText";
+    const entries = articleStructure(body, outline, true);
+    expect(entries.map((e) => e.heading)).toEqual([
+      "Find your show idea",
+      "Choose a format",
+      "The gear you need",
+      "Microphones under $100",
+      "Questions beginners ask",
+    ]);
+  });
+
+  it("lists nothing waiting when there is no outline", () => {
+    expect(articleStructure("## One\n\ntext", [], true)).toEqual([
+      { level: 2, heading: "One", state: "writing" },
+    ]);
+    expect(articleStructure("", [], true)).toEqual([]);
+  });
+
+  it("leaves deeper headings out, and lists a body's own h1 with the sections", () => {
+    const body = "# Title again\n\n## One\n\n#### Detail\n\n### Two\n";
+    expect(
+      articleStructure(body, [], false).map((e) => `${e.level} ${e.heading}`),
+    ).toEqual(["2 Title again", "2 One", "3 Two"]);
+  });
+});
+
+describe("writingPosition", () => {
+  it("counts main sections: the one being written of all planned", () => {
+    const body = "## Pick a show idea\n\nText.\n\n## Choose a format\n\nA solo";
+    expect(writingPosition(articleStructure(body, outline, true))).toEqual({
+      section: 2,
+      sections: 4,
+    });
+  });
+});
