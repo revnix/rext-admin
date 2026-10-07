@@ -52,7 +52,8 @@ const headingsOf = (list: unknown): Planned[] =>
 /**
  * The outline's planned headings, wherever its schema keeps them: a flat `sections` list, or one
  * nested a level down (a blog's `structure.sections`). An outline with neither (a how-to's steps,
- * a glossary's terms) plans its page another way, and gives none.
+ * a glossary's terms) plans its page in blocks of its own: each block the backend names for
+ * display (`_render.blocks`: "Steps", "Tools"…) lists as a main row, with its items under it.
  */
 export function plannedSections(outline: unknown): Planned[] {
   if (!isRecord(outline)) return [];
@@ -63,7 +64,23 @@ export function plannedSections(outline: unknown): Planned[] {
     const nested = headingsOf(value.sections);
     if (nested.length > 0) return nested;
   }
-  return [];
+  const blocks = isRecord(outline._render) ? outline._render.blocks : undefined;
+  return (Array.isArray(blocks) ? blocks : [])
+    .filter(isRecord)
+    .flatMap((block) => {
+      const items = (Array.isArray(block.items) ? block.items : [])
+        .filter(isRecord)
+        .filter((item) => typeof item.label === "string" && item.label.trim());
+      if (typeof block.heading !== "string" || !block.heading.trim()) return [];
+      if (items.length === 0) return [];
+      return [
+        { heading: block.heading, heading_level: "H2" } as Planned,
+        ...items.map(
+          (item) =>
+            ({ heading: item.label as string, heading_level: "H3" }) as Planned,
+        ),
+      ];
+    });
 }
 
 export function articleStructure(
