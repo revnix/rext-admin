@@ -58,16 +58,16 @@ describe("the divider block", () => {
     });
   });
 
-  it("goes under a line with text, with a new line after it at the article's end", () => {
+  it("goes under a line with text, with a new line after it to type on", () => {
     expect(afterDivider(["Intro.", "Last words."], 1)).toEqual({
       blocks: ["Intro.", "Last words.", "rule", ""],
       cursorOn: 3,
     });
   });
 
-  it("goes between two lines, the cursor on the one after", () => {
+  it("keeps the typing out of the line that came next", () => {
     expect(afterDivider(["Intro.", "Next."], 0)).toEqual({
-      blocks: ["Intro.", "rule", "Next."],
+      blocks: ["Intro.", "rule", "", "Next."],
       cursorOn: 2,
     });
   });
