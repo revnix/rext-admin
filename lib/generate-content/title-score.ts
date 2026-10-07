@@ -49,15 +49,21 @@ export function normalizeTitle(title: string): string {
 const NON_WORD = /[\p{P}\p{S}\p{Z}\p{C}_]+/gu;
 
 /**
- * Scripts written without spaces between words (Thai, Lao, Myanmar, Khmer, kana, CJK ideographs):
- * a phrase in them is matched as a run of characters, since no space marks its word boundaries.
+ * Scripts written without spaces between words (Thai, Lao, Myanmar, Khmer, kana including the
+ * halfwidth forms, CJK ideographs): a phrase's edge in one of them needs no space beside it, and
+ * a character of one beside a phrase is a boundary in itself.
  */
 const UNSPACED_SCRIPT =
-  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
+  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+
+/** A length in characters (code points), as the backend's Python counts it, not UTF-16 units. */
+function charCount(text: string): number {
+  return Array.from(text).length;
+}
 
 /**
  * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
- * `_normalize_for_match` (which casefolds: the two differ only for letters like ß).
+ * `_normalize_for_match`.
  */
 function forMatch(text: string): string {
   return ` ${text
@@ -73,7 +79,7 @@ function forMatch(text: string): string {
  * (punctuation flattened) plus 20 when that is more, never over 75. A short keyphrase keeps 59.
  */
 export function titleMaxChars(keyphrase?: string | null): number {
-  const length = forMatch(keyphrase ?? "").trim().length;
+  const length = charCount(forMatch(keyphrase ?? "").trim());
   return Math.min(
     TITLE_MAX_CHARS_CEILING,
     Math.max(TITLE_MAX_CHARS, length + TITLE_ROOM_BESIDE_KEYPHRASE),
@@ -87,10 +93,33 @@ export function titleMaxChars(keyphrase?: string | null): number {
 export function containsKeyphrase(title: string, keyphrase: string): boolean {
   const phrase = forMatch(keyphrase).trim();
   if (phrase === "") return false;
-  const haystack = forMatch(title);
-  return UNSPACED_SCRIPT.test(phrase)
-    ? haystack.includes(phrase)
-    : haystack.includes(` ${phrase} `);
+  const haystack = forMatch(title); // padded with a space at each end
+  const chars = Array.from(phrase);
+  const first = chars[0];
+  const last = chars[chars.length - 1];
+  for (
+    let start = haystack.indexOf(phrase);
+    start !== -1;
+    start = haystack.indexOf(phrase, start + 1)
+  ) {
+    const end = start + phrase.length;
+    const preceding = Array.from(haystack.slice(0, start));
+    const before = preceding[preceding.length - 1] ?? " ";
+    const after = Array.from(haystack.slice(end))[0] ?? " ";
+    if (atBoundary(first, before) && atBoundary(last, after)) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether a phrase's edge character ends a word against the character beside it (the backend's
+ * `_at_boundary`). Each edge is judged on its own, so "AIツール" still needs its Latin edge to
+ * end a word.
+ */
+function atBoundary(edge: string, beside: string): boolean {
+  return (
+    beside === " " || UNSPACED_SCRIPT.test(edge) || UNSPACED_SCRIPT.test(beside)
+  );
 }
 
 /** All-capital words that are names, not shouting. Three letters or fewer (SEO, API) always pass. */
@@ -139,7 +168,7 @@ export function scoreTitle(
     });
   }
 
-  const length = text.length;
+  const length = charCount(text);
   const max = titleMaxChars(phrase);
   const inRange = length >= TITLE_MIN_CHARS && length <= max;
   checks.push({

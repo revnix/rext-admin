@@ -172,6 +172,14 @@ describe("containsKeyphrase in any script, as the backend's", () => {
       "プロジェクト管理ツール",
       true,
     ],
+    ["ﾌﾟﾛｼﾞｪｸﾄﾂｰﾙ比較", "ﾌﾟﾛｼﾞｪｸﾄﾂｰﾙ", true],
+    ["AIツール比較", "AIツール", true],
+    ["XAIツール比較", "AIツール", false],
+    ["项目管理 software 推荐", "项目管理 software", true],
+    ["项目管理 softwarex", "项目管理 software", false],
+    ["最佳seo工具推荐", "seo", true],
+    ["Maße und Gewichte", "Masse", false],
+    ["MASSE UND GEWICHTE", "masse", true],
   ])("%s / %s → %s", (title, keyphrase, expected) => {
     expect(containsKeyphrase(title, keyphrase)).toBe(expected);
   });
@@ -187,6 +195,12 @@ describe("containsKeyphrase in any script, as the backend's", () => {
       label: `Has “${keyphrase}”`,
     });
     expect(score.checks[1]).toMatchObject({ id: "length", met: true });
+  });
+
+  it("counts characters as the backend does, not UTF-16 units", () => {
+    const deseret = "𐐷".repeat(40); // 40 characters outside the Basic Multilingual Plane
+    expect(deseret.length).toBe(80);
+    expect(titleMaxChars(deseret)).toBe(60);
   });
 
   it("measures an accented keyphrase the same however it was typed", () => {
