@@ -7,19 +7,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { AuthGuard } from "@/components/auth-guard";
+import { ContentHealthCard } from "@/components/home/content-health-card";
 import { ContinueRow } from "@/components/home/continue-row";
 import { CreditsCard } from "@/components/home/credits-card";
 import { HomeChecklist } from "@/components/home/home-checklist";
 import { PaywallCard } from "@/components/home/paywall-card";
 import {
   articlesToContinue,
-  type ChecklistFacts,
   checklistSteps,
+  contentHealth,
   countPipeline,
   hasWrittenArticle,
+  recentPublishes,
   suggestKeywords,
+  type ChecklistFacts,
 } from "@/components/home/home-data";
 import { PipelineCounts } from "@/components/home/pipeline-counts";
+import { PublishingCard } from "@/components/home/publishing-card";
 import { SearchConsoleCard } from "@/components/home/search-console-card";
 import { SuggestedKeywords } from "@/components/home/suggested-keywords";
 import { DetailPage, PageSkeleton } from "@/components/layouts";
@@ -258,6 +262,17 @@ export default function HomePage() {
                 failed={content.isError}
               />
             </SettingsGroup>
+            {articles && (
+              <SettingsGroup title="Performance">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ContentHealthCard
+                    health={contentHealth(articles, new Date())}
+                    libraryHref={libraryHref}
+                  />
+                  <PublishingCard slug={slug} {...recentPublishes(articles)} />
+                </div>
+              </SettingsGroup>
+            )}
             {suggestions.length > 0 && (
               <SettingsGroup
                 title="Suggested keywords"
