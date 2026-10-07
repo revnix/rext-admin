@@ -71,15 +71,19 @@ export function creditsPlan(
 }
 
 /**
- * The status badge beside the plan's name, or none when it would only say the name again: the
- * trial's plan is named "Trial", and its status is trial too.
+ * The status badge beside the plan's name, or none on the trial: its plan is named "Trial", so a
+ * "Trial" badge would only say the name again. Every other status shows, whatever the plan is
+ * called (an admin may name a plan anything).
  */
-export function statusBesidePlan<T extends { label: string }>(
-  status: T | undefined,
+export function statusBesidePlan<T>(
+  status: string | undefined,
+  words: T | undefined,
   planName: string,
 ): T | undefined {
-  return status &&
-    status.label.trim().toLowerCase() !== planName.trim().toLowerCase()
-    ? status
-    : undefined;
+  if (
+    status === SubscriptionStatus.TRIAL &&
+    planName.trim().toLowerCase() === "trial"
+  )
+    return undefined;
+  return words;
 }

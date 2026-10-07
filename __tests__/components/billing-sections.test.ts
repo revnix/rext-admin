@@ -116,15 +116,31 @@ describe("monthlyCreditsLeft and bonusWords", () => {
 describe("statusBesidePlan", () => {
   const trial = { label: "Trial", tone: "neutral" };
   const active = { label: "Active", tone: "success" };
+  const cancelled = { label: "Cancelled", tone: "neutral" };
 
-  it("leaves out a badge that only repeats the plan's name", () => {
-    expect(statusBesidePlan(trial, "Trial")).toBeUndefined();
-    expect(statusBesidePlan(trial, " trial ")).toBeUndefined();
+  it("leaves out the trial's badge beside the plan named Trial", () => {
+    expect(
+      statusBesidePlan(SubscriptionStatus.TRIAL, trial, "Trial"),
+    ).toBeUndefined();
+    expect(
+      statusBesidePlan(SubscriptionStatus.TRIAL, trial, " trial "),
+    ).toBeUndefined();
   });
 
-  it("keeps a badge that says something the name doesn't", () => {
-    expect(statusBesidePlan(active, "Growth")).toBe(active);
-    expect(statusBesidePlan(trial, "Growth")).toBe(trial);
-    expect(statusBesidePlan(undefined, "Growth")).toBeUndefined();
+  it("keeps every other badge, whatever the plan is named", () => {
+    expect(statusBesidePlan(SubscriptionStatus.ACTIVE, active, "Growth")).toBe(
+      active,
+    );
+    expect(statusBesidePlan(SubscriptionStatus.TRIAL, trial, "Growth")).toBe(
+      trial,
+    );
+    // An admin may name a plan anything: its status still shows.
+    expect(statusBesidePlan(SubscriptionStatus.ACTIVE, active, "Active")).toBe(
+      active,
+    );
+    expect(
+      statusBesidePlan(SubscriptionStatus.CANCELLED, cancelled, "Cancelled"),
+    ).toBe(cancelled);
+    expect(statusBesidePlan(undefined, undefined, "Growth")).toBeUndefined();
   });
 });

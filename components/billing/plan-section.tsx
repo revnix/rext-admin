@@ -101,6 +101,7 @@ export function PlanSection() {
   const planName =
     subscription?.plan_display_name ?? credits.data?.plan_name ?? "Your plan";
   const statusWords = statusBesidePlan(
+    status,
     status ? STATUS[status] : undefined,
     planName,
   );
