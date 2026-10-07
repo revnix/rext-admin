@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { TitleStep } from "@/components/generate-content/title-step";
 
 // The side pane's list is SerpSnapshot's to test; here only what the step hands it.
+// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage it labels.
+jest.mock("@/components/generate-content/run-cost", () => ({
+  StageCostLabel: ({ stage }: { stage: string }) => <span>· {stage}</span>,
+}));
+
 const mockShown: unknown[] = [];
 jest.mock("@/components/keywords/serp-snapshot", () => ({
   SerpSnapshot: ({ results }: { results: unknown[] }) => {
@@ -54,7 +59,12 @@ it("starts on the recommended title, with its reason, and continues with it", as
 
   expect(screen.getByRole("radio", { name: TITLES[1] })).toBeChecked();
   expect(screen.getByText(GATE.recommendation_reason)).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+  // Each title's count says what it counts (E25).
+  expect(screen.getAllByText(/^\d of 3 checks$/)).toHaveLength(TITLES.length);
+  // Continue takes the outline's credits, and says so (E25).
+  await userEvent.click(
+    screen.getByRole("button", { name: "Continue · generate_outline" }),
+  );
 
   expect(onContinue).toHaveBeenCalledWith(TITLES[1]);
 });

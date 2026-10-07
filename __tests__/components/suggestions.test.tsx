@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 
+// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage it labels.
+jest.mock("@/components/generate-content/run-cost", () => ({
+  StageCostLabel: ({ stage }: { stage: string }) => <span>· {stage}</span>,
+}));
+
 const seo = (
   volume: SEORESULT["volume"],
   volume_status?: SEORESULT["volume_status"],
@@ -75,7 +80,10 @@ describe("SuggestionsSection", () => {
     const onSelect = jest.fn();
     renderSuggestions({ onSelect });
     await userEvent.click(
-      screen.getByRole("button", { name: "Continue with this keyword" }),
+      // Keeping the keyword takes the titles' credits, and the button says so (E25).
+      screen.getByRole("button", {
+        name: "Continue with this keyword · title_generation",
+      }),
     );
     expect(onSelect).toHaveBeenLastCalledWith("seo tools");
 

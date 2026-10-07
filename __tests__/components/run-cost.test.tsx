@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import {
   RunBalance,
   RunCostLabel,
+  StageCostLabel,
 } from "@/components/generate-content/run-cost";
 import { useCreditGate } from "@/hooks/use-credit-gate";
 import { apiClient } from "@/lib/api-client";
@@ -32,7 +33,15 @@ jest.mock("@/lib/api-client", () => ({
     subscriptions: {
       getCredits: jest.fn(),
       getTrialStatus: jest.fn().mockResolvedValue({ trial_expired: false }),
-      getCatalog: jest.fn().mockResolvedValue({ credits: { per_article: 15 } }),
+      getCatalog: jest.fn().mockResolvedValue({
+        credits: {
+          per_article: 15,
+          stages: [
+            { key: "title_generation", credits: 1 },
+            { key: "generate_outline", credits: 1 },
+          ],
+        },
+      }),
     },
   },
 }));
@@ -118,6 +127,37 @@ describe("RunCostLabel", () => {
     expect(screen.getByText(/Balance after/)).toHaveTextContent(
       "Balance after: 4,528 credits",
     );
+  });
+});
+
+describe("StageCostLabel", () => {
+  it("adds the stage's credits from the plan catalogue once it loads", async () => {
+    render(<StageCostLabel stage="title_generation" />, {
+      wrapper: withQueries(),
+    });
+    expect(await screen.findByText(/credit/)).toHaveTextContent("· 1 credit");
+  });
+
+  it("follows the catalogue when a stage's figure changes", async () => {
+    jest.mocked(apiClient.subscriptions.getCatalog).mockResolvedValueOnce({
+      credits: { stages: [{ key: "generate_outline", credits: 2 }] },
+    } as never);
+    render(<StageCostLabel stage="generate_outline" />, {
+      wrapper: withQueries(),
+    });
+    expect(await screen.findByText(/credits/)).toHaveTextContent("· 2 credits");
+  });
+
+  it("shows nothing for a stage the catalogue doesn't list", async () => {
+    const getCatalog = jest
+      .mocked(apiClient.subscriptions.getCatalog)
+      .mockResolvedValueOnce({ credits: { stages: [] } } as never);
+    const { container } = render(<StageCostLabel stage="title_generation" />, {
+      wrapper: withQueries(),
+    });
+    await waitFor(() => expect(getCatalog).toHaveBeenCalled());
+    await act(async () => {});
+    expect(container).toBeEmptyDOMElement();
   });
 });
 

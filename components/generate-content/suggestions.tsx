@@ -21,6 +21,7 @@ import {
 } from "@/lib/keywords/keyword-metrics";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
+import { StageCostLabel } from "./run-cost";
 
 // No loading state on this step outlives this; then it says what is missing.
 const LOADING_TIMEOUT_MS = 30_000;
@@ -102,6 +103,7 @@ export function SuggestionsSection({
           action={
             <Button onClick={() => onSelect(primaryKeyword)}>
               Continue with this keyword
+              <StageCostLabel stage="title_generation" />
             </Button>
           }
         />
