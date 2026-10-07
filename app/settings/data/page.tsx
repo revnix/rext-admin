@@ -9,7 +9,7 @@ export default function DataAndTrashSettingsPage() {
     <div className="flex flex-col gap-8">
       <SettingsGroup
         title="Export your data"
-        description="A copy of what your account holds, sent to your email address."
+        description="A copy of what your account holds, saved as a file and emailed to you."
       >
         <PrivacySettings />
       </SettingsGroup>
