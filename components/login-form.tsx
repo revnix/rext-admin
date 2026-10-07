@@ -97,7 +97,11 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  const attemptSignIn = async ({ email, password }: LoginData) => {
+  /** Whether it signed in: then it navigates, and the form stays busy until the next page shows. */
+  const attemptSignIn = async ({
+    email,
+    password,
+  }: LoginData): Promise<boolean> => {
     // Backend validated successfully, now use NextAuth for session creation.
     // There is deliberately no "confirm reactivation" flag here — a deactivated
     // account is only reactivated by opening the emailed link.
@@ -140,7 +144,7 @@ export function LoginForm({
             );
           }
         }
-        return;
+        return false;
       }
 
       // Use the error message from the backend if available (stored in result.code)
@@ -170,11 +174,11 @@ export function LoginForm({
           { type: "server", message: displayErrorMessage },
           { shouldFocus: true },
         );
-        return;
+        return false;
       }
 
       toast.error(displayErrorMessage);
-      return;
+      return false;
     }
 
     toast.success("Login successful!");
@@ -205,6 +209,7 @@ export function LoginForm({
         router.push(redirect as Route);
       }
     }
+    return true;
   };
 
   const onSubmit = async (values: LoginData) => {
@@ -215,8 +220,9 @@ export function LoginForm({
       sessionStorage.removeItem("session_invalid");
     }
 
+    let signedIn = false;
     try {
-      await attemptSignIn(values);
+      signedIn = await attemptSignIn(values);
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       const classifiedError = classifyError(error);
@@ -227,7 +233,8 @@ export function LoginForm({
           : "An error occurred. Please try again.",
       );
     } finally {
-      setIsLoading(false);
+      // Signed in: the next page takes over; re-enabling the button meanwhile would invite a second login.
+      if (!signedIn) setIsLoading(false);
     }
   };
 
