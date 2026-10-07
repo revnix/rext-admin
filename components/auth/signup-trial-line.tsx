@@ -8,10 +8,16 @@ import type { CatalogTrial } from "@/types/plan-catalog";
 
 /**
  * The trial in one line, every figure from the catalogue: "A new account starts with a 7-day
- * trial: 60 credits, about 4 articles, no card needed."
+ * trial: 60 credits, about 4 articles, no card needed." An estimate the catalogue leaves out is
+ * left out here too.
  */
 export function trialLine(trial: CatalogTrial): string {
-  return `A new account starts with a ${count(trial.days)}-day trial: ${count(trial.credits)} credits, about ${count(trial.articles)} articles${trial.card_required ? "." : ", no card needed."}`;
+  const details = [
+    trial.credits != null && `${count(trial.credits)} credits`,
+    trial.articles != null && `about ${count(trial.articles)} articles`,
+    !trial.card_required && "no card needed",
+  ].filter(Boolean);
+  return `A new account starts with a ${count(trial.days)}-day trial${details.length ? `: ${details.join(", ")}` : ""}.`;
 }
 
 /**

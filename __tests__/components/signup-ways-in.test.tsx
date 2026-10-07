@@ -9,6 +9,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SignupForm } from "@/components/signup-form";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
+import { analytics } from "@/lib/analytics";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
@@ -87,10 +88,13 @@ it("offers Google and GitHub before the email form, with their terms line betwee
   expect(follows(divider, email)).toBe(true);
 });
 
-it("sends Google back to the dashboard", async () => {
+it("sends Google back to the dashboard, counted as a sign-up", async () => {
   renderSignup();
   await userEvent.click(screen.getByRole("button", { name: "Google" }));
   expect(signIn).toHaveBeenCalledWith("google", { callbackUrl: "/" });
+  expect(analytics.track).toHaveBeenCalledWith("user_signed_up", {
+    method: "google",
+  });
 });
 
 it("names the trial from the catalogue", async () => {
@@ -123,4 +127,35 @@ it("names no trial on an invitation, and Google lands on the invitation", async 
   });
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(screen.queryByText(/-day trial/)).toBeNull();
+});
+
+it("keeps the invitation while it's being checked, with no trial line yet", async () => {
+  invitation.mockReturnValue({
+    ...noInvitation,
+    invitationToken: "tok",
+    isLoading: true,
+  });
+  renderSignup();
+
+  await userEvent.click(screen.getByRole("button", { name: "Google" }));
+  expect(signIn).toHaveBeenCalledWith("google", {
+    callbackUrl: "/invitations/accept?token=tok",
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(screen.queryByText(/-day trial/)).toBeNull();
+});
+
+it("names the trial after an invalid invitation, which signs up as usual", async () => {
+  invitation.mockReturnValue({
+    ...noInvitation,
+    invitationToken: "expired",
+    error: "This invitation has expired.",
+  });
+  renderSignup();
+
+  expect(
+    await screen.findByText(/7-day trial: 60 credits/),
+  ).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "GitHub" }));
+  expect(signIn).toHaveBeenCalledWith("github", { callbackUrl: "/" });
 });

@@ -53,6 +53,22 @@ describe("trialLine", () => {
   });
 });
 
+describe("trialLine without estimates", () => {
+  it("leaves out an estimate the catalogue leaves out", () => {
+    expect(trialLine({ ...trial, credits: null })).toBe(
+      "A new account starts with a 7-day trial: about 4 articles, no card needed.",
+    );
+    expect(
+      trialLine({
+        ...trial,
+        credits: null,
+        articles: null,
+        card_required: true,
+      }),
+    ).toBe("A new account starts with a 7-day trial.");
+  });
+});
+
 describe("SignupTrialLine", () => {
   beforeEach(() => getCatalog.mockReset());
 

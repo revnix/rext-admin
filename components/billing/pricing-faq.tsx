@@ -47,7 +47,7 @@ function answers(catalog: PlanCatalog) {
   if (trial) {
     items.push({
       question: "Is there a free trial?",
-      answer: `Yes: a new account starts with ${count(trial.days)} days and ${count(trial.credits)} credits, about ${count(trial.articles)} articles${trial.card_required ? "" : ", with no card needed"}. ${trial.credits_renew ? "" : "The trial's credits don't renew. "}Choose a plan here at any time.`,
+      answer: `Yes: a new account starts with ${count(trial.days)} days${trial.credits != null ? ` and ${count(trial.credits)} credits` : ""}${trial.articles != null ? `, about ${count(trial.articles)} articles` : ""}${trial.card_required ? "" : ", with no card needed"}. ${trial.credits_renew ? "" : "The trial's credits don't renew. "}Choose a plan here at any time.`,
     });
   }
   items.push(

@@ -23,8 +23,9 @@ export interface CatalogPlan {
 export interface CatalogTrial {
   plan_name: string;
   days: number;
-  credits: number;
-  articles: number;
+  /** The API may omit the trial's estimates (null): say nothing rather than a wrong number. */
+  credits: number | null;
+  articles: number | null;
   credits_renew: boolean;
   card_required: boolean;
   max_workspaces: number | null;

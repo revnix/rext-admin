@@ -11,9 +11,15 @@ interface OAuthButtonsProps {
   callbackUrl?: string;
   /** Under the buttons, before "Or continue with email": what they agree to. */
   notice?: ReactNode;
+  /** On the sign-up page a click is a sign-up, and analytics counts it as one. */
+  signUp?: boolean;
 }
 
-export function OAuthButtons({ callbackUrl = "/", notice }: OAuthButtonsProps) {
+export function OAuthButtons({
+  callbackUrl = "/",
+  notice,
+  signUp = false,
+}: OAuthButtonsProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
@@ -25,7 +31,9 @@ export function OAuthButtons({ callbackUrl = "/", notice }: OAuthButtonsProps) {
         setIsGitHubLoading(true);
       }
 
-      analytics.track("user_signed_in", { method: provider });
+      analytics.track(signUp ? "user_signed_up" : "user_signed_in", {
+        method: provider,
+      });
       await signIn(provider, { callbackUrl });
     } catch (error) {
       log.error(`[OAuth] ${provider} sign in error:`, error);

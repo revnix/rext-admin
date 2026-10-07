@@ -48,6 +48,10 @@ export function SignupForm({
     isValid: hasValidInvitation,
     error: invitationError,
   } = useInvitationValidation();
+  // An invitation counts until it's known to be invalid: while it's checked, Google and GitHub keep
+  // it, and the trial line waits rather than flashing.
+  const joinsWorkspace =
+    !!invitationToken && (hasValidInvitation || isLoadingInvitation);
 
   const form = useZodForm(signupFormSchema, {
     defaultValues: {
@@ -297,17 +301,18 @@ export function SignupForm({
             : "Enter your details below to create your account"}
         </p>
         {/* An invitation joins a workspace that already has its plan: no trial to name. */}
-        {!invitationToken && <SignupTrialLine />}
+        {!joinsWorkspace && <SignupTrialLine />}
       </div>
 
       {/* The same ways in as login, with the same terms; an invitation still lands on its accept page. */}
       <OAuthButtons
         callbackUrl={
-          hasValidInvitation && invitationToken
+          joinsWorkspace && invitationToken
             ? `/invitations/accept?token=${encodeURIComponent(invitationToken)}`
             : "/"
         }
         notice={<LegalAgreement action="continuing with Google or GitHub" />}
+        signUp
       />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
