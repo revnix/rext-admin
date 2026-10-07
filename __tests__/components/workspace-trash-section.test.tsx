@@ -20,12 +20,13 @@ jest.mock("@/lib/api-client", () => ({
   },
 }));
 // On /w/<slug> pages the provider's workspaceId is the slug; the trash uses the workspace's id.
+const mockWorkspace: {
+  workspaceId: string;
+  workspace: { id: string } | undefined;
+  error: Error | null;
+} = { workspaceId: "acme", workspace: { id: "w1" }, error: null };
 jest.mock("@/providers/workspace-provider", () => ({
-  useWorkspace: () => ({
-    workspaceId: "acme",
-    workspace: { id: "w1" },
-    error: null,
-  }),
+  useWorkspace: () => mockWorkspace,
 }));
 const mockCan: Record<string, boolean> = {};
 jest.mock("@/hooks/use-permission", () => ({
@@ -61,15 +62,15 @@ function renderTrash(items = [ARTICLE, PERSONA]) {
     total_count: items.length,
     retention_days: 30,
   });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={client}>
       <WorkspaceTrashSection />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 async function chooseFromMenu(item: string, action: RegExp) {
@@ -84,6 +85,8 @@ describe("WorkspaceTrashSection", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     for (const key of Object.keys(mockCan)) delete mockCan[key];
+    mockWorkspace.workspace = { id: "w1" };
+    mockWorkspace.error = null;
   });
 
   it("lists deleted articles and personas, and says when they go for good", async () => {
@@ -159,5 +162,23 @@ describe("WorkspaceTrashSection", () => {
     renderTrash([]);
 
     expect(await screen.findByText("Nothing in the trash")).toBeInTheDocument();
+  });
+
+  it("says the workspace didn't load, not that the trash is empty, and reads it again", async () => {
+    mockWorkspace.workspace = undefined;
+    mockWorkspace.error = new Error("The workspace didn't load");
+    const client = renderTrash();
+    const refetch = jest.spyOn(client, "refetchQueries");
+
+    expect(
+      await screen.findByText("The trash didn't load"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Nothing in the trash")).not.toBeInTheDocument();
+    expect(workspaces.getTrash).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(refetch).toHaveBeenCalledWith({
+      queryKey: expect.arrayContaining(["acme"]),
+    });
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { SettingsGroup } from "@/components/settings/settings-group";
@@ -11,7 +11,10 @@ import {
   useDeleteTrashItemForever,
   useRestoreTrashItem,
 } from "@/hooks/mutations/use-workspace-trash";
-import { useAwaitingData } from "@/hooks/use-awaiting-data";
+import {
+  useAwaitingData,
+  useWorkspaceFailure,
+} from "@/hooks/use-awaiting-data";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import type { WorkspaceTrashKind } from "@/lib/api-client/workspaces";
 import { CONTENT_PERMISSIONS, PERSONA_PERMISSIONS } from "@/lib/permissions";
@@ -46,6 +49,19 @@ export function WorkspaceTrashSection() {
     enabled: Boolean(workspaceId),
   });
   const awaiting = useAwaitingData(trash);
+  // A workspace that couldn't be read is the trash's failure too: its query never runs. Try again
+  // then reads the workspace again, through the provider's own query.
+  const workspaceError = useWorkspaceFailure();
+  const queryClient = useQueryClient();
+  const retry = () => {
+    if (workspaceError && workspaceRef) {
+      void queryClient.refetchQueries({
+        queryKey: workspaceQueries.detail(workspaceRef).queryKey,
+      });
+    } else {
+      void trash.refetch();
+    }
+  };
   const { hasPermission: canDeleteArticles } = useWorkspacePermission(
     CONTENT_PERMISSIONS.DELETE,
     workspaceRef,
@@ -112,9 +128,9 @@ export function WorkspaceTrashSection() {
       <TrashTable
         caption="Deleted articles and personas"
         items={items}
-        awaiting={awaiting && !trash.error}
-        error={trash.error}
-        onRetry={() => void trash.refetch()}
+        awaiting={awaiting && !trash.error && !workspaceError}
+        error={trash.error ?? workspaceError}
+        onRetry={retry}
         onRestore={restore}
         onDeleteForever={deleteForever}
         canAct={canAct}
