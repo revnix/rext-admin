@@ -128,10 +128,27 @@ export function WorkspaceCreateWizard() {
     workspaceId,
     { poll: Boolean(operationId) },
   );
-  const outcome = pipelineOutcome(pipeline, operationId);
+  // A record of another run: one that's going replaced ours (another tab read the website again),
+  // so it's followed; one that completed drafted the brand voice. A stopped one is ours, read
+  // before the retry's record came back, and says nothing.
+  const outcome =
+    pipeline?.status === "completed"
+      ? "completed"
+      : pipelineOutcome(pipeline, operationId);
+  const replacement =
+    pipeline?.status === "running" &&
+    pipeline.operation_id &&
+    pipeline.operation_id !== operationId
+      ? pipeline.operation_id
+      : null;
   useEffect(() => {
     if (operationId && outcome === "completed") handleComplete();
   }, [operationId, outcome, handleComplete]);
+  useEffect(() => {
+    if (!operationId || !replacement) return;
+    setStreamProblem(null);
+    setOperationId(replacement);
+  }, [operationId, replacement]);
 
   const retry = useRetryWorkspacePipeline();
   const readWebsiteAgain = async () => {

@@ -186,6 +186,18 @@ describe("Creating a workspace when the backend restarts mid-analysis", () => {
     await waitFor(() => expect(mockStream.operationId).toBe("op-3"));
   });
 
+  it("follows a run that replaced its own, as when another tab read the website again", async () => {
+    // Review round 1: the record shows a newer run going; the wizard follows it, not the old one.
+    answerWith({ status: "running", operation_id: "op-5" });
+
+    await createWorkspace();
+
+    await waitFor(() => expect(mockStream.operationId).toBe("op-5"));
+    expect(
+      screen.queryByRole("button", { name: "Read the website again" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps today's reconnect when the backend keeps no record", async () => {
     answerWith(null);
 

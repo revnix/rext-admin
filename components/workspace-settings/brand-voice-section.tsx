@@ -192,8 +192,10 @@ export function BrandVoiceSection() {
         )}
         {stoppedRun && (
           <Notice tone="warning" title={stoppedRun.title}>
-            {stoppedRun.body} The brand voice below wasn't updated by it. Read
-            the website again to run it once more.
+            {stoppedRun.body} The brand voice below wasn't updated by it.{" "}
+            {canUpdate
+              ? "Read the website again to run it once more."
+              : "Someone who can edit the brand voice can read the website again."}
           </Notice>
         )}
       </SettingsGroup>
