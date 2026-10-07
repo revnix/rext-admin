@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckoutWithDiscount } from "@/components/subscription/checkout-with-discount";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
@@ -295,19 +295,19 @@ export function PlanGrid() {
   const saving = Math.max(0, ...plans.map((p) => p.yearly_saving_percent));
 
   return (
-    <div className="flex flex-col gap-6">
+    // The period's tabs control the grid of plans: it's their panel, so each tab names a real one.
+    <Tabs
+      value={period}
+      onValueChange={(value) => setPeriod(value as BillingPeriod)}
+      className="gap-6"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs
-          value={period}
-          onValueChange={(value) => setPeriod(value as BillingPeriod)}
-        >
-          <TabsList aria-label="Billing period">
-            <TabsTrigger value={BillingPeriod.MONTHLY}>Monthly</TabsTrigger>
-            <TabsTrigger value={BillingPeriod.YEARLY}>
-              Yearly{saving > 0 ? `, ${saving}% less` : ""}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <TabsList aria-label="Billing period">
+          <TabsTrigger value={BillingPeriod.MONTHLY}>Monthly</TabsTrigger>
+          <TabsTrigger value={BillingPeriod.YEARLY}>
+            Yearly{saving > 0 ? `, ${saving}% less` : ""}
+          </TabsTrigger>
+        </TabsList>
       </div>
       {/* A failed renewal's notice is the shell's banner, on every page. */}
       <BillingActionNotice kinds={["resume"]} />
@@ -329,26 +329,31 @@ export function PlanGrid() {
           On any plan started before {offerEnd(offer)}.
         </Notice>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {plans.map((plan) => {
-          const checkoutPlan = byName.get(plan.name);
-          return (
-            <PlanCard
-              key={plan.name}
-              plan={plan}
-              period={period}
-              currency={currency}
-              checkoutPlan={checkoutPlan}
-              isCurrent={Boolean(
-                currentPlanId && checkoutPlan?.id === currentPlanId,
-              )}
-              hasPaidPlan={hasPaidPlan}
-              settle={settle}
-              held={billing.failed}
-            />
-          );
-        })}
-      </div>
-    </div>
+      {[BillingPeriod.MONTHLY, BillingPeriod.YEARLY].map((value) => (
+        // Not a tab stop of its own: the plans' buttons are the first things to reach in it.
+        <TabsContent key={value} value={value} tabIndex={-1}>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {plans.map((plan) => {
+              const checkoutPlan = byName.get(plan.name);
+              return (
+                <PlanCard
+                  key={plan.name}
+                  plan={plan}
+                  period={period}
+                  currency={currency}
+                  checkoutPlan={checkoutPlan}
+                  isCurrent={Boolean(
+                    currentPlanId && checkoutPlan?.id === currentPlanId,
+                  )}
+                  hasPaidPlan={hasPaidPlan}
+                  settle={settle}
+                  held={billing.failed}
+                />
+              );
+            })}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }

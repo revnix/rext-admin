@@ -339,7 +339,8 @@ function DayCell({
             aria-label={`${name}: ${entries.length === 1 ? "1 article" : `${entries.length} articles`}`}
             aria-pressed={isPicked}
             className={cn(
-              "absolute inset-0 rounded-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:hidden",
+              // Focus draws an inset outline, so it still shows on the picked day, whose ring is its state.
+              "absolute inset-0 rounded-none outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ring sm:hidden",
               isPicked && "ring-2 ring-primary ring-inset",
             )}
           />
