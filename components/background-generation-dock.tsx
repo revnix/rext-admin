@@ -59,6 +59,10 @@ type GenerationStatusResponse = {
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
+/** Another job's button in the dock's list: "Continue" for a run waiting on the writer, else "Open". */
+const otherOpenLabel = (job: BackgroundGenerationJob) =>
+  job.status === "completed" && job.awaitingInput ? "Continue" : "Open";
+
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
 /**
@@ -526,6 +530,15 @@ export function BackgroundGenerationDock() {
   const pending = isPending(job);
   const completed = job.status === "completed";
   const awaitingInput = completed && job.awaitingInput === true;
+  // The open button's words. Its accessible name adds the run's title, so it can't be confused with
+  // the step's own Continue on the page (E25).
+  const openLabel = awaitingInput
+    ? "Continue"
+    : completed
+      ? "Open article"
+      : pending
+        ? "View progress"
+        : "View details";
   // A run paused on an interrupt reads as `completed`, but the article is not
   // finished — the thread is still live and still blocks new generations. The
   // X must end it server-side, not just hide the dock. Only a genuinely
@@ -639,15 +652,10 @@ export function BackgroundGenerationDock() {
               variant={completed ? "default" : "outline"}
               size="sm"
               className="h-8 whitespace-nowrap"
+              aria-label={`${openLabel}: ${job.title}`}
               onClick={() => openJob(job)}
             >
-              {awaitingInput
-                ? "Continue"
-                : completed
-                  ? "Open article"
-                  : pending
-                    ? "View progress"
-                    : "View details"}
+              {openLabel}
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -733,11 +741,10 @@ export function BackgroundGenerationDock() {
                 variant="ghost"
                 size="sm"
                 className="h-8 shrink-0"
+                aria-label={`${otherOpenLabel(other)}: ${other.title}`}
                 onClick={() => openJob(other)}
               >
-                {other.status === "completed" && other.awaitingInput
-                  ? "Continue"
-                  : "Open"}
+                {otherOpenLabel(other)}
                 <ArrowUpRight className="h-3 w-3" />
               </Button>
 

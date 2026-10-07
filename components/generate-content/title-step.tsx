@@ -25,6 +25,7 @@ import {
   serpResultsFromGate,
 } from "@/lib/keywords/serp-results";
 import { cn } from "@/lib/utils";
+import { StageCostLabel } from "./run-cost";
 
 interface TitleStepProps {
   instruction: string;
@@ -249,6 +250,7 @@ export function TitleStep({
           className="min-w-[140px]"
         >
           Continue
+          <StageCostLabel stage="generate_outline" />
           <ArrowRight />
         </Button>
       </div>
@@ -292,7 +294,7 @@ function ScoreLine({ score }: { score: TitleScore }) {
   return (
     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
       <span className="font-medium tabular-nums text-foreground">
-        {score.met} of {score.total}
+        {score.met} of {score.total} checks
       </span>
       {score.checks.map((check) => (
         <span key={check.id} className="inline-flex items-center gap-1">

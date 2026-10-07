@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import {
   Tooltip,
@@ -13,6 +14,7 @@ import {
   shortfall,
   stageName,
 } from "@/lib/billing/credits";
+import { subscriptionQueries } from "@/lib/query-keys";
 import type { BilledRun, CreditBalance, RunCost } from "@/types/subscription";
 
 /** The run's cost, and whether the plan meters it (an unlimited plan has no balance to show). */
@@ -52,6 +54,26 @@ export function RunCostLabel({
       )}
     </span>
   );
+}
+
+/**
+ * The stages a step's Continue takes on its own (E25): the titles, when the keyword is kept, and
+ * the outline, after the title. The backend charges them there (keyword_recomendation.py,
+ * generation/outline.py).
+ */
+export type StepStage = "title_generation" | "generate_outline";
+
+/**
+ * What a step's Continue adds when it takes a stage's credits: "· 1 credit". The figure is the plan
+ * catalogue's; nothing shows until the catalogue loads, or if it doesn't list the stage.
+ */
+export function StageCostLabel({ stage }: { stage: StepStage }) {
+  const { data } = useQuery(subscriptionQueries.catalog());
+  const credits = data?.credits.stages.find(
+    (item) => item.key === stage,
+  )?.credits;
+  if (credits === undefined) return null;
+  return <span className="num font-normal">· {formatCredits(credits)}</span>;
 }
 
 /** The balance after the run, as a line under the button on a phone, where the label has no room. */
