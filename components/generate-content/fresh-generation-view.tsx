@@ -87,6 +87,9 @@ import {
 import {
   GENERATION_STREAM_MODES,
   isOutlineToken,
+  type LibraryResearchEvent,
+  libraryResearchNote,
+  readLibraryResearchEvent,
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
@@ -401,6 +404,9 @@ export function FreshGenerationView({
     if (wasLoadingRef.current && !loadingNow) setInPlaceAnalysis(false);
     wasLoadingRef.current = loadingNow;
   }, [loadingNow]);
+  // A start from a saved keyword: whether it reuses the analysis's search results (E24).
+  const [libraryResearch, setLibraryResearch] =
+    useState<LibraryResearchEvent | null>(null);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
@@ -687,6 +693,7 @@ export function FreshGenerationView({
     setTimedOutStages(null);
     // A notice belongs to the run it came from, not to the next one opened.
     setRunError(null);
+    setLibraryResearch(null);
 
     const restore = async () => {
       let terminalFailure = false;
@@ -1411,6 +1418,13 @@ export function FreshGenerationView({
                 ),
               );
             }
+          } else if (d?.type === "library") {
+            const research = readLibraryResearchEvent(d);
+            if (research) {
+              setLibraryResearch(research);
+              // No search is read: the run goes straight on to the content type.
+              if (research.reused) runStages.start("content-type");
+            }
           } else if (d?.type === "run") {
             const runFailed = readRunFailedEvent(d);
             if (runFailed) {
@@ -1792,6 +1806,7 @@ export function FreshGenerationView({
       const { signal } = abortControllerRef.current;
 
       setRunError(null);
+      setLibraryResearch(null);
       dispatch({ type: "RESET_FOR_REANALYSIS" });
       dispatch({ type: "SET_RUN_PHASE", payload: { phase: "analysis" } });
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -1967,6 +1982,8 @@ export function FreshGenerationView({
       // hiccup, rejected run) leaves no run on the thread and nothing on
       // screen — the click simply vanishes. Retry once before reporting back.
       setRunError(null);
+      // The start's note on its research is said; the run has moved past it.
+      setLibraryResearch(null);
       let settled = false;
       let aborted = false;
       let runGoing = false;
@@ -2377,6 +2394,11 @@ export function FreshGenerationView({
             onCancel={_handleCancelGeneration}
             className="max-w-2xl"
           />
+        )}
+        {libraryResearch && (
+          <p className="mt-3 max-w-md text-center text-caption text-muted-foreground">
+            {libraryResearchNote(libraryResearch)}
+          </p>
         )}
       </div>,
     );
