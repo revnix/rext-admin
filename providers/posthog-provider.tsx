@@ -5,7 +5,7 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
-import { analytics, registerPostHog } from "@/lib/analytics";
+import { analytics, registerPostHog, takeOAuthLinking } from "@/lib/analytics";
 import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
@@ -83,6 +83,8 @@ export function OAuthLoginRecord() {
     } catch {
       // Storage refused: this page's set above still records it once.
     }
+    // A provider linked from the settings is not a sign-in (markOAuthLinking); a new account still is.
+    if (takeOAuthLinking(login.provider) && !login.isNew) return;
     analytics.track(login.isNew ? "user_signed_up" : "user_signed_in", {
       method: login.provider,
     });
@@ -93,8 +95,10 @@ export function OAuthLoginRecord() {
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  // Set once posthog-js is wired into `analytics`. A child's effect runs before this one's, and an
-  // event tracked before then never reaches PostHog, so the OAuth record mounts only after it.
+  // Set once posthog-js is initialised and wired into `analytics`. A child's effect runs before this
+  // one's, and posthog-js drops an identify or a capture made before init, so the page views, the auth
+  // sync and the OAuth record mount only after it: the sync before the record, so that the record goes
+  // out under the person rather than an anonymous id (siblings' effects run in order).
   const [registered, setRegistered] = useState(false);
 
   useEffect(() => {
@@ -125,9 +129,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   return (
     <PHProvider client={posthog}>
       <Suspense fallback={null}>
-        <PostHogPageView />
-        <PostHogAuthSync />
-        {registered && <OAuthLoginRecord />}
+        {registered && (
+          <>
+            <PostHogPageView />
+            <PostHogAuthSync />
+            <OAuthLoginRecord />
+          </>
+        )}
       </Suspense>
       {children}
     </PHProvider>
