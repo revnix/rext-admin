@@ -13,7 +13,7 @@ import {
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  usePathname: () => "/acme/generate_content",
+  usePathname: () => "/acme/generate-content",
   // Another run is open on the page, with its own Continue.
   useSearchParams: () => new URLSearchParams("thread=on-screen"),
 }));
@@ -42,7 +42,7 @@ const paused = (threadId: string, title: string): BackgroundGenerationJob => ({
   progress: 40,
   createdAt: "2026-10-07T08:00:00Z",
   updatedAt: "2026-10-07T08:00:00Z",
-  resultUrl: `/acme/generate_content?thread=${threadId}`,
+  resultUrl: `/acme/generate-content?thread=${threadId}`,
 });
 
 it("names each paused run's Continue after its title", async () => {

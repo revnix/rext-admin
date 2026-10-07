@@ -50,7 +50,7 @@ describe("buildBreadcrumbs", () => {
       { label: "Acme", href: "/" },
       { label: "Keywords" },
     ]);
-    expect(buildBreadcrumbs("/w/acme/generate_content", "Acme")).toEqual([
+    expect(buildBreadcrumbs("/w/acme/generate-content", "Acme")).toEqual([
       { label: "Acme", href: "/" },
       { label: "Generate" },
     ]);

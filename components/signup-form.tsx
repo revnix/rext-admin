@@ -28,6 +28,7 @@ import { useHydrated } from "@/hooks/use-hydrated";
 import { checkPasswordBreach } from "@/lib/password-utils";
 import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
+import { workspaceRoutes } from "@/lib/routes";
 
 export function SignupForm({
   className,
@@ -160,7 +161,9 @@ export function SignupForm({
             if (accepted?.workspace_slug) {
               toast.success(`Welcome to ${accepted.workspace_name}!`);
               router.push(
-                `/w/${accepted.workspace_slug}/generate_content` as Route,
+                workspaceRoutes.generate_content(
+                  accepted.workspace_slug,
+                ) as Route,
               );
               return;
             }
@@ -191,7 +194,9 @@ export function SignupForm({
           } else {
             // Workspace exists, redirect to generate content page
             const firstWorkspace = workspaces[0];
-            router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
+            router.push(
+              workspaceRoutes.generate_content(firstWorkspace.slug) as Route,
+            );
           }
         } catch (fetchError) {
           log.error(

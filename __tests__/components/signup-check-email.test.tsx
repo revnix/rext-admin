@@ -174,7 +174,7 @@ describe("SignupForm, an account that must verify its email", () => {
     await signUp();
 
     await screen.findByRole("button", { name: "Create account" });
-    expect(push).toHaveBeenCalledWith("/w/acme/generate_content");
+    expect(push).toHaveBeenCalledWith("/w/acme/generate-content");
     // The backend's register endpoint records user.create; the form adds no second entry.
     expect(request).not.toHaveBeenCalled();
     expect(listWorkspaces).toHaveBeenCalledTimes(1);

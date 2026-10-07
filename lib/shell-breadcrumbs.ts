@@ -18,7 +18,7 @@ const WORKSPACE_SECTIONS: Record<
   string,
   { label: string; pages?: Record<string, string>; record?: string }
 > = {
-  generate_content: { label: "Generate" },
+  "generate-content": { label: "Generate" },
   content: { label: "Content" },
   keywords: { label: "Keywords", record: "Keyword" },
   personas: { label: "Personas", pages: { create: "New persona" } },

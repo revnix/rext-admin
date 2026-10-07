@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
 import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
 import type { Route } from "next";
+import { workspaceRoutes } from "@/lib/routes";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -123,7 +124,9 @@ export default function AcceptInvitationPage() {
 
       toast.success(`Welcome to ${result.workspace_name}!`);
       // Redirect to workspace
-      router.push(`/w/${result.workspace_slug}/generate_content` as Route);
+      router.push(
+        workspaceRoutes.generate_content(result.workspace_slug) as Route,
+      );
     } catch (error) {
       const err = error as Error;
       toast.error(`Failed to accept invitation: ${err.message}`);
