@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CreateWorkspacePage from "@/app/w/create/page";
+import { subscriptionQueries } from "@/lib/query-keys";
+import type { UsageReport } from "@/types/subscription";
 
 jest.mock("@/components/workspace", () => ({
   WorkspaceCreateWizard: () => <div>Workspace details</div>,
@@ -10,37 +12,42 @@ jest.mock("@/hooks/use-page-title", () => ({
   usePageTitle: jest.fn(),
 }));
 
-// Must be a real jest.mock registration: the page imports the module normally,
-// so a bare jest.requireMock (automock) would never reach the component and the
-// real React-Query hook would run instead.
-jest.mock("@/components/subscription/usage-limit-warning", () => ({
-  useResourceLimit: jest.fn(),
+// The page reads GET /subscriptions/usage through its query; a request that never answers keeps
+// a query with no data pending, as a slow network does.
+jest.mock("@/lib/api-client", () => ({
+  apiClient: {
+    subscriptions: { getUsageStats: () => new Promise(() => {}) },
+  },
 }));
 
-const mockUseResourceLimit = jest.requireMock(
-  "@/components/subscription/usage-limit-warning",
-).useResourceLimit;
+const usage = (used: number, limit: number | null): UsageReport => ({
+  workspaces: {
+    used,
+    limit,
+    percentage: limit ? (used / limit) * 100 : 0,
+    unlimited: limit === null,
+  },
+  members: { used: 1, limit: null, percentage: 0, unlimited: true },
+});
+
+function renderPage(report?: UsageReport) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  if (report) {
+    queryClient.setQueryData(subscriptionQueries.usage().queryKey, report);
+  }
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <CreateWorkspacePage />
+    </QueryClientProvider>,
+  );
+  return { queryClient, ...view };
+}
 
 describe("CreateWorkspacePage", () => {
-  beforeEach(() => {
-    mockUseResourceLimit.mockReset();
-  });
-
   it("shows a limit reached state when the plan workspace cap is already used", () => {
-    mockUseResourceLimit.mockReturnValue({
-      isLimitReached: true,
-      isLoading: false,
-      canCreate: false,
-      usagePercentage: 100,
-    });
-
-    const queryClient = new QueryClient();
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <CreateWorkspacePage />
-      </QueryClientProvider>,
-    );
+    renderPage(usage(1, 1));
 
     expect(
       screen.getAllByText(/workspace limit reached/i).length,
@@ -49,20 +56,7 @@ describe("CreateWorkspacePage", () => {
   });
 
   it("waits for the limit check to finish before rendering the wizard", () => {
-    mockUseResourceLimit.mockReturnValue({
-      isLimitReached: false,
-      isLoading: true,
-      canCreate: false,
-      usagePercentage: 0,
-    });
-
-    const queryClient = new QueryClient();
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <CreateWorkspacePage />
-      </QueryClientProvider>,
-    );
+    renderPage();
 
     expect(screen.getByText(/checking workspace limits/i)).toBeInTheDocument();
     expect(
@@ -71,35 +65,39 @@ describe("CreateWorkspacePage", () => {
     expect(screen.queryByText(/workspace details/i)).not.toBeInTheDocument();
   });
 
-  it("keeps the wizard mounted when creating the last allowed workspace", () => {
-    mockUseResourceLimit.mockReturnValue({
-      isLimitReached: false,
-      isLoading: false,
-      canCreate: true,
-      usagePercentage: 50,
+  it("counts the plan's workspaces", () => {
+    renderPage(usage(1, 3));
+    expect(
+      screen.getByText(/1 of 3 workspaces on your plan/),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no count for a plan without a workspace limit", () => {
+    renderPage(usage(2, null));
+    expect(screen.queryByText(/on your plan/)).not.toBeInTheDocument();
+    expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
+  });
+
+  it("keeps the wizard mounted, and counts the new workspace, when creating the last allowed one", async () => {
+    const { queryClient } = renderPage(usage(0, 1));
+    expect(
+      screen.getByText(/0 of 1 workspace on your plan/),
+    ).toBeInTheDocument();
+
+    // The wizard's refresh after creating: the usage now counts the new workspace.
+    act(() => {
+      queryClient.setQueryData(
+        subscriptionQueries.usage().queryKey,
+        usage(1, 1),
+      );
     });
 
-    const queryClient = new QueryClient();
-
-    const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
-        <CreateWorkspacePage />
-      </QueryClientProvider>,
+    // The query tells its observers on the next tick.
+    await waitFor(() =>
+      expect(
+        screen.getByText(/1 of 1 workspace on your plan/),
+      ).toBeInTheDocument(),
     );
-
-    mockUseResourceLimit.mockReturnValue({
-      isLimitReached: true,
-      isLoading: false,
-      canCreate: false,
-      usagePercentage: 100,
-    });
-
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <CreateWorkspacePage />
-      </QueryClientProvider>,
-    );
-
     expect(screen.getByText(/workspace details/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/workspace limit reached/i),

@@ -27,9 +27,8 @@ jest.mock("@/providers/sse-provider", () => ({
   useSSE: () => ({ clearCompletedOperation: jest.fn() }),
 }));
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
-// The workspace the backend creates, and the plan's usage the page reads its count from.
+// The workspace the backend creates.
 const createWorkspace = jest.fn();
-const fetchUsage = jest.fn();
 jest.mock("@/stores/workspace", () => {
   const state = {
     createWorkspace: (...args: unknown[]) => createWorkspace(...args),
@@ -42,14 +41,10 @@ jest.mock("@/stores/workspace", () => {
     useWorkspaceCrudStore: { getState: () => ({ currentOperation: null }) },
   };
 });
-jest.mock("@/stores/subscription-store", () => ({
-  useSubscriptionStore: { getState: () => ({ fetchUsage }) },
-}));
 
 describe("The plan's workspace count during setup (D22)", () => {
   it("is read again once the workspace exists, so it counts the new one", async () => {
     createWorkspace.mockResolvedValue({ id: "ws-1", slug: "acme" });
-    fetchUsage.mockResolvedValue(undefined);
     const client = new QueryClient();
     const invalidate = jest.spyOn(client, "invalidateQueries");
     render(
@@ -71,7 +66,7 @@ describe("The plan's workspace count during setup (D22)", () => {
     );
 
     await waitFor(() => expect(createWorkspace).toHaveBeenCalled());
-    await waitFor(() => expect(fetchUsage).toHaveBeenCalledTimes(1));
+    // The page's count reads this query (app/w/create/page.tsx).
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ["subscriptions", "usage"],
     });

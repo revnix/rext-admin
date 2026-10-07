@@ -1,12 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { FormPage, PageSkeleton } from "@/components/layouts";
-import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Meter } from "@/components/ui/meter";
 import { WorkspaceCreateWizard } from "@/components/workspace";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { subscriptionQueries } from "@/lib/query-keys";
 
 /**
  * Creating a workspace (plans/app/D-pages.md §2.9): the plan's workspace count before the form,
@@ -19,21 +20,23 @@ export default function CreateWorkspacePage() {
     "A workspace for one website: its brand voice, personas and content",
   );
 
-  const {
-    isLimitReached,
-    isLoading: isLimitLoading,
-    used,
-    max,
-  } = useResourceLimit("workspaces");
+  // The plan's workspaces, from GET /subscriptions/usage: the wizard refreshes it once the new
+  // workspace exists, so the count includes it during the analysis.
+  const usage = useQuery(subscriptionQueries.usage());
+  const workspaces = usage.data?.workspaces;
+  const used = workspaces?.used ?? null;
+  const max = workspaces && !workspaces.unlimited ? workspaces.limit : null;
+  const isLimitReached = used !== null && max !== null && used >= max;
   const initialLimitReached = useRef<boolean | null>(null);
 
   // Only the first load decides the gate: creating the last allowed workspace updates the usage
-  // while the analysis runs, and that must not swap the run for this gate.
-  if (!isLimitLoading && initialLimitReached.current === null) {
+  // while the analysis runs, and that must not swap the run for this gate. If the usage can't be
+  // read, the form shows without a count; creating still checks the limit.
+  if (!usage.isPending && initialLimitReached.current === null) {
     initialLimitReached.current = isLimitReached;
   }
 
-  if (isLimitLoading) {
+  if (usage.isPending) {
     return <PageSkeleton layout="form" label="Checking workspace limits..." />;
   }
 
