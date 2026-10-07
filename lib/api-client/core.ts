@@ -97,25 +97,18 @@ export class ApiClient {
   }
 
   /**
-   * The fetch itself. No answer at all (the connection failed or was cut, or the proxy's answer
-   * carried no CORS headers) becomes the "couldn't reach the server" error, apart from any error
-   * raised later while reading an answer.
+   * No answer, or one cut short: the connection failed, the proxy's answer carried no CORS headers,
+   * or the body stopped arriving after the headers had. Any of them becomes the "couldn't reach the
+   * server" error; whatever else went wrong reading an answer stays as it is.
    */
-  private async fetchAnswer(
-    url: string,
-    options: RequestInit,
-  ): Promise<Response> {
-    try {
-      return await authenticatedFetch(url, options);
-    } catch (error) {
-      if (!isNetworkFailure(error)) throw error;
-      throw new ApiError(
-        0,
-        SERVER_UNREACHABLE_MESSAGE,
-        SERVER_UNREACHABLE,
-        null,
-      );
-    }
+  private unreachable(error: unknown): unknown {
+    if (!isNetworkFailure(error)) return error;
+    return new ApiError(
+      0,
+      SERVER_UNREACHABLE_MESSAGE,
+      SERVER_UNREACHABLE,
+      null,
+    );
   }
 
   /**
@@ -171,7 +164,7 @@ export class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await this.fetchAnswer(url, options);
+      const response = await authenticatedFetch(url, options);
 
       // Handle HTTP errors
       if (!response.ok) {
@@ -382,7 +375,8 @@ export class ApiClient {
 
       // Legacy format or direct data
       return result as T;
-    } catch (error) {
+    } catch (thrown) {
+      const error = this.unreachable(thrown);
       if (error instanceof ApiError) {
         throw error;
       }
@@ -412,7 +406,7 @@ export class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await this.fetchAnswer(url, options);
+      const response = await authenticatedFetch(url, options);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "Unknown error");
@@ -426,7 +420,8 @@ export class ApiClient {
       }
 
       return response;
-    } catch (error) {
+    } catch (thrown) {
+      const error = this.unreachable(thrown);
       if (error instanceof ApiError) {
         throw error;
       }

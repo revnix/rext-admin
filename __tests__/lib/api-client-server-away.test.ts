@@ -180,6 +180,23 @@ describe("a request that changes nothing", () => {
     expect(isServerAway()).toBe(false);
   });
 
+  it("is sent again when the answer is cut after its headers arrived", async () => {
+    send
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => {
+          throw new TypeError("terminated");
+        },
+      })
+      .mockResolvedValueOnce(api(200, { id: "p1" }));
+    const done = settle(new ApiClient().request("/api/v1/personas"));
+    await jest.advanceTimersByTimeAsync(1000);
+
+    expect(await done).toEqual({ value: { id: "p1" }, error: undefined });
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
   it("is retried the same way when the answer is read raw", async () => {
     send
       .mockResolvedValueOnce(proxy(503))
