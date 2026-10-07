@@ -1588,16 +1588,48 @@ describe("outlineIsEmpty", () => {
     expect(outlineIsEmpty(undefined, offering(0))).toBe(false);
   });
 
-  it("is empty without a title, whatever else it holds", () => {
+  it("is empty with nothing to review, with a title or without", () => {
     expect(outlineIsEmpty({}, offering(0))).toBe(true);
-    expect(outlineIsEmpty({ title: "   " }, offering(3))).toBe(true);
     expect(outlineIsEmpty({ title: 7, sections: [] }, offering(0))).toBe(true);
-  });
-
-  it("is empty with a title but no section, block or question to review", () => {
     expect(outlineIsEmpty({ title: "Tea", sections: [] }, offering(0))).toBe(
       true,
     );
+    // Blocks with nothing in them are nothing to review.
+    expect(
+      outlineIsEmpty(
+        {
+          title: "Tea",
+          _render: {
+            blocks: [
+              { heading: "Sections", items: [] },
+              { heading: "Steps", items: [{ label: "  ", points: [] }] },
+            ],
+          },
+        },
+        offering(0),
+      ),
+    ).toBe(true);
+  });
+
+  it("doesn't go by the title: an outline with something to review isn't empty without one", () => {
+    expect(outlineIsEmpty({ title: "   " }, offering(3))).toBe(false);
+    // An older outline, kept only as the backend's display blocks.
+    expect(
+      outlineIsEmpty(
+        {
+          _render: {
+            title: "Tea",
+            blocks: [
+              {
+                heading: "Sections",
+                items: [{ label: "Black tea", points: [] }],
+              },
+            ],
+          },
+        },
+        offering(0),
+      ),
+    ).toBe(false);
   });
 
   it("is not empty with rows the gate offers, with sections of its own, or with only an FAQ", () => {

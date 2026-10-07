@@ -887,6 +887,37 @@ describe("OutlineReview, an outline that came back empty", () => {
     ).toBeEnabled();
   });
 
+  it("doesn't go by the title: sections to review are shown, with Approve", () => {
+    // An older outline, kept only as the backend's display blocks, at a gate that offers no edits.
+    render(
+      <OutlineReview
+        outline={
+          {
+            _render: {
+              title: "Running shoes for beginners",
+              blocks: [
+                {
+                  heading: "Sections",
+                  items: [{ label: "Cushioning and support", points: [] }],
+                },
+              ],
+            },
+          } as unknown as Outline
+        }
+        rawTokens=""
+        isLoading={false}
+        gate={emptyGate}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Cushioning and support")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
+  });
+
   it("waits for the outline's own gate before saying so", () => {
     // The step's update puts the outline on the page a moment before its gate opens; until then
     // the page still holds the title step's gate, with no sections to read.

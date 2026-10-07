@@ -910,9 +910,10 @@ export function readOnlyBlocks(outline: unknown): OutlineRenderBlock[] {
 }
 
 /**
- * Whether there is nothing to approve: an outline that came back without a title, or with no section
- * the gate offers, no block to show and no FAQ. The outline model sometimes runs away into whitespace
- * and the run still reaches the gate (task 783); approving that would write an article from nothing.
+ * Whether there is nothing to approve: no section the gate offers, no block with anything in it and
+ * no FAQ. The outline model sometimes runs away into whitespace and the run still reaches the gate
+ * (task 783); approving that would write an article from nothing. The title doesn't decide: an
+ * outline with sections to review is shown, whatever its title.
  * Decided only at the outline's own gate: the page shows an outline as soon as its step sends one,
  * a moment before that gate opens, and until then there is no offer to read and nothing for
  * Regenerate to answer. An outline still streaming (null) isn't empty.
@@ -922,12 +923,22 @@ export function outlineIsEmpty(
   gate: Pick<OutlineGate, "open" | "sections">,
 ): boolean {
   if (!gate.open || !isRecord(outline)) return false;
-  const title = typeof outline.title === "string" ? outline.title.trim() : "";
-  if (!title) return true;
   return (
     gate.sections.length === 0 &&
-    readOnlyBlocks(outline).length === 0 &&
+    !readOnlyBlocks(outline).some(blockShowsSomething) &&
     readOutlineFaqs(outline).length === 0
+  );
+}
+
+/** Whether a block has an item to read: the blocks come from the backend as they are. */
+function blockShowsSomething(block: OutlineRenderBlock): boolean {
+  return (
+    isRecord(block) &&
+    Array.isArray(block.items) &&
+    block.items.some(
+      (item) =>
+        isRecord(item) && typeof item.label === "string" && item.label.trim(),
+    )
   );
 }
 
