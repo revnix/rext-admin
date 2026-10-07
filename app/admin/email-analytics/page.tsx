@@ -214,7 +214,7 @@ export default function EmailAnalyticsPage() {
                 setWorkspaceId(value === "all" ? null : value)
               }
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px]" aria-label="Workspace">
                 <SelectValue placeholder="All workspaces" />
               </SelectTrigger>
               <SelectContent>
@@ -227,7 +227,7 @@ export default function EmailAnalyticsPage() {
               </SelectContent>
             </Select>
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" aria-label="Date range">
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
               <SelectContent>
@@ -262,7 +262,7 @@ export default function EmailAnalyticsPage() {
                     </CardDescription>
                   </div>
                   <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[140px]" aria-label="Group by">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
