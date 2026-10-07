@@ -344,7 +344,7 @@ export default function AcceptInvitationPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-foreground">
             <Mail className="h-6 w-6" />
             <CardTitle>Workspace invitation</CardTitle>
           </div>

@@ -103,17 +103,12 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           />
         </div>
 
-        <div
-          className={cn(
-            "text-center text-sm font-medium",
-            clampedProgress === 100 ? "text-primary" : "text-foreground",
-          )}
-        >
+        <div className="text-center text-sm font-medium text-foreground">
           {Math.round(clampedProgress)}%
         </div>
 
         {clampedProgress === 100 && (
-          <div className="text-center text-sm font-medium text-primary">
+          <div className="text-center text-sm font-medium text-foreground">
             Complete!
           </div>
         )}

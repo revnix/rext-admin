@@ -209,9 +209,7 @@ export function InvoiceDocument({
         </div>
         <div className="flex justify-between w-64 text-base font-bold pt-2 border-t text-foreground">
           <span>Total Amount:</span>
-          <span className="text-primary">
-            {formatCurrency(invoice.amount, invoice.currency)}
-          </span>
+          <span>{formatCurrency(invoice.amount, invoice.currency)}</span>
         </div>
       </div>
     </div>

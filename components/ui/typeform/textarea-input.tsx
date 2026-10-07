@@ -87,7 +87,7 @@ const TextAreaInput = React.forwardRef<HTMLTextAreaElement, TextAreaInputProps>(
             rows={rows}
             className={cn(
               "text-lg resize-none transition-all duration-200",
-              "border-2 focus:border-primary",
+              "border-2 focus:border-ring",
               "placeholder:text-muted-foreground/50",
               icon && "pl-10",
               error && "border-destructive focus:border-destructive",

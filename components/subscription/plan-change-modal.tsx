@@ -235,15 +235,15 @@ export function PlanChangeModal({
                     key={plan.id}
                     className={`relative flex items-start space-x-3 rounded-md border p-4 transition-colors w-full ${
                       isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
+                        ? "border-primary bg-surface-inset"
+                        : "border-border hover:border-border-strong"
                     } ${isCurrent ? "opacity-50" : ""}`}
                   >
                     <RadioGroupPrimitive.Item
                       value={plan.id}
                       id={plan.id}
                       disabled={isCurrent}
-                      className="mt-1 h-4 w-4 rounded-full border border-primary text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="mt-1 h-4 w-4 rounded-full border border-primary text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
                         <div className="h-2 w-2 rounded-full bg-current" />

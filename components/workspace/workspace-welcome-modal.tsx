@@ -174,7 +174,7 @@ export function WorkspaceWelcomeModal({
 
             {/* Permissions */}
             {permissions.length > 0 && (
-              <div className="rounded-md border border-primary/15 bg-primary/5 p-5 sm:p-6">
+              <div className="rounded-md border border-border bg-surface-inset p-5 sm:p-6">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-foreground" />
                   As {roleName}, you can:
