@@ -515,7 +515,7 @@ export function BackgroundGenerationDock() {
   };
 
   const isViewingGenerationThread =
-    (pathname?.endsWith("/generate_content") ?? false) && Boolean(openThreadId);
+    (pathname?.endsWith("/generate-content") ?? false) && Boolean(openThreadId);
 
   const displayedJobs = isViewingGenerationThread
     ? visibleJobs.filter((job) => job.threadId !== openThreadId)
@@ -548,7 +548,7 @@ export function BackgroundGenerationDock() {
   // page, to avoid duplicating the page's own Continue/action button.
   //
   // This must compare the thread, not the path. Every generation lives at the
-  // same `/generate_content` route, so a path-prefix check also matched the
+  // same `/generate-content` route, so a path-prefix check also matched the
   // blank selection page — which hid Continue for a job that was waiting on the
   // user, leaving no way back into it.
   const isOnResultPage = openThreadId === job.threadId;

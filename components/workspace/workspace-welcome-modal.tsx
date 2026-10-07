@@ -18,6 +18,7 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
+import { workspaceRoutes } from "@/lib/routes";
 
 interface WorkspaceWelcomeModalProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function WorkspaceWelcomeModal({
 
   const handleStartExploring = () => {
     handleClose();
-    router.push(`/w/${workspace.slug}/generate_content` as Route);
+    router.push(workspaceRoutes.generate_content(workspace.slug) as Route);
   };
 
   return (

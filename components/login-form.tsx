@@ -29,6 +29,7 @@ import { analytics } from "@/lib/analytics";
 import { classifyError } from "@/lib/error-utils";
 import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
+import { workspaceRoutes } from "@/lib/routes";
 
 export function LoginForm({
   className,
@@ -202,7 +203,9 @@ export function LoginForm({
           router.push("/w/create" as Route);
         } else {
           const firstWorkspace = workspaces[0];
-          router.push(`/w/${firstWorkspace.slug}/generate_content` as Route);
+          router.push(
+            workspaceRoutes.generate_content(firstWorkspace.slug) as Route,
+          );
         }
       } catch (error) {
         log.error("[Auth] Failed to fetch workspaces:", error);

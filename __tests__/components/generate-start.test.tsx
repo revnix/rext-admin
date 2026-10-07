@@ -138,7 +138,7 @@ describe("RecentKeywords", () => {
       await screen.findByRole("button", { name: "Use: seo tools" }),
     );
     expect(push).toHaveBeenCalledWith(
-      "/w/acme/generate_content?library=library_seo%20tools_1",
+      "/w/acme/generate-content?library=library_seo%20tools_1",
     );
   });
 

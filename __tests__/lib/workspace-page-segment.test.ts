@@ -21,7 +21,7 @@ describe("extractWorkspacePageSegment", () => {
     expect(extractWorkspacePageSegment(path)).toBe(page);
   });
 
-  it.each(["/w/acme", "/w/acme/generate_content", "/settings/security", "/"])(
+  it.each(["/w/acme", "/w/acme/generate-content", "/settings/security", "/"])(
     "has no page for %s",
     (path) => {
       expect(extractWorkspacePageSegment(path)).toBeNull();

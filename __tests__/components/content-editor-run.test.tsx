@@ -25,7 +25,7 @@ jest.mock("@/providers/workspace-provider", () => {
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
-  usePathname: () => "/w/nextly/generate_content",
+  usePathname: () => "/w/nextly/generate-content",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ workspaceSlug: "nextly" }),
 }));

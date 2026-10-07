@@ -18,7 +18,7 @@ app/
   fonts.ts, fonts/          the three faces, self-hosted through next/font/local (licences in public/fonts/licenses)
   globals.css, styles/      the design tokens; the content wizard's and the generated article's own styles
   (home)/                   the dashboard (/): a route group, so the home page gets the shell's layout
-  w/[workspaceSlug]/        the workspace pages: generate_content (+ library), content (+ [id] the editor, calendar),
+  w/[workspaceSlug]/        the workspace pages: generate-content (+ library), content (+ [id] the editor, calendar),
                             personas (+ create, [personaId], [personaId]/edit), integrations, settings (General, brand-voice, members,
                             danger-zone); page.tsx redirects to /; /brand_voice and /members redirect to their settings
                             sections; /topics and /knowledge redirect (both features are removed)
@@ -121,7 +121,7 @@ Every primitive renders at `/dev/primitives` (development only), in its variants
 
 ## The generation flow
 
-`/w/[slug]/generate_content` runs the keyword-to-article pipeline as a LangGraph thread. The page starts a thread through `app/api/generate/threads` (which stamps `metadata.owner` with the user's id), streams `updates`, `messages-tuple` and `custom` events from `app/api/generate/[threadId]/stream` (`client.runs.stream` with `streamResumable` and `onDisconnect: "continue"`; the modes are `GENERATION_STREAM_MODES` in `lib/generate-content/run-events.ts`), and answers the four gates (keyword, content type, topic, outline) through `resume`. The routes call LangGraph with the signed-in user's backend access token (`getGenerationClient` in `lib/generate-content/thread-access.ts`), and every `[threadId]` route calls `requireThreadOwner` first, which refuses a thread whose `metadata.owner` is not that user. The backend's LangGraph auth (rext-control#195) stamps and filters the same field from the same token; until it is on, this check is the only one. An expired token answers `TOKEN_EXPIRED`, which `authenticatedFetch` turns into a session refresh and a retry.
+`/w/[slug]/generate-content` runs the keyword-to-article pipeline as a LangGraph thread. The page starts a thread through `app/api/generate/threads` (which stamps `metadata.owner` with the user's id), streams `updates`, `messages-tuple` and `custom` events from `app/api/generate/[threadId]/stream` (`client.runs.stream` with `streamResumable` and `onDisconnect: "continue"`; the modes are `GENERATION_STREAM_MODES` in `lib/generate-content/run-events.ts`), and answers the four gates (keyword, content type, topic, outline) through `resume`. The routes call LangGraph with the signed-in user's backend access token (`getGenerationClient` in `lib/generate-content/thread-access.ts`), and every `[threadId]` route calls `requireThreadOwner` first, which refuses a thread whose `metadata.owner` is not that user. The backend's LangGraph auth (rext-control#195) stamps and filters the same field from the same token; until it is on, this check is the only one. An expired token answers `TOKEN_EXPIRED`, which `authenticatedFetch` turns into a session refresh and a retry.
 
 The page component is `components/generate-content/fresh-generation-view.tsx` (about 2,300 lines, a reducer in `lib/generate-content/generation-reducer.ts`); the article is edited again at `/w/[slug]/content/[id]` with the same `ContentEditor` (`components/generate-content/content.tsx`, Lexical). The user can leave: the run continues on the server, the dock (`components/background-generation-dock.tsx`, `stores/background-generation-store.ts`, persisted, synced across tabs through localStorage) polls `status` and shows progress, and a notification arrives when the backend has written the draft to the content library. `BACKGROUND_CONTENT_GENERATION.md` describes the lifecycle in full.
 
@@ -146,7 +146,7 @@ The rework replaces this underneath (plan B): three token layers in `globals.css
 
 ## Traps
 
-- Articles start from keyword research only (`/w/<slug>/generate_content`). The old topic-based wizard is retired: `/w/<slug>/content/create` redirects to the keyword flow (`next.config.ts`), and no page starts an article from a topic or a title.
+- Articles start from keyword research only (`/w/<slug>/generate-content`; the old `generate_content` address redirects with a 308). The old topic-based wizard is retired: `/w/<slug>/content/create` redirects to the keyword flow (`next.config.ts`), and no page starts an article from a topic or a title.
 - A new public page must be added to `publicRoutes` in `proxy.ts`, or it redirects to `/login`.
 - `typedRoutes` is on: a path built at run time needs `as Route`, and a removed page leaves stale types in `.next/dev/types` that fail the type check until they are deleted (`../rext-control/scripts/app/check.sh` deletes them).
 - `next.config.ts` redirects `/settings/billing` to `/settings/subscription`: the billing page under `app/settings/billing` is unreachable.
