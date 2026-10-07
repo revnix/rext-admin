@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Download, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,14 @@ export function PrivacySettings() {
     defaultValues: defaultDataExportValues,
   });
 
+  // Whether the file was saved here: without a payload, or when the browser refuses, only the email copy says so.
+  const [downloaded, setDownloaded] = useState(false);
+
   const exportMutation = useMutation({
     mutationFn: (data: DataExportFormValues) =>
       apiClient.account.requestDataExport(data),
     onSuccess: (data) => {
-      toast.success(
-        data.message || "Data export completed and sent to your email.",
-      );
+      let saved = false;
       if (data.export_payload && data.filename) {
         try {
           const jsonStr = JSON.stringify(data.export_payload, null, 2);
@@ -52,10 +54,17 @@ export function PrivacySettings() {
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
+          saved = true;
         } catch (err) {
           log.error("Failed to generate client-side download", err);
         }
       }
+      setDownloaded(saved);
+      toast.success(
+        saved
+          ? "Data export completed: your file is downloading."
+          : "Data export completed: a copy is on its way to your email.",
+      );
     },
     onError: (error: unknown) => {
       log.error("Data export request failed", error);
@@ -170,8 +179,9 @@ export function PrivacySettings() {
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>
-              Data export completed. Your file should start downloading
-              automatically, and a copy has been sent to your email.
+              {downloaded
+                ? "Data export completed. Your file should start downloading automatically, and a copy is on its way to your email."
+                : "Data export completed. A copy is on its way to your email."}
             </AlertDescription>
           </Alert>
         )}

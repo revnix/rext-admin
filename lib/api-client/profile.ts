@@ -11,6 +11,7 @@ import type {
   UserProfile,
 } from "@/types/profile";
 import type { ApiClient } from "./core";
+import type { components } from "./schema";
 import { ENDPOINTS } from "./endpoints";
 import type { DataExportFormValues } from "@/schemas/account-schemas";
 
@@ -135,19 +136,15 @@ export function createAccountNamespace(client: ApiClient) {
      * Request data export
      */
     requestDataExport: async (data: DataExportFormValues) => {
-      return client.request<{
-        success: boolean;
-        message: string;
-        export_id: string;
-        status?: string;
-        format?: string;
-        filename?: string;
-        export_payload?: Record<string, unknown>;
-      }>(ENDPOINTS.ACCOUNT.exportData, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      // The backend's contract: the client unwraps its `data`, where the payload may be null.
+      return client.request<components["schemas"]["DataExportResponse"]>(
+        ENDPOINTS.ACCOUNT.exportData,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
     },
 
     /**
