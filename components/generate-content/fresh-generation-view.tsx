@@ -82,7 +82,11 @@ import {
   TOO_MANY_RUNS,
 } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
-import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
+import {
+  canAnalyze,
+  isKeywordReanalysis,
+  isReanalysingInPlace,
+} from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
 import { deriveActiveGenerationViewState } from "@/lib/generate-content/background-generation-view-state";
@@ -2190,8 +2194,15 @@ export function FreshGenerationView({
     router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
   }, [threadId, removeBackgroundJob, router, workspaceSlug]);
 
+  // A keyword analysed from step 2 keeps step 2 on screen while it runs (FB2.3).
+  const reanalysingInPlace = isReanalysingInPlace({
+    atKeywordStep: instructionType === "keyword Selection",
+    phase: runState?.phase,
+  });
+
   if (
     (isLoading || isManualLoading) &&
+    !reanalysingInPlace &&
     !showOutlineReview &&
     !showContentStream &&
     (isRegeneratingTopics || !suppressLibraryTopicLoader)
@@ -2371,7 +2382,16 @@ export function FreshGenerationView({
             <KeywordForm
               userKeyword={userKeyword}
               country={country}
-              disabled={isManualLoading}
+              disabled={
+                isManualLoading ||
+                !canAnalyze({
+                  atKeywordStep: instructionType === "keyword Selection",
+                  value: userKeyword,
+                  primaryKeyword,
+                  country,
+                  analyzedCountry,
+                })
+              }
               restoreCountry={!backgroundThreadId}
               // On the keyword step only a new keyword or country is billed.
               run={

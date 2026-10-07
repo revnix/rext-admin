@@ -1,4 +1,8 @@
-import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
+import {
+  canAnalyze,
+  isKeywordReanalysis,
+  isReanalysingInPlace,
+} from "@/lib/generate-content/keyword-reanalysis";
 import {
   generationReducer,
   initialState,
@@ -210,5 +214,72 @@ describe("keyword analysis state", () => {
     expect(state.contentTypes).toEqual([]);
     expect(state.selectedContentType).toBeNull();
     expect(state.recommendedTopic).toBeNull();
+  });
+});
+
+describe("canAnalyze (FB2.3)", () => {
+  const onScreen = {
+    primaryKeyword: "running shoes",
+    country: "us",
+    analyzedCountry: "us",
+  };
+
+  it("waits on step 2 while the keyword and country are the ones on screen", () => {
+    expect(
+      canAnalyze({ atKeywordStep: true, value: "running shoes", ...onScreen }),
+    ).toBe(false);
+    // Typed back the same, in any case or spacing: still the analysis that's there.
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "  Running Shoes ",
+        ...onScreen,
+      }),
+    ).toBe(false);
+  });
+
+  it("analyzes on step 2 once the keyword or the country changes", () => {
+    expect(
+      canAnalyze({ atKeywordStep: true, value: "trail shoes", ...onScreen }),
+    ).toBe(true);
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "running shoes",
+        ...onScreen,
+        country: "gb",
+      }),
+    ).toBe(true);
+  });
+
+  it("leaves step 1 as it was", () => {
+    expect(
+      canAnalyze({
+        atKeywordStep: false,
+        value: "",
+        primaryKeyword: "",
+        country: "us",
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("isReanalysingInPlace (FB2.3)", () => {
+  it("keeps step 2 on screen while a keyword picked there is analysed", () => {
+    expect(
+      isReanalysingInPlace({ atKeywordStep: true, phase: "analysis" }),
+    ).toBe(true);
+  });
+
+  it("shows the run's progress for the first analysis and for moving on", () => {
+    expect(
+      isReanalysingInPlace({ atKeywordStep: false, phase: "analysis" }),
+    ).toBe(false);
+    expect(
+      isReanalysingInPlace({ atKeywordStep: true, phase: "content-type" }),
+    ).toBe(false);
+    expect(isReanalysingInPlace({ atKeywordStep: true, phase: null })).toBe(
+      false,
+    );
   });
 });
