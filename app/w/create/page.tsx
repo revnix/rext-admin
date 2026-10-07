@@ -50,7 +50,9 @@ export default function CreateWorkspacePage() {
           title="Workspace limit reached"
           description={
             max !== null
-              ? `Your plan includes ${max} ${max === 1 ? "workspace" : "workspaces"}, and all of them are in use. A bigger plan adds more.`
+              ? max === 1
+                ? "Your plan includes 1 workspace, and it's in use. A bigger plan adds more."
+                : `Your plan includes ${max} workspaces, and all of them are in use. A bigger plan adds more.`
               : "Your plan's workspaces are all in use. A bigger plan adds more."
           }
           action={{ label: "View plans", href: "/pricing" }}

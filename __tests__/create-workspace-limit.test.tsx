@@ -53,6 +53,9 @@ describe("CreateWorkspacePage", () => {
       screen.getAllByText(/workspace limit reached/i).length,
     ).toBeGreaterThan(0);
     expect(screen.queryByText(/workspace details/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Your plan includes 1 workspace, and it's in use/),
+    ).toBeInTheDocument();
   });
 
   it("waits for the limit check to finish before rendering the wizard", () => {
