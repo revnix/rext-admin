@@ -19,7 +19,10 @@ import type {
   OutlineRenderBlock,
 } from "@/types/generate-content";
 
-export type HeadingLevel = "H2" | "H3";
+/** A section's level. H4 comes only from the gate (a pillar page's deepest headings): shown, never set here. */
+export type HeadingLevel = "H2" | "H3" | "H4";
+
+const HEADING_LEVELS: readonly HeadingLevel[] = ["H2", "H3", "H4"];
 
 /** One section the user may reorder, rename or remove, as the gate sends it. */
 export interface EditableSectionRow {
@@ -72,7 +75,9 @@ function readRow(value: unknown): EditableSectionRow | null {
     id,
     list,
     heading: heading.trim(),
-    ...(level === "H2" || level === "H3" ? { heading_level: level } : {}),
+    ...(HEADING_LEVELS.includes(level as HeadingLevel)
+      ? { heading_level: level as HeadingLevel }
+      : {}),
   };
 }
 
@@ -159,56 +164,174 @@ export function groupRows(
     .filter((group) => group.rows.length > 0);
 }
 
-/**
- * The rows with one list's shown rows in a new order (a drag, a move, an
- * addition). A removed row stays right after the shown row it followed.
- */
-export function replaceList(
-  rows: TreeRow[],
-  list: string,
-  listRows: TreeRow[],
-): TreeRow[] {
-  return groupAll(rows).flatMap((group) => {
-    if (group.list !== list) return group.rows;
-    const hiddenAfter = new Map<string | null, TreeRow[]>();
-    let previous: string | null = null;
-    for (const row of group.rows) {
-      if (row.removed) {
-        hiddenAfter.set(previous, [...(hiddenAfter.get(previous) ?? []), row]);
-      } else previous = row.key;
-    }
-    const placed = listRows.filter(shown);
-    const kept = new Set(placed.map((row) => row.key));
-    // A removed row whose neighbour is gone from the list stays at its end.
-    const orphans = [...hiddenAfter]
-      .filter(([key]) => key !== null && !kept.has(key))
-      .flatMap(([, hidden]) => hidden);
-    return [
-      ...(hiddenAfter.get(null) ?? []),
-      ...placed.flatMap((row) => [row, ...(hiddenAfter.get(row.key) ?? [])]),
-      ...orphans,
-    ];
-  });
+/** One list's shown rows, in order: what the tree draws and what the positions count. */
+function shownInList(rows: TreeRow[], list: string): TreeRow[] {
+  return rows.filter((row) => row.list === list && shown(row));
 }
 
-/** One row moved by `offset` places within its own list (a menu's Move up and Move down). */
+const LEVEL_RANK: Record<HeadingLevel, number> = { H2: 2, H3: 3, H4: 4 };
+
+/** How deep a row sits: 2 for an H2 or a section without a level, 3 for an H3, 4 for an H4. */
+export function levelRank(row: Pick<TreeRow, "level">): number {
+  return row.level ? LEVEL_RANK[row.level] : 2;
+}
+
+/**
+ * Where the block a row heads ends among its list's shown rows: the index just past the row and the
+ * deeper rows after it (an H2's subsections, an H3's H4s). The outline is a flat list with levels, as
+ * the backend stores it, so a section's subsections are simply the deeper rows that follow it.
+ */
+export function blockEnd(listRows: TreeRow[], start: number): number {
+  const rank = levelRank(listRows[start]);
+  let end = start + 1;
+  while (end < listRows.length && levelRank(listRows[end]) > rank) end += 1;
+  return end;
+}
+
+/**
+ * Whether the block at `start` may land in `gap` (the place before `listRows[gap]`; the list's length
+ * is its end). Its own place counts. An H2 lands only between whole sections, never inside one; an H3
+ * never between an H3 and its H4s; and a subsection never opens the list (the backend would quietly
+ * make it an H2).
+ */
+function takesBlock(
+  listRows: TreeRow[],
+  start: number,
+  end: number,
+  gap: number,
+): boolean {
+  if (gap < 0 || gap > listRows.length || (gap > start && gap < end))
+    return false;
+  const rank = levelRank(listRows[start]);
+  if (gap < listRows.length && levelRank(listRows[gap]) > rank) return false;
+  return !(rank > 2 && gap === 0 && start !== 0);
+}
+
+/** The places a row's block may be dropped (its own included), for the drag's drop line. */
+export function dropGaps(listRows: TreeRow[], start: number): number[] {
+  const end = blockEnd(listRows, start);
+  const gaps: number[] = [];
+  for (let gap = 0; gap <= listRows.length; gap += 1)
+    if (takesBlock(listRows, start, end, gap)) gaps.push(gap);
+  return gaps;
+}
+
+/** The gap nearest a pointer's height among the places a block may go; null when there are none. */
+export function nearestGap(
+  gapTops: number[],
+  candidates: number[],
+  y: number,
+): number | null {
+  let best: number | null = null;
+  for (const gap of candidates) {
+    if (gapTops[gap] === undefined) continue;
+    if (
+      best === null ||
+      Math.abs(gapTops[gap] - y) < Math.abs(gapTops[best] - y)
+    )
+      best = gap;
+  }
+  return best;
+}
+
+/**
+ * Where one step up or down takes the block at `start` (Alt+↑, Alt+↓, the menu's Move up and Move
+ * down), or null when it can't go further. A block passes its neighbour's whole block, so an H2 moves
+ * past whole sections. A subsection already first in its section goes up to the end of the section
+ * before; one already last goes down to the start of the next section.
+ */
+export function moveTarget(
+  listRows: TreeRow[],
+  start: number,
+  offset: -1 | 1,
+): number | null {
+  const rank = levelRank(listRows[start]);
+  const end = blockEnd(listRows, start);
+  let gap: number;
+  if (offset < 0) {
+    // The previous row as deep as this one or less: a sibling to pass, or the section it opens.
+    gap = start - 1;
+    while (gap >= 0 && levelRank(listRows[gap]) > rank) gap -= 1;
+    if (gap < 0) return null;
+  } else {
+    if (end >= listRows.length) return null;
+    gap =
+      levelRank(listRows[end]) === rank
+        ? blockEnd(listRows, end)
+        : // The next row opens a section above this level: go in as its first subsection.
+          end + 1;
+  }
+  return takesBlock(listRows, start, end, gap) ? gap : null;
+}
+
+/**
+ * Where, in all the rows, something of `rank` goes into a list's `gap`. Removed rows keep their place
+ * for an Undo: one right after the row before the gap stays with that row's section when it is deeper
+ * than what comes in (an H3 removed from the section before a new H2), and stays after what comes in
+ * otherwise (a removed H2 after a new subsection, which then stays in its own section).
+ */
+function insertionIndex(
+  rows: TreeRow[],
+  listRows: TreeRow[],
+  gap: number,
+  rank: number,
+): number {
+  if (gap === 0) return rows.indexOf(listRows[0]);
+  const before = listRows[gap - 1];
+  let at = rows.indexOf(before) + 1;
+  while (
+    at < rows.length &&
+    rows[at].list === before.list &&
+    !shown(rows[at]) &&
+    levelRank(rows[at]) > rank
+  )
+    at += 1;
+  return at;
+}
+
+/**
+ * The row's block (it and its subsections, with the removed rows among and right after them, which
+ * keep following it for their Undo) moved to `gap` of its list's shown rows. The rows unchanged when
+ * the gap is its own place or one it can't take.
+ */
+export function moveBlockTo(
+  rows: TreeRow[],
+  key: string,
+  gap: number,
+): TreeRow[] {
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!row || !shown(row)) return rows;
+  const listRows = shownInList(rows, row.list);
+  const start = listRows.indexOf(row);
+  const end = blockEnd(listRows, start);
+  if (gap === start || gap === end || !takesBlock(listRows, start, end, gap))
+    return rows;
+  const from = rows.indexOf(row);
+  const next = listRows[end];
+  let to = next ? rows.indexOf(next) : from + 1;
+  if (!next) while (to < rows.length && rows[to].list === row.list) to += 1;
+  const block = rows.slice(from, to);
+  const rest = [...rows.slice(0, from), ...rows.slice(to)];
+  const at = insertionIndex(
+    rest,
+    shownInList(rest, row.list),
+    gap > start ? gap - (end - start) : gap,
+    levelRank(row),
+  );
+  return [...rest.slice(0, at), ...block, ...rest.slice(at)];
+}
+
+/** One step up or down for a row and its subsections (`moveTarget`); the rows unchanged at an end. */
 export function moveRow(
   rows: TreeRow[],
   key: string,
   offset: -1 | 1,
 ): TreeRow[] {
   const row = rows.find((candidate) => candidate.key === key);
-  if (!row) return rows;
-  const listRows = rows.filter(
-    (candidate) => candidate.list === row.list && shown(candidate),
-  );
-  const from = listRows.indexOf(row);
-  const to = from + offset;
-  if (to < 0 || to >= listRows.length) return rows;
-  const reordered = [...listRows];
-  reordered.splice(from, 1);
-  reordered.splice(to, 0, row);
-  return replaceList(rows, row.list, reordered);
+  if (!row || !shown(row)) return rows;
+  const listRows = shownInList(rows, row.list);
+  const gap = moveTarget(listRows, listRows.indexOf(row), offset);
+  return gap === null ? rows : moveBlockTo(rows, key, gap);
 }
 
 export function renameRow(
@@ -224,19 +347,45 @@ export function renameRow(
 }
 
 /**
- * The rows a removal hides: the row, and for an H2 the shown H3s that follow it in its list up to
- * the next H2, since they're its subsections (removing only the H2 would hang them under the
- * section before, or before any section at all).
+ * Whether a section's level may change to `level`. Only between H2 and H3, in a list with levels: an
+ * H4 keeps its level. A section becomes a subsection only with a section above it, since the first
+ * section is never a subsection.
+ */
+export function canChangeLevel(
+  rows: TreeRow[],
+  key: string,
+  level: "H2" | "H3",
+): boolean {
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!row || !shown(row) || row.level === level) return false;
+  if (row.level !== "H2" && row.level !== "H3") return false;
+  return level === "H2" || shownInList(rows, row.list).indexOf(row) > 0;
+}
+
+/**
+ * A section made a subsection (H2 to H3) or a subsection a section (H3 to H2), in place. The outline
+ * is a flat list with levels, so nothing moves: a new subsection's own subsections sit beside it under
+ * the section above, and a new section takes the subsections after it in its old section.
+ */
+export function changeLevel(
+  rows: TreeRow[],
+  key: string,
+  level: "H2" | "H3",
+): TreeRow[] {
+  if (!canChangeLevel(rows, key, level)) return rows;
+  return rows.map((row) => (row.key === key ? { ...row, level } : row));
+}
+
+/**
+ * The rows a removal hides: the row and the shown rows of its block (an H2's subsections), since
+ * removing only the H2 would hang them under the section before, or before any section at all.
  */
 function removalKeys(rows: TreeRow[], row: TreeRow): string[] {
-  const keys = [row.key];
-  if (row.level !== "H2") return keys;
-  const listRows = rows.filter((candidate) => candidate.list === row.list);
-  for (const next of listRows.slice(listRows.indexOf(row) + 1)) {
-    if (next.level === "H2") break;
-    if (next.level === "H3" && shown(next)) keys.push(next.key);
-  }
-  return keys;
+  const listRows = shownInList(rows, row.list);
+  const start = listRows.indexOf(row);
+  return listRows
+    .slice(start, blockEnd(listRows, start))
+    .map((candidate) => candidate.key);
 }
 
 /**
@@ -246,10 +395,7 @@ function removalKeys(rows: TreeRow[], row: TreeRow): string[] {
 export function canRemoveRow(rows: TreeRow[], key: string): boolean {
   const row = rows.find((candidate) => candidate.key === key);
   if (!row || !shown(row)) return false;
-  const left = rows.filter(
-    (candidate) => candidate.list === row.list && shown(candidate),
-  ).length;
-  return left > removalKeys(rows, row).length;
+  return shownInList(rows, row.list).length > removalKeys(rows, row).length;
 }
 
 /**
@@ -289,7 +435,63 @@ export function restoreRow(rows: TreeRow[], key: string): TreeRow[] {
   });
 }
 
+/**
+ * The most sections one approval adds: the backend takes six and drops the rest without a word
+ * (MAX_ADDED_SECTIONS in rext-backend's outline_edits.py), so the tree stops at six and says why.
+ */
+export const MAX_ADDED_SECTIONS = 6;
+
+/** The sections the user added that approval would send, in every list. */
+export function addedSections(rows: TreeRow[]): number {
+  return rows.filter((row) => row.id === null && shown(row)).length;
+}
+
+export function canAddSection(rows: TreeRow[]): boolean {
+  return addedSections(rows) < MAX_ADDED_SECTIONS;
+}
+
+/** Whether an Undo may bring a removal back: not when the added sections it holds would pass the cap. */
+export function canRestoreRow(rows: TreeRow[], key: string): boolean {
+  const added = rows.filter(
+    (row) =>
+      row.removed &&
+      row.id === null &&
+      (row.key === key || row.removedWith === key),
+  ).length;
+  return added === 0 || addedSections(rows) + added <= MAX_ADDED_SECTIONS;
+}
+
 let addedCount = 0;
+
+/**
+ * A new section in `gap` of its list's shown rows (0 is the top, the list's length its end), at
+ * `level` when the list has levels (an H2 unless said otherwise). The rows unchanged for a blank
+ * heading, past the cap, or for a subsection at the top.
+ */
+export function insertRow(
+  rows: TreeRow[],
+  list: string,
+  gap: number,
+  heading: string,
+  level: "H2" | "H3" = "H2",
+): TreeRow[] {
+  const trimmed = heading.trim();
+  const listRows = shownInList(rows, list);
+  if (!trimmed || !canAddSection(rows) || listRows.length === 0) return rows;
+  if (gap < 0 || gap > listRows.length) return rows;
+  const hasLevels = listRows.some((row) => row.level);
+  if (hasLevels && level !== "H2" && gap === 0) return rows;
+  addedCount += 1;
+  const added: TreeRow = {
+    key: `added-${addedCount}`,
+    id: null,
+    list,
+    heading: trimmed,
+    ...(hasLevels ? { level } : {}),
+  };
+  const at = insertionIndex(rows, listRows, gap, levelRank(added));
+  return [...rows.slice(0, at), added, ...rows.slice(at)];
+}
 
 /** A new section at the end of its list, as an H2 when the list has levels. */
 export function addRow(
@@ -297,56 +499,28 @@ export function addRow(
   list: string,
   heading: string,
 ): TreeRow[] {
-  const trimmed = heading.trim();
-  if (!trimmed) return rows;
-  addedCount += 1;
-  const listRows = rows.filter((row) => row.list === list && shown(row));
-  const hasLevels = listRows.some((row) => row.level);
-  const added: TreeRow = {
-    key: `added-${addedCount}`,
-    id: null,
-    list,
-    heading: trimmed,
-    ...(hasLevels ? { level: "H2" as const } : {}),
-  };
-  return replaceList(rows, list, [...listRows, added]);
+  return insertRow(rows, list, shownInList(rows, list).length, heading);
 }
 
 /**
  * A new subsection (an H3) under an H2, after that H2's subsections (E31, rext-control#599). Only an
- * H2 takes one; the list's levels already say it has them. It goes into the rows themselves, before
- * the next H2 even when that H2 is removed and waiting on its Undo, so an Undo can't come back
- * between the parent and its new subsection. Removing the H2 takes it along, like any of its H3s.
+ * H2 takes one; the list's levels already say it has them. It goes before a removed H2 that waits on
+ * its Undo there, so an Undo can't come back between the parent and its new subsection. Removing the
+ * H2 takes it along, like any of its H3s.
  */
 export function addSubsection(
   rows: TreeRow[],
   parentKey: string,
   heading: string,
 ): TreeRow[] {
-  const trimmed = heading.trim();
-  const at0 = rows.findIndex((row) => row.key === parentKey);
-  const parent = rows[at0];
-  if (!trimmed || !parent || parent.level !== "H2" || !shown(parent))
-    return rows;
-  addedCount += 1;
-  let at = at0 + 1;
-  while (
-    at < rows.length &&
-    rows[at].list === parent.list &&
-    rows[at].level === "H3"
-  )
-    at += 1;
-  const added: TreeRow = {
-    key: `added-${addedCount}`,
-    id: null,
-    list: parent.list,
-    heading: trimmed,
-    level: "H3",
-  };
-  return [...rows.slice(0, at), added, ...rows.slice(at)];
+  const parent = rows.find((row) => row.key === parentKey);
+  if (parent?.level !== "H2" || !shown(parent)) return rows;
+  const listRows = shownInList(rows, parent.list);
+  const gap = blockEnd(listRows, listRows.indexOf(parent));
+  return insertRow(rows, parent.list, gap, heading, "H3");
 }
 
-/** Whether the rows differ from what the gate offered: order, headings, removals or additions. */
+/** Whether the rows differ from what the gate offered: order, headings, levels, removals or additions. */
 export function rowsEdited(
   allRows: TreeRow[],
   offered: EditableSectionRow[],
@@ -355,7 +529,9 @@ export function rowsEdited(
   if (rows.length !== offered.length) return true;
   return rows.some(
     (row, index) =>
-      row.id !== offered[index].id || row.heading !== offered[index].heading,
+      row.id !== offered[index].id ||
+      row.heading !== offered[index].heading ||
+      row.level !== offered[index].heading_level,
   );
 }
 
@@ -371,6 +547,169 @@ export function sectionEdits(rows: TreeRow[]): SectionEdit[] {
       ? { id: row.id, heading: row.heading, ...level }
       : { new: true as const, list: row.list, heading: row.heading, ...level };
   });
+}
+
+// ── What a screen reader hears after an edit ────────────────────────────────
+
+/** A row's place among its list's shown rows: its position, the row before it, and its section. */
+export function rowPlace(
+  rows: TreeRow[],
+  key: string,
+): {
+  position: number;
+  total: number;
+  previous: TreeRow | null;
+  /** The row it is a subsection of; null for a section. */
+  parent: TreeRow | null;
+  /** The shown rows of its block beneath it. */
+  subsections: number;
+} | null {
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!row || !shown(row)) return null;
+  const listRows = shownInList(rows, row.list);
+  const index = listRows.indexOf(row);
+  const rank = levelRank(row);
+  let parent: TreeRow | null = null;
+  for (let at = index - 1; at >= 0 && rank > 2; at -= 1)
+    if (levelRank(listRows[at]) < rank) {
+      parent = listRows[at];
+      break;
+    }
+  return {
+    position: index + 1,
+    total: listRows.length,
+    previous: listRows[index - 1] ?? null,
+    parent,
+    subsections: blockEnd(listRows, index) - index - 1,
+  };
+}
+
+const withSubsections = (heading: string, subsections: number) =>
+  subsections === 0
+    ? heading
+    : `${heading} and its ${subsections === 1 ? "subsection" : `${subsections} subsections`}`;
+
+/** "Moved Timing and its 2 subsections to position 8 of 14, after Choosing crops." */
+export function moveAnnouncement(
+  before: TreeRow[],
+  after: TreeRow[],
+  key: string,
+): string {
+  const was = rowPlace(before, key);
+  const place = rowPlace(after, key);
+  const row = after.find((candidate) => candidate.key === key);
+  if (!was || !place || !row) return "";
+  const where =
+    place.parent && place.parent.key !== was.parent?.key
+      ? `now a subsection of ${place.parent.heading}`
+      : place.previous
+        ? `after ${place.previous.heading}`
+        : "at the top";
+  return `Moved ${withSubsections(row.heading, place.subsections)} to position ${place.position} of ${place.total}, ${where}.`;
+}
+
+/** "Bed sizes is now a subsection of Planning your beds." */
+export function levelAnnouncement(rows: TreeRow[], key: string): string {
+  const place = rowPlace(rows, key);
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!place || !row) return "";
+  if (place.parent)
+    return `${row.heading} is now a subsection of ${place.parent.heading}.`;
+  const taken = place.subsections;
+  return taken === 0
+    ? `${row.heading} is now a section.`
+    : `${row.heading} is now a section, with the ${taken === 1 ? "subsection" : `${taken} subsections`} after it.`;
+}
+
+/** "Removed Timing and its 2 subsections. Undo is in the notification." */
+export function removalAnnouncement(
+  heading: string,
+  subsections: number,
+): string {
+  return `Removed ${withSubsections(heading, subsections)}. Undo is in the notification.`;
+}
+
+/** "Restored Timing and its 2 subsections." */
+export function restoreAnnouncement(
+  heading: string,
+  subsections: number,
+): string {
+  return `Restored ${withSubsections(heading, subsections)}.`;
+}
+
+/** "Added Tools for the first season as a section, position 12 of 15." */
+export function insertAnnouncement(
+  rows: TreeRow[],
+  list: string,
+  gap: number,
+): string {
+  const row = shownInList(rows, list)[gap];
+  const place = row && rowPlace(rows, row.key);
+  if (!row || !place) return "";
+  const as = place.parent
+    ? ` as a subsection of ${place.parent.heading}`
+    : row.level
+      ? " as a section"
+      : "";
+  return `Added ${row.heading}${as}, position ${place.position} of ${place.total}.`;
+}
+
+/** The summary above a list: "9 sections · 5 subsections · ~3,100 words". */
+export function listSummary(
+  rows: TreeRow[],
+  outline: unknown,
+  list: string,
+): string {
+  const listRows = shownInList(rows, list);
+  const budgets = rows
+    .filter((row) => row.list === list && row.id)
+    .map((row) => sectionPlan(outline, row.id)?.wordCount ?? 0)
+    .filter((words) => words > 0)
+    .sort((a, b) => a - b);
+  // An added section gets its neighbours' middle budget, as the backend gives it (_added_item).
+  const addedBudget = budgets[Math.floor(budgets.length / 2)] ?? 0;
+  const words = listRows.reduce(
+    (sum, row) =>
+      sum +
+      (row.id ? (sectionPlan(outline, row.id)?.wordCount ?? 0) : addedBudget),
+    0,
+  );
+  const sections = listRows.filter((row) => levelRank(row) === 2).length;
+  const subsections = listRows.length - sections;
+  return [
+    `${sections} ${sections === 1 ? "section" : "sections"}`,
+    subsections > 0
+      ? `${subsections} ${subsections === 1 ? "subsection" : "subsections"}`
+      : "",
+    words > 0 ? `~${words.toLocaleString()} words` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * The FAQ's questions, read as the backend's extract_outline_faqs reads them: the outline's `faqs`,
+ * else its `faq`; a list of questions or of `{ question }`, or a wrapper holding one under `faqs`.
+ * Shown read-only: the FAQ isn't a body heading, and approval sends no edits to it.
+ */
+export function readOutlineFaqs(outline: unknown): string[] {
+  if (!isRecord(outline)) return [];
+  for (const key of ["faqs", "faq"]) {
+    const value = outline[key];
+    const items = isRecord(value) ? value.faqs : value;
+    if (!Array.isArray(items)) continue;
+    const questions = items
+      .map((item) =>
+        typeof item === "string"
+          ? item.trim()
+          : isRecord(item) && typeof item.question === "string"
+            ? item.question.trim()
+            : "",
+      )
+      .filter(Boolean);
+    if (questions.length > 0) return questions;
+  }
+  return [];
 }
 
 // ── What a row shows under its heading ──────────────────────────────────────

@@ -128,10 +128,12 @@ function renderReview({
 }
 
 const sectionList = () => screen.getByRole("region", { name: "Sections" });
+// The tree grid's rows, in order, by the heading each is named after.
 const headings = () =>
-  within(sectionList())
-    .getAllByRole("listitem")
-    .map((item) => item.querySelector(".font-medium")?.textContent);
+  Array.from(
+    sectionList().querySelectorAll('[data-slot="outline-heading"]'),
+    (heading) => heading.textContent,
+  );
 
 async function chooseFromMenu(
   user: ReturnType<typeof userEvent.setup>,
@@ -156,7 +158,9 @@ describe("OutlineReview, the outline tree", () => {
       "Cushioning and support",
       "How to get fitted",
     ]);
-    expect(screen.getByText("~400 words")).toBeInTheDocument();
+    expect(
+      screen.getByRole("row", { name: "Cushioning and support" }),
+    ).toHaveAccessibleDescription("~400 words");
     expect(
       screen.queryByText("Why Cushioning and support?"),
     ).not.toBeInTheDocument();
