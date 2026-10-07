@@ -31,6 +31,17 @@ describe("Generate's address", () => {
     ).toBeLessThan(
       sources.indexOf("/w/:workspaceSlug/generate_content/:path*"),
     );
+    // The exact old address in one hop: through the :path* rule it would gain a trailing slash,
+    // and a second redirect to drop it.
+    expect(
+      redirects.find((r) => r.source === "/w/:workspaceSlug/generate_content"),
+    ).toMatchObject({
+      destination: "/w/:workspaceSlug/generate-content",
+      permanent: true,
+    });
+    expect(sources.indexOf("/w/:workspaceSlug/generate_content")).toBeLessThan(
+      sources.indexOf("/w/:workspaceSlug/generate_content/:path*"),
+    );
     // The retired topic wizard opens the new address directly.
     expect(
       redirects.find((r) => r.source === "/w/:workspaceSlug/content/create")
