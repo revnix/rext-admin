@@ -57,6 +57,13 @@ export const workspaceQueries = {
       queryFn: () => apiClient.workspaces.getDeleted(),
       staleTime: 30_000,
     }),
+  /** A workspace's trash: its deleted articles and personas (G45). */
+  trash: (workspaceId: string) =>
+    queryOptions({
+      queryKey: [...workspaceQueries.all(), "trash", workspaceId] as const,
+      queryFn: () => apiClient.workspaces.getTrash(workspaceId),
+      staleTime: 30_000,
+    }),
   availableRoles: () =>
     queryOptions({
       queryKey: [...workspaceQueries.all(), "available-roles"] as const,

@@ -88,6 +88,7 @@ export const workspaceRoutes = {
     brandVoice: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/brand-voice`,
     members: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/members`,
+    trash: (workspaceSlug: string) => `/w/${workspaceSlug}/settings/trash`,
     dangerZone: (workspaceSlug: string) =>
       `/w/${workspaceSlug}/settings/danger-zone`,
   },

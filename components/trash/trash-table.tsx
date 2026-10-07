@@ -101,6 +101,7 @@ export function TrashTable({
   deleteForeverWarning,
   emptyDescription,
   confirmByTypingName = false,
+  canAct,
 }: {
   /** The table's name for assistive technology: "Deleted workspaces". */
   caption: string;
@@ -117,6 +118,8 @@ export function TrashTable({
   emptyDescription?: ReactNode;
   /** Ask for the item's name before deleting it for good (a workspace: everything in it goes). */
   confirmByTypingName?: boolean;
+  /** Whether the person may restore or delete this item; a row they may only see has no menu. */
+  canAct?: (item: TrashItem) => boolean;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [target, setTarget] = useState<TrashItem | null>(null);
@@ -158,6 +161,7 @@ export function TrashTable({
   };
 
   const rowActions = (item: TrashItem): DataTableRowAction[] => {
+    if (canAct && !canAct(item)) return [];
     const busy = busyId === item.id ? "Working on it…" : false;
     return [
       {
