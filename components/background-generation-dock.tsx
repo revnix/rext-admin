@@ -7,6 +7,7 @@ import {
   Loader2,
   X,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -97,6 +98,19 @@ export function BackgroundGenerationDock() {
   const storedWorkspaceSlug = useCurrentWorkspaceSlug();
   const workspaceSlug =
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
+  // The article on screen, on its own page (/w/<slug>/content/<id>): its run is the one that page
+  // already shows, so the dock leaves that job out however the page was reached (FB2.6). The run's
+  // thread is the article's langgraph_thread_id, read from the page's own query in the cache (the
+  // same key as useContentDetail), never fetched here.
+  const articleId =
+    pathname?.match(/^\/w\/[^/]+\/content\/([^/]+)$/)?.[1] ?? "";
+  const { data: openArticle } = useQuery<{
+    content?: { langgraph_thread_id?: string | null };
+  } | null>({
+    queryKey: ["content", workspaceContext?.workspace?.id || "", articleId],
+    enabled: false,
+  });
+  const articleThreadId = openArticle?.content?.langgraph_thread_id ?? null;
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showStages, setShowStages] = useState(false);
@@ -517,9 +531,11 @@ export function BackgroundGenerationDock() {
   const isViewingGenerationThread =
     (pathname?.endsWith("/generate-content") ?? false) && Boolean(openThreadId);
 
-  const displayedJobs = isViewingGenerationThread
-    ? visibleJobs.filter((job) => job.threadId !== openThreadId)
-    : visibleJobs;
+  const displayedJobs = visibleJobs.filter(
+    (job) =>
+      !(isViewingGenerationThread && job.threadId === openThreadId) &&
+      job.threadId !== articleThreadId,
+  );
 
   if (!isMounted || displayedJobs.length === 0) return null;
 
