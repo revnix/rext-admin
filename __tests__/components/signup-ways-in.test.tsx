@@ -88,13 +88,19 @@ it("offers Google and GitHub before the email form, with their terms line betwee
   expect(follows(divider, email)).toBe(true);
 });
 
-it("sends Google back to the dashboard, counted as a sign-up", async () => {
+it("sends Google back to the dashboard, recording only that it started", async () => {
   renderSignup();
   await userEvent.click(screen.getByRole("button", { name: "Google" }));
   expect(signIn).toHaveBeenCalledWith("google", { callbackUrl: "/" });
-  expect(analytics.track).toHaveBeenCalledWith("user_signed_up", {
+  // The sign-up itself is recorded once the backend says it created the account.
+  expect(analytics.track).toHaveBeenCalledWith("oauth_started", {
     method: "google",
+    page: "signup",
   });
+  expect(analytics.track).not.toHaveBeenCalledWith(
+    "user_signed_up",
+    expect.anything(),
+  );
 });
 
 it("names the trial from the catalogue", async () => {

@@ -14,6 +14,8 @@ declare module "next-auth" {
     } & Omit<NonNullable<DefaultSession["user"]>, "refreshToken">;
     accessTokenExpires?: number; // Timestamp when access token expires
     error?: string; // Error code if token refresh fails
+    /** The last Google or GitHub login: which, whether it created the account, and when. */
+    oauthLogin?: OAuthLogin;
   }
 
   interface User {
@@ -46,5 +48,18 @@ declare module "next-auth/jwt" {
     accessTokenExpires?: number; // Timestamp when access token expires
     rememberMe?: boolean; // Whether user chose "remember me"
     error?: string; // Error code if token refresh fails
+    oauthLogin?: OAuthLogin;
   }
+}
+
+/**
+ * Set when Google or GitHub logs someone in; analytics records it once (`OAuthLoginRecord` in
+ * providers/posthog-provider.tsx).
+ */
+interface OAuthLogin {
+  provider: string;
+  /** The backend created the account on this login: a sign-up, not a sign-in. */
+  isNew: boolean;
+  /** When, so the record is made once per login. */
+  at: number;
 }

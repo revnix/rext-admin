@@ -651,6 +651,13 @@ export default {
             token.picture = oauthData.user.avatar_url || user.image;
             token.accessToken = oauthData.access_token;
             token.refreshToken = oauthData.refresh_token;
+            // Whether this login created the account: analytics records a sign-up or a sign-in
+            // from it once the session exists, rather than guessing on the button's click.
+            token.oauthLogin = {
+              provider: account?.provider ?? "oauth",
+              isNew: oauthData.is_new_user === true,
+              at: Date.now(),
+            };
             token.role = getPrimaryRole(oauthData.user);
             token.permissions =
               oauthData.user.permissions || oauthData.permissions || [];
@@ -818,6 +825,7 @@ export default {
           | number
           | undefined;
         session.error = token.error as string | undefined;
+        session.oauthLogin = token.oauthLogin;
       }
       return session;
     },
