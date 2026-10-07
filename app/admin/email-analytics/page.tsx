@@ -93,6 +93,9 @@ interface EmailFailure {
   sent_at: string;
 }
 
+const NO_TEMPLATES: TemplateStats[] = [];
+const NO_FAILURES: EmailFailure[] = [];
+
 export default function EmailAnalyticsPage() {
   const [dateRange, setDateRange] = useState("30d");
   const [period, setPeriod] = useState("daily");
@@ -321,14 +324,14 @@ export default function EmailAnalyticsPage() {
 
             <TabsContent value="templates" className="space-y-4">
               <EmailPerformanceTable
-                data={templateData || []}
+                data={templateData ?? NO_TEMPLATES}
                 isLoading={templateLoading}
               />
             </TabsContent>
 
             <TabsContent value="failures" className="space-y-4">
               <EmailFailuresTable
-                data={failuresData || []}
+                data={failuresData ?? NO_FAILURES}
                 isLoading={failuresLoading}
               />
             </TabsContent>
