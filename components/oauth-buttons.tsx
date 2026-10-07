@@ -11,7 +11,8 @@ interface OAuthButtonsProps {
   callbackUrl?: string;
   /** Under the buttons, before "Or continue with email": what they agree to. */
   notice?: ReactNode;
-  /** On the sign-up page a click is a sign-up, and analytics counts it as one. */
+  /** The sign-up page: the click is recorded as started there (a sign-up or sign-in is recorded once
+   * the backend says which, `OAuthLoginRecord`). */
   signUp?: boolean;
 }
 
@@ -31,8 +32,9 @@ export function OAuthButtons({
         setIsGitHubLoading(true);
       }
 
-      analytics.track(signUp ? "user_signed_up" : "user_signed_in", {
+      analytics.track("oauth_started", {
         method: provider,
+        page: signUp ? "signup" : "login",
       });
       await signIn(provider, { callbackUrl });
     } catch (error) {

@@ -5,7 +5,7 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef } from "react";
-import { registerPostHog } from "@/lib/analytics";
+import { analytics, registerPostHog } from "@/lib/analytics";
 import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
@@ -61,6 +61,36 @@ function PostHogAuthSync() {
   return null;
 }
 
+/** The logins already recorded, for a browser that refuses storage. */
+const recordedLogins = new Set<number>();
+
+/**
+ * A Google or GitHub login, recorded once its session exists: a sign-up when the backend created the
+ * account on it, otherwise a sign-in. The login's time keys it, so a reload or another tab doesn't
+ * record it again. (The button's click records only that the person started, `oauth_started`.)
+ */
+export function OAuthLoginRecord() {
+  const { data: session } = useSession();
+  const login = session?.oauthLogin;
+
+  useEffect(() => {
+    if (!login || recordedLogins.has(login.at)) return;
+    recordedLogins.add(login.at);
+    const key = `rext-oauth-login-recorded:${login.at}`;
+    try {
+      if (window.localStorage.getItem(key)) return;
+      window.localStorage.setItem(key, "1");
+    } catch {
+      // Storage refused: this page's set above still records it once.
+    }
+    analytics.track(login.isNew ? "user_signed_up" : "user_signed_in", {
+      method: login.provider,
+    });
+  }, [login]);
+
+  return null;
+}
+
 // ── Provider ─────────────────────────────────────────────────────────────────
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -92,6 +122,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <PostHogPageView />
         <PostHogAuthSync />
+        <OAuthLoginRecord />
       </Suspense>
       {children}
     </PHProvider>
