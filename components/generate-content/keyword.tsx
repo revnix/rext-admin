@@ -88,7 +88,8 @@ export function KeywordForm({
           if (disabled || locked) return;
           onSubmit();
         }}
-        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-md"
+        // The field draws no box of its own, so the form shows its focus, as an Input does.
+        className="relative flex flex-col sm:flex-row gap-3 py-2 bg-card/80 border border-border rounded-md has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-(length:--focus-ring-width) has-[input:focus-visible]:ring-ring/20"
       >
         <div className="flex-1 flex items-center px-4">
           <Search className="w-6 h-6 text-muted-foreground mr-4" />
