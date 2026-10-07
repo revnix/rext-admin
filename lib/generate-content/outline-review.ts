@@ -124,6 +124,8 @@ export interface TreeRow {
    * was moved or removed since.
    */
   removed?: true;
+  /** For an H3 removed with its H2: that H2's key, so Undo brings the section back whole. */
+  removedWith?: string;
 }
 
 const shown = (row: TreeRow) => !row.removed;
@@ -221,39 +223,68 @@ export function renameRow(
   );
 }
 
-/** Whether a row may be removed: the backend keeps a list rather than empty it, so the last one stays. */
-export function canRemoveRow(rows: TreeRow[], key: string): boolean {
-  const row = rows.find((candidate) => candidate.key === key);
-  return (
-    !!row &&
-    shown(row) &&
-    rows.filter((candidate) => candidate.list === row.list && shown(candidate))
-      .length > 1
-  );
+/**
+ * The rows a removal hides: the row, and for an H2 the shown H3s that follow it in its list up to
+ * the next H2, since they're its subsections (removing only the H2 would hang them under the
+ * section before, or before any section at all).
+ */
+function removalKeys(rows: TreeRow[], row: TreeRow): string[] {
+  const keys = [row.key];
+  if (row.level !== "H2") return keys;
+  const listRows = rows.filter((candidate) => candidate.list === row.list);
+  for (const next of listRows.slice(listRows.indexOf(row) + 1)) {
+    if (next.level === "H2") break;
+    if (next.level === "H3" && shown(next)) keys.push(next.key);
+  }
+  return keys;
 }
 
-/** The row hidden in its place, for an Undo to bring back (`restoreRow`). */
+/**
+ * Whether a row may be removed: the backend keeps a list rather than empty it, so a removal that
+ * would hide every section left in the list (an H2 with all its subsections included) isn't offered.
+ */
+export function canRemoveRow(rows: TreeRow[], key: string): boolean {
+  const row = rows.find((candidate) => candidate.key === key);
+  if (!row || !shown(row)) return false;
+  const left = rows.filter(
+    (candidate) => candidate.list === row.list && shown(candidate),
+  ).length;
+  return left > removalKeys(rows, row).length;
+}
+
+/**
+ * The row hidden in its place, with an H2's subsections hidden alongside it, for an Undo to bring
+ * back (`restoreRow`). `subsections` counts the H3s that went with it.
+ */
 export function removeRow(
   rows: TreeRow[],
   key: string,
-): { rows: TreeRow[]; removed: TreeRow | null } {
+): { rows: TreeRow[]; removed: TreeRow | null; subsections: number } {
   const row = rows.find((candidate) => candidate.key === key);
-  if (!row || !canRemoveRow(rows, key)) return { rows, removed: null };
+  if (!row || !canRemoveRow(rows, key))
+    return { rows, removed: null, subsections: 0 };
+  const hidden = new Set(removalKeys(rows, row));
   return {
-    rows: rows.map((candidate) =>
-      candidate.key === key
+    rows: rows.map((candidate) => {
+      if (!hidden.has(candidate.key)) return candidate;
+      return candidate.key === key
         ? { ...candidate, removed: true as const }
-        : candidate,
-    ),
+        : { ...candidate, removed: true as const, removedWith: key };
+    }),
     removed: row,
+    subsections: hidden.size - 1,
   };
 }
 
-/** The undo of `removeRow`: the row shown again, in the place it kept. */
+/**
+ * The undo of `removeRow`: the row shown again in the place it kept, with the subsections removed
+ * with it (not one removed on its own before).
+ */
 export function restoreRow(rows: TreeRow[], key: string): TreeRow[] {
   return rows.map((row) => {
-    if (row.key !== key || !row.removed) return row;
-    const { removed: _removed, ...restored } = row;
+    if (!row.removed || (row.key !== key && row.removedWith !== key))
+      return row;
+    const { removed: _removed, removedWith: _with, ...restored } = row;
     return restored;
   });
 }
