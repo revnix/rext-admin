@@ -1,7 +1,8 @@
 /**
  * The plan grid (F3, F11.6) offers no checkout while the backend would refuse one: it waits for the
  * billing action, offers the action instead of a checkout, and holds checkout when the action
- * couldn't be read.
+ * couldn't be read. A held paid plan sends every other tier to Billing, even once an admin has made
+ * it private (F3a); a free plan's holder still checks out.
  */
 
 import { render, screen, waitFor } from "@testing-library/react";
@@ -56,7 +57,7 @@ const growth = {
   max_members_per_workspace: 5,
 };
 
-function renderGrid() {
+function renderGrid(subscription: Record<string, unknown> | null = null) {
   subscriptions.getCatalog.mockResolvedValue({
     currency: "USD",
     plans: [growth],
@@ -69,7 +70,7 @@ function renderGrid() {
       { id: "plan-growth", name: "growth", is_active: true, is_public: true },
     ],
   });
-  subscriptions.getCurrentPlan.mockResolvedValue({ subscription: null });
+  subscriptions.getCurrentPlan.mockResolvedValue({ subscription });
   render(
     <QueryClientProvider
       client={
@@ -132,6 +133,45 @@ describe("PlanGrid and the billing action", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Choose Growth" }),
+    ).toBeDisabled();
+  });
+});
+
+describe("PlanGrid and a held plan", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    subscriptions.getBillingAction.mockResolvedValue({ billing_action: null });
+  });
+
+  it("sends every tier to Billing for a held paid plan an admin made private", async () => {
+    // "pro" is no longer public, so /subscriptions/plans doesn't list it.
+    renderGrid({ plan_id: "plan-old-pro", plan_name: "pro", status: "active" });
+
+    expect(
+      await screen.findByRole("link", { name: "Switch to Growth" }),
+    ).toHaveAttribute("href", "/settings/plan");
+    expect(
+      screen.queryByRole("button", { name: "Choose Growth" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("still offers checkout to a free plan's holder", async () => {
+    renderGrid({ plan_id: "plan-free", plan_name: "free", status: "active" });
+
+    expect(
+      await screen.findByRole("button", { name: "Choose Growth" }),
+    ).toBeEnabled();
+  });
+
+  it("marks a held public plan as the person's own", async () => {
+    renderGrid({
+      plan_id: "plan-growth",
+      plan_name: "growth",
+      status: "active",
+    });
+
+    expect(
+      await screen.findByRole("button", { name: "Your plan" }),
     ).toBeDisabled();
   });
 });

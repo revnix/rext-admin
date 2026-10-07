@@ -76,6 +76,13 @@ export function offerWords(offer: CatalogOffer) {
  */
 const HOLDS_A_PLAN = new Set(["active", "past_due", "suspended", "unpaid"]);
 
+/**
+ * The held plans the backend lets a person check out from (SubscriptionService.create_checkout);
+ * from any other, a new plan is a change in Billing. Judged by the held plan's name, not by the
+ * public list: a plan an admin made private or inactive is still held (F3a, rext-control#447).
+ */
+const CHECKOUT_FROM_PLANS = new Set(["free", "trial"]);
+
 /** What a card offers instead of a checkout while the person's subscription isn't finished. */
 type Settle = { label: string; run: () => void; busy: boolean };
 
@@ -278,8 +285,12 @@ export function PlanGrid() {
   const settle = action
     ? { label: action.label, run: action.run, busy: action.busy }
     : null;
+  const heldPlanName = subscription?.plan_name?.toLowerCase();
   const hasPaidPlan = Boolean(
-    currentPlanId && [...byName.values()].some((p) => p.id === currentPlanId),
+    currentPlanId &&
+      (heldPlanName
+        ? !CHECKOUT_FROM_PLANS.has(heldPlanName)
+        : [...byName.values()].some((p) => p.id === currentPlanId)),
   );
   const saving = Math.max(0, ...plans.map((p) => p.yearly_saving_percent));
 
