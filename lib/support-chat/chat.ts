@@ -17,7 +17,7 @@ declare global {
   interface Window {
     $crisp?: { push: (command: CrispCommand) => unknown };
     CRISP_WEBSITE_ID?: string;
-    CRISP_TOKEN_ID?: string;
+    CRISP_TOKEN_ID?: string | null;
     CRISP_RUNTIME_CONFIG?: { session_merge?: boolean };
   }
 }
@@ -29,7 +29,8 @@ interface Identity {
   name: string | null;
 }
 
-/** The Crisp website the chat opens; unset, there's no chat to offer. */
+/** The Crisp website the chat opens; unset, there's no chat to offer. env.ts requires it with
+ * CRISP_TOKEN_SECRET, so a deploy never offers a chat whose identity route can't answer. */
 export function supportChatEnabled(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
 }
@@ -90,9 +91,10 @@ export async function openSupportChat(): Promise<boolean> {
   return true;
 }
 
-/** On sign-out: the browser's Crisp session ends with the account's (the page then reloads). */
+/** On sign-out or an account switch: the browser's Crisp session ends with the account's. */
 export function resetSupportChat(): void {
   if (typeof window === "undefined" || !window.$crisp) return;
+  // Crisp's order: the token is cleared first, or the reset keeps the old conversation.
+  window.CRISP_TOKEN_ID = null;
   window.$crisp.push(["do", "session:reset"]);
-  window.CRISP_TOKEN_ID = undefined;
 }

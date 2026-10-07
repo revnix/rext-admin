@@ -30,5 +30,9 @@ export function useSupportChat() {
     });
   }, []);
 
-  return { available: enabled && !impersonation?.is_impersonating, open };
+  // Only once the status says no: unknown (still loading, or failed) offers nothing.
+  return {
+    available: enabled && impersonation?.is_impersonating === false,
+    open,
+  };
 }

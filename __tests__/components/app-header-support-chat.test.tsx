@@ -14,17 +14,33 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/w/acme/content",
   useRouter: () => ({ push: jest.fn() }),
 }));
+// The impersonation status never answers unless a test puts one in the cache.
+jest.mock("@/lib/api-client", () => {
+  const actual = jest.requireActual("@/lib/api-client");
+  return {
+    ...actual,
+    apiClient: {
+      ...actual.apiClient,
+      impersonation: {
+        ...actual.apiClient.impersonation,
+        getStatus: () => new Promise(() => {}),
+      },
+    },
+  };
+});
 const openSupportChat = jest.fn(async () => true);
 jest.mock("@/lib/support-chat/chat", () => ({
   supportChatEnabled: () => Boolean(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID),
   openSupportChat: () => openSupportChat(),
 }));
 
-function renderHeader(impersonating: boolean) {
+function renderHeader(impersonating: boolean | "unknown") {
   const client = new QueryClient();
-  client.setQueryData(impersonationQueries.status().queryKey, {
-    is_impersonating: impersonating,
-  } as never);
+  if (impersonating !== "unknown") {
+    client.setQueryData(impersonationQueries.status().queryKey, {
+      is_impersonating: impersonating,
+    } as never);
+  }
   render(
     <QueryClientProvider client={client}>
       <SidebarProvider>
@@ -72,4 +88,14 @@ it("keeps the plain help link when no chat is set up", () => {
   expect(
     screen.getByRole("link", { name: /help center/i }),
   ).toBeInTheDocument();
+});
+
+it("offers no chat until the impersonation status is known", () => {
+  process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID = "website";
+  renderHeader("unknown");
+
+  expect(
+    screen.getByRole("link", { name: /help center/i }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Help" })).toBeNull();
 });

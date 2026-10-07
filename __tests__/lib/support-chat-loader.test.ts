@@ -113,6 +113,6 @@ describe("the support chat", () => {
       "do",
       "session:reset",
     ]);
-    expect(window.CRISP_TOKEN_ID).toBeUndefined();
+    expect(window.CRISP_TOKEN_ID).toBeNull(); // cleared before the reset, as Crisp asks
   });
 });
