@@ -117,7 +117,7 @@ const CountryDropdownComponent = (
 
   // Slim: the flag alone; otherwise the flag and the country's name, as wide as the row allows.
   const triggerClasses = cn(
-    "flex h-10 items-center justify-between gap-2 whitespace-nowrap rounded-md bg-transparent px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
+    "flex h-10 items-center justify-between gap-2 whitespace-nowrap rounded-md bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
     slim ? "w-20" : "w-full sm:w-48",
   );
 

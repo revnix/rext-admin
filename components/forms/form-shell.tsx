@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { FocusEvent, ReactNode } from "react";
 import type {
   FieldValues,
   SubmitErrorHandler,
@@ -30,6 +30,18 @@ import { useLeaveGuard } from "./use-leave-guard";
  * submission starts, then shows a spinner and keeps its label; a failed submit focuses the first
  * error (useZodForm). Leaving with unsaved changes asks first. The column's width is FormPage's.
  */
+/**
+ * A focused field that's already on screen isn't scrolled by the browser, even when the sticky
+ * submit row covers it; scrollIntoView honours html's scroll-padding (globals.css), so the field
+ * moves up clear of the row (WCAG 2.4.11). The row's own buttons stay where the row is.
+ */
+function keepClearOfStickyRow(event: FocusEvent<HTMLFormElement>) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  if (target.closest('[data-slot="form-submit-row"]')) return;
+  target.scrollIntoView({ block: "nearest" });
+}
+
 export function FormShell<
   TInput extends FieldValues,
   TOutput extends FieldValues,
@@ -71,11 +83,14 @@ export function FormShell<
       method="post"
       noValidate
       onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      onFocus={sticky ? keepClearOfStickyRow : undefined}
       className={cn("flex flex-col gap-8", className)}
     >
       {children}
       <div
         data-slot="form-submit-row"
+        // globals.css keeps keyboard focus clear above a sticky row (scroll-padding on html).
+        data-sticky={sticky || undefined}
         className={cn(
           "flex flex-wrap items-center gap-2",
           sticky &&

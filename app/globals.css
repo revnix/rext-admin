@@ -145,6 +145,12 @@
   --form-max: 560px;
   --prose-max: 65ch;
 
+  /* The shell's sticky bars (app-shell.tsx sets the same two on its wrapper), and the height a form's
+     sticky submit row takes: keyboard focus never lands behind them (WCAG 2.4.11, html below). */
+  --header-height: 3.5rem;
+  --bottom-bar-height: calc(3.5rem + env(safe-area-inset-bottom));
+  --form-submit-row-clearance: 4.5rem;
+
   /* Stacking: everything floating sits in a portal, so these never fight a stacking context. */
   --z-sticky: 10;
   --z-dropdown: 1000;
@@ -318,6 +324,28 @@
 
   html {
     font-optical-sizing: auto;
+    /* Keyboard focus scrolls a control clear of the sticky header and, on phones, the bottom bar. */
+    scroll-padding-top: var(--header-height);
+    scroll-padding-bottom: var(--bottom-bar-height);
+  }
+
+  /* A form's sticky submit row (FormShell) sits above the bar: focus keeps clear of both. */
+  html:has([data-slot="form-submit-row"][data-sticky]) {
+    scroll-padding-bottom: calc(
+      var(--bottom-bar-height) +
+      var(--form-submit-row-clearance)
+    );
+  }
+
+  /* lg: the bottom bar is hidden. */
+  @media (width >= 64rem) {
+    html {
+      scroll-padding-bottom: 0;
+    }
+
+    html:has([data-slot="form-submit-row"][data-sticky]) {
+      scroll-padding-bottom: var(--form-submit-row-clearance);
+    }
   }
 
   body {
