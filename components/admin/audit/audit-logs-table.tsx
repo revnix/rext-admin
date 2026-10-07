@@ -1,9 +1,17 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  createDataTableColumnHelper,
+  DataTable,
+  type DataTableFacet,
+  type DataTableRowAction,
+  type DataTableState,
+  UNKNOWN,
+} from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  AUDIT_LOG_ACTION_AREAS,
+  AUDIT_LOG_RESOURCE_TYPES,
+} from "@/lib/search-params/admin-audit-logs";
 
-interface AuditLog {
+export interface AuditLog {
   id: string;
   user_id?: string | null;
   full_name?: string | null;
@@ -39,178 +44,214 @@ interface AuditLog {
 }
 
 interface AuditLogsTableProps {
+  /** The current page of entries. */
   logs: AuditLog[];
+  /** Every entry the search and the filters match, across the pages. */
+  total: number;
   isLoading: boolean;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  onRefresh: () => void;
+  /** The search, the filters and the page, from the URL; the server applies them. */
+  state: DataTableState;
 }
+
+// The outcome as a word. Success is the norm and stays neutral; only an outcome that needs a second look
+// takes a status tint.
+const STATUS_TINT: Readonly<Record<string, BadgeProps["variant"]>> = {
+  failed: "danger",
+  partial: "warning",
+};
+
+// Most actions are routine and read as a neutral word; colour only for what needs a second look.
+const ACTION_TINT: Readonly<Record<string, BadgeProps["variant"]>> = {
+  cancel: "danger",
+  cancelled: "danger",
+  delete: "danger",
+  deleted: "danger",
+  failed: "danger",
+  rejected: "danger",
+  impersonate: "warning",
+};
+
+function StatusBadge({ status }: { status?: string | null }) {
+  const value = status || "unknown";
+  return (
+    <Badge variant={STATUS_TINT[value] ?? "neutral"}>
+      {value.charAt(0).toUpperCase() + value.slice(1)}
+    </Badge>
+  );
+}
+
+function ActionBadge({ action }: { action: string }) {
+  const actionType = action.split(".").pop() || "";
+  return <Badge variant={ACTION_TINT[actionType] ?? "neutral"}>{action}</Badge>;
+}
+
+function UserCell({ log }: { log: AuditLog }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate font-medium text-foreground">
+        {log.full_name || "System"}
+      </p>
+      {log.user_email && (
+        <p className="truncate text-muted-foreground">{log.user_email}</p>
+      )}
+    </div>
+  );
+}
+
+const ACTION_AREA_LABELS: Record<
+  (typeof AUDIT_LOG_ACTION_AREAS)[number],
+  string
+> = {
+  user: "User actions",
+  workspace: "Workspace actions",
+  content: "Content actions",
+  subscription: "Subscription actions",
+};
+
+const RESOURCE_TYPE_LABELS: Record<
+  (typeof AUDIT_LOG_RESOURCE_TYPES)[number],
+  string
+> = {
+  user: "User",
+  workspace: "Workspace",
+  content: "Content",
+  subscription: "Subscription",
+  role: "Role",
+};
+
+// One action area and one resource type at a time, as the backend takes them.
+const FACETS: readonly DataTableFacet[] = [
+  {
+    column: "action",
+    title: "Action",
+    single: true,
+    options: AUDIT_LOG_ACTION_AREAS.map((value) => ({
+      value,
+      label: ACTION_AREA_LABELS[value],
+    })),
+  },
+  {
+    column: "resource",
+    title: "Resource",
+    single: true,
+    options: AUDIT_LOG_RESOURCE_TYPES.map((value) => ({
+      value,
+      label: RESOURCE_TYPE_LABELS[value],
+    })),
+  },
+];
+
+const column = createDataTableColumnHelper<AuditLog>();
+
+// The server searches, filters and pages; the table only draws the page.
+const columns = column.columns([
+  column.accessor("created_at", {
+    header: "Timestamp",
+    cell: ({ getValue }) => (
+      <span className="whitespace-nowrap">
+        {dateFormat.shortWithTime(getValue()) || UNKNOWN}
+      </span>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor((log) => log.user_email ?? "", {
+    id: "user",
+    header: "User",
+    cell: ({ row }) => <UserCell log={row.original} />,
+    enableSorting: false,
+  }),
+  column.accessor("action", {
+    header: "Action",
+    cell: ({ getValue }) => <ActionBadge action={getValue()} />,
+    enableSorting: false,
+  }),
+  column.accessor("resource_type", {
+    id: "resource",
+    header: "Resource",
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <p>{row.original.resource_type}</p>
+        {row.original.resource_id && (
+          <p className="num font-mono text-muted-foreground">
+            {row.original.resource_id.slice(0, 8)}…
+          </p>
+        )}
+      </div>
+    ),
+    enableSorting: false,
+  }),
+  column.accessor("status", {
+    header: "Status",
+    cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+    enableSorting: false,
+  }),
+  column.accessor("ip_address", {
+    header: "IP address",
+    cell: ({ getValue }) => (
+      <span className="num font-mono text-muted-foreground">
+        {getValue() || UNKNOWN}
+      </span>
+    ),
+    enableSorting: false,
+  }),
+]);
 
 export function AuditLogsTable({
   logs,
+  total,
   isLoading,
-  page,
-  totalPages,
-  onPageChange,
+  state,
 }: AuditLogsTableProps) {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getStatusBadge = (status?: string | null) => {
-    if (!status) status = "unknown";
-    // The outcome as a word. Success is the norm and stays neutral; only an outcome that needs a second look
-    // takes a status tint.
-    const variants: Record<string, "danger" | "warning"> = {
-      failed: "danger",
-      partial: "warning",
-    };
-
-    return (
-      <Badge variant={variants[status] ?? "neutral"}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
-  const getActionBadge = (action: string) => {
-    // Most actions are routine and read as a neutral word; colour only for what needs a second look.
-    const attention: Record<string, "danger" | "warning"> = {
-      cancel: "danger",
-      cancelled: "danger",
-      delete: "danger",
-      deleted: "danger",
-      failed: "danger",
-      rejected: "danger",
-      impersonate: "warning",
-    };
-
-    const actionType = action.split(".").pop() || "";
-
-    return <Badge variant={attention[actionType] ?? "neutral"}>{action}</Badge>;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 5 }, (_, i) => `audit-skeleton-${i}`).map(
-          (key) => (
-            <Skeleton key={key} className="h-12 w-full" />
-          ),
-        )}
-      </div>
-    );
-  }
-
-  if (!logs || logs.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Eye className="h-12 w-12 mx-auto mb-2 opacity-20" />
-        <p>No audit logs found</p>
-        <p className="text-sm">Try adjusting your filters</p>
-      </div>
-    );
-  }
+  const rowActions = (log: AuditLog): DataTableRowAction[] => [
+    {
+      label: "View details",
+      icon: Eye,
+      onSelect: () => setSelectedLog(log),
+    },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Resource</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>IP Address</TableHead>
-              <TableHead className="text-right">Details</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {logs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="text-sm whitespace-nowrap">
-                  {formatDate(log.created_at)}
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    <div className="font-medium">
-                      {log.full_name || "System"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {log.user_email}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{getActionBadge(log.action)}</TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    <div>{log.resource_type}</div>
-                    {log.resource_id && (
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {log.resource_id.slice(0, 8)}...
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{getStatusBadge(log.status)}</TableCell>
-                <TableCell className="text-sm font-mono text-muted-foreground">
-                  {log.ip_address || "N/A"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedLog(log)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Page {page + 1} of {totalPages}
+    <>
+      <DataTable
+        caption="Audit trail"
+        columns={columns}
+        data={logs}
+        getRowId={(log) => log.id}
+        getRowLabel={(log) =>
+          `${log.action} by ${log.user_email || "System"}, ${dateFormat.shortWithTime(log.created_at)}`
+        }
+        state={state}
+        manual={{ rowCount: total }}
+        isLoading={isLoading}
+        surface="plain"
+        search={{ placeholder: "Search by user email" }}
+        facets={FACETS}
+        rowActions={rowActions}
+        emptyState={
+          <EmptyState
+            title="No audit logs yet"
+            description="Admin actions and system events show here."
+          />
+        }
+        renderCard={(log, { actions }) => (
+          <div className="flex items-start gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <UserCell log={log} />
+              <div className="flex flex-wrap items-center gap-2">
+                <ActionBadge action={log.action} />
+                <StatusBadge status={log.status} />
+              </div>
+              <p className="text-muted-foreground">
+                {dateFormat.shortWithTime(log.created_at) || UNKNOWN} ·{" "}
+                {log.resource_type}
+              </p>
+            </div>
+            {actions}
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages - 1}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      />
 
       {/* Detail Dialog */}
       {selectedLog && (
@@ -219,7 +260,7 @@ export function AuditLogsTable({
             <DialogHeader>
               <DialogTitle>Audit Log Details</DialogTitle>
               <DialogDescription>
-                {formatDate(selectedLog.created_at)} •{" "}
+                {dateFormat.shortWithTime(selectedLog.created_at)} •{" "}
                 {selectedLog.user_email || "System"}
               </DialogDescription>
             </DialogHeader>
@@ -229,13 +270,13 @@ export function AuditLogsTable({
                 <div>
                   <div className="text-sm font-medium">Action</div>
                   <div className="mt-1">
-                    {getActionBadge(selectedLog.action)}
+                    <ActionBadge action={selectedLog.action} />
                   </div>
                 </div>
                 <div>
                   <div className="text-sm font-medium">Status</div>
                   <div className="mt-1">
-                    {getStatusBadge(selectedLog.status)}
+                    <StatusBadge status={selectedLog.status} />
                   </div>
                 </div>
                 <div>
@@ -245,19 +286,19 @@ export function AuditLogsTable({
                 <div>
                   <div className="text-sm font-medium">Resource ID</div>
                   <p className="mt-1 text-sm font-mono text-muted-foreground">
-                    {selectedLog.resource_id || "N/A"}
+                    {selectedLog.resource_id || UNKNOWN}
                   </p>
                 </div>
                 <div>
                   <div className="text-sm font-medium">IP Address</div>
                   <p className="mt-1 text-sm font-mono">
-                    {selectedLog.ip_address || "N/A"}
+                    {selectedLog.ip_address || UNKNOWN}
                   </p>
                 </div>
                 <div>
                   <div className="text-sm font-medium">Workspace ID</div>
                   <p className="mt-1 text-sm font-mono text-muted-foreground">
-                    {selectedLog.workspace_id || "N/A"}
+                    {selectedLog.workspace_id || UNKNOWN}
                   </p>
                 </div>
               </div>
@@ -301,6 +342,6 @@ export function AuditLogsTable({
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }
