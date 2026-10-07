@@ -348,10 +348,12 @@ function DayCell({
               {shown.map((entry) => (
                 <span
                   key={`${entry.id}-${entry.platform}`}
+                  // Info is neutral, so the shape tells them apart: a hollow dot is still to go out, a
+                  // filled one is published.
                   className={cn(
                     "size-1.5 rounded-full",
                     entry.status === "scheduled"
-                      ? "bg-info-600"
+                      ? "border border-info-600"
                       : "bg-muted-foreground",
                   )}
                 />
