@@ -429,7 +429,7 @@ export function WorkspaceInviteMembersDialog({
             {/* Email Chips Input */}
             <div className="space-y-3">
               <Label htmlFor="invite-emails">Email addresses</Label>
-              <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-primary">
+              <div className="min-h-[100px] p-3 border-2 rounded-md focus-within:border-ring">
                 <div className="flex flex-wrap gap-2">
                   {/* Email chips */}
                   {emailChips.map((chip, index) => (

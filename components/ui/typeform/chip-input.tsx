@@ -296,7 +296,7 @@ export function ChipInput({
       <div
         className={cn(
           "relative min-h-12 p-3 border-2 rounded-md transition-all duration-200",
-          "focus-within:border-primary",
+          "focus-within:border-ring",
           (error || internalError) && "border-destructive",
           disabled && "opacity-50 cursor-not-allowed",
           className,
@@ -323,7 +323,7 @@ export function ChipInput({
               variant="default"
               className={cn(
                 "px-2 py-1 text-sm flex items-center gap-1 transition-all duration-200",
-                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "bg-primary text-primary-foreground hover:bg-primary-hover",
                 focusedChipIndex === index &&
                   "ring-2 ring-primary ring-offset-1",
               )}
@@ -336,7 +336,7 @@ export function ChipInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-auto p-0 hover:bg-transparent focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                className="h-auto p-0 hover:bg-transparent focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 onClick={() => removeChip(index)}
                 onKeyDown={(e) => handleChipKeyDown(e, index)}
                 disabled={disabled}
@@ -370,7 +370,7 @@ export function ChipInput({
             type="button"
             variant="ghost"
             size="sm"
-            className="absolute right-2 top-2 h-8 w-8 p-0 focus:ring-2 focus:ring-primary focus:ring-offset-1"
+            className="absolute right-2 top-2 h-8 w-8 p-0 focus:ring-2 focus:ring-ring focus:ring-offset-1"
             onClick={() => addChip(inputValue)}
             disabled={disabled}
             aria-label={`Add "${inputValue}"`}

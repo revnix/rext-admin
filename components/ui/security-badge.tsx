@@ -315,7 +315,7 @@ function getConfig(variant: SecurityBadgeVariant) {
     lemonsqueezy: {
       icon: CheckCircle2,
       text: "Powered by LemonSqueezy",
-      iconColor: "text-primary",
+      iconColor: "text-muted-foreground",
       ariaLabel: "Powered by LemonSqueezy payment processor",
     },
     "pci-compliant": {
