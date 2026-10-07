@@ -11,7 +11,7 @@ import {
   takeOAuthLinking,
 } from "@/lib/analytics";
 
-beforeEach(() => window.sessionStorage.clear());
+beforeEach(() => window.localStorage.clear());
 afterEach(() => jest.restoreAllMocks());
 
 it("is true once, for the provider the link button marked", () => {
@@ -20,8 +20,23 @@ it("is true once, for the provider the link button marked", () => {
   expect(takeOAuthLinking("google")).toBe(false);
 });
 
-it("is false for another provider's login, and the mark is gone after it", () => {
+it("is false for another provider's login, and leaves that provider's mark alone", () => {
   markOAuthLinking("github");
+  expect(takeOAuthLinking("google")).toBe(false);
+  expect(takeOAuthLinking("github")).toBe(true);
+});
+
+it("keeps two tabs' links to different providers apart (C13c, review round 1)", () => {
+  markOAuthLinking("google");
+  markOAuthLinking("github");
+  expect(takeOAuthLinking("google")).toBe(true);
+  expect(takeOAuthLinking("github")).toBe(true);
+});
+
+it("clears every provider's mark from the login and sign-up buttons", () => {
+  markOAuthLinking("google");
+  markOAuthLinking("github");
+  clearOAuthLinking();
   expect(takeOAuthLinking("google")).toBe(false);
   expect(takeOAuthLinking("github")).toBe(false);
 });
@@ -34,7 +49,7 @@ it("is false after the login and sign-up buttons clear it", () => {
 
 it("is false without a mark, or with an unreadable one", () => {
   expect(takeOAuthLinking("google")).toBe(false);
-  window.sessionStorage.setItem("rext-oauth-linking", "1696000000000");
+  window.localStorage.setItem("rext-oauth-linking:google", "not a time");
   expect(takeOAuthLinking("google")).toBe(false);
 });
 
@@ -44,4 +59,14 @@ it("ignores a mark older than ten minutes", () => {
   markOAuthLinking("google");
   jest.spyOn(Date, "now").mockReturnValue(now);
   expect(takeOAuthLinking("google")).toBe(false);
+});
+
+it("is shared by the app's tabs: the mark lives in localStorage, not one tab's sessionStorage (C13c)", () => {
+  markOAuthLinking("github");
+  // Another tab has its own sessionStorage but the same localStorage.
+  window.sessionStorage.clear();
+  expect(
+    window.localStorage.getItem("rext-oauth-linking:github"),
+  ).not.toBeNull();
+  expect(takeOAuthLinking("github")).toBe(true);
 });
