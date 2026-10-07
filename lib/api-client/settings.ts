@@ -17,6 +17,11 @@ import type {
 import type { ApiClient } from "./core";
 import { buildUrl } from "@/lib/url-utils";
 import { ENDPOINTS } from "./endpoints";
+import type { components } from "./schema";
+
+/** The backend's models for the unsubscribe link, from its OpenAPI spec. */
+type UnsubscribeRequest = components["schemas"]["UnsubscribeRequest"];
+type UnsubscribeResponse = components["schemas"]["UnsubscribeResponse"];
 
 // ============================================================================
 // NOTIFICATIONS
@@ -48,6 +53,22 @@ export function createNotificationsNamespace(client: ApiClient) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(preferences),
+        },
+      );
+    },
+
+    /**
+     * Unsubscribe with the token from an email's link; no sign-in needed. Without
+     * email types it turns every email off.
+     */
+    unsubscribe: async (token: string) => {
+      const body = { token, email_types: [] } satisfies UnsubscribeRequest;
+      return client.request<UnsubscribeResponse>(
+        ENDPOINTS.SETTINGS.notifications.unsubscribe,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         },
       );
     },
