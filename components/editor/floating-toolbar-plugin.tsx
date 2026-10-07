@@ -8,6 +8,7 @@ import {
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_LOW,
+  type ElementNode,
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
@@ -125,7 +126,7 @@ export function FloatingToolbarPlugin() {
 
   if (!shown) return null;
 
-  const block = (make: () => ReturnType<typeof $createQuoteNode>) =>
+  const block = (make: () => ElementNode) =>
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) $setBlocksType(selection, make);
