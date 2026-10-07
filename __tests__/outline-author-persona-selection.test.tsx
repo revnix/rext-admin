@@ -240,6 +240,19 @@ describe("OutlineReview with no persona yet (FB2.20)", () => {
     expect(refetch).toHaveBeenCalled();
   });
 
+  it("reloads from the empty state too, for a first persona made in another tab", () => {
+    const refetch = jest.fn();
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: { personas: [] },
+      refetch,
+      isFetching: false,
+    });
+    renderOutline({ selected_persona_id: null, persona_recommendations: [] });
+    expect(screen.getByText(/No author persona yet/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh personas" }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
   it("offers no Create persona to a role that can't create one", () => {
     granted.delete("persona.create");
     (usePersonas as jest.Mock).mockReturnValue({

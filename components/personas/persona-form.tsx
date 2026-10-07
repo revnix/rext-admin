@@ -88,6 +88,7 @@ export function PersonaForm({
   onSaved,
   onCancel,
   onDirtyChange,
+  onSubmittingChange,
 }: {
   persona?: Persona;
   /** In a dialog (PersonaDialog): called with the saved persona's id instead of opening its page. */
@@ -96,6 +97,8 @@ export function PersonaForm({
   onCancel?: () => void;
   /** In a dialog: whether anything is unsaved, so closing it some other way can ask first. */
   onDirtyChange?: (dirty: boolean) => void;
+  /** In a dialog: whether the save is under way, so nothing closes it until the save settles. */
+  onSubmittingChange?: (submitting: boolean) => void;
 }) {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
@@ -137,6 +140,10 @@ export function PersonaForm({
   useEffect(() => {
     onDirtyChange?.(unsaved);
   }, [unsaved, onDirtyChange]);
+  const { isSubmitting } = form.formState;
+  useEffect(() => {
+    onSubmittingChange?.(isSubmitting);
+  }, [isSubmitting, onSubmittingChange]);
 
   useEffect(() => {
     if (!avatarPreview) return;
