@@ -13,11 +13,10 @@ describe("KeywordDifficulty, a ring in the level's colour (FB2.9 #690)", () => {
     (score, band, colour) => {
       render(<KeywordDifficulty score={score} />);
 
-      const meter = screen.getByRole("meter", {
-        name: `Keyword difficulty, ${score} of 100`,
-      });
-      expect(meter).toHaveAttribute("aria-valuenow", String(score));
-      expect(meter.querySelectorAll("circle")[1]).toHaveClass(colour);
+      const ring = screen
+        .getByTitle(`Keyword difficulty: ${score} out of 100`)
+        .closest('[data-slot="score-ring"]');
+      expect(ring?.querySelectorAll("circle")[1]).toHaveClass(colour);
       expect(screen.getByText(`${score}%`)).toBeInTheDocument();
       expect(screen.getByText(band)).toBeInTheDocument();
     },
@@ -27,17 +26,19 @@ describe("KeywordDifficulty, a ring in the level's colour (FB2.9 #690)", () => {
     render(<KeywordDifficulty score={42} compact />);
 
     expect(
-      screen.getByRole("meter", { name: "Keyword difficulty, 42 of 100" }),
+      screen
+        .getByTitle("Keyword difficulty: 42 out of 100")
+        .closest('[data-slot="score-ring"]'),
     ).toHaveClass("size-5");
     expect(screen.getByText("Hard")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.queryByText("42%")).toBeNull();
   });
 
-  it("says unknown, with no meter, when there is no score", () => {
-    render(<KeywordDifficulty score={null} />);
+  it("says unknown, with no ring, when there is no score", () => {
+    const { container } = render(<KeywordDifficulty score={null} />);
 
-    expect(screen.queryByRole("meter")).toBeNull();
+    expect(container.querySelector('[data-slot="score-ring"]')).toBeNull();
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 });
