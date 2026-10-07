@@ -36,15 +36,22 @@ export function PersonaDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [unsaved, setUnsaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const close = () => {
     setOpen(false);
     setUnsaved(false);
+    setSaving(false);
     setConfirming(false);
   };
   // Escape, a click outside or the close button: with anything entered, ask before discarding it.
-  // (The form's own Cancel asks through FormShell's leave guard first.)
-  const requestClose = () => (unsaved ? setConfirming(true) : close());
+  // (The form's own Cancel asks through FormShell's leave guard first.) While the save is under
+  // way the dialog stays: the request can't be taken back, so its persona must not be "discarded".
+  const requestClose = () => {
+    if (saving) return;
+    if (unsaved) setConfirming(true);
+    else close();
+  };
   return (
     <>
       <Dialog
@@ -66,6 +73,7 @@ export function PersonaDialog({
             }}
             onCancel={close}
             onDirtyChange={setUnsaved}
+            onSubmittingChange={setSaving}
           />
         </DialogContent>
       </Dialog>

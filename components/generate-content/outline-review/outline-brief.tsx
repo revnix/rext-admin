@@ -235,24 +235,10 @@ export function OutlineBrief({
                 />
               </div>
               {onRefreshPersonas && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Refresh personas"
-                  title="Refresh personas"
-                  disabled={refreshingPersonas}
-                  onClick={onRefreshPersonas}
-                >
-                  <RefreshCw
-                    aria-hidden
-                    className={
-                      refreshingPersonas
-                        ? "animate-spin motion-reduce:animate-none"
-                        : undefined
-                    }
-                  />
-                </Button>
+                <RefreshPersonasButton
+                  refreshing={refreshingPersonas}
+                  onRefresh={onRefreshPersonas}
+                />
               )}
             </div>
             <p className="text-caption text-muted-foreground">
@@ -269,20 +255,29 @@ export function OutlineBrief({
             <p className="text-table text-muted-foreground">
               No author persona yet. The article is written without one.
             </p>
-            {canCreatePersona && (
-              <PersonaDialog
-                trigger={
-                  <Button type="button" variant="outline">
-                    <UserPlus aria-hidden />
-                    Create persona
-                  </Button>
-                }
-                onCreated={(id) => {
-                  onRefreshPersonas?.();
-                  if (id) onPersonaChange(id);
-                }}
-              />
-            )}
+            {/* The refresh is here too: the first persona may be made in another tab. */}
+            <div className="flex items-center gap-2">
+              {onRefreshPersonas && (
+                <RefreshPersonasButton
+                  refreshing={refreshingPersonas}
+                  onRefresh={onRefreshPersonas}
+                />
+              )}
+              {canCreatePersona && (
+                <PersonaDialog
+                  trigger={
+                    <Button type="button" variant="outline">
+                      <UserPlus aria-hidden />
+                      Create persona
+                    </Button>
+                  }
+                  onCreated={(id) => {
+                    onRefreshPersonas?.();
+                    if (id) onPersonaChange(id);
+                  }}
+                />
+              )}
+            </div>
           </div>
         )}
       </BriefGroup>
@@ -392,6 +387,34 @@ export function OutlineBrief({
         </BriefGroup>
       )}
     </div>
+  );
+}
+
+/** Reloads the workspace's personas, for one made in another tab or page (FB2.20). */
+function RefreshPersonasButton({
+  refreshing,
+  onRefresh,
+}: {
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label="Refresh personas"
+      title="Refresh personas"
+      disabled={refreshing}
+      onClick={onRefresh}
+    >
+      <RefreshCw
+        aria-hidden
+        className={
+          refreshing ? "animate-spin motion-reduce:animate-none" : undefined
+        }
+      />
+    </Button>
   );
 }
 

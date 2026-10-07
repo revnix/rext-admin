@@ -35,6 +35,10 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
   personas: { create: jest.Mock };
 };
 
+beforeEach(() => {
+  api.personas.create.mockReset();
+});
+
 function renderDialog(onCreated = jest.fn()) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -83,6 +87,38 @@ it("closes on Escape at once when nothing was entered", async () => {
     ).not.toBeInTheDocument(),
   );
   expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
+it("stays open while the save is under way, then closes with the new persona", async () => {
+  let finish: (value: unknown) => void = () => {};
+  api.personas.create.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const onCreated = renderDialog();
+  await userEvent.click(screen.getByRole("button", { name: "Create persona" }));
+  const dialog = await screen.findByRole("dialog", { name: "Create persona" });
+  await userEvent.type(screen.getByLabelText(/Display name/), "Nina");
+  const submit = screen
+    .getAllByRole("button", { name: "Create persona" })
+    .find((button) => dialog.contains(button));
+  await userEvent.click(submit as HTMLElement);
+  await waitFor(() => expect(api.personas.create).toHaveBeenCalled());
+
+  // The request is out and can't be taken back: Escape neither closes nor offers to discard.
+  await userEvent.keyboard("{Escape}");
+  expect(screen.getByRole("dialog", { name: "Create persona" })).toBeVisible();
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(onCreated).not.toHaveBeenCalled();
+
+  finish({ persona: { id: "p7", name: "Nina" } });
+  await waitFor(() => expect(onCreated).toHaveBeenCalledWith("p7"));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("dialog", { name: "Create persona" }),
+    ).not.toBeInTheDocument(),
+  );
 });
 
 it("creates a persona in the dialog, closes, and passes its id without leaving the page", async () => {
