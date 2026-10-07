@@ -16,12 +16,19 @@ const SECRET_PARAMS = new Set([
   "id_token",
 ]);
 
-/** The event properties PostHog fills with an address. */
+/**
+ * The event properties PostHog fills with an address. The session-entry ones ride on every event
+ * of a session that began on an emailed link (posthog.com/docs/data/sessions, session entry
+ * properties); the rest of PostHog's session and initial properties hold a path, a host or a
+ * campaign tag, never a query.
+ */
 const URL_PROPERTIES = [
   "$current_url",
   "$referrer",
   "$initial_current_url",
   "$initial_referrer",
+  "$session_entry_url",
+  "$session_entry_referrer",
 ];
 
 /** The address with every secret parameter's value replaced by "redacted". */

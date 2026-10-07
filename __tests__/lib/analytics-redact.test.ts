@@ -61,6 +61,32 @@ describe("redactEventUrls", () => {
     expect(event.properties.other).toContain("kept-elsewhere");
   });
 
+  it("redacts every address property, the session's entry address included", () => {
+    // A session that began on an emailed link carries that address on every event it sends.
+    for (const key of [
+      "$current_url",
+      "$referrer",
+      "$initial_current_url",
+      "$initial_referrer",
+      "$session_entry_url",
+      "$session_entry_referrer",
+    ]) {
+      const event = {
+        properties: { [key]: "https://app.rext.ai/unsubscribe?token=t4" },
+        $set: { [key]: "https://app.rext.ai/verify-email?token=t5" },
+      };
+
+      redactEventUrls(event);
+
+      expect(event.properties[key]).toBe(
+        "https://app.rext.ai/unsubscribe?token=redacted",
+      );
+      expect(event.$set[key]).toBe(
+        "https://app.rext.ai/verify-email?token=redacted",
+      );
+    }
+  });
+
   it("passes a dropped event through", () => {
     expect(redactEventUrls(null)).toBeNull();
   });
