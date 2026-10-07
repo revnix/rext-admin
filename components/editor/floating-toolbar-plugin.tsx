@@ -38,6 +38,7 @@ type Shown = {
   bold: boolean;
   italic: boolean;
   link: boolean;
+  column: Column;
 };
 
 function Tool({
@@ -75,14 +76,16 @@ function Tool({
   );
 }
 
-/** The bar's centre, moved in from an edge it would cross (with the page's 16 px gutter kept). */
-const EDGE = 16;
-function withinWindow(centre: number, width: number) {
+/** The text column's two edges in the window: the bar stays between them. */
+type Column = { left: number; right: number };
+
+/** The bar's centre, moved in so that all of the bar stays over the text column it formats. */
+function withinColumn(centre: number, width: number, column: Column) {
   const half = width / 2;
-  const least = half + EDGE;
-  const most = window.innerWidth - half - EDGE;
+  const least = column.left + half;
+  const most = column.right - half;
   return least > most
-    ? window.innerWidth / 2
+    ? (column.left + column.right) / 2
     : Math.min(Math.max(centre, least), most);
 }
 
@@ -94,7 +97,7 @@ export function FloatingToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const [shown, setShown] = useState<Shown | null>(null);
   const [linking, setLinking] = useState<string | null>(null);
-  // The bar's own width, to keep all of it inside the window beside a narrow screen's edge.
+  // The bar's own width, to keep all of it over the text column on a narrow screen.
   const barRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: measured again when the bar's content changes
@@ -113,17 +116,20 @@ export function FloatingToolbarPlugin() {
         selection.getTextContent().trim() === "" ||
         !native ||
         native.rangeCount === 0 ||
-        !root?.contains(native.anchorNode)
+        !root ||
+        !root.contains(native.anchorNode)
       ) {
         setShown(null);
         setLinking(null);
         return;
       }
       const rect = native.getRangeAt(0).getBoundingClientRect();
+      const text = root.getBoundingClientRect();
       const node = selection.anchor.getNode();
       setShown({
         top: rect.top,
         left: rect.left + rect.width / 2,
+        column: { left: text.left, right: text.right },
         bold: selection.hasFormat("bold"),
         italic: selection.hasFormat("italic"),
         link: $isLinkNode(node) || $isLinkNode(node.getParent()),
@@ -165,7 +171,10 @@ export function FloatingToolbarPlugin() {
       role="toolbar"
       aria-label="Format the selection"
       ref={barRef}
-      style={{ top: shown.top, left: withinWindow(shown.left, width) }}
+      style={{
+        top: shown.top,
+        left: withinColumn(shown.left, width, shown.column),
+      }}
       className="not-prose fixed z-50 -mt-2 flex -translate-x-1/2 -translate-y-full items-center gap-0.5 rounded-md border bg-popover p-1 text-popover-foreground shadow-overlay"
     >
       {linking === null ? (
