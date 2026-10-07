@@ -15,6 +15,7 @@ import {
   saveBrandVoice,
 } from "@/components/workspace-settings/brand-voice-fields";
 import { DraftedNotice } from "@/components/workspace-settings/drafted-notice";
+import { useShowAfter } from "@/hooks/use-show-after";
 import { workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 import {
@@ -45,6 +46,9 @@ export function WorkspaceReviewStep({
     workspaceQueries.brandVoice(workspaceId),
   );
 
+  // A quick read shows no skeleton at all: it appears only after a short delay.
+  const showSkeleton = useShowAfter(isPending);
+
   const form = useZodForm(brandVoiceFormSchema, {
     defaultValues: toBrandVoiceFormValues(),
   });
@@ -73,7 +77,7 @@ export function WorkspaceReviewStep({
   };
 
   if (isPending) {
-    return <Skeleton className="h-96 w-full" />;
+    return showSkeleton ? <Skeleton className="h-96 w-full" /> : null;
   }
 
   if (isError) {
