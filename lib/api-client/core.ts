@@ -16,6 +16,7 @@ import {
   isNetworkFailure,
   isOffline,
   markRetried,
+  noteServerAnswered,
   reportServerAway,
   SERVER_UNREACHABLE,
   SERVER_UNREACHABLE_MESSAGE,
@@ -131,7 +132,9 @@ export class ApiClient {
   ): Promise<T> {
     for (let attempt = 0; ; attempt += 1) {
       try {
-        return await send();
+        const answer = await send();
+        noteServerAnswered();
+        return answer;
       } catch (error) {
         if (!ApiError.is(error)) throw error;
         const noAnswer = error.code === SERVER_UNREACHABLE;

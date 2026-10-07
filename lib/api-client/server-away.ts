@@ -74,8 +74,14 @@ export const alreadyRetried = (error: unknown) =>
   typeof error === "object" && error !== null && retried.has(error);
 
 // Whether the server is taken to be away: set when a request's retries run out, cleared when the
-// notice's watch sees the API answer again (or gives up).
+// notice's watch sees the API answer again or gives up. Two rules keep the notice from coming back
+// in a loop while one request keeps failing though the API is up, or through a long outage: for a
+// minute after the watch saw the API answer, a failure reports nothing; and once the watch has
+// given up, nothing is reported until a request is answered again.
+const QUIET_AFTER_BACK_MS = 60_000;
 let away = false;
+let quietUntil = 0;
+let gaveUp = false;
 const listeners = new Set<() => void>();
 
 const setAway = (next: boolean) => {
@@ -86,9 +92,25 @@ const setAway = (next: boolean) => {
 
 /** Only the browser keeps this: on the server no notice watches for the API's return. */
 export const reportServerAway = () => {
-  if (typeof window !== "undefined") setAway(true);
+  if (typeof window === "undefined" || gaveUp || Date.now() < quietUntil) {
+    return;
+  }
+  setAway(true);
 };
-export const reportServerBack = () => setAway(false);
+/** The watch saw the API answer. */
+export const reportServerBack = () => {
+  quietUntil = Date.now() + QUIET_AFTER_BACK_MS;
+  setAway(false);
+};
+/** The watch gave up waiting. */
+export const stopWatchingServer = () => {
+  gaveUp = true;
+  setAway(false);
+};
+/** A request was answered: the API is there, whatever the watch concluded. */
+export const noteServerAnswered = () => {
+  gaveUp = false;
+};
 export const isServerAway = () => away;
 export function subscribeServerAway(listener: () => void) {
   listeners.add(listener);
