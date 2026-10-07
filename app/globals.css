@@ -137,6 +137,9 @@
   --control-height-sm: 32px;
   --control-height-md: 36px;
   --control-height-lg: 40px;
+  /* The focus ring's geometry (design/app-language.md §3): 2 px, offset 2 px. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
   --control-radius: var(--radius);
   --card-radius: calc(var(--radius) + 4px);
   --card-padding: 16px;
@@ -312,8 +315,8 @@
      a 2 px outline in the ring colour, 3.57 : 1 or better on every surface (WCAG 2.4.7). A
      component's own outline-none or focus ring, in the utilities layer, wins over this. */
   :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--focus-ring-offset);
   }
 
   html {
