@@ -4,7 +4,7 @@
  * nothing ran, so nothing failed and nothing is left to poll.
  */
 import { TextDecoder, TextEncoder } from "node:util";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 import { SERVER_UNREACHABLE_MESSAGE } from "@/lib/api-client/server-away";
 
@@ -168,5 +168,35 @@ describe("A new keyword's analysis while the backend is away", () => {
     expect(
       mockRequested.filter((url) => url === `/api/generate/${THREAD}/stream`),
     ).toHaveLength(1);
+  });
+});
+
+describe("An article being written while the backend is away", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("keeps asking for its status instead of calling it failed, for three minutes", async () => {
+    jest.useFakeTimers();
+    jobs.push({ threadId: THREAD, status: "running" });
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId={THREAD} />,
+    );
+    const statusReads = () =>
+      mockRequested.filter((url) => url.includes("/status")).length;
+
+    // Half a minute of 503s: three failed reads used to end the run on screen.
+    await act(() => jest.advanceTimersByTimeAsync(30_000));
+    expect(statusReads()).toBeGreaterThanOrEqual(6);
+    expect(jobs).toEqual([{ threadId: THREAD, status: "running" }]);
+    expect(screen.queryByText(SERVER_UNREACHABLE_MESSAGE)).toBeNull();
+
+    // Past three minutes it says so, in the same plain sentence.
+    await act(() => jest.advanceTimersByTimeAsync(3 * 60 * 1000));
+    expect(jobs[0]).toMatchObject({
+      threadId: THREAD,
+      status: "failed",
+      error: SERVER_UNREACHABLE_MESSAGE,
+    });
   });
 });
