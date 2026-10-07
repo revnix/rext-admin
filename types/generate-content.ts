@@ -993,6 +993,12 @@ export type RunStreamEvent<T = unknown> = {
 export type ResumeOptions = {
   payload: Record<string, unknown>;
   status?: string;
+  /**
+   * The caller puts its own step back when the run doesn't start (the outline's
+   * feedback, which keeps what the user typed); otherwise a refused resume puts the
+   * paused step back from the server.
+   */
+  restoresItsStep?: boolean;
 };
 
 export type WorkflowStep =

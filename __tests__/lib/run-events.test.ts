@@ -4,6 +4,8 @@ import {
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
+  reloadsAfterResume,
+  resumeAttemptIsFinal,
   runIsGoing,
   settlesRun,
 } from "@/lib/generate-content/run-events";
@@ -268,5 +270,44 @@ describe("a start whose credits couldn't be read (E27)", () => {
     ).toBe(
       "We couldn't check your credits just now, so the run didn't start. Try again in a moment.",
     );
+  });
+});
+
+describe("a refused resume (E27)", () => {
+  const attempt = {
+    created: false,
+    aborted: false,
+    settled: false,
+    refused: false,
+  };
+
+  it("is not sent again: only an attempt with no sign of a run is retried", () => {
+    expect(resumeAttemptIsFinal({ ...attempt, refused: true })).toBe(true);
+    expect(resumeAttemptIsFinal(attempt)).toBe(false);
+    expect(resumeAttemptIsFinal({ ...attempt, created: true })).toBe(true);
+  });
+
+  it("puts the paused step back from the server, unless its caller does", () => {
+    const refused = { unsettled: false, refused: true };
+    expect(reloadsAfterResume({ ...refused, restoresItsStep: false })).toBe(
+      true,
+    );
+    expect(reloadsAfterResume({ ...refused, restoresItsStep: true })).toBe(
+      false,
+    );
+    expect(
+      reloadsAfterResume({
+        unsettled: false,
+        refused: false,
+        restoresItsStep: false,
+      }),
+    ).toBe(false);
+    expect(
+      reloadsAfterResume({
+        unsettled: true,
+        refused: false,
+        restoresItsStep: true,
+      }),
+    ).toBe(true);
   });
 });
