@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
+import { describeRun } from "@/lib/generate-content/run-findings";
 import {
   useCancelOnUnmount,
   useOncePerKey,
@@ -613,6 +614,8 @@ export function FreshGenerationView({
     outline.resetStream();
     content.resetStream();
     setToolCalls([]);
+    // What the run on screen had found belongs to the thread it came from.
+    runStages.seed(null);
     dispatch({ type: "SET_MANUAL_LOADING", payload: true });
     dispatch({
       type: "SET_LOADING_STATUS",
@@ -732,6 +735,8 @@ export function FreshGenerationView({
         }
         consecutiveFailures = 0;
         awaySince = null;
+        // What the run found before the page looked, for its progress box (rext-control#694).
+        runStages.seed(payload.state, payload.runStage);
 
         const inArticlePhase = isArticlePhase(payload.progress);
         // Interactive steps interrupt inside a subgraph, so the pending
@@ -1294,6 +1299,8 @@ export function FreshGenerationView({
         // arrives as `custom` token events, which generate_content writes.
         const message = readMessageToken(chunk);
         if (message) {
+          // The title and outline models' text, for the progress box's rows (rext-control#694).
+          runStages.token(message);
           if (
             message.token &&
             tokenTargetRef.current === "outline" &&
@@ -1308,6 +1315,7 @@ export function FreshGenerationView({
         if (chunk.event === "custom" || chunk.event?.startsWith("custom|")) {
           // biome-ignore lint/suspicious/noExplicitAny: custom event payload
           const d = chunk.data as any;
+          runStages.custom(d);
           if (d?.type === "token" && tokenTargetRef.current === "content") {
             // The agent has stopped searching and writes: Research ends, Draft runs.
             if (!writing) {
@@ -1603,7 +1611,10 @@ export function FreshGenerationView({
         Object.keys(updates)
           .filter((k) => !k.startsWith("__"))
           .forEach((node) => {
-            runStages.nodeDone(node);
+            runStages.nodeDone(
+              node,
+              (updates as Record<string, unknown>)[node],
+            );
             dispatch({
               type: "SET_LOADING_STATUS",
               payload: `${formatNodeName(node)}...`,
@@ -2302,8 +2313,19 @@ export function FreshGenerationView({
         {runStages.run && (
           <RunProgress
             stages={runStages.run.stages}
+            // What each stage found, from the stream (rext-control#694).
+            {...describeRun(runStages.run, runStages.findings, {
+              // The analysis is of the keyword typed; the later steps work on the one chosen.
+              keyword:
+                (runStages.run.phase === "analysis"
+                  ? userKeyword || primaryKeyword
+                  : primaryKeyword || userKeyword) || _initialKeyword,
+              country,
+              contentType: selectedContentType || recommendedContentType,
+              intent: selectedIntent || seoResult?.intent,
+            })}
             onCancel={_handleCancelGeneration}
-            className="max-w-md"
+            className="max-w-2xl"
           />
         )}
       </div>
