@@ -6,6 +6,20 @@ import { log } from "@/lib/logger";
 const sseLogger = log.forComponent("sse-stream");
 
 /**
+ * A run's stream ended on an error the proxy route reported, with its code when the route gave one
+ * (`TOO_MANY_RUNS`: the backend refused to start the run).
+ */
+export class RunStreamError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "RunStreamError";
+  }
+}
+
+/**
  * A new generation thread in the workspace. The backend refuses it unless the
  * user may create content there; the error carries the server's words.
  */
@@ -74,7 +88,13 @@ export async function* streamFromSSE(
       // stream event: swallowing it as "malformed" is what makes a failed
       // resume look like a click that did nothing.
       const streamError = (parsed as { error?: unknown })?.error;
-      if (typeof streamError === "string") throw new Error(streamError);
+      if (typeof streamError === "string") {
+        const code = (parsed as { code?: unknown }).code;
+        throw new RunStreamError(
+          streamError,
+          typeof code === "string" ? code : undefined,
+        );
+      }
 
       const result = RunStreamEventSchema.safeParse(parsed);
 

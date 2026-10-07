@@ -28,6 +28,9 @@ jest.mock("@/lib/generate-content/thread-access", () => ({
     thread: { thread_id: "t1", metadata: { owner: "u1", workspace_id: "w1" } },
   })),
   tokenExpired: jest.fn(),
+  streamErrorPayload: (error: unknown) => ({
+    error: error instanceof Error ? error.message : "Stream error",
+  }),
 }));
 jest.mock("@/lib/generate-content/run-webhook", () => ({
   runWebhookOption: {},

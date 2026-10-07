@@ -55,6 +55,7 @@ import {
 } from "@/lib/generate-content/generation-reducer";
 import {
   createThread,
+  RunStreamError,
   streamFromSSE,
   formatNodeName,
 } from "@/lib/generate-content/stream-utils";
@@ -72,6 +73,7 @@ import {
   readStoppedRun,
   runIsGoing,
   settlesRun,
+  TOO_MANY_RUNS,
 } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
 import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
@@ -1544,7 +1546,20 @@ export function FreshGenerationView({
       }
     } catch (_e) {
       const isAbort = _e instanceof DOMException && _e.name === "AbortError";
-      if (!isAbort && runCreatedRef.current) {
+      if (_e instanceof RunStreamError && _e.code === TOO_MANY_RUNS) {
+        // The backend refused to start the run (two already going, E27): nothing ran, so
+        // nothing failed. A resume leaves its step waiting; a new start leaves no dock job.
+        if (activeThreadId && (await readLatestRun(activeThreadId))) {
+          updateBackgroundJob(activeThreadId, {
+            status: "completed",
+            awaitingInput: true,
+          });
+          toast.error(_e.message);
+        } else {
+          if (activeThreadId) removeBackgroundJob(activeThreadId);
+          setRunError(_e.message);
+        }
+      } else if (!isAbort && runCreatedRef.current) {
         // The stream broke, not the run: it was started with onDisconnect
         // "continue" and goes on on the server (leaving the page mid-run, a
         // dropped connection). Keep the job running so the dock's status poll
