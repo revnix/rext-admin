@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ApiError } from "@/lib/api-client/core";
+import { alreadyRetried } from "@/lib/api-client/server-away";
 
 export const userSessionsQueryOptions = (refetchInterval?: number) =>
   queryOptions({
@@ -18,6 +19,7 @@ export const userSessionsQueryOptions = (refetchInterval?: number) =>
       ) {
         return false;
       }
+      if (alreadyRetried(error)) return false;
       return failureCount < 3;
     },
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),

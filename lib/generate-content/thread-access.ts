@@ -6,6 +6,14 @@ import {
   type GenerationIdentity,
   generationIdentity,
 } from "@/lib/generate-content/generation-identity";
+import {
+  SERVER_UNREACHABLE,
+  SERVER_UNREACHABLE_MESSAGE,
+} from "@/lib/api-client/server-away";
+import {
+  backendAwayResponse,
+  isBackendAway,
+} from "@/lib/generate-content/backend-away";
 import { TOO_MANY_RUNS } from "@/lib/generate-content/run-events";
 
 /**
@@ -59,6 +67,10 @@ export function streamErrorPayload(error: unknown): {
 } {
   if (error instanceof RunRefusedError) {
     return { error: error.message, code: TOO_MANY_RUNS };
+  }
+  // The backend couldn't be reached (a deploy's restart): a sentence, not the SDK's error.
+  if (isBackendAway(error)) {
+    return { error: SERVER_UNREACHABLE_MESSAGE, code: SERVER_UNREACHABLE };
   }
   return { error: error instanceof Error ? error.message : "Stream error" };
 }
@@ -156,6 +168,10 @@ export async function requireThreadOwner(
     }
     if (isExpiredTokenError(error)) {
       return { ok: false, response: tokenExpired() };
+    }
+    // Still a refusal, but one the page can tell from a real one and wait out.
+    if (isBackendAway(error)) {
+      return { ok: false, response: backendAwayResponse() };
     }
 
     return deny("Unable to verify thread ownership", 502);

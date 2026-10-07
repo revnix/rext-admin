@@ -1,4 +1,8 @@
 import {
+  backendAwayResponse,
+  isBackendAway,
+} from "@/lib/generate-content/backend-away";
+import {
   getGenerationClient,
   isExpiredTokenError,
   requireGenerationIdentity,
@@ -45,6 +49,8 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    if (isBackendAway(error)) return backendAwayResponse();
 
     return Response.json(
       { error: "Unable to start a generation" },

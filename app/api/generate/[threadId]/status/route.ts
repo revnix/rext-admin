@@ -1,5 +1,9 @@
 import type { NextRequest } from "next/server";
 
+import {
+  backendAwayResponse,
+  isBackendAway,
+} from "@/lib/generate-content/backend-away";
 import { deriveBackgroundProgress } from "@/lib/generate-content/background-progress";
 import {
   getGenerationClient,
@@ -69,6 +73,9 @@ export async function GET(
       state: includeState ? threadState : undefined,
     });
   } catch (error) {
+    // The backend is away (a deploy's restart), not the run: the page and the dock ask again.
+    if (isBackendAway(error)) return backendAwayResponse();
+
     const message =
       error instanceof Error
         ? error.message

@@ -69,6 +69,14 @@ import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useBackgroundGenerationStore } from "@/stores/background-generation-store";
 import { useWorkspace } from "@/providers/workspace-provider";
 import { RunNotice } from "@/components/generate-content/run-notice";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
+import {
+  AWAY_RETRY_MS,
+  BackendAwayError,
+  isAwayFailure,
+  isAwayResponse,
+  keepsWaiting,
+} from "@/lib/generate-content/backend-away";
 import {
   GENERATION_STREAM_MODES,
   isOutlineToken,
@@ -363,6 +371,10 @@ export function FreshGenerationView({
   // E27): nothing was sent, so a resume neither retries nor waits for a run.
   const runRefusedRef = useRef(false);
 
+  // Set while the restore path reads a run's stream it rejoined: a rejoin the server can't be
+  // reached for says nothing and changes nothing, since the restore asks again by itself.
+  const rejoiningRef = useRef(false);
+
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
@@ -589,6 +601,8 @@ export function FreshGenerationView({
     let disposed = false;
     let retryId: number | undefined;
     let consecutiveFailures = 0;
+    // When the backend was first found away (a deploy's restart), until it answers again.
+    let awaySince: number | null = null;
 
     dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
     // Clear stale content / scores / outline from a previously-viewed thread
@@ -650,6 +664,7 @@ export function FreshGenerationView({
           `/api/generate/${encodeURIComponent(backgroundThreadId)}/status?includeState=true`,
           { cache: "no-store" },
         );
+        if (isAwayResponse(response.status)) throw new BackendAwayError();
         const payload = (await response.json()) as {
           run?: { id?: string; status?: string };
           state?: {
@@ -720,6 +735,7 @@ export function FreshGenerationView({
           );
         }
         consecutiveFailures = 0;
+        awaySince = null;
 
         const inArticlePhase = isArticlePhase(payload.progress);
         // Interactive steps interrupt inside a subgraph, so the pending
@@ -826,10 +842,12 @@ export function FreshGenerationView({
               { runId },
               signal,
             );
+            rejoiningRef.current = true;
             await processStreamRef.current(stream);
           } catch {
             // Join dropped or the run just ended — the re-check below reconciles.
           } finally {
+            rejoiningRef.current = false;
             streamBusyRef.current = false;
             streamingThreadRef.current = null;
           }
@@ -852,6 +870,19 @@ export function FreshGenerationView({
           error instanceof Error
             ? error.message
             : "Unable to restore this article";
+        // The backend is away (a deploy restarts it for about a minute), not the run, which
+        // goes on once it's back: keep asking, and count nothing against the run meanwhile.
+        if (!terminalFailure && isAwayFailure(error)) {
+          awaySince ??= Date.now();
+          if (keepsWaiting(awaySince, Date.now())) {
+            dispatch({
+              type: "SET_LOADING_STATUS",
+              payload: "Reconnecting to background generation...",
+            });
+            retryId = window.setTimeout(restore, AWAY_RETRY_MS);
+            return;
+          }
+        }
         consecutiveFailures += 1;
         if (!terminalFailure && consecutiveFailures < 3) {
           dispatch({
@@ -1599,6 +1630,32 @@ export function FreshGenerationView({
         } else {
           if (activeThreadId) removeBackgroundJob(activeThreadId);
           setRunError(_e.message);
+        }
+      } else if (
+        _e instanceof RunStreamError &&
+        _e.code === SERVER_UNREACHABLE &&
+        (rejoiningRef.current || !runCreatedRef.current)
+      ) {
+        // The server couldn't be reached (a deploy restarts the backend for about a minute):
+        // nothing ran, so nothing failed. A rejoin says nothing, the restore asks again. A new
+        // start leaves no dock job; a resume leaves its step waiting, and the restore path
+        // brings that step back once the server answers.
+        if (rejoiningRef.current) {
+          // Nothing to do.
+        } else if (startedThreadId) {
+          runRefusedRef.current = true;
+          removeBackgroundJob(startedThreadId);
+          setRunError(_e.message);
+        } else {
+          runRefusedRef.current = true;
+          if (activeThreadId) {
+            updateBackgroundJob(activeThreadId, {
+              status: "completed",
+              awaitingInput: true,
+              completionNotified: true,
+            });
+          }
+          toast.error(_e.message);
         }
       } else if (!isAbort && runCreatedRef.current) {
         // The stream broke, not the run: it was started with onDisconnect
