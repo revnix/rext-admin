@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { LibraryView } from "@/components/keywords/library-view";
+import { ApiError } from "@/lib/api-client";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -19,8 +21,9 @@ jest.mock("@/providers/workspace-provider", () => ({
 jest.mock("@/hooks/use-auth-session", () => ({
   useAuthSession: () => ({ user: { id: "u1" } }),
 }));
+const toast = { success: jest.fn(), error: jest.fn(), info: jest.fn() };
 jest.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: { success: jest.fn(), error: jest.fn() } }),
+  useToast: () => ({ toast }),
 }));
 
 const granted = new Set<string>();
@@ -32,9 +35,10 @@ jest.mock("@/hooks/use-permission", () => ({
 }));
 
 const searchLibrary = jest.fn();
+const deleteLibraryItem = jest.fn();
 jest.mock("@/lib/generate-content/library-item", () => ({
   searchLibrary: (...args: unknown[]) => searchLibrary(...args),
-  deleteLibraryItem: jest.fn(),
+  deleteLibraryItem: (...args: unknown[]) => deleteLibraryItem(...args),
   libraryStartQuery: (key: string) => `library=${encodeURIComponent(key)}`,
 }));
 
@@ -145,5 +149,83 @@ describe("LibraryView", () => {
       await screen.findByText("Your keywords didn't load"),
     ).toBeInTheDocument();
     expect(screen.queryByText("No keywords yet")).toBeNull();
+  });
+
+  describe("removing a keyword (G78)", () => {
+    const ROW = {
+      key: "library_seo tools_2026-10-05T09:00:00+00:00",
+      value: {
+        original_query: "seo tools",
+        recommendations: [],
+        seo_state: {
+          keyword_difficulty: 42,
+          intent: ["commercial"],
+          volume: 1200,
+          volume_status: "ok",
+          backlinks: 10,
+          referring_domains: 4,
+        },
+        timestamp: "2026-10-05T09:00:00Z",
+      },
+    };
+
+    async function removeSeoTools() {
+      granted.add("content.read");
+      searchLibrary.mockResolvedValue([ROW]);
+      renderLibrary();
+      const menus = await screen.findAllByRole("button", {
+        name: /actions for seo tools/i,
+      });
+      await userEvent.click(menus[0]);
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /Remove from library/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Remove keyword" }),
+      );
+    }
+
+    it("removes it through the app's route, by its key, and reads the list again", async () => {
+      deleteLibraryItem.mockResolvedValue(undefined);
+      await removeSeoTools();
+
+      await waitFor(() =>
+        expect(deleteLibraryItem).toHaveBeenCalledWith(ROW.key, "w1"),
+      );
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          '"seo tools" was removed from your library.',
+        ),
+      );
+      await waitFor(() => expect(searchLibrary).toHaveBeenCalledTimes(2));
+    });
+
+    it("says a keyword already gone was removed, and reads the list again", async () => {
+      deleteLibraryItem.mockRejectedValue(
+        new ApiError(404, "That keyword isn't in your library."),
+      );
+      await removeSeoTools();
+
+      await waitFor(() =>
+        expect(toast.info).toHaveBeenCalledWith(
+          '"seo tools" was already removed from your library.',
+        ),
+      );
+      expect(toast.error).not.toHaveBeenCalled();
+      await waitFor(() => expect(searchLibrary).toHaveBeenCalledTimes(2));
+    });
+
+    it("says plainly when it couldn't be removed, and keeps it listed", async () => {
+      deleteLibraryItem.mockRejectedValue(new ApiError(403, "Forbidden"));
+      await removeSeoTools();
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "\"seo tools\" couldn't be removed. It's still in your library. Try again.",
+        ),
+      );
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(searchLibrary).toHaveBeenCalledTimes(1);
+    });
   });
 });

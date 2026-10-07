@@ -25,6 +25,7 @@ import {
   deleteLibraryItem,
   libraryStartQuery,
 } from "@/lib/generate-content/library-item";
+import { ApiError } from "@/lib/api-client";
 import { keywordMetrics } from "@/lib/keywords/keyword-metrics";
 import { log } from "@/lib/logger";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
@@ -77,18 +78,28 @@ export function LibraryView() {
     [library.data],
   );
 
+  const refreshLibrary = () =>
+    queryClient.invalidateQueries({
+      queryKey: libraryQueries.list(workspaceId, userId).queryKey,
+    });
+
   const remove = useMutation({
-    mutationFn: (row: KeywordRow) =>
-      deleteLibraryItem(row.id, userId, workspaceId),
+    mutationFn: (row: KeywordRow) => deleteLibraryItem(row.id, workspaceId),
     onSuccess: (_, row) => {
       toast.success(`"${row.keyword}" was removed from your library.`);
-      return queryClient.invalidateQueries({
-        queryKey: libraryQueries.list(workspaceId, userId).queryKey,
-      });
+      return refreshLibrary();
     },
     onError: (error, row) => {
+      // Already gone (removed in another tab, say): say so, and show the list as it is.
+      if (ApiError.hasStatus(error, 404)) {
+        toast.info(`"${row.keyword}" was already removed from your library.`);
+        return refreshLibrary();
+      }
       libraryLogger.error("Failed to delete keyword", { error });
-      toast.error(`"${row.keyword}" couldn't be removed. Try again.`);
+      toast.error(
+        `"${row.keyword}" couldn't be removed. It's still in your library. Try again.`,
+      );
+      return undefined;
     },
   });
 

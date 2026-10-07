@@ -497,9 +497,11 @@ export const ENDPOINTS = {
 
   /**
    * Keyword Library Endpoints
-   * @note Workspace-scoped keyword storage management
+   * @note The caller's own library in a workspace (rext-backend G78). Reads go to LangGraph's store,
+   * which answers only searches and gets; a removal goes through this app route.
    */
   KEYWORD_LIBRARY: {
-    base: "/store/items",
+    items: (workspaceId: string) =>
+      `/api/v1/workspaces/${workspaceId}/keyword-library/items` as const,
   },
 } as const;
