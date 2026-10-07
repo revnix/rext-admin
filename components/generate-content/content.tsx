@@ -865,7 +865,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               onClick={onEditToggle}
               disabled={!isFinal}
             >
-              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+              {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
               {isEditing ? "Preview" : "Edit"}
             </Button>
           ) : (
@@ -876,7 +876,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                 disabled
               >
-                <Pencil size={14} />
+                <Pencil size={16} />
                 Edit
               </Button>
             </LockedFeatureTooltip>
@@ -891,7 +891,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
             >
-              <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+              <Save size={16} className={isSaving ? "animate-pulse" : ""} />
               {isSaving ? "Saving…" : "Save"}
             </Button>
           ) : (
@@ -902,7 +902,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                 disabled
               >
-                <Save size={14} />
+                <Save size={16} />
                 Save
               </Button>
             </LockedFeatureTooltip>
@@ -917,9 +917,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                 size="sm"
                 className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
               >
-                <Copy size={14} />
+                <Copy size={16} />
                 Copy
-                <ChevronDown size={12} />
+                <ChevronDown size={16} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48" align="center">
@@ -944,11 +944,11 @@ function ContentEditorInner(props: ContentEditorProps) {
                   className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
                 >
                   <Send
-                    size={14}
+                    size={16}
                     className={isPublishing ? "animate-pulse" : ""}
                   />
                   {isPublishing ? "Publishing…" : "Publish"}
-                  <ChevronDown size={12} />
+                  <ChevronDown size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -990,7 +990,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
                 disabled
               >
-                <Send size={14} />
+                <Send size={16} />
                 Publish
               </Button>
             </LockedFeatureTooltip>
@@ -1095,10 +1095,10 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   return (
     // Full-bleed (cancels PageFrame's side gutters, 16, 24 and 32 px) and, on
-    // xl, exactly the viewport between the 56 px app header and the run dock
-    // (when it shows): each column scrolls on its own, so there is one
+    // xl, exactly the viewport between the app header (--header-height) and the
+    // run dock (when it shows): each column scrolls on its own, so there is one
     // scrollbar per column and none on the page (D23).
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-3.5rem-var(--dock-height,0px))] xl:overflow-hidden">
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-var(--header-height)-var(--dock-height,0px))] xl:overflow-hidden">
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
