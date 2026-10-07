@@ -681,10 +681,7 @@ export function PrimitivesGallery() {
                     · {layout.use}
                   </span>
                 </span>
-                <Link
-                  href={layout.example as Route}
-                  className="text-sm text-primary underline-offset-4 hover:underline"
-                >
+                <Link href={layout.example as Route} className="text-sm link">
                   {layout.example}
                 </Link>
               </li>

@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
                 </p>
                 {user?.permissions && user.permissions.length > 0 && (
                   <details className="mt-4">
-                    <summary className="cursor-pointer text-primary hover:underline">
+                    <summary className="cursor-pointer link">
                       View all permissions
                     </summary>
                     <ul className="mt-2 space-y-1 pl-4">

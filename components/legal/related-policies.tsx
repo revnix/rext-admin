@@ -18,7 +18,7 @@ export function RelatedPolicies({ current }: { current: Route }) {
       <ul className="space-y-1 text-body">
         {POLICIES.filter((policy) => policy.href !== current).map((policy) => (
           <li key={policy.href}>
-            <Link href={policy.href} className="text-primary hover:underline">
+            <Link href={policy.href} className="link">
               {policy.label}
             </Link>
           </li>
