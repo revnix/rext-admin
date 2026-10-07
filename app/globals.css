@@ -140,6 +140,8 @@
   --control-radius: var(--radius);
   --card-radius: calc(var(--radius) + 4px);
   --card-padding: 16px;
+  /* A dialog's long message (a server's reason) scrolls past this height. */
+  --dialog-message-max: 15rem;
   --page-gutter: 16px;
   --content-max: 1200px;
   --form-max: 560px;
