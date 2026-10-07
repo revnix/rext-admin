@@ -22,6 +22,8 @@ import type {
 import type { Persona } from "@/types/workspace";
 import { PersonaPicker } from "./persona-picker";
 
+// What the article does under each choice, as the backend holds it to (FB2.19):
+// each line is a promise the writer and the article's checks keep.
 const PROMINENCE: {
   value: BrandProminence;
   label: string;
@@ -31,14 +33,20 @@ const PROMINENCE: {
     value: "prominent",
     label: "Prominent",
     description:
-      "Named in the opening and the closing call to action, with what it offers.",
+      "Named in the opening and in the closing call to action, with what it offers.",
   },
   {
     value: "subtle",
     label: "Subtle",
-    description: "One natural mention in the body.",
+    description:
+      "One natural mention early in the body. Never in the title, a heading or the call to action.",
   },
-  { value: "none", label: "None", description: "Not mentioned." },
+  {
+    value: "none",
+    label: "None",
+    description:
+      "Not named and not linked anywhere: the title, the body, the call to action or the meta tags.",
+  },
 ];
 
 export interface OutlineBriefProps {
@@ -284,31 +292,37 @@ export function OutlineBrief({
 
       {brandPromotion && (
         <BriefGroup title="Brand mention">
-          <p className="text-table text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {brandPromotion.brand_name}
-            </span>
-            {brandPromotion.brand_url
-              ? `, linked to ${brandPromotion.brand_url}`
-              : ""}
-            <span className="num">
-              {" "}
-              · {Math.round(brandPromotion.score * 100)}% match
-            </span>
-          </p>
+          <div className="space-y-1 text-table text-muted-foreground">
+            <p>
+              <span className="font-medium text-foreground">
+                {brandPromotion.brand_name}
+              </span>
+              {brandPromotion.brand_url
+                ? `, linked to ${brandPromotion.brand_url}`
+                : ""}
+            </p>
+            <p>
+              This article's subject matches what {brandPromotion.brand_name}{" "}
+              offers by{" "}
+              <span className="num">
+                {Math.round(brandPromotion.score * 100)}%
+              </span>
+              .
+            </p>
+          </div>
           <RadioGroupPrimitive.Root
             aria-label={`How prominently ${brandPromotion.brand_name} is mentioned`}
             value={prominence}
             onValueChange={(value) =>
               onProminenceChange(value as BrandProminence)
             }
-            className="divide-y divide-border rounded-md border border-border"
+            className="space-y-2"
           >
             {PROMINENCE.map((option) => (
               <label
                 key={option.value}
                 htmlFor={`${ids}-prominence-${option.value}`}
-                className="flex cursor-pointer items-start gap-3 px-3 py-2.5 first:rounded-t-md last:rounded-b-md hover:bg-surface-inset has-data-[state=checked]:bg-surface-inset"
+                className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card px-3 py-3 transition-colors hover:bg-surface-inset has-data-[state=checked]:border-primary has-data-[state=checked]:hover:bg-card"
               >
                 <RadioGroupPrimitive.Item
                   id={`${ids}-prominence-${option.value}`}
