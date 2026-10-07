@@ -195,20 +195,13 @@ describe("the section edits", () => {
   });
 
   it("keeps a removed row after the section it followed when others move", () => {
-    const [a, b, c] = ids(rows) as string[];
+    const [a, b, c, d] = ids(rows) as string[];
+    // B goes with its subsection C.
     const removedB = removeRow(rows, b).rows;
-    // One Move up takes C past the hidden row and above A.
-    const moved = moveRow(removedB, c, -1);
-    expect(
-      groupRows(moved)[0]
-        .rows.map((row) => row.id)
-        .slice(0, 2),
-    ).toEqual([c, a]);
-    expect(
-      restoreRow(moved, b)
-        .map((row) => row.id)
-        .slice(0, 3),
-    ).toEqual([c, a, b]);
+    // One Move up takes D past the hidden rows and above A.
+    const moved = moveRow(removedB, d, -1);
+    expect(groupRows(moved)[0].rows.map((row) => row.id)).toEqual([d, a]);
+    expect(restoreRow(moved, b).map((row) => row.id)).toEqual([d, a, b, c]);
   });
 
   it("puts a row back in its own list after an edit in another", () => {
@@ -227,6 +220,64 @@ describe("the section edits", () => {
       "tools:0",
       "tools:1",
     ]);
+  });
+
+  it("removes an H2 with its H3s, and Undo brings the section back whole", () => {
+    // "Cushioning" (H2) takes "Heel drop" (H3) with it.
+    const {
+      rows: after,
+      removed,
+      subsections,
+    } = removeRow(rows, "structure.sections:1");
+    expect(removed?.heading).toBe("Cushioning");
+    expect(subsections).toBe(1);
+    expect(
+      sectionEdits(after).map((edit) => ("id" in edit ? edit.id : null)),
+    ).toEqual(["structure.sections:0", "structure.sections:3"]);
+    expect(restoreRow(after, "structure.sections:1")).toEqual(rows);
+  });
+
+  it("removes the first H2 alone when no H3 follows it", () => {
+    const { rows: after, subsections } = removeRow(
+      rows,
+      "structure.sections:0",
+    );
+    expect(subsections).toBe(0);
+    expect(groupRows(after)[0].rows.map((row) => row.id)).toEqual([
+      "structure.sections:1",
+      "structure.sections:2",
+      "structure.sections:3",
+    ]);
+  });
+
+  it("removes an H3 alone, and an H2's Undo leaves an H3 removed before it removed", () => {
+    const h3 = removeRow(rows, "structure.sections:2");
+    expect(h3.subsections).toBe(0);
+    const h2 = removeRow(h3.rows, "structure.sections:1");
+    expect(h2.subsections).toBe(0);
+    const undone = restoreRow(h2.rows, "structure.sections:1");
+    expect(groupRows(undone)[0].rows.map((row) => row.id)).toEqual([
+      "structure.sections:0",
+      "structure.sections:1",
+      "structure.sections:3",
+    ]);
+    expect(restoreRow(undone, "structure.sections:2")).toEqual(rows);
+  });
+
+  it("keeps the last H2 when removing it would take every row of the list", () => {
+    const last = rows.slice(1, 3); // "Cushioning" and its "Heel drop"
+    expect(canRemoveRow(last, "structure.sections:1")).toBe(false);
+    expect(canRemoveRow(last, "structure.sections:2")).toBe(true);
+  });
+
+  it("removes one row from a list without levels", () => {
+    const flat = [
+      { key: "tools:0", id: "tools:0", list: "tools", heading: "A tool" },
+      { key: "tools:1", id: "tools:1", list: "tools", heading: "B tool" },
+    ];
+    const { rows: after, subsections } = removeRow(flat, "tools:0");
+    expect(subsections).toBe(0);
+    expect(groupRows(after)[0].rows.map((row) => row.id)).toEqual(["tools:1"]);
   });
 
   it("never removes a list's last section", () => {
