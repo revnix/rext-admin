@@ -56,7 +56,7 @@ export function WithSidePane({
           <Button
             variant="outline"
             size="sm"
-            className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+--spacing(4))] z-(--z-sticky) lg:hidden"
+            className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+var(--dock-height,0px)+--spacing(4))] z-(--z-sticky) lg:hidden"
           >
             <PanelRight />
             {sideTitle}
