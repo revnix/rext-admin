@@ -31,10 +31,8 @@ jest.mock("@/lib/auth-utils", () => ({
   authenticatedFetch: jest.fn(() => new Promise(() => {})),
 }));
 jest.mock("@/providers/workspace-provider", () => ({
-  useWorkspaceOptional: () => ({
-    workspaceSlug: "acme",
-    workspace: { id: "ws-1" },
-  }),
+  // As in production on /w/ pages: the dock sits outside the page's WorkspaceProvider.
+  useWorkspaceOptional: () => null,
 }));
 
 const paused = (threadId: string, title: string): BackgroundGenerationJob => ({

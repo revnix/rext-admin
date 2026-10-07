@@ -7,9 +7,15 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { toast } from "sonner";
 
 import { RunProgress } from "@/components/generate-content/run-progress";
@@ -57,6 +63,22 @@ type GenerationStatusResponse = {
   runStage?: BackgroundGenerationJob["runStage"];
 };
 
+/** The run of the article whose page is open, from that page's query in the cache, if it has loaded. */
+function openArticleThread(
+  client: QueryClient,
+  articleId: string,
+): string | null {
+  if (!articleId) return null;
+  for (const [key, data] of client.getQueriesData<{
+    content?: { langgraph_thread_id?: string | null };
+  }>({ queryKey: ["content"] })) {
+    if (key[2] === articleId && data?.content?.langgraph_thread_id) {
+      return data.content.langgraph_thread_id;
+    }
+  }
+  return null;
+}
+
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
@@ -100,17 +122,17 @@ export function BackgroundGenerationDock() {
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
   // The article on screen, on its own page (/w/<slug>/content/<id>): its run is the one that page
   // already shows, so the dock leaves that job out however the page was reached (FB2.6). The run's
-  // thread is the article's langgraph_thread_id, read from the page's own query in the cache (the
-  // same key as useContentDetail), never fetched here.
+  // thread is the article's langgraph_thread_id, from the page's own query in the cache
+  // (useContentDetail's ["content", workspace id, id]), never fetched here. The dock sits outside the
+  // page's WorkspaceProvider, so the entry is found by the article's id, not built from a workspace id.
   const articleId =
     pathname?.match(/^\/w\/[^/]+\/content\/([^/]+)$/)?.[1] ?? "";
-  const { data: openArticle } = useQuery<{
-    content?: { langgraph_thread_id?: string | null };
-  } | null>({
-    queryKey: ["content", workspaceContext?.workspace?.id || "", articleId],
-    enabled: false,
-  });
-  const articleThreadId = openArticle?.content?.langgraph_thread_id ?? null;
+  const queryClient = useQueryClient();
+  const articleThreadId = useSyncExternalStore(
+    (onChange) => queryClient.getQueryCache().subscribe(onChange),
+    () => openArticleThread(queryClient, articleId),
+    () => null,
+  );
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showStages, setShowStages] = useState(false);
