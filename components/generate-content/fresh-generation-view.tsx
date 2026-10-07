@@ -2449,7 +2449,9 @@ export function FreshGenerationView({
           instructionType === "topic" ||
           instructionType === "topic_selection" ||
           (instructionType === "keyword Selection" &&
-            serpResultsFromGate(state.interrupt?.[0]?.value).length > 0)
+            serpResultsFromGate(state.interrupt?.[0]?.value).length > 0) ||
+          // A keyword analysed in place: the search field keeps the width it had (FB2.3).
+          reanalysingInPlace
         }
         className={cn(
           "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
@@ -2458,7 +2460,8 @@ export function FreshGenerationView({
             : !showContentStream
               ? "min-h-[85vh]"
               : "min-h-0",
-          instructionType === "outline_review"
+          // In place, the search field also stays at the top, where the new analysis will show.
+          instructionType === "outline_review" || reanalysingInPlace
             ? "justify-start"
             : " justify-center",
         )}
