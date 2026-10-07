@@ -50,6 +50,13 @@ export const workspaceQueries = {
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
     }),
+  /** The account's trash: the workspaces deleted and still restorable (Settings, Data and trash). */
+  deleted: () =>
+    queryOptions({
+      queryKey: [...workspaceQueries.all(), "deleted"] as const,
+      queryFn: () => apiClient.workspaces.getDeleted(),
+      staleTime: 30_000,
+    }),
   availableRoles: () =>
     queryOptions({
       queryKey: [...workspaceQueries.all(), "available-roles"] as const,
