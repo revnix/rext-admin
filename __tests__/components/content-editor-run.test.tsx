@@ -82,7 +82,7 @@ describe("ContentEditor's toolbar", () => {
 describe("ContentEditor while the article is written, as the page shows it (task 703)", () => {
   const writingProps = {
     isEnhancing: true,
-    enhancingMsg: "Writing the draft",
+    enhancingMsg: "Draft",
     allContent: {
       title: "How to start a podcast",
       meta_description: "Pick a show you can keep up.",
@@ -112,8 +112,10 @@ describe("ContentEditor while the article is written, as the page shows it (task
 
   it("says where the writing is, and keeps the actions for the end", () => {
     render(editor(writingProps));
-    expect(screen.getByText("Writing the draft")).toBeInTheDocument();
-    expect(screen.getByText(/section 2 of 3/)).toBeInTheDocument();
+    // In these words always: the stage's name alone ("Draft") read as the article's status.
+    expect(
+      screen.getByText("Writing the article").parentElement,
+    ).toHaveTextContent("Writing the article · Draft · section 2 of 3");
     for (const name of ["Edit", "Save", "Copy", "Publish"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
@@ -140,9 +142,9 @@ describe("ContentEditor while the article is written, as the page shows it (task
     const article = screen.getByRole("article");
     expect(within(article).getByText("The gear you need")).toBeInTheDocument();
     expect(within(article).getAllByText("Still to come")).toHaveLength(2);
-    // The stage's name is in the bar only, not on a panel over the text.
-    expect(screen.getAllByText("Writing the draft")).toHaveLength(1);
-    expect(within(article).queryByText("Writing the draft")).toBeNull();
+    // What is being written is said in the bar only, not on a panel over the text.
+    expect(screen.getAllByText("Writing the article")).toHaveLength(1);
+    expect(within(article).queryByText("Writing the article")).toBeNull();
   });
 
   it("shows the title and the outline's sections before the first words arrive, not grey bars", () => {
