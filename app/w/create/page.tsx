@@ -36,7 +36,10 @@ export default function CreateWorkspacePage() {
     initialLimitReached.current = isLimitReached;
   }
 
-  if (usage.isPending) {
+  // The skeleton waits for the first decision only. A refetch afterwards (the wizard's, once the
+  // workspace exists, or a window refocus after a failed read) puts a query with no data back to
+  // pending, and must not unmount the wizard mid-analysis.
+  if (initialLimitReached.current === null) {
     return <PageSkeleton layout="form" label="Checking workspace limits..." />;
   }
 
