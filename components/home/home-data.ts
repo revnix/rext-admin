@@ -277,7 +277,15 @@ export function recentPublishes(
     (item.publishing_results ?? []).flatMap((result) => {
       const state = publishState(String(result.status));
       if (!state) return [];
-      const at = Date.parse(result.last_synced_at ?? result.last_synced ?? "");
+      // A result the site hasn't been asked about yet (a publish that just failed) has no time of
+      // its own: the article's last change stands in, so it isn't sorted behind every dated one.
+      const at = Date.parse(
+        result.last_synced_at ??
+          result.last_synced ??
+          item.updated_at ??
+          item.created_at ??
+          "",
+      );
       return [
         {
           articleId: item.id,
