@@ -1,6 +1,6 @@
 import { AccountDeactivation } from "@/components/account-settings/account-deactivation";
 import { PrivacySettings } from "@/components/account-settings/privacy-settings";
-import { DeletedWorkspaces } from "@/components/settings/deleted-workspaces";
+import { AccountTrash } from "@/components/settings/account-trash";
 import { SettingsGroup } from "@/components/settings/settings-group";
 
 /** Account settings, Data and trash: export your data, the deleted workspaces, closing the account. */
@@ -13,7 +13,7 @@ export default function DataAndTrashSettingsPage() {
       >
         <PrivacySettings />
       </SettingsGroup>
-      <DeletedWorkspaces />
+      <AccountTrash />
       <SettingsGroup
         title="Close your account"
         description="What happens to your plan and your data is set out below, before you confirm."
