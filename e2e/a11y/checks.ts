@@ -35,8 +35,6 @@ interface Stop {
   devTool: boolean;
   /** What covers its centre, if something else does (2.4.11). */
   coveredBy: string | null;
-  /** The outline and box-shadow, while it has focus, of the element, its two nearest ancestors and its labels. */
-  rings: string[];
 }
 
 /**
@@ -54,7 +52,7 @@ export async function focusIssues(
     window.scrollTo(0, 0);
   });
   const issues: Issue[] = [];
-  const stops: Stop[] = [];
+  const stops: { stop: Stop; rings: string[] }[] = [];
   const seen = new Set<string>();
   for (let i = 0; i < maxStops; i++) {
     await page.keyboard.press("Tab");
@@ -64,7 +62,10 @@ export async function focusIssues(
     if (!stop || seen.has(stop.id)) break;
     seen.add(stop.id);
     if (stop.devTool) continue;
-    stops.push(stop);
+    stops.push({
+      stop,
+      rings: (await page.evaluate(readRings, stop.id)) ?? [],
+    });
     if (!stop.hidden && stop.coveredBy) {
       issues.push({
         check: "focus not obscured",
@@ -77,10 +78,10 @@ export async function focusIssues(
   await page.evaluate(() =>
     (document.activeElement as HTMLElement | null)?.blur(),
   );
-  for (const stop of stops) {
+  for (const { stop, rings } of stops) {
     const unfocused = await page.evaluate(readRings, stop.id);
     if (!unfocused) continue;
-    const shown = stop.rings.some(
+    const shown = rings.some(
       (ring, level) => ring !== "" && ring !== unfocused[level],
     );
     if (!shown) {
@@ -237,35 +238,21 @@ function readFocus(): Stop | null {
     }
   }
 
-  const candidates: Element[] = [el];
-  for (let up = el.parentElement, level = 0; up && level < 2; level++) {
-    candidates.push(up);
-    up = up.parentElement;
-  }
-  candidates.push(...Array.from((el as HTMLInputElement).labels ?? []));
-  const rings = candidates.map((node) => {
-    const s = getComputedStyle(node);
-    const outline =
-      s.outlineStyle !== "none" &&
-      Number.parseFloat(s.outlineWidth) > 0 &&
-      s.outlineColor !== "transparent" &&
-      !/rgba\([^)]*,\s*0\)$/.test(s.outlineColor)
-        ? `outline ${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor}`
-        : "";
-    const shadow = s.boxShadow !== "none" ? `shadow ${s.boxShadow}` : "";
-    return [outline, shadow].filter(Boolean).join(" ");
-  });
   return {
     id: el.dataset[marker] as string,
     label,
     hidden,
     devTool: isDevTool(el),
     coveredBy,
-    rings,
   };
 }
 
-/** Runs in the page: the same elements' outline and box-shadow for a marked element, unfocused. */
+/**
+ * Runs in the page: the outline and box-shadow a marked element, its three nearest ancestors and its labels
+ * show now (read with focus on the element, then without). Only what can be seen counts: an outline or a
+ * shadow layer in a transparent colour, or a shadow of no size (a ring of 0 px, as `ring-0` leaves),
+ * reads as nothing, so swapping one for another isn't taken for a focus ring.
+ */
 function readRings(id: string): string[] | null {
   const el = document.querySelector(`[data-a11y-stop="${id}"]`);
   if (!el) return null;
@@ -273,23 +260,56 @@ function readRings(id: string): string[] | null {
   for (const animation of document.getAnimations()) {
     if (animation instanceof CSSTransition) animation.finish();
   }
+  // A computed colour's alpha: rgba()'s fourth value, or what follows the slash in the newer forms.
+  const opaque = (colour: string) => {
+    if (colour === "transparent") return false;
+    const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(colour);
+    if (slash) return Number(slash[1]) > 0;
+    const rgba = /^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)$/.exec(colour);
+    return rgba ? Number(rgba[1]) > 0 : true;
+  };
+  // Box-shadow layers, split on the commas outside a colour's parentheses.
+  const layers = (shadow: string) => {
+    const found: string[] = [];
+    let depth = 0;
+    let from = 0;
+    for (let i = 0; i < shadow.length; i++) {
+      if (shadow[i] === "(") depth++;
+      else if (shadow[i] === ")") depth--;
+      else if (shadow[i] === "," && depth === 0) {
+        found.push(shadow.slice(from, i).trim());
+        from = i + 1;
+      }
+    }
+    found.push(shadow.slice(from).trim());
+    return found;
+  };
+  const seen = (layer: string) => {
+    const colour = /^(\w+\([^)]*\)|[a-z]+)/.exec(layer)?.[1] ?? "";
+    const lengths = layer
+      .slice(colour.length)
+      .match(/-?[\d.]+px/g)
+      ?.map((length) => Number.parseFloat(length));
+    return opaque(colour) && (lengths ?? []).some((length) => length !== 0);
+  };
   const candidates: Element[] = [el];
-  for (let up = el.parentElement, level = 0; up && level < 2; level++) {
+  // Three: the box a field shows its focus on can sit outside Input's own wrapper and a row (the keyword form).
+  for (let up = el.parentElement, level = 0; up && level < 3; level++) {
     candidates.push(up);
     up = up.parentElement;
   }
   candidates.push(...Array.from((el as HTMLInputElement).labels ?? []));
-  const rings = candidates.map((node) => {
+  return candidates.map((node) => {
     const s = getComputedStyle(node);
     const outline =
       s.outlineStyle !== "none" &&
       Number.parseFloat(s.outlineWidth) > 0 &&
-      s.outlineColor !== "transparent" &&
-      !/rgba\([^)]*,\s*0\)$/.test(s.outlineColor)
+      opaque(s.outlineColor)
         ? `outline ${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor}`
         : "";
-    const shadow = s.boxShadow !== "none" ? `shadow ${s.boxShadow}` : "";
+    const shown =
+      s.boxShadow === "none" ? [] : layers(s.boxShadow).filter(seen);
+    const shadow = shown.length > 0 ? `shadow ${shown.join(", ")}` : "";
     return [outline, shadow].filter(Boolean).join(" ");
   });
-  return rings;
 }
