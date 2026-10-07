@@ -126,6 +126,17 @@ describe("deriveBackgroundProgress, the run component's stage", () => {
     ).toEqual({ phase: "analysis", id: "measure" });
   });
 
+  it("names where a timed-out run stopped, with its error (E22)", () => {
+    const progress = deriveBackgroundProgress(
+      "timeout",
+      inside("content_engine", "humanize_content"),
+    );
+    expect(progress.runStage).toEqual({ phase: "article", id: "style" });
+    expect(progress.error).toBe(
+      "Article generation timed out. Open it to try again.",
+    );
+  });
+
   it("names none for a run that is not running", () => {
     expect(
       deriveBackgroundProgress("pending", inside("serp_engine", "fetch_serp"))

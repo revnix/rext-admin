@@ -169,9 +169,12 @@ export function deriveBackgroundProgress(
   state?: GenerationThreadState | null,
 ): BackgroundProgress {
   const progress = deriveProgressAndStage(runStatus, state);
-  if (runStatus !== "running" || progress.error) return progress;
-  const runStage = deriveRunStage(state);
-  return runStage ? { ...progress, runStage } : progress;
+  // A running run's stage; and a timed-out run's, where the time limit stopped it (E22, rext-control#451).
+  if (runStatus === "timeout" || (runStatus === "running" && !progress.error)) {
+    const runStage = deriveRunStage(state);
+    return runStage ? { ...progress, runStage } : progress;
+  }
+  return progress;
 }
 
 function deriveProgressAndStage(

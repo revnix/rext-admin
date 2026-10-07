@@ -158,6 +158,18 @@ export function failStages(stages: RunStage[], now: number): RunStage[] {
   });
 }
 
+/**
+ * A run the time limit stopped, from outside the stream (the dock's poll, the page's restore): the
+ * stage it stopped in failed, the ones before it done, the ones after never ran (E22,
+ * rext-control#451).
+ */
+export function timedOutStages(
+  runStage: { phase: RunPhase; id: string },
+  now: number,
+): RunStage[] {
+  return failStages(stagesAt(runStage.phase, runStage.id), now);
+}
+
 /** Where a running node puts the run: its phase and stage. The dock reads this from the thread's
  *  state (the nodes running when it polls), so it holds every node that can run, not only the
  *  ones that end a stage. */

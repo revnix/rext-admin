@@ -24,7 +24,7 @@ import {
   requestBackgroundGenerationRestore,
 } from "@/lib/generate-content/background-generation-sync";
 import { describeFailedJob } from "@/lib/generate-content/background-progress";
-import { stagesAt } from "@/lib/generate-content/run-stages";
+import { stagesAt, timedOutStages } from "@/lib/generate-content/run-stages";
 import { workspaceRoutes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/providers/workspace-provider";
@@ -312,6 +312,7 @@ export function BackgroundGenerationDock() {
                 stage: nextStage,
                 progress: nextProgress,
                 runStage: nextRunStage,
+                timedOut: false,
                 ...(stageChanged && {
                   stageStartedAt: new Date().toISOString(),
                 }),
@@ -340,10 +341,15 @@ export function BackgroundGenerationDock() {
               payload.run.status === "timeout" ||
               payload.run.status === "interrupted"
             ) {
+              const timedOut = payload.run.status === "timeout";
               updateJob(job.threadId, {
                 runId: payload.run.id,
                 status: "failed",
-                runStage: undefined,
+                // A timed-out run keeps where it stopped, for the run component's Timed out state.
+                runStage: timedOut
+                  ? (payload.runStage ?? latestJob.runStage)
+                  : undefined,
+                timedOut,
                 stage: payload.stage ?? "Generation failed",
                 progress: 100,
                 error:
@@ -521,15 +527,20 @@ export function BackgroundGenerationDock() {
   // blank selection page — which hid Continue for a job that was waiting on the
   // user, leaving no way back into it.
   const isOnResultPage = openThreadId === job.threadId;
-  // The run component, for a run the poll has placed in a stage; other jobs keep their sentence.
-  const runStages =
-    pending && job.runStage
+  // The run component, for a run the poll has placed in a stage, and for one that timed out there
+  // (the running stage failed, the rest never ran); other jobs keep their sentence.
+  const timedOut = job.status === "failed" && job.timedOut === true;
+  const runStages = !job.runStage
+    ? null
+    : pending
       ? stagesAt(
           job.runStage.phase,
           job.runStage.id,
           job.stageStartedAt ? Date.parse(job.stageStartedAt) : undefined,
         )
-      : null;
+      : timedOut
+        ? timedOutStages(job.runStage, Date.now())
+        : null;
 
   return (
     <section
@@ -579,6 +590,7 @@ export function BackgroundGenerationDock() {
             <RunProgress
               variant="compact"
               stages={runStages}
+              timedOut={timedOut}
               className="mt-1 max-w-sm"
             />
           ) : (
@@ -667,7 +679,11 @@ export function BackgroundGenerationDock() {
           id="background-generation-stages"
           className="border-t border-border px-4 py-3 md:px-6"
         >
-          <RunProgress stages={runStages} className="max-w-md" />
+          <RunProgress
+            stages={runStages}
+            timedOut={timedOut}
+            className="max-w-md"
+          />
         </div>
       )}
 

@@ -77,6 +77,24 @@ describe("RunProgress", () => {
     expect(screen.queryByText(/Still working/)).toBeNull();
   });
 
+  it("shows a timed-out run's failed stage and the notice, with no clock (E22)", () => {
+    const stopped = analysis(60_000).map((stage) =>
+      stage.state === "active"
+        ? { ...stage, state: "failed" as const, endedAt: 1 }
+        : stage.state === "pending"
+          ? { ...stage, state: "skipped" as const }
+          : stage,
+    );
+    render(<RunProgress stages={stopped} timedOut />);
+    expect(screen.getByText("Failed")).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent("Timed out");
+  });
+
+  it("says Timed out on the dock's one line", () => {
+    render(<RunProgress stages={analysis(2000)} variant="compact" timedOut />);
+    expect(screen.getByText("Timed out", { selector: "span" })).toBeVisible();
+  });
+
   it("announces the running stage", () => {
     render(<RunProgress stages={analysis(2000)} />);
     expect(
