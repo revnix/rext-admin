@@ -2,16 +2,18 @@
 
 import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 
 interface OAuthButtonsProps {
   callbackUrl?: string;
+  /** Under the buttons, before "Or continue with email": what they agree to. */
+  notice?: ReactNode;
 }
 
-export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
+export function OAuthButtons({ callbackUrl = "/", notice }: OAuthButtonsProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
 
@@ -86,6 +88,8 @@ export function OAuthButtons({ callbackUrl = "/" }: OAuthButtonsProps) {
           GitHub
         </Button>
       </div>
+
+      {notice}
 
       <div className="flex items-center gap-3 text-caption text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
