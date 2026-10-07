@@ -1448,6 +1448,29 @@ describe("buildOutlineApproval", () => {
     });
   });
 
+  it("sends the keywords as the user left them, and none when the outline has none", () => {
+    // FB2.18: the backend reads the list as the user's, and what is missing from it as removed.
+    const approval = buildOutlineApproval({
+      ...base,
+      keywords: ["running shoes", "trail shoes"],
+    });
+    expect(approval.keywords_to_include).toEqual([
+      "running shoes",
+      "trail shoes",
+    ]);
+    // Every secondary keyword removed: the focus keyphrase alone still says so.
+    expect(
+      buildOutlineApproval({ ...base, keywords: ["running shoes"] })
+        .keywords_to_include,
+    ).toEqual(["running shoes"]);
+    expect(buildOutlineApproval(base)).not.toHaveProperty(
+      "keywords_to_include",
+    );
+    expect(buildOutlineApproval({ ...base, keywords: [] })).not.toHaveProperty(
+      "keywords_to_include",
+    );
+  });
+
   it("sends the sections in the user's order once they changed", () => {
     const twiceUp = moveRow(
       moveRow(rows, "structure.sections:3", -1),
