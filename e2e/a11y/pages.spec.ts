@@ -3,6 +3,10 @@ import { axeIssues, focusIssues, type Issue, motionIssues } from "./checks";
 import { routesToCheck } from "./routes";
 import { test } from "./shared-context";
 
+// Every page opens with reduced motion, so the motion check sees what such a visitor gets and the other
+// checks read finished states (the shared, signed-in context sets it itself).
+test.use({ reducedMotion: "reduce" });
+
 const listed = (issues: Issue[]) =>
   issues.map((issue) => `${issue.check}: ${issue.target}: ${issue.detail}`);
 
