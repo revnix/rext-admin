@@ -49,15 +49,26 @@ jest.mock("@/components/ui/safe-lexical-editor", () => ({
   SafeLexicalEditor: ({
     initialValue,
     onChange,
+    toolbar,
+    bare,
+    plugins,
   }: {
     initialValue: string;
     onChange: (markdown: string) => void;
+    toolbar?: boolean;
+    bare?: boolean;
+    plugins?: unknown;
   }) => (
-    <textarea
-      aria-label="Article text"
-      defaultValue={initialValue}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <>
+      <textarea
+        aria-label="Article text"
+        defaultValue={initialValue}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <output aria-label="Editor options">
+        {`toolbar=${toolbar} bare=${bare} plugins=${plugins ? "yes" : "no"}`}
+      </output>
+    </>
   ),
 }));
 
@@ -114,6 +125,14 @@ describe("The full-screen article editor", () => {
       images_data: expect.objectContaining({ images: [] }),
     });
     expect(await screen.findByText(/^Saved · /)).toBeInTheDocument();
+  });
+
+  it("brings its own tools: no fixed toolbar, no frame, its plugins", () => {
+    renderPage();
+    expect(screen.getByLabelText("Editor options")).toHaveTextContent(
+      "toolbar=false bare=true plugins=yes",
+    );
+    expect(screen.getByText(/Type \/ for blocks/)).toBeInTheDocument();
   });
 
   it("doesn't save the editor's own first rewrite of the text", async () => {
