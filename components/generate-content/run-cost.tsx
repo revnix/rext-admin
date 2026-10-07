@@ -60,7 +60,7 @@ export function StageCostTooltip({
       <TooltipContent side="top" className="max-w-xs">
         <span className="grid grid-cols-[1fr_auto] gap-x-4">
           <span>{stageName(stage)}</span>
-          <span className="num text-right">{formatCount(cost)}</span>
+          <span className="num text-right">{formatCredits(cost)}</span>
         </span>
         {balance && metered && (
           <span className="mt-1.5 block">
@@ -97,14 +97,14 @@ export function RunCostTooltip({
             <span key={stage.key} className="contents">
               <span>{stageName(stage.key)}</span>
               <span className="num text-right">
-                {formatCount(stage.credits)}
+                {formatCredits(stage.credits)}
               </span>
             </span>
           ))}
-          {cost.stages.length > 1 && (
+          {cost.stages.length !== 1 && (
             <span className="contents font-medium">
-              <span>Total</span>
-              <span className="num text-right">{formatCount(cost.cost)}</span>
+              <span>{cost.stages.length > 1 ? "Total" : "Cost"}</span>
+              <span className="num text-right">{formatCredits(cost.cost)}</span>
             </span>
           )}
         </span>
@@ -116,5 +116,24 @@ export function RunCostTooltip({
         )}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * A touch screen has no hover, so on a phone the run's cost and the balance it leaves stay in a
+ * line beneath the buttons (never on them): the tooltip can't be opened before the tap starts the
+ * run. Hidden from 640 px up, where the tooltip serves.
+ */
+export function PhoneRunCost({ run }: { run: BilledRun }) {
+  const view = useRunCost(run);
+  if (!view) return null;
+  const { cost, metered } = view;
+  return (
+    <p className="num text-right text-xs text-muted-foreground sm:hidden">
+      {formatCredits(cost.cost)}
+      {metered &&
+        cost.balance_after !== null &&
+        ` · balance after ${formatCount(cost.balance_after)}`}
+    </p>
   );
 }

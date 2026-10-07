@@ -15,6 +15,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import userEvent from "@testing-library/user-event";
 import {
+  PhoneRunCost,
   RunCostTooltip,
   StageCostTooltip,
 } from "@/components/generate-content/run-cost";
@@ -112,6 +113,22 @@ describe("RunCostTooltip (FB2.11: the cost in the tooltip, not on the label)", (
   });
 });
 
+describe("PhoneRunCost", () => {
+  it("keeps the article's cost and the balance after visible on a phone, beneath the buttons", () => {
+    useBalance(balance(4540));
+    render(<PhoneRunCost run="generate" />);
+    expect(screen.getByText(/12 credits/)).toHaveTextContent(
+      "12 credits · balance after 4,528",
+    );
+  });
+
+  it("names the cost alone on an unlimited plan", () => {
+    useBalance(balance(4540, null));
+    render(<PhoneRunCost run="generate" />);
+    expect(screen.getByText(/credits/)).toHaveTextContent(/^12 credits$/);
+  });
+});
+
 describe("StageCostTooltip", () => {
   it("gives the stage's credits from the plan catalogue, and the balance after", async () => {
     useBalance(balance(4540));
@@ -132,7 +149,8 @@ describe("StageCostTooltip", () => {
 
     await user.tab();
     const tip = await screen.findByRole("tooltip");
-    expect(tip).toHaveTextContent("1");
+    // The amount says what it is, even without a balance (an unlimited plan).
+    expect(tip).toHaveTextContent("1 credit");
     expect(tip).toHaveTextContent("Balance after: 4,539 credits");
     expect(
       screen.getByRole("button", { name: "Continue with this keyword" }),
