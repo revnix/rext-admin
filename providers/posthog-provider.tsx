@@ -8,6 +8,7 @@ import { useEffect, Suspense, useRef, useState } from "react";
 import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import {
   analytics,
+  isImpersonating,
   registerPostHog,
   takeOAuthLinking,
   unregisterPostHog,
@@ -124,8 +125,13 @@ type RunningMode = "full" | "anonymous";
 // Read by before_send, which posthog-js keeps for the page's life: a "no" given later applies at once.
 let runningMode: RunningMode | null = null;
 
-/** posthog-js's before_send: the credentials out of every address; for a "no", page routes only. */
+/**
+ * posthog-js's before_send: nothing during impersonation; otherwise the credentials out of every
+ * address, and for a "no", page routes only.
+ */
 function beforeSend(event: CaptureResult | null): CaptureResult | null {
+  // An admin acting as a customer: nothing leaves, page views and identification included.
+  if (isImpersonating()) return null;
   const redacted = redactEventUrls(event);
   return runningMode === "anonymous"
     ? anonymousEvent(redacted, routeOnScreen)
