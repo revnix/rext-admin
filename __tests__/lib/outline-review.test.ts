@@ -918,7 +918,60 @@ describe("what the outline says about itself", () => {
     expect(listSummary(addRow(rows, "s", "Tools"), deepOutline, "s")).toBe(
       "5 sections · 3 subsections · ~1,950 words",
     );
-    expect(listSummary([treeRow("t0", "Trowel")], {}, "s")).toBe("1 section");
+    // One section left, with no budget to add up.
+    expect(listSummary([treeRow("a", "A", "H2")], {}, "s")).toBe("1 section");
+  });
+
+  it("counts a list without heading levels by its own name", () => {
+    // A How-to's lists, as a real run sent them: "Steps" and "Tools", neither with levels.
+    const named = (list: string, count: number) =>
+      Array.from({ length: count }, (_, index) =>
+        treeRow(`${list}:${index}`, `Row ${index}`, undefined, list),
+      );
+    const summary = (list: string, count: number) =>
+      listSummary(named(list, count), {}, list);
+
+    expect(summary("steps", 5)).toBe("5 steps");
+    expect(summary("steps", 1)).toBe("1 step");
+    expect(summary("tools", 3)).toBe("3 tools");
+    expect(summary("tools", 1)).toBe("1 tool");
+    // The name is the list's label: the last part of its path, underscores as spaces.
+    expect(summary("structure.key_decisions", 2)).toBe("2 key decisions");
+    expect(summary("structure.key_decisions", 1)).toBe("1 key decision");
+    expect(summary("phases", 1)).toBe("1 phase");
+    // No simple singular: items, for one row and for many, so the word never changes with the count.
+    for (const list of [
+      "categories",
+      "classes",
+      "boxes",
+      "analysis",
+      "tools_needed",
+      "glossary",
+    ]) {
+      expect(summary(list, 1)).toBe("1 item");
+      expect(summary(list, 4)).toBe("4 items");
+    }
+  });
+
+  it("keeps the words budgeted beside a named count, and sections where rows have levels", () => {
+    const steps = [0, 1, 2].map((index) =>
+      treeRow(`steps:${index}`, `Step ${index}`, undefined, "steps"),
+    );
+    const budgets = {
+      steps: [300, 250, 350].map((words) => ({
+        suggested_word_count: words,
+      })),
+    };
+    expect(listSummary(steps, budgets, "steps")).toBe("3 steps · ~900 words");
+    expect(
+      listSummary(removeRow(steps, "steps:1").rows, budgets, "steps"),
+    ).toBe("2 steps · ~650 words");
+    // A list named for something else still counts sections once its rows carry levels.
+    const levelled = [
+      treeRow("steps:0", "Prepare", "H2", "steps"),
+      treeRow("steps:1", "Measure", "H3", "steps"),
+    ];
+    expect(listSummary(levelled, {}, "steps")).toBe("1 section · 1 subsection");
   });
 
   it("reads the FAQ's questions from every shape the outline holds them in", () => {
