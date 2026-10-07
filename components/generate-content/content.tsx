@@ -51,7 +51,6 @@ import {
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -857,24 +856,18 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* The article's actions, each named (D23): a 2 by 2 grid so the words fit the 288 px pane. */}
       <div className="grid grid-cols-2 gap-2 px-3 sticky top-0 bg-card py-3 z-4 border-b border-border">
         <div>
+          {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
           {canUpdate ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-                  onClick={onEditToggle}
-                  disabled={!isFinal}
-                >
-                  {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
-                  {isEditing ? "Preview" : "Edit"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {isEditing ? "View preview mode" : "Edit content"}
-              </TooltipContent>
-            </Tooltip>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+              onClick={onEditToggle}
+              disabled={!isFinal}
+            >
+              {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+              {isEditing ? "Preview" : "Edit"}
+            </Button>
           ) : (
             <LockedFeatureTooltip message="Editing requires Editor role or above">
               <Button
@@ -891,23 +884,16 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div>
           {canUpdate ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={saveContent}
-                  disabled={!isFinal || isSaving || isPublishing}
-                  variant="secondary"
-                  size="sm"
-                  className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-                >
-                  <Save size={14} className={isSaving ? "animate-pulse" : ""} />
-                  {isSaving ? "Saving…" : "Save"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Saves the content in the workspace
-              </TooltipContent>
-            </Tooltip>
+            <Button
+              onClick={saveContent}
+              disabled={!isFinal || isSaving || isPublishing}
+              variant="secondary"
+              size="sm"
+              className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+            >
+              <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+              {isSaving ? "Saving…" : "Save"}
+            </Button>
           ) : (
             <LockedFeatureTooltip message="Saving requires Editor role or above">
               <Button
@@ -924,23 +910,18 @@ function ContentEditorInner(props: ContentEditorProps) {
         </div>
         <div>
           <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    disabled={!isFinal}
-                    variant="secondary"
-                    size="sm"
-                    className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-                  >
-                    <Copy size={14} />
-                    Copy
-                    <ChevronDown size={12} />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Copy content</TooltipContent>
-            </Tooltip>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={!isFinal}
+                variant="secondary"
+                size="sm"
+                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+              >
+                <Copy size={14} />
+                Copy
+                <ChevronDown size={12} />
+              </Button>
+            </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48" align="center">
               <DropdownMenuItem onClick={() => handleCopy("html")}>
                 Copy HTML
@@ -1114,9 +1095,10 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   return (
     // Full-bleed (cancels PageFrame's side gutters, 16, 24 and 32 px) and, on
-    // xl, exactly the viewport below the 5rem app header: each column scrolls
-    // on its own, so there is one scrollbar per column and none on the page.
-    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-5rem)] xl:overflow-hidden">
+    // xl, exactly the viewport between the 56 px app header and the run dock
+    // (when it shows): each column scrolls on its own, so there is one
+    // scrollbar per column and none on the page (D23).
+    <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-3.5rem-var(--dock-height,0px))] xl:overflow-hidden">
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Sidebar: Outline (never render inside editor body) */}
         {sidebarSections.length > 0 && (
