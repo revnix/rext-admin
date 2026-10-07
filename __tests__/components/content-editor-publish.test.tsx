@@ -229,6 +229,17 @@ describe("The article's Publish menu", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers the article as Markdown by that name (#704)", async () => {
+    render(editor(false));
+    const user = userEvent.setup();
+    screen.getAllByRole("button", { name: "Copy" })[0].focus();
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByRole("menuitem", { name: "Copy Markdown" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Copy MD" })).toBeNull();
+  });
+
   it("links to the post after a publish", async () => {
     api.content.publish.mockResolvedValue({
       content: { wordpress_url: "https://example.com/how-to-start/" },

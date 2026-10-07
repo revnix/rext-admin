@@ -944,7 +944,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Copy HTML
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-                Copy MD
+                Copy Markdown
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("formatted")}>
                 Copy Text
@@ -1229,7 +1229,10 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </>
             ) : (
-              <div className="relative">
+              // Images span the article's column at their own aspect, the featured one
+              // included (the founder's feedback v2, #704); the editor's image nodes stay
+              // as they are in Edit.
+              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(>img)]:block">
                 {!body?.trim() ? (
                   <div className="not-prose space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -1253,6 +1256,15 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 ) : (
                   <>
+                    {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
+                        the article, instead of behind its button (#704). */}
+                    <div className="not-prose mb-8 xl:hidden">
+                      <ArticleChecklist
+                        seoScore={seoScore}
+                        checklist={checklist}
+                        trustScore={trustScore}
+                      />
+                    </div>
                     <header>
                       {tags.length > 0 && (
                         <div className="not-prose mb-4 flex flex-wrap gap-2">
