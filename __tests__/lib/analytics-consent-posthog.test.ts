@@ -65,6 +65,21 @@ describe("posthog-js under the consent rule", () => {
     expect(storedAboutThePerson()).toEqual([]);
   });
 
+  it("forgets the choice on a reset, so the provider has to put it back", () => {
+    const { client, seen } = start("reset");
+    client.opt_in_capturing({ captureEventName: false });
+
+    client.reset();
+    client.capture("after_the_reset");
+    expect(seen.map((event) => event.event)).not.toContain("after_the_reset");
+
+    client.opt_in_capturing({ captureEventName: false });
+    client.capture("after_the_choice_is_back");
+    expect(seen.map((event) => event.event)).toContain(
+      "after_the_choice_is_back",
+    );
+  });
+
   it("captures with an identity it stores after a yes", () => {
     const { client, seen } = start("allowed");
 

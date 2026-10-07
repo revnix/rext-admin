@@ -150,6 +150,22 @@ describe("where analytics is on unless switched off", () => {
     expect(question()).toBeNull();
   });
 
+  it("puts the choice back after a sign-out's reset, which posthog-js forgets it on", async () => {
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());
+    expect(mockPosthog.opt_in_capturing).toHaveBeenCalledTimes(1);
+
+    // Signing out resets analytics through the wrapper (lib/logout-utils.ts).
+    analytics.reset();
+
+    expect(mockPosthog.reset).toHaveBeenCalledTimes(1);
+    expect(mockPosthog.opt_in_capturing).toHaveBeenCalledTimes(2);
+    // Put back quietly: nobody chose anything just now.
+    expect(mockPosthog.opt_in_capturing).toHaveBeenLastCalledWith({
+      captureEventName: false,
+    });
+  });
+
   it("drops the identity and our own events the moment the switch goes off", async () => {
     renderProvider();
     await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());

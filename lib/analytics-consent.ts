@@ -102,34 +102,87 @@ export async function analyticsMode(): Promise<AnalyticsMode> {
 
 const CHANGE_EVENT = "rext:analytics-consent";
 
-/** Records the choice and tells the page (the analytics provider, the prompt, the settings). */
-export function writeConsent(choice: ConsentChoice): void {
+function setConsentCookie(choice: ConsentChoice): void {
   // biome-ignore lint/suspicious/noDocumentCookie: the choice is read back synchronously, here and by the server
   document.cookie = consentCookie(
     choice,
     window.location.protocol === "https:",
   );
-  // The same cookie from the server lasts the full six months in Safari too. If the request
-  // fails, the cookie written above still holds the choice.
+}
+
+// The same cookie from the server lasts the full six months in Safari too. One request at a time,
+// and always for the latest choice: two presses of the switch in quick succession would otherwise
+// race, and the slower answer's cookie would replace the newer choice.
+let latestChoice: ConsentChoice | null = null;
+let serverBusy = false;
+
+function sendToServer(): void {
+  if (serverBusy || latestChoice === null) return;
+  const choice = latestChoice;
+  serverBusy = true;
   void fetch("/api/consent", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ choice }),
     keepalive: true,
-  }).catch(() => {});
-  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: choice }));
+  })
+    // If the request fails, the cookie written by the page still holds the choice.
+    .catch(() => {})
+    .then(() => {
+      serverBusy = false;
+      if (latestChoice !== null && latestChoice !== choice) {
+        // A newer choice was made meanwhile, and the server's cookie has just replaced it:
+        // put it back at once, then send it.
+        setConsentCookie(latestChoice);
+        sendToServer();
+      }
+    });
 }
 
-/** Runs `listener` whenever the person chooses, on this page. Returns the way to stop. */
+// The app's other tabs hear a change at once, through one channel per page: the object that
+// posts a message doesn't receive it, so this page's listeners hear it once, from the window.
+let tabs: BroadcastChannel | null | undefined;
+
+function otherTabs(): BroadcastChannel | null {
+  if (tabs === undefined) {
+    tabs =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel(CHANGE_EVENT);
+  }
+  return tabs;
+}
+
+/** Records the choice and tells the app, in this tab and the others. */
+export function writeConsent(choice: ConsentChoice): void {
+  setConsentCookie(choice);
+  latestChoice = choice;
+  sendToServer();
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: choice }));
+  otherTabs()?.postMessage(choice);
+}
+
+/**
+ * Runs `listener` whenever the person chooses, in this tab or another of the app's. Returns the
+ * way to stop.
+ */
 export function onConsentChange(
   listener: (choice: ConsentChoice) => void,
 ): () => void {
-  const handle = (event: Event) => {
+  const here = (event: Event) => {
     const choice = (event as CustomEvent).detail;
     if (isConsentChoice(choice)) listener(choice);
   };
-  window.addEventListener(CHANGE_EVENT, handle);
-  return () => window.removeEventListener(CHANGE_EVENT, handle);
+  const elsewhere = (event: MessageEvent) => {
+    if (isConsentChoice(event.data)) listener(event.data);
+  };
+  const channel = otherTabs();
+  window.addEventListener(CHANGE_EVENT, here);
+  channel?.addEventListener("message", elsewhere);
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, here);
+    channel?.removeEventListener("message", elsewhere);
+  };
 }
 
 /**
