@@ -1,6 +1,6 @@
 // The legal pages live on the website, open to anyone signed out (the app's /legal pages aren't).
-const TERMS_URL = "https://rext.ai/terms";
-const PRIVACY_URL = "https://rext.ai/privacy";
+const TERMS_URL = "https://rext.ai/terms-and-conditions";
+const PRIVACY_URL = "https://rext.ai/privacy-policy";
 
 const LINK = "underline underline-offset-4 hover:text-foreground";
 
