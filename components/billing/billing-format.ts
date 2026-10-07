@@ -48,6 +48,47 @@ export function monthlyCreditsLeft(
   return credits.monthly_credits ?? credits.current_credits;
 }
 
+/**
+ * A balance set against the plan's monthly allowance, as every surface words it (task 784). At or
+ * under the allowance it is "412 of 1,000". Above it (credits an admin added, a balance carried
+ * over) "157 of 60" would read as a mistake, so the balance stands alone, and the bar is full,
+ * never past its track.
+ */
+export function againstAllowance(left: number, total: number | null) {
+  const over = total !== null && left > total;
+  return {
+    /** The balance is above the allowance. */
+    over,
+    /** The allowance to name after "of", or null when there is none to name. */
+    of: over ? null : total,
+    /** The bar's reading, or null with no allowance to measure against. */
+    meter:
+      total !== null && total > 0
+        ? { value: Math.min(Math.max(left, 0), total), max: total }
+        : null,
+  };
+}
+
+/** "412 of 1,000 credits", or "157 credits" above the allowance or with none. */
+export function balanceLine(left: number, total: number | null): string {
+  const { of } = againstAllowance(left, total);
+  return of !== null
+    ? `${left.toLocaleString()} of ${of.toLocaleString()} credits`
+    : `${left.toLocaleString()} credits`;
+}
+
+/**
+ * What the balance is made of while a bonus is still there: "1,000 monthly + 600 launch bonus".
+ * Null without one. The backend spends the bonus first.
+ */
+export function breakdownWords(
+  credits: Pick<CreditBalance, "current_credits" | "monthly_credits" | "bonus">,
+): string | null {
+  const bonus = credits.bonus;
+  if (!bonus || bonus.credits <= 0) return null;
+  return `${monthlyCreditsLeft(credits).toLocaleString()} monthly + ${bonus.credits.toLocaleString()} ${bonus.label.toLowerCase()}`;
+}
+
 /** "Plus 1,000 launch bonus credits, until Oct 14, 2026." or null. */
 export function bonusWords(
   credits: Pick<CreditBalance, "bonus">,

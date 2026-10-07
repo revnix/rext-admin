@@ -4,7 +4,10 @@
  */
 
 import {
+  againstAllowance,
+  balanceLine,
   bonusWords,
+  breakdownWords,
   formatAmount,
   monthlyCreditsLeft,
   nextDate,
@@ -121,6 +124,63 @@ describe("monthlyCreditsLeft and bonusWords", () => {
   it("reads the total when the backend sends no monthly figure, and no bonus", () => {
     expect(monthlyCreditsLeft({ current_credits: 300 })).toBe(300);
     expect(bonusWords({ bonus: null })).toBeNull();
+  });
+});
+
+describe("a balance against the plan's allowance (task 784)", () => {
+  it("names the allowance at or under it, with the bar at its share", () => {
+    expect(againstAllowance(412, 1000)).toEqual({
+      over: false,
+      of: 1000,
+      meter: { value: 412, max: 1000 },
+    });
+    expect(againstAllowance(1000, 1000).of).toBe(1000);
+    expect(balanceLine(412, 1000)).toBe("412 of 1,000 credits");
+    expect(balanceLine(1000, 1000)).toBe("1,000 of 1,000 credits");
+  });
+
+  it("lets a balance above the allowance stand alone, with the bar full and no further", () => {
+    // 150 credits added to a trial of 60: never "157 of 60".
+    expect(againstAllowance(157, 60)).toEqual({
+      over: true,
+      of: null,
+      meter: { value: 60, max: 60 },
+    });
+    expect(balanceLine(157, 60)).toBe("157 credits");
+    expect(balanceLine(2000, 1000)).toBe("2,000 credits");
+  });
+
+  it("has no allowance to name or measure against on a plan without one", () => {
+    expect(againstAllowance(120, null)).toEqual({
+      over: false,
+      of: null,
+      meter: null,
+    });
+    expect(balanceLine(120, null)).toBe("120 credits");
+    expect(againstAllowance(0, 0).meter).toBeNull();
+  });
+
+  it("never draws a bar under empty", () => {
+    expect(againstAllowance(-5, 60).meter).toEqual({ value: 0, max: 60 });
+  });
+
+  it("says what the balance is made of while a bonus is left", () => {
+    const launch = {
+      current_credits: 1600,
+      monthly_credits: 1000,
+      bonus: {
+        label: "Launch bonus",
+        promotion: "launch",
+        credits: 600,
+        granted: 1000,
+        expires_at: "2026-10-14T06:59:00Z",
+      },
+    };
+    expect(breakdownWords(launch)).toBe("1,000 monthly + 600 launch bonus");
+    expect(
+      breakdownWords({ ...launch, bonus: { ...launch.bonus, credits: 0 } }),
+    ).toBeNull();
+    expect(breakdownWords({ current_credits: 300, bonus: null })).toBeNull();
   });
 });
 

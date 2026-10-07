@@ -11,7 +11,11 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
-import { bonusWords, monthlyCreditsLeft } from "./billing-format";
+import {
+  againstAllowance,
+  bonusWords,
+  monthlyCreditsLeft,
+} from "./billing-format";
 import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 
 /** "1 workspace", "3 workspaces". */
@@ -124,8 +128,9 @@ function CreditsCard({
 }) {
   const left = monthlyCreditsLeft(credits);
   const total = credits.credits_per_month;
-  const usedShare =
-    total && total > 0 ? Math.min(1, Math.max(0, 1 - left / total)) : null;
+  // Above the allowance (credits an admin added) the balance stands alone, with the bar full.
+  const { of, meter } = againstAllowance(left, total);
+  const usedShare = meter ? 1 - meter.value / meter.max : null;
   const warn = usedShare !== null && usedShare >= WARN_USED_SHARE;
   const trialEndsOn = trialEnd ?? credits.credits_reset_date;
 
@@ -152,15 +157,15 @@ function CreditsCard({
               {left.toLocaleString()}
             </span>
             <span className="text-sm text-muted-foreground">
-              {total !== null
-                ? ` of ${total.toLocaleString()} credits left`
+              {of !== null
+                ? ` of ${of.toLocaleString()} credits left`
                 : " credits left"}
             </span>
           </p>
-          {total !== null && total > 0 && (
+          {meter && (
             <Meter
-              value={left}
-              max={total}
+              value={meter.value}
+              max={meter.max}
               low={warn}
               label="Credits left this period"
             />

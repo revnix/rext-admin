@@ -100,4 +100,37 @@ describe("Home's Credits card", () => {
       screen.getByRole("link", { name: "Plan and billing" }),
     ).toBeInTheDocument();
   });
+
+  it("reads N of M under the allowance, and the balance alone above it (task 784)", () => {
+    const growth = {
+      ...noPlan("me"),
+      current_credits: 412,
+      monthly_credits: 412,
+      credits_per_month: 1000,
+      articles_remaining: 27,
+      plan_name: "Growth",
+    } as unknown as CreditBalance;
+    renderCard(growth);
+    expect(screen.getByText("412")).toBeInTheDocument();
+    expect(screen.getByText(/of 1,000/)).toBeInTheDocument();
+    expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "412");
+  });
+
+  it("never writes a balance above its allowance as N of M: the balance alone, the bar full", () => {
+    // 150 credits added to a trial of 60.
+    const granted = {
+      ...noPlan("me"),
+      current_credits: 157,
+      monthly_credits: 157,
+      credits_per_month: 60,
+      articles_remaining: 10,
+      plan_name: "Trial",
+    } as unknown as CreditBalance;
+    renderCard(granted);
+    expect(screen.getByText("157")).toBeInTheDocument();
+    expect(screen.queryByText(/of 60/)).not.toBeInTheDocument();
+    const meter = screen.getByRole("meter");
+    expect(meter).toHaveAttribute("aria-valuenow", "60");
+    expect(meter).toHaveAttribute("aria-valuemax", "60");
+  });
 });
