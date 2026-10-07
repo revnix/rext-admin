@@ -318,6 +318,162 @@ describe("the outline as a document outline", () => {
   });
 });
 
+describe("a page with several lists", () => {
+  // A How-to's outline, as a real run sent it: two lists, neither with heading levels.
+  const list = (name: string, headings: string[], level?: Level) =>
+    headings.map((heading, index) => ({
+      id: `${name}:${index}`,
+      list: name,
+      heading,
+      ...(level ? { heading_level: level } : {}),
+    }));
+  const STEPS = list("steps", [
+    "Measure the space",
+    "Create a layout plan",
+    "Mark the beds",
+    "Dig",
+    "Plant",
+  ]);
+  const TOOLS = list("tools", ["Spade", "String", "Tape measure"]);
+  const gateWith = (...lists: ReturnType<typeof list>[]) => ({
+    type: "outline_review",
+    section_additions: ["steps"],
+    editable_sections: lists.flat(),
+  });
+  const treeOf = (name: string) => screen.getByRole("treegrid", { name });
+  /** The lines of keyboard hints on the page: each names "rename" once. */
+  const hintLines = () =>
+    screen
+      .getAllByText("rename", { exact: false })
+      .map((hint) => hint.closest("p"));
+
+  it("counts a list without levels by its own name, not as sections", async () => {
+    const { user } = renderOutline({ gate: gateWith(STEPS, TOOLS) });
+
+    const steps = screen.getByRole("region", { name: "Steps" });
+    const tools = screen.getByRole("region", { name: "Tools" });
+    expect(within(steps).getByText("5 steps")).toBeInTheDocument();
+    expect(within(tools).getByText("3 tools")).toBeInTheDocument();
+    expect(screen.queryByText(/\bsections?\b ·|^\d+ sections?$/)).toBe(null);
+
+    // The count follows an edit, down to one.
+    await act(() =>
+      within(treeOf("Tools")).getByRole("row", { name: "String" }).focus(),
+    );
+    await user.keyboard("{Delete}{Delete}");
+    expect(within(tools).getByText("1 tool")).toBeInTheDocument();
+  });
+
+  it("names the keys once, under the last list, with no level key where no list has levels", () => {
+    renderOutline({ gate: gateWith(STEPS, TOOLS) });
+
+    const lines = hintLines();
+    expect(lines).toHaveLength(1);
+    // Under the last list, and every list's tree grid is described by it.
+    expect(screen.getByRole("region", { name: "Tools" })).toContainElement(
+      lines[0],
+    );
+    expect(screen.getByRole("region", { name: "Steps" })).not.toContainElement(
+      lines[0],
+    );
+    for (const name of ["Steps", "Tools"]) {
+      expect(treeOf(name)).toHaveAccessibleDescription(
+        /select.*rename.*move.*remove.*more/,
+      );
+      expect(treeOf(name)).not.toHaveAccessibleDescription(/level/);
+    }
+    expect(lines[0]).not.toHaveTextContent("level");
+  });
+
+  it("offers a row without a level no change of level in its menu, though the key answers", async () => {
+    const { user, approve } = renderOutline({ gate: gateWith(STEPS, TOOLS) });
+
+    await user.click(
+      screen.getByRole("button", { name: "Actions for Create a layout plan" }),
+    );
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual([
+      "RenameEnter",
+      "Move upAlt+↑",
+      "Move downAlt+↓",
+      "Add section below",
+      "RemoveDelete",
+    ]);
+    await user.keyboard("{Escape}");
+
+    const row = within(treeOf("Steps")).getByRole("row", {
+      name: "Create a layout plan",
+    });
+    await waitFor(() => expect(row).toHaveFocus());
+    await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    expectSaid("Create a layout plan has no heading level to change.");
+    // Moving a step still works, and is sent.
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    expectSaid(
+      "Moved Create a layout plan to position 3 of 5, after Mark the beds.",
+    );
+    expect(
+      (await approve()).sections?.map((edit) => ("id" in edit ? edit.id : "")),
+    ).toEqual([
+      "steps:0",
+      "steps:2",
+      "steps:1",
+      "steps:3",
+      "steps:4",
+      "tools:0",
+      "tools:1",
+      "tools:2",
+    ]);
+  });
+
+  it("names the level key in the one line when a list on the page has levels", () => {
+    renderOutline({
+      gate: gateWith(
+        [
+          ...list("sections", ["Why plan"], "H2"),
+          ...list("sections", ["Sun hours"], "H3").map((row) => ({
+            ...row,
+            id: "sections:1",
+          })),
+        ],
+        TOOLS,
+      ),
+    });
+
+    const lines = hintLines();
+    expect(lines).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Tools" })).toContainElement(
+      lines[0],
+    );
+    expect(lines[0]).toHaveTextContent("level");
+    expect(
+      within(screen.getByRole("region", { name: "Sections" })).getByText(
+        "1 section · 1 subsection",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "Tools" })).getByText(
+        "3 tools",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the line under a single list, with the level key for a list with levels", () => {
+    renderOutline();
+
+    const lines = hintLines();
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toHaveTextContent("level");
+    expect(screen.getByRole("region", { name: "Sections" })).toContainElement(
+      lines[0],
+    );
+  });
+});
+
 describe("the outline's keyboard", () => {
   it("is one stop in the Tab order, with ↑ ↓ Home End between sections", async () => {
     const { user } = renderOutline();

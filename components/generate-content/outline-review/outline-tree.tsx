@@ -103,7 +103,8 @@ export const ADD_CAP_REASON = `One approval adds at most ${MAX_ADDED_SECTIONS} s
  * F2 renames in place, Alt+↑ ↓ moves a section (an H2 with its subsections), Alt+→ ← makes it a
  * subsection or a section, Delete removes it, and Shift+F10, the context-menu key or the … button
  * opens its menu, which offers every action with its keys (WCAG 2.2, 2.5.7: dragging is never the only
- * way). The handle drags with the pointer only, onto a drop line between whole sections.
+ * way). The handle drags with the pointer only, onto a drop line between whole sections. The keys are
+ * named once, under the last list, for every list on the page.
  */
 export function OutlineTree({
   rows,
@@ -113,8 +114,11 @@ export function OutlineTree({
   editable,
   ...edits
 }: OutlineTreeProps) {
+  const hintsId = useId();
   const groups = groupRows(rows);
   const named = groups.length > 1;
+  // A How-to's Steps and Tools have no heading levels: the level keys are named only where a list has them.
+  const anyLevels = groups.some((group) => group.rows.some((row) => row.level));
   return (
     <div className="space-y-6">
       {groups.map((group, index) => (
@@ -128,6 +132,8 @@ export function OutlineTree({
           title={index === 0 ? title : undefined}
           editable={editable}
           addable={editable && addableLists.includes(group.list)}
+          hintsId={hintsId}
+          hints={index === groups.length - 1 ? { level: anyLevels } : undefined}
           {...edits}
         />
       ))}
@@ -169,6 +175,8 @@ function OutlineGroup({
   title,
   editable,
   addable,
+  hintsId,
+  hints,
   onMove,
   onMoveTo,
   onChangeLevel,
@@ -180,10 +188,13 @@ function OutlineGroup({
   label: string;
   listRows: TreeRow[];
   addable: boolean;
+  /** The page's one line of keyboard hints, which every list's tree grid is described by. */
+  hintsId: string;
+  /** Set on the last list, which shows that line; `level` when a list on the page has heading levels. */
+  hints?: { level: boolean };
 }) {
   const id = useId();
   const labelId = `${id}-label`;
-  const hintsId = `${id}-keys`;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [openPlans, setOpenPlans] = useState<ReadonlySet<string>>(new Set());
   const [renamingKey, setRenamingKey] = useState<string | null>(null);
@@ -697,7 +708,7 @@ function OutlineGroup({
           </div>
         )}
 
-        {editable && (
+        {editable && hints && (
           <p
             id={hintsId}
             className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-b-md border-t border-border bg-surface px-3 py-2.5 text-caption text-muted-foreground max-md:hidden"
@@ -705,7 +716,7 @@ function OutlineGroup({
             <KeyHint keys={["↑", "↓"]} label="select" />
             <KeyHint keys={["Enter"]} label="rename" />
             <KeyHint keys={["Alt", "↑", "↓"]} label="move" />
-            <KeyHint keys={["Alt", "←", "→"]} label="level" />
+            {hints.level && <KeyHint keys={["Alt", "←", "→"]} label="level" />}
             <KeyHint keys={["Delete"]} label="remove" />
             <span className="whitespace-nowrap">
               <Kbd>⋯</Kbd> or <Kbd>Shift</Kbd>+<Kbd>F10</Kbd> more

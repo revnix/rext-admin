@@ -712,7 +712,24 @@ export function insertAnnouncement(
   return `Added ${row.heading}${as}, position ${place.position} of ${place.total}.`;
 }
 
-/** The summary above a list: "9 sections · 5 subsections · ~3,100 words". */
+/**
+ * A list's rows counted by the list's own name, for a list without heading levels (a How-to's "Steps"
+ * and "Tools" are not sections): "5 steps", "1 tool". A name with no simple singular (not a plain
+ * plural in -s: "categories", "tools needed") counts items instead, so one row never reads "1 steps".
+ */
+function countByName(count: number, list: string): string {
+  const plural = listLabel(list).toLowerCase();
+  const simple =
+    /[a-z]s$/.test(plural) &&
+    !/(ss|us|is|ies|sses|xes|zes|ches|shes)$/.test(plural);
+  if (!simple) return `${count} ${count === 1 ? "item" : "items"}`;
+  return `${count} ${count === 1 ? plural.slice(0, -1) : plural}`;
+}
+
+/**
+ * The summary above a list: "9 sections · 5 subsections · ~3,100 words" where the rows have heading
+ * levels, and the rows by the list's name where they have none ("5 steps · ~900 words").
+ */
 export function listSummary(
   rows: TreeRow[],
   outline: unknown,
@@ -735,7 +752,9 @@ export function listSummary(
   const sections = listRows.filter((row) => levelRank(row) === 2).length;
   const subsections = listRows.length - sections;
   return [
-    `${sections} ${sections === 1 ? "section" : "sections"}`,
+    listRows.some((row) => row.level)
+      ? `${sections} ${sections === 1 ? "section" : "sections"}`
+      : countByName(listRows.length, list),
     subsections > 0
       ? `${subsections} ${subsections === 1 ? "subsection" : "subsections"}`
       : "",
