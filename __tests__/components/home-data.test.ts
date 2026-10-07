@@ -339,6 +339,33 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
     ]);
   });
 
+  it("places a result with no time of its own by its article's last change", () => {
+    const { items } = recentPublishes(
+      [
+        article({
+          id: "1",
+          title: "Older, dated",
+          updated_at: "2026-10-01T00:00:00Z",
+          publishing_results: [
+            { site_id: "a", status: "published", last_synced: "2026-10-03" },
+          ],
+        }),
+        article({
+          id: "2",
+          title: "Just failed",
+          updated_at: "2026-10-06T00:00:00Z",
+          publishing_results: [{ site_id: "a", status: "failed" }],
+        }),
+      ],
+      new Map(),
+      1,
+    );
+
+    expect(items.map((item) => [item.title, item.state])).toEqual([
+      ["Just failed", "failed"],
+    ]);
+  });
+
   it("leaves out a result that is no publish any more, and calls a draft a draft", () => {
     const { items, failed } = recentPublishes([
       article({
