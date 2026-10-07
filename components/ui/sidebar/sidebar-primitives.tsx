@@ -392,7 +392,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
  * action goes, since both are hidden there.
  */
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-3 text-left text-body text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-has-data-[sidebar=menu-badge]/menu-item:pr-10 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:[&>span:not([data-icon])]:sr-only lg:max-xl:group-data-[collapsible=auto]:[&>span:not([data-icon])]:sr-only group-data-[collapsible=icon]:pr-3! lg:max-xl:group-data-[collapsible=auto]:pr-3!",
+  "peer/menu-button flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-3 text-left text-body text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground relative data-[active=true]:before:absolute data-[active=true]:before:inset-y-1.5 data-[active=true]:before:left-0 data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-sidebar-primary data-[state=open]:bg-sidebar-accent group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-has-data-[sidebar=menu-badge]/menu-item:pr-10 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:[&>span:not([data-icon])]:sr-only lg:max-xl:group-data-[collapsible=auto]:[&>span:not([data-icon])]:sr-only group-data-[collapsible=icon]:pr-3! lg:max-xl:group-data-[collapsible=auto]:pr-3!",
   {
     variants: {
       variant: {
@@ -594,7 +594,7 @@ function SidebarMenuSubButton({
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "flex h-8 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-sm px-2 max-lg:h-(--control-height-lg) text-muted-foreground outline-hidden ring-sidebar-ring transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
-        "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
+        "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground relative data-[active=true]:before:absolute data-[active=true]:before:inset-y-1.5 data-[active=true]:before:left-0 data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-sidebar-primary",
         size === "sm" ? "text-label" : "text-body",
         COLLAPSED_HIDDEN,
         className,

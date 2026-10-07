@@ -1,6 +1,7 @@
 /**
  * The checklist beside an article: the on-page score, the rows the backend's
- * checklist carries, the issues, and the claims to verify.
+ * checklist carries (readability in words), and the checks the article passes.
+ * The open issues and the claims to verify are hidden for now (#704).
  */
 
 import { render, screen, within } from "@testing-library/react";
@@ -56,7 +57,7 @@ const checklist: ContentChecklist = {
 };
 
 describe("ArticleChecklist", () => {
-  it("shows the score, the rows, the issues and the claims", () => {
+  it("shows the score, the rows and the checks passed, and hides the issues and the claims", () => {
     render(
       <ArticleChecklist
         seoScore={seoScore}
@@ -68,22 +69,49 @@ describe("ArticleChecklist", () => {
     const card = screen.getByRole("region", { name: "Checklist" });
     expect(within(card).getByText("On-page score · Good")).toBeInTheDocument();
     expect(within(card).getByText("82")).toBeInTheDocument();
-    expect(within(card).getByText("Fairly difficult")).toBeInTheDocument();
+    expect(within(card).getByText("Moderate")).toBeInTheDocument();
+    expect(within(card).queryByText("51")).toBeNull();
     expect(within(card).getByText("0.61%")).toBeInTheDocument();
     expect(within(card).getByText("In range")).toBeInTheDocument();
     expect(within(card).getByText("12 uses")).toBeInTheDocument();
     expect(within(card).getByText("78%")).toBeInTheDocument();
     expect(within(card).getByText("1 failing")).toBeInTheDocument();
     expect(
-      within(card).getByText("1,120 words, under 1,500"),
+      within(card).getByRole("heading", { name: "Checks passed" }),
     ).toBeInTheDocument();
-    expect(within(card).getByText("Add an internal link")).toBeInTheDocument();
+    expect(within(card).getByText("Optimal Title Length")).toBeInTheDocument();
+
+    expect(within(card).queryByText("Issues")).toBeNull();
+    expect(within(card).queryByText("1,120 words, under 1,500")).toBeNull();
+    expect(within(card).queryByText("Add an internal link")).toBeNull();
+    expect(within(card).queryByText("Claims to verify")).toBeNull();
     expect(
-      within(card).getByText("Headless sites load 40% faster on average."),
-    ).toBeInTheDocument();
-    expect(
-      within(card).getByText("No source for “40% faster”"),
-    ).toBeInTheDocument();
+      within(card).queryByText("Headless sites load 40% faster on average."),
+    ).toBeNull();
+  });
+
+  it("gives each copy of the card its own heading id", () => {
+    render(
+      <>
+        <ArticleChecklist
+          seoScore={seoScore}
+          checklist={checklist}
+          trustScore={trustScore}
+        />
+        <ArticleChecklist
+          seoScore={seoScore}
+          checklist={checklist}
+          trustScore={trustScore}
+        />
+      </>,
+    );
+    const ids = screen
+      .getAllByRole("heading", { name: "Checklist" })
+      .map((h) => h.id);
+    expect(new Set(ids).size).toBe(2);
+    expect(screen.getAllByRole("region", { name: "Checklist" })).toHaveLength(
+      2,
+    );
   });
 
   it("leaves out the checks and the claims for an article saved before they were kept", () => {
@@ -95,13 +123,13 @@ describe("ArticleChecklist", () => {
       />,
     );
 
-    expect(screen.getByText("Fairly difficult")).toBeInTheDocument();
+    expect(screen.getByText("Moderate")).toBeInTheDocument();
     expect(screen.queryByText("Checks")).not.toBeInTheDocument();
     expect(screen.queryByText("Claims to verify")).not.toBeInTheDocument();
     expect(screen.queryByText("Trust")).not.toBeInTheDocument();
   });
 
-  it("says so when every claim has a source", () => {
+  it("shows the validator's pass as a row", () => {
     render(
       <ArticleChecklist
         seoScore={null}
@@ -121,9 +149,7 @@ describe("ArticleChecklist", () => {
     );
 
     expect(screen.getByText("Passed")).toBeInTheDocument();
-    expect(
-      screen.getByText("Every factual claim has a source."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Every factual claim has a source.")).toBeNull();
   });
 
   it("renders nothing before the checks have come back", () => {

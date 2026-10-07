@@ -21,6 +21,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -33,7 +40,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useResourceLimit } from "@/components/subscription/usage-limit-warning";
 import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
-import { buildWorkspacePath, extractWorkspacePageSegment } from "@/lib/routes";
+import { extractWorkspacePageSegment } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useWorkspaceStore } from "@/stores/workspace";
 import type { Workspace } from "@/types/workspace";
@@ -55,13 +62,62 @@ function siteHost(url?: string | null): string | null {
  * its name and its plan; inside, every workspace, the workspace's settings, all workspaces, and
  * "Create workspace" with the plan's cap.
  */
+/** A workspace in the list: its icon, its name and site, and a check on the current one. */
+function WorkspaceRow({
+  title,
+  workspace,
+  current,
+}: {
+  title: string;
+  workspace: Workspace;
+  current: boolean;
+}) {
+  return (
+    <>
+      <WorkspaceFavicon name={title} src={workspace.favicon_url} />
+      <span className="grid min-w-0 flex-1">
+        <span className="truncate text-body">{title}</span>
+        {siteHost(workspace.url) && (
+          <span className="truncate text-caption text-muted-foreground">
+            {siteHost(workspace.url)}
+          </span>
+        )}
+      </span>
+      {current && (
+        <Check aria-label="Current workspace" className="size-4 shrink-0" />
+      )}
+    </>
+  );
+}
+
+/** A link in the phone's workspace sheet, which closes the sheets as it navigates. */
+function SheetLink({
+  href,
+  onNavigate,
+  children,
+}: {
+  href: string;
+  onNavigate: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href as Route}
+      onClick={onNavigate}
+      className="flex min-h-(--control-height-lg) items-center gap-2 rounded-sm px-2 text-label hover:bg-surface-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function WorkspaceSwitcher({
   settingsUrl,
 }: {
   /** The workspace settings page, when the person may open it. */
   settingsUrl?: string | null;
 }) {
-  const { isMobile, state, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
@@ -134,20 +190,19 @@ export function WorkspaceSwitcher({
     }
   }, [pathname, setLastWorkspacePath]);
 
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const handleSheetNavigate = () => {
+    setSheetOpen(false);
+    setOpenMobile(false);
+  };
+
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
-    // The shell stays mounted across workspaces, so the phone's sheet would stay open over the page.
+    // The shell stays mounted across workspaces, so the phone's sheets would stay open over the page.
+    setSheetOpen(false);
     setOpenMobile(false);
-
-    // On a workspace page, open the same page in the other workspace; elsewhere, go home.
-    const currentPageSegment = extractWorkspacePageSegment(pathname);
-    if (currentPageSegment) {
-      router.push(
-        buildWorkspacePath(workspace.slug, currentPageSegment) as Route,
-      );
-    } else {
-      router.push("/");
-    }
+    // A workspace opens on its Home (FB2.5), whatever page the switch was made from.
+    router.push(`/w/${workspace.slug}` as Route);
   };
 
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
@@ -172,39 +227,116 @@ export function WorkspaceSwitcher({
   const cap = max !== null && used !== null ? `${used} of ${max}` : null;
   const createLocked = isLimitReached || isLimitLoading;
 
+  const trigger = (
+    <SidebarMenuButton
+      size="lg"
+      className="px-2.5 text-foreground data-[state=open]:bg-sidebar-accent"
+      tooltip={name}
+    >
+      <WorkspaceFavicon name={name} src={isLoading ? null : displayFavicon} />
+      <span className="grid min-w-0 flex-1 text-left">
+        <span className="truncate text-body font-medium">{name}</span>
+        {detail && (
+          <span className="truncate text-caption text-muted-foreground">
+            {detail}
+          </span>
+        )}
+      </span>
+      <ChevronsUpDown
+        data-collapse="hide"
+        className="ml-auto text-muted-foreground"
+      />
+    </SidebarMenuButton>
+  );
+
+  // Phones: the sidebar is itself a sheet, so the list opens as a sheet from the bottom (FB2.5), with
+  // the same entries; a disabled entry says why in words, as a touch screen shows no tooltip.
+  if (isMobile) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>{trigger}</SheetTrigger>
+            <SheetContent side="bottom" className="max-h-dvh overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Workspaces</SheetTitle>
+              </SheetHeader>
+              <nav aria-label="Workspaces" className="grid gap-1 px-4 pb-4">
+                {workspaces.map((workspace) => {
+                  const title = getWorkspaceDisplayTitle(
+                    workspace,
+                    "Untitled workspace",
+                  );
+                  return (
+                    <button
+                      key={workspace.id}
+                      type="button"
+                      onClick={() => handleWorkspaceSelect(workspace)}
+                      className="flex min-h-(--control-height-lg) items-center gap-2 rounded-sm px-2 text-left hover:bg-surface-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      <WorkspaceRow
+                        title={title}
+                        workspace={workspace}
+                        current={currentWorkspace?.id === workspace.id}
+                      />
+                    </button>
+                  );
+                })}
+                <hr className="my-1 border-border" />
+                {settingsUrl && (
+                  <SheetLink
+                    href={settingsUrl}
+                    onNavigate={handleSheetNavigate}
+                  >
+                    <Settings className="size-4 text-muted-foreground" />
+                    Workspace settings
+                  </SheetLink>
+                )}
+                <SheetLink href="/w" onNavigate={handleSheetNavigate}>
+                  <LayoutGrid className="size-4 text-muted-foreground" />
+                  All workspaces
+                </SheetLink>
+                {createLocked ? (
+                  <p className="flex min-h-(--control-height-lg) items-center gap-2 px-2 text-label text-muted-foreground">
+                    <Plus className="size-4" />
+                    <span className="flex-1">
+                      {isLimitReached
+                        ? "Workspace limit reached: upgrade your plan to create more"
+                        : "Checking your plan…"}
+                    </span>
+                    {cap && <span className="num text-caption">{cap}</span>}
+                  </p>
+                ) : (
+                  <SheetLink href="/w/create" onNavigate={handleSheetNavigate}>
+                    <Plus className="size-4 text-muted-foreground" />
+                    <span className="flex-1">Create workspace</span>
+                    {cap && (
+                      <span className="num text-caption text-muted-foreground">
+                        {cap}
+                      </span>
+                    )}
+                  </SheetLink>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  // Desktop: the list opens to the right of the sidebar, expanded or collapsed (FB2.5), so it never
+  // covers the sidebar's own entries.
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="px-2.5 text-foreground data-[state=open]:bg-sidebar-accent"
-              tooltip={name}
-            >
-              <WorkspaceFavicon
-                name={name}
-                src={isLoading ? null : displayFavicon}
-              />
-              <span className="grid min-w-0 flex-1 text-left">
-                <span className="truncate text-body font-medium">{name}</span>
-                {detail && (
-                  <span className="truncate text-caption text-muted-foreground">
-                    {detail}
-                  </span>
-                )}
-              </span>
-              <ChevronsUpDown
-                data-collapse="hide"
-                className="ml-auto text-muted-foreground"
-              />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+          <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-60"
+            className="min-w-60"
             align="start"
-            side={isMobile || state === "expanded" ? "bottom" : "right"}
-            sideOffset={4}
+            side="right"
+            sideOffset={8}
           >
             <DropdownMenuLabel className="text-caption font-medium text-muted-foreground">
               Workspaces
@@ -228,24 +360,11 @@ export function WorkspaceSwitcher({
                     onSelect={() => handleWorkspaceSelect(workspace)}
                     className="gap-2"
                   >
-                    <WorkspaceFavicon
-                      name={title}
-                      src={workspace.favicon_url}
+                    <WorkspaceRow
+                      title={title}
+                      workspace={workspace}
+                      current={isCurrent}
                     />
-                    <span className="grid min-w-0 flex-1">
-                      <span className="truncate text-body">{title}</span>
-                      {siteHost(workspace.url) && (
-                        <span className="truncate text-caption text-muted-foreground">
-                          {siteHost(workspace.url)}
-                        </span>
-                      )}
-                    </span>
-                    {isCurrent && (
-                      <Check
-                        aria-label="Current workspace"
-                        className="size-4 shrink-0"
-                      />
-                    )}
                   </DropdownMenuItem>
                 );
               })

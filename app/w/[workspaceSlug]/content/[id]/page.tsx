@@ -397,6 +397,7 @@ export default function WorkspaceContentDetailPage({
             outline={outline}
             onEditToggle={handleEditToggle}
             onContentChange={setContentMarkdown}
+            isLive={content.status === "published"}
           />
         )}
       </WorkingSurface>

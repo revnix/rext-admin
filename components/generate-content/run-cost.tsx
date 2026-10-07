@@ -30,33 +30,6 @@ function useRunCost(run: BilledRun | null): {
 }
 
 /**
- * What a billed button adds to its label: "· 12 credits", and with `showBalance` "· balance
- * after 4,528" from 640 px up (beneath, `RunBalance` says it). Nothing until the costs load.
- */
-export function RunCostLabel({
-  run,
-  showBalance = false,
-}: {
-  run: BilledRun;
-  showBalance?: boolean;
-}) {
-  const view = useRunCost(run);
-  if (!view) return null;
-  const { cost, metered } = view;
-  return (
-    <span className="num font-normal">
-      · {formatCredits(cost.cost)}
-      {showBalance && metered && cost.balance_after !== null && (
-        <span className="hidden sm:inline">
-          {" "}
-          · balance after {formatCount(cost.balance_after)}
-        </span>
-      )}
-    </span>
-  );
-}
-
-/**
  * The stages a step's Continue takes on its own (E25): the titles, when the keyword is kept, and
  * the outline, after the title. The backend charges them there (keyword_recomendation.py,
  * generation/outline.py).
@@ -64,26 +37,38 @@ export function RunCostLabel({
 export type StepStage = "title_generation" | "generate_outline";
 
 /**
- * What a step's Continue adds when it takes a stage's credits: "· 1 credit". The figure is the plan
- * catalogue's; nothing shows until the catalogue loads, or if it doesn't list the stage.
+ * A step's Continue with its stage's cost in a tooltip (FB2.11, rext-control#692): the stage and
+ * its credits, from the plan catalogue, and the balance it leaves when the plan meters credits.
+ * Costs stay off the buttons' labels. Nothing extra until the catalogue loads, or if it doesn't
+ * list the stage.
  */
-export function StageCostLabel({ stage }: { stage: StepStage }) {
+export function StageCostTooltip({
+  stage,
+  children,
+}: {
+  stage: StepStage;
+  children: ReactElement;
+}) {
   const { data } = useQuery(subscriptionQueries.catalog());
-  const credits = data?.credits.stages.find(
-    (item) => item.key === stage,
-  )?.credits;
-  if (credits === undefined) return null;
-  return <span className="num font-normal">· {formatCredits(credits)}</span>;
-}
-
-/** The balance after the run, as a line under the button on a phone, where the label has no room. */
-export function RunBalance({ run }: { run: BilledRun }) {
-  const view = useRunCost(run);
-  if (!view?.metered || view.cost.balance_after === null) return null;
+  const balance = useWorkspaceCredits();
+  const cost = data?.credits.stages.find((item) => item.key === stage)?.credits;
+  if (cost === undefined) return children;
+  const metered = balance ? balance.articles_remaining !== null : false;
   return (
-    <p className="num text-right text-xs text-muted-foreground sm:hidden">
-      Balance after: {formatCredits(view.cost.balance_after)}
-    </p>
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <span className="grid grid-cols-[1fr_auto] gap-x-4">
+          <span>{stageName(stage)}</span>
+          <span className="num text-right">{formatCredits(cost)}</span>
+        </span>
+        {balance && metered && (
+          <span className="mt-1.5 block">
+            {`Balance after: ${formatCredits(Math.max(balance.current_credits - cost, 0))}`}
+          </span>
+        )}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -112,14 +97,14 @@ export function RunCostTooltip({
             <span key={stage.key} className="contents">
               <span>{stageName(stage.key)}</span>
               <span className="num text-right">
-                {formatCount(stage.credits)}
+                {formatCredits(stage.credits)}
               </span>
             </span>
           ))}
-          {cost.stages.length > 1 && (
+          {cost.stages.length !== 1 && (
             <span className="contents font-medium">
-              <span>Total</span>
-              <span className="num text-right">{formatCount(cost.cost)}</span>
+              <span>{cost.stages.length > 1 ? "Total" : "Cost"}</span>
+              <span className="num text-right">{formatCredits(cost.cost)}</span>
             </span>
           )}
         </span>
@@ -131,5 +116,24 @@ export function RunCostTooltip({
         )}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * A touch screen has no hover, so on a phone the run's cost and the balance it leaves stay in a
+ * line beneath the buttons (never on them): the tooltip can't be opened before the tap starts the
+ * run. Hidden from 640 px up, where the tooltip serves.
+ */
+export function PhoneRunCost({ run }: { run: BilledRun }) {
+  const view = useRunCost(run);
+  if (!view) return null;
+  const { cost, metered } = view;
+  return (
+    <p className="num text-right text-xs text-muted-foreground sm:hidden">
+      {formatCredits(cost.cost)}
+      {metered &&
+        cost.balance_after !== null &&
+        ` · balance after ${formatCount(cost.balance_after)}`}
+    </p>
   );
 }

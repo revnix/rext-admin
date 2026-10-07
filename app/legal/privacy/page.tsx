@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
     >
       <article className="prose prose-app max-w-prose">
         <p className="not-prose text-caption text-muted-foreground">
-          Last updated 6 October 2026
+          Last updated 7 October 2026
         </p>
 
         <h2>1. Payment Information We Collect</h2>
@@ -227,14 +227,48 @@ export default function PrivacyPolicyPage() {
           </li>
         </ul>
 
-        <h2>9. Children's Privacy</h2>
+        <h2>9. Support Chat</h2>
+        <p>
+          &ldquo;Chat with us&rdquo;, in the help menu, opens a chat run by{" "}
+          <strong>Crisp</strong> (Crisp IM SAS, France), whose servers are in
+          the European Union.
+        </p>
+        <ul>
+          <li>
+            The chat loads only when you open it. Until then, no Crisp script,
+            request or cookie touches the app.
+          </li>
+          <li>
+            We send Crisp your email, name and account ID, so we know who
+            we&rsquo;re talking to.
+          </li>
+          <li>
+            Crisp receives your messages and any files you send, with your IP
+            address, browser, device and the page you&rsquo;re on.
+          </li>
+          <li>
+            Once you open it, Crisp keeps its own cookies (
+            <code>crisp-client/*</code>) for 6 months, so your conversation
+            continues.
+          </li>
+          <li>
+            We use the chat only to help you. We never change your account or
+            billing because of a chat message alone: we confirm by email first.
+          </li>
+          <li>
+            To have your chat history deleted, email{" "}
+            <a href="mailto:contact@rext.ai">contact@rext.ai</a>.
+          </li>
+        </ul>
+
+        <h2>10. Children's Privacy</h2>
         <p>
           We do not knowingly collect payment information from anyone under 16.
           If you believe a child has provided payment details, contact us
           immediately at contact@rext.ai.
         </p>
 
-        <h2>10. Changes to This Policy</h2>
+        <h2>11. Changes to This Policy</h2>
         <p>We may update this privacy policy to reflect:</p>
         <ul>
           <li>Changes in payment processing</li>
@@ -246,7 +280,7 @@ export default function PrivacyPolicyPage() {
           effect.
         </p>
 
-        <h2>11. Contact & Questions</h2>
+        <h2>12. Contact & Questions</h2>
         <p>For privacy or billing questions:</p>
         <ul>
           <li>

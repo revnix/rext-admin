@@ -7,7 +7,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 import { useGeneratePreferencesStore } from "@/stores/generate-preferences-store";
 import { ArrowRight, Search } from "lucide-react";
 import { CountryDropdown } from "../ui/country-dropdown";
-import { RunCostLabel, RunCostTooltip } from "./run-cost";
+import { RunCostTooltip } from "./run-cost";
 import { useEffect, useRef, useState } from "react";
 
 /** The role lock's words, on Analyze and on each recent keyword's Use. */
@@ -75,7 +75,6 @@ export function KeywordForm({
       className="h-10 px-4 rounded-md font-semibold gap-1.5 text-sm shrink-0"
     >
       Analyze
-      {run && !locked && <RunCostLabel run={run} />}
       <ArrowRight className="w-3 h-3" />
     </Button>
   );

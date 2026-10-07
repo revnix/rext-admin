@@ -55,7 +55,7 @@ export const workspaceRoutes = {
    */
   content: (workspaceSlug: string) => `/w/${workspaceSlug}/content`,
   generate_content: (workspaceSlug: string) =>
-    `/w/${workspaceSlug}/generate_content`,
+    `/w/${workspaceSlug}/generate-content`,
   keywordLibrary: (workspaceSlug: string) => `/w/${workspaceSlug}/keywords`,
   keywordLibraryItem: (workspaceSlug: string, key: string) =>
     `/w/${workspaceSlug}/keywords/${encodeURIComponent(key)}`,

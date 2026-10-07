@@ -12,6 +12,7 @@ import {
   trialState,
 } from "@/components/billing/trial-state";
 import { Meter } from "@/components/ui/meter";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useNow } from "@/hooks/use-now";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -107,16 +108,13 @@ function describe(credits: CreditBalance) {
 }
 
 /**
- * The credits meter (design/app-language.md §5): in the header, the balance with a short bar; in
- * the sidebar's footer, the bar and "412 of 1,000 credits". Both open the usage page.
+ * The credits meter (design/app-language.md §5), in the sidebar's footer: the bar and "412 of
+ * 1,000 credits", opening the usage page. The header no longer repeats it (FB2.4).
  */
-export function CreditMeter({
-  variant,
-  className,
-}: {
-  variant: "header" | "sidebar";
-  className?: string;
-}) {
+export function CreditMeter({ className }: { className?: string }) {
+  // Like the sidebar's other links: on a phone the sheet closes as the meter opens usage, or it
+  // would stay over the page (the settings layout keeps the shell mounted).
+  const { setOpenMobile } = useSidebar();
   const credits = useShellCredits();
   const trial = useShellTrial(credits);
   if (!credits) return null;
@@ -125,46 +123,11 @@ export function CreditMeter({
   const low = trial ? trial.ending : described.low;
   const label = trial ? trialPillWords(trial) : described.label;
 
-  if (variant === "header") {
-    return (
-      <Link
-        href={settingsRoutes.usage}
-        aria-label={`${label}. Open usage`}
-        className={cn(
-          "h-8 items-center gap-2 rounded-sm px-2 max-lg:h-(--control-height-lg) text-label text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          className,
-        )}
-      >
-        {share !== null && total !== null && (
-          <Meter value={left} max={total} low={low} className="w-10" />
-        )}
-        {trial ? (
-          <span className="num">{trialPillWords(trial)}</span>
-        ) : (
-          <span>
-            <span className="num font-medium text-foreground">
-              {left.toLocaleString()}
-            </span>{" "}
-            credits
-          </span>
-        )}
-        {!trial && credits.articles_remaining !== null && (
-          <span className="hidden xl:inline">
-            ·{" "}
-            <span className="num">
-              {credits.articles_remaining.toLocaleString()}
-            </span>{" "}
-            articles
-          </span>
-        )}
-      </Link>
-    );
-  }
-
   return (
     <Link
       href={settingsRoutes.usage}
       aria-label={`${label}. Open usage`}
+      onClick={() => setOpenMobile(false)}
       data-collapse="hide"
       className={cn(
         "block rounded-sm px-3 py-2 transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",

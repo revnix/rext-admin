@@ -3,6 +3,7 @@ import { log } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { apiClient } from "@/lib/api-client";
+import { resetSupportChat } from "@/lib/support-chat/chat";
 import { resetAllStores } from "./store-registry";
 
 let logoutPromise: Promise<void> | null = null;
@@ -67,6 +68,9 @@ async function executeLogout(callbackUrl: string): Promise<void> {
     } catch (e) {
       log.error("[Auth] Failed to reset analytics", e);
     }
+
+    // The support chat's session ends with the account's (#711); nothing when it never opened.
+    resetSupportChat();
 
     // 3. Clear and cancel all React Query operations
     const queryClient = getQueryClient();

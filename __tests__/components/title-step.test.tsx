@@ -3,9 +3,18 @@ import userEvent from "@testing-library/user-event";
 import { TitleStep } from "@/components/generate-content/title-step";
 
 // The side pane's list is SerpSnapshot's to test; here only what the step hands it.
-// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage it labels.
+// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage's
+// tooltip the button sits in.
 jest.mock("@/components/generate-content/run-cost", () => ({
-  StageCostLabel: ({ stage }: { stage: string }) => <span>· {stage}</span>,
+  // As the real tooltip's trigger, no wrapper: the button itself is marked.
+  StageCostTooltip: ({
+    stage,
+    children,
+  }: {
+    stage: string;
+    children: React.ReactElement<Record<string, unknown>>;
+  }) =>
+    jest.requireActual("react").cloneElement(children, { "data-stage": stage }),
 }));
 
 const mockShown: unknown[] = [];
@@ -61,10 +70,13 @@ it("starts on the recommended title, with its reason, and continues with it", as
   expect(screen.getByText(GATE.recommendation_reason)).toBeInTheDocument();
   // Each title's count says what it counts (E25).
   expect(screen.getAllByText(/^\d of 3 checks$/)).toHaveLength(TITLES.length);
-  // Continue takes the outline's credits, and says so (E25).
-  await userEvent.click(
-    screen.getByRole("button", { name: "Continue · generate_outline" }),
+  // Continue takes the outline's credits: its tooltip says so, not its label (E25, FB2.11).
+  const proceed = screen.getByRole("button", { name: "Continue" });
+  expect(proceed.closest("[data-stage]")).toHaveAttribute(
+    "data-stage",
+    "generate_outline",
   );
+  await userEvent.click(proceed);
 
   expect(onContinue).toHaveBeenCalledWith(TITLES[1]);
 });

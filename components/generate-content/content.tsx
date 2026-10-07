@@ -69,6 +69,12 @@ import { analytics } from "@/lib/analytics";
 import { marked } from "marked";
 import { cn } from "@/lib/utils";
 import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
+import {
+  PUBLISH_RESULT_COPY,
+  postLink,
+  publishConfirmCopy,
+} from "@/lib/content/publish-copy";
+import { useConfirmation } from "../ui/confirmation-dialog";
 import { Skeleton } from "../ui/skeleton";
 
 const TAG_SKELETON_KEYS = Array.from(
@@ -80,27 +86,6 @@ const CONTENT_SKELETON_KEYS = Array.from(
   { length: 3 },
   (_, i) => `content-skeleton-${i + 1}`,
 );
-
-const WORDPRESS_STATUS_DETAILS: Record<
-  WordPressPostStatus,
-  { label: string; successTitle: string; successMessage: string }
-> = {
-  publish: {
-    label: "Publish",
-    successTitle: "Content Published Successfully!",
-    successMessage: "Your content is live on WordPress.",
-  },
-  draft: {
-    label: "Draft",
-    successTitle: "WordPress Draft Created!",
-    successMessage: "Your content was saved as a draft in WordPress.",
-  },
-  pending: {
-    label: "Review",
-    successTitle: "Submitted for Review!",
-    successMessage: "Your content is pending review in WordPress.",
-  },
-};
 
 // Custom renderers: links open in new tab; images get fallback placeholder on error
 marked.use({
@@ -269,6 +254,9 @@ type ContentEditorProps = {
   toolCalls?: ToolCall[];
   /** The run component while the article is written, at the top of the side panel. */
   runProgress?: React.ReactNode;
+  /** The article is live on a connected site (its status is "published"): a draft or review save
+   *  then takes the post down, so the Publish menu warns first (#676). */
+  isLive?: boolean;
   /** When true, shows the content blurred with a humanizing overlay */
 };
 
@@ -292,6 +280,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
     toolCalls = [],
     runProgress,
+    isLive = false,
   } = props;
 
   // JSON-LD is not part of content-level on-page SEO: hide those findings and
@@ -348,6 +337,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     action: "publish" | "save" | "copy";
     message: string;
     showIntegrationLink?: boolean;
+    /** The post on the site, after a publish that made it live. */
+    postUrl?: string | null;
   }>({
     title: "",
     isOpen: false,
@@ -364,9 +355,16 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
-  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
-  const [selectedPublishStatus, setSelectedPublishStatus] =
-    useState<WordPressPostStatus>("publish");
+  const { confirm, ConfirmationComponent } = useConfirmation();
+  // What this editor's own last publish did to the post, ahead of the page's refetch of the article
+  // (the fresh-generation view has no article to read it from at all). It holds only while `isLive`
+  // is still the value it was set against: once the page reads the article again, the page wins.
+  const [liveHere, setLiveHere] = useState<{
+    live: boolean;
+    against: boolean;
+  } | null>(null);
+  const postIsLive =
+    liveHere && liveHere.against === isLive ? liveHere.live : isLive;
   const [pendingPublishStatus, setPendingPublishStatus] =
     useState<WordPressPostStatus>("publish");
 
@@ -561,7 +559,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   ) => {
     if (!isFinal || !workspaceId) return;
     setPendingPublishStatus(selectedStatus);
-    const statusDetails = WORDPRESS_STATUS_DETAILS[selectedStatus];
+    const statusDetails = PUBLISH_RESULT_COPY[selectedStatus];
     log.info("[WordPress Publish] Selected post status", {
       selected_status: selectedStatus,
       content_id: contentSavedId,
@@ -597,11 +595,11 @@ function ContentEditorInner(props: ContentEditorProps) {
       }
 
       setStatusModal({
-        title: `${statusDetails.label} Content...`,
+        title: `${statusDetails.working}...`,
         isOpen: true,
         type: "success",
         action: "publish",
-        message: `Sending content to WordPress with status "${selectedStatus}"...`,
+        message: "Sending the article to your site...",
       });
 
       const cmsType = activeIntegrations[0]?.integration_type;
@@ -648,12 +646,28 @@ function ContentEditorInner(props: ContentEditorProps) {
         content_id: contentSavedId ?? response?.id ?? undefined,
       });
       invalidateContentCache();
+      // A publish makes the post live; a draft or review save takes it down, but only where it
+      // reached the site: one that failed may still show the post, so the warning stays.
+      // When no site took it, nothing changed on any site.
+      const results = response?.publish_results;
+      const someSiteMissed = (results?.failed ?? 0) > 0;
+      const noSiteTookIt = results ? results.successful === 0 : false;
+      setLiveHere({
+        live: noSiteTookIt
+          ? postIsLive
+          : selectedStatus === "publish" || (someSiteMissed && postIsLive),
+        against: isLive,
+      });
       setStatusModal({
         title: statusDetails.successTitle,
         isOpen: true,
         type: "success",
         action: "publish",
         message: statusDetails.successMessage,
+        postUrl:
+          selectedStatus === "publish"
+            ? postLink(response?.content?.wordpress_url)
+            : null,
       });
     } catch (error) {
       const err = error as Error & { statusCode?: number };
@@ -681,8 +695,8 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
       setStatusModal({
         title: isIntegrationIssue
-          ? "Permission Required"
-          : "Failed to Publish Content",
+          ? "Permission required"
+          : "The article wasn't sent to your site",
         isOpen: true,
         type: "error",
         action: "publish",
@@ -846,9 +860,12 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  const openPublishConfirmation = (status: WordPressPostStatus) => {
-    setSelectedPublishStatus(status);
-    setPublishConfirmOpen(true);
+  // Every choice in the menu asks first, in words that name it; on a live article, a draft or review
+  // save says the post leaves the site (#676).
+  const openPublishConfirmation = async (status: WordPressPostStatus) => {
+    if (await confirm(publishConfirmCopy(status, postIsLive))) {
+      publishContent(status);
+    }
   };
 
   const analysisSidebarContent = (
@@ -927,7 +944,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Copy HTML
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-                Copy MD
+                Copy Markdown
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("formatted")}>
                 Copy Text
@@ -1212,7 +1229,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </>
             ) : (
-              <div className="relative">
+              // Images span the article's column at their own aspect, the featured one
+              // included (the founder's feedback v2, #704); the editor's image nodes stay
+              // as they are in Edit. Each image's wrappers become blocks, the outer one over
+              // its inline `display: inline-block` (hence `!`), or a narrow image would stay
+              // at its own width (review round 1).
+              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
                 {!body?.trim() ? (
                   <div className="not-prose space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -1236,6 +1258,15 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 ) : (
                   <>
+                    {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
+                        the article, instead of behind its button (#704). */}
+                    <div className="not-prose mb-8 xl:hidden">
+                      <ArticleChecklist
+                        seoScore={seoScore}
+                        checklist={checklist}
+                        trustScore={trustScore}
+                      />
+                    </div>
                     <header>
                       {tags.length > 0 && (
                         <div className="not-prose mb-4 flex flex-wrap gap-2">
@@ -1385,6 +1416,18 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Go to Integrations
               </Button>
             )}
+            {statusModal.postUrl && (
+              <Button asChild variant="outline" className="mt-2 gap-2">
+                <a
+                  href={statusModal.postUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open the post
+                </a>
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -1474,41 +1517,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>
-            Confirm {WORDPRESS_STATUS_DETAILS[selectedPublishStatus].label}
-          </DialogTitle>
-
-          <DialogDescription>
-            Are you sure you want to{" "}
-            <strong>
-              {WORDPRESS_STATUS_DETAILS[
-                selectedPublishStatus
-              ].label.toLowerCase()}
-            </strong>{" "}
-            this content?
-          </DialogDescription>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPublishConfirmOpen(false)}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              onClick={() => {
-                setPublishConfirmOpen(false);
-                publishContent(selectedPublishStatus);
-              }}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {ConfirmationComponent}
     </div>
   );
 }
