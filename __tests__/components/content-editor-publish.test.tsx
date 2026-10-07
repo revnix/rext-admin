@@ -137,6 +137,48 @@ describe("The article's Publish menu", () => {
     );
   });
 
+  it.each([
+    [
+      "every site took the draft",
+      { failed: 0, successful: 1 },
+      "Save as a draft on your site?",
+    ],
+    [
+      "a site missed it",
+      { failed: 1, successful: 1 },
+      "Take the post down from your site?",
+    ],
+  ])(
+    "after a draft save where %s, the next one asks accordingly",
+    async (_, outcome, nextTitle) => {
+      api.content.publish.mockResolvedValue({
+        content: {},
+        publish_results: { total_sites: 2, all_failed: false, ...outcome },
+      });
+      render(editor(true));
+      const first = await choose("Save as Draft");
+      await first.user.click(
+        within(first.dialog).getByRole("button", {
+          name: "Take the post down",
+        }),
+      );
+      expect(
+        await screen.findByText("Saved as a draft on your site", undefined, {
+          timeout: 4000,
+        }),
+      ).toBeInTheDocument();
+      await first.user.click(
+        within(screen.getByRole("dialog")).getAllByRole("button", {
+          name: "Close",
+        })[0],
+      );
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      const second = await choose("Save as Draft");
+      expect(within(second.dialog).getByText(nextTitle)).toBeInTheDocument();
+    },
+  );
+
   it("asks plainly on an article that isn't live", async () => {
     render(editor(false));
     const { dialog } = await choose("Save as Draft");

@@ -646,8 +646,13 @@ function ContentEditorInner(props: ContentEditorProps) {
         content_id: contentSavedId ?? response?.id ?? undefined,
       });
       invalidateContentCache();
-      // A publish makes the post live; a draft or review save takes it down.
-      setLiveHere({ live: selectedStatus === "publish", against: isLive });
+      // A publish makes the post live; a draft or review save takes it down, but only where it
+      // reached the site: one that failed may still show the post, so the warning stays.
+      const someSiteMissed = (response?.publish_results?.failed ?? 0) > 0;
+      setLiveHere({
+        live: selectedStatus === "publish" || (someSiteMissed && postIsLive),
+        against: isLive,
+      });
       setStatusModal({
         title: statusDetails.successTitle,
         isOpen: true,
