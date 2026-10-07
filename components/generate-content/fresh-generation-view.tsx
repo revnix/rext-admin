@@ -386,6 +386,9 @@ export function FreshGenerationView({
   // step 2's Analyze or a suggestion, never by the first analysis, and cleared when that run's
   // loading ends.
   const [inPlaceAnalysis, setInPlaceAnalysis] = useState(false);
+  // Whether step 2 had its side pane (the search results) when that analysis started: the step
+  // keeps that width while it runs, so the search field neither widens nor narrows.
+  const [inPlaceSidePane, setInPlaceSidePane] = useState(false);
   const loadingNow = isLoading || isManualLoading;
   const wasLoadingRef = useRef(false);
   useEffect(() => {
@@ -2072,6 +2075,10 @@ export function FreshGenerationView({
           thread_id: threadId ?? undefined,
         });
         setInPlaceAnalysis(isReanalysis);
+        setInPlaceSidePane(
+          isReanalysis &&
+            serpResultsFromGate(state.interrupt?.[0]?.value).length > 0,
+        );
         const resumed = resumeWorkflow({
           payload: {
             "Primary Keyword": value,
@@ -2451,7 +2458,7 @@ export function FreshGenerationView({
           (instructionType === "keyword Selection" &&
             serpResultsFromGate(state.interrupt?.[0]?.value).length > 0) ||
           // A keyword analysed in place: the search field keeps the width it had (FB2.3).
-          reanalysingInPlace
+          (reanalysingInPlace && inPlaceSidePane)
         }
         className={cn(
           "flex flex-col items-center justify-center relative lg:px-8 transition-all duration-700",
