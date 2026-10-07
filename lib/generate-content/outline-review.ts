@@ -906,6 +906,23 @@ export function readOnlyBlocks(outline: unknown): OutlineRenderBlock[] {
   return items.length > 0 ? [{ heading: "Sections", items }] : [];
 }
 
+/**
+ * Whether there is nothing to approve: an outline that came back without a title, or with no section
+ * the gate offers, no block to show and no FAQ. The outline model sometimes runs away into whitespace
+ * and the run still reaches the gate (task 783); approving that would write an article from nothing.
+ * `offered` is how many section rows the gate offers. An outline still streaming (null) isn't empty.
+ */
+export function outlineIsEmpty(outline: unknown, offered: number): boolean {
+  if (!isRecord(outline)) return false;
+  const title = typeof outline.title === "string" ? outline.title.trim() : "";
+  if (!title) return true;
+  return (
+    offered === 0 &&
+    readOnlyBlocks(outline).length === 0 &&
+    readOutlineFaqs(outline).length === 0
+  );
+}
+
 // ── While the outline streams ────────────────────────────────────────────────
 
 /** A string field of the outline model's JSON so far (its title, its brief), complete or not yet. */

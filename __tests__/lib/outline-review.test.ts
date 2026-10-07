@@ -24,6 +24,7 @@ import {
   moveTarget,
   nearestGap,
   placeBelow,
+  outlineIsEmpty,
   readOnlyBlocks,
   readOutlineFaqs,
   readOutlineGate,
@@ -1569,5 +1570,38 @@ describe("reading the outline", () => {
     expect(streamedField(raw, "title")).toBe("Running shoes");
     expect(streamedField('{"title":"Runn', "title")).toBe("Runn");
     expect(streamedField("{", "title")).toBe("");
+  });
+});
+
+describe("outlineIsEmpty", () => {
+  it("is not empty while the outline still streams", () => {
+    expect(outlineIsEmpty(null, 0)).toBe(false);
+    expect(outlineIsEmpty(undefined, 0)).toBe(false);
+  });
+
+  it("is empty without a title, whatever else it holds", () => {
+    expect(outlineIsEmpty({}, 0)).toBe(true);
+    expect(outlineIsEmpty({ title: "   " }, 3)).toBe(true);
+    expect(outlineIsEmpty({ title: 7, sections: [] }, 0)).toBe(true);
+  });
+
+  it("is empty with a title but no section, block or question to review", () => {
+    expect(outlineIsEmpty({ title: "Tea", sections: [] }, 0)).toBe(true);
+  });
+
+  it("is not empty with rows the gate offers, with sections of its own, or with only an FAQ", () => {
+    expect(outlineIsEmpty({ title: "Tea" }, 4)).toBe(false);
+    expect(
+      outlineIsEmpty(
+        { title: "Tea", sections: [{ heading: "Black tea", key_points: [] }] },
+        0,
+      ),
+    ).toBe(false);
+    expect(
+      outlineIsEmpty(
+        { title: "Tea", faqs: [{ question: "How hot should the water be?" }] },
+        0,
+      ),
+    ).toBe(false);
   });
 });
