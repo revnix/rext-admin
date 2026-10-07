@@ -5,9 +5,8 @@ import { ArrowRight, Building2, Check, User, UserCog, X } from "lucide-react";
 import { detectRoleCategory } from "@/lib/role-categories";
 import { local } from "@/lib/storage";
 import { ONBOARDING_STORAGE_KEYS } from "@/lib/storage-keys";
-import { useReducedMotion } from "@/lib/animations";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,9 +18,6 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { Workspace } from "@/types/workspace";
 import type { Route } from "next";
-
-/** Number of CSS confetti particles to render. Set to 0 for reduced-motion users. */
-const CONFETTI_PIECE_COUNT = 50;
 
 interface WorkspaceWelcomeModalProps {
   open: boolean;
@@ -54,27 +50,12 @@ export function WorkspaceWelcomeModal({
 }: WorkspaceWelcomeModalProps) {
   const router = useRouter();
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(true);
-  const prefersReducedMotion = useReducedMotion();
 
   // Default permissions based on role if not provided
   const permissions =
     rolePermissions.length > 0
       ? rolePermissions
       : getDefaultPermissions(roleName);
-
-  // Trigger confetti animation on mount
-  useEffect(() => {
-    if (open && !prefersReducedMotion) {
-      setIsAnimating(true);
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [open, prefersReducedMotion]);
 
   const handleClose = () => {
     if (dontShowAgain) {
@@ -106,9 +87,6 @@ export function WorkspaceWelcomeModal({
             {roleName}
           </DialogDescription>
         </VisuallyHidden>
-
-        {/* Confetti Background Animation */}
-        {isAnimating && <ConfettiEffect />}
 
         {/* Close button */}
         <div className="absolute top-4 right-4 z-10">
@@ -238,55 +216,6 @@ export function WorkspaceWelcomeModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/**
- * Confetti effect using CSS animations
- * Creates floating particles across the screen
- * Renders nothing if the user prefers reduced motion
- */
-function ConfettiEffect() {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return null;
-  }
-
-  // The accent and the neutral steps only: status colours mean status (design/app-language.md §2).
-  const colors = [
-    "bg-primary",
-    "bg-foreground",
-    "bg-muted-foreground",
-    "bg-border-strong",
-  ];
-
-  const confettiPieces = Array.from(
-    { length: CONFETTI_PIECE_COUNT },
-    (_, i) => ({
-      id: i,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      left: `${Math.random() * 100}%`,
-      animationDelay: `${Math.random() * 3}s`,
-      animationDuration: `${3 + Math.random() * 2}s`,
-    }),
-  );
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-0">
-      {confettiPieces.map((piece) => (
-        <div
-          key={piece.id}
-          className={`absolute w-2 h-2 ${piece.color} rounded-full animate-confetti-fall`}
-          style={{
-            left: piece.left,
-            top: "-10px",
-            animationDelay: piece.animationDelay,
-            animationDuration: piece.animationDuration,
-          }}
-        />
-      ))}
-    </div>
   );
 }
 

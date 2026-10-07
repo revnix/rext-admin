@@ -16,7 +16,6 @@
     "arbitrary-size": 2
   },
   "components/ui/chart.tsx": {
-    "literal-colour": 5,
     "off-scale": 1,
     "arbitrary-radius": 2
   },
@@ -38,7 +37,7 @@
     "off-scale": 1
   },
   "components/ui/radio-group.tsx": {
-    "off-scale": 2
+    "off-scale": 1
   },
   "components/ui/scroll-area.tsx": {
     "arbitrary-radius": 1
@@ -57,8 +56,5 @@
   },
   "components/ui/typeform/single-select-card.tsx": {
     "off-scale": 1
-  },
-  "components/workspace/workspace-welcome-modal.tsx": {
-    "arbitrary-radius": 1
   }
 }
