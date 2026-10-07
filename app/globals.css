@@ -168,6 +168,37 @@
   --duration-slow: 320ms;
 }
 
+/* The sidebar is an obsidian island with lime accents on the light content area (FB2.7 #688, the
+   founder's option A). Inside it the roles are redefined, so every part of the shell in it (the
+   switcher, the nav, the credits, the user menu) reads light on dark at AA: text about 17:1, muted
+   text about 9:1, lime about 14:1. Menus it opens render outside it and stay light. Desktop and the
+   phone's drawer both carry data-slot="sidebar". */
+[data-slot="sidebar"] {
+  --surface-raised: var(--accent-fill); /* obsidian-950 */
+  --surface: var(--surface-raised);
+  --surface-inset: var(--accent-fill-hover); /* obsidian-800 */
+  --foreground: var(--neutral-0);
+  --muted-foreground: color-mix(in oklch, var(--neutral-0) 72%, transparent);
+  --border: color-mix(in oklch, var(--neutral-0) 12%, transparent);
+  --primary: var(--accent-on-fill); /* lime-400 */
+  --primary-foreground: var(--accent-fill);
+  --primary-hover: color-mix(
+    in oklch,
+    var(--accent-on-fill) 85%,
+    var(--neutral-0)
+  );
+  --ring: var(--accent-on-fill);
+  --sidebar: var(--surface-raised);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--surface-inset);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-primary: var(--accent-on-fill);
+  --sidebar-primary-foreground: var(--accent-fill);
+  --sidebar-ring: var(--accent-on-fill);
+  color: var(--foreground);
+}
+
 @theme inline {
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
