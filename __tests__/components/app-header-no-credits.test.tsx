@@ -3,6 +3,7 @@
  * the balance shows, so the header has the breadcrumb, notifications and help only.
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { AppHeader } from "@/components/shell/app-header";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -15,11 +16,13 @@ jest.mock("next/navigation", () => ({
 
 it("has no credits link or meter at the top right", () => {
   render(
-    <SidebarProvider>
-      <TooltipProvider>
-        <AppHeader />
-      </TooltipProvider>
-    </SidebarProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <SidebarProvider>
+        <TooltipProvider>
+          <AppHeader />
+        </TooltipProvider>
+      </SidebarProvider>
+    </QueryClientProvider>,
   );
   expect(screen.getByRole("banner")).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /credits|usage/i })).toBeNull();

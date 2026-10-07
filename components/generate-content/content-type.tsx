@@ -1,14 +1,9 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { getContentTypeConfig } from "@/config/content-types";
 import {
   arrangeContentTypes,
@@ -44,7 +39,6 @@ export default function ContentType({
   handleContentTypeSelect,
 }: ContentTypeProps) {
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (
@@ -65,16 +59,13 @@ export default function ContentType({
   // The candidates are the backend's list for the intent it read, so that intent orders them.
   const gateIntent =
     typeof ownGate?.search_intent === "string" ? ownGate.search_intent : "";
+  // Every type the backend offers, in one grid: the recommended one first, then what the results
+  // show and what the intent most often wants, then the rest (FB2.10 #691: nothing folded away).
   const { shown, more } = arrangeContentTypes(contentTypes, {
     recommended: recommendedContentType,
     intent: gateIntent || intent,
     serpTypes: evidence?.dominantFormat?.contentTypes,
   });
-  // A type picked under "More types" stays in view when the list is folded again.
-  const keptInView =
-    !moreOpen && selectedType && more.includes(selectedType)
-      ? [selectedType]
-      : [];
 
   const card = (type: string) => (
     <TypeCard
@@ -105,31 +96,9 @@ export default function ContentType({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {[...shown, ...keptInView].map(card)}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {[...shown, ...more].map(card)}
       </div>
-
-      {more.length > 0 && (
-        <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="mt-3">
-              {moreOpen ? "Fewer types" : `More types (${more.length})`}
-              <ChevronDown
-                aria-hidden="true"
-                className={cn(
-                  "transition-transform duration-(--duration-base) ease-out",
-                  moreOpen && "rotate-180",
-                )}
-              />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {more.map(card)}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      )}
 
       <div className="mt-6 flex justify-end">
         <Button

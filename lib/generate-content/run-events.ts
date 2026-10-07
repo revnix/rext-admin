@@ -27,8 +27,10 @@ const FALLBACK_MESSAGE = "This run stopped before it finished.";
  * The `content.error_code`s of a run the backend ended on purpose, with a message
  * for the user (rext-backend): a keyword with no search results or a failed
  * search lookup (`no_serp_data`, `rext.py`), a topic step that wrote no titles
- * (`topic_generation_failed`, `topic_generation.py`), and a start whose credits
- * couldn't be read (`credit_check_failed`, `rext.py`: "Try again in a moment").
+ * (`topic_generation_failed`, `topic_generation.py`), a start whose credits
+ * couldn't be read (`credit_check_failed`, `rext.py`: "Try again in a moment"),
+ * and an outline or article the AI provider couldn't serve
+ * (`provider_unavailable`, `provider_unavailable.py`: "busy right now", G75.1).
  * A run short of credits (`insufficient_credits`) has its own popup and isn't
  * one of these.
  */
@@ -36,6 +38,7 @@ export const STOPPED_RUN_CODES: readonly string[] = [
   "no_serp_data",
   "topic_generation_failed",
   "credit_check_failed",
+  "provider_unavailable",
 ];
 
 /**
@@ -78,8 +81,9 @@ export function readStoppedRun(values: unknown): string | null {
 
 /**
  * The graph's last nodes (rext-backend's `src/flow/engines/rext.py` and
- * `topic_generation.py`): the article written, or a run the credit gate, an
- * empty search or a topic step without titles ended. An update from one of them
+ * `topic_generation.py`, `provider_unavailable.py`): the article written, or a
+ * run the credit gate, an empty search, a topic step without titles or an
+ * unavailable AI provider ended. An update from one of them
  * means the run is over.
  */
 const LAST_NODES = [
@@ -88,6 +92,7 @@ const LAST_NODES = [
   "credit_check_failed",
   "no_serp_data",
   "topics_failed",
+  "provider_unavailable",
 ];
 
 /**

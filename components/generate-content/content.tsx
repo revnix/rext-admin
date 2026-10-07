@@ -75,6 +75,7 @@ import {
   publishConfirmCopy,
 } from "@/lib/content/publish-copy";
 import { useConfirmation } from "../ui/confirmation-dialog";
+import { Notice } from "../ui/notice";
 import { Skeleton } from "../ui/skeleton";
 
 const TAG_SKELETON_KEYS = Array.from(
@@ -353,6 +354,22 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  // Scheduling publishes to a connected site later, so the dialog first reads whether one is
+  // connected; coming back from the integrations tab reads it again (#705).
+  const scheduleSites = useQuery({
+    ...integrationQueries.list(workspaceId ?? ""),
+    enabled: scheduleDialogOpen && !!workspaceId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const scheduleNeedsSite =
+    scheduleSites.isSuccess &&
+    !scheduleSites.data.some((site) => site.is_active !== false);
+  const checkingScheduleSites =
+    scheduleSites.isPending && scheduleSites.fetchStatus === "fetching";
+  // A list that couldn't be read is no proof of a site, an earlier answer still in the cache
+  // included: the dates wait for a check that worked (review rounds 1 and 2).
+  const scheduleSitesFailed = scheduleSites.isError;
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
   const { confirm, ConfirmationComponent } = useConfirmation();
@@ -1435,84 +1452,141 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* Schedule dialog */}
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
         <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
-          <DialogTitle>Schedule Publication</DialogTitle>
+          <DialogTitle>Schedule publication</DialogTitle>
           <DialogDescription>
-            Pick a date and time in your account timezone ({accountTimezone}).
-            Content publishes automatically via WordPress.
+            {scheduleNeedsSite
+              ? "A scheduled article is published to your site at the time you pick."
+              : `Pick a date and time in your account timezone (${accountTimezone}). Content publishes automatically via WordPress.`}
           </DialogDescription>
-          {timezoneMismatch && syncTimezoneMutation.isError && (
-            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-foreground">
-              <AlertCircle size={14} className="mt-0.5 shrink-0" />
-              <div className="flex-1">
-                Couldn&apos;t update your account timezone to match your device
-                (<strong>{browserTimezone}</strong>). Scheduled times will use{" "}
-                <strong>{accountTimezone}</strong> until this succeeds.
+          {checkingScheduleSites ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 size={16} className="animate-spin shrink-0" />
+              Checking your connected sites…
+            </div>
+          ) : scheduleSitesFailed ? (
+            <Notice
+              tone="danger"
+              title="Your sites couldn't be checked"
+              className="self-start"
+              action={
                 <Button
-                  type="button"
-                  variant="link"
                   size="sm"
-                  className="h-auto p-0 ml-1 text-foreground underline"
-                  disabled={syncTimezoneMutation.isPending}
-                  onClick={() => syncTimezoneMutation.mutate()}
+                  variant="outline"
+                  disabled={scheduleSites.isFetching}
+                  onClick={() => scheduleSites.refetch()}
                 >
-                  Retry
+                  Try again
                 </Button>
+              }
+            >
+              Scheduling needs a connected site, so the dates show once the
+              check works.
+            </Notice>
+          ) : scheduleNeedsSite ? (
+            <Notice
+              tone="info"
+              title="Connect a site first"
+              className="self-start"
+              action={
+                workspaceSlug ? (
+                  <Button asChild variant="outline" size="sm">
+                    <a
+                      href={`/w/${workspaceSlug}/integrations`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink size={16} aria-hidden />
+                      Set up an integration
+                    </a>
+                  </Button>
+                ) : undefined
+              }
+            >
+              Set one up in a new tab, then come back: this dialog shows the
+              dates once a site is connected.
+            </Notice>
+          ) : (
+            <>
+              {timezoneMismatch && syncTimezoneMutation.isError && (
+                <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-foreground">
+                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    Couldn&apos;t update your account timezone to match your
+                    device (<strong>{browserTimezone}</strong>). Scheduled times
+                    will use <strong>{accountTimezone}</strong> until this
+                    succeeds.
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 ml-1 text-foreground underline"
+                      disabled={syncTimezoneMutation.isPending}
+                      onClick={() => syncTimezoneMutation.mutate()}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {timezoneMismatch && syncTimezoneMutation.isPending && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
+                  <Loader2 size={14} className="animate-spin shrink-0" />
+                  Updating your account timezone to match your device (
+                  {browserTimezone})...
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-4 py-2">
+                <Calendar
+                  mode="single"
+                  selected={scheduleDate}
+                  onSelect={setScheduleDate}
+                  disabled={isDateDisabled}
+                />
+                <div className="w-full space-y-1.5">
+                  <Label htmlFor="schedule-time" className="text-xs">
+                    Time
+                  </Label>
+                  <Input
+                    id="schedule-time"
+                    type="time"
+                    value={scheduleTime}
+                    min={minScheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
-            </div>
+            </>
           )}
-          {timezoneMismatch && syncTimezoneMutation.isPending && (
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
-              <Loader2 size={14} className="animate-spin shrink-0" />
-              Updating your account timezone to match your device (
-              {browserTimezone})...
-            </div>
-          )}
-          <div className="flex flex-col items-center gap-4 py-2">
-            <Calendar
-              mode="single"
-              selected={scheduleDate}
-              onSelect={setScheduleDate}
-              disabled={isDateDisabled}
-            />
-            <div className="w-full space-y-1.5">
-              <Label htmlFor="schedule-time" className="text-xs">
-                Time
-              </Label>
-              <Input
-                id="schedule-time"
-                type="time"
-                value={scheduleTime}
-                min={minScheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
           <DialogFooter>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setScheduleDialogOpen(false)}
             >
-              Cancel
+              {scheduleNeedsSite || scheduleSitesFailed ? "Close" : "Cancel"}
             </Button>
-            <Button
-              size="sm"
-              disabled={
-                !scheduleDate ||
-                isPublishing ||
-                isScheduleTimeInPast ||
-                (timezoneMismatch && syncTimezoneMutation.isPending)
-              }
-              onClick={scheduleContent}
-            >
-              {isPublishing ? (
-                <Loader2 size={13} className="animate-spin mr-1" />
-              ) : (
-                <Clock size={13} className="mr-1" />
+            {!scheduleNeedsSite &&
+              !checkingScheduleSites &&
+              !scheduleSitesFailed && (
+                <Button
+                  size="sm"
+                  disabled={
+                    !scheduleDate ||
+                    isPublishing ||
+                    isScheduleTimeInPast ||
+                    (timezoneMismatch && syncTimezoneMutation.isPending)
+                  }
+                  onClick={scheduleContent}
+                >
+                  {isPublishing ? (
+                    <Loader2 size={13} className="animate-spin mr-1" />
+                  ) : (
+                    <Clock size={13} className="mr-1" />
+                  )}
+                  Schedule
+                </Button>
               )}
-              Schedule
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

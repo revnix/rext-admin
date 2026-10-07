@@ -76,6 +76,16 @@ describe("readStoppedRun", () => {
     ).toBe(message);
   });
 
+  it("reads a run the AI provider couldn't serve from its state", () => {
+    const message =
+      "The writing service is busy right now, so this run stopped before it finished. Please try again in a few minutes.";
+    expect(
+      readStoppedRun({
+        content: { error: message, error_code: "provider_unavailable" },
+      }),
+    ).toBe(message);
+  });
+
   it.each([
     undefined,
     null,
@@ -123,6 +133,10 @@ describe("settlesRun", () => {
     [
       "a topic step without titles",
       { event: "updates|content_engine:1", data: { topics_failed: {} } },
+    ],
+    [
+      "an unavailable AI provider",
+      { event: "updates|content_engine:1", data: { provider_unavailable: {} } },
     ],
     [
       "a failure the backend reported",

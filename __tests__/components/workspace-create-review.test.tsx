@@ -8,9 +8,11 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
 import { apiClient } from "@/lib/api-client";
+import { workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 
 const mockPush = jest.fn();
+const mockSetCurrentWorkspace = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
@@ -53,7 +55,8 @@ jest.mock("@/stores/workspace", () => {
       slug: "acme",
     }),
     workspaceList: [],
-    setCurrentWorkspace: jest.fn(),
+    setCurrentWorkspace: (workspace: unknown) =>
+      mockSetCurrentWorkspace(workspace),
   };
   return {
     useWorkspaceStore: (selector: (s: typeof state) => unknown) =>
@@ -80,13 +83,12 @@ const drafted = {
   },
 };
 
-async function createAndFinishTheAnalysis() {
+const newClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+async function createAndFinishTheAnalysis(client = newClient()) {
   render(
-    <QueryClientProvider
-      client={
-        new QueryClient({ defaultOptions: { queries: { retry: false } } })
-      }
-    >
+    <QueryClientProvider client={client}>
       <WorkspaceCreateWizard />
     </QueryClientProvider>,
   );
@@ -133,6 +135,29 @@ describe("The drafted details in the creation flow", () => {
     );
     // Nothing was changed here: the analysis's draft is saved already.
     expect(workspaces.updateBrandVoice).not.toHaveBeenCalled();
+  });
+
+  it("puts the new workspace in the switcher's list before it becomes the current one", async () => {
+    // The switcher puts back the first workspace of its list when the current one isn't in it,
+    // and the sidebar would name that one, and link to it, through the analysis and the review.
+    const client = newClient();
+    const key = workspaceQueries.list().queryKey;
+    client.setQueryData(key, {
+      workspaces: [{ id: "ws-0", slug: "older" }],
+    } as never);
+    let listedWhenCurrent: string[] = [];
+    mockSetCurrentWorkspace.mockImplementationOnce(() => {
+      listedWhenCurrent = (client.getQueryData(key)?.workspaces ?? []).map(
+        (workspace) => workspace.id,
+      );
+    });
+
+    await createAndFinishTheAnalysis(client);
+
+    expect(mockSetCurrentWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "ws-1" }),
+    );
+    expect(listedWhenCurrent).toEqual(["ws-1", "ws-0"]);
   });
 
   it("saves what was changed before it opens Generate content", async () => {

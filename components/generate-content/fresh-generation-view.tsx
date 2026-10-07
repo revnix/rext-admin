@@ -82,7 +82,12 @@ import {
   TOO_MANY_RUNS,
 } from "@/lib/generate-content/run-events";
 import { workspaceRoutes } from "@/lib/routes";
-import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
+import {
+  canAnalyze,
+  isKeywordReanalysis,
+  isReanalysingInPlace,
+  withAnalysedCountry,
+} from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
 import { deriveActiveGenerationViewState } from "@/lib/generate-content/background-generation-view-state";
@@ -368,6 +373,16 @@ export function FreshGenerationView({
   const [timedOutStages, setTimedOutStages] = useState<RunStage[] | null>(null);
   // A run the backend ended early (no search results, a failed lookup).
   const [runError, setRunError] = useState<string | null>(null);
+  // A keyword analysed from step 2 itself (FB2.3): its run keeps the step on screen. Set only by
+  // step 2's Analyze or a suggestion, never by the first analysis, and cleared when that run's
+  // loading ends.
+  const [inPlaceAnalysis, setInPlaceAnalysis] = useState(false);
+  const loadingNow = isLoading || isManualLoading;
+  const wasLoadingRef = useRef(false);
+  useEffect(() => {
+    if (wasLoadingRef.current && !loadingNow) setInPlaceAnalysis(false);
+    wasLoadingRef.current = loadingNow;
+  }, [loadingNow]);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
@@ -540,10 +555,15 @@ export function FreshGenerationView({
           payload: value.recommended_topic,
         });
 
-      dispatch({ type: "SET_INTERRUPT", payload: interrupts });
+      // The reducer reads the analysed country off the interrupt; an older thread's has none.
+      const restored = withAnalysedCountry(
+        interrupts,
+        values?.serp_payload?.country,
+      );
+      dispatch({ type: "SET_INTERRUPT", payload: restored });
       dispatch({
         type: "UPDATE_FROM_STREAM",
-        payload: { __interrupt__: interrupts } as StreamUpdates,
+        payload: { __interrupt__: restored } as StreamUpdates,
       });
     },
     [backgroundThreadId],
@@ -575,7 +595,9 @@ export function FreshGenerationView({
     // so they don't bleed into this thread's view (e.g. showing a finished
     // article underneath a different thread's outline step).
     dispatch({ type: "RESET_FOR_THREAD_SWITCH" });
-    // Also reset local component state that lives outside the reducer.
+    // Also reset local component state that lives outside the reducer. The in-place flag belongs
+    // to the run left behind: this thread's analysis didn't start from step 2.
+    setInPlaceAnalysis(false);
     setTokenTarget("none");
     tokenTargetRef.current = "none";
     outline.resetStream();
@@ -1197,11 +1219,15 @@ export function FreshGenerationView({
    */
   const processStream = async (
     stream: AsyncGenerator<RunStreamEvent>,
+    // The thread a new start just created: `threadId` is still stale in this
+    // closure for it (the reducer dispatch has not re-rendered yet), and a start
+    // the backend refuses never sends the `run/created` that would name it.
+    // Without it, the refusal left the dock's job running and took this stream
+    // for a superseded one, so the loader never cleared over the notice (E27).
+    startedThreadId?: string,
   ): Promise<boolean> => {
-    // `threadId` is still stale in this closure for the very first run (the
-    // reducer dispatch has not re-rendered yet), so track it locally and let
-    // `run/created` confirm it.
-    let activeThreadId = threadId ?? backgroundThreadId ?? null;
+    let activeThreadId =
+      startedThreadId ?? threadId ?? backgroundThreadId ?? null;
     let settled = false;
     // The backend ended the run early (run.failed): its stages fail, they don't complete.
     let stopped = false;
@@ -1565,6 +1591,9 @@ export function FreshGenerationView({
           updateBackgroundJob(activeThreadId, {
             status: "completed",
             awaitingInput: true,
+            // Back to the step it was waiting on, which was announced already: the dock
+            // mustn't announce it again as a next step ready (the refusal's toast says why).
+            completionNotified: true,
           });
           toast.error(_e.message);
         } else {
@@ -1753,7 +1782,7 @@ export function FreshGenerationView({
         signal,
       );
 
-      const settled = await processStream(stream);
+      const settled = await processStream(stream, newThreadId);
       // A new thread has no other run: any run on it is this one.
       if (
         !settled &&
@@ -1960,7 +1989,8 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
-        return resumeWorkflow({
+        setInPlaceAnalysis(isReanalysis);
+        const resumed = resumeWorkflow({
           payload: {
             "Primary Keyword": value,
             country,
@@ -1970,6 +2000,13 @@ export function FreshGenerationView({
             ? "Analyzing keyword..."
             : "Content Type Selection...",
         });
+        // A resume that never started leaves no run to wait for in place.
+        if (isReanalysis) {
+          void resumed.then((started) => {
+            if (!started) setInPlaceAnalysis(false);
+          });
+        }
+        return resumed;
       }
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
@@ -2183,8 +2220,16 @@ export function FreshGenerationView({
     router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
   }, [threadId, removeBackgroundJob, router, workspaceSlug]);
 
+  // A keyword analysed from step 2 keeps step 2 on screen while it runs (FB2.3).
+  const reanalysingInPlace = isReanalysingInPlace({
+    fromKeywordStep: inPlaceAnalysis && instructionType === "keyword Selection",
+    loading: loadingNow,
+    phase: runState?.phase,
+  });
+
   if (
     (isLoading || isManualLoading) &&
+    !reanalysingInPlace &&
     !showOutlineReview &&
     !showContentStream &&
     (isRegeneratingTopics || !suppressLibraryTopicLoader)
@@ -2220,7 +2265,9 @@ export function FreshGenerationView({
         primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
-        seoResult={seoResult}
+        // In place, the new analysis shows once its run has finished: its buttons before then
+        // would act on a stream that's still closing (FB2.3).
+        seoResult={reanalysingInPlace ? null : seoResult}
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
         keywordClusters={keywordClusters}
@@ -2364,7 +2411,16 @@ export function FreshGenerationView({
             <KeywordForm
               userKeyword={userKeyword}
               country={country}
-              disabled={isManualLoading}
+              disabled={
+                isManualLoading ||
+                !canAnalyze({
+                  atKeywordStep: instructionType === "keyword Selection",
+                  value: userKeyword,
+                  primaryKeyword,
+                  country,
+                  analyzedCountry,
+                })
+              }
               restoreCountry={!backgroundThreadId}
               // On the keyword step only a new keyword or country is billed.
               run={

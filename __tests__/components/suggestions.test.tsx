@@ -72,10 +72,8 @@ describe("SuggestionsSection", () => {
     expect(within(card).getByText("1.2K")).toBeInTheDocument();
     expect(within(card).getByText("Hard")).toBeInTheDocument();
     expect(
-      within(card).getByRole("meter", {
-        name: "Keyword difficulty, 42 of 100",
-      }),
-    ).toBeInTheDocument();
+      within(card).getByRole("meter", { name: "Keyword difficulty" }),
+    ).toHaveAttribute("aria-valuenow", "42");
     expect(
       within(card).getByText(
         "Search results: Informational · Suggested: Commercial",
