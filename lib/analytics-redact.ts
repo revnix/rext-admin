@@ -2,7 +2,7 @@
  * What analytics may know of an address. Links in our emails carry credentials in their query
  * (an unsubscribe, verification, reset or invitation token) and sign-in pages carry an email, so
  * those values are replaced before an event leaves the browser: PostHog adds the current address
- * to every event it sends, not only to page views (rext-control#541, Codex on revnix/rext-admin#601).
+ * to every event it sends, not only to page views (rext-control#541).
  */
 
 /** Query parameters whose values never go to analytics. */

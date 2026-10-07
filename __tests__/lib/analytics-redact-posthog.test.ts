@@ -6,8 +6,8 @@
 /**
  * What posthog-js itself attaches to an event, run through the dashboard's redaction (D20,
  * rext-control#541). The redaction's own tests list the properties known to hold an address; this
- * one runs the real library, so a property a posthog-js upgrade adds is caught too ($session_entry_url
- * was found that way, Codex on revnix/rext-admin#601). A recorder after the redaction keeps each event
+ * one runs the real library, so a property a posthog-js upgrade adds is caught too, as
+ * $session_entry_url was missing from that list once. A recorder after the redaction keeps each event
  * and drops it, so nothing is sent.
  */
 

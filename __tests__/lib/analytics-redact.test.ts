@@ -1,6 +1,6 @@
 /**
- * Analytics never receives an emailed link's credential or a sign-in page's email (D20, Codex on
- * #601): the token in /unsubscribe, /verify-email, /reset-password or an invitation's link is the
+ * Analytics never receives an emailed link's credential or a sign-in page's email (D20,
+ * rext-control#541): the token in /unsubscribe, /verify-email, /reset-password or an invitation's link is the
  * proof those pages' endpoints accept.
  */
 
