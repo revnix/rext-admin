@@ -52,21 +52,6 @@ export const metadata: Metadata = {
       "Research a keyword, choose a title and an outline, and get an article written in your brand voice.",
     creator: "@RextAI",
   },
-  icons: {
-    icon: [
-      { url: "/favicons/favicon.ico" },
-      { url: "/favicons/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicons/favicon-96x96.png", type: "image/png", sizes: "96x96" },
-    ],
-    apple: [
-      {
-        url: "/favicons/apple-touch-icon.png",
-        sizes: "180x180",
-        type: "image/png",
-      },
-    ],
-  },
-  manifest: "/favicons/site.webmanifest",
   robots: {
     index: false, // Admin dashboard shouldn't be indexed
     follow: false,

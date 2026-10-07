@@ -1,12 +1,12 @@
 "use client";
 
 import { Bell, CircleQuestionMark } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
+import { LogoMark } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -141,13 +141,7 @@ export function AppHeader() {
         aria-label="Rext AI home"
         className="-ml-2.5 inline-flex size-(--control-height-lg) shrink-0 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
       >
-        <Image
-          src="/logos/icon_dark.svg"
-          alt=""
-          width={20}
-          height={20}
-          className="size-5"
-        />
+        <LogoMark className="size-5" />
       </Link>
       <ShellBreadcrumb />
       <div className="flex shrink-0 items-center gap-1">

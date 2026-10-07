@@ -2,11 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, SquarePen } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import * as React from "react";
 
+import { Logo, LogoMark } from "@/components/brand-logo";
 import {
   Collapsible,
   CollapsibleContent,
@@ -358,21 +358,10 @@ export function AppSidebar({ navigation }: { navigation: ShellNavigation }) {
           aria-label="Rext AI home"
           className="flex h-8 items-center rounded-sm px-3 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none max-lg:h-(--control-height-lg)"
         >
-          <Image
-            src="/logos/rext_logo_light.svg"
-            alt=""
-            width={120}
-            height={20}
-            loading="eager"
-            data-collapse="hide"
-          />
-          <Image
-            src="/logos/icon_dark.svg"
-            alt=""
-            width={16}
-            height={16}
-            className="hidden size-4 group-data-[collapsible=icon]:block lg:max-xl:group-data-[collapsible=auto]:block"
-          />
+          <span data-collapse="hide">
+            <Logo className="h-5" />
+          </span>
+          <LogoMark className="hidden size-4 group-data-[collapsible=icon]:block lg:max-xl:group-data-[collapsible=auto]:block" />
         </Link>
         <WorkspaceSwitcher settingsUrl={settings?.url ?? null} />
         <GenerateButton navigation={navigation} />
