@@ -112,6 +112,48 @@ describe("articleStructure, headings that resemble one another", () => {
   });
 });
 
+describe("articleStructure, text that only looks like headings or differs from the plan", () => {
+  it("leaves out lines inside fenced code", () => {
+    const body = [
+      "## Install it",
+      "",
+      "```sh",
+      "# install the tool",
+      "## not a heading",
+      "```",
+      "",
+      "~~~",
+      "### nor this",
+      "~~~",
+      "",
+      "### After the code",
+    ].join("\n");
+    expect(articleStructure(body, [], false).map((e) => e.heading)).toEqual([
+      "Install it",
+      "After the code",
+    ]);
+  });
+
+  it("doesn't list a reworded last section twice", () => {
+    const planned = [
+      { heading: "Pick a show idea" },
+      { heading: "Choose a format" },
+      { heading: "Questions beginners ask" },
+      { heading: "How long should it be?", heading_level: "H3" as const },
+    ];
+    const body =
+      "## Pick a show idea\n\nText.\n\n## Choose a format\n\nText.\n\n## What beginners want to know\n\nText";
+    const entries = articleStructure(body, planned, true);
+    expect(entries.map((e) => `${e.heading}: ${e.state}`)).toEqual([
+      "Pick a show idea: done",
+      "Choose a format: done",
+      "What beginners want to know: writing",
+      "How long should it be?: waiting",
+    ]);
+    expect(writingPosition(entries)).toEqual({ section: 3, sections: 3 });
+  });
+});
+
 describe("writingPosition", () => {
   it("leaves a body's own h1 out of the count", () => {
     const body = "# The title again\n\n## Pick a show idea\n\nText";
