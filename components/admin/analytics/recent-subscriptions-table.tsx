@@ -5,6 +5,7 @@ import {
   createDataTableColumnHelper,
   DataTable,
   UNKNOWN,
+  useDataTableLocalState,
 } from "@/components/ui/data-table";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 
@@ -62,6 +63,8 @@ const columns = column.columns([
 export function RecentSubscriptionsTable({
   subscriptions,
 }: RecentSubscriptionsTableProps) {
+  // Ten a page, the only size it offers: without its own state a table starts at 25.
+  const tableState = useDataTableLocalState({ pageSize: 10 });
   return (
     <DataTable
       caption="Recent subscriptions"
@@ -71,6 +74,7 @@ export function RecentSubscriptionsTable({
       getRowLabel={(sub) => sub.user_name}
       surface="plain"
       density="compact"
+      state={tableState}
       pageSizeOptions={[10]}
       emptyState={
         <p className="py-8 text-center text-sm text-muted-foreground">
