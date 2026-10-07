@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  CREDIT_REASON_MAX,
+  CREDIT_REASON_MIN,
+  creditAmountError,
+  creditExpiryError,
+} from "@/lib/billing/credit-adjustments";
 
 import {
   BANNER_AREAS,
@@ -45,3 +51,38 @@ export const incidentBannerSchema = z.object({
 });
 
 export type IncidentBannerValues = z.infer<typeof incidentBannerSchema>;
+
+/**
+ * Add, deduct or reset a user's credits (super admins only). The amount and the expiry's day stay
+ * as typed (`lib/billing/credit-adjustments.ts` reads them): an amount is needed to add or deduct
+ * and ignored for a reset, and only an add has an expiry, on a day that hasn't ended. The reason
+ * is the backend's 3 to 500 characters once trimmed; the customer sees it.
+ */
+export const adminCreditAdjustmentSchema = z
+  .object({
+    action: z.enum(["add", "deduct", "reset"]),
+    amount: z.string(),
+    expires_at: z.string(),
+    reason: z
+      .string()
+      .trim()
+      .min(
+        CREDIT_REASON_MIN,
+        `Give a reason of at least ${CREDIT_REASON_MIN} characters`,
+      )
+      .max(CREDIT_REASON_MAX, `Use at most ${CREDIT_REASON_MAX} characters`),
+  })
+  .superRefine((values, ctx) => {
+    if (values.action === "reset") return;
+    const amount = creditAmountError(values.amount);
+    if (amount)
+      ctx.addIssue({ code: "custom", path: ["amount"], message: amount });
+    const expiry =
+      values.action === "add" ? creditExpiryError(values.expires_at) : null;
+    if (expiry)
+      ctx.addIssue({ code: "custom", path: ["expires_at"], message: expiry });
+  });
+
+export type AdminCreditAdjustmentValues = z.infer<
+  typeof adminCreditAdjustmentSchema
+>;
