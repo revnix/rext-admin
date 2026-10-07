@@ -187,7 +187,7 @@ export function OAuthAccounts() {
                   className="mt-2 sm:mt-0 h-8 w-full sm:w-auto"
                   onClick={() => {
                     // The same OAuth sign-in as logging in: marked, so analytics doesn't count it as one.
-                    markOAuthLinking();
+                    markOAuthLinking(provider);
                     signIn(provider, { callbackUrl: "/settings" });
                   }}
                 >
