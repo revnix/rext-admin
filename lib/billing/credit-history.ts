@@ -18,10 +18,9 @@ export type HistoryGrant = CreditGrantEntry & {
   granted_by_email?: string | null;
 };
 
-/** An adjustment as either view sends it: only the admin's points at the grant an add made. */
+/** An adjustment as either view sends it: only the admin's says what a deduct asked for. */
 export type HistoryAdjustment = CreditAdjustmentEntry & {
   requested_amount?: number | null;
-  grant_id?: string | null;
   adjusted_by?: string | null;
   adjusted_by_email?: string | null;
 };
@@ -51,8 +50,9 @@ export interface CreditHistoryRow {
 }
 
 /**
- * An add's audit entry and its grant are written in one request; the customer's rows carry no
- * grant id, so there they are matched by amount and reason within this long of each other.
+ * An add names the grant it made (`grant_id`), and the two are joined on it. An add's audit entry
+ * and its grant are written in one request, so rows without the id (an API that doesn't send it
+ * yet) are matched by amount and reason within this long of each other.
  */
 const SAME_CHANGE_MS = 60_000;
 

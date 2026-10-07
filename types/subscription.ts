@@ -355,6 +355,8 @@ export interface CreditAdjustmentEntry {
   reason: string | null;
   /** An add's expiry. */
   expires_at: string | null;
+  /** The grant an add made, by its id; not there from an API that doesn't send it yet. */
+  grant_id?: string | null;
   created_at: string;
 }
 
