@@ -67,7 +67,7 @@ export function SettingsPage({
                     <Link
                       href={href as Route}
                       aria-current={href === current?.href ? "page" : undefined}
-                      className="flex h-9 items-center rounded-sm px-3 max-lg:h-(--control-height-lg) text-body text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-[current=page]:bg-surface-inset aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+                      className="flex h-9 items-center rounded-sm px-3 max-lg:h-(--control-height-lg) text-body text-muted-foreground transition-colors duration-(--duration-fast) ease-out hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none relative aria-[current=page]:bg-surface-inset aria-[current=page]:font-medium aria-[current=page]:text-foreground aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-1.5 aria-[current=page]:before:left-0 aria-[current=page]:before:w-0.5 aria-[current=page]:before:rounded-full aria-[current=page]:before:bg-primary"
                     >
                       <span className="truncate">{name}</span>
                     </Link>
