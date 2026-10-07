@@ -9,6 +9,8 @@ import {
   countPipeline,
   hasWrittenArticle,
   suggestKeywords,
+  contentHealth,
+  recentPublishes,
 } from "@/components/home/home-data";
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
 import type { ContentItem } from "@/types/content";
@@ -186,5 +188,111 @@ describe("checklistSteps", () => {
       ["content", false],
       ["publish", false],
     ]);
+  });
+});
+
+describe("content health and publishing on the home (FB2.27 #708)", () => {
+  const NOW = new Date("2026-10-07T12:00:00Z");
+  const article = (over: Partial<ContentItem>): ContentItem =>
+    ({
+      id: over.id ?? "a",
+      workspace_id: "w",
+      created_by_user_id: "u",
+      title: over.title ?? "An article",
+      slug: "",
+      status: "published",
+      content_language: "en",
+      created_at: "2026-10-01T00:00:00Z",
+      updated_at: "2026-10-06T00:00:00Z",
+      ...over,
+    }) as ContentItem;
+
+  it("averages the published articles' scores and counts those under 70 and the stale drafts", () => {
+    const health = contentHealth(
+      [
+        article({
+          id: "1",
+          seo_data: { seo_score: 90 } as ContentItem["seo_data"],
+        }),
+        article({
+          id: "2",
+          seo_data: { seo_score: 60 } as ContentItem["seo_data"],
+        }),
+        article({
+          id: "3",
+          seo_data: { content_seo_score: 66 } as ContentItem["seo_data"],
+        }),
+        article({
+          id: "4",
+          status: "draft",
+          seo_data: { seo_score: 10 } as ContentItem["seo_data"],
+        }),
+        article({
+          id: "5",
+          status: "draft",
+          updated_at: "2026-09-20T00:00:00Z",
+        }),
+        article({
+          id: "6",
+          status: "ready",
+          updated_at: "2026-09-23T12:00:00Z",
+        }),
+      ],
+      NOW,
+    );
+    expect(health).toEqual({
+      scored: 3,
+      average: 72,
+      underHealthy: 2,
+      staleDrafts: 2,
+    });
+  });
+
+  it("has no average without a scored published article", () => {
+    expect(
+      contentHealth([article({ status: "draft" })], NOW).average,
+    ).toBeNull();
+  });
+
+  it("lists the latest publishes newest first and counts every failure", () => {
+    const { items, failed } = recentPublishes(
+      [
+        article({
+          id: "1",
+          title: "Old",
+          publishing_results: [
+            {
+              site_id: "s",
+              site_name: "Blog",
+              status: "published",
+              last_synced_at: "2026-10-01T00:00:00Z",
+            },
+          ],
+        }),
+        article({
+          id: "2",
+          title: "New",
+          publishing_results: [
+            {
+              site_id: "s",
+              site_name: "Blog",
+              status: "failed",
+              last_synced_at: "2026-10-06T00:00:00Z",
+            },
+            {
+              site_id: "t",
+              status: "success",
+              last_synced_at: "2026-10-05T00:00:00Z",
+            },
+          ],
+        }),
+      ],
+      2,
+    );
+    expect(items.map((item) => [item.title, item.site, item.failed])).toEqual([
+      ["New", "Blog", true],
+      ["New", "Your site", false],
+    ]);
+    expect(failed).toBe(1);
   });
 });
