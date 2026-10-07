@@ -194,6 +194,41 @@ describe("The article's Publish menu", () => {
     ).toBeNull();
   });
 
+  it("keeps a not-live article not live when no site took the publish", async () => {
+    api.content.publish.mockResolvedValue({
+      content: {},
+      publish_results: {
+        total_sites: 1,
+        successful: 0,
+        failed: 1,
+        all_failed: true,
+      },
+    });
+    render(editor(false));
+    const first = await choose("Publish");
+    await first.user.click(
+      within(first.dialog).getByRole("button", { name: "Publish article" }),
+    );
+    await waitFor(() => expect(api.content.publish).toHaveBeenCalled(), {
+      timeout: 4000,
+    });
+    await waitFor(
+      () => expect(screen.queryByText(/Publishing the article/)).toBeNull(),
+      {
+        timeout: 4000,
+      },
+    );
+    for (const close of screen.queryAllByRole("button", { name: "Close" })) {
+      await first.user.click(close).catch(() => {});
+    }
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    const second = await choose("Save as Draft");
+    expect(
+      within(second.dialog).getByText("Save as a draft on your site?"),
+    ).toBeInTheDocument();
+  });
+
   it("links to the post after a publish", async () => {
     api.content.publish.mockResolvedValue({
       content: { wordpress_url: "https://example.com/how-to-start/" },
