@@ -11,6 +11,7 @@ import {
   suggestKeywords,
   contentHealth,
   recentPublishes,
+  siteLabels,
 } from "@/components/home/home-data";
 import type { LibraryEntry } from "@/lib/generate-content/library-item";
 import type { ContentItem } from "@/types/content";
@@ -287,12 +288,73 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
           ],
         }),
       ],
+      new Map(),
       2,
     );
-    expect(items.map((item) => [item.title, item.site, item.failed])).toEqual([
-      ["New", "Blog", true],
-      ["New", "Your site", false],
+    expect(items.map((item) => [item.title, item.site, item.state])).toEqual([
+      ["New", "Blog", "failed"],
+      ["New", "Your site", "published"],
     ]);
     expect(failed).toBe(1);
+  });
+
+  it("reads the content list's own names, and names each site by its address", () => {
+    // What the backend's list sends: `url` and `last_synced`, and no site name.
+    const { items } = recentPublishes(
+      [
+        article({
+          id: "1",
+          title: "First",
+          publishing_results: [
+            {
+              site_id: "wp",
+              status: "published",
+              url: "https://www.example.com/first",
+              last_synced: "2026-10-02T00:00:00+00:00",
+            },
+          ],
+        }),
+        article({
+          id: "2",
+          title: "Second",
+          publishing_results: [
+            {
+              site_id: "gone",
+              status: "scheduled",
+              last_synced: "2026-10-04T00:00:00+00:00",
+            },
+          ],
+        }),
+      ],
+      siteLabels([
+        { id: "wp", site_url: "https://www.example.com/" },
+        { id: "bad", site_url: "not a url" },
+        { id: "none", site_url: null },
+      ]),
+    );
+
+    expect(items.map((item) => [item.title, item.site, item.state])).toEqual([
+      ["Second", "Your site", "scheduled"],
+      ["First", "example.com", "published"],
+    ]);
+  });
+
+  it("leaves out a result that is no publish any more, and calls a draft a draft", () => {
+    const { items, failed } = recentPublishes([
+      article({
+        id: "1",
+        title: "Mixed",
+        publishing_results: [
+          { site_id: "a", status: "trashed", last_synced: "2026-10-05" },
+          { site_id: "b", status: "deleted", last_synced: "2026-10-05" },
+          { site_id: "c", status: "unknown", last_synced: "2026-10-05" },
+          { site_id: "d", status: "draft", last_synced: "2026-10-03" },
+          { site_id: "e", status: "pending", last_synced: "2026-10-02" },
+        ],
+      }),
+    ]);
+
+    expect(items.map((item) => item.state)).toEqual(["draft", "draft"]);
+    expect(failed).toBe(0);
   });
 });
