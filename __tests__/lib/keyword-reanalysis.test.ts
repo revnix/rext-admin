@@ -2,12 +2,14 @@ import {
   canAnalyze,
   isKeywordReanalysis,
   isReanalysingInPlace,
+  withAnalysedCountry,
 } from "@/lib/generate-content/keyword-reanalysis";
 import {
   generationReducer,
   initialState,
 } from "@/lib/generate-content/generation-reducer";
 import type {
+  Interrupt,
   KeywordCluster,
   PageState,
   StreamUpdates,
@@ -261,6 +263,59 @@ describe("canAnalyze (FB2.3)", () => {
         country: "us",
       }),
     ).toBe(true);
+  });
+});
+
+describe("withAnalysedCountry (FB2.3)", () => {
+  const keywordStep = (overrides: Record<string, unknown> = {}) =>
+    analysis("keyword a", "us", overrides).__interrupt__ as Interrupt[];
+
+  it("gives an older keyword step the country its search ran for", () => {
+    const restored = withAnalysedCountry(
+      keywordStep({ Country: undefined }),
+      "gb",
+    );
+    expect(restored[0].value.Country).toBe("gb");
+
+    // The reducer records it, so a change of country alone can be analysed.
+    const state = apply(initialState, {
+      __interrupt__: restored,
+    } as StreamUpdates);
+    expect(state.analyzedCountry).toBe("gb");
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "keyword a",
+        primaryKeyword: state.primaryKeyword,
+        country: "us",
+        analyzedCountry: state.analyzedCountry,
+      }),
+    ).toBe(true);
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "keyword a",
+        primaryKeyword: state.primaryKeyword,
+        country: "gb",
+        analyzedCountry: state.analyzedCountry,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps the interrupt's own country, and leaves the other steps alone", () => {
+    const own = keywordStep();
+    expect(withAnalysedCountry(own, "gb")[0]).toBe(own[0]);
+
+    const titles = [
+      { id: "1", value: { type: "topic Selection", topics: ["a title"] } },
+    ] as Interrupt[];
+    expect(withAnalysedCountry(titles, "gb")[0]).toBe(titles[0]);
+  });
+
+  it("changes nothing when the thread has no search country either", () => {
+    const older = keywordStep({ Country: undefined });
+    expect(withAnalysedCountry(older, undefined)).toBe(older);
+    expect(withAnalysedCountry(older, "  ")).toBe(older);
   });
 });
 
