@@ -21,6 +21,7 @@ export function PageSkeleton({
   rows,
   stats = 0,
   label = "Loading",
+  centered = false,
 }: {
   layout?: PageSkeletonLayout;
   /** Table rows (list), text lines (detail) or fields (form). */
@@ -28,10 +29,18 @@ export function PageSkeleton({
   /** Figure cards above a list, as on the admin pages. */
   stats?: number;
   label?: string;
+  /** A form page shown centred (FormPage's `centered`): the skeleton stands where the page will. */
+  centered?: boolean;
 }) {
   return (
     <PageFrame>
-      <Busy label={label} className="flex flex-col gap-8">
+      <Busy
+        label={label}
+        className={cn(
+          "flex flex-col gap-8",
+          centered && "mx-auto w-full max-w-(--form-max)",
+        )}
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <Skeleton className="h-8 w-56 max-w-full" />
