@@ -26,7 +26,6 @@ import { buildBreadcrumbs } from "@/lib/shell-breadcrumbs";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { CreditMeter } from "./credit-meter";
 
 const HELP_URL = "https://rext.ai/help";
 
@@ -145,7 +144,6 @@ export function AppHeader() {
       </Link>
       <ShellBreadcrumb />
       <div className="flex shrink-0 items-center gap-1">
-        <CreditMeter variant="header" className="hidden sm:flex" />
         <NotificationsButton />
         <HelpLink />
       </div>
