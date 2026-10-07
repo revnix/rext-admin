@@ -3,6 +3,9 @@
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { useId, useLayoutEffect, useState } from "react";
 
+import { RefreshCw, UserPlus } from "lucide-react";
+import { PersonaDialog } from "@/components/personas/persona-dialog";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
@@ -46,6 +49,9 @@ export interface OutlineBriefProps {
   personaRecommendations: PersonaRecommendation[];
   personaId: string | null;
   onPersonaChange: (personaId: string | null) => void;
+  /** Reload the workspace's personas, for one made in another tab or page (FB2.20). */
+  onRefreshPersonas?: () => void;
+  refreshingPersonas?: boolean;
   brandPromotion: BrandVoicePromotion | null;
   /** The level the gate preselects, marked "recommended". */
   recommendedProminence: BrandProminence | null;
@@ -73,6 +79,8 @@ export function OutlineBrief({
   personaRecommendations,
   personaId,
   onPersonaChange,
+  onRefreshPersonas,
+  refreshingPersonas = false,
   brandPromotion,
   recommendedProminence,
   prominence,
@@ -166,8 +174,8 @@ export function OutlineBrief({
         )}
       </BriefGroup>
 
-      {personas.length > 0 && (
-        <BriefGroup title="Author">
+      <BriefGroup title="Author">
+        {personas.length > 0 ? (
           <div className="space-y-1.5">
             <label
               htmlFor={`${ids}-persona`}
@@ -175,13 +183,37 @@ export function OutlineBrief({
             >
               Author persona
             </label>
-            <PersonaPicker
-              id={`${ids}-persona`}
-              personas={personas}
-              recommendations={personaRecommendations}
-              selectedId={personaId}
-              onSelect={onPersonaChange}
-            />
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <PersonaPicker
+                  id={`${ids}-persona`}
+                  personas={personas}
+                  recommendations={personaRecommendations}
+                  selectedId={personaId}
+                  onSelect={onPersonaChange}
+                />
+              </div>
+              {onRefreshPersonas && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Refresh personas"
+                  title="Refresh personas"
+                  disabled={refreshingPersonas}
+                  onClick={onRefreshPersonas}
+                >
+                  <RefreshCw
+                    aria-hidden
+                    className={
+                      refreshingPersonas
+                        ? "animate-spin motion-reduce:animate-none"
+                        : undefined
+                    }
+                  />
+                </Button>
+              )}
+            </div>
             <p className="text-caption text-muted-foreground">
               {!noPersonaFits
                 ? "Recommended by fit with the keyword, the title, the search intent and the content type."
@@ -190,8 +222,27 @@ export function OutlineBrief({
                   : "None of your personas covers this subject; the article is written as the one you picked."}
             </p>
           </div>
-        </BriefGroup>
-      )}
+        ) : (
+          // No persona yet: make one here, without leaving the run (FB2.20); it becomes the author.
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-table text-muted-foreground">
+              No author persona yet. The article is written without one.
+            </p>
+            <PersonaDialog
+              trigger={
+                <Button type="button" variant="outline">
+                  <UserPlus aria-hidden />
+                  Create persona
+                </Button>
+              }
+              onCreated={(id) => {
+                onRefreshPersonas?.();
+                if (id) onPersonaChange(id);
+              }}
+            />
+          </div>
+        )}
+      </BriefGroup>
 
       {brandPromotion && (
         <BriefGroup title="Brand mention">

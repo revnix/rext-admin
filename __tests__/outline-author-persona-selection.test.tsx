@@ -200,3 +200,32 @@ describe("OutlineReview author persona selection", () => {
     expect(screen.getByRole("combobox")).toHaveTextContent("No author persona");
   });
 });
+
+describe("OutlineReview with no persona yet (FB2.20)", () => {
+  it("offers Create persona instead of an empty dropdown", () => {
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: { personas: [] },
+      refetch: jest.fn(),
+      isFetching: false,
+    });
+    renderOutline({ selected_persona_id: null, persona_recommendations: [] });
+    expect(screen.getByText(/No author persona yet/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create persona" }),
+    ).toBeInTheDocument();
+  });
+
+  it("reloads the personas from the refresh icon beside the dropdown", () => {
+    const refetch = jest.fn();
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: {
+        personas: [{ id: "persona-1", name: "Alpha Persona" }],
+      },
+      refetch,
+      isFetching: false,
+    });
+    renderOutline();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh personas" }));
+    expect(refetch).toHaveBeenCalled();
+  });
+});

@@ -110,7 +110,11 @@ export function OutlineReview({
     );
   }, [sortedLinks]);
 
-  const { data: personasData } = usePersonas(workspaceId || null);
+  const {
+    data: personasData,
+    refetch: refetchPersonas,
+    isFetching: personasFetching,
+  } = usePersonas(workspaceId || null);
   const personas = useMemo(() => personasData?.personas ?? [], [personasData]);
   const [personaId, setPersonaId] = useState<string | null>(null);
   // Adopt each recommendation exactly once. Tracking the recommendation already
@@ -179,6 +183,8 @@ export function OutlineReview({
       personaRecommendations={outline.persona_recommendations ?? []}
       personaId={personaId}
       onPersonaChange={setPersonaId}
+      onRefreshPersonas={() => void refetchPersonas()}
+      refreshingPersonas={personasFetching}
       brandPromotion={gate.brandPromotion}
       recommendedProminence={gate.recommendedProminence}
       prominence={prominence}
