@@ -39,7 +39,8 @@ function keepClearOfStickyRow(event: FocusEvent<HTMLFormElement>) {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
   if (target.closest('[data-slot="form-submit-row"]')) return;
-  target.scrollIntoView({ block: "nearest" });
+  // Optional: jsdom (the tests) has no scrollIntoView.
+  target.scrollIntoView?.({ block: "nearest" });
 }
 
 export function FormShell<

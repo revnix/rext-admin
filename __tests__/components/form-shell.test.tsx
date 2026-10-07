@@ -47,6 +47,17 @@ function FileForm({ chosen }: { chosen: boolean }) {
   );
 }
 
+function StickyForm() {
+  const form = useZodForm(schema, { defaultValues: { name: "" } });
+  return (
+    <FormShell form={form} onSubmit={jest.fn()} submitLabel="Save" sticky>
+      <FieldController control={form.control} name="name" label="Name">
+        {(field) => <Input {...field} />}
+      </FieldController>
+    </FormShell>
+  );
+}
+
 describe("the form shell and its fields", () => {
   beforeEach(() => push.mockClear());
 
@@ -115,5 +126,36 @@ describe("the form shell and its fields", () => {
     await user.click(screen.getByRole("link", { name: "Elsewhere" }));
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe("a form with a sticky submit row (WCAG 2.4.11)", () => {
+  const scrollIntoView = jest.fn();
+  beforeAll(() => {
+    // jsdom has none: FormShell calls it only where it exists.
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+  });
+  afterAll(() => {
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+  });
+  beforeEach(() => scrollIntoView.mockClear());
+
+  it("scrolls a focused field clear of the row, and leaves the row's own buttons", async () => {
+    const user = userEvent.setup();
+    render(<StickyForm />);
+
+    await user.click(screen.getByRole("textbox", { name: /name/i }));
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+
+    scrollIntoView.mockClear();
+    screen.getByRole("button", { name: "Save" }).focus();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("marks the row, so the page's scroll padding keeps room for it", () => {
+    const { container } = render(<StickyForm />);
+    expect(
+      container.querySelector('[data-slot="form-submit-row"]'),
+    ).toHaveAttribute("data-sticky", "true");
   });
 });
