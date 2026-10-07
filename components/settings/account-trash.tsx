@@ -1,13 +1,15 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { useMemo } from "react";
-import { toast } from "sonner";
 import { TrashTable, type TrashItem } from "@/components/trash/trash-table";
 import { Button } from "@/components/ui/button";
+import {
+  useDeleteWorkspaceForever,
+  useRestoreWorkspace,
+} from "@/hooks/mutations/use-workspace-trash";
 import { awaitingData } from "@/hooks/use-awaiting-data";
-import { apiClient } from "@/lib/api-client";
 import { workspaceQueries } from "@/lib/query-keys";
 import { SettingsGroup } from "./settings-group";
 
@@ -20,8 +22,9 @@ const ACCOUNT_SCOPE = { id: "account", error: null };
  * it goes with it.
  */
 export function AccountTrash() {
-  const queryClient = useQueryClient();
   const deleted = useQuery(workspaceQueries.deleted());
+  const restoreWorkspace = useRestoreWorkspace();
+  const deleteWorkspaceForever = useDeleteWorkspaceForever();
 
   const items = useMemo<TrashItem[]>(
     () =>
@@ -36,35 +39,13 @@ export function AccountTrash() {
   );
 
   const restore = async (item: TrashItem) => {
-    try {
-      await apiClient.workspaces.restore(item.id);
-      toast.success(`"${item.name}" was restored`);
-      // The workspace list and the trash share this key's prefix.
-      await queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "The workspace couldn't be restored",
-      );
-    }
+    // The mutation toasts a failure; the row's menu is free again either way.
+    await restoreWorkspace.mutateAsync(item).catch(() => undefined);
   };
 
   const deleteForever = async (item: TrashItem) => {
-    try {
-      await apiClient.workspaces.deletePermanently(item.id);
-      toast.success(`"${item.name}" was deleted for good`);
-      await queryClient.invalidateQueries({
-        queryKey: workspaceQueries.deleted().queryKey,
-      });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "The workspace couldn't be deleted",
-      );
-      throw error;
-    }
+    // A failure is toasted and rethrown, so the table keeps its confirmation open.
+    await deleteWorkspaceForever.mutateAsync(item);
   };
 
   return (
@@ -93,6 +74,7 @@ export function AccountTrash() {
         onRetry={() => void deleted.refetch()}
         onRestore={restore}
         onDeleteForever={deleteForever}
+        emptyDescription="Workspaces you delete stay here while they can still be restored."
         confirmByTypingName
         deleteForeverWarning={() =>
           "Everything in it goes: articles, personas, the brand voice and its connections."
