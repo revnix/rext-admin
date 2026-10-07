@@ -267,19 +267,36 @@ describe("canAnalyze (FB2.3)", () => {
 describe("isReanalysingInPlace (FB2.3)", () => {
   it("keeps step 2 on screen while a keyword picked there is analysed", () => {
     expect(
-      isReanalysingInPlace({ atKeywordStep: true, phase: "analysis" }),
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: true,
+        phase: "analysis",
+      }),
     ).toBe(true);
   });
 
-  it("shows the run's progress for the first analysis and for moving on", () => {
+  it("shows the run's progress for the first analysis, for moving on, and once it's done", () => {
+    // The first analysis: started from step 1, even once the stream shows step 2.
     expect(
-      isReanalysingInPlace({ atKeywordStep: false, phase: "analysis" }),
+      isReanalysingInPlace({
+        fromKeywordStep: false,
+        loading: true,
+        phase: "analysis",
+      }),
     ).toBe(false);
     expect(
-      isReanalysingInPlace({ atKeywordStep: true, phase: "content-type" }),
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: true,
+        phase: "content-type",
+      }),
     ).toBe(false);
-    expect(isReanalysingInPlace({ atKeywordStep: true, phase: null })).toBe(
-      false,
-    );
+    expect(
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: false,
+        phase: "analysis",
+      }),
+    ).toBe(false);
   });
 });

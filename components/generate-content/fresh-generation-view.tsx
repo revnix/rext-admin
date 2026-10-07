@@ -372,6 +372,16 @@ export function FreshGenerationView({
   const [timedOutStages, setTimedOutStages] = useState<RunStage[] | null>(null);
   // A run the backend ended early (no search results, a failed lookup).
   const [runError, setRunError] = useState<string | null>(null);
+  // A keyword analysed from step 2 itself (FB2.3): its run keeps the step on screen. Set only by
+  // step 2's Analyze or a suggestion, never by the first analysis, and cleared when that run's
+  // loading ends.
+  const [inPlaceAnalysis, setInPlaceAnalysis] = useState(false);
+  const loadingNow = isLoading || isManualLoading;
+  const wasLoadingRef = useRef(false);
+  useEffect(() => {
+    if (wasLoadingRef.current && !loadingNow) setInPlaceAnalysis(false);
+    wasLoadingRef.current = loadingNow;
+  }, [loadingNow]);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
@@ -1971,7 +1981,8 @@ export function FreshGenerationView({
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
-        return resumeWorkflow({
+        setInPlaceAnalysis(isReanalysis);
+        const resumed = resumeWorkflow({
           payload: {
             "Primary Keyword": value,
             country,
@@ -1981,6 +1992,13 @@ export function FreshGenerationView({
             ? "Analyzing keyword..."
             : "Content Type Selection...",
         });
+        // A resume that never started leaves no run to wait for in place.
+        if (isReanalysis) {
+          void resumed.then((started) => {
+            if (!started) setInPlaceAnalysis(false);
+          });
+        }
+        return resumed;
       }
       case "CONTENT_TYPE_SELECT":
         setTokenTarget("outline");
@@ -2196,7 +2214,8 @@ export function FreshGenerationView({
 
   // A keyword analysed from step 2 keeps step 2 on screen while it runs (FB2.3).
   const reanalysingInPlace = isReanalysingInPlace({
-    atKeywordStep: instructionType === "keyword Selection",
+    fromKeywordStep: inPlaceAnalysis && instructionType === "keyword Selection",
+    loading: loadingNow,
     phase: runState?.phase,
   });
 
@@ -2238,7 +2257,9 @@ export function FreshGenerationView({
         primaryKeyword={primaryKeyword}
         suggestedKeywords={suggestedKeywords}
         onSelect={(selected) => handleWorkflow("KEYWORD_SELECT", selected)}
-        seoResult={seoResult}
+        // In place, the new analysis shows once its run has finished: its buttons before then
+        // would act on a stream that's still closing (FB2.3).
+        seoResult={reanalysingInPlace ? null : seoResult}
         selectedIntent={selectedIntent}
         onIntentChange={setSelectedIntent}
         keywordClusters={keywordClusters}
