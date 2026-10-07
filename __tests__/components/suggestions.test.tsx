@@ -3,9 +3,18 @@ import userEvent from "@testing-library/user-event";
 import { SuggestionsSection } from "@/components/generate-content/suggestions";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 
-// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage it labels.
+// The stage's credits come from the plan catalogue (run-cost.test.tsx); here, which stage's
+// tooltip the button sits in.
 jest.mock("@/components/generate-content/run-cost", () => ({
-  StageCostLabel: ({ stage }: { stage: string }) => <span>· {stage}</span>,
+  // As the real tooltip's trigger, no wrapper: the button itself is marked.
+  StageCostTooltip: ({
+    stage,
+    children,
+  }: {
+    stage: string;
+    children: React.ReactElement<Record<string, unknown>>;
+  }) =>
+    jest.requireActual("react").cloneElement(children, { "data-stage": stage }),
 }));
 
 const seo = (
@@ -80,11 +89,15 @@ describe("SuggestionsSection", () => {
     const onSelect = jest.fn();
     renderSuggestions({ onSelect });
     await userEvent.click(
-      // Keeping the keyword takes the titles' credits, and the button says so (E25).
-      screen.getByRole("button", {
-        name: "Continue with this keyword · title_generation",
-      }),
+      // Keeping the keyword takes the titles' credits: its tooltip says so, not its label (E25,
+      // FB2.11).
+      screen.getByRole("button", { name: "Continue with this keyword" }),
     );
+    expect(
+      screen
+        .getByRole("button", { name: "Continue with this keyword" })
+        .closest("[data-stage]"),
+    ).toHaveAttribute("data-stage", "title_generation");
     expect(onSelect).toHaveBeenLastCalledWith("seo tools");
 
     // The analysed keyword isn't offered again among the suggestions.

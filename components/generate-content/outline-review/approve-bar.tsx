@@ -2,11 +2,12 @@ import { Check, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
-import { RunBalance, RunCostLabel, RunCostTooltip } from "../run-cost";
+import { RunCostTooltip } from "../run-cost";
 
 /**
  * The outline's two answers: regenerate it with feedback, or approve it and
- * write the article, with the article's cost and the balance it leaves (E13).
+ * write the article. Each button's cost, and the balance it leaves, is in its
+ * tooltip on hover or focus, not on the label (E13, FB2.11).
  * `start` sits at the bar's left end (the Brief's button on narrow screens).
  */
 export function OutlineApproveBar({
@@ -28,18 +29,15 @@ export function OutlineApproveBar({
           <Button variant="outline" onClick={onRegenerate} disabled={disabled}>
             <RefreshCw />
             Regenerate
-            <RunCostLabel run="regenerate_outline" />
           </Button>
         </RunCostTooltip>
         <RunCostTooltip run="generate">
           <Button onClick={onApprove} disabled={disabled}>
             <Check />
             Approve and generate
-            <RunCostLabel run="generate" showBalance />
           </Button>
         </RunCostTooltip>
       </div>
-      <RunBalance run="generate" />
     </div>
   );
 }
