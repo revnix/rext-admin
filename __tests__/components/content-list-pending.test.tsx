@@ -32,9 +32,9 @@ jest.mock("@/lib/api-client", () => ({
   },
 }));
 
-const renderPage = () =>
+const renderPage = (searchParams = "") =>
   render(
-    <NuqsTestingAdapter>
+    <NuqsTestingAdapter searchParams={searchParams}>
       <QueryClientProvider
         client={
           new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -90,5 +90,24 @@ describe("The content list before its workspace has loaded", () => {
 
     expect(await screen.findByText("No content yet")).toBeInTheDocument();
     expect(screen.queryByText("Content didn't load")).toBeNull();
+  });
+});
+
+describe("The content list on the server (rext-control#381)", () => {
+  it("asks the backend for one page, with the URL's search, filters and sort", async () => {
+    workspace = { id: "w1", name: "Acme" };
+    listContent.mockResolvedValue({ content: [], total_count: 0 });
+    renderPage("?q=seo&status=draft,review&sort=title.asc&page=2");
+
+    await waitFor(() =>
+      expect(listContent).toHaveBeenCalledWith("w1", {
+        q: "seo",
+        status: ["draft", "review"],
+        persona: [],
+        sort: "title.asc",
+        limit: 25,
+        offset: 25,
+      }),
+    );
   });
 });

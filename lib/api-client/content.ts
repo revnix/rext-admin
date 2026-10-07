@@ -60,14 +60,30 @@ export function createContentNamespace(client: ApiClient) {
     list: async (
       workspaceId: string,
       options?: {
-        status?: string;
+        /** One status, or several (the backend reads `draft,review`). */
+        status?: string | readonly string[];
+        /** Persona ids; `none` for articles without one. */
+        persona?: readonly string[];
+        /** Matches the title, or the address of a site the article went out to. */
+        q?: string;
+        /** `<column>.<asc|desc>` over the library's columns. */
+        sort?: string;
         limit?: number;
         offset?: number;
       },
     ) => {
+      const list = (value?: string | readonly string[]) =>
+        typeof value === "string"
+          ? value || undefined
+          : value?.length
+            ? value.join(",")
+            : undefined;
       const endpoint = buildUrl(ENDPOINTS.CONTENT.base, {
         workspace_id: workspaceId,
-        status: options?.status,
+        status: list(options?.status),
+        persona: list(options?.persona),
+        q: options?.q?.trim() || undefined,
+        sort: options?.sort,
         limit: options?.limit,
         offset: options?.offset,
       });

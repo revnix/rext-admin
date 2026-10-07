@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { refreshPersonaCounts } from "@/hooks/use-personas";
 import { apiClient } from "@/lib/api-client";
@@ -21,8 +26,8 @@ const CONTENT_MAX_PAGES = 40;
 type ContentPage = Pick<ContentListResponse, "content" | "total_count">;
 
 /**
- * Reads every page of a list: 500 items a request, until a short page or the total. The backend's
- * list has no search or sort, so the library loads all of it and does both in the browser.
+ * Reads every page of a list: 500 items a request, until a short page or the total. For the views
+ * that need every article (home, the calendar); the library pages on the server (useContentPage).
  */
 export async function fetchAllContent(
   listPage: (page: { limit: number; offset: number }) => Promise<ContentPage>,
@@ -39,6 +44,40 @@ export async function fetchAllContent(
     }
   }
   return items;
+}
+
+/** The library's search, filters, sort and page, as the backend applies them (rext-control#381). */
+export type ContentPageQuery = {
+  q: string;
+  status: readonly string[];
+  persona: readonly string[];
+  sort: { id: string; desc: boolean } | null;
+  pageIndex: number;
+  pageSize: number;
+};
+
+/**
+ * One page of the library, searched, filtered and sorted by the backend, with the filtered total for
+ * the table's pages. The page shown stays while the next one loads.
+ */
+export function useContentPage(workspaceId: string, query: ContentPageQuery) {
+  return useQuery({
+    queryKey: ["content", workspaceId, "page", query],
+    queryFn: () =>
+      apiClient.content.list(workspaceId, {
+        q: query.q,
+        status: query.status,
+        persona: query.persona,
+        sort: query.sort
+          ? `${query.sort.id}.${query.sort.desc ? "desc" : "asc"}`
+          : undefined,
+        limit: query.pageSize,
+        offset: query.pageIndex * query.pageSize,
+      }),
+    enabled: !!workspaceId,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
+  });
 }
 
 /** Every content item in the workspace; the default page of 100 used to hide the rest. */

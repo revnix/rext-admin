@@ -32,7 +32,8 @@ import {
   useAwaitingData,
   useWorkspaceFailure,
 } from "@/hooks/use-awaiting-data";
-import { useAllContent, useTrashContent } from "@/hooks/use-content";
+import { useContentPage, useTrashContent } from "@/hooks/use-content";
+import { useDebounce } from "@/hooks/useDebounce";
 import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
@@ -164,6 +165,7 @@ const columns = column.columns([
 
 // A stable empty list while the content loads: a new [] on each render would rebuild the rows.
 const NO_CONTENT: ContentItem[] = [];
+const NO_VALUES: string[] = [];
 
 // The facet offers only the statuses the URL accepts, so a chosen one survives a reload.
 const STATUS_FACET = [
@@ -243,10 +245,27 @@ export default function WorkspaceContentPage() {
     }.`,
   );
 
-  // Every item: the table searches, filters and sorts them in the browser. The query waits for the
-  // workspace, so the list waits on `useAwaitingData`, not `isLoading` (D16a).
-  const contentQuery = useAllContent(workspaceId);
-  const content = contentQuery.data ?? NO_CONTENT;
+  // One page at a time: the backend searches, filters and sorts (rext-control#381), from the same
+  // URL state the table shows. The query waits for the workspace, so the list waits on
+  // `useAwaitingData`, not `isLoading` (D16a).
+  const { pageIndex, pageSize } = tableState.pagination;
+  const search = useDebounce(tableState.globalFilter, 300);
+  const facetValues = (id: string) => {
+    const value = tableState.columnFilters.find(
+      (filter) => filter.id === id,
+    )?.value;
+    return Array.isArray(value) ? (value as string[]) : NO_VALUES;
+  };
+  const contentQuery = useContentPage(workspaceId, {
+    q: search,
+    status: facetValues("status"),
+    persona: facetValues("persona"),
+    sort: tableState.sorting[0] ?? null,
+    pageIndex,
+    pageSize,
+  });
+  const content = contentQuery.data?.content ?? NO_CONTENT;
+  const total = contentQuery.data?.total_count ?? 0;
   const isWaiting = useAwaitingData(contentQuery);
   const error = contentQuery.error ?? workspaceError;
 
@@ -384,6 +403,7 @@ export default function WorkspaceContentPage() {
               caption="Content"
               columns={columns}
               data={content}
+              manual={{ rowCount: total }}
               getRowId={(item) => item.id}
               getRowLabel={(item) => item.title || "Untitled"}
               state={tableState}
