@@ -12,7 +12,7 @@ const alertVariants = cva(
         destructive:
           "border-destructive/50 text-destructive [&>svg]:text-destructive bg-destructive/5",
         success:
-          "border-green-200 text-green-800 bg-green-50 [&>svg]:text-green-600",
+          "border-success-200 text-success-700 bg-success-50 [&>svg]:text-success-600",
         // Only destructive and success carry colour; other notices stay neutral.
         warning:
           "border-border text-foreground bg-muted/40 [&>svg]:text-foreground",

@@ -18,8 +18,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-          success: "!bg-[#e8f5e9] !border-[#4caf50] !text-[#1b5e20]",
-          error: "!bg-[#ffebee] !border-[#f44336] !text-[#b71c1c]",
+          success: "!bg-success-50 !border-success-200 !text-success-700",
+          error: "!bg-danger-50 !border-danger-200 !text-danger-700",
           // Only error and success carry colour; other notices stay neutral.
           warning: "!bg-card !border-border !text-foreground",
           info: "!bg-card !border-border !text-foreground",

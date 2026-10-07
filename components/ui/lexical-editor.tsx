@@ -411,7 +411,7 @@ function ImageNodeComponent({
           type="button"
           title="Remove image"
           onClick={handleRemove}
-          className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-white rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
+          className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-150 cursor-pointer bg-background/90 hover:bg-destructive border border-border hover:border-destructive text-muted-foreground hover:text-destructive-foreground rounded-md w-7 h-7 flex items-center justify-center shadow-sm"
         >
           <X size={13} />
         </button>
@@ -1536,7 +1536,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
                   variant="outline"
                   size="sm"
                   onClick={removeLink}
-                  className="h-8 px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 px-2 text-danger-600 hover:text-danger-700 hover:bg-danger-50"
                 >
                   <X size={14} className="mr-1" /> Remove
                 </Button>
@@ -1882,8 +1882,8 @@ export default function LexicalEditor({
 
       {showDebug && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-900 text-slate-100 p-4 rounded-md overflow-x-auto">
-            <h3 className="text-sm font-semibold mb-2 text-slate-400 uppercase tracking-wider">
+          <div className="bg-surface-inset text-foreground p-4 rounded-md overflow-x-auto">
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wider">
               Editor Configuration
             </h3>
             <pre className="text-xs font-mono">
@@ -1904,8 +1904,8 @@ export default function LexicalEditor({
               )}
             </pre>
           </div>
-          <div className="bg-slate-50 border rounded-md p-4">
-            <h3 className="text-sm font-semibold mb-2 text-slate-700 uppercase tracking-wider">
+          <div className="bg-surface-inset border rounded-md p-4">
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wider">
               Markdown Input / Output
             </h3>
             <Textarea

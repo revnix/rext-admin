@@ -19,7 +19,7 @@ function Input({ className, type, error, success, ...props }: InputProps) {
           "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
           error && "border-destructive focus-visible:ring-destructive/20",
           success &&
-            "border-green-500 focus-visible:border-green-500 focus-visible:ring-green-500/20",
+            "border-success-600 focus-visible:border-success-600 focus-visible:ring-success-600/20",
           className,
         )}
         {...props}

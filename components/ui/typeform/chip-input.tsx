@@ -241,9 +241,9 @@ export function ChipInput({
   if (isFallbackMode) {
     return (
       <div className="space-y-2" data-chip-input data-fallback-mode>
-        <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-          <span className="text-sm text-amber-800">
+        <div className="flex items-center gap-2 p-2 bg-warning-50 border border-warning-200 rounded-md">
+          <AlertTriangle className="w-4 h-4 text-warning-600 shrink-0" />
+          <span className="text-sm text-warning-700">
             Using fallback text input mode. Enter comma-separated values.
           </span>
         </div>
@@ -397,7 +397,7 @@ export function ChipInput({
           <output
             className={cn(
               "text-xs text-muted-foreground",
-              value.length > maxItems * 0.8 && "text-amber-600",
+              value.length > maxItems * 0.8 && "text-warning-600",
               value.length === maxItems && "text-destructive",
             )}
           >
