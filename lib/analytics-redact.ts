@@ -72,6 +72,14 @@ export function redactEventUrls<
   return event;
 }
 
+/**
+ * posthog-js options that go with `redactStoredAddresses`. With `save_referrer` on, every event
+ * writes the page's raw referrer into the tab's session storage, a second store the function below
+ * doesn't reach. The session's and the person's first referrer are still kept (redacted, below)
+ * and sent as `$session_entry_referrer` and `$initial_referrer`.
+ */
+export const STORED_ADDRESS_OPTIONS = { save_referrer: false } as const;
+
 /** What the provider needs of posthog-js to read and replace what it keeps in the browser. */
 interface StoredProperties {
   get_property: (name: string) => unknown;
