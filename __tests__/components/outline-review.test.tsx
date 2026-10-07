@@ -420,6 +420,30 @@ describe("OutlineReview, the outline tree", () => {
     ]);
   });
 
+  it("keeps a subsection under its H2 when the next H2's removal is undone", async () => {
+    const user = userEvent.setup();
+    renderReview({ gate: withSubsection });
+
+    // The next section goes, with its subsection, its Undo still offered...
+    await chooseFromMenu(user, "Cushioning and support", "Remove");
+    const [, options] = (toast as unknown as jest.Mock).mock.calls.at(-1);
+    // ...then a subsection is added to the section before it...
+    await chooseFromMenu(user, "Why the right shoe matters", "Add subsection");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Overpronation{Enter}",
+    );
+    // ...and the Undo brings the removed section back after it, not between it and its parent.
+    act(() => options.action.onClick());
+
+    expect(headings()).toEqual([
+      "Why the right shoe matters",
+      "Overpronation",
+      "Cushioning and support",
+      "How to get fitted",
+    ]);
+  });
+
   it("rebuilds the tree when a regenerated outline changes only a level", async () => {
     const user = userEvent.setup();
     const onApprove = jest.fn<void, [OutlineApproval]>();
