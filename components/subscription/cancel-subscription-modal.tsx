@@ -1,6 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, XCircle } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Notice } from "@/components/ui/notice";
@@ -16,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { subscriptionQueries } from "@/lib/query-keys";
+import { settingsRoutes } from "@/lib/routes";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { buildCancellationReason } from "@/lib/subscription/cancellation-feedback";
 
@@ -66,6 +71,12 @@ export function CancelSubscriptionModal({
   currentPeriodEnd,
 }: CancelSubscriptionModalProps) {
   const { cancelSubscription, fetchSubscription } = useSubscriptionStore();
+  // The refund rule, from the plan catalogue (rext-backend#824), in the refund dialog's words.
+  const { data: catalog } = useQuery({
+    ...subscriptionQueries.catalog(),
+    enabled: open,
+  });
+  const refund = catalog?.refund;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -178,7 +189,32 @@ export function CancelSubscriptionModal({
                 </li>
                 <li>All your data will be preserved for 14 days</li>
                 <li>You can reactivate your subscription anytime</li>
-                <li>No refunds for the current billing period</li>
+                <li>
+                  {refund ? (
+                    <>
+                      {`Within ${refund.window_days} days of a payment, the whole payment comes back if fewer than ${refund.credit_limit} credits were used since it.`}{" "}
+                      Request it from{" "}
+                      <Link
+                        href={settingsRoutes.invoices as Route}
+                        className="font-medium text-foreground underline underline-offset-4"
+                      >
+                        Invoices
+                      </Link>
+                      .
+                    </>
+                  ) : (
+                    <>
+                      Refunds follow the{" "}
+                      <Link
+                        href={"/legal/refund-policy" as Route}
+                        className="font-medium text-foreground underline underline-offset-4"
+                      >
+                        refund policy
+                      </Link>
+                      .
+                    </>
+                  )}
+                </li>
               </ul>
             </Notice>
 
