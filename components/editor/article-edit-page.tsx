@@ -114,6 +114,8 @@ function ArticleEditor({
   const save = useCallback(
     async (markdown: string) => {
       await apiClient.content.update(workspaceId, contentId, {
+        // Unchanged here; the request's type asks for it with every update.
+        title,
         body_markdown: markdown,
         // The backend publishes the stored row, so the HTML and the image list go with the text.
         body_html: articleHtml(markdown),
@@ -121,7 +123,7 @@ function ArticleEditor({
       });
       queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
     },
-    [workspaceId, contentId, queryClient],
+    [workspaceId, contentId, title, queryClient],
   );
 
   const { state, savedAt, change, rebase, saveNow } = useAutosave({

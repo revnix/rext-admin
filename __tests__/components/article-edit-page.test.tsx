@@ -105,6 +105,7 @@ describe("The full-screen article editor", () => {
     await wait(2000);
     expect(update).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledWith("w1", "c1", {
+      title: "How to start a podcast",
       body_markdown: "Hello world",
       body_html: "<p>Hello world</p>",
       images_data: expect.objectContaining({ images: [] }),
