@@ -1569,6 +1569,9 @@ export function FreshGenerationView({
           updateBackgroundJob(activeThreadId, {
             status: "completed",
             awaitingInput: true,
+            // Back to the step it was waiting on, which was announced already: the dock
+            // mustn't announce it again as a next step ready (the refusal's toast says why).
+            completionNotified: true,
           });
           toast.error(_e.message);
         } else {
