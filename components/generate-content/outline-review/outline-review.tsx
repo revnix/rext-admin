@@ -4,7 +4,7 @@ import { RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { WithSidePane } from "@/components/layouts";
+import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -233,7 +233,9 @@ export function OutlineReview({
         )}
       </header>
 
-      <WithSidePane side={briefPane} sideTitle="Brief">
+      {/* Under 1024 px the Brief opens from the approve bar: a floating button would cover the
+          right-aligned Regenerate and Approve that end the page (E28). */}
+      <WithSidePane side={briefPane} sideTitle="Brief" trigger="inline">
         <div className="space-y-6">
           <Tabs defaultValue="outline">
             <div className="flex items-center justify-between gap-2">
@@ -268,6 +270,7 @@ export function OutlineReview({
             disabled={isLoading || isDraft}
             onRegenerate={onReject}
             onApprove={approve}
+            start={<SidePaneTrigger size="default" className="mr-auto" />}
           />
         </div>
       </WithSidePane>

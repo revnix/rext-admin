@@ -482,6 +482,30 @@ describe("OutlineReview, the approval", () => {
   });
 });
 
+describe("OutlineReview, the Brief on narrow screens", () => {
+  it("opens from the approve bar, with no floating button over Approve", async () => {
+    const user = userEvent.setup();
+    renderReview();
+
+    const brief = screen.getByRole("button", { name: "Brief" });
+    expect(screen.getAllByRole("button", { name: "Brief" })).toHaveLength(1);
+    expect(brief).not.toHaveClass("fixed");
+    // In the same row as Regenerate and Approve, at its start.
+    const approveRow = screen.getByRole("button", {
+      name: "Regenerate",
+    }).parentElement;
+    expect(approveRow?.firstElementChild).toBe(brief);
+    expect(approveRow).toContainElement(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    );
+    expect(brief).toHaveClass("mr-auto", "lg:hidden");
+
+    await user.click(brief);
+    const sheet = await screen.findByRole("dialog", { name: "Brief" });
+    expect(within(sheet).getByRole("radio", { name: /subtle/i })).toBeChecked();
+  });
+});
+
 describe("OutlineReview, the sources", () => {
   it("has no Sources view when the run has nothing to show", () => {
     renderReview();
