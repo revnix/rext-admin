@@ -127,7 +127,10 @@ jobs:
 
       - name: Performance budgets
         # Lighthouse CI on five of those pages (lighthouserc.json): LCP 2.5 s, CLS 0.1, and TBT 200 ms, the
-        # lab's stand-in for INP. It reports whether or not the accessibility checks passed.
+        # lab's stand-in for INP. It reports whether or not the accessibility checks passed. Each page loads
+        # three times and each metric's own median is judged ("median", not "median-run", which checks
+        # every metric against one run chosen by its score: on 2026-10-07 that was the job's first,
+        # cold load of /login, at 262 ms TBT against 24 and 29 for the other two).
         if: env.FULL == 'true' && !cancelled() && steps.build.outcome == 'success'
         run: pnpm perf
 
