@@ -2,32 +2,59 @@
  * Reading a workspace's website again (D5a): each workspace keeps its own refresh state, so a run or
  * a failure in one workspace, even one that finishes after another workspace's run began, doesn't
  * lock the button, open the progress dialog or show "The website couldn't be read" in another.
+ *
+ * A run found on mount (D5b): it was started before the section last unmounted, so it may have ended
+ * while nobody listened. Its dialog opens only once the stream shows it still going; a stream that
+ * says it's complete, or stays silent, settles it.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
-import { BrandVoiceRefreshControl } from "@/components/workspace";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  BrandVoiceRefreshControl,
+  RESUMED_RUN_SILENCE_MS,
+} from "@/components/workspace/brand-voice-refresh-control";
 import {
   brandVoiceRefreshFor,
   useBrandVoiceRefreshStore,
 } from "@/stores/workspace";
+import type { SSEEvent } from "@/types/sse";
 
 jest.mock("@/lib/api-client", () => ({
   apiClient: { workspaces: { refreshBrandVoice: jest.fn() } },
 }));
 
+// What the stream has delivered for the control's operation, and the control's callbacks.
+let mockStreamEvents: SSEEvent[] = [];
+let mockStreamOptions: {
+  onComplete?: () => unknown;
+  onEnded?: () => unknown;
+} = {};
+const mockDisconnect = jest.fn();
+
 jest.mock("@/hooks/use-sse-channel", () => ({
-  useSSEChannel: () => ({
-    events: [],
-    status: { connected: false, retryCount: 0 },
-    disconnect: jest.fn(),
-    isConnected: false,
-  }),
+  useSSEChannel: (
+    _operationId: string | null,
+    options: { onComplete?: () => unknown; onEnded?: () => unknown },
+  ) => {
+    mockStreamOptions = options;
+    return {
+      events: mockStreamEvents,
+      status: { connected: false, retryCount: 0 },
+      disconnect: mockDisconnect,
+      isConnected: false,
+    };
+  },
 }));
 
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
+
+const toast = jest.requireMock("sonner").toast as {
+  success: jest.Mock;
+  error: jest.Mock;
+};
 
 const api = jest.requireMock("@/lib/api-client").apiClient as {
   workspaces: { refreshBrandVoice: jest.Mock };
@@ -35,8 +62,22 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
 
 const idle = { isRefreshing: false };
 
+function streamEvent(step: string, status: SSEEvent["status"]): SSEEvent {
+  return {
+    id: step,
+    operation_id: "op-1",
+    scope: step === "connected" ? "connection" : "workspace",
+    step,
+    status,
+    message: step,
+    timestamp: "2026-10-07T05:00:00Z",
+  };
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  mockStreamEvents = [];
+  mockStreamOptions = {};
   useBrandVoiceRefreshStore.setState({ brandVoiceRefresh: {} });
 });
 
@@ -112,35 +153,37 @@ describe("the brand voice refresh state", () => {
   });
 });
 
-describe("the refresh button", () => {
-  function renderControl(workspaceId: string) {
-    const client = new QueryClient();
-    return render(
-      <QueryClientProvider client={client}>
-        <BrandVoiceRefreshControl workspaceId={workspaceId}>
-          Read the website again
-        </BrandVoiceRefreshControl>
-      </QueryClientProvider>,
-    );
-  }
+function renderControl(workspaceId: string) {
+  const client = new QueryClient();
+  const invalidate = jest.spyOn(client, "invalidateQueries");
+  const control = () => (
+    <QueryClientProvider client={client}>
+      <BrandVoiceRefreshControl workspaceId={workspaceId}>
+        Read the website again
+      </BrandVoiceRefreshControl>
+    </QueryClientProvider>
+  );
+  const view = render(control());
+  return { invalidate, rerender: () => view.rerender(control()) };
+}
 
-  it("shows its own workspace's run", () => {
-    act(() => {
-      useBrandVoiceRefreshStore.setState({
-        brandVoiceRefresh: {
-          "ws-a": { isRefreshing: true, operationId: "op-1" },
-        },
-      });
+/** A run of workspace A's, started before its section mounted. */
+function runFoundOnMount() {
+  act(() => {
+    useBrandVoiceRefreshStore.setState({
+      brandVoiceRefresh: {
+        "ws-a": { isRefreshing: true, operationId: "op-1" },
+      },
     });
+  });
+}
+
+describe("the refresh button", () => {
+  it("shows its own workspace's run", () => {
+    runFoundOnMount();
     renderControl("ws-a");
 
-    // The open dialog hides the page behind it from the accessibility tree.
-    expect(
-      screen.getByRole("button", { name: /Reading/, hidden: true }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("dialog", { name: "Reading your website" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Reading/ })).toBeDisabled();
   });
 
   it("isn't locked by another workspace's run", () => {
@@ -157,5 +200,157 @@ describe("the refresh button", () => {
       screen.getByRole("button", { name: "Read the website again" }),
     ).toBeEnabled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("a run found on mount", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("opens its dialog once the stream shows it still going", () => {
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+
+    // Nothing from the run yet: no dialog stuck on "Connecting…".
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    mockStreamEvents = [
+      streamEvent("connected", "connected"),
+      streamEvent("scrape.started", "started"),
+    ];
+    view.rerender();
+
+    expect(
+      screen.getByRole("dialog", { name: "Reading your website" }),
+    ).toBeInTheDocument();
+  });
+
+  it("settles when the stream says it's already complete", async () => {
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+
+    // A reconnect after the run ended: the backend replays its completion.
+    mockStreamEvents = [
+      streamEvent("connected", "connected"),
+      streamEvent("pipeline.completed", "completed"),
+    ];
+    view.rerender();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await act(async () => {
+      await mockStreamOptions.onComplete?.();
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Read the website again" }),
+    ).toBeEnabled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      brandVoiceRefreshFor(
+        useBrandVoiceRefreshStore.getState().brandVoiceRefresh,
+        "ws-a",
+      ),
+    ).toMatchObject({ isRefreshing: false, operationId: undefined });
+    expect(view.invalidate).toHaveBeenCalledWith({
+      queryKey: ["workspaces", "brand-voice", "ws-a"],
+    });
+  });
+
+  it("settles with no success toast when the stream says only that it ended", async () => {
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+
+    // The provider's answer for an ended run carries no outcome: it may have failed.
+    await act(async () => {
+      await mockStreamOptions.onEnded?.();
+    });
+
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Read the website again" }),
+    ).toBeEnabled();
+    expect(view.invalidate).toHaveBeenCalledWith({
+      queryKey: ["workspaces", "brand-voice", "ws-a"],
+    });
+  });
+
+  it("settles and reads the brand voice again when the backend no longer holds it", () => {
+    jest.useFakeTimers();
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+
+    // The backend forgot the ended run: the stream opens and says nothing more.
+    mockStreamEvents = [streamEvent("connected", "connected")];
+    view.rerender();
+
+    act(() => {
+      jest.advanceTimersByTime(RESUMED_RUN_SILENCE_MS);
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Read the website again" }),
+    ).toBeEnabled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(view.invalidate).toHaveBeenCalledWith({
+      queryKey: ["workspaces", "brand-voice", "ws-a"],
+    });
+  });
+
+  it("waits while the stream hasn't opened (the backend down, a retry)", () => {
+    jest.useFakeTimers();
+    runFoundOnMount();
+    renderControl("ws-a");
+
+    act(() => {
+      jest.advanceTimersByTime(RESUMED_RUN_SILENCE_MS * 2);
+    });
+
+    // Nothing proves the run ended, so a second refresh can't be started over it.
+    expect(screen.getByRole("button", { name: /Reading/ })).toBeDisabled();
+    expect(
+      brandVoiceRefreshFor(
+        useBrandVoiceRefreshStore.getState().brandVoiceRefresh,
+        "ws-a",
+      ),
+    ).toMatchObject({ isRefreshing: true, operationId: "op-1" });
+  });
+
+  it("keeps a going run's dialog open past the silence limit", () => {
+    jest.useFakeTimers();
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+    mockStreamEvents = [
+      streamEvent("connected", "connected"),
+      streamEvent("scrape.started", "started"),
+    ];
+    view.rerender();
+
+    act(() => {
+      jest.advanceTimersByTime(RESUMED_RUN_SILENCE_MS);
+    });
+
+    expect(
+      screen.getByRole("dialog", { name: "Reading your website" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("a run started here", () => {
+  it("opens its dialog at once", async () => {
+    api.workspaces.refreshBrandVoice.mockResolvedValue({
+      operation_id: "op-2",
+    });
+    renderControl("ws-a");
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Read the website again" }),
+      );
+    });
+
+    expect(
+      screen.getByRole("dialog", { name: "Reading your website" }),
+    ).toBeInTheDocument();
   });
 });
