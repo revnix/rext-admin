@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useHydrated } from "@/hooks/use-hydrated";
 import type { Route } from "next";
 
 /**
@@ -44,6 +45,7 @@ function AccountRecoveryContent() {
 
   const [email, setEmail] = useState(prefill);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hydrated = useHydrated();
   const [submitted, setSubmitted] = useState(false);
 
   const submitRequest = async (e: React.FormEvent) => {
@@ -104,7 +106,8 @@ function AccountRecoveryContent() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <form onSubmit={submitRequest} className="grid gap-3">
+        {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+        <form method="post" onSubmit={submitRequest} className="grid gap-3">
           <Label htmlFor="email">Account email</Label>
           <Input
             id="email"
@@ -115,7 +118,11 @@ function AccountRecoveryContent() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSubmitting}
           />
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={!hydrated || isSubmitting}
+          >
             {isSubmitting ? "Submitting..." : "Submit recovery request"}
           </Button>
         </form>

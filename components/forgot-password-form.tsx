@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/hooks/use-hydrated";
 import {
   type ForgotPasswordData,
   forgotPasswordSchema,
@@ -25,6 +26,7 @@ export function ForgotPasswordForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -90,7 +92,8 @@ export function ForgotPasswordForm({
           </p>
         </div>
         <div className="px-0">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+          <form method="post" onSubmit={handleSubmit(onSubmit)}>
             {error && (
               <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                 {error}
@@ -120,7 +123,7 @@ export function ForgotPasswordForm({
                 <Button
                   type="submit"
                   className="w-full h-11 !shadow-none"
-                  disabled={isLoading || success}
+                  disabled={!hydrated || isLoading || success}
                 >
                   {isLoading
                     ? "Sending..."

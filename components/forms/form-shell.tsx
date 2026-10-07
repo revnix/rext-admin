@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useLeaveGuard } from "./use-leave-guard";
 
 /**
@@ -62,9 +63,12 @@ export function FormShell<
   // Not "submitted successfully": that holds even when the page catches its own save error.
   const { isDirty, isSubmitting } = form.formState;
   const guard = useLeaveGuard((isDirty || dirty) && !isSubmitting);
+  const hydrated = useHydrated();
 
   return (
+    // A submit before the page runs is the browser's own: post keeps the fields out of the address.
     <form
+      method="post"
       noValidate
       onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       className={cn("flex flex-col gap-8", className)}
@@ -79,7 +83,7 @@ export function FormShell<
             "sticky bottom-(--bottom-bar-height) z-(--z-sticky) -mx-1 border-t bg-background px-1 py-3 lg:bottom-0",
         )}
       >
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={!hydrated || isSubmitting}>
           {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
           {submitLabel}
         </Button>
