@@ -75,7 +75,9 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
 };
 
 const editor = () => (
-  <QueryClientProvider client={new QueryClient()}>
+  <QueryClientProvider
+    client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+  >
     <ContentEditor
       contentId="c1"
       allContent={{ title: "How to start a podcast" } as never}
@@ -157,6 +159,34 @@ describe("Scheduling an article", () => {
 
     expect(await within(dialog).findByLabelText("Time")).toBeInTheDocument();
     expect(within(dialog).queryByText("Connect a site first")).toBeNull();
+  });
+
+  it("shows no dates when the sites couldn't be checked, and checks again on request", async () => {
+    api.integrations.list.mockRejectedValue(new Error("Network error"));
+    render(editor());
+    const dialog = await openSchedule();
+
+    expect(
+      await within(dialog).findByText(
+        "Your sites couldn't be checked",
+        undefined,
+        {
+          timeout: 8000,
+        },
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Time")).toBeNull();
+    expect(
+      within(dialog).queryByRole("button", { name: "Schedule" }),
+    ).toBeNull();
+
+    api.integrations.list.mockResolvedValue([
+      { id: "s1", is_active: true, integration_type: "wordpress" },
+    ]);
+    await userEvent
+      .setup()
+      .click(within(dialog).getByRole("button", { name: "Try again" }));
+    expect(await within(dialog).findByLabelText("Time")).toBeInTheDocument();
   });
 
   it("treats a paused site as none", async () => {

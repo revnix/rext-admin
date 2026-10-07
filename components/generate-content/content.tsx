@@ -367,6 +367,9 @@ function ContentEditorInner(props: ContentEditorProps) {
     !scheduleSites.data.some((site) => site.is_active !== false);
   const checkingScheduleSites =
     scheduleSites.isPending && scheduleSites.fetchStatus === "fetching";
+  // A list that couldn't be read is no proof of a site: the dates wait for one that could
+  // (review round 1).
+  const scheduleSitesFailed = scheduleSites.isError && !scheduleSites.data;
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
   const { confirm, ConfirmationComponent } = useConfirmation();
@@ -1460,6 +1463,25 @@ function ContentEditorInner(props: ContentEditorProps) {
               <Loader2 size={16} className="animate-spin shrink-0" />
               Checking your connected sites…
             </div>
+          ) : scheduleSitesFailed ? (
+            <Notice
+              tone="danger"
+              title="Your sites couldn't be checked"
+              className="self-start"
+              action={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={scheduleSites.isFetching}
+                  onClick={() => scheduleSites.refetch()}
+                >
+                  Try again
+                </Button>
+              }
+            >
+              Scheduling needs a connected site, so the dates show once the
+              check works.
+            </Notice>
           ) : scheduleNeedsSite ? (
             <Notice
               tone="info"
@@ -1542,27 +1564,29 @@ function ContentEditorInner(props: ContentEditorProps) {
               size="sm"
               onClick={() => setScheduleDialogOpen(false)}
             >
-              {scheduleNeedsSite ? "Close" : "Cancel"}
+              {scheduleNeedsSite || scheduleSitesFailed ? "Close" : "Cancel"}
             </Button>
-            {!scheduleNeedsSite && !checkingScheduleSites && (
-              <Button
-                size="sm"
-                disabled={
-                  !scheduleDate ||
-                  isPublishing ||
-                  isScheduleTimeInPast ||
-                  (timezoneMismatch && syncTimezoneMutation.isPending)
-                }
-                onClick={scheduleContent}
-              >
-                {isPublishing ? (
-                  <Loader2 size={13} className="animate-spin mr-1" />
-                ) : (
-                  <Clock size={13} className="mr-1" />
-                )}
-                Schedule
-              </Button>
-            )}
+            {!scheduleNeedsSite &&
+              !checkingScheduleSites &&
+              !scheduleSitesFailed && (
+                <Button
+                  size="sm"
+                  disabled={
+                    !scheduleDate ||
+                    isPublishing ||
+                    isScheduleTimeInPast ||
+                    (timezoneMismatch && syncTimezoneMutation.isPending)
+                  }
+                  onClick={scheduleContent}
+                >
+                  {isPublishing ? (
+                    <Loader2 size={13} className="animate-spin mr-1" />
+                  ) : (
+                    <Clock size={13} className="mr-1" />
+                  )}
+                  Schedule
+                </Button>
+              )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
