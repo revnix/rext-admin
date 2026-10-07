@@ -653,10 +653,12 @@ export function FreshGenerationView({
           return;
         }
 
-        // The run hit the time limit where the status says: the run component's Timed out state,
-        // not the generic restore error (E22, rext-control#451).
-        if (payload.run?.status === "timeout" && payload.runStage) {
-          setTimedOutStages(stagesWhereTimedOut(payload.runStage, Date.now()));
+        // The run hit the time limit: the run component's Timed out state, not the generic restore
+        // error (E22, rext-control#451). Where it stopped is the status's word, else the stage the
+        // dock's poll kept for the job.
+        const timedOutAt = payload.runStage ?? trackedJob?.runStage;
+        if (payload.run?.status === "timeout" && timedOutAt) {
+          setTimedOutStages(stagesWhereTimedOut(timedOutAt, Date.now()));
           // The run the page joined while restoring is over: no stage stays active elsewhere.
           clearRunStages();
           setIsBackgroundGenerationActive(false);
@@ -668,7 +670,7 @@ export function FreshGenerationView({
             status: "failed",
             stage: payload.stage ?? "Generation failed",
             error: payload.error,
-            runStage: payload.runStage,
+            runStage: timedOutAt,
             timedOut: true,
           });
           return;
