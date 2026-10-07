@@ -189,6 +189,29 @@ describe("Scheduling an article", () => {
     expect(await within(dialog).findByLabelText("Time")).toBeInTheDocument();
   });
 
+  it("shows no dates when a later check fails, even with an earlier answer cached", async () => {
+    api.integrations.list.mockResolvedValue([
+      { id: "s1", is_active: true, integration_type: "wordpress" },
+    ]);
+    render(editor());
+    const dialog = await openSchedule();
+    await within(dialog).findByLabelText("Time");
+
+    api.integrations.list.mockRejectedValue(new Error("Network error"));
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+
+    expect(
+      await within(dialog).findByText("Your sites couldn't be checked"),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText("Time")).toBeNull();
+    expect(
+      within(dialog).queryByRole("button", { name: "Schedule" }),
+    ).toBeNull();
+  });
+
   it("treats a paused site as none", async () => {
     api.integrations.list.mockResolvedValue([
       { id: "s1", is_active: false, integration_type: "wordpress" },
