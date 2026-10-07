@@ -77,7 +77,7 @@ function PostHogAuthSync() {
       });
     } else if (status === "unauthenticated" && identifiedIdRef.current) {
       identifiedIdRef.current = null;
-      posthog.reset();
+      resetIdentity();
     }
   }, [status, session]);
 
@@ -130,6 +130,21 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   return runningMode === "anonymous"
     ? anonymousEvent(redacted, routeOnScreen)
     : redacted;
+}
+
+/**
+ * Forgets who the person is (a sign-out) and puts back what is allowed. posthog-js's reset also
+ * clears its own record of the choice, and under the consent rule it then captures nothing until
+ * it is told again: without this, a sign-out followed by a sign-in on the same page would send
+ * nothing until a reload.
+ */
+function resetIdentity(): void {
+  posthog.reset();
+  if (runningMode === "full") {
+    posthog.opt_in_capturing({ captureEventName: false });
+  } else if (runningMode === "anonymous") {
+    posthog.opt_out_capturing();
+  }
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
@@ -195,7 +210,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           identify: (distinctId, properties) =>
             posthog.identify(distinctId, properties),
           capture: (event, properties) => posthog.capture(event, properties),
-          reset: () => posthog.reset(),
+          reset: resetIdentity,
         });
       } else {
         // A no: our own events stop, the identity goes, and what is left is counted without one.

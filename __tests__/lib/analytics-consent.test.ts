@@ -123,6 +123,41 @@ describe("writeConsent", () => {
     );
   });
 
+  it("asks the server for one choice at a time, and always for the latest", async () => {
+    // Two presses of the switch in quick succession: the first answer must not undo the second.
+    const answers: Array<() => void> = [];
+    const post = jest.fn(
+      () =>
+        new Promise((resolve) => {
+          answers.push(() => resolve({ ok: true }));
+        }),
+    );
+    global.fetch = post as unknown as typeof fetch;
+    const sent = () =>
+      post.mock.calls.map(
+        (call) =>
+          JSON.parse(
+            (call as unknown as [string, RequestInit])[1].body as string,
+          ).choice,
+      );
+
+    writeConsent("granted");
+    writeConsent("denied");
+    expect(sent()).toEqual(["granted"]);
+
+    // The server's answer to the first sets its cookie over the newer choice...
+    setCookie("rext-consent=granted");
+    answers[0]();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // ...which is put back at once, and only then sent.
+    expect(readConsent()).toBe("denied");
+    expect(sent()).toEqual(["granted", "denied"]);
+    answers[1]();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(post).toHaveBeenCalledTimes(2);
+  });
+
   it("writes a six-month cookie for the whole app, secure on https", () => {
     expect(consentCookie("granted", true)).toBe(
       "rext-consent=granted; Max-Age=15724800; Path=/; SameSite=Lax; Secure",
@@ -145,5 +180,75 @@ describe("fromThisSite", () => {
     );
     expect(fromThisSite("null", "app.rext.ai")).toBe(false);
     expect(fromThisSite("not a url", "app.rext.ai")).toBe(false);
+  });
+});
+
+describe("the app's other tabs", () => {
+  /** The browser's BroadcastChannel, enough of it: a message reaches every other channel of the name. */
+  class FakeChannel {
+    static open: FakeChannel[] = [];
+    private listeners = new Set<(event: MessageEvent) => void>();
+    constructor(readonly name: string) {
+      FakeChannel.open.push(this);
+    }
+    postMessage(data: unknown) {
+      for (const other of FakeChannel.open) {
+        if (other === this || other.name !== this.name) continue;
+        for (const listener of other.listeners) {
+          listener({ data } as MessageEvent);
+        }
+      }
+    }
+    addEventListener(_type: string, listener: (event: MessageEvent) => void) {
+      this.listeners.add(listener);
+    }
+    removeEventListener(
+      _type: string,
+      listener: (event: MessageEvent) => void,
+    ) {
+      this.listeners.delete(listener);
+    }
+  }
+
+  /** The module as one tab loads it, with its own channel. */
+  function openTab(): typeof import("@/lib/analytics-consent") {
+    const tab: { module?: typeof import("@/lib/analytics-consent") } = {};
+    jest.isolateModules(() => {
+      tab.module = require("@/lib/analytics-consent");
+    });
+    if (!tab.module) throw new Error("the consent module did not load");
+    return tab.module;
+  }
+
+  const realChannel = global.BroadcastChannel;
+  beforeEach(() => {
+    FakeChannel.open = [];
+    global.BroadcastChannel = FakeChannel as unknown as typeof BroadcastChannel;
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true }) as unknown as typeof fetch;
+  });
+  afterEach(() => {
+    global.BroadcastChannel = realChannel;
+  });
+
+  it("hear a choice at once, and the tab that made it hears it once", () => {
+    const here = openTab();
+    const there = openTab();
+    const heardHere: string[] = [];
+    const heardThere: string[] = [];
+    const stopHere = here.onConsentChange((choice) => heardHere.push(choice));
+    // The other tab's window is this test's window too, so its own window listener is left out:
+    // what it hears below came through the channel.
+    const stopThere = there.onConsentChange((choice) =>
+      heardThere.push(choice),
+    );
+
+    here.writeConsent("denied");
+    stopHere();
+    stopThere();
+
+    expect(heardHere).toEqual(["denied"]);
+    expect(heardThere).toContain("denied");
   });
 });
