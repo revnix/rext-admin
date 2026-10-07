@@ -152,14 +152,16 @@ export function PlanSection() {
                   )}
                 {paid ? (
                   <div className="flex flex-wrap gap-2">
-                    {billingAction?.action === "update_payment_method" ? (
+                    {status === SubscriptionStatus.PAST_DUE ||
+                    status === SubscriptionStatus.SUSPENDED ? (
                       // A failed renewal is fixed with a new card; a plan change waits for it
-                      // (the backend refuses one during a payment retry).
+                      // (the backend refuses one during a payment retry). Decided by the plan's
+                      // own status, so it holds while the billing action loads or if it fails.
                       <Button
-                        onClick={billingAction.run}
-                        disabled={billingAction.busy}
+                        onClick={() => void billing.updatePaymentMethod()}
+                        disabled={billing.isLoading}
                       >
-                        {billingAction.label}
+                        Update card
                       </Button>
                     ) : (
                       <Button onClick={() => setChanging(true)}>
