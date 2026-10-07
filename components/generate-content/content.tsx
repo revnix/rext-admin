@@ -1369,7 +1369,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 {statusModal.title}
               </DialogTitle>
               {/* A server's reason can be long and unbroken: it wraps, and scrolls past the cap. */}
-              <DialogDescription className="max-h-60 overflow-y-auto wrap-anywhere text-muted-foreground text-base">
+              <DialogDescription className="max-h-(--dialog-message-max) overflow-y-auto wrap-anywhere text-muted-foreground text-base">
                 {statusModal.message}
               </DialogDescription>
             </div>
