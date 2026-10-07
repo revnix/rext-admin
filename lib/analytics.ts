@@ -178,3 +178,55 @@ class Analytics {
 
 export const analytics = new Analytics();
 export type { AnalyticsEvent, EventProperties, AnalyticsUser };
+
+// ── Linking a provider ───────────────────────────────────────────────────────
+// Linking Google or GitHub from the settings goes through the same OAuth sign-in as logging in, so
+// the link button marks it, with its provider, and the login record (OAuthLoginRecord,
+// providers/posthog-provider.tsx) records no sign-in for it. The mark is in localStorage, shared by the
+// app's tabs: another open tab may refresh its session and record the login before the linking tab
+// does (C13c), and whichever tab records it first takes the mark. A login or sign-up started from the
+// OAuth buttons clears it, so a link that was abandoned can't hide a real sign-in after it.
+
+/** One mark per provider, so two tabs linking Google and GitHub at once don't overwrite each other. */
+const OAUTH_LINKING_PREFIX = "rext-oauth-linking:";
+/** A mark older than this is from a link that was abandoned, not the login now being recorded. */
+const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
+
+/** Called by the link button just before it starts the provider's sign-in. */
+export function markOAuthLinking(provider: string): void {
+  try {
+    window.localStorage.setItem(
+      OAUTH_LINKING_PREFIX + provider,
+      String(Date.now()),
+    );
+  } catch {
+    // Storage refused: the link is recorded as a sign-in, as before.
+  }
+}
+
+/** Called by the login and sign-up OAuth buttons: what they start is never a link, for any provider. */
+export function clearOAuthLinking(): void {
+  try {
+    const keys = Object.keys(window.localStorage).filter((key) =>
+      key.startsWith(OAUTH_LINKING_PREFIX),
+    );
+    for (const key of keys) window.localStorage.removeItem(key);
+  } catch {
+    // Storage refused: there is no mark to clear.
+  }
+}
+
+/**
+ * Whether the login being recorded, through `provider`, is a link: that provider's mark, under ten
+ * minutes old. Clears that mark either way, and leaves another provider's alone.
+ */
+export function takeOAuthLinking(provider: string): boolean {
+  try {
+    const key = OAUTH_LINKING_PREFIX + provider;
+    const at = Number(window.localStorage.getItem(key));
+    window.localStorage.removeItem(key);
+    return at > 0 && Date.now() - at < OAUTH_LINKING_MAX_AGE_MS;
+  } catch {
+    return false;
+  }
+}

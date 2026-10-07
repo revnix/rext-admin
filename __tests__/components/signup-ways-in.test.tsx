@@ -9,7 +9,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SignupForm } from "@/components/signup-form";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
-import { analytics } from "@/lib/analytics";
+import { analytics, clearOAuthLinking } from "@/lib/analytics";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
@@ -26,7 +26,10 @@ jest.mock("@/hooks/use-toast", () => ({
 jest.mock("@/hooks/use-invitation-validation", () => ({
   useInvitationValidation: jest.fn(),
 }));
-jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
+jest.mock("@/lib/analytics", () => ({
+  analytics: { track: jest.fn() },
+  clearOAuthLinking: jest.fn(),
+}));
 jest.mock("@/lib/api-client", () => ({
   ...jest.requireActual("@/lib/api-client"),
   apiClient: {
@@ -101,6 +104,8 @@ it("sends Google back to the dashboard, recording only that it started", async (
     "user_signed_up",
     expect.anything(),
   );
+  // A sign-up is never a link: an abandoned link's mark is cleared (C13b).
+  expect(clearOAuthLinking).toHaveBeenCalled();
 });
 
 it("names the trial from the catalogue", async () => {

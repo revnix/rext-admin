@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { log } from "@/lib/logger";
-import { analytics } from "@/lib/analytics";
+import { analytics, clearOAuthLinking } from "@/lib/analytics";
 
 interface OAuthButtonsProps {
   callbackUrl?: string;
@@ -32,6 +32,8 @@ export function OAuthButtons({
         setIsGitHubLoading(true);
       }
 
+      // A login or sign-up, never a link: an abandoned link's mark mustn't hide it (clearOAuthLinking).
+      clearOAuthLinking();
       analytics.track("oauth_started", {
         method: provider,
         page: signUp ? "signup" : "login",

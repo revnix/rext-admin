@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { TrialBanner } from "@/components/billing/trial-banner";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
@@ -77,25 +78,48 @@ export function useBillingAction() {
   const query = useQuery(subscriptionQueries.billingAction());
   const { isLoading, updatePaymentMethod, resumeSubscription } =
     useBillingActions();
-  // After a resume, the action and the current plan are read again.
+  const [resumedAt, setResumedAt] = useState<number | null>(null);
+  const refresh = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: subscriptionQueries.billingAction().queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: subscriptionQueries.current().queryKey,
+        }),
+      ]),
+    [queryClient],
+  );
+  // After a resume, the action and the current plan are read again, then every few seconds
+  // until the action is no longer Resume: our record changes when Lemon Squeezy's webhook
+  // lands, usually within seconds. The reads stop after two minutes either way.
   const resume = async () => {
-    await resumeSubscription();
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: subscriptionQueries.billingAction().queryKey,
-      }),
-      queryClient.invalidateQueries({
-        queryKey: subscriptionQueries.current().queryKey,
-      }),
-    ]);
+    if (!(await resumeSubscription())) return;
+    setResumedAt(Date.now());
+    await refresh();
   };
+  const stillResumable = query.data?.billing_action?.action === "resume";
+  useEffect(() => {
+    if (resumedAt === null || !stillResumable) return;
+    const timer = setInterval(() => {
+      if (Date.now() - resumedAt > RESUME_SETTLE_WINDOW_MS)
+        clearInterval(timer);
+      else void refresh();
+    }, RESUME_POLL_MS);
+    return () => clearInterval(timer);
+  }, [resumedAt, stillResumable, refresh]);
   const raw = query.data?.billing_action ?? null;
   const action: ResolvedBillingAction | null = raw
     ? {
         ...raw,
         ...words(raw),
         label:
-          raw.action === "update_payment_method" ? "Update card" : "Resume",
+          raw.action === "update_payment_method"
+            ? "Update card"
+            : isLoading
+              ? "Resuming…"
+              : "Resume",
         run:
           raw.action === "update_payment_method" ? updatePaymentMethod : resume,
         busy: isLoading,
@@ -103,11 +127,16 @@ export function useBillingAction() {
     : null;
   return {
     action,
+    /** A resume went through in this visit; the plan may still read cancelled for a moment. */
+    resumed: resumedAt !== null,
     settled: query.isSuccess,
     failed: query.isError,
     retry: () => void query.refetch(),
   };
 }
+
+export const RESUME_POLL_MS = 3000;
+const RESUME_SETTLE_WINDOW_MS = 2 * 60 * 1000;
 
 function ActionNotice({
   action,
