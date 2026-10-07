@@ -9,6 +9,10 @@ import { motion, AnimatePresence } from "motion/react";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
 import {
+  useCancelOnUnmount,
+  useOncePerKey,
+} from "@/hooks/use-strict-mode-safe";
+import {
   FIRST_ARTICLE_TOKEN,
   type RunPhase,
   type RunStage,
@@ -433,11 +437,9 @@ export function FreshGenerationView({
       );
   }, [backgroundThreadId]);
 
-  // Cancel on unmount (e.g. user navigates away)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: cancelStream is stable (uses refs internally), dep array intentionally empty
-  useEffect(() => {
-    return () => cancelStream();
-  }, []);
+  // Cancel on unmount (e.g. user navigates away); strict mode's unmount and mount again leaves a start's
+  // stream alone (E23, rext-control#494).
+  useCancelOnUnmount(cancelStream);
 
   const hydrateFromBackgroundState = useCallback(
     (values: Partial<WREXT>) => {
@@ -867,12 +869,11 @@ export function FreshGenerationView({
     updateBackgroundJob,
   ]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleKeywordSubmit is declared after this effect and is not stable
-  useEffect(() => {
-    if (_initialKeyword) {
-      handleKeywordSubmit();
-    }
-  }, [_initialKeyword]);
+  // A library start runs once per keyword (E23, rext-control#494). handleKeywordSubmit is declared below;
+  // the hook calls it after the render.
+  useOncePerKey(_initialKeyword, () => {
+    void handleKeywordSubmit();
+  });
 
   // Auto-skip keyword selection step when coming from library
   // biome-ignore lint/correctness/useExhaustiveDependencies: handleWorkflow is declared after this effect and is not stable
