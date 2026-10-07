@@ -16,7 +16,7 @@ describe("extractWorkspacePageSegment", () => {
     ["/w/acme/settings/brand-voice", "settings/brand-voice"],
     ["/w/acme/settings/members", "settings/members"],
     ["/w/acme/settings/danger-zone", "settings/danger-zone"],
-    ["/w/acme/settings/trash", "settings"],
+    ["/w/acme/settings/trash", "settings/trash"],
   ])("reads %s as %s", (path, page) => {
     expect(extractWorkspacePageSegment(path)).toBe(page);
   });
@@ -40,6 +40,9 @@ describe("buildWorkspacePath", () => {
     );
     expect(buildWorkspacePath("globex", "settings/brand-voice")).toBe(
       "/w/globex/settings/brand-voice",
+    );
+    expect(buildWorkspacePath("globex", "settings/trash")).toBe(
+      "/w/globex/settings/trash",
     );
     expect(buildWorkspacePath("globex", "settings")).toBe("/w/globex/settings");
   });

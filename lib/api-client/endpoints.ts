@@ -44,6 +44,16 @@ export const ENDPOINTS = {
     permanentDelete: (id: string) =>
       `/api/v1/workspaces/${id}/permanent` as const,
 
+    // The workspace's trash (G45): deleted articles and personas while they can be restored.
+    trash: (id: string) => `/api/v1/workspaces/${id}/trash` as const,
+    trashItem: (id: string, kind: "articles" | "personas", itemId: string) =>
+      `/api/v1/workspaces/${id}/trash/${kind}/${itemId}` as const,
+    restoreTrashItem: (
+      id: string,
+      kind: "articles" | "personas",
+      itemId: string,
+    ) => `/api/v1/workspaces/${id}/trash/${kind}/${itemId}/restore` as const,
+
     // Brand Voice
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
     refreshBrandVoice: (id: string) =>

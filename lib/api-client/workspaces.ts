@@ -13,6 +13,34 @@ import type {
   Persona,
 } from "@/types/workspace";
 
+/** What can be in a workspace's trash (G45). */
+export type WorkspaceTrashKind = "article" | "persona";
+
+/** One deleted article or persona, while it can be restored. */
+export interface WorkspaceTrashEntry {
+  kind: WorkspaceTrashKind;
+  id: string;
+  /** The article's title or the persona's name. */
+  name: string;
+  deleted_at: string;
+  deleted_by: { id: string; name: string | null } | null;
+  /** After this the nightly purge deletes it for good. */
+  recovery_deadline: string;
+  days_remaining: number;
+}
+
+export interface WorkspaceTrashResponse {
+  items: WorkspaceTrashEntry[];
+  total_count: number;
+  /** How long a deleted item stays restorable, in days. */
+  retention_days: number;
+}
+
+const TRASH_PATH: Record<WorkspaceTrashKind, "articles" | "personas"> = {
+  article: "articles",
+  persona: "personas",
+};
+
 interface DeletedWorkspaceResponse {
   total_count: number;
   workspaces: Array<{
@@ -148,6 +176,44 @@ export function createWorkspacesNamespace(client: ApiClient) {
         { method: "GET" },
       );
       return validateResponse(workspaceResponseSchema, data, "workspaces.get");
+    },
+
+    /**
+     * The workspace's trash: its deleted articles and personas (the kinds the caller may read),
+     * newest first, while they can be restored.
+     */
+    getTrash: async (workspaceId: string) =>
+      client.request<WorkspaceTrashResponse>(
+        ENDPOINTS.WORKSPACES.trash(workspaceId),
+        { method: "GET" },
+      ),
+
+    /** Restores a deleted article or persona to the workspace. */
+    restoreTrashItem: async (
+      workspaceId: string,
+      kind: WorkspaceTrashKind,
+      itemId: string,
+    ) => {
+      await client.request<unknown>(
+        ENDPOINTS.WORKSPACES.restoreTrashItem(
+          workspaceId,
+          TRASH_PATH[kind],
+          itemId,
+        ),
+        { method: "POST" },
+      );
+    },
+
+    /** Deletes an article or persona in the trash for good. */
+    deleteTrashItemForever: async (
+      workspaceId: string,
+      kind: WorkspaceTrashKind,
+      itemId: string,
+    ) => {
+      await client.request<void>(
+        ENDPOINTS.WORKSPACES.trashItem(workspaceId, TRASH_PATH[kind], itemId),
+        { method: "DELETE" },
+      );
     },
 
     /**

@@ -262,12 +262,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        // Deleted workspaces are restored from the account's trash (Data and trash).
-        source: "/w/:workspaceSlug/settings/trash",
-        destination: "/settings/data",
-        permanent: false,
-      },
-      {
         source: "/admin/analytics/subscriptions",
         destination: "/admin/subscriptions",
         permanent: false,

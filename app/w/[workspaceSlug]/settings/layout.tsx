@@ -4,7 +4,9 @@ import { SettingsPage, type SettingsSection } from "@/components/layouts";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import {
   BRAND_VOICE_PERMISSIONS,
+  CONTENT_PERMISSIONS,
   MEMBER_PERMISSIONS,
+  PERSONA_PERMISSIONS,
   WORKSPACE_PERMISSIONS,
 } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
@@ -13,7 +15,8 @@ import { useWorkspace } from "@/providers/workspace-provider";
 /**
  * Workspace settings (plans/app/D-pages.md §2.6): one SettingsPage, a route per section. General is
  * open to every member (read-only without workspace.update); the others are listed only for the
- * people who may open them, as the sidebar does. The workspace's trash joins as a section with D13.
+ * people who may open them, as the sidebar does. Trash (D13b) is for whoever may read the articles
+ * or the personas: the backend lists only the kinds they may read.
  */
 export default function WorkspaceSettingsLayout({
   children,
@@ -27,6 +30,14 @@ export default function WorkspaceSettingsLayout({
   );
   const { hasPermission: canReadMembers } = useWorkspacePermission(
     MEMBER_PERMISSIONS.READ,
+    workspaceId,
+  );
+  const { hasPermission: canReadContent } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.READ,
+    workspaceId,
+  );
+  const { hasPermission: canReadPersonas } = useWorkspacePermission(
+    PERSONA_PERMISSIONS.READ,
     workspaceId,
   );
   const { hasPermission: canDelete } = useWorkspacePermission(
@@ -47,6 +58,12 @@ export default function WorkspaceSettingsLayout({
     sections.push({
       label: "Members",
       href: workspaceRoutes.settings.members(workspaceSlug),
+    });
+  }
+  if (canReadContent || canReadPersonas) {
+    sections.push({
+      label: "Trash",
+      href: workspaceRoutes.settings.trash(workspaceSlug),
     });
   }
   if (canDelete) {
