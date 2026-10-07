@@ -55,7 +55,13 @@ const NON_WORD = /[\p{P}\p{S}\p{Z}\p{C}_]+/gu;
  * boundary in itself. The `u` flag reads a character past the first plane as one code point.
  */
 const UNSPACED_SCRIPT =
-  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u{20000}-\u{3ffff}]/u;
+  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3005-\u3007\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u{20000}-\u{3ffff}]/u;
+
+/** A space beside a character of an unspaced script, which `forMatch` drops. */
+const SPACE_BESIDE_UNSPACED = new RegExp(
+  `(?<=${UNSPACED_SCRIPT.source}) | (?=${UNSPACED_SCRIPT.source})`,
+  "gu",
+);
 
 /** A length in characters (code points), as the backend's Python counts it, not UTF-16 units. */
 function charCount(text: string): number {
@@ -68,19 +74,25 @@ function charCount(text: string): number {
  * lowercase i carries, so the dot goes: Turkish "İstanbul" is "istanbul" in lowercase. A capital Σ
  * lowercases to the final ς at a word's end, which a user types as σ: both are σ. An invisible
  * format character (a soft hyphen, a zero-width joiner) is no word break, and a mark goes with a
- * flattened character it sits on (an emoji's variation selector).
+ * flattened character it sits on (an emoji's variation selector). NFC runs again after lowercasing,
+ * which can leave a letter and its accent apart ("J̌" is "ǰ"); the Armenian ligature և is եւ, as
+ * its capital ԵՒ lowercases; and beside a script written without spaces, a space (or the
+ * punctuation it replaced: "生成AI・ツール") is no word break.
  */
 function forMatch(text: string): string {
   return ` ${text
     .normalize("NFC")
     .toLowerCase()
+    .normalize("NFC")
     .replace(/i\u0307/g, "i")
     .replace(/ς/g, "σ")
+    .replace(/և/g, "եւ")
     .replace(/\p{Cf}/gu, "")
     .replace(/([\p{P}\p{S}\p{Z}\p{C}_])\p{M}+/gu, "$1")
     .replace(NON_WORD, " ")
     .trim()
-    .replace(/\s+/g, " ")} `;
+    .replace(/\s+/g, " ")
+    .replace(SPACE_BESIDE_UNSPACED, "")} `;
 }
 
 /**
