@@ -187,7 +187,8 @@ export type { AnalyticsEvent, EventProperties, AnalyticsUser };
 // does (C13c), and whichever tab records it first takes the mark. A login or sign-up started from the
 // OAuth buttons clears it, so a link that was abandoned can't hide a real sign-in after it.
 
-const OAUTH_LINKING_KEY = "rext-oauth-linking";
+/** One mark per provider, so two tabs linking Google and GitHub at once don't overwrite each other. */
+const OAUTH_LINKING_PREFIX = "rext-oauth-linking:";
 /** A mark older than this is from a link that was abandoned, not the login now being recorded. */
 const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
 
@@ -195,38 +196,36 @@ const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
 export function markOAuthLinking(provider: string): void {
   try {
     window.localStorage.setItem(
-      OAUTH_LINKING_KEY,
-      JSON.stringify({ provider, at: Date.now() }),
+      OAUTH_LINKING_PREFIX + provider,
+      String(Date.now()),
     );
   } catch {
     // Storage refused: the link is recorded as a sign-in, as before.
   }
 }
 
-/** Called by the login and sign-up OAuth buttons: what they start is never a link. */
+/** Called by the login and sign-up OAuth buttons: what they start is never a link, for any provider. */
 export function clearOAuthLinking(): void {
   try {
-    window.localStorage.removeItem(OAUTH_LINKING_KEY);
+    const keys = Object.keys(window.localStorage).filter((key) =>
+      key.startsWith(OAUTH_LINKING_PREFIX),
+    );
+    for (const key of keys) window.localStorage.removeItem(key);
   } catch {
     // Storage refused: there is no mark to clear.
   }
 }
 
 /**
- * Whether the login being recorded, through `provider`, is a link started in this tab: a mark for the
- * same provider, under ten minutes old. Clears the mark either way.
+ * Whether the login being recorded, through `provider`, is a link: that provider's mark, under ten
+ * minutes old. Clears that mark either way, and leaves another provider's alone.
  */
 export function takeOAuthLinking(provider: string): boolean {
   try {
-    const raw = window.localStorage.getItem(OAUTH_LINKING_KEY);
-    window.localStorage.removeItem(OAUTH_LINKING_KEY);
-    if (!raw) return false;
-    const mark = JSON.parse(raw) as { provider?: unknown; at?: unknown };
-    return (
-      mark.provider === provider &&
-      typeof mark.at === "number" &&
-      Date.now() - mark.at < OAUTH_LINKING_MAX_AGE_MS
-    );
+    const key = OAUTH_LINKING_PREFIX + provider;
+    const at = Number(window.localStorage.getItem(key));
+    window.localStorage.removeItem(key);
+    return at > 0 && Date.now() - at < OAUTH_LINKING_MAX_AGE_MS;
   } catch {
     return false;
   }
