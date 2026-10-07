@@ -11,7 +11,7 @@ import {
   takeOAuthLinking,
 } from "@/lib/analytics";
 
-beforeEach(() => window.sessionStorage.clear());
+beforeEach(() => window.localStorage.clear());
 afterEach(() => jest.restoreAllMocks());
 
 it("is true once, for the provider the link button marked", () => {
@@ -34,7 +34,7 @@ it("is false after the login and sign-up buttons clear it", () => {
 
 it("is false without a mark, or with an unreadable one", () => {
   expect(takeOAuthLinking("google")).toBe(false);
-  window.sessionStorage.setItem("rext-oauth-linking", "1696000000000");
+  window.localStorage.setItem("rext-oauth-linking", "1696000000000");
   expect(takeOAuthLinking("google")).toBe(false);
 });
 
@@ -44,4 +44,12 @@ it("ignores a mark older than ten minutes", () => {
   markOAuthLinking("google");
   jest.spyOn(Date, "now").mockReturnValue(now);
   expect(takeOAuthLinking("google")).toBe(false);
+});
+
+it("is shared by the app's tabs: the mark lives in localStorage, not one tab's sessionStorage (C13c)", () => {
+  markOAuthLinking("github");
+  // Another tab has its own sessionStorage but the same localStorage.
+  window.sessionStorage.clear();
+  expect(window.localStorage.getItem("rext-oauth-linking")).not.toBeNull();
+  expect(takeOAuthLinking("github")).toBe(true);
 });

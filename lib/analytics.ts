@@ -181,10 +181,11 @@ export type { AnalyticsEvent, EventProperties, AnalyticsUser };
 
 // ── Linking a provider ───────────────────────────────────────────────────────
 // Linking Google or GitHub from the settings goes through the same OAuth sign-in as logging in, so
-// the link button marks it, with its provider, in this tab's session storage (which the provider's
-// round trip keeps), and the login record (OAuthLoginRecord, providers/posthog-provider.tsx) records no
-// sign-in for it. A login or sign-up started from the OAuth buttons clears the mark, so a link that was
-// abandoned can't hide a real sign-in after it.
+// the link button marks it, with its provider, and the login record (OAuthLoginRecord,
+// providers/posthog-provider.tsx) records no sign-in for it. The mark is in localStorage, shared by the
+// app's tabs: another open tab may refresh its session and record the login before the linking tab
+// does (C13c), and whichever tab records it first takes the mark. A login or sign-up started from the
+// OAuth buttons clears it, so a link that was abandoned can't hide a real sign-in after it.
 
 const OAUTH_LINKING_KEY = "rext-oauth-linking";
 /** A mark older than this is from a link that was abandoned, not the login now being recorded. */
@@ -193,7 +194,7 @@ const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
 /** Called by the link button just before it starts the provider's sign-in. */
 export function markOAuthLinking(provider: string): void {
   try {
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       OAUTH_LINKING_KEY,
       JSON.stringify({ provider, at: Date.now() }),
     );
@@ -205,7 +206,7 @@ export function markOAuthLinking(provider: string): void {
 /** Called by the login and sign-up OAuth buttons: what they start is never a link. */
 export function clearOAuthLinking(): void {
   try {
-    window.sessionStorage.removeItem(OAUTH_LINKING_KEY);
+    window.localStorage.removeItem(OAUTH_LINKING_KEY);
   } catch {
     // Storage refused: there is no mark to clear.
   }
@@ -217,8 +218,8 @@ export function clearOAuthLinking(): void {
  */
 export function takeOAuthLinking(provider: string): boolean {
   try {
-    const raw = window.sessionStorage.getItem(OAUTH_LINKING_KEY);
-    window.sessionStorage.removeItem(OAUTH_LINKING_KEY);
+    const raw = window.localStorage.getItem(OAUTH_LINKING_KEY);
+    window.localStorage.removeItem(OAUTH_LINKING_KEY);
     if (!raw) return false;
     const mark = JSON.parse(raw) as { provider?: unknown; at?: unknown };
     return (
