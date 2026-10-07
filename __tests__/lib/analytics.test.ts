@@ -61,3 +61,46 @@ describe("analytics.track", () => {
     expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
   });
 });
+
+describe("before the person's answer on analytics is known", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("holds events and sends them, in order, once analytics is allowed", () => {
+    const { analytics, registerPostHog } = loadAnalytics();
+    const capture = jest.fn();
+
+    analytics.track("user_signed_in", { method: "credentials" });
+    analytics.track("workspace_created");
+    expect(capture).not.toHaveBeenCalled();
+
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+
+    expect(capture.mock.calls).toEqual([
+      ["user_signed_in", { method: "credentials" }],
+      ["workspace_created", {}],
+    ]);
+  });
+
+  it("sends none of them after a no, then or later", () => {
+    const { analytics, registerPostHog, unregisterPostHog } = loadAnalytics();
+    const capture = jest.fn();
+
+    analytics.track("user_signed_in");
+    unregisterPostHog();
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  it("holds a hundred at most", () => {
+    const { analytics, registerPostHog } = loadAnalytics();
+    const capture = jest.fn();
+
+    for (let i = 0; i < 130; i++) analytics.track("title_selected");
+    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+
+    expect(capture).toHaveBeenCalledTimes(100);
+  });
+});

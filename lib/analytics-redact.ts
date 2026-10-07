@@ -72,6 +72,74 @@ export function redactEventUrls<
   return event;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The path segment after each of these names a workspace, an article, a keyword, a person. */
+const NAMED_AFTER: Record<string, string> = {
+  w: ":workspace",
+  content: ":id",
+  keywords: ":keyword",
+  personas: ":id",
+  users: ":id",
+};
+/** Fixed pages that sit where a name would. */
+const FIXED_SEGMENTS = new Set(["create", "new", "edit", "accept"]);
+
+/**
+ * An address reduced to its route: no query, no fragment, and no workspace, article, keyword or
+ * person in the path (`/w/acme/content/6f1c…` becomes `/w/:workspace/content/:id`). What analytics
+ * may know of a page for someone who said no to being measured (lib/analytics-consent.ts): which
+ * kind of page was opened, never whose.
+ */
+export function anonymousAddress(address: string): string {
+  let parsed: URL | null = null;
+  try {
+    parsed = new URL(address);
+  } catch {
+    if (!address.startsWith("/")) return address;
+  }
+  const path = parsed ? parsed.pathname : address.split(/[?#]/)[0];
+  const segments = path.split("/");
+  const route = segments.map((segment, index) => {
+    if (!segment) return segment;
+    const named = NAMED_AFTER[segments[index - 1]];
+    if (named && !FIXED_SEGMENTS.has(segment)) return named;
+    return UUID.test(segment) || /^\d+$/.test(segment) ? ":id" : segment;
+  });
+  return (parsed ? parsed.origin : "") + route.join("/");
+}
+
+/**
+ * PostHog's before_send for someone who said no: only page views and page leaves are kept, each
+ * with its addresses reduced to routes and with nothing that describes the person.
+ */
+export function anonymousEvent<
+  T extends {
+    event?: string;
+    properties?: PropertyBag;
+    $set?: PropertyBag;
+    $set_once?: PropertyBag;
+  },
+>(event: T | null): T | null {
+  if (!event) return event;
+  if (event.event !== "$pageview" && event.event !== "$pageleave") return null;
+  delete event.$set;
+  delete event.$set_once;
+  const bag = event.properties;
+  if (!bag) return event;
+  for (const key of Object.keys(bag)) {
+    const value = bag[key];
+    if (key === "$set" || key === "$set_once") {
+      delete bag[key];
+    } else if (
+      typeof value === "string" &&
+      (URL_PROPERTIES.includes(key) || key.endsWith("pathname"))
+    ) {
+      bag[key] = anonymousAddress(value);
+    }
+  }
+  return event;
+}
+
 /**
  * posthog-js options that go with `redactStoredAddresses`. With `save_referrer` on, every event
  * writes the page's raw referrer into the tab's session storage, a second store the function below

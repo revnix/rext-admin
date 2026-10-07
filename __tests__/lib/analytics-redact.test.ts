@@ -4,7 +4,12 @@
  * proof those pages' endpoints accept.
  */
 
-import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
+import {
+  anonymousAddress,
+  anonymousEvent,
+  redactEventUrls,
+  redactUrl,
+} from "@/lib/analytics-redact";
 
 describe("redactUrl", () => {
   it("replaces a link's token and keeps the rest of the address", () => {
@@ -111,5 +116,74 @@ describe("redactEventUrls", () => {
 
   it("passes a dropped event through", () => {
     expect(redactEventUrls(null)).toBeNull();
+  });
+});
+
+describe("anonymousAddress", () => {
+  it("keeps the kind of page and drops whose it is", () => {
+    expect(
+      anonymousAddress(
+        "https://app.rext.ai/w/acme/content/6f1c2d3e-0000-4000-8000-123456789abc?tab=seo#top",
+      ),
+    ).toBe("https://app.rext.ai/w/:workspace/content/:id");
+    expect(
+      anonymousAddress(
+        "https://app.rext.ai/w/acme/keywords/best%20crm%20software",
+      ),
+    ).toBe("https://app.rext.ai/w/:workspace/keywords/:keyword");
+    expect(anonymousAddress("/w/acme/generate-content?thread=abc")).toBe(
+      "/w/:workspace/generate-content",
+    );
+  });
+
+  it("leaves a page that names nobody as it is, without its query", () => {
+    expect(anonymousAddress("https://app.rext.ai/w/create")).toBe(
+      "https://app.rext.ai/w/create",
+    );
+    expect(anonymousAddress("https://app.rext.ai/settings/data?x=1")).toBe(
+      "https://app.rext.ai/settings/data",
+    );
+    expect(anonymousAddress("https://app.rext.ai/w/acme/personas/create")).toBe(
+      "https://app.rext.ai/w/:workspace/personas/create",
+    );
+  });
+
+  it("leaves anything that isn't an address alone", () => {
+    expect(anonymousAddress("$direct")).toBe("$direct");
+  });
+});
+
+describe("anonymousEvent", () => {
+  it("keeps a page view with its addresses as routes and nothing about the person", () => {
+    const event = {
+      event: "$pageview",
+      properties: {
+        $current_url: "https://app.rext.ai/w/acme/content?q=mary",
+        $pathname: "/w/acme/content",
+        $session_entry_url: "https://app.rext.ai/w/acme",
+        $browser: "Chrome",
+        $set: { email: "mary@example.com" },
+      },
+      $set: { email: "mary@example.com" },
+      $set_once: { $initial_current_url: "https://app.rext.ai/w/acme" },
+    };
+
+    const kept = anonymousEvent(event);
+
+    expect(kept).not.toBeNull();
+    expect(JSON.stringify(kept)).not.toContain("acme");
+    expect(JSON.stringify(kept)).not.toContain("mary");
+    expect(event.properties.$current_url).toBe(
+      "https://app.rext.ai/w/:workspace/content",
+    );
+    expect(event.properties.$pathname).toBe("/w/:workspace/content");
+    expect(event.properties.$browser).toBe("Chrome");
+  });
+
+  it("drops every other event", () => {
+    expect(
+      anonymousEvent({ event: "keyword_selected", properties: {} }),
+    ).toBeNull();
+    expect(anonymousEvent({ event: "$identify", properties: {} })).toBeNull();
   });
 });

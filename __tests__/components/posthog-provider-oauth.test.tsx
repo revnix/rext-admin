@@ -4,7 +4,7 @@
  * a child's effect runs before its parent's and an event tracked before then is lost.
  */
 
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 const mockCapture = jest.fn();
@@ -22,7 +22,13 @@ jest.mock("posthog-js", () => ({
     reset: jest.fn(),
     get_property: jest.fn(),
     onSessionId: jest.fn(),
+    opt_in_capturing: jest.fn(),
   },
+}));
+// Analytics is on for this person (a region that isn't asked first): the provider starts.
+jest.mock("@/lib/analytics-consent", () => ({
+  ...jest.requireActual("@/lib/analytics-consent"),
+  analyticsMode: async () => "full",
 }));
 jest.mock("posthog-js/react", () => ({
   PostHogProvider: ({ children }: { children: React.ReactNode }) => (
@@ -51,15 +57,17 @@ afterAll(() => {
   process.env.NEXT_PUBLIC_POSTHOG_KEY = key;
 });
 
-it("sends the sign-up to PostHog when the session is ready on the first render", () => {
+it("sends the sign-up to PostHog when the session is ready on the first render", async () => {
   render(
     <PostHogProvider>
       <p>The page</p>
     </PostHogProvider>,
   );
-  expect(mockCapture).toHaveBeenCalledWith(
-    "user_signed_up",
-    expect.objectContaining({ method: "google" }),
+  await waitFor(() =>
+    expect(mockCapture).toHaveBeenCalledWith(
+      "user_signed_up",
+      expect.objectContaining({ method: "google" }),
+    ),
   );
 });
 
