@@ -33,6 +33,7 @@ import {
   personaFormSchema,
 } from "@/schemas/persona-schemas";
 import type { Persona } from "@/types/workspace";
+import { initials } from "@/lib/initials";
 
 /** JPEG/PNG/GIF/WebP up to 5MB, matching what the upload endpoint accepts. */
 const AVATAR_ACCEPT = "image/png,image/jpeg,image/gif,image/webp";
@@ -362,7 +363,7 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
             <Avatar className="size-16 rounded-md border">
               <AvatarImage src={avatarShown} alt="" className="object-cover" />
               <AvatarFallback className="rounded-md text-xl font-semibold">
-                {displayName.charAt(0).toUpperCase()}
+                {initials(displayName)}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-wrap items-center gap-2">

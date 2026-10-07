@@ -16,7 +16,11 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBillingActions } from "@/hooks/use-billing-actions";
 import { useBillingAction } from "./billing-action-notice";
-import { HOLDS_A_PAID_PLAN, nextDate } from "./billing-format";
+import {
+  HOLDS_A_PAID_PLAN,
+  nextDate,
+  statusBesidePlan,
+} from "./billing-format";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { BillingPeriod, SubscriptionStatus } from "@/types/subscription";
@@ -94,7 +98,12 @@ export function PlanSection() {
   const status = subscription?.status;
   const paid = Boolean(status && HOLDS_A_PAID_PLAN.has(status));
   const chooseFromGrid = !paid && status !== SubscriptionStatus.CANCELLED;
-  const statusWords = status ? STATUS[status] : undefined;
+  const planName =
+    subscription?.plan_display_name ?? credits.data?.plan_name ?? "Your plan";
+  const statusWords = statusBesidePlan(
+    status ? STATUS[status] : undefined,
+    planName,
+  );
   const allowance = credits.data?.credits_per_month;
 
   return (
@@ -106,11 +115,7 @@ export function PlanSection() {
             {subscription ? (
               <>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-section">
-                    {subscription.plan_display_name ??
-                      credits.data?.plan_name ??
-                      "Your plan"}
-                  </h3>
+                  <h3 className="text-section">{planName}</h3>
                   {statusWords && (
                     <Badge variant={statusWords.tone}>
                       {statusWords.label}

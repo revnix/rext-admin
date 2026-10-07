@@ -35,14 +35,7 @@ import { performLogout } from "@/lib/logout-utils";
 import { profileQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
 import { useNotificationStore } from "@/stores/notification-store";
-
-const initials = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?";
+import { initials } from "@/lib/initials";
 
 function avatarUrl(path?: string | null): string | undefined {
   if (!path) return undefined;
