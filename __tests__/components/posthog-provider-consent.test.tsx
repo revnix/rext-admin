@@ -8,6 +8,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { analytics, setImpersonating } from "@/lib/analytics";
 import { analyticsMode, writeConsent } from "@/lib/analytics-consent";
+import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 const mockPosthog = {
@@ -78,6 +79,8 @@ beforeEach(() => {
 function renderProvider() {
   return render(
     <PostHogProvider>
+      {/* The shell shows the question; the provider acts on the answer. */}
+      <AnalyticsConsentPrompt />
       <p>The page</p>
     </PostHogProvider>,
   );
@@ -85,8 +88,7 @@ function renderProvider() {
 
 const pageViews = () =>
   mockPosthog.capture.mock.calls.filter(([event]) => event === "$pageview");
-const question = () =>
-  screen.queryByRole("heading", { name: "May we measure how you use Rext?" });
+const question = () => screen.queryByText("May we measure how you use Rext?");
 
 describe("where the person is asked first, and hasn't answered", () => {
   beforeEach(() => mode.mockResolvedValue("wait"));
@@ -94,9 +96,7 @@ describe("where the person is asked first, and hasn't answered", () => {
   it("sends nothing and asks", async () => {
     renderProvider();
 
-    expect(
-      await screen.findByRole("heading", { name: /May we measure/ }),
-    ).toBeTruthy();
+    expect(await screen.findByText(/May we measure/)).toBeTruthy();
     expect(mockPosthog.init).not.toHaveBeenCalled();
     expect(mockPosthog.capture).not.toHaveBeenCalled();
     expect(mockPosthog.identify).not.toHaveBeenCalled();
