@@ -26,14 +26,23 @@ const FALLBACK_MESSAGE = "This run stopped before it finished.";
 /**
  * The `content.error_code`s of a run the backend ended on purpose, with a message
  * for the user (rext-backend): a keyword with no search results or a failed
- * search lookup (`no_serp_data`, `rext.py`), and a topic step that wrote no
- * titles (`topic_generation_failed`, `topic_generation.py`). A run short of
- * credits (`insufficient_credits`) has its own popup and isn't one of these.
+ * search lookup (`no_serp_data`, `rext.py`), a topic step that wrote no titles
+ * (`topic_generation_failed`, `topic_generation.py`), and a start whose credits
+ * couldn't be read (`credit_check_failed`, `rext.py`: "Try again in a moment").
+ * A run short of credits (`insufficient_credits`) has its own popup and isn't
+ * one of these.
  */
 export const STOPPED_RUN_CODES: readonly string[] = [
   "no_serp_data",
   "topic_generation_failed",
+  "credit_check_failed",
 ];
+
+/**
+ * The code a stream route sends with the backend's refusal to start a run: the
+ * user already has as many in flight as allowed (rext-backend G62, a 429).
+ */
+export const TOO_MANY_RUNS = "too_many_runs";
 
 export function isStoppedRunCode(code: unknown): boolean {
   return typeof code === "string" && STOPPED_RUN_CODES.includes(code);
@@ -76,6 +85,7 @@ export function readStoppedRun(values: unknown): string | null {
 const LAST_NODES = [
   "content_engine",
   "insufficient_credits",
+  "credit_check_failed",
   "no_serp_data",
   "topics_failed",
 ];

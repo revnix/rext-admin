@@ -6,11 +6,69 @@ import {
   type GenerationIdentity,
   generationIdentity,
 } from "@/lib/generate-content/generation-identity";
+import { TOO_MANY_RUNS } from "@/lib/generate-content/run-events";
+
+/**
+ * The backend's refusal to start a run, with its sentence for the user. The backend answers 429
+ * when a user already has two runs in flight (rext-backend G62); that's a refusal to show, not a
+ * rate limit to wait out.
+ */
+export class RunRefusedError extends Error {
+  readonly status = 429;
+}
+
+const REFUSAL_FALLBACK =
+  "You already have as many articles generating as your account allows. Wait for one to finish, then start another.";
+
+/**
+ * A 429's body, kept before the SDK reads it: the SDK turns a failed response into its own error
+ * (reading the body) before its failed-response hook runs, so the hook finds the sentence here.
+ */
+const refusalBodies = new WeakMap<Response, Promise<string>>();
+
+const fetchKeepingRefusals = async (
+  ...args: Parameters<typeof fetch>
+): Promise<Response> => {
+  const response = await fetch(...args);
+  if (response.status === 429) {
+    refusalBodies.set(response, response.clone().text());
+  }
+  return response;
+};
+
+/** The sentence a 429 carries (`{"detail": "..."}`), or a plain fallback. */
+export async function refusalMessage(
+  body: string | undefined,
+): Promise<string> {
+  try {
+    const detail = (JSON.parse(body ?? "") as { detail?: unknown }).detail;
+    if (typeof detail === "string" && detail.trim()) return detail.trim();
+  } catch {
+    // Not JSON: the fallback below.
+  }
+  return REFUSAL_FALLBACK;
+}
+
+/**
+ * What a stream route sends when its run fails to start or stops: the error's message, and for the
+ * backend's refusal its code, so the page can tell "two runs already going" from a failure.
+ */
+export function streamErrorPayload(error: unknown): {
+  error: string;
+  code?: string;
+} {
+  if (error instanceof RunRefusedError) {
+    return { error: error.message, code: TOO_MANY_RUNS };
+  }
+  return { error: error instanceof Error ? error.message : "Stream error" };
+}
 
 /**
  * The LangGraph client shared by every `/api/generate/*` proxy route. It sends
  * the caller's backend access token: the backend refuses anonymous requests to
- * the LangGraph routes and only shows a user the threads they own.
+ * the LangGraph routes and only shows a user the threads they own. A 429 isn't
+ * retried: the SDK would retry it five times with backoff, about half a minute
+ * of nothing before the refusal showed.
  */
 export const getGenerationClient = <TState = unknown>(accessToken: string) =>
   new Client<TState>({
@@ -18,6 +76,18 @@ export const getGenerationClient = <TState = unknown>(accessToken: string) =>
       explicitBaseUrl: process.env.LANGGRAPH_API_URL,
     }),
     defaultHeaders: { Authorization: `Bearer ${accessToken}` },
+    callerOptions: {
+      fetch: fetchKeepingRefusals,
+      // A throw here ends the SDK's retries; anything else lets it retry as usual.
+      onFailedResponseHook: async (response) => {
+        if (response?.status === 429) {
+          throw new RunRefusedError(
+            await refusalMessage(await refusalBodies.get(response)),
+          );
+        }
+        return false;
+      },
+    },
   });
 
 type Denied = { ok: false; response: Response };

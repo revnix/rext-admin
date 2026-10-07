@@ -1,5 +1,6 @@
 import {
   isOutlineToken,
+  isStoppedRunCode,
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
@@ -113,6 +114,10 @@ describe("settlesRun", () => {
       { event: "updates", data: { insufficient_credits: { content: {} } } },
     ],
     ["an empty search", { event: "updates", data: { no_serp_data: {} } }],
+    [
+      "a start whose credits couldn't be read",
+      { event: "updates", data: { credit_check_failed: { content: {} } } },
+    ],
     [
       "a topic step without titles",
       { event: "updates|content_engine:1", data: { topics_failed: {} } },
@@ -246,5 +251,22 @@ describe("the live outline from a recorded stream", () => {
       recorded.some((e) => readMessageToken(e)?.node === "topic_generation"),
     ).toBe(true);
     expect(outlineText(recorded)).not.toContain("topics");
+  });
+});
+
+describe("a start whose credits couldn't be read (E27)", () => {
+  it("is a run the backend ended on purpose, with its message", () => {
+    expect(isStoppedRunCode("credit_check_failed")).toBe(true);
+    expect(
+      readStoppedRun({
+        content: {
+          error_code: "credit_check_failed",
+          error:
+            "We couldn't check your credits just now, so the run didn't start. Try again in a moment.",
+        },
+      }),
+    ).toBe(
+      "We couldn't check your credits just now, so the run didn't start. Try again in a moment.",
+    );
   });
 });
