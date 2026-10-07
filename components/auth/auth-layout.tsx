@@ -16,12 +16,13 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="flex max-w-md flex-col items-center gap-8 text-center">
           <BrandLogo width={150} height={50} className="object-contain" />
           <div className="space-y-3">
+            {/* design/copy-rules.md: no unsourced multipliers; the stance is articles you'd sign. */}
             <h2 className="font-display text-display text-foreground">
-              Speedy, easy and fast content generation.
+              Write articles you'd put your name on.
             </h2>
             <p className="text-body text-muted-foreground">
-              Rext AI helps you set content goals, earn organic traffic, and
-              scale your publishing workflow up to 10x faster.
+              Rext AI researches your keywords, plans the article with you and
+              writes it in your brand's voice.
             </p>
           </div>
         </div>

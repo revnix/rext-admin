@@ -302,7 +302,7 @@ export function LoginForm({
                 {...field}
                 type="email"
                 autoComplete="email"
-                placeholder="m@example.com"
+                placeholder="you@company.com"
               />
             )}
           </FieldController>

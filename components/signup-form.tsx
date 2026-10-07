@@ -26,6 +26,10 @@ import { checkPasswordBreach } from "@/lib/password-utils";
 import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
 
+// The legal pages live on the website, open to anyone signed out.
+const TERMS_URL = "https://rext.ai/terms";
+const PRIVACY_URL = "https://rext.ai/privacy";
+
 export function SignupForm({
   className,
   ...props
@@ -305,12 +309,7 @@ export function SignupForm({
             required
           >
             {(field) => (
-              <Input
-                {...field}
-                autoComplete="name"
-                placeholder="John"
-                disabled={isLoading}
-              />
+              <Input {...field} autoComplete="name" disabled={isLoading} />
             )}
           </FieldController>
 
@@ -328,7 +327,7 @@ export function SignupForm({
                 {...field}
                 type="email"
                 autoComplete="email"
-                placeholder="m@example.com"
+                placeholder="you@company.com"
                 disabled={isLoading}
                 readOnly={hasValidInvitation}
               />
@@ -378,6 +377,28 @@ export function SignupForm({
           </Button>
         </FieldGroup>
       </form>
+
+      <p className="text-center text-caption text-muted-foreground">
+        By creating an account, you agree to the{" "}
+        <a
+          href={TERMS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Terms<span className="sr-only"> (opens in a new tab)</span>
+        </a>{" "}
+        and the{" "}
+        <a
+          href={PRIVACY_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-4 hover:text-foreground"
+        >
+          Privacy Policy<span className="sr-only"> (opens in a new tab)</span>
+        </a>
+        .
+      </p>
 
       <p className="text-center text-body text-muted-foreground">
         Already have an account?{" "}
