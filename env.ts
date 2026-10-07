@@ -94,6 +94,20 @@ export const env = createEnv({
   },
   createFinalSchema: (shape, isServer) =>
     z.object(shape).superRefine((values, ctx) => {
+      // The support chat needs both: the website it opens and the secret its identity route
+      // signs with. One alone would offer a chat that can never open (#711).
+      if (
+        isServer &&
+        Boolean(values.NEXT_PUBLIC_CRISP_WEBSITE_ID) !==
+          Boolean(values.CRISP_TOKEN_SECRET)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["CRISP_TOKEN_SECRET"],
+          message:
+            "The support chat needs both NEXT_PUBLIC_CRISP_WEBSITE_ID and CRISP_TOKEN_SECRET, or neither",
+        });
+      }
       if (!isServer || !needsDeployNames) return;
       // Not NEXT_PUBLIC_BACKEND_API_URL instead: the auth pages (forgot and
       // reset password, account recovery, email verification) and sign-out's

@@ -28,6 +28,7 @@ import { apiClient } from "@/lib/api-client";
 import { storeWelcomeData } from "@/providers/workspace-welcome-provider";
 import type { Route } from "next";
 import { workspaceRoutes } from "@/lib/routes";
+import { resetSupportChat } from "@/lib/support-chat/chat";
 
 export default function AcceptInvitationPage() {
   const router = useRouter();
@@ -81,6 +82,8 @@ export default function AcceptInvitationPage() {
         destination === "signup"
           ? `/signup?${params.toString()}`
           : `/login?${params.toString()}`;
+      // Another account follows: the support chat's session must not carry over (#711).
+      resetSupportChat();
       await signOut({ redirect: false });
       router.push(target as Route);
     },
