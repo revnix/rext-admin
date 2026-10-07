@@ -30,6 +30,7 @@ import {
   type DataTableRowAction,
   UNKNOWN,
 } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Notice } from "@/components/ui/notice";
@@ -98,6 +99,7 @@ export function TrashTable({
   onRestore,
   onDeleteForever,
   deleteForeverWarning,
+  emptyDescription,
   confirmByTypingName = false,
 }: {
   /** The table's name for assistive technology: "Deleted workspaces". */
@@ -111,6 +113,8 @@ export function TrashTable({
   onDeleteForever: (item: TrashItem) => Promise<void>;
   /** What goes along when this item is deleted for good, for the confirmation. */
   deleteForeverWarning: (item: TrashItem) => ReactNode;
+  /** The empty state's one sentence: what lands in this trash, and for how long. */
+  emptyDescription?: ReactNode;
   /** Ask for the item's name before deleting it for good (a workspace: everything in it goes). */
   confirmByTypingName?: boolean;
 }) {
@@ -204,9 +208,11 @@ export function TrashTable({
           ) : undefined
         }
         emptyState={
-          <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Nothing in the trash.
-          </p>
+          <EmptyState
+            title="Nothing in the trash"
+            description={emptyDescription}
+            as="h3"
+          />
         }
         renderCard={(item, { actions }) => (
           <div className="flex items-start justify-between gap-3">

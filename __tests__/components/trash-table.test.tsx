@@ -75,12 +75,20 @@ describe("TrashTable", () => {
         deleteForeverWarning={() => ""}
       />,
     );
-    expect(screen.queryByText("Nothing in the trash.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Nothing in the trash" }),
+    ).not.toBeInTheDocument();
     unmount();
-    table({ items: [] });
-    expect(screen.getAllByText("Nothing in the trash.").length).toBeGreaterThan(
-      0,
-    );
+    table({
+      items: [],
+      emptyDescription: "Workspaces you delete stay here.",
+    });
+    expect(
+      screen.getAllByRole("heading", { name: "Nothing in the trash" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Workspaces you delete stay here.").length,
+    ).toBeGreaterThan(0);
   });
 
   it("says when the trash didn't load, and tries again", async () => {
