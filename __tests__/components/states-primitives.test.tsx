@@ -71,6 +71,26 @@ describe("EmptyState", () => {
 });
 
 describe("Meter", () => {
+  it("draws one part per unit when segmented, the filled ones first and the rest hollow", () => {
+    const { container, rerender } = render(
+      <Meter value={2} max={3} segmented />,
+    );
+    const parts = () =>
+      Array.from(
+        container.querySelector('[data-slot="meter"]')?.children ?? [],
+      ).map((part) => part.classList.contains("bg-foreground"));
+    expect(parts()).toEqual([true, true, false]);
+    // Hidden without a label: the parent says the count in words.
+    expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+
+    rerender(<Meter value={5} max={3} segmented label="Checks met" />);
+    expect(parts()).toEqual([true, true, true]);
+    expect(screen.getByRole("meter", { name: "Checks met" })).toHaveAttribute(
+      "aria-valuenow",
+      "3",
+    );
+  });
+
   it("is a meter with its values when labelled, hidden when not", () => {
     const { rerender, container } = render(
       <Meter value={412} max={1000} label="Credits left" />,
