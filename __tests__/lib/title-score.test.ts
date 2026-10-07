@@ -2,6 +2,7 @@ import {
   containsKeyphrase,
   normalizeTitle,
   scoreTitle,
+  titleMaxChars,
 } from "@/lib/generate-content/title-score";
 
 // The Title step's score: the backend's title contract (seo_title_rules.py) plus a clarity check.
@@ -93,5 +94,59 @@ describe("scoreTitle", () => {
       "length",
       "clarity",
     ]);
+  });
+});
+
+// A long keyphrase leaves 59 characters little room beside it: the backend lets its titles run to
+// the keyphrase plus 20, never over 75 (seo_title_rules.title_max_chars, G69).
+describe("the length limit for a long keyphrase", () => {
+  const LONG = "best project management software for small teams"; // 48
+
+  it("is 59 for a short keyphrase, the keyphrase plus 20 for a long one, at most 75", () => {
+    expect(titleMaxChars(KEYPHRASE)).toBe(59);
+    expect(titleMaxChars("")).toBe(59);
+    expect(titleMaxChars(null)).toBe(59);
+    expect(titleMaxChars(LONG)).toBe(68);
+    expect(titleMaxChars("x".repeat(60))).toBe(75);
+  });
+
+  it("measures the keyphrase with its punctuation flattened, as the backend does", () => {
+    // 76 as typed, 70 flattened: 70 + 20, capped at 75.
+    expect(
+      titleMaxChars(
+        "c++ and c# developers for hire: best project management software for teams!!",
+      ),
+    ).toBe(75);
+  });
+
+  it("meets the length check for a long keyphrase's title within its limit", () => {
+    const title =
+      "Best Project Management Software for Small Teams: How to Choose"; // 63
+    const score = scoreTitle(title, LONG);
+
+    expect(score.checks[1]).toEqual({
+      id: "length",
+      met: true,
+      label: "63 characters",
+    });
+    expect(score).toMatchObject({ met: 3, total: 3 });
+  });
+
+  it("says over the keyphrase's limit, not over 59", () => {
+    const title =
+      "Best Project Management Software for Small Teams: A Buyer's Guide for 2026"; // 74
+    expect(scoreTitle(title, LONG).checks[1]).toEqual({
+      id: "length",
+      met: false,
+      label: "74 characters, over 68",
+    });
+  });
+
+  it("keeps 59 for a short keyphrase", () => {
+    const title =
+      "How to Choose an SEO Agency: A Guide for Small Business Owner"; // 61
+    expect(scoreTitle(title, KEYPHRASE).checks[1].label).toBe(
+      "61 characters, over 59",
+    );
   });
 });
