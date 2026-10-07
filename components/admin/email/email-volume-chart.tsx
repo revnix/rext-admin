@@ -98,6 +98,8 @@ export function EmailVolumeChart({ data, isLoading }: EmailVolumeChartProps) {
           type="monotone"
           dataKey="Clicked"
           stroke="var(--neutral-500)"
+          // Dashed: with info neutral, Opened and Clicked are near greys, so the shape tells them apart.
+          strokeDasharray="5 3"
           strokeWidth={2}
           dot={false}
         />
