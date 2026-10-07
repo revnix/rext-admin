@@ -69,15 +69,7 @@ export function AppShell({
   useWorkspacePermissions(workspaceSlug ?? currentSlug);
 
   return (
-    <SidebarProvider
-      defaultPreference={defaultPreference}
-      style={{
-        // The header's height: the header takes it, and a surface sized to the viewport (the
-        // article editor) subtracts it.
-        "--header-height": "3.5rem",
-        "--bottom-bar-height": "calc(3.5rem + env(safe-area-inset-bottom))",
-      }}
-    >
+    <SidebarProvider defaultPreference={defaultPreference}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-(--z-toast) focus:rounded-sm focus:bg-surface-raised focus:px-3 focus:py-2 focus:text-label focus:shadow-overlay"

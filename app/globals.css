@@ -145,8 +145,9 @@
   --form-max: 560px;
   --prose-max: 65ch;
 
-  /* The shell's sticky bars (app-shell.tsx sets the same two on its wrapper), and the height a form's
-     sticky submit row takes: keyboard focus never lands behind them (WCAG 2.4.11, html below). */
+  /* The shell's sticky bars: the header and the phone's bottom bar are this tall, and a surface sized
+     to the viewport (the article editor) subtracts them. With the height a form's sticky submit row
+     takes, keyboard focus never lands behind them (WCAG 2.4.11, html below). */
   --header-height: 3.5rem;
   --bottom-bar-height: calc(3.5rem + env(safe-area-inset-bottom));
   --form-submit-row-clearance: 4.5rem;
