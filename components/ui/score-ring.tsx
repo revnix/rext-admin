@@ -24,13 +24,13 @@ export function ScoreRing({
         className,
       )}
     >
+      {/* The title is one string: React renders a title's several text children as an empty title
+          on the server, and the page then fails to hydrate. */}
       <svg
         viewBox="0 0 64 64"
         className="absolute inset-0 size-full -rotate-90"
       >
-        <title>
-          {label}: {score} out of 100
-        </title>
+        <title>{`${label}: ${score} out of 100`}</title>
         <circle
           cx="32"
           cy="32"
