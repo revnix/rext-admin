@@ -1368,7 +1368,8 @@ function ContentEditorInner(props: ContentEditorProps) {
               <DialogTitle className="text-2xl font-bold text-foreground tracking-tight">
                 {statusModal.title}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-base">
+              {/* A server's reason can be long and unbroken: it wraps, and scrolls past the cap. */}
+              <DialogDescription className="max-h-60 overflow-y-auto wrap-anywhere text-muted-foreground text-base">
                 {statusModal.message}
               </DialogDescription>
             </div>

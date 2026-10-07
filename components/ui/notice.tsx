@@ -74,7 +74,9 @@ export function Notice({
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex min-w-0 grow basis-64 flex-col gap-0.5">
           {title && <p className="font-medium">{title}</p>}
-          {children && <div className="text-foreground/80">{children}</div>}
+          {children && (
+            <div className="wrap-anywhere text-foreground/80">{children}</div>
+          )}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>

@@ -21,7 +21,9 @@ export function RunNotice({
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+        <p className="mt-1 wrap-anywhere text-sm text-muted-foreground">
+          {message}
+        </p>
         <Button
           type="button"
           variant="outline"
