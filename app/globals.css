@@ -305,7 +305,15 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+
+  /* Keyboard focus shows wherever a component draws none of its own (plain links, breadcrumbs):
+     a 2 px outline in the ring colour, 3.57 : 1 or better on every surface (WCAG 2.4.7). A
+     component's own outline-none or focus ring, in the utilities layer, wins over this. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   html {
