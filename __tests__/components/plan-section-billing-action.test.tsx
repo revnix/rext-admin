@@ -89,6 +89,18 @@ describe("PlanSection and the billing action", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("never offers Change plan while past due, even when the billing action can't be read", async () => {
+    renderPlan("past_due", null);
+    subscriptions.getBillingAction.mockRejectedValue(new Error("down"));
+
+    expect(
+      await screen.findByRole("button", { name: "Update card" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Change plan" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the end date and confirms a resume until the plan updates", async () => {
     subscriptions.resumeSubscription.mockResolvedValue({});
     renderPlan("cancelled", {
