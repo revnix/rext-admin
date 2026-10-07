@@ -371,10 +371,6 @@ export function FreshGenerationView({
   // E27): nothing was sent, so a resume neither retries nor waits for a run.
   const runRefusedRef = useRef(false);
 
-  // Set while the restore path reads a run's stream it rejoined: a rejoin the server can't be
-  // reached for says nothing and changes nothing, since the restore asks again by itself.
-  const rejoiningRef = useRef(false);
-
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
   const trackedKeywordSearchRef = useRef<string | null>(null);
@@ -842,12 +838,10 @@ export function FreshGenerationView({
               { runId },
               signal,
             );
-            rejoiningRef.current = true;
-            await processStreamRef.current(stream);
+            await processStreamRef.current(stream, undefined, true);
           } catch {
             // Join dropped or the run just ended — the re-check below reconciles.
           } finally {
-            rejoiningRef.current = false;
             streamBusyRef.current = false;
             streamingThreadRef.current = null;
           }
@@ -1256,6 +1250,10 @@ export function FreshGenerationView({
     // Without it, the refusal left the dock's job running and took this stream
     // for a superseded one, so the loader never cleared over the notice (E27).
     startedThreadId?: string,
+    // The restore path reading a run it rejoined. Whatever ends that stream changes nothing
+    // here: the restore reads the run's status next and shows how it stands (still going, done
+    // or failed), so a connection lost to a deploy's restart never marks a running job failed.
+    rejoined = false,
   ): Promise<boolean> => {
     let activeThreadId =
       startedThreadId ?? threadId ?? backgroundThreadId ?? null;
@@ -1614,7 +1612,9 @@ export function FreshGenerationView({
       }
     } catch (_e) {
       const isAbort = _e instanceof DOMException && _e.name === "AbortError";
-      if (_e instanceof RunStreamError && _e.code === TOO_MANY_RUNS) {
+      if (rejoined) {
+        // Nothing to do: see `rejoined`.
+      } else if (_e instanceof RunStreamError && _e.code === TOO_MANY_RUNS) {
         // The backend refused to start the run (two already going, E27): nothing ran, so
         // nothing failed. A resume leaves its step waiting; a new start leaves no dock job.
         runRefusedRef.current = true;
@@ -1634,15 +1634,14 @@ export function FreshGenerationView({
       } else if (
         _e instanceof RunStreamError &&
         _e.code === SERVER_UNREACHABLE &&
-        (rejoiningRef.current || !runCreatedRef.current)
+        !runCreatedRef.current
       ) {
-        // The server couldn't be reached (a deploy restarts the backend for about a minute):
-        // nothing ran, so nothing failed. A rejoin says nothing, the restore asks again. A new
-        // start leaves no dock job; a resume leaves its step waiting, and the restore path
-        // brings that step back once the server answers.
-        if (rejoiningRef.current) {
-          // Nothing to do.
-        } else if (startedThreadId) {
+        // The server couldn't be reached (a deploy restarts the backend for about a minute)
+        // before any run was announced: nothing is known to have failed, and nothing is sent
+        // again, since the request may have arrived. A new start leaves no dock job; a resume
+        // leaves its step waiting, and the restore path shows how the thread stands (that step
+        // again, or the run if it did start) once the server answers.
+        if (startedThreadId) {
           runRefusedRef.current = true;
           removeBackgroundJob(startedThreadId);
           setRunError(_e.message);

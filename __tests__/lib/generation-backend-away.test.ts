@@ -110,6 +110,28 @@ describe("in the page", () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it("a step whose stream is cut after it opened says the same, so it's never sent twice", async () => {
+    send.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: async () => {
+            throw new TypeError("terminated");
+          },
+          cancel: jest.fn(),
+        }),
+      },
+    });
+    const error = await firstEvent("/api/generate/t1/resume").catch(
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(RunStreamError);
+    expect((error as RunStreamError).code).toBe(SERVER_UNREACHABLE);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
   it("any other failed step keeps its own error, and an abort stays an abort", async () => {
     send.mockResolvedValue({ ok: false, status: 500 });
     const failed = await firstEvent("/api/generate/t1/resume").catch(

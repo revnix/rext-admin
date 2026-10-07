@@ -70,6 +70,9 @@ jest.mock("@/stores/background-generation-store", () => {
   useStore.getState = () => state;
   return { useBackgroundGenerationStore: useStore, mockJobs: jobs };
 });
+const { analytics } = jest.requireMock("@/lib/analytics") as {
+  analytics: { track: jest.Mock };
+};
 const { mockJobs: jobs } = jest.requireMock(
   "@/stores/background-generation-store",
 ) as { mockJobs: Array<{ threadId: string; status: string }> };
@@ -121,16 +124,51 @@ jest.mock("@/components/generate-content/workflow-step-indicator", () => ({
   WorkflowStepIndicator: () => null,
 }));
 
-// The proxy routes: a new thread, then the backend goes away before its stream starts.
+// The proxy routes. By default a new thread, then the backend goes away before its stream starts.
+// With `mockBackend.up`, the run is going and the stream the page rejoins breaks at once (the
+// join route reports whatever ended it, with no code).
 const mockRequested: string[] = [];
+const mockBackend = { up: false };
 jest.mock("@/lib/auth-utils", () => ({
   authenticatedFetch: jest.fn(async (url: string) => {
     mockRequested.push(url);
     if (url === "/api/generate/threads") {
       return { ok: true, json: async () => ({ data: { thread_id: THREAD } }) };
     }
-    if (url.endsWith("/stream") || url.includes("/status")) {
-      return { ok: false, status: 503 };
+    if (!mockBackend.up) {
+      if (url.endsWith("/stream") || url.includes("/status")) {
+        return { ok: false, status: 503 };
+      }
+    } else if (url.includes("/status")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          threadId: THREAD,
+          run: { id: "run-1", status: "running" },
+          progress: 40,
+          stage: "Writing your article",
+        }),
+      };
+    } else if (url.endsWith("/join")) {
+      const chunks = [
+        new TextEncoder().encode(
+          `data: ${JSON.stringify({ error: "terminated" })}\n\n`,
+        ),
+      ];
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          getReader: () => ({
+            read: async () =>
+              chunks.length
+                ? { done: false, value: chunks.shift() }
+                : { done: true, value: undefined },
+            cancel: jest.fn(),
+          }),
+        },
+      };
     }
     throw new Error(`unexpected request: ${url}`);
   }),
@@ -139,6 +177,8 @@ jest.mock("@/lib/auth-utils", () => ({
 beforeEach(() => {
   jobs.length = 0;
   mockRequested.length = 0;
+  mockBackend.up = false;
+  analytics.track.mockClear();
 });
 
 describe("A new keyword's analysis while the backend is away", () => {
@@ -198,5 +238,25 @@ describe("An article being written while the backend is away", () => {
       status: "failed",
       error: SERVER_UNREACHABLE_MESSAGE,
     });
+  });
+
+  it("stays running when the stream the page rejoined breaks: the next status read decides", async () => {
+    jest.useFakeTimers();
+    mockBackend.up = true;
+    jobs.push({ threadId: THREAD, status: "running" });
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId={THREAD} />,
+    );
+
+    await act(() => jest.advanceTimersByTimeAsync(10_000));
+
+    // Rejoined, broke, and asked for the status again, more than once.
+    const joins = mockRequested.filter((url) => url.endsWith("/join")).length;
+    expect(joins).toBeGreaterThanOrEqual(2);
+    expect(jobs[0]).toMatchObject({ threadId: THREAD, status: "running" });
+    expect(analytics.track).not.toHaveBeenCalledWith(
+      "content_generation_failed",
+      expect.anything(),
+    );
   });
 });

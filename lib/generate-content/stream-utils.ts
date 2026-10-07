@@ -91,7 +91,16 @@ export async function* streamFromSSE(
       reader.cancel();
       return;
     }
-    const { done, value } = await reader.read();
+    let chunk: Awaited<ReturnType<typeof reader.read>>;
+    try {
+      chunk = await reader.read();
+    } catch (error) {
+      // The connection was cut after the stream had opened: the same error as a request that
+      // never arrived, so a step is never sent a second time on it (it may have started a run).
+      if (!isNetworkFailure(error)) throw error;
+      throw new RunStreamError(SERVER_UNREACHABLE_MESSAGE, SERVER_UNREACHABLE);
+    }
+    const { done, value } = chunk;
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 

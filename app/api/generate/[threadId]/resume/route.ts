@@ -1,5 +1,9 @@
 import type { NextRequest } from "next/server";
 
+import {
+  backendAwayResponse,
+  isBackendAway,
+} from "@/lib/generate-content/backend-away";
 import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
 import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
@@ -63,6 +67,7 @@ export async function POST(
         { status: 202 },
       );
     } catch (error) {
+      if (isBackendAway(error)) return backendAwayResponse();
       const message =
         error instanceof Error
           ? error.message
