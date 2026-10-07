@@ -8,15 +8,17 @@
  * roles in :root that point at primitives; component tokens that point at roles. Utilities
  * reach the roles through @theme inline. A colour change edits the primitives, nothing else.
  *
- * Tailwind's own palette is still on while the sweep (task B7) moves the stock classes onto
- * the roles, folder by folder. Its last pull request adds `--color-*: initial;` at the top of
- * the @theme block, after which a stray `bg-blue-600` compiles to nothing.
+ * Tailwind's own palette is off (`--color-*: initial`, task B7a): a stock class such as
+ * `bg-blue-600` compiles to nothing, and only the roles below make colour utilities.
  */
 
 /* Light only for now: `dark:` classes apply nowhere until tasks B4 and B7 remove them. */
 @custom-variant dark (&:where(.dark-mode-retired, .dark-mode-retired *));
 
 @theme static {
+  /* Tailwind's palette off: the colour utilities come only from the roles in @theme inline below. */
+  --color-*: initial;
+
   /* Neutral, achromatic. 400 is darker than Tailwind's so a field's edge clears 3:1 on every surface. */
   --neutral-0: oklch(100% 0 0);
   --neutral-50: oklch(98.5% 0 0);
@@ -460,23 +462,6 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-/* The workspace welcome modal's confetti (components/workspace/workspace-welcome-modal.tsx). */
-.animate-confetti-fall {
-  animation: confetti-fall 4s ease-in-out forwards;
-}
-
-@keyframes confetti-fall {
-  from {
-    transform: translateY(-10px) rotate(0deg);
-    opacity: 1;
-  }
-
-  to {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
 }
 
 /*
