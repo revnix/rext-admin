@@ -72,6 +72,9 @@ export function AppShell({
     <SidebarProvider
       defaultPreference={defaultPreference}
       style={{
+        // The header's height: the header takes it, and a surface sized to the viewport (the
+        // article editor) subtracts it.
+        "--header-height": "3.5rem",
         "--bottom-bar-height": "calc(3.5rem + env(safe-area-inset-bottom))",
       }}
     >

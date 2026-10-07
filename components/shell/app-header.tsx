@@ -134,7 +134,7 @@ function HelpLink() {
  */
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-(--z-sticky) flex h-14 shrink-0 items-center gap-2 border-b border-border bg-surface px-4 md:px-6">
+    <header className="sticky top-0 z-(--z-sticky) flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border bg-surface px-4 md:px-6">
       <SidebarTrigger className="-ml-1 hidden lg:inline-flex" />
       <Link
         href={"/" as Route}
