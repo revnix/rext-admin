@@ -32,6 +32,7 @@ jest.mock("@/hooks/use-awaiting-data", () => ({
 }));
 
 jest.mock("@/hooks/use-content", () => ({
+  ...jest.requireActual("@/hooks/use-content"),
   useContentDetail: () => ({
     data: {
       content: {
@@ -71,12 +72,14 @@ jest.mock("@/lib/api-client", () => ({
 const update = jest.requireMock("@/lib/api-client").apiClient.content
   .update as jest.Mock;
 
+let unmountPage: () => void = () => {};
 function renderPage() {
-  render(
+  const { unmount } = render(
     <QueryClientProvider client={new QueryClient()}>
       <ArticleEditPage workspaceSlug="nextly" contentId="c1" />
     </QueryClientProvider>,
   );
+  unmountPage = unmount;
   return userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 }
 
@@ -148,6 +151,18 @@ describe("The full-screen article editor", () => {
     expect(await screen.findByText(/^Saved · /)).toBeInTheDocument();
     expect(screen.queryByText("Your last changes aren't saved yet")).toBeNull();
     expect(window.localStorage.getItem("rext:article-draft:c1")).toBeNull();
+  });
+
+  it("copies an edit made just before leaving to this device", async () => {
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "!");
+    // Gone at once: neither the half-second wait for the copy nor the save has run.
+    unmountPage();
+
+    expect(window.localStorage.getItem("rext:article-draft:c1")).toContain(
+      "Hello!",
+    );
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("offers text an earlier visit couldn't save, and saves it once restored", async () => {

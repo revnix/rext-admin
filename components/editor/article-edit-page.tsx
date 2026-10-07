@@ -1,12 +1,12 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLeaveGuard } from "@/components/forms/use-leave-guard";
+import { WorkingSurface } from "@/components/layouts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +24,8 @@ import { SafeLexicalEditor } from "@/components/ui/safe-lexical-editor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutosave, type SaveState } from "@/hooks/use-autosave";
 import { useAwaitingData } from "@/hooks/use-awaiting-data";
-import { useContentDetail } from "@/hooks/use-content";
+import { useAutosaveContent, useContentDetail } from "@/hooks/use-content";
 import { useWorkspacePermission } from "@/hooks/use-permission";
-import { apiClient } from "@/lib/api-client";
 import { articleHtml } from "@/lib/content/article-html";
 import { deriveImagesData } from "@/lib/content/image-data";
 import {
@@ -97,7 +96,7 @@ function ArticleEditor({
   articleHref,
 }: EditorProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { mutateAsync: saveArticle } = useAutosaveContent();
   // The text the editor starts from, and a key that restarts it when a draft is restored.
   const [start, setStart] = useState({ markdown: serverMarkdown, key: 0 });
   const [words, setWords] = useState(() => countWords(serverMarkdown));
@@ -109,21 +108,31 @@ function ArticleEditor({
   const edited = useCallback(() => {
     touched.current = true;
   }, []);
+  // The copy on this device: the newest edit not yet written there, and the wait before it is.
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uncopied = useRef<string | null>(null);
+  const copyToDevice = useCallback(() => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = null;
+    if (uncopied.current !== null) writeLocalDraft(contentId, uncopied.current);
+    uncopied.current = null;
+  }, [contentId]);
 
   const save = useCallback(
-    async (markdown: string) => {
-      await apiClient.content.update(workspaceId, contentId, {
-        // Unchanged here; the request's type asks for it with every update.
-        title,
-        body_markdown: markdown,
-        // The backend publishes the stored row, so the HTML and the image list go with the text.
-        body_html: articleHtml(markdown),
-        images_data: deriveImagesData(markdown),
-      });
-      queryClient.invalidateQueries({ queryKey: ["content", workspaceId] });
-    },
-    [workspaceId, contentId, title, queryClient],
+    (markdown: string) =>
+      saveArticle({
+        workspaceId,
+        contentId,
+        data: {
+          // Unchanged here; the request's type asks for it with every update.
+          title,
+          body_markdown: markdown,
+          // The backend publishes the stored row, so the HTML and the image list go with the text.
+          body_html: articleHtml(markdown),
+          images_data: deriveImagesData(markdown),
+        },
+      }),
+    [workspaceId, contentId, title, saveArticle],
   );
 
   const { state, savedAt, change, rebase, saveNow } = useAutosave({
@@ -145,30 +154,34 @@ function ArticleEditor({
         rebase(markdown);
         return;
       }
-      // The copy on this device, at most twice a second.
-      if (draftTimer.current) clearTimeout(draftTimer.current);
-      draftTimer.current = setTimeout(
-        () => writeLocalDraft(contentId, markdown),
-        500,
-      );
+      // The copy on this device, at most twice a second; the last edit always gets there.
+      uncopied.current = markdown;
+      if (!draftTimer.current) {
+        draftTimer.current = setTimeout(copyToDevice, 500);
+      }
       change(markdown);
     },
-    [contentId, change, rebase],
+    [change, rebase, copyToDevice],
   );
 
   // Once everything is saved, the copy on this device has done its job.
   useEffect(() => {
     if (state !== "saved") return;
     if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = null;
+    uncopied.current = null;
     if (touched.current) clearLocalDraft(contentId);
   }, [state, contentId]);
 
-  useEffect(
-    () => () => {
-      if (draftTimer.current) clearTimeout(draftTimer.current);
-    },
-    [],
-  );
+  // Leaving, by any way out (a link, "Leave anyway", a closed or reloaded tab): an edit still
+  // waiting for its turn is copied to the device first.
+  useEffect(() => {
+    window.addEventListener("pagehide", copyToDevice);
+    return () => {
+      window.removeEventListener("pagehide", copyToDevice);
+      copyToDevice();
+    };
+  }, [copyToDevice]);
 
   const restore = () => {
     if (!found) return;
@@ -252,7 +265,7 @@ function ArticleEditor({
       ) : null}
 
       <main
-        className="min-h-0 flex-1 overflow-y-auto bg-card px-4 md:px-10"
+        className="min-h-0 flex-1 overflow-y-auto bg-card"
         // What counts as an edit: typing, deleting, a shortcut, a paste, a cut, a drop, or a
         // toolbar button. Placing the cursor or moving it doesn't.
         onBeforeInputCapture={edited}
@@ -273,17 +286,20 @@ function ArticleEditor({
           if ((event.target as Element).closest("button")) edited();
         }}
       >
-        <article className="prose lg:prose-lg prose-app mx-auto w-full pt-8 pb-24">
-          {/* layout-ok: the article's own title, in its prose; this page is outside the shell and has no layout header */}
-          <h1>{title}</h1>
-          <SafeLexicalEditor
-            key={start.key}
-            readOnly={false}
-            initialValue={start.markdown}
-            onChange={handleChange}
-            toolbarClass="not-prose top-0 z-10"
-          />
-        </article>
+        {/* The shared editor layout: its frame and gutters, and the article's own title as the h1. */}
+        <WorkingSurface title={title} ownHeading flush>
+          <article className="prose lg:prose-lg prose-app mx-auto w-full pt-8 pb-24">
+            {/* layout-ok: the article's own title, in its prose (WorkingSurface's ownHeading) */}
+            <h1>{title}</h1>
+            <SafeLexicalEditor
+              key={start.key}
+              readOnly={false}
+              initialValue={start.markdown}
+              onChange={handleChange}
+              toolbarClass="not-prose top-0 z-10"
+            />
+          </article>
+        </WorkingSurface>
       </main>
 
       <footer className="flex shrink-0 items-center justify-between border-t border-border bg-card px-4 py-2 text-caption text-muted-foreground">

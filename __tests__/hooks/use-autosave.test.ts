@@ -131,6 +131,27 @@ describe("useAutosave", () => {
     expect(result.current.state).toBe("saved");
   });
 
+  it("tries nothing again once the page is gone", async () => {
+    let fail: (error: Error) => void = () => {};
+    const save = jest
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise<void>((_, reject) => (fail = reject)),
+      )
+      .mockResolvedValue(undefined);
+    const { result, unmount } = renderHook(() =>
+      useAutosave({ initial: "", save, delay: 1000, retryDelay: 15000 }),
+    );
+    act(() => result.current.change("old text"));
+    await act(async () => jest.advanceTimersByTime(1000));
+    expect(save).toHaveBeenCalledTimes(1);
+
+    unmount();
+    await act(async () => fail(new Error("offline")));
+    await act(async () => jest.advanceTimersByTime(60000));
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it("says no when a save on request fails", async () => {
     const save = jest.fn().mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => useAutosave({ initial: "", save }));

@@ -36,9 +36,13 @@ export function useAutosave<T>({
   const saveRef = useRef(save);
   saveRef.current = save;
   const runRef = useRef<() => Promise<boolean>>(async () => true);
+  // False once the page is gone: a save still in flight then ends quietly, and nothing is tried
+  // again, so an abandoned editor can never write its old text over a newer one.
+  const alive = useRef(true);
 
   const schedule = useCallback((ms: number) => {
     if (timer.current) clearTimeout(timer.current);
+    if (!alive.current) return;
     timer.current = setTimeout(() => {
       timer.current = null;
       void runRef.current();
@@ -46,7 +50,7 @@ export function useAutosave<T>({
   }, []);
 
   runRef.current = async () => {
-    if (inFlight.current) return false;
+    if (inFlight.current || !alive.current) return false;
     const sending = latest.current;
     if (Object.is(sending, saved.current)) {
       setState("saved");
@@ -57,8 +61,9 @@ export function useAutosave<T>({
     try {
       await saveRef.current(sending);
       saved.current = sending;
-      setSavedAt(new Date());
       inFlight.current = false;
+      if (!alive.current) return Object.is(latest.current, sending);
+      setSavedAt(new Date());
       if (Object.is(latest.current, sending)) {
         setState("saved");
         return true;
@@ -68,6 +73,7 @@ export function useAutosave<T>({
       return false;
     } catch {
       inFlight.current = false;
+      if (!alive.current) return false;
       setState("failed");
       schedule(retryDelay);
       return false;
@@ -108,12 +114,14 @@ export function useAutosave<T>({
     return runRef.current();
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
       if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+      timer.current = null;
+    };
+  }, []);
 
   return { state, savedAt, change, rebase, saveNow };
 }
