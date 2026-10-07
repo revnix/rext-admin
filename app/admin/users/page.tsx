@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Ban,
   CheckCircle2,
+  Coins,
   Mail,
   PauseCircle,
   Pencil,
@@ -18,6 +19,7 @@ import { useMemo, useState } from "react";
 import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
+import { UserCreditsDialog } from "@/components/admin/users/user-credits-dialog";
 import { UserStatusDialog } from "@/components/admin/users/user-status-dialog";
 import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-table";
 import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
@@ -91,6 +93,7 @@ type UsersDialogState =
   | { type: "status"; user: User; action: UserStatusAction }
   | { type: "manageRoles"; user: User }
   | { type: "edit"; user: User }
+  | { type: "credits"; user: User }
   | { type: "delete"; user: User };
 
 // Never "Active" for a status the page doesn't know: it reads Unknown.
@@ -274,7 +277,8 @@ export default function AdminUsersPage() {
   });
 
   // Only Super Admins can permanently delete a soft-deleted user; the Soft
-  // Deleted tab greys that one action out for everyone else.
+  // Deleted tab greys that one action out for everyone else. The Credits row
+  // action is theirs alone, too.
   const viewerIsSuperAdmin = useIsSuperAdmin();
 
   const handleTabChange = (value: string) => {
@@ -465,6 +469,18 @@ export default function AdminUsersPage() {
               disabled:
                 locked || (row.status === "banned" ? "Already banned" : false),
               onSelect: open({ type: "status", user, action: "ban" }),
+            },
+          ]
+        : []),
+      ...(viewerIsSuperAdmin
+        ? [
+            {
+              // The backend lets only a super admin add, deduct or reset
+              // credits, and never on a Super Admin's own account.
+              label: "Credits",
+              icon: Coins,
+              disabled: locked,
+              onSelect: open({ type: "credits", user }),
             },
           ]
         : []),
@@ -745,6 +761,11 @@ export default function AdminUsersPage() {
             open={dialogState.type === "edit"}
             onOpenChange={closeDialog}
             user={dialogState.type === "edit" ? dialogState.user : null}
+          />
+          <UserCreditsDialog
+            open={dialogState.type === "credits"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "credits" ? dialogState.user : null}
           />
           <DeleteUserDialog
             open={dialogState.type === "delete"}
