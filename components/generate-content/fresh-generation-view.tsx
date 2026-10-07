@@ -2395,11 +2395,13 @@ export function FreshGenerationView({
             className="max-w-2xl"
           />
         )}
-        {libraryResearch && (
-          <p className="mt-3 max-w-md text-center text-caption text-muted-foreground">
-            {libraryResearchNote(libraryResearch)}
-          </p>
-        )}
+        {/* Mounted with the progress, so the note is announced when the stream fills it in. */}
+        <p
+          role="status"
+          className="mt-3 max-w-md text-center text-caption text-muted-foreground"
+        >
+          {libraryResearch ? libraryResearchNote(libraryResearch) : null}
+        </p>
       </div>,
     );
   }
