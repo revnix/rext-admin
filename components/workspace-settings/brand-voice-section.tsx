@@ -4,8 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { FieldController } from "@/components/forms/field-controller";
 import { FormSection, FormShell } from "@/components/forms/form-shell";
@@ -42,7 +42,21 @@ const ONE_PER_LINE = "One per line.";
  * brand_voice.update the form is shown disabled.
  */
 export function BrandVoiceSection() {
-  const drafted = useSearchParams().get("drafted") === "1";
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  // Arriving from a new workspace's analysis: the notice shows for this visit only. The parameter
+  // leaves the address at once, so coming back later (from Personas, say) shows no stale notice.
+  const [drafted] = useState(() => searchParams.get("drafted") === "1");
+  useEffect(() => {
+    if (searchParams.get("drafted") === null) return;
+    const rest = new URLSearchParams(searchParams);
+    rest.delete("drafted");
+    const query = rest.toString();
+    router.replace(`${pathname}${query ? `?${query}` : ""}` as Route, {
+      scroll: false,
+    });
+  }, [searchParams, pathname, router]);
   const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
   const { hasPermission: canRead, isLoading: isReadLoading } =
@@ -303,7 +317,7 @@ function siteName(website: string | undefined): string {
  * personas are drafted from the people named on the customer's own site, so the notice says so and
  * names them (E26): they're real people, and the user decides whether they stay.
  */
-function DraftedNotice({
+export function DraftedNotice({
   workspaceId,
   workspaceSlug,
   website,
@@ -313,9 +327,16 @@ function DraftedNotice({
   website?: string;
 }) {
   const { data, isSuccess } = usePersonas(workspaceId);
-  const names = (data?.personas ?? [])
-    .map((persona) => persona.full_name || persona.name)
-    .filter(Boolean);
+  // The personas as they were on arrival, the ones drafted from the site: a later change to the
+  // list (another tab, a refetch) doesn't change who the notice says came from the site.
+  const [names, setNames] = useState<string[] | null>(null);
+  if (isSuccess && names === null) {
+    setNames(
+      (data?.personas ?? [])
+        .map((persona) => persona.full_name || persona.name)
+        .filter(Boolean),
+    );
+  }
   const personasLink = (
     <Link
       href={workspaceRoutes.personas(workspaceSlug) as Route}
@@ -329,7 +350,7 @@ function DraftedNotice({
     <Notice tone="success" title="Your brand voice is drafted">
       We read {siteName(website)} and saved this brand voice and its
       competitors.{" "}
-      {isSuccess &&
+      {names &&
         (names.length > 0 ? (
           <>
             We also drafted{" "}
