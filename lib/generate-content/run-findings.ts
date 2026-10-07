@@ -139,7 +139,8 @@ export const OUTLINE_MODEL_NODE = "generate_outline";
  * since the model has a node of its own, and `topic_generation` (the gate's node, where the model
  * call used to sit) in the recorded stream and on a run from before: both are the title model's.
  */
-export function textNode(node: string): string {
+export function textNode(node: string | null | undefined): string | null {
+  if (!node) return null;
   return node === "topic_generation" ? TITLE_MODEL_NODE : node;
 }
 
