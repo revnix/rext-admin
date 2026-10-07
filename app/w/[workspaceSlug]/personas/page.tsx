@@ -18,6 +18,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PersonaDialog } from "@/components/personas/persona-dialog";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useDeletePersona, usePersonas } from "@/hooks/use-personas";
 import { dateFormat } from "@/lib/formatters/date-formatters";
@@ -164,13 +165,16 @@ export default function PersonasPage() {
       : []),
   ];
 
+  // The creation form in a dialog (FB2.20), so the list stays in view; the create page remains for links.
   const newPersona = canCreate ? (
-    <Button asChild>
-      <Link href={createHref}>
-        <Plus aria-hidden />
-        New persona
-      </Link>
-    </Button>
+    <PersonaDialog
+      trigger={
+        <Button>
+          <Plus aria-hidden />
+          New persona
+        </Button>
+      }
+    />
   ) : null;
 
   if (!workspace?.id || isPermissionLoading) {

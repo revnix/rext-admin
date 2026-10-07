@@ -83,7 +83,17 @@ export function toPersonaFormValues(persona: Persona): PersonaFormValues {
  * editing behave the same; a typed photo link is sent only when it was changed, since an empty one
  * would clear an uploaded photo.
  */
-export function PersonaForm({ persona }: { persona?: Persona }) {
+export function PersonaForm({
+  persona,
+  onSaved,
+  onCancel,
+}: {
+  persona?: Persona;
+  /** In a dialog (PersonaDialog): called with the saved persona's id instead of opening its page. */
+  onSaved?: (personaId: string | undefined) => void;
+  /** In a dialog: Cancel closes it instead of going back. */
+  onCancel?: () => void;
+}) {
   const { workspace, workspaceSlug } = useWorkspace();
   const router = useRouter();
   const workspaceId = workspace?.id || "";
@@ -248,6 +258,11 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
       form.reset(values);
       setAvatarFile(null);
       setRemovePhoto(false);
+      if (onSaved) {
+        submitting.current = false;
+        onSaved(personaId);
+        return;
+      }
       router.push(
         (personaId
           ? workspaceRoutes.persona(workspaceSlug, personaId)
@@ -273,8 +288,9 @@ export function PersonaForm({ persona }: { persona?: Persona }) {
       onSubmit={onSubmit}
       onInvalid={() => toast.error("Please fix the highlighted fields")}
       submitLabel={editing ? "Save persona" : "Create persona"}
-      cancel={{ onCancel: () => router.back() }}
-      sticky
+      cancel={{ onCancel: onCancel ?? (() => router.back()) }}
+      // In a dialog the submit row ends the form; the dialog itself scrolls.
+      sticky={!onSaved}
       // A chosen or removed photo lives outside the form's values; leaving would drop it.
       dirty={Boolean(avatarFile) || removePhoto}
     >
