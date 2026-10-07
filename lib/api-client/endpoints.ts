@@ -317,6 +317,8 @@ export const ENDPOINTS = {
     history: "/api/v1/subscriptions/history",
     usage: "/api/v1/subscriptions/usage",
     credits: "/api/v1/subscriptions/credits",
+    /** What Rext support changed in the caller's credits (FB2.28). */
+    creditHistory: "/api/v1/subscriptions/credits/history",
     trialStatus: "/api/v1/subscriptions/trial-status",
   },
 
@@ -355,6 +357,9 @@ export const ENDPOINTS = {
     analytics: "/api/v1/admin/analytics",
     // Users
     users: "/api/v1/admin/users",
+    // A user's credits: read them, or add, deduct or reset them (super admin only)
+    userCredits: (userId: string) =>
+      `/api/v1/admin/users/${userId}/credits` as const,
     // Workspaces
     workspaces: "/api/v1/admin/workspaces",
     // Invitations

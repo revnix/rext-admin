@@ -20,6 +20,7 @@ import type {
   UsageStats,
   UserSubscription,
   CreditBalance,
+  CreditHistory,
 } from "@/types/subscription";
 import type { PlanCatalog } from "@/types/plan-catalog";
 import type { ApiClient } from "./core";
@@ -416,6 +417,17 @@ export function createSubscriptionsNamespace(client: ApiClient) {
       return client.request<CreditBalance>(url, {
         method: "GET",
       });
+    },
+
+    /**
+     * What Rext support changed in the signed-in person's credits: the credits added (with what is
+     * left of them) and every add, deduct and reset, newest first.
+     */
+    getCreditHistory: async (): Promise<CreditHistory> => {
+      return client.request<CreditHistory>(
+        ENDPOINTS.SUBSCRIPTIONS.creditHistory,
+        { method: "GET" },
+      );
     },
   };
 }
