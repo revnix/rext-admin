@@ -19,6 +19,7 @@ import {
   countPipeline,
   hasWrittenArticle,
   recentPublishes,
+  siteLabels,
   suggestKeywords,
   type ChecklistFacts,
 } from "@/components/home/home-data";
@@ -269,7 +270,10 @@ export default function HomePage() {
                     health={contentHealth(articles, new Date())}
                     libraryHref={libraryHref}
                   />
-                  <PublishingCard slug={slug} {...recentPublishes(articles)} />
+                  <PublishingCard
+                    slug={slug}
+                    {...recentPublishes(articles, siteLabels(sites.data ?? []))}
+                  />
                 </div>
               </SettingsGroup>
             )}

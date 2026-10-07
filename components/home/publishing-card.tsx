@@ -2,7 +2,17 @@ import type { Route } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { workspaceRoutes } from "@/lib/routes";
-import type { RecentPublish } from "./home-data";
+import type { PublishState, RecentPublish } from "./home-data";
+
+const STATE: Record<
+  PublishState,
+  { label: string; variant: "success" | "neutral" | "danger" }
+> = {
+  published: { label: "Published", variant: "success" },
+  scheduled: { label: "Scheduled", variant: "neutral" },
+  draft: { label: "Draft on site", variant: "neutral" },
+  failed: { label: "Failed", variant: "danger" },
+};
 
 /** The latest publishes to the workspace's sites, failures flagged (FB2.27 #708, option B). */
 export function PublishingCard({
@@ -22,14 +32,14 @@ export function PublishingCard({
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Articles you publish to your sites show here, with any that didn't go
+          Articles you send to your sites show here, with any that didn't go
           out.
         </p>
       ) : (
         <ul className="divide-y divide-border text-sm">
           {items.map((item) => (
             <li
-              key={`${item.articleId}-${item.site}`}
+              key={`${item.articleId}-${item.siteId}`}
               className="flex items-center justify-between gap-3 py-2"
             >
               <span className="min-w-0">
@@ -45,8 +55,8 @@ export function PublishingCard({
                   {item.site}
                 </span>
               </span>
-              <Badge variant={item.failed ? "danger" : "success"}>
-                {item.failed ? "Failed" : "Published"}
+              <Badge variant={STATE[item.state].variant}>
+                {STATE[item.state].label}
               </Badge>
             </li>
           ))}

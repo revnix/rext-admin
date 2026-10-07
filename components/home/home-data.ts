@@ -224,42 +224,75 @@ export function contentHealth(
   };
 }
 
+/** How sending an article to a site went. */
+export type PublishState = "published" | "scheduled" | "draft" | "failed";
+
 export type RecentPublish = {
   articleId: string;
+  siteId: string;
   title: string;
   site: string;
-  failed: boolean;
+  state: PublishState;
   at: number | null;
 };
 
-/** A publishing result that didn't go out. */
-function isFailed(status: string): boolean {
-  return /fail|error/i.test(status);
+/** A publishing result's state for the home; null for one that is no publish any more (a post
+ * trashed or deleted on the site, a state the site didn't tell). */
+function publishState(status: string): PublishState | null {
+  if (/fail|error/i.test(status)) return "failed";
+  if (status === "scheduled") return "scheduled";
+  if (status === "draft" || status === "pending") return "draft";
+  if (["published", "synced", "success"].includes(status)) return "published";
+  return null;
+}
+
+/** Each connected site's name for the home: its address without "www.". */
+export function siteLabels(
+  sites: { id: string; site_url?: string | null }[],
+): Map<string, string> {
+  const labels = new Map<string, string>();
+  for (const site of sites) {
+    if (!site.site_url) continue;
+    try {
+      labels.set(
+        site.id,
+        new URL(site.site_url).hostname.replace(/^www\./, ""),
+      );
+    } catch {
+      // An address that isn't a URL names nothing.
+    }
+  }
+  return labels;
 }
 
 /** The latest publishes to the workspace's sites, newest first (FB2.27 #708), and how many of all
- * of them failed. */
+ * of them failed. The content list names a result's address and time `url` and `last_synced`, and
+ * no site: `sites` names it (siteLabels). */
 export function recentPublishes(
   content: ContentItem[],
+  sites: Map<string, string> = new Map(),
   limit = 5,
 ): { items: RecentPublish[]; failed: number } {
   const all: RecentPublish[] = content.flatMap((item) =>
-    (item.publishing_results ?? []).map((result) => {
-      const at = result.last_synced_at
-        ? Date.parse(result.last_synced_at)
-        : Number.NaN;
-      return {
-        articleId: item.id,
-        title: item.title,
-        site: result.site_name || "Your site",
-        failed: isFailed(String(result.status)),
-        at: Number.isFinite(at) ? at : null,
-      };
+    (item.publishing_results ?? []).flatMap((result) => {
+      const state = publishState(String(result.status));
+      if (!state) return [];
+      const at = Date.parse(result.last_synced_at ?? result.last_synced ?? "");
+      return [
+        {
+          articleId: item.id,
+          siteId: result.site_id,
+          title: item.title,
+          site: result.site_name || sites.get(result.site_id) || "Your site",
+          state,
+          at: Number.isFinite(at) ? at : null,
+        },
+      ];
     }),
   );
   all.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
   return {
     items: all.slice(0, limit),
-    failed: all.filter((entry) => entry.failed).length,
+    failed: all.filter((entry) => entry.state === "failed").length,
   };
 }
