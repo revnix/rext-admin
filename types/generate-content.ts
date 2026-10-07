@@ -896,6 +896,8 @@ export interface PageState {
   country: string;
   /** Country of the analysis currently shown (as confirmed by the backend). */
   analyzedCountry: string;
+  /** Keyword of that analysis, step 1's choice: picking one at step 2 moves `primaryKeyword` to it. */
+  analyzedKeyword: string;
   primaryKeyword: string;
   suggestedKeywords: string[];
   generatedContent: string;
@@ -934,6 +936,8 @@ export interface PageState {
   recommendedContentType: string | null;
   recommendedTopic: string | null;
   selectedContentType: string | null;
+  /** The title chosen at step 4, word for word. */
+  selectedTopic: string | null;
 }
 
 export type PageAction =
@@ -958,6 +962,7 @@ export type PageAction =
   | { type: "SET_RECOMMENDED_CONTENT_TYPE"; payload: string | null }
   | { type: "SET_SELECTED_CONTENT_TYPE"; payload: string | null }
   | { type: "SET_RECOMMENDED_TOPIC"; payload: string | null }
+  | { type: "SET_SELECTED_TOPIC"; payload: string }
   | { type: "SET_INTERRUPT"; payload: Interrupt[] }
   | { type: "SET_LOADING_STATUS"; payload: string }
   | {

@@ -118,6 +118,23 @@ it("scores each title against the gate's keyphrase", () => {
   expect(screen.getByText("52 characters")).toBeInTheDocument();
 });
 
+it("says the run's choices in one line on a phone only: wider, the steps above say them", () => {
+  render(
+    <TitleStep
+      instruction="Select a title"
+      titles={TITLES}
+      gate={GATE}
+      context={["seo agency", "commercial", null, "how-to-guide"]}
+      onContinue={jest.fn()}
+      onRegenerate={jest.fn()}
+    />,
+  );
+
+  expect(
+    screen.getByText("seo agency · commercial · how-to-guide"),
+  ).toHaveClass("md:hidden");
+});
+
 it("shows the search results' top ten beside the titles", () => {
   renderStep();
 

@@ -50,6 +50,12 @@ import {
 import { ContentEditor } from "@/components/generate-content/content";
 import ContentType from "./content-type";
 import { WorkflowStepIndicator } from "@/components/generate-content/workflow-step-indicator";
+import {
+  currentStepIndex,
+  runningStage,
+  stepChoices,
+  WORKFLOW_STEPS,
+} from "@/lib/generate-content/workflow-steps";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { useCreditGate } from "@/hooks/use-credit-gate";
@@ -500,6 +506,12 @@ export function FreshGenerationView({
         type: "SET_OUTLINE",
         payload: restoredContent?.outline ?? null,
       });
+      // The content type picked, as the thread keeps it, for the steps above (FB2.12).
+      if (restoredContent?.content_type)
+        dispatch({
+          type: "SET_SELECTED_CONTENT_TYPE",
+          payload: restoredContent.content_type,
+        });
       if (finalContent) {
         dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });
         dispatch({
@@ -553,6 +565,17 @@ export function FreshGenerationView({
         dispatch({
           type: "SET_COUNTRY",
           payload: values.serp_payload.country,
+        });
+      // What the earlier steps chose, as the thread keeps it, for the steps above (FB2.12).
+      if (values?.content?.content_type)
+        dispatch({
+          type: "SET_SELECTED_CONTENT_TYPE",
+          payload: values.content.content_type,
+        });
+      if (values?.content?.selected_topic)
+        dispatch({
+          type: "SET_SELECTED_TOPIC",
+          payload: values.content.selected_topic,
         });
 
       const value = interrupts[0]?.value;
@@ -2117,6 +2140,7 @@ export function FreshGenerationView({
       case "TOPIC_SELECT":
         setTokenTarget("none");
         tokenTargetRef.current = "none";
+        dispatch({ type: "SET_SELECTED_TOPIC", payload: value });
         dispatch({
           type: "SET_RUN_PHASE",
           payload: { phase: "outline" },
@@ -2316,6 +2340,34 @@ export function FreshGenerationView({
     phase: runState?.phase,
   });
 
+  // The six steps (FB2.12): across the working area over each step and each wait between two, and
+  // atop the article's column on the Article step. While the page waits on a run, the step that run
+  // prepares is the current one, with the stage running for it.
+  const stepper = (waiting = false) => {
+    const current = currentStepIndex(
+      instructionType,
+      waiting ? runState?.phase : null,
+    );
+    return (
+      <WorkflowStepIndicator
+        steps={WORKFLOW_STEPS}
+        current={current}
+        choices={stepChoices(state)}
+        running={runningStage(runStages.run, current)}
+      />
+    );
+  };
+  // At the widest step's width and gutter, so the row stays put as a step's column narrows or widens.
+  const stepperRow = (waiting: boolean, below?: React.ReactNode) => (
+    <>
+      <StepColumn withSidePane className="pt-4 md:pt-6 lg:px-8">
+        {stepper(waiting)}
+      </StepColumn>
+      {below}
+    </>
+  );
+  const editorShown = showContentStream && !restoreError && !timedOutStages;
+
   if (
     (isLoading || isManualLoading) &&
     !reanalysingInPlace &&
@@ -2323,7 +2375,8 @@ export function FreshGenerationView({
     !showContentStream &&
     (isRegeneratingTopics || !suppressLibraryTopicLoader)
   ) {
-    return (
+    return stepperRow(
+      true,
       <div
         className={cn(
           "max-w-3xl mx-auto w-full flex flex-col items-center relative lg:px-6 transition-all duration-700 mt-4",
@@ -2340,7 +2393,7 @@ export function FreshGenerationView({
             className="max-w-2xl"
           />
         )}
-      </div>
+      </div>,
     );
   }
 
@@ -2425,29 +2478,9 @@ export function FreshGenerationView({
     ),
   };
 
-  const WORKFLOW_STEPS = [
-    { id: "keyword", label: "Search Keyword" },
-    { id: "keyword Selection", label: "Select Keyword" },
-    { id: "content_type", label: "Content Type" },
-    { id: "topic", label: "Title", aliases: ["topic_selection"] },
-    {
-      id: "outline_review",
-      label: "Content Outline",
-      aliases: ["outline_reject"],
-    },
-    { id: "content", label: "Article" },
-  ];
-
-  const activeStepIndex = (() => {
-    const idx = WORKFLOW_STEPS.findIndex(
-      (s) =>
-        s.id === instructionType || (s.aliases ?? []).includes(instructionType),
-    );
-    return idx === -1 ? WORKFLOW_STEPS.length - 1 : idx;
-  })();
-
   return (
     <div className="relative">
+      {!editorShown && stepperRow(false)}
       <StepColumn
         // A step with a side pane beside it (the search results, on the Select keyword and Title
         // steps; the brief, on the outline step) gets the room for both.
@@ -2473,24 +2506,6 @@ export function FreshGenerationView({
             : " justify-center",
         )}
       >
-        {/* Persistent workflow step indicator */}
-        {!showContentStream && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-            className={cn(
-              "mt-5",
-              activeStepIndex === 0 ? "mx-auto" : "mr-auto",
-            )}
-          >
-            <WorkflowStepIndicator
-              steps={WORKFLOW_STEPS}
-              activeStepIndex={activeStepIndex}
-            />
-          </motion.div>
-        )}
-
         <AnimatePresence mode="wait">
           {instructionType === "keyword" && <HeroSection />}
         </AnimatePresence>
@@ -2652,9 +2667,11 @@ export function FreshGenerationView({
       )}
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
-      {showContentStream && !restoreError && !timedOutStages && (
+      {editorShown && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
+            // The editor fills the page, so the steps go atop the article's own column.
+            steps={stepper()}
             // The article's run, while it runs: the same stages as every other
             // phase, in the editor's side panel (the editor fills the page).
             runProgress={

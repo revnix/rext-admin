@@ -54,6 +54,13 @@ describe("ContentEditor while the article is written", () => {
     expect(screen.getAllByText("The run's stages").length).toBeGreaterThan(0);
   });
 
+  it("keeps the flow's steps on the Article step, atop the article's column (FB2.12)", () => {
+    render(editor({ steps: <nav aria-label="Article steps" /> }));
+    // Once, and inside the article's column (each column scrolls on its own): right above the article.
+    const steps = screen.getByRole("navigation", { name: "Article steps" });
+    expect(steps.parentElement?.nextElementSibling?.tagName).toBe("ARTICLE");
+  });
+
   it("shows no Pipeline box with the old names", () => {
     render(editor({ isEnhancing: true }));
     expect(screen.queryByText("Pipeline")).toBeNull();

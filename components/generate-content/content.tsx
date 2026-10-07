@@ -184,6 +184,8 @@ type ContentEditorProps = {
   toolCalls?: ToolCall[];
   /** The run component while the article is written, at the top of the side panel. */
   runProgress?: React.ReactNode;
+  /** The Generate flow's steps, atop the article's column: inside it, since each column scrolls on its own. */
+  steps?: React.ReactNode;
   /** The article is live on a connected site (its status is "published"): a draft or review save
    *  then takes the post down, so the Publish menu warns first (#676). */
   isLive?: boolean;
@@ -210,6 +212,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
     toolCalls = [],
     runProgress,
+    steps,
     isLive = false,
   } = props;
 
@@ -1149,6 +1152,7 @@ function ContentEditorInner(props: ContentEditorProps) {
           ref={scrollRef}
           className="w-full min-w-0 flex-1 bg-card px-4 md:px-6 xl:px-8 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
         >
+          {steps && <div className="pt-4 md:pt-6">{steps}</div>}
           {/* The article is one prose container (design/app-language.md §7): the title,
               the intro and the body share its measure and its type, in the preview and
               in the editor. overflow-clip (not overflow-hidden) still contains wide
