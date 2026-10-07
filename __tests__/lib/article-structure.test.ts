@@ -113,7 +113,34 @@ describe("plannedSections", () => {
     ).toEqual([{ heading: "Gear", heading_level: "H2" }]);
   });
 
-  it("gives none for an outline planned another way, or no outline", () => {
+  it("lists an outline planned in blocks (a how-to's steps) by block, its items under it", () => {
+    expect(
+      plannedSections({
+        steps: { steps: [{ title: "Gather" }] },
+        _render: {
+          blocks: [
+            {
+              heading: "Steps",
+              items: [
+                { label: "Gather your gear", points: [] },
+                { label: "Record a test", points: ["One minute"] },
+              ],
+            },
+            { heading: "Empty block", items: [] },
+            { heading: "Tools", items: [{ label: "A USB microphone" }] },
+          ],
+        },
+      }),
+    ).toEqual([
+      { heading: "Steps", heading_level: "H2" },
+      { heading: "Gather your gear", heading_level: "H3" },
+      { heading: "Record a test", heading_level: "H3" },
+      { heading: "Tools", heading_level: "H2" },
+      { heading: "A USB microphone", heading_level: "H3" },
+    ]);
+  });
+
+  it("gives none for an outline with nothing to list, or no outline", () => {
     expect(
       plannedSections({ steps: { steps: [{ title: "Gather" }] } }),
     ).toEqual([]);
