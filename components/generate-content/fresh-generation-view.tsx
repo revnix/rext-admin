@@ -90,6 +90,7 @@ import {
   type LibraryResearchEvent,
   libraryResearchNote,
   readLibraryResearchEvent,
+  readLibraryResearchState,
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
@@ -776,6 +777,11 @@ export function FreshGenerationView({
         awaySince = null;
         // What the run found before the page looked, for its progress box (rext-control#694).
         runStages.seed(payload.state, payload.runStage);
+
+        // The research note from the run's own state: its stream event is not
+        // replayed on a reconnect or a reload.
+        const research = readLibraryResearchState(payload.state?.values);
+        if (research) setLibraryResearch(research);
 
         const inArticlePhase = isArticlePhase(payload.progress);
         // Interactive steps interrupt inside a subgraph, so the pending
