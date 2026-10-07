@@ -8,6 +8,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
 import { apiClient } from "@/lib/api-client";
+import { workspaceRoutes } from "@/lib/routes";
 
 const mockPush = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -126,7 +127,9 @@ describe("The drafted details in the creation flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Finish" }));
 
     await waitFor(() =>
-      expect(mockPush).toHaveBeenCalledWith("/w/acme/generate_content"),
+      expect(mockPush).toHaveBeenCalledWith(
+        workspaceRoutes.generate_content("acme"),
+      ),
     );
     // Nothing was changed here: the analysis's draft is saved already.
     expect(workspaces.updateBrandVoice).not.toHaveBeenCalled();
@@ -140,7 +143,9 @@ describe("The drafted details in the creation flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Finish" }));
 
     await waitFor(() =>
-      expect(mockPush).toHaveBeenCalledWith("/w/acme/generate_content"),
+      expect(mockPush).toHaveBeenCalledWith(
+        workspaceRoutes.generate_content("acme"),
+      ),
     );
     expect(workspaces.updateBrandVoice).toHaveBeenCalledWith(
       "ws-1",
