@@ -237,7 +237,60 @@ describe("containsKeyphrase in any script, as the backend's", () => {
   });
 });
 
+// The backend's `title_width` (Python 3.11, Unicode 14.0.0) at the edges of every wide range
+// in title-score.ts and just outside them, by width; regenerate with the table.
+const PYTHON_WIDTHS: [number, string][] = [
+  [
+    2,
+    `
+1100 115f 231a 231b 2329 232a 23e9 23ec 23f0 23f3 25fd 25fe 2614 2615 2648 2653 267f 2693
+26a1 26aa 26ab 26bd 26be 26c4 26c5 26ce 26d4 26ea 26f2 26f3 26f5 26fa 26fd 2705 270a 270b
+2728 274c 274e 2753 2755 2757 2795 2797 27b0 27bf 2b1b 2b1c 2b50 2b55 2e80 303e 3041 3247
+3250 4dbf 4e00 a4c6 a960 a97c ac00 d7a3 f900 fad9 fe10 fe19 fe30 fe6b ff01 ff60 ffe0 ffe6
+16fe0 1b2fb 1f004 1f0cf 1f18e 1f191 1f19a 1f200 1f320 1f32d 1f335 1f337 1f37c 1f37e 1f393
+1f3a0 1f3ca 1f3cf 1f3d3 1f3e0 1f3f0 1f3f4 1f3f8 1f43e 1f440 1f442 1f4fc 1f4ff 1f53d 1f54b
+1f54e 1f550 1f567 1f57a 1f595 1f596 1f5a4 1f5fb 1f64f 1f680 1f6c5 1f6cc 1f6d0 1f6d2 1f6d5
+1f6df 1f6eb 1f6ec 1f6f4 1f6fc 1f7e0 1f7f0 1f90c 1f93a 1f93c 1f945 1f947 1f9ff 1fa70 1faf6
+20000 3134a
+`,
+  ],
+  [
+    1,
+    `
+10ff 1160 2319 231c 2328 232b 23e8 23ed 23ef 23f1 23f2 23f4 25fc 25ff 2613 2616 2647 2654
+267e 2680 2692 2694 26a0 26a2 26a9 26ac 26bc 26bf 26c3 26c6 26cd 26cf 26d3 26d5 26e9 26eb
+26f1 26f4 26f6 26f9 26fb 26fc 26fe 2704 2706 2709 270c 2727 2729 274b 274d 274f 2752 2756
+2758 2794 2798 27af 27b1 27be 27c0 2b1a 2b1d 2b4f 2b51 2b54 2b56 303f 3248 324f 4dc0 4dff
+a95f f8ff ff61 1f003 1f005 1f0ce 1f18d 1f18f 1f190 1f19b 1f1ff 1f321 1f32c 1f336 1f37d 1f394
+1f39f 1f3cb 1f3ce 1f3d4 1f3df 1f3f1 1f3f3 1f3f5 1f3f7 1f43f 1f441 1f4fd 1f4fe 1f53e 1f54a
+1f54f 1f568 1f579 1f57b 1f594 1f597 1f5a3 1f5a5 1f5fa 1f650 1f67f 1f6c6 1f6cb 1f6cd 1f6cf
+1f6d3 1f6d4 1f6e0 1f6ea 1f6f3 1f90b 1f93b 1f946 1fa00
+`,
+  ],
+  [
+    0,
+    `
+fe0f fe2f
+`,
+  ],
+];
+
 describe("a title's width and its script's range, as the backend's (G69c)", () => {
+  it("counts emoji and every other wide character as the backend's Python does", () => {
+    expect(titleWidth("🚀")).toBe(2);
+    expect(titleWidth("⌚")).toBe(2);
+    expect(titleWidth("⚽")).toBe(2);
+    expect(titleWidth(`${"a".repeat(58)}🚀`)).toBe(60);
+    // CJK Extension H (Unicode 15), unassigned in the backend's Unicode 14, which reads it as F
+    expect(titleWidth(String.fromCodePoint(0x31350))).toBe(2);
+    for (const [width, codes] of PYTHON_WIDTHS) {
+      for (const code of codes.trim().split(/\s+/)) {
+        const char = String.fromCodePoint(Number.parseInt(code, 16));
+        expect([code, titleWidth(char)]).toEqual([code, width]);
+      }
+    }
+  });
+
   it("measures Latin by length, a wide character as two, a mark as none", () => {
     expect(titleWidth("SEO Agencies for Small Businesses")).toBe(33);
     expect(titleWidth("项目管理软件")).toBe(12);
