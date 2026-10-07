@@ -12,6 +12,7 @@ import {
   trialState,
 } from "@/components/billing/trial-state";
 import { Meter } from "@/components/ui/meter";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useNow } from "@/hooks/use-now";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -111,6 +112,9 @@ function describe(credits: CreditBalance) {
  * 1,000 credits", opening the usage page. The header no longer repeats it (FB2.4).
  */
 export function CreditMeter({ className }: { className?: string }) {
+  // Like the sidebar's other links: on a phone the sheet closes as the meter opens usage, or it
+  // would stay over the page (the settings layout keeps the shell mounted).
+  const { setOpenMobile } = useSidebar();
   const credits = useShellCredits();
   const trial = useShellTrial(credits);
   if (!credits) return null;
@@ -123,6 +127,7 @@ export function CreditMeter({ className }: { className?: string }) {
     <Link
       href={settingsRoutes.usage}
       aria-label={`${label}. Open usage`}
+      onClick={() => setOpenMobile(false)}
       data-collapse="hide"
       className={cn(
         "block rounded-sm px-3 py-2 transition-colors duration-(--duration-fast) ease-out hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
