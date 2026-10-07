@@ -74,24 +74,21 @@ describe("ContentType", () => {
     expect(screen.getAllByText(/^Why:/)).toHaveLength(1);
   });
 
-  it("folds the rarely used types under More types", () => {
+  it("shows every type in one grid, the recommended first, with nothing folded away (#691)", () => {
     renderStep();
+    const cards = screen
+      .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-pressed"));
+    expect(cards).toHaveLength(COMMERCIAL.length);
+    expect(cards[0]).toHaveAccessibleName("Comparison (recommended)");
+    expect(screen.getByRole("button", { name: "Pros and cons" })).toBeVisible();
     expect(
-      screen.queryByRole("button", { name: "Pros and cons" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "More types (2)" }));
+      screen.queryByRole("button", { name: /More types|Fewer types/ }),
+    ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Pros and cons" }));
     expect(
       screen.getByRole("button", { name: "Pros and cons" }),
     ).toHaveAttribute("aria-pressed", "true");
-    // Folded again, the chosen type stays in view.
-    fireEvent.click(screen.getByRole("button", { name: "Fewer types" }));
-    expect(
-      screen.getByRole("button", { name: "Pros and cons" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(
-      screen.queryByRole("button", { name: "Buying guide" }),
-    ).not.toBeInTheDocument();
   });
 
   it("continues with the chosen type", () => {

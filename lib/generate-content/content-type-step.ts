@@ -75,7 +75,7 @@ export function evidenceParts(evidence: SerpEvidence | null): string[] {
 // The types most written for each intent, most common first (reports/app/04-competitors-and-
 // workflow.md §2.2): informational keywords get guides and explainers, commercial ones "best X"
 // lists, comparisons and reviews, transactional ones landing and service pages, navigational ones
-// the brand's own pages. The backend's other candidates go under "More types".
+// the brand's own pages. The backend's other candidates follow them in the grid.
 const COMMON_BY_INTENT: Record<string, string[]> = {
   informational: ["how-to-guide", "explainer", "blog", "faq"],
   commercial: [
@@ -94,11 +94,11 @@ const COMMON_BY_INTENT: Record<string, string[]> = {
   ],
 };
 
-// Three to five cards in the common case (the plan's step 3).
+// The leading three to five cards in the common case (the plan's step 3); the rest follow.
 const MIN_SHOWN = 3;
 const MAX_SHOWN = 5;
 
-/** The candidate types split into the cards shown and those under "More types". Shown, in
+/** The candidate types in the order the grid shows them: `shown` leads, `more` follows. Shown, in
  * order: the recommended type, the types the SERP's leading format supports, then the intent's
  * common types; at least three of the candidates, at most five. A single leftover is shown
  * rather than folded away. */
