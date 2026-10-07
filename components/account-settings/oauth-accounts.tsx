@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Notice } from "@/components/ui/notice";
+import { markOAuthLinking } from "@/lib/analytics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,7 +186,8 @@ export function OAuthAccounts() {
                   size="sm"
                   className="mt-2 sm:mt-0 h-8 w-full sm:w-auto"
                   onClick={() => {
-                    // Redirect to OAuth flow using NextAuth
+                    // The same OAuth sign-in as logging in: marked, so analytics doesn't count it as one.
+                    markOAuthLinking();
                     signIn(provider, { callbackUrl: "/settings" });
                   }}
                 >

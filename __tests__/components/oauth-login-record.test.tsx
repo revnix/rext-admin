@@ -13,9 +13,11 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
 }));
+const mockTakeOAuthLinking = jest.fn(() => false);
 jest.mock("@/lib/analytics", () => ({
   analytics: { track: jest.fn() },
   registerPostHog: jest.fn(),
+  takeOAuthLinking: () => mockTakeOAuthLinking(),
 }));
 const useSession = jest.fn();
 jest.mock("next-auth/react", () => ({ useSession: () => useSession() }));
@@ -60,4 +62,22 @@ it("records nothing without an OAuth login", () => {
   useSession.mockReturnValue({ data: null });
   render(<OAuthLoginRecord />);
   expect(track).not.toHaveBeenCalled();
+});
+
+it("records no sign-in for a provider linked from the settings (C13b)", () => {
+  mockTakeOAuthLinking.mockReturnValueOnce(true);
+  useSession.mockReturnValue({
+    data: { oauthLogin: { provider: "github", isNew: false, at: 1005 } },
+  });
+  render(<OAuthLoginRecord />);
+  expect(track).not.toHaveBeenCalled();
+});
+
+it("still records a sign-up when a marked login created the account", () => {
+  mockTakeOAuthLinking.mockReturnValueOnce(true);
+  useSession.mockReturnValue({
+    data: { oauthLogin: { provider: "google", isNew: true, at: 1006 } },
+  });
+  render(<OAuthLoginRecord />);
+  expect(track).toHaveBeenCalledWith("user_signed_up", { method: "google" });
 });
