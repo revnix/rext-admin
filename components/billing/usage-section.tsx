@@ -6,16 +6,24 @@ import Link from "next/link";
 import { SettingsGroup } from "@/components/settings/settings-group";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Meter } from "@/components/ui/meter";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  type CreditHistoryRow,
+  mergeCreditHistory,
+} from "@/lib/billing/credit-history";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { subscriptionQueries } from "@/lib/query-keys";
+import { creditHistoryQueryOptions } from "@/lib/query-options/credits";
 import {
+  addedWords,
   againstAllowance,
   bonusWords,
   monthlyCreditsLeft,
 } from "./billing-format";
+import { CreditHistoryList } from "./credit-history-list";
 import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 
 /** "1 workspace", "3 workspaces". */
@@ -39,13 +47,16 @@ const WARN_USED_SHARE = 0.8;
 
 /**
  * Account settings, Usage (plans/app/F-billing.md F5): the credits of this period against the
- * plan's, with the bonus and the 80 % warning; the workspaces against the plan's cap. Every figure
- * is the backend's (`/subscriptions/credits`, `/subscriptions/usage`, the catalogue). There is no
- * history by month: the backend keeps no record of credits by period yet.
+ * plan's, with the bonus, the credits Rext support added and the 80 % warning; the workspaces
+ * against the plan's cap; and what Rext support changed in the credits, with the reason for each
+ * (FB2.28). Every figure is the backend's (`/subscriptions/credits`, `/subscriptions/usage`,
+ * `/subscriptions/credits/history`, the catalogue). There is no history by month: the backend
+ * keeps no record of credits by period yet.
  */
 export function UsageSection() {
   const credits = useQuery(subscriptionQueries.myCredits());
   const usage = useQuery(subscriptionQueries.usage());
+  const history = useQuery(creditHistoryQueryOptions());
   const catalog = useQuery(subscriptionQueries.catalog());
   const current = useQuery(subscriptionQueries.current());
   const onTrial =
@@ -116,7 +127,47 @@ export function UsageSection() {
           </Card>
         )}
       </SettingsGroup>
+
+      <SettingsGroup
+        title="Credit history"
+        description="Credits Rext support added, deducted or reset on your account, with the reason for each."
+      >
+        {history.isPending ? (
+          <Skeleton className="h-24 w-full" />
+        ) : history.isError ? (
+          <Notice tone="danger" title="Your credit history didn't load">
+            Refresh the page to try again.
+          </Notice>
+        ) : (
+          <CreditHistoryCard
+            rows={mergeCreditHistory(history.data, "customer")}
+          />
+        )}
+      </SettingsGroup>
     </div>
+  );
+}
+
+function CreditHistoryCard({ rows }: { rows: CreditHistoryRow[] }) {
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        {rows.length === 0 ? (
+          <EmptyState
+            as="h3"
+            title="No changes yet"
+            description="When Rext support adds, deducts or resets credits on your account, it shows here."
+            className="py-6"
+          />
+        ) : (
+          <CreditHistoryList
+            rows={rows}
+            label="Credit history"
+            unknownActor="Rext support"
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -138,6 +189,7 @@ function CreditsCard({
   const warn = usedShare !== null && usedShare >= WARN_USED_SHARE;
   const trialEndsOn = trialEnd ?? credits.credits_reset_date;
   const bonus = bonusWords(credits);
+  const added = addedWords(credits);
 
   return (
     <div className="flex flex-col gap-4">
@@ -177,9 +229,13 @@ function CreditsCard({
           )}
           <p className="text-sm text-muted-foreground">
             {[
-              // The bonus first, then what the plan's credits and the bonus buy together.
-              ...(bonus
-                ? [bonus, articlesWords(credits.articles_remaining, true)]
+              // The bonus and what Rext support added first, then what all of it buys together.
+              ...(bonus || added
+                ? [
+                    bonus,
+                    added,
+                    articlesWords(credits.articles_remaining, true),
+                  ]
                 : [articlesWords(credits.articles_remaining)]),
               onTrial
                 ? trialEndsOn &&
