@@ -1,20 +1,42 @@
 import {
+  addedSections,
   addRow,
+  addSubsection,
+  blockEnd,
   buildOutlineApproval,
+  canAddSection,
+  canChangeLevel,
   canRemoveRow,
+  canRestoreRow,
+  changeLevel,
+  dropGaps,
   groupRows,
+  insertAnnouncement,
+  insertRow,
+  levelAnnouncement,
+  listSummary,
+  MAX_ADDED_SECTIONS,
+  moveAnnouncement,
+  moveBlockTo,
   moveRow,
+  moveTarget,
+  nearestGap,
   readOnlyBlocks,
+  readOutlineFaqs,
   readOutlineGate,
+  removalAnnouncement,
   removeRow,
   renameRow,
+  restoreAnnouncement,
   restoreRow,
+  rowPlace,
   rowsEdited,
   rowsFromGate,
   sectionEdits,
   sectionPlan,
   streamedField,
   streamedHeadings,
+  type TreeRow,
 } from "@/lib/generate-content/outline-review";
 
 // The gate as rext-backend's review_outline sends it (outline_edits.editable_sections).
@@ -138,11 +160,12 @@ describe("readOutlineGate", () => {
 describe("the section edits", () => {
   const rows = rowsFromGate(readOutlineGate(gateValue).sections);
 
-  it("moves a row within its list, and not past either end", () => {
+  it("moves a section past the whole section beside it, and not past either end", () => {
+    // "Getting fitted" goes above "Cushioning" and its "Heel drop", never between them.
     expect(ids(moveRow(rows, "structure.sections:3", -1))).toEqual([
       "structure.sections:0",
-      "structure.sections:1",
       "structure.sections:3",
+      "structure.sections:1",
       "structure.sections:2",
     ]);
     expect(moveRow(rows, "structure.sections:0", -1)).toBe(rows);
@@ -319,7 +342,7 @@ describe("the section edits", () => {
         "Care",
       ),
     );
-    expect(edits[2]).toEqual({
+    expect(edits[1]).toEqual({
       id: "structure.sections:3",
       heading: "Getting fitted",
       heading_level: "H2",
@@ -335,6 +358,589 @@ describe("the section edits", () => {
       heading: "Care",
       heading_level: "H2",
     });
+  });
+});
+
+// A blog outline with subsections (FB2.15): Why plan · Choosing the spot (Sun hours, Soil) ·
+// Planning beds (Bed sizes) · Timing.
+const deepGate = {
+  editable_sections: (
+    [
+      ["Why plan", "H2"],
+      ["Choosing the spot", "H2"],
+      ["Sun hours", "H3"],
+      ["Soil", "H3"],
+      ["Planning beds", "H2"],
+      ["Bed sizes", "H3"],
+      ["Timing", "H2"],
+    ] as const
+  ).map(([heading, heading_level], index) => ({
+    id: `s:${index}`,
+    list: "s",
+    heading,
+    heading_level,
+  })),
+};
+const deepOutline = {
+  s: [200, 300, 150, 200, 350, 150, 400].map((words) => ({
+    heading: "",
+    suggested_word_count: words,
+  })),
+};
+
+const treeRow = (
+  key: string,
+  heading: string,
+  level?: "H2" | "H3" | "H4",
+  list = "s",
+): TreeRow => ({ key, id: key, list, heading, ...(level ? { level } : {}) });
+const shownHeadings = (rows: TreeRow[]) =>
+  groupRows(rows).flatMap((group) => group.rows.map((item) => item.heading));
+const keyOf = (rows: TreeRow[], heading: string) =>
+  rows.find((item) => item.heading === heading)?.key ?? "";
+
+describe("moving a section with its subsections", () => {
+  const rows = rowsFromGate(readOutlineGate(deepGate).sections);
+
+  it("takes an H2 and its H3s past the whole section above", () => {
+    const moved = moveRow(rows, "s:4", -1);
+    expect(shownHeadings(moved)).toEqual([
+      "Why plan",
+      "Planning beds",
+      "Bed sizes",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Timing",
+    ]);
+    expect(moveAnnouncement(rows, moved, "s:4")).toBe(
+      "Moved Planning beds and its subsection to position 2 of 7, after Why plan.",
+    );
+  });
+
+  it("takes an H2 and its H3s past the whole section below", () => {
+    expect(shownHeadings(moveRow(rows, "s:1", 1))).toEqual([
+      "Why plan",
+      "Planning beds",
+      "Bed sizes",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Timing",
+    ]);
+  });
+
+  it("keeps the first row first and the last row last", () => {
+    expect(moveRow(rows, "s:0", -1)).toBe(rows);
+    expect(moveRow(rows, "s:6", 1)).toBe(rows);
+    expect(moveTarget(rows, 0, -1)).toBeNull();
+    expect(moveTarget(rows, 6, 1)).toBeNull();
+  });
+
+  it("says a section is at the top once it is", () => {
+    const moved = moveRow(rows, "s:1", -1);
+    expect(shownHeadings(moved)[0]).toBe("Choosing the spot");
+    expect(moveAnnouncement(rows, moved, "s:1")).toBe(
+      "Moved Choosing the spot and its 2 subsections to position 1 of 7, at the top.",
+    );
+  });
+
+  it("moves a subsection among the subsections of its section", () => {
+    const up = moveRow(rows, "s:3", -1);
+    expect(shownHeadings(up).slice(1, 4)).toEqual([
+      "Choosing the spot",
+      "Soil",
+      "Sun hours",
+    ]);
+    expect(moveAnnouncement(rows, up, "s:3")).toBe(
+      "Moved Soil to position 3 of 7, after Choosing the spot.",
+    );
+    expect(shownHeadings(moveRow(rows, "s:2", 1))).toEqual(shownHeadings(up));
+  });
+
+  it("takes a first subsection up to the end of the section before, and says so", () => {
+    const moved = moveRow(rows, "s:5", -1);
+    expect(shownHeadings(moved)).toEqual([
+      "Why plan",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Bed sizes",
+      "Planning beds",
+      "Timing",
+    ]);
+    expect(moveAnnouncement(rows, moved, "s:5")).toBe(
+      "Moved Bed sizes to position 5 of 7, now a subsection of Choosing the spot.",
+    );
+  });
+
+  it("takes a last subsection down to the start of the next section, and says so", () => {
+    const moved = moveRow(rows, "s:3", 1);
+    expect(shownHeadings(moved)).toEqual([
+      "Why plan",
+      "Choosing the spot",
+      "Sun hours",
+      "Planning beds",
+      "Soil",
+      "Bed sizes",
+      "Timing",
+    ]);
+    expect(moveAnnouncement(rows, moved, "s:3")).toBe(
+      "Moved Soil to position 5 of 7, now a subsection of Planning beds.",
+    );
+  });
+
+  it("never lets a subsection open the list, nor fall off its end", () => {
+    const short = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("b", "B", "H2"),
+    ];
+    // Above "A" there is no section to join: the first section is never a subsection.
+    expect(moveRow(short, "a1", -1)).toBe(short);
+    expect(shownHeadings(moveRow(short, "a1", 1))).toEqual(["A", "B", "A one"]);
+    const last = [treeRow("a", "A", "H2"), treeRow("a1", "A one", "H3")];
+    expect(moveRow(last, "a1", 1)).toBe(last);
+  });
+
+  it("moves an H3 with its H4s, and an H2 with both", () => {
+    const pillar = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a11", "A one, deeper", "H4"),
+      treeRow("a2", "A two", "H3"),
+      treeRow("b", "B", "H2"),
+    ];
+    expect(blockEnd(pillar, 0)).toBe(4);
+    expect(blockEnd(pillar, 1)).toBe(3);
+    expect(shownHeadings(moveRow(pillar, "a1", 1))).toEqual([
+      "A",
+      "A two",
+      "A one",
+      "A one, deeper",
+      "B",
+    ]);
+    expect(shownHeadings(moveRow(pillar, "b", -1))).toEqual([
+      "B",
+      "A",
+      "A one",
+      "A one, deeper",
+      "A two",
+    ]);
+  });
+
+  it("moves one row at a time in a list without levels", () => {
+    const flat = [
+      treeRow("t0", "Trowel"),
+      treeRow("t1", "Fork"),
+      treeRow("t2", "Hose"),
+    ];
+    expect(shownHeadings(moveRow(flat, "t2", -1))).toEqual([
+      "Trowel",
+      "Hose",
+      "Fork",
+    ]);
+    expect(moveRow(flat, "t0", -1)).toBe(flat);
+  });
+
+  it("puts a removed section back after the section it followed, after a move", () => {
+    // "Planning beds" goes with "Bed sizes"; then "Choosing the spot" moves below "Timing".
+    const removed = removeRow(rows, "s:4").rows;
+    const moved = moveRow(removed, "s:1", 1);
+    expect(shownHeadings(moved)).toEqual([
+      "Why plan",
+      "Timing",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+    ]);
+    expect(shownHeadings(restoreRow(moved, "s:4"))).toEqual([
+      "Why plan",
+      "Timing",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Planning beds",
+      "Bed sizes",
+    ]);
+  });
+
+  it("undoes a move with the opposite move", () => {
+    expect(moveRow(moveRow(rows, "s:4", -1), "s:4", 1)).toEqual(rows);
+    expect(moveRow(moveRow(rows, "s:5", -1), "s:5", 1)).toEqual(rows);
+  });
+});
+
+describe("dropping a dragged section", () => {
+  const rows = rowsFromGate(readOutlineGate(deepGate).sections);
+
+  it("offers an H2 only the gaps between whole sections", () => {
+    // "Choosing the spot" (rows 1 to 3): the top, its own place, before "Timing" and the end.
+    expect(dropGaps(rows, 1)).toEqual([0, 1, 4, 6, 7]);
+  });
+
+  it("offers a subsection every gap but the top", () => {
+    expect(dropGaps(rows, 2)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it("keeps an H3 from landing between another H3 and its H4s", () => {
+    const pillar = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a11", "A one, deeper", "H4"),
+      treeRow("a2", "A two", "H3"),
+    ];
+    expect(dropGaps(pillar, 3)).toEqual([1, 3, 4]);
+  });
+
+  it("picks the gap nearest the pointer among those offered", () => {
+    const tops = [0, 40, 80, 120, 160];
+    expect(nearestGap(tops, [0, 3, 4], 50)).toBe(0);
+    expect(nearestGap(tops, [0, 3, 4], 70)).toBe(3);
+    expect(nearestGap(tops, [0, 3, 4], 500)).toBe(4);
+    expect(nearestGap(tops, [], 50)).toBeNull();
+  });
+
+  it("drops a section with its subsections where the line showed", () => {
+    expect(shownHeadings(moveBlockTo(rows, "s:1", 7))).toEqual([
+      "Why plan",
+      "Planning beds",
+      "Bed sizes",
+      "Timing",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+    ]);
+    expect(shownHeadings(moveBlockTo(rows, "s:6", 1))).toEqual([
+      "Why plan",
+      "Timing",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Planning beds",
+      "Bed sizes",
+    ]);
+  });
+
+  it("drops a subsection into another section", () => {
+    const moved = moveBlockTo(rows, "s:2", 6);
+    expect(shownHeadings(moved).slice(3)).toEqual([
+      "Planning beds",
+      "Bed sizes",
+      "Sun hours",
+      "Timing",
+    ]);
+    expect(rowPlace(moved, "s:2")?.parent?.heading).toBe("Planning beds");
+  });
+
+  it("leaves the rows as they are for its own place or a gap it can't take", () => {
+    expect(moveBlockTo(rows, "s:1", 1)).toBe(rows);
+    expect(moveBlockTo(rows, "s:1", 4)).toBe(rows);
+    // An H2 into the middle of a section, and a subsection to the top.
+    expect(moveBlockTo(rows, "s:1", 5)).toBe(rows);
+    expect(moveBlockTo(rows, "s:2", 0)).toBe(rows);
+    expect(moveBlockTo(rows, "s:9", 0)).toBe(rows);
+  });
+});
+
+describe("changing a section's level", () => {
+  const offered = readOutlineGate(deepGate).sections;
+  const rows = rowsFromGate(offered);
+
+  it("makes a section a subsection of the section above, in place", () => {
+    const changed = changeLevel(rows, "s:4", "H3");
+    expect(shownHeadings(changed)).toEqual(shownHeadings(rows));
+    expect(changed[4].level).toBe("H3");
+    // Its own subsection now sits beside it under "Choosing the spot".
+    expect(rowPlace(changed, "s:5")?.parent?.heading).toBe("Choosing the spot");
+    expect(levelAnnouncement(changed, "s:4")).toBe(
+      "Planning beds is now a subsection of Choosing the spot.",
+    );
+  });
+
+  it("never makes the first section a subsection", () => {
+    expect(canChangeLevel(rows, "s:0", "H3")).toBe(false);
+    expect(changeLevel(rows, "s:0", "H3")).toBe(rows);
+  });
+
+  it("makes a subsection a section, which takes the subsections after it", () => {
+    const changed = changeLevel(rows, "s:2", "H2");
+    expect(changed[2].level).toBe("H2");
+    expect(rowPlace(changed, "s:3")?.parent?.heading).toBe("Sun hours");
+    expect(levelAnnouncement(changed, "s:2")).toBe(
+      "Sun hours is now a section, with the subsection after it.",
+    );
+    expect(levelAnnouncement(changeLevel(rows, "s:3", "H2"), "s:3")).toBe(
+      "Soil is now a section.",
+    );
+  });
+
+  it("changes nothing for the level a row has, an H4, or a list without levels", () => {
+    expect(changeLevel(rows, "s:1", "H2")).toBe(rows);
+    expect(changeLevel(rows, "s:2", "H3")).toBe(rows);
+    const pillar = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a11", "A one, deeper", "H4"),
+    ];
+    expect(canChangeLevel(pillar, "a11", "H3")).toBe(false);
+    expect(canChangeLevel(pillar, "a11", "H2")).toBe(false);
+    const flat = [treeRow("t0", "Trowel"), treeRow("t1", "Fork")];
+    expect(canChangeLevel(flat, "t1", "H3")).toBe(false);
+  });
+
+  it("counts a level change alone as an edit, until it is changed back", () => {
+    expect(rowsEdited(rows, offered)).toBe(false);
+    const changed = changeLevel(rows, "s:4", "H3");
+    expect(rowsEdited(changed, offered)).toBe(true);
+    expect(sectionEdits(changed)[4]).toEqual({
+      id: "s:4",
+      heading: "Planning beds",
+      heading_level: "H3",
+    });
+    expect(rowsEdited(changeLevel(changed, "s:4", "H2"), offered)).toBe(false);
+  });
+
+  it("reads an H4 from the gate and sends it back as it came", () => {
+    const gate = readOutlineGate({
+      editable_sections: [
+        { id: "s:0", list: "s", heading: "A", heading_level: "H2" },
+        { id: "s:1", list: "s", heading: "A one", heading_level: "H3" },
+        { id: "s:2", list: "s", heading: "Deeper", heading_level: "H4" },
+        { id: "s:3", list: "s", heading: "Odd", heading_level: "H5" },
+      ],
+    });
+    expect(gate.sections[2].heading_level).toBe("H4");
+    expect(gate.sections[3].heading_level).toBeUndefined();
+    expect(sectionEdits(rowsFromGate(gate.sections))[2]).toEqual({
+      id: "s:2",
+      heading: "Deeper",
+      heading_level: "H4",
+    });
+  });
+
+  it("removes an H3 with its H4s, and an H2 with every row under it", () => {
+    const pillar = [
+      treeRow("a", "A", "H2"),
+      treeRow("a1", "A one", "H3"),
+      treeRow("a11", "A one, deeper", "H4"),
+      treeRow("a2", "A two", "H3"),
+      treeRow("b", "B", "H2"),
+    ];
+    const h3 = removeRow(pillar, "a1");
+    expect(h3.subsections).toBe(1);
+    expect(shownHeadings(h3.rows)).toEqual(["A", "A two", "B"]);
+    expect(restoreRow(h3.rows, "a1")).toEqual(pillar);
+    const h2 = removeRow(pillar, "a");
+    expect(h2.subsections).toBe(3);
+    expect(shownHeadings(h2.rows)).toEqual(["B"]);
+  });
+});
+
+describe("adding a section in place", () => {
+  const rows = rowsFromGate(readOutlineGate(deepGate).sections);
+
+  it("puts a section where it was asked for: the top, between two, the end", () => {
+    expect(
+      shownHeadings(insertRow(rows, "s", 0, " Before you start "))[0],
+    ).toBe("Before you start");
+    const between = insertRow(rows, "s", 4, "Tools");
+    expect(shownHeadings(between).slice(3, 6)).toEqual([
+      "Soil",
+      "Tools",
+      "Planning beds",
+    ]);
+    expect(between[4]).toMatchObject({ id: null, list: "s", level: "H2" });
+    expect(insertAnnouncement(between, "s", 4)).toBe(
+      "Added Tools as a section, position 5 of 8.",
+    );
+    expect(shownHeadings(insertRow(rows, "s", 7, "Checklist")).at(-1)).toBe(
+      "Checklist",
+    );
+  });
+
+  it("puts a subsection where it was asked for, sent as a new H3", () => {
+    const added = insertRow(rows, "s", 3, "Wind", "H3");
+    expect(shownHeadings(added).slice(1, 5)).toEqual([
+      "Choosing the spot",
+      "Sun hours",
+      "Wind",
+      "Soil",
+    ]);
+    expect(sectionEdits(added)[3]).toEqual({
+      new: true,
+      list: "s",
+      heading: "Wind",
+      heading_level: "H3",
+    });
+    expect(insertAnnouncement(added, "s", 3)).toBe(
+      "Added Wind as a subsection of Choosing the spot, position 4 of 8.",
+    );
+  });
+
+  it("refuses a blank heading, a place outside the list, and a subsection at the top", () => {
+    expect(insertRow(rows, "s", 2, "   ")).toBe(rows);
+    expect(insertRow(rows, "s", 9, "Too far")).toBe(rows);
+    expect(insertRow(rows, "s", -1, "Too far")).toBe(rows);
+    expect(insertRow(rows, "other", 0, "No such list")).toBe(rows);
+    expect(insertRow(rows, "s", 0, "Opening", "H3")).toBe(rows);
+  });
+
+  it("gives a row of a list without levels no level", () => {
+    const flat = [treeRow("t0", "Trowel"), treeRow("t1", "Fork")];
+    const added = insertRow(flat, "s", 1, "Hose", "H3");
+    expect(shownHeadings(added)).toEqual(["Trowel", "Hose", "Fork"]);
+    expect(added[1]).not.toHaveProperty("level");
+    expect(insertAnnouncement(added, "s", 1)).toBe(
+      "Added Hose, position 2 of 3.",
+    );
+  });
+
+  it("stops at six new sections, counted across the lists", () => {
+    let current: TreeRow[] = [
+      ...rows,
+      treeRow("t0", "Trowel", undefined, "tools"),
+    ];
+    for (let count = 1; count <= MAX_ADDED_SECTIONS; count += 1) {
+      expect(canAddSection(current)).toBe(true);
+      current =
+        count % 2 === 0
+          ? insertRow(current, "tools", 1, `Tool ${count}`)
+          : addRow(current, "s", `Section ${count}`);
+      expect(addedSections(current)).toBe(count);
+    }
+    expect(MAX_ADDED_SECTIONS).toBe(6);
+    expect(canAddSection(current)).toBe(false);
+    expect(insertRow(current, "s", 0, "A seventh")).toBe(current);
+    expect(addRow(current, "s", "A seventh")).toBe(current);
+    expect(addSubsection(current, "s:1", "A seventh")).toBe(current);
+    expect(sectionEdits(current).filter((edit) => "new" in edit)).toHaveLength(
+      6,
+    );
+  });
+
+  it("frees a place when an added section is removed, and holds an Undo that would pass six", () => {
+    let current = rows;
+    for (let count = 1; count <= MAX_ADDED_SECTIONS; count += 1)
+      current = addRow(current, "s", `Section ${count}`);
+    const first = keyOf(current, "Section 1");
+    const removed = removeRow(current, first).rows;
+    expect(canAddSection(removed)).toBe(true);
+    expect(canRestoreRow(removed, first)).toBe(true);
+    const refilled = addRow(removed, "s", "Section 7");
+    expect(addedSections(refilled)).toBe(6);
+    expect(canRestoreRow(refilled, first)).toBe(false);
+    // A removed section the gate offered always comes back.
+    expect(canRestoreRow(removeRow(refilled, "s:6").rows, "s:6")).toBe(true);
+  });
+
+  it("keeps a new subsection in its section when the removed section after it comes back", () => {
+    const removed = removeRow(rows, "s:4").rows;
+    const added = addSubsection(removed, "s:1", "Wind");
+    expect(shownHeadings(restoreRow(added, "s:4"))).toEqual([
+      "Why plan",
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Wind",
+      "Planning beds",
+      "Bed sizes",
+      "Timing",
+    ]);
+  });
+
+  it("keeps a removed subsection in its section when a new section goes in after it", () => {
+    const removed = removeRow(rows, "s:3").rows;
+    const added = insertRow(removed, "s", 3, "Tools");
+    expect(shownHeadings(restoreRow(added, "s:3")).slice(1, 6)).toEqual([
+      "Choosing the spot",
+      "Sun hours",
+      "Soil",
+      "Tools",
+      "Planning beds",
+    ]);
+  });
+
+  it("adds a subsection at the end of an H2's subsections, and under no other row", () => {
+    expect(
+      shownHeadings(addSubsection(rows, "s:1", "Wind")).slice(1, 5),
+    ).toEqual(["Choosing the spot", "Sun hours", "Soil", "Wind"]);
+    expect(addSubsection(rows, "s:2", "Under an H3")).toBe(rows);
+    expect(addSubsection(rows, "s:1", "  ")).toBe(rows);
+  });
+});
+
+describe("what the outline says about itself", () => {
+  const rows = rowsFromGate(readOutlineGate(deepGate).sections);
+
+  it("gives a row's place, the row before it, its section and what is under it", () => {
+    expect(rowPlace(rows, "s:3")).toEqual({
+      position: 4,
+      total: 7,
+      previous: rows[2],
+      parent: rows[1],
+      subsections: 0,
+    });
+    expect(rowPlace(rows, "s:1")).toMatchObject({
+      position: 2,
+      parent: null,
+      subsections: 2,
+    });
+    expect(rowPlace(rows, "s:0")?.previous).toBeNull();
+    expect(rowPlace(rows, "nope")).toBeNull();
+    expect(rowPlace(removeRow(rows, "s:6").rows, "s:6")).toBeNull();
+  });
+
+  it("words a removal and its Undo, with the subsections that went along", () => {
+    expect(removalAnnouncement("Timing", 2)).toBe(
+      "Removed Timing and its 2 subsections. Undo is in the notification.",
+    );
+    expect(removalAnnouncement("Soil", 0)).toBe(
+      "Removed Soil. Undo is in the notification.",
+    );
+    expect(restoreAnnouncement("Planning beds", 1)).toBe(
+      "Restored Planning beds and its subsection.",
+    );
+  });
+
+  it("sums a list up: sections, subsections and the words budgeted", () => {
+    expect(listSummary(rows, deepOutline, "s")).toBe(
+      "4 sections · 3 subsections · ~1,750 words",
+    );
+    // A removal takes its budget away; an added section counts the middle budget, as the backend gives it.
+    expect(listSummary(removeRow(rows, "s:4").rows, deepOutline, "s")).toBe(
+      "3 sections · 2 subsections · ~1,250 words",
+    );
+    expect(listSummary(addRow(rows, "s", "Tools"), deepOutline, "s")).toBe(
+      "5 sections · 3 subsections · ~1,950 words",
+    );
+    expect(listSummary([treeRow("t0", "Trowel")], {}, "s")).toBe("1 section");
+  });
+
+  it("reads the FAQ's questions from every shape the outline holds them in", () => {
+    expect(readOutlineFaqs({ faqs: [" When to start? ", "", 3] })).toEqual([
+      "When to start?",
+    ]);
+    expect(
+      readOutlineFaqs({
+        faqs: [
+          { question: "How big?", answer: "Small." },
+          { answer: "No question" },
+        ],
+      }),
+    ).toEqual(["How big?"]);
+    expect(
+      readOutlineFaqs({ faq: { faqs: [{ question: "How much sun?" }] } }),
+    ).toEqual(["How much sun?"]);
+    // An empty `faqs` falls through to `faq`.
+    expect(readOutlineFaqs({ faqs: [], faq: ["Which layout?"] })).toEqual([
+      "Which layout?",
+    ]);
+    expect(readOutlineFaqs({ faq: [{ label: "Docs", url: "/docs" }] })).toEqual(
+      [],
+    );
+    expect(readOutlineFaqs({ sections: [] })).toEqual([]);
+    expect(readOutlineFaqs(null)).toEqual([]);
   });
 });
 
@@ -373,10 +979,40 @@ describe("buildOutlineApproval", () => {
     expect(
       approval.sections?.map((edit) => ("id" in edit ? edit.id : null)),
     ).toEqual([
-      "structure.sections:0",
       "structure.sections:3",
+      "structure.sections:0",
       "structure.sections:1",
       "structure.sections:2",
+    ]);
+  });
+
+  it("sends the sections when only a level changed", () => {
+    // FB2.15, gap 1: a level change alone used to leave `sections` out, so it was lost.
+    const approval = buildOutlineApproval({
+      ...base,
+      rows: changeLevel(rows, "structure.sections:3", "H3"),
+    });
+    expect(approval.sections).toEqual([
+      {
+        id: "structure.sections:0",
+        heading: "Why it matters",
+        heading_level: "H2",
+      },
+      {
+        id: "structure.sections:1",
+        heading: "Cushioning",
+        heading_level: "H2",
+      },
+      {
+        id: "structure.sections:2",
+        heading: "Heel drop",
+        heading_level: "H3",
+      },
+      {
+        id: "structure.sections:3",
+        heading: "Getting fitted",
+        heading_level: "H3",
+      },
     ]);
   });
 
