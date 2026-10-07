@@ -86,6 +86,7 @@ import {
   canAnalyze,
   isKeywordReanalysis,
   isReanalysingInPlace,
+  withAnalysedCountry,
 } from "@/lib/generate-content/keyword-reanalysis";
 import { toast } from "sonner";
 import type { Route } from "next";
@@ -554,10 +555,15 @@ export function FreshGenerationView({
           payload: value.recommended_topic,
         });
 
-      dispatch({ type: "SET_INTERRUPT", payload: interrupts });
+      // The reducer reads the analysed country off the interrupt; an older thread's has none.
+      const restored = withAnalysedCountry(
+        interrupts,
+        values?.serp_payload?.country,
+      );
+      dispatch({ type: "SET_INTERRUPT", payload: restored });
       dispatch({
         type: "UPDATE_FROM_STREAM",
-        payload: { __interrupt__: interrupts } as StreamUpdates,
+        payload: { __interrupt__: restored } as StreamUpdates,
       });
     },
     [backgroundThreadId],
@@ -589,7 +595,9 @@ export function FreshGenerationView({
     // so they don't bleed into this thread's view (e.g. showing a finished
     // article underneath a different thread's outline step).
     dispatch({ type: "RESET_FOR_THREAD_SWITCH" });
-    // Also reset local component state that lives outside the reducer.
+    // Also reset local component state that lives outside the reducer. The in-place flag belongs
+    // to the run left behind: this thread's analysis didn't start from step 2.
+    setInPlaceAnalysis(false);
     setTokenTarget("none");
     tokenTargetRef.current = "none";
     outline.resetStream();
