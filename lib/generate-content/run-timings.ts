@@ -21,10 +21,11 @@ const TYPICAL_MS: Record<string, number> = {
   draft: 110_000,
   style: 45_000,
   checks: 40_000,
-  // The workspace analysis (lib/workspace/workspace-run-stages.ts).
-  "workspace-scrape": 20_000,
-  "workspace-brand-voice": 60_000,
-  "workspace-competitors": 15_000,
+  // The workspace analysis (lib/workspace/workspace-run-stages.ts), as staging's runs took it on
+  // 2026-10-06 and 07: reading 11 s, the brand voice 14 s, competitors 55 to 70 s.
+  "workspace-scrape": 15_000,
+  "workspace-brand-voice": 20_000,
+  "workspace-competitors": 60_000,
 };
 
 type Samples = Record<string, number[]>;

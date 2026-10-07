@@ -15,7 +15,7 @@ import { Notice } from "@/components/ui/notice";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { log } from "@/lib/logger";
-import { workspaceQueries } from "@/lib/query-keys";
+import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
 import {
   findFailedEvent,
   workspaceRunStages,
@@ -25,6 +25,7 @@ import {
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
+import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { Route } from "next";
 
@@ -114,6 +115,14 @@ export function WorkspaceCreateWizard() {
       // The switcher's list stays cached for minutes; the sidebar needs the new workspace now.
       setCurrentWorkspace(workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      // The plan's count above the form ("1 of 1 workspace on your plan") counts this one now.
+      void useSubscriptionStore
+        .getState()
+        .fetchUsage()
+        .catch(() => undefined);
+      queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.usage().queryKey,
+      });
       analytics.track(
         isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
         { workspace_id: workspace.id, workspace_slug: workspace.slug },
