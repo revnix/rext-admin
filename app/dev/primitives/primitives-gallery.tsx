@@ -11,7 +11,11 @@ import { PasswordInput } from "@/components/forms/password-input";
 import { ToggleController } from "@/components/forms/toggle-controller";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { RunProgress } from "@/components/generate-content/run-progress";
-import { DetailPage } from "@/components/layouts";
+import {
+  DetailPage,
+  SidePaneTrigger,
+  WithSidePane,
+} from "@/components/layouts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -304,10 +308,89 @@ const LAYOUTS = [
   },
   {
     name: "WorkingSurface",
-    use: "The calendar, the editor, Generate",
+    use: "The outline, the calendar, the editor, Generate",
     example: "/w/rext-ai/content/calendar",
   },
 ];
+
+/** WorkingSurface's options, and WithSidePane's for a step's own two panes. */
+const SURFACE_PROPS = [
+  {
+    name: "side",
+    use: "The side pane: beside the main pane from 1024\u00a0px, a sheet behind a button under it",
+  },
+  {
+    name: "sideTitle",
+    use: "Names the pane: its landmark, its button and its sheet's title (Details by default)",
+  },
+  {
+    name: "trigger",
+    use: "WithSidePane: floating at the bottom right (default), or inline where the page renders SidePaneTrigger",
+  },
+  {
+    name: "showTitle",
+    use: "WithSidePane: the title above the pane on wide screens too, for content without a heading",
+  },
+  { name: "flush", use: "WorkingSurface: no room above and below the surface" },
+  {
+    name: "ownHeading",
+    use: "WorkingSurface: the surface draws the page's h1 itself (the editor), so no header",
+  },
+];
+
+const SAMPLE_OUTLINE = [
+  { level: 2, heading: "What a content calendar template is" },
+  { level: 3, heading: "The columns a small team needs" },
+  { level: 2, heading: "How to fill it for a month" },
+  { level: 3, heading: "Planning around launches" },
+  { level: 2, heading: "Keeping it up to date" },
+];
+
+/**
+ * The two panes as the outline step uses them: the outline in the main pane, the brief beside it
+ * from 1024 px, and under 1024 px the brief in a sheet behind a button in the step's own flow.
+ */
+function WorkingSurfaceSample() {
+  return (
+    <WithSidePane
+      sideTitle="Brief"
+      trigger="inline"
+      side={
+        <dl className="space-y-3 rounded-md border border-border p-4 text-sm">
+          <div>
+            <dt className="text-muted-foreground">Keyword</dt>
+            <dd>content calendar template</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Length</dt>
+            <dd className="num">1,600 words</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Persona</dt>
+            <dd>Marketing lead at a small team</dd>
+          </div>
+        </dl>
+      }
+    >
+      <div className="space-y-3">
+        <ol className="divide-y divide-border rounded-md border border-border">
+          {SAMPLE_OUTLINE.map((item) => (
+            <li
+              key={item.heading}
+              className={item.level === 3 ? "py-2 pr-4 pl-8" : "px-4 py-2"}
+            >
+              <span className="mr-2 font-mono text-xs text-muted-foreground">
+                H{item.level}
+              </span>
+              <span className="text-sm">{item.heading}</span>
+            </li>
+          ))}
+        </ol>
+        <SidePaneTrigger size="default" />
+      </div>
+    </WithSidePane>
+  );
+}
 
 const NOW = Date.now();
 const SAMPLE_STAGES = [
@@ -684,6 +767,28 @@ export function PrimitivesGallery() {
                 <Link href={layout.example as Route} className="text-sm link">
                   {layout.example}
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
+        <Section
+          title="Working surface"
+          description="Two panes, as the outline step uses them: the main pane takes the width, and the side pane sits beside it from 1024&nbsp;px. Under 1024&nbsp;px the side pane is a sheet behind a button (narrow this window to see it). The button floats at the bottom right by default; a step that ends with its own buttons puts it in its flow instead, as here. These panes are the only things inside a page that may scroll."
+        >
+          <WorkingSurfaceSample />
+          <ul className="divide-y divide-border rounded-md border border-border">
+            {SURFACE_PROPS.map((prop) => (
+              <li
+                key={prop.name}
+                className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:gap-4"
+              >
+                <span className="w-28 shrink-0 font-mono text-sm">
+                  {prop.name}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {prop.use}
+                </span>
               </li>
             ))}
           </ul>
