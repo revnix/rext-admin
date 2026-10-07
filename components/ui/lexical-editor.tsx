@@ -229,7 +229,7 @@ function ImagePlaceholderSlot({
   const requireEditMode = useCallback(() => {
     if (onRequestEdit) {
       onRequestEdit();
-      toast.info("Switched to Edit mode — choose your image.");
+      toast.info("Opening the editor: choose your image there.");
       return;
     }
     toast.info("Editing requires Editor role or above.");

@@ -1,6 +1,6 @@
 {
   "components/generate-content/content.tsx": {
-    "page-heading": 2
+    "page-heading": 1
   },
   "components/subscription/invoice-document.tsx": {
     "table-recipe": 1

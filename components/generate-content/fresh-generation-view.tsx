@@ -2286,24 +2286,6 @@ export function FreshGenerationView({
   const suppressLibraryTopicLoader =
     isLibrary && isTopicLoading && runState === null;
 
-  const handleEditToggle = useCallback(
-    () => dispatch({ type: "SET_IS_EDITING", payload: !isEditing }),
-    [isEditing],
-  );
-
-  const handleContentChange = useCallback(
-    (val: string) => {
-      dispatch({ type: "SET_GENERATED_CONTENT", payload: val });
-      if (allContent) {
-        dispatch({
-          type: "SET_ALL_CONTENT",
-          payload: { ...allContent, body_markdown: val },
-        });
-      }
-    },
-    [allContent],
-  );
-
   // Cancel an in-progress generation. Stops the server-owned run (credits
   // already spent on finished steps are not refunded), clears the tracking
   // record across tabs, and returns to a fresh generation screen.
@@ -2702,12 +2684,9 @@ export function FreshGenerationView({
             generatedContent={
               isContentFinal ? generatedContent : displayedBodyMarkdown
             }
-            isEditing={isEditing}
             userKeyword={userKeyword}
             outline={parsedOutline}
             toolCalls={toolCalls}
-            onEditToggle={handleEditToggle}
-            onContentChange={handleContentChange}
           />
         </div>
       )}
