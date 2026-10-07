@@ -44,7 +44,7 @@ export function AnalyticsConsentPrompt() {
   return (
     <section
       aria-labelledby="analytics-consent-title"
-      className="fixed inset-x-4 bottom-[calc(var(--bottom-bar-height)+1rem)] z-(--z-overlay) flex flex-col gap-3 rounded-(--card-radius) border border-border bg-surface-raised p-4 shadow-overlay sm:left-auto sm:w-96 lg:right-6 lg:bottom-6"
+      className="fixed inset-x-4 bottom-[calc(var(--bottom-bar-height,0px)+var(--dock-height,0px)+--spacing(4))] z-(--z-overlay) flex flex-col gap-3 rounded-(--card-radius) border border-border bg-surface-raised p-4 shadow-overlay sm:left-auto sm:w-96 lg:right-6 lg:bottom-[calc(var(--dock-height,0px)+--spacing(6))]"
     >
       <div className="flex flex-col gap-1">
         <h2

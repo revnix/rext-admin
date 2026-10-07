@@ -5,8 +5,8 @@
  */
 
 import {
-  anonymousAddress,
   anonymousEvent,
+  anonymousRoute,
   redactEventUrls,
   redactUrl,
 } from "@/lib/analytics-redact";
@@ -119,48 +119,65 @@ describe("redactEventUrls", () => {
   });
 });
 
-describe("anonymousAddress", () => {
-  it("keeps the kind of page and drops whose it is", () => {
+describe("anonymousRoute", () => {
+  it("names every dynamic part of the path instead of filling it in", () => {
     expect(
-      anonymousAddress(
-        "https://app.rext.ai/w/acme/content/6f1c2d3e-0000-4000-8000-123456789abc?tab=seo#top",
-      ),
-    ).toBe("https://app.rext.ai/w/:workspace/content/:id");
+      anonymousRoute("/w/acme/content/6f1c2d3e", {
+        workspaceSlug: "acme",
+        id: "6f1c2d3e",
+      }),
+    ).toBe("/w/:workspaceSlug/content/:id");
+    // The editor's own route, which names the workspace outside /w.
     expect(
-      anonymousAddress(
-        "https://app.rext.ai/w/acme/keywords/best%20crm%20software",
-      ),
-    ).toBe("https://app.rext.ai/w/:workspace/keywords/:keyword");
-    expect(anonymousAddress("/w/acme/generate-content?thread=abc")).toBe(
-      "/w/:workspace/generate-content",
-    );
+      anonymousRoute("/edit/acme/6f1c2d3e", {
+        workspaceSlug: "acme",
+        id: "6f1c2d3e",
+      }),
+    ).toBe("/edit/:workspaceSlug/:id");
   });
 
-  it("leaves a page that names nobody as it is, without its query", () => {
-    expect(anonymousAddress("https://app.rext.ai/w/create")).toBe(
-      "https://app.rext.ai/w/create",
-    );
-    expect(anonymousAddress("https://app.rext.ai/settings/data?x=1")).toBe(
-      "https://app.rext.ai/settings/data",
-    );
-    expect(anonymousAddress("https://app.rext.ai/w/acme/personas/create")).toBe(
-      "https://app.rext.ai/w/:workspace/personas/create",
-    );
+  it("keeps the fixed parts, so each kind of page is counted as itself", () => {
+    expect(
+      anonymousRoute("/w/acme/content/calendar", { workspaceSlug: "acme" }),
+    ).toBe("/w/:workspaceSlug/content/calendar");
+    expect(anonymousRoute("/settings/data", {})).toBe("/settings/data");
   });
 
-  it("leaves anything that isn't an address alone", () => {
-    expect(anonymousAddress("$direct")).toBe("$direct");
+  it("finds a parameter whether the path or the parameter is the encoded one", () => {
+    expect(
+      anonymousRoute("/w/acme/keywords/best%20crm%20software", {
+        workspaceSlug: "acme",
+        key: "best crm software",
+      }),
+    ).toBe("/w/:workspaceSlug/keywords/:key");
+    expect(
+      anonymousRoute("/w/acme/keywords/best%20crm", {
+        workspaceSlug: "acme",
+        key: "best%20crm",
+      }),
+    ).toBe("/w/:workspaceSlug/keywords/:key");
+  });
+
+  it("names each part of a catch-all", () => {
+    expect(anonymousRoute("/docs/a/b", { path: ["a", "b"] })).toBe(
+      "/docs/:path/:path",
+    );
   });
 });
 
 describe("anonymousEvent", () => {
-  it("keeps a page view with its addresses as routes and nothing about the person", () => {
+  const route = "/w/:workspaceSlug/content";
+
+  it("keeps a page view with the page's route and nothing about the person", () => {
     const event = {
       event: "$pageview",
       properties: {
         $current_url: "https://app.rext.ai/w/acme/content?q=mary",
         $pathname: "/w/acme/content",
+        $host: "app.rext.ai",
         $session_entry_url: "https://app.rext.ai/w/acme",
+        $session_entry_pathname: "/w/acme",
+        $referrer: "https://app.rext.ai/w/acme/keywords/crm",
         $browser: "Chrome",
         $set: { email: "mary@example.com" },
       },
@@ -168,22 +185,28 @@ describe("anonymousEvent", () => {
       $set_once: { $initial_current_url: "https://app.rext.ai/w/acme" },
     };
 
-    const kept = anonymousEvent(event);
+    const kept = anonymousEvent(event, route);
 
     expect(kept).not.toBeNull();
     expect(JSON.stringify(kept)).not.toContain("acme");
     expect(JSON.stringify(kept)).not.toContain("mary");
-    expect(event.properties.$current_url).toBe(
-      "https://app.rext.ai/w/:workspace/content",
-    );
-    expect(event.properties.$pathname).toBe("/w/:workspace/content");
-    expect(event.properties.$browser).toBe("Chrome");
+    expect(kept?.properties).toEqual({
+      $current_url: "https://app.rext.ai/w/:workspaceSlug/content",
+      $pathname: route,
+      $host: "app.rext.ai",
+      $browser: "Chrome",
+    });
   });
 
-  it("drops every other event", () => {
+  it("drops every other event, and a page view whose route isn't known", () => {
     expect(
-      anonymousEvent({ event: "keyword_selected", properties: {} }),
+      anonymousEvent({ event: "keyword_selected", properties: {} }, route),
     ).toBeNull();
-    expect(anonymousEvent({ event: "$identify", properties: {} })).toBeNull();
+    expect(
+      anonymousEvent({ event: "$identify", properties: {} }, route),
+    ).toBeNull();
+    expect(
+      anonymousEvent({ event: "$pageview", properties: {} }, null),
+    ).toBeNull();
   });
 });

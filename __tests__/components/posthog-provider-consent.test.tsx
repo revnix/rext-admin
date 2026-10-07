@@ -43,6 +43,7 @@ jest.mock("posthog-js/react", () => ({
 jest.mock("next/navigation", () => ({
   usePathname: () => "/w/acme/content",
   useSearchParams: () => new URLSearchParams("q=mary"),
+  useParams: () => ({ workspaceSlug: "acme" }),
 }));
 jest.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -127,7 +128,7 @@ describe("where the person is asked first, and hasn't answered", () => {
     expect(mockPosthog.opt_in_capturing).not.toHaveBeenCalled();
     expect(mockPosthog.identify).not.toHaveBeenCalled();
     expect(pageViews()[0][1]).toEqual({
-      $current_url: `${window.origin}/w/:workspace/content`,
+      $current_url: `${window.origin}/w/:workspaceSlug/content`,
     });
     expect(question()).toBeNull();
   });
@@ -173,9 +174,12 @@ describe("where analytics is on unless switched off", () => {
     expect(
       beforeSend({
         event: "$pageview",
-        properties: { $current_url: "https://app.rext.ai/w/acme" },
+        properties: {
+          $current_url: "https://app.rext.ai/w/acme/content?q=mary",
+          $host: "app.rext.ai",
+        },
       }).properties.$current_url,
-    ).toBe("https://app.rext.ai/w/:workspace");
+    ).toBe("https://app.rext.ai/w/:workspaceSlug/content");
   });
 });
 

@@ -2,7 +2,7 @@
 
 import posthog, { type CaptureResult } from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
 import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
@@ -14,8 +14,8 @@ import {
 } from "@/lib/analytics";
 import { analyticsMode, onConsentChange } from "@/lib/analytics-consent";
 import {
-  anonymousAddress,
   anonymousEvent,
+  anonymousRoute,
   redactEventUrls,
   redactStoredAddresses,
   redactUrl,
@@ -24,21 +24,27 @@ import {
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
+// The route of the page on screen, with its parameters named instead of filled in. Read by
+// before_send, which turns the page views and leaves of someone who said no into this.
+let routeOnScreen: string | null = null;
+
 function PostHogPageView({ anonymous }: { anonymous: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const params = useParams();
 
   useEffect(() => {
     if (!pathname) return;
+    routeOnScreen = anonymousRoute(pathname, params ?? {});
     let url = window.origin + pathname;
     const qs = searchParams.toString();
     if (qs) url = `${url}?${qs}`;
     posthog.capture("$pageview", {
       // For someone who said no, the page's route and nothing of whose it is. Otherwise the
       // address without an emailed link's token or a sign-in page's email.
-      $current_url: anonymous ? anonymousAddress(url) : redactUrl(url),
+      $current_url: anonymous ? window.origin + routeOnScreen : redactUrl(url),
     });
-  }, [pathname, searchParams, anonymous]);
+  }, [pathname, searchParams, params, anonymous]);
 
   return null;
 }
@@ -121,7 +127,9 @@ let runningMode: RunningMode | null = null;
 /** posthog-js's before_send: the credentials out of every address; for a "no", page routes only. */
 function beforeSend(event: CaptureResult | null): CaptureResult | null {
   const redacted = redactEventUrls(event);
-  return runningMode === "anonymous" ? anonymousEvent(redacted) : redacted;
+  return runningMode === "anonymous"
+    ? anonymousEvent(redacted, routeOnScreen)
+    : redacted;
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
