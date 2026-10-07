@@ -37,6 +37,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { dateFormat } from "@/lib/formatters/date-formatters";
+import { contentTypeLabel } from "@/lib/generate-content/content-type-step";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import {
@@ -117,9 +118,18 @@ const columns = column.columns([
     filterFn: "arrHas",
     enableGlobalFilter: false,
   }),
-  // No Type, Words or Platform column: the backend stopped returning an article's metadata
-  // (content_metadata) in February, so they read "—" for every article (D2b #466). The type comes
-  // back when the backend stores it.
+  // The type chosen in Generate's content-type step, by the step's own names; stored with the
+  // article since D2c #468, so an older article reads "—". No Words or Platform column: the
+  // backend stopped returning an article's metadata (content_metadata) in February (D2b #466).
+  column.accessor((item) => item.content_type ?? "", {
+    id: "type",
+    header: "Type",
+    cell: ({ getValue }) =>
+      getValue() ? contentTypeLabel(getValue()) : UNKNOWN,
+    sortFn: "text",
+    filterFn: "arrHas",
+    enableGlobalFilter: true,
+  }),
   column.accessor((item) => item.persona_id ?? "", {
     id: "persona",
     header: "Author persona",
@@ -180,7 +190,7 @@ const STATUS_FACET = [
 // In the view menu, not on the screen at first: the library's columns are the goal's (D2 #233).
 const HIDDEN_COLUMNS = ["seo", "created_at"];
 
-/** A row as a card under 640 px: the title, its status, then when it last changed. */
+/** A row as a card under 640 px: the title, its status, then what it is and when it last changed. */
 function ContentRowCard({
   item,
   actions,
@@ -190,6 +200,10 @@ function ContentRowCard({
   actions: ReactNode;
   select: ReactNode;
 }) {
+  const details = [
+    item.content_type ? contentTypeLabel(item.content_type) : null,
+    dateFormat.short(updatedAt(item)),
+  ].filter(Boolean);
   return (
     <div className="flex items-start gap-3">
       {select}
@@ -197,7 +211,7 @@ function ContentRowCard({
         <ContentTitle item={item} />
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
           <ContentStatusBadge status={item.status} />
-          <span className="num">{dateFormat.short(updatedAt(item))}</span>
+          <span className="num">{details.join(" · ")}</span>
         </div>
       </div>
       {actions}
@@ -263,10 +277,25 @@ export default function WorkspaceContentPage() {
     [personaList],
   );
 
-  // Status from the backend's list; persona from the workspace.
+  // Status from the backend's list; type from what the articles carry; persona from the workspace.
   const facets = useMemo(() => {
+    const types = [
+      ...new Set(
+        content
+          .map((item) => item.content_type)
+          .filter((type): type is string => Boolean(type)),
+      ),
+    ].sort();
     return [
       ...STATUS_FACET,
+      {
+        column: "type",
+        title: "Type",
+        options: types.map((value) => ({
+          value,
+          label: contentTypeLabel(value),
+        })),
+      },
       {
         column: "persona",
         title: "Persona",
@@ -276,7 +305,7 @@ export default function WorkspaceContentPage() {
         })),
       },
     ];
-  }, [personaNames]);
+  }, [content, personaNames]);
 
   const trashContentMutation = useTrashContent();
   const { confirm, ConfirmationComponent } = useConfirmation();

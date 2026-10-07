@@ -189,7 +189,60 @@ describe("arrangeContentTypes", () => {
   });
 });
 
+// Every type the backend's content-type step offers (rext-backend
+// src/flow/model/structure/intent_suggestion.py, INTENT_TO_CONTENT_TYPES), as the library shows
+// it beside a saved article (D2c #468).
+const BACKEND_CONTENT_TYPES = [
+  "about-us",
+  "alternatives",
+  "best-tools",
+  "blog",
+  "brand-page",
+  "buying-guide",
+  "case-study",
+  "checklist",
+  "checkout-page",
+  "comparison",
+  "contact-us",
+  "coupon-page",
+  "demo-page",
+  "documentation",
+  "explainer",
+  "faq",
+  "feature-overview",
+  "glossary",
+  "help-center",
+  "how-to-guide",
+  "in-depth-review",
+  "landing-page",
+  "login-guide",
+  "pillar-content",
+  "pricing-page",
+  "product-homepage",
+  "product-roundup",
+  "pros-cons",
+  "resource-list",
+  "sales-page",
+  "service-page",
+  "signup-page",
+  "tutorial",
+  "white-paper",
+];
+
 describe("contentTypeLabel", () => {
+  it("names every type the generator offers in sentence case, never as a slug", () => {
+    for (const type of BACKEND_CONTENT_TYPES) {
+      const label = contentTypeLabel(type);
+      expect([type, label]).toEqual([
+        type,
+        expect.stringMatching(/^[A-Z][^_]*$/),
+      ]);
+      expect(label).not.toContain("  ");
+      // Only the hyphens a name keeps ("How-to guide", "In-depth review").
+      expect(label.replace(/How-to|In-depth/, "")).not.toContain("-");
+    }
+  });
+
   it("names a type in sentence case", () => {
     expect(contentTypeLabel("best-tools")).toBe("Best tools");
     expect(contentTypeLabel("service_page")).toBe("Service page");

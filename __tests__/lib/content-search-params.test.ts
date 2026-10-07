@@ -3,6 +3,7 @@ import { loadContentListParams } from "@/lib/search-params/content";
 const DEFAULTS = {
   q: "",
   status: [],
+  type: [],
   persona: [],
   sort: { id: "updated_at", desc: true },
   page: 0,
@@ -25,19 +26,20 @@ describe("the content library's table state in the URL", () => {
     });
   });
 
-  it("reads the personas, an open set", () => {
-    const params = loadContentListParams("?persona=6f1c,9a2b");
+  it("reads the types and the personas, which are open sets (D2c #468)", () => {
+    const params = loadContentListParams(
+      "?type=how-to-guide,landing-page&persona=6f1c,9a2b",
+    );
+    expect(params.type).toEqual(["how-to-guide", "landing-page"]);
     expect(params.persona).toEqual(["6f1c", "9a2b"]);
-  });
-
-  it("ignores an older link's type filter: the backend returns no type (D2b #466)", () => {
-    const params = loadContentListParams("?type=blog&persona=6f1c");
-    expect(params).toEqual({ ...DEFAULTS, persona: ["6f1c"] });
-    expect(params).not.toHaveProperty("type");
+    expect(loadContentListParams("?sort=type.asc").sort).toEqual({
+      id: "type",
+      desc: false,
+    });
   });
 
   it("sorts an older link by a removed column the default way (D2b #466)", () => {
-    for (const sort of ["type.asc", "words.desc", "platform.asc"]) {
+    for (const sort of ["words.desc", "platform.asc"]) {
       expect(loadContentListParams(`?sort=${sort}`).sort).toEqual(
         DEFAULTS.sort,
       );

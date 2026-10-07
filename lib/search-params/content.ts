@@ -40,10 +40,11 @@ export const CONTENT_LIST_STATUS_LABELS: Record<ContentListStatus, string> = {
   archived: "Archived",
 };
 
-/** The library's columns a link may sort by; an older link's Type, Words or Platform sort falls back. */
+/** The library's columns a link may sort by; an older link's Words or Platform sort falls back. */
 export const CONTENT_LIST_SORTS = [
   "title",
   "status",
+  "type",
   "persona",
   "updated_at",
   "published_to",
@@ -58,11 +59,12 @@ export const contentListParams = {
     desc: true,
   }),
   status: parseAsFacet(CONTENT_LIST_STATUSES),
-  // An open set: the workspace's persona ids.
+  // Open sets: the content types the articles carry, and the workspace's persona ids.
+  type: parseAsArrayOf(parseAsString).withDefault([]),
   persona: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
 /** The keys of `contentListParams` that are faceted filters on the table's columns. */
-export const CONTENT_LIST_FACETS = ["status", "persona"] as const;
+export const CONTENT_LIST_FACETS = ["status", "type", "persona"] as const;
 
 export const loadContentListParams = createLoader(contentListParams);

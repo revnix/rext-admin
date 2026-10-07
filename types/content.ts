@@ -147,6 +147,9 @@ export interface ContentItem {
   seo_data?: ContentSEODataSchema;
   /** The author persona chosen in the outline step; null when none was. */
   persona_id?: string | null;
+  /** The type chosen in Generate's content-type step ("how-to-guide"), stored with the article
+   * since D2c #468; null for one saved before. */
+  content_type?: string | null;
   content_metadata?: ContentMetadataSchema;
 
   // Flow-generated structured data
