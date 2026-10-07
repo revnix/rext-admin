@@ -648,9 +648,14 @@ function ContentEditorInner(props: ContentEditorProps) {
       invalidateContentCache();
       // A publish makes the post live; a draft or review save takes it down, but only where it
       // reached the site: one that failed may still show the post, so the warning stays.
-      const someSiteMissed = (response?.publish_results?.failed ?? 0) > 0;
+      // When no site took it, nothing changed on any site.
+      const results = response?.publish_results;
+      const someSiteMissed = (results?.failed ?? 0) > 0;
+      const noSiteTookIt = results ? results.successful === 0 : false;
       setLiveHere({
-        live: selectedStatus === "publish" || (someSiteMissed && postIsLive),
+        live: noSiteTookIt
+          ? postIsLive
+          : selectedStatus === "publish" || (someSiteMissed && postIsLive),
         against: isLive,
       });
       setStatusModal({
