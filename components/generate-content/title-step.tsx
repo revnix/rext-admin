@@ -8,13 +8,22 @@ import {
   Pencil,
   RefreshCcw,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 
-import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
-import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
+import {
+  KeyphraseText,
+  SerpSnapshot,
+} from "@/components/keywords/serp-snapshot";
+import { WithSidePane } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  comparePick,
+  measureTitle,
+  type SerpTitleFacts,
+  serpTitleFacts,
+} from "@/lib/generate-content/serp-title-facts";
 import {
   normalizeTitle,
   scoreTitle,
@@ -45,10 +54,16 @@ interface TitleStepProps {
   isRegenerating?: boolean;
 }
 
+/** The panel's name, and the heading the link above the titles jumps to under 1024 px. */
+const PANE_TITLE = "How the top ten title it";
+const PANE_HEADING_ID = "top-ten-titles";
+
 /**
  * Step 4, Title (plans/app/E-workflow.md §4): the five candidates as a list, each with a small score
- * (lib/generate-content/title-score.ts), any of them editable before Continue, and the search
- * results' top ten beside them so the pattern is visible (research 04 §2.3).
+ * (lib/generate-content/title-score.ts), any of them editable before Continue, and beside them how
+ * the search results' top ten title their pages (task 695, option A): what their titles have in
+ * common, the pick against them, and the ten. Under 1024 px the panel is part of the page instead of
+ * a sheet: the facts come before the titles and the rest follows Continue.
  */
 export function TitleStep({
   instruction,
@@ -60,7 +75,10 @@ export function TitleStep({
   onRegenerate,
   isRegenerating = false,
 }: TitleStepProps) {
-  const { recommendationReason, focusKeyphrase, serpTitles } = readGate(gate);
+  const { recommendationReason, focusKeyphrase, serpTitles } = useMemo(
+    () => readGate(gate),
+    [gate],
+  );
   const group = useId();
   const [drafts, setDrafts] = useState<string[]>(titles);
   const [selected, setSelected] = useState(0);
@@ -85,6 +103,23 @@ export function TitleStep({
 
   const chosen = normalizeTitle(drafts[selected] ?? "");
   const contextLine = context.filter(Boolean).join(" · ");
+  const facts = useMemo(
+    () => serpTitleFacts(serpTitles, focusKeyphrase),
+    [serpTitles, focusKeyphrase],
+  );
+  // The ten results, for the panel's two places; they change only with the gate.
+  const topTen = useMemo(
+    () => (
+      <SerpSnapshot
+        results={serpTitles}
+        heading={null}
+        keyphrase={focusKeyphrase}
+        measure={(title) => measureTitle(title, focusKeyphrase)}
+        marks
+      />
+    ),
+    [serpTitles, focusKeyphrase],
+  );
 
   const regenerate = () => {
     if (isRegenerating) return;
@@ -112,6 +147,17 @@ export function TitleStep({
         )}
       </div>
 
+      {facts && (
+        <div className="mb-6 space-y-2 lg:hidden">
+          <p className="text-table">
+            <a href={`#${PANE_HEADING_ID}`} className="link">
+              {PANE_TITLE}
+            </a>
+          </p>
+          <TopTenFacts facts={facts} keyphrase={focusKeyphrase} />
+        </div>
+      )}
+
       <fieldset
         disabled={isRegenerating}
         className={cn("mb-6", isRegenerating && "opacity-40")}
@@ -130,19 +176,20 @@ export function TitleStep({
                 // biome-ignore lint/suspicious/noArrayIndexKey: see above
                 key={index}
                 className={cn(
-                  "flex items-start gap-3 rounded-md border bg-card p-4 transition-colors",
+                  "flex items-start gap-3 rounded-md border p-4 transition-colors",
                   isSelected
-                    ? "border-primary"
-                    : "border-border hover:bg-surface-inset",
+                    ? "border-primary bg-surface-inset"
+                    : "border-border bg-card hover:bg-surface-inset",
                 )}
               >
+                {/* Filled when checked: an obsidian ring around a lime dot. */}
                 <input
                   type="radio"
                   id={id}
                   name={group}
                   checked={isSelected}
                   onChange={() => setSelected(index)}
-                  className="mt-1 size-4 shrink-0 accent-primary"
+                  className="mt-1 size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-border-strong bg-card checked:border-[5px] checked:border-primary checked:bg-primary-foreground"
                 />
                 <div className="min-w-0 flex-1 space-y-2">
                   {isEditing ? (
@@ -164,11 +211,11 @@ export function TitleStep({
                     <label
                       htmlFor={id}
                       className={cn(
-                        "block cursor-pointer text-sm leading-snug text-foreground",
+                        "block cursor-pointer text-base text-foreground",
                         isSelected && "font-medium",
                       )}
                     >
-                      {draft}
+                      <KeyphraseText text={draft} keyphrase={focusKeyphrase} />
                     </label>
                   )}
                   <ScoreLine score={scoreTitle(draft, focusKeyphrase)} />
@@ -239,11 +286,7 @@ export function TitleStep({
         </div>
       </div>
 
-      {/* Under 1024 px the search results open from here: a floating button covered Continue (E29). */}
       <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
-        {serpTitles.length > 0 && (
-          <SidePaneTrigger size="default" className="mr-auto" />
-        )}
         <StageCostTooltip stage="generate_outline">
           <Button
             onClick={() => chosen && onContinue(chosen)}
@@ -255,19 +298,194 @@ export function TitleStep({
           </Button>
         </StageCostTooltip>
       </div>
+
+      {/* Under 1024 px the rest of the panel follows Continue, in the page's flow. */}
+      {facts && (
+        <section
+          aria-labelledby={PANE_HEADING_ID}
+          className="mt-8 border-t border-border pt-6 lg:hidden"
+        >
+          <TopTenPanel
+            headingId={PANE_HEADING_ID}
+            facts={facts}
+            keyphrase={focusKeyphrase}
+            pick={chosen}
+          >
+            {topTen}
+          </TopTenPanel>
+        </section>
+      )}
     </div>
   );
 
-  if (serpTitles.length === 0) return list;
+  if (!facts) return list;
   return (
+    // From 1024 px the panel is beside the titles. Under it the step shows the panel itself (the
+    // facts above the titles, the rest after Continue), so the pane's sheet gets no button here.
     <WithSidePane
-      sideTitle="Top search results"
-      showTitle
+      sideTitle={PANE_TITLE}
       trigger="inline"
-      side={<SerpSnapshot results={serpTitles} heading={null} />}
+      side={
+        <TopTenPanel
+          facts={facts}
+          showFacts
+          keyphrase={focusKeyphrase}
+          pick={chosen}
+        >
+          {topTen}
+        </TopTenPanel>
+      }
     >
       {list}
     </WithSidePane>
+  );
+}
+
+/**
+ * The panel: what it is for, the facts, the pick against them, and the ten results (its children).
+ * The step renders it twice, each hidden at the other's widths: beside the titles from 1024 px, and
+ * after Continue under it, there without the facts, which sit above the titles.
+ */
+function TopTenPanel({
+  headingId,
+  facts,
+  showFacts = false,
+  keyphrase,
+  pick,
+  children,
+}: {
+  headingId?: string;
+  facts: SerpTitleFacts;
+  showFacts?: boolean;
+  keyphrase: string | null;
+  /** The selected title, as it will be sent. */
+  pick: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="space-y-1">
+        <h2 id={headingId} className="scroll-mt-6 text-section text-foreground">
+          {PANE_TITLE}
+        </h2>
+        <p className="text-table text-muted-foreground">
+          Your title will sit among these on the first page of results. Their
+          wording, length and keyword placement show what searchers already
+          click, so you can match it or stand out.
+        </p>
+      </div>
+      {showFacts && <TopTenFacts facts={facts} keyphrase={keyphrase} />}
+      {pick && <YourPick title={pick} facts={facts} keyphrase={keyphrase} />}
+      {children}
+      <p className="text-caption text-muted-foreground">
+        From the search this run analysed.
+        {keyphrase && " The keyword is in bold."}
+      </p>
+    </div>
+  );
+}
+
+/** "1 runs", "4 run", "none run": a count as the subject of a verb. */
+function counted(count: number, verb: string) {
+  if (count === 0) return `none ${verb}`;
+  return (
+    <>
+      <span className="num">{count}</span> {count === 1 ? `${verb}s` : verb}
+    </>
+  );
+}
+
+/** The three facts: the keyphrase's use and lead, the typical length, and the shared words. */
+function TopTenFacts({
+  facts,
+  keyphrase,
+}: {
+  facts: SerpTitleFacts;
+  keyphrase: string | null;
+}) {
+  const { total, length } = facts;
+  const uses = facts.keyphrase?.uses.length ?? 0;
+  const [shared, ...also] = facts.sharedWords ?? [];
+  return (
+    <dl className="divide-y divide-border rounded-md border border-border bg-card px-3 text-table">
+      {facts.keyphrase && keyphrase && (
+        <Fact term="Keyword">
+          {uses === 0 ? (
+            <>
+              None of the <span className="num">{total}</span> use “{keyphrase}”
+            </>
+          ) : (
+            <>
+              <b className="num font-semibold">
+                {uses} of {total}
+              </b>{" "}
+              {uses === 1 ? "uses" : "use"} “{keyphrase}”;{" "}
+              {counted(facts.keyphrase.leads.length, "lead")} with it
+            </>
+          )}
+        </Fact>
+      )}
+      <Fact term="Length">
+        Typically <b className="num font-semibold">{length.typical}</b>{" "}
+        characters; {counted(length.over, "run")} past{" "}
+        <span className="num">{length.limit}</span>
+        {length.over > 0 && " and may be cut off"}
+      </Fact>
+      {shared && (
+        <Fact term="Shared word">
+          “{shared.word}” in{" "}
+          <b className="num font-semibold">
+            {shared.count} of {total}
+          </b>
+          {also.length > 0 &&
+            `; also ${also
+              .slice(0, 2)
+              .map(({ word }) => `“${word}”`)
+              .join(", ")}`}
+        </Fact>
+      )}
+    </dl>
+  );
+}
+
+function Fact({ term, children }: { term: string; children: ReactNode }) {
+  return (
+    <div className="flex gap-2 py-2">
+      <dt className="w-22 shrink-0 text-muted-foreground">{term}</dt>
+      <dd className="min-w-0 flex-1 text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+/** The selected title as the results show theirs, with its length and how it compares. */
+function YourPick({
+  title,
+  facts,
+  keyphrase,
+}: {
+  title: string;
+  facts: SerpTitleFacts;
+  keyphrase: string | null;
+}) {
+  const { length, cutOff } = measureTitle(title, keyphrase);
+  const comparison = comparePick(title, facts, keyphrase);
+  return (
+    <div className="rounded-md border border-border bg-surface-inset px-3 py-2.5">
+      <p className="flex justify-between gap-2 text-caption font-medium text-muted-foreground">
+        <span>Your pick</span>
+        <span className="num">
+          {length} characters{cutOff && ", may be cut off"}
+        </span>
+      </p>
+      <p className="mt-1 text-table font-medium text-foreground">
+        <KeyphraseText text={title} keyphrase={keyphrase} />
+      </p>
+      {comparison && (
+        <p className="mt-0.5 text-caption text-muted-foreground">
+          {comparison}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -290,19 +508,45 @@ function readGate(gate: unknown): {
   };
 }
 
-/** The score as a count and the three checks in words; a check that fails says what is wrong. */
+/**
+ * The score as a small meter and a count, then the three checks in words; a check that fails says
+ * what is wrong, at weight 500 beside a dash.
+ */
 function ScoreLine({ score }: { score: TitleScore }) {
+  // One segment per check, the met ones first, so five scores compare at a glance.
+  const segments = [...score.checks].sort(
+    (a, b) => Number(b.met) - Number(a.met),
+  );
   return (
     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
-      <span className="font-medium tabular-nums text-foreground">
-        {score.met} of {score.total} checks
+      <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+        <span aria-hidden className="inline-flex gap-0.5">
+          {segments.map((check) => (
+            <span
+              key={check.id}
+              className={cn(
+                "h-1.5 w-3 rounded-full",
+                check.met ? "bg-foreground" : "border border-border-strong",
+              )}
+            />
+          ))}
+        </span>
+        <span className="num">
+          {score.met} of {score.total} checks
+        </span>
       </span>
       {score.checks.map((check) => (
-        <span key={check.id} className="inline-flex items-center gap-1">
+        <span
+          key={check.id}
+          className={cn(
+            "inline-flex items-center gap-1",
+            !check.met && "font-medium text-foreground",
+          )}
+        >
           {check.met ? (
-            <Check aria-hidden className="size-3.5 text-success-700" />
+            <Check aria-hidden className="size-3.5 text-success-600" />
           ) : (
-            <Minus aria-hidden className="size-3.5 text-warning-700" />
+            <Minus aria-hidden className="size-3.5 text-warning-600" />
           )}
           {check.label}
         </span>
