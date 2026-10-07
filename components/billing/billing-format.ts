@@ -20,8 +20,10 @@ export function nextDate(subscription: UserSubscriptionDetail): string | null {
   const status = subscription.status;
   if (status === SubscriptionStatus.TRIAL && subscription.trial_end_date)
     return `Your trial ends ${dateFormat.short(subscription.trial_end_date)}.`;
-  if (status === SubscriptionStatus.CANCELLED && subscription.ends_at)
-    return `It ends ${dateFormat.short(subscription.ends_at)}, and nothing more is charged.`;
+  // The backend's subscription carries end_date; ends_at is the older field name.
+  const ends = subscription.ends_at ?? subscription.end_date;
+  if (status === SubscriptionStatus.CANCELLED && ends)
+    return `It ends ${dateFormat.short(ends)}, and nothing more is charged.`;
   const renews = subscription.renews_at ?? subscription.current_period_end;
   if (renews && HOLDS_A_PAID_PLAN.has(status))
     return `It renews ${dateFormat.short(renews)}.`;

@@ -153,6 +153,33 @@ describe("BillingActionNotice", () => {
     );
   });
 
+  it("says Resuming… while the resume runs (#529)", async () => {
+    let finish: (value: unknown) => void = () => {};
+    subscriptions.resumeSubscription.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    renderWith(
+      {
+        action: "resume",
+        status: "cancelled",
+        payment_failed_at: null,
+        ends_at: "2026-10-20T12:00:00Z",
+      },
+      <BillingActionNotice kinds={["resume"]} />,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Resume" }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Resuming…" }),
+    ).toBeDisabled();
+    finish({});
+  });
+
   it("shows nothing when nothing is unfinished", async () => {
     renderWith(null, <BillingActionNotice kinds={["resume"]} />);
 

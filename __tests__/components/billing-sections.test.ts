@@ -58,6 +58,17 @@ describe("nextDate", () => {
     ).toBe("It ends Nov 6, 2026, and nothing more is charged.");
   });
 
+  it("reads a cancelled plan's end from end_date, as the backend sends it (#529)", () => {
+    expect(
+      nextDate(
+        subscription({
+          status: SubscriptionStatus.CANCELLED,
+          end_date: "2026-11-06T10:00:00Z",
+        }),
+      ),
+    ).toBe("It ends Nov 6, 2026, and nothing more is charged.");
+  });
+
   it("says when a trial ends", () => {
     expect(
       nextDate(
