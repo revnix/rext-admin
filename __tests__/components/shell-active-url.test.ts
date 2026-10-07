@@ -3,7 +3,7 @@ import { findActiveUrl } from "@/components/shell/use-shell-navigation";
 const URLS = [
   "/",
   "/w/acme/content",
-  "/w/acme/generate_content",
+  "/w/acme/generate-content",
   "/w/acme/keywords",
   "/w/acme/content/calendar",
   "/w/acme/settings",
@@ -31,8 +31,8 @@ describe("findActiveUrl", () => {
     expect(findActiveUrl("/w/acme/keywords/seo%20tools", URLS)).toBe(
       "/w/acme/keywords",
     );
-    expect(findActiveUrl("/w/acme/generate_content", URLS)).toBe(
-      "/w/acme/generate_content",
+    expect(findActiveUrl("/w/acme/generate-content", URLS)).toBe(
+      "/w/acme/generate-content",
     );
   });
 

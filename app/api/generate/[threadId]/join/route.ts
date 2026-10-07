@@ -4,6 +4,7 @@ import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
 import {
   getGenerationClient,
   requireThreadOwner,
+  streamErrorPayload,
 } from "@/lib/generate-content/thread-access";
 import { leanChunk } from "@/lib/generate-content/lean-stream-chunk";
 
@@ -62,9 +63,10 @@ export async function POST(
         controller.close();
       } catch (error) {
         if (signal.aborted) return;
-        const msg = error instanceof Error ? error.message : "Stream error";
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`),
+          encoder.encode(
+            `data: ${JSON.stringify(streamErrorPayload(error))}\n\n`,
+          ),
         );
         controller.close();
       }

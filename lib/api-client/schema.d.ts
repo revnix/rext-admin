@@ -6620,6 +6620,11 @@ export interface components {
              * @default []
              */
             permissions: string[];
+            /**
+             * Is New User
+             * @default false
+             */
+            is_new_user: boolean;
         };
         /** AvailableRolesResponse */
         AvailableRolesResponse: {

@@ -9,6 +9,19 @@ import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError } from "@/lib/error-utils";
+import {
+  AWAY_RETRY_DELAYS_MS,
+  isAwayStatus,
+  isIdempotent,
+  isNetworkFailure,
+  isOffline,
+  markRetried,
+  noteServerAnswered,
+  reportServerAway,
+  SERVER_UNREACHABLE,
+  SERVER_UNREACHABLE_MESSAGE,
+  waitFor,
+} from "./server-away";
 
 const log = logger.forComponent("ApiClient");
 
@@ -74,9 +87,80 @@ export class ApiClient {
   }
 
   /**
-   * Generic request method for all API calls
+   * Generic request method for all API calls. A request that changes nothing is tried again
+   * while the server is away (a deploy's restart); see `ridingOutDeploy`.
    */
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    return this.ridingOutDeploy(options, () =>
+      this.requestOnce<T>(endpoint, options),
+    );
+  }
+
+  /**
+   * No answer, or one cut short: the connection failed, the proxy's answer carried no CORS headers,
+   * or the body stopped arriving after the headers had. Any of them becomes the "couldn't reach the
+   * server" error; whatever else went wrong reading an answer stays as it is.
+   */
+  private unreachable(error: unknown): unknown {
+    if (!isNetworkFailure(error)) return error;
+    return new ApiError(
+      0,
+      SERVER_UNREACHABLE_MESSAGE,
+      SERVER_UNREACHABLE,
+      null,
+    );
+  }
+
+  /**
+   * Rides out a backend deploy (task 759): the API restarts for about a minute, and meanwhile the
+   * proxy answers 502 or 503, or nothing readable at all. A GET or HEAD is sent again after about
+   * 1, 3 and 8 seconds; when those run out the shell is told the server is away, and the request
+   * fails as usual. Anything else isn't repeated, since it may already have been carried out: it
+   * fails at once with a sentence to show. The backend's own 502 or 503 (a JSON body, with its
+   * own words) is retried the same way but keeps its message.
+   */
+  private async ridingOutDeploy<T>(
+    options: RequestInit,
+    send: () => Promise<T>,
+  ): Promise<T> {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        const answer = await send();
+        noteServerAnswered();
+        return answer;
+      } catch (error) {
+        if (!ApiError.is(error)) throw error;
+        const noAnswer = error.code === SERVER_UNREACHABLE;
+        const proxyAnswer =
+          isAwayStatus(error.statusCode) && error.context == null;
+        if (!noAnswer && !isAwayStatus(error.statusCode)) throw error;
+
+        const failure =
+          noAnswer || !proxyAnswer
+            ? error
+            : new ApiError(
+                error.statusCode,
+                SERVER_UNREACHABLE_MESSAGE,
+                SERVER_UNREACHABLE,
+                null,
+              );
+        if (!isIdempotent(options.method) || isOffline()) throw failure;
+
+        const delay = AWAY_RETRY_DELAYS_MS[attempt];
+        if (delay === undefined) {
+          markRetried(failure);
+          if (failure.code === SERVER_UNREACHABLE) reportServerAway();
+          throw failure;
+        }
+        await waitFor(delay, options.signal);
+      }
+    }
+  }
+
+  private async requestOnce<T>(
+    endpoint: string,
+    options: RequestInit,
+  ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
@@ -291,7 +375,8 @@ export class ApiClient {
 
       // Legacy format or direct data
       return result as T;
-    } catch (error) {
+    } catch (thrown) {
+      const error = this.unreachable(thrown);
       if (error instanceof ApiError) {
         throw error;
       }
@@ -308,6 +393,15 @@ export class ApiClient {
   async requestRaw(
     endpoint: string,
     options: RequestInit = {},
+  ): Promise<Response> {
+    return this.ridingOutDeploy(options, () =>
+      this.requestRawOnce(endpoint, options),
+    );
+  }
+
+  private async requestRawOnce(
+    endpoint: string,
+    options: RequestInit,
   ): Promise<Response> {
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -326,7 +420,8 @@ export class ApiClient {
       }
 
       return response;
-    } catch (error) {
+    } catch (thrown) {
+      const error = this.unreachable(thrown);
       if (error instanceof ApiError) {
         throw error;
       }

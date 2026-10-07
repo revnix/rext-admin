@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   BillingActionNotice,
+  RESUME_POLL_MS,
   ShellBillingBanner,
 } from "@/components/billing/billing-action-notice";
 import { apiClient } from "@/lib/api-client";
@@ -151,6 +152,84 @@ describe("BillingActionNotice", () => {
     await waitFor(() =>
       expect(subscriptions.resumeSubscription).toHaveBeenCalled(),
     );
+  });
+
+  it("says Resuming… while the resume runs (#529)", async () => {
+    let finish: (value: unknown) => void = () => {};
+    subscriptions.resumeSubscription.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    renderWith(
+      {
+        action: "resume",
+        status: "cancelled",
+        payment_failed_at: null,
+        ends_at: "2026-10-20T12:00:00Z",
+      },
+      <BillingActionNotice kinds={["resume"]} />,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Resume" }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Resuming…" }),
+    ).toBeDisabled();
+    finish({});
+    // The resume finishes inside this test, not in the next one: the button comes back and the
+    // action is read again.
+    expect(await screen.findByRole("button", { name: "Resume" })).toBeEnabled();
+    await waitFor(() =>
+      expect(subscriptions.getBillingAction).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it("keeps reading the action until Lemon Squeezy's webhook shows the resume (#529)", async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const cancelled: BillingAction = {
+      action: "resume",
+      status: "cancelled",
+      payment_failed_at: null,
+      ends_at: "2026-10-20T12:00:00Z",
+    };
+    subscriptions.resumeSubscription.mockResolvedValue({});
+    // Before the click, and right after it: the webhook hasn't landed yet.
+    subscriptions.getBillingAction
+      .mockResolvedValueOnce({ billing_action: cancelled })
+      .mockResolvedValueOnce({ billing_action: cancelled })
+      .mockResolvedValue({ billing_action: null });
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <BillingActionNotice kinds={["resume"]} />
+      </QueryClientProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Resume" }));
+    // The read right after the resume still finds it cancelled.
+    await waitFor(() =>
+      expect(subscriptions.getBillingAction).toHaveBeenCalledTimes(2),
+    );
+    // The poll starts in an effect, so time passes in waitFor's own steps until it has read
+    // again, rather than in one jump that could land before the effect ran.
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole("button", { name: /Resum/ }),
+        ).not.toBeInTheDocument(),
+      { timeout: RESUME_POLL_MS * 3 },
+    );
+    expect(
+      subscriptions.getBillingAction.mock.calls.length,
+    ).toBeGreaterThanOrEqual(3);
+    jest.useRealTimers();
   });
 
   it("shows nothing when nothing is unfinished", async () => {

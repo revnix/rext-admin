@@ -173,3 +173,134 @@ export function checklistSteps(facts: ChecklistFacts): ChecklistStep[] {
     facts[step.id] === undefined ? [] : [{ ...step, done: !!facts[step.id] }],
   );
 }
+
+/** An article's on-page score, when it has one. */
+function seoScore(item: ContentItem): number | null {
+  const score = item.seo_data?.seo_score ?? item.seo_data?.content_seo_score;
+  return typeof score === "number" && Number.isFinite(score) ? score : null;
+}
+
+/** Under this on-page score an article is worth another look. */
+export const HEALTHY_SCORE = 70;
+/** A draft left this long without a change is going stale. */
+export const STALE_DRAFT_DAYS = 14;
+
+export type ContentHealth = {
+  /** Published articles with a score. */
+  scored: number;
+  /** Their average on-page score, rounded; null with none. */
+  average: number | null;
+  /** How many of them score under HEALTHY_SCORE. */
+  underHealthy: number;
+  /** Drafts not changed for STALE_DRAFT_DAYS or more. */
+  staleDrafts: number;
+};
+
+/** The home's content health (FB2.27 #708): the published articles' on-page scores, and the drafts
+ * left untouched, from the content list the home already loads. */
+export function contentHealth(
+  content: ContentItem[],
+  now: Date,
+): ContentHealth {
+  const scores = content
+    .filter((item) => String(item.status) === "published")
+    .map(seoScore)
+    .filter((score): score is number => score !== null);
+  const staleBefore = now.getTime() - STALE_DRAFT_DAYS * 24 * 60 * 60 * 1000;
+  const staleDrafts = content.filter((item) => {
+    if (!DRAFT_STATES.has(String(item.status))) return false;
+    const changed = Date.parse(item.updated_at ?? item.created_at);
+    return Number.isFinite(changed) && changed <= staleBefore;
+  }).length;
+  return {
+    scored: scores.length,
+    average: scores.length
+      ? Math.round(
+          scores.reduce((sum, score) => sum + score, 0) / scores.length,
+        )
+      : null,
+    underHealthy: scores.filter((score) => score < HEALTHY_SCORE).length,
+    staleDrafts,
+  };
+}
+
+/** How sending an article to a site went. */
+export type PublishState = "published" | "scheduled" | "draft" | "failed";
+
+export type RecentPublish = {
+  articleId: string;
+  siteId: string;
+  title: string;
+  site: string;
+  state: PublishState;
+  at: number | null;
+};
+
+/** A publishing result's state for the home; null for one that is no publish any more (a post
+ * trashed or deleted on the site, a state the site didn't tell). */
+function publishState(status: string): PublishState | null {
+  if (/fail|error/i.test(status)) return "failed";
+  if (status === "scheduled") return "scheduled";
+  if (status === "draft" || status === "pending") return "draft";
+  if (["published", "synced", "success"].includes(status)) return "published";
+  return null;
+}
+
+/** Each connected site's name for the home: its address without "www.". */
+export function siteLabels(
+  sites: { id: string; site_url?: string | null }[],
+): Map<string, string> {
+  const labels = new Map<string, string>();
+  for (const site of sites) {
+    if (!site.site_url) continue;
+    try {
+      labels.set(
+        site.id,
+        new URL(site.site_url).hostname.replace(/^www\./, ""),
+      );
+    } catch {
+      // An address that isn't a URL names nothing.
+    }
+  }
+  return labels;
+}
+
+/** The latest publishes to the workspace's sites, newest first (FB2.27 #708), and how many of all
+ * of them failed. The content list names a result's address and time `url` and `last_synced`, and
+ * no site: `sites` names it (siteLabels). */
+export function recentPublishes(
+  content: ContentItem[],
+  sites: Map<string, string> = new Map(),
+  limit = 5,
+): { items: RecentPublish[]; failed: number } {
+  const all: RecentPublish[] = content.flatMap((item) =>
+    (item.publishing_results ?? []).flatMap((result) => {
+      const state = publishState(String(result.status));
+      if (!state) return [];
+      // A result the site hasn't been asked about yet (a publish that just failed) has no time of
+      // its own: the article's last change stands in, so it isn't sorted behind every dated one.
+      const at = Date.parse(
+        result.last_synced_at ??
+          result.last_synced ??
+          item.updated_at ??
+          item.created_at ??
+          "",
+      );
+      return [
+        {
+          articleId: item.id,
+          siteId: result.site_id,
+          title: item.title,
+          site: result.site_name || sites.get(result.site_id) || "Your site",
+          state,
+          at: Number.isFinite(at) ? at : null,
+        },
+      ];
+    }),
+  );
+  all.sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
+  return {
+    items: all.slice(0, limit),
+    failed: all.filter((entry) => entry.state === "failed").length,
+  };
+}

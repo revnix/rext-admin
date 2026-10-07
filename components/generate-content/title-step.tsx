@@ -25,7 +25,7 @@ import {
   serpResultsFromGate,
 } from "@/lib/keywords/serp-results";
 import { cn } from "@/lib/utils";
-import { StageCostLabel } from "./run-cost";
+import { StageCostTooltip } from "./run-cost";
 
 interface TitleStepProps {
   instruction: string;
@@ -244,15 +244,16 @@ export function TitleStep({
         {serpTitles.length > 0 && (
           <SidePaneTrigger size="default" className="mr-auto" />
         )}
-        <Button
-          onClick={() => chosen && onContinue(chosen)}
-          disabled={!chosen || isRegenerating}
-          className="min-w-[140px]"
-        >
-          Continue
-          <StageCostLabel stage="generate_outline" />
-          <ArrowRight />
-        </Button>
+        <StageCostTooltip stage="generate_outline">
+          <Button
+            onClick={() => chosen && onContinue(chosen)}
+            disabled={!chosen || isRegenerating}
+            className="min-w-[140px]"
+          >
+            Continue
+            <ArrowRight />
+          </Button>
+        </StageCostTooltip>
       </div>
     </div>
   );

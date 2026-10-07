@@ -1,9 +1,15 @@
-import { isKeywordReanalysis } from "@/lib/generate-content/keyword-reanalysis";
+import {
+  canAnalyze,
+  isKeywordReanalysis,
+  isReanalysingInPlace,
+  withAnalysedCountry,
+} from "@/lib/generate-content/keyword-reanalysis";
 import {
   generationReducer,
   initialState,
 } from "@/lib/generate-content/generation-reducer";
 import type {
+  Interrupt,
   KeywordCluster,
   PageState,
   StreamUpdates,
@@ -210,5 +216,142 @@ describe("keyword analysis state", () => {
     expect(state.contentTypes).toEqual([]);
     expect(state.selectedContentType).toBeNull();
     expect(state.recommendedTopic).toBeNull();
+  });
+});
+
+describe("canAnalyze (FB2.3)", () => {
+  const onScreen = {
+    primaryKeyword: "running shoes",
+    country: "us",
+    analyzedCountry: "us",
+  };
+
+  it("waits on step 2 while the keyword and country are the ones on screen", () => {
+    expect(
+      canAnalyze({ atKeywordStep: true, value: "running shoes", ...onScreen }),
+    ).toBe(false);
+    // Typed back the same, in any case or spacing: still the analysis that's there.
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "  Running Shoes ",
+        ...onScreen,
+      }),
+    ).toBe(false);
+  });
+
+  it("analyzes on step 2 once the keyword or the country changes", () => {
+    expect(
+      canAnalyze({ atKeywordStep: true, value: "trail shoes", ...onScreen }),
+    ).toBe(true);
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "running shoes",
+        ...onScreen,
+        country: "gb",
+      }),
+    ).toBe(true);
+  });
+
+  it("leaves step 1 as it was", () => {
+    expect(
+      canAnalyze({
+        atKeywordStep: false,
+        value: "",
+        primaryKeyword: "",
+        country: "us",
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("withAnalysedCountry (FB2.3)", () => {
+  const keywordStep = (overrides: Record<string, unknown> = {}) =>
+    analysis("keyword a", "us", overrides).__interrupt__ as Interrupt[];
+
+  it("gives an older keyword step the country its search ran for", () => {
+    const restored = withAnalysedCountry(
+      keywordStep({ Country: undefined }),
+      "gb",
+    );
+    expect(restored[0].value.Country).toBe("gb");
+
+    // The reducer records it, so a change of country alone can be analysed.
+    const state = apply(initialState, {
+      __interrupt__: restored,
+    } as StreamUpdates);
+    expect(state.analyzedCountry).toBe("gb");
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "keyword a",
+        primaryKeyword: state.primaryKeyword,
+        country: "us",
+        analyzedCountry: state.analyzedCountry,
+      }),
+    ).toBe(true);
+    expect(
+      canAnalyze({
+        atKeywordStep: true,
+        value: "keyword a",
+        primaryKeyword: state.primaryKeyword,
+        country: "gb",
+        analyzedCountry: state.analyzedCountry,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps the interrupt's own country, and leaves the other steps alone", () => {
+    const own = keywordStep();
+    expect(withAnalysedCountry(own, "gb")[0]).toBe(own[0]);
+
+    const titles = [
+      { id: "1", value: { type: "topic Selection", topics: ["a title"] } },
+    ] as Interrupt[];
+    expect(withAnalysedCountry(titles, "gb")[0]).toBe(titles[0]);
+  });
+
+  it("changes nothing when the thread has no search country either", () => {
+    const older = keywordStep({ Country: undefined });
+    expect(withAnalysedCountry(older, undefined)).toBe(older);
+    expect(withAnalysedCountry(older, "  ")).toBe(older);
+  });
+});
+
+describe("isReanalysingInPlace (FB2.3)", () => {
+  it("keeps step 2 on screen while a keyword picked there is analysed", () => {
+    expect(
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: true,
+        phase: "analysis",
+      }),
+    ).toBe(true);
+  });
+
+  it("shows the run's progress for the first analysis, for moving on, and once it's done", () => {
+    // The first analysis: started from step 1, even once the stream shows step 2.
+    expect(
+      isReanalysingInPlace({
+        fromKeywordStep: false,
+        loading: true,
+        phase: "analysis",
+      }),
+    ).toBe(false);
+    expect(
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: true,
+        phase: "content-type",
+      }),
+    ).toBe(false);
+    expect(
+      isReanalysingInPlace({
+        fromKeywordStep: true,
+        loading: false,
+        phase: "analysis",
+      }),
+    ).toBe(false);
   });
 });

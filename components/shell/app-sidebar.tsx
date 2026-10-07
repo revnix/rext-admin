@@ -417,7 +417,7 @@ export function AppSidebar({ navigation }: { navigation: ShellNavigation }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <CreditMeter variant="sidebar" />
+        <CreditMeter />
         <UserMenu />
       </SidebarFooter>
       <SidebarRail />

@@ -7,8 +7,15 @@ import {
   Loader2,
   X,
 } from "lucide-react";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { toast } from "sonner";
 
 import { RunProgress } from "@/components/generate-content/run-progress";
@@ -56,6 +63,22 @@ type GenerationStatusResponse = {
   runStage?: BackgroundGenerationJob["runStage"];
 };
 
+/** The run of the article whose page is open, from that page's query in the cache, if it has loaded. */
+function openArticleThread(
+  client: QueryClient,
+  articleId: string,
+): string | null {
+  if (!articleId) return null;
+  for (const [key, data] of client.getQueriesData<{
+    content?: { langgraph_thread_id?: string | null };
+  }>({ queryKey: ["content"] })) {
+    if (key[2] === articleId && data?.content?.langgraph_thread_id) {
+      return data.content.langgraph_thread_id;
+    }
+  }
+  return null;
+}
+
 const isPending = (job: BackgroundGenerationJob) =>
   job.status === "queued" || job.status === "running";
 
@@ -97,6 +120,19 @@ export function BackgroundGenerationDock() {
   const storedWorkspaceSlug = useCurrentWorkspaceSlug();
   const workspaceSlug =
     workspaceContext?.workspaceSlug || storedWorkspaceSlug || null;
+  // The article on screen, on its own page (/w/<slug>/content/<id>): its run is the one that page
+  // already shows, so the dock leaves that job out however the page was reached (FB2.6). The run's
+  // thread is the article's langgraph_thread_id, from the page's own query in the cache
+  // (useContentDetail's ["content", workspace id, id]), never fetched here. The dock sits outside the
+  // page's WorkspaceProvider, so the entry is found by the article's id, not built from a workspace id.
+  const articleId =
+    pathname?.match(/^\/w\/[^/]+\/content\/([^/]+)$/)?.[1] ?? "";
+  const queryClient = useQueryClient();
+  const articleThreadId = useSyncExternalStore(
+    (onChange) => queryClient.getQueryCache().subscribe(onChange),
+    () => openArticleThread(queryClient, articleId),
+    () => null,
+  );
   const [isMounted, setIsMounted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showStages, setShowStages] = useState(false);
@@ -515,11 +551,13 @@ export function BackgroundGenerationDock() {
   };
 
   const isViewingGenerationThread =
-    (pathname?.endsWith("/generate_content") ?? false) && Boolean(openThreadId);
+    (pathname?.endsWith("/generate-content") ?? false) && Boolean(openThreadId);
 
-  const displayedJobs = isViewingGenerationThread
-    ? visibleJobs.filter((job) => job.threadId !== openThreadId)
-    : visibleJobs;
+  const displayedJobs = visibleJobs.filter(
+    (job) =>
+      !(isViewingGenerationThread && job.threadId === openThreadId) &&
+      job.threadId !== articleThreadId,
+  );
 
   if (!isMounted || displayedJobs.length === 0) return null;
 
@@ -548,7 +586,7 @@ export function BackgroundGenerationDock() {
   // page, to avoid duplicating the page's own Continue/action button.
   //
   // This must compare the thread, not the path. Every generation lives at the
-  // same `/generate_content` route, so a path-prefix check also matched the
+  // same `/generate-content` route, so a path-prefix check also matched the
   // blank selection page — which hid Continue for a job that was waiting on the
   // user, leaving no way back into it.
   const isOnResultPage = openThreadId === job.threadId;

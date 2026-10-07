@@ -13,6 +13,13 @@
  */
 export const FIRST_ARTICLE_TOKEN = "first_article_token";
 
+/**
+ * Not a graph node: the run's hook passes it to `finishNode` when the title model's streamed text
+ * closes (rext-control#694). The backend checks the titles inside the same node after that and sends
+ * no signal of its own, so the end of the text is where "Checking each title" starts.
+ */
+export const TITLES_WRITTEN = "titles_written";
+
 export type RunStageState =
   | "pending"
   | "active"
@@ -34,6 +41,49 @@ export interface RunStage {
   /** Epoch ms. */
   startedAt?: number;
   endedAt?: number;
+}
+
+/** A run's title over its stages (rext-control#694): the clock runs from `startedAt` when it is known. */
+export interface RunHeader {
+  title: string;
+  subtitle?: string;
+  /** Epoch ms; left out for a run picked up mid-way, whose real start the page never saw. */
+  startedAt?: number;
+}
+
+/** One title row while the titles are written: its checks, worked out in the page (title-score.ts). */
+export interface RunTitleRow {
+  title: string;
+  /** "next": not begun; its `title` is a placeholder ("Fifth title"). */
+  state: "written" | "writing" | "next";
+  checks: { label: string; met: boolean }[];
+  recommended?: boolean;
+  reason?: string;
+}
+
+/** What a stage shows under its line: the things it found or is working on, each one real. */
+export type RunStageItems =
+  | {
+      kind: "results";
+      items: { position: number; title: string; site: string }[];
+      /** How many show before "Show all n results". */
+      preview: number;
+    }
+  | { kind: "chips"; items: string[] }
+  | { kind: "titles"; rows: RunTitleRow[] }
+  | { kind: "lines"; items: string[] };
+
+/**
+ * What a stage says beside its name (rext-control#694): what it will do while it waits (grey), what it
+ * is doing while it runs, what it found once done (announced once), and the things under it.
+ */
+export interface RunStageDetail {
+  waiting?: string;
+  live?: string;
+  result?: string;
+  items?: RunStageItems;
+  /** Progress inside the running stage (titles written), which the bar adds to the stages done. */
+  progress?: { done: number; total: number; label: string };
 }
 
 /** What the run is doing between two gates. */
@@ -61,7 +111,16 @@ export const RUN_PHASES: Record<RunPhase, RunStageDef[]> = {
   "content-type": [
     { id: "content-type", label: "Choosing a content type", endsAfter: [] },
   ],
-  titles: [{ id: "titles", label: "Writing five titles", endsAfter: [] }],
+  // The model writes the five titles, then the same node checks and repairs them: the end of its
+  // streamed text ends the writing (TITLES_WRITTEN), or its update when the text never streamed.
+  titles: [
+    {
+      id: "titles",
+      label: "Writing five titles",
+      endsAfter: [TITLES_WRITTEN, "generate_topics"],
+    },
+    { id: "title-checks", label: "Checking each title", endsAfter: [] },
+  ],
   outline: [
     {
       id: "keyword-groups",
@@ -185,6 +244,7 @@ export const NODE_STAGES: Record<string, { phase: RunPhase; id: string }> = {
   save_keyword_research: { phase: "analysis", id: "measure" },
   recommend_content_type: { phase: "content-type", id: "content-type" },
   content_type: { phase: "content-type", id: "content-type" },
+  // The poll can't tell the titles' writing from their checking (one node): it reads as the writing.
   generate_topics: { phase: "titles", id: "titles" },
   topic_generation: { phase: "titles", id: "titles" },
   keyword_clustering: { phase: "outline", id: "keyword-groups" },

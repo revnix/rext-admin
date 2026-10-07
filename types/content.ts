@@ -122,6 +122,10 @@ export interface PublishingResult {
   status: string;
   external_url?: string;
   last_synced_at?: string;
+  /** The content list's names for the two fields above: it sends these, and no site name (the
+   * field isn't in the API's spec yet, so this is read from the backend's `list_content`). */
+  url?: string | null;
+  last_synced?: string | null;
 }
 
 /**
@@ -182,6 +186,14 @@ export interface ContentResponse {
   id: string;
   operation_id?: string; // For SSE subscription during generation
   message?: string;
+  /** POST /content/{id}/publish and /content/publish only: how each site took it. A publish can
+   *  succeed on one site and fail on another (the backend's PublishToSitesResponse). */
+  publish_results?: {
+    total_sites: number;
+    successful: number;
+    failed: number;
+    all_failed: boolean;
+  };
 }
 
 /**

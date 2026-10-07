@@ -2,7 +2,7 @@
 
 import { type ReactNode, useId } from "react";
 import { MonthlyVolume } from "@/components/ui/content/monthly-volume-card";
-import { Meter } from "@/components/ui/meter";
+import { DifficultyRing } from "./difficulty-ring";
 import {
   Select,
   SelectContent,
@@ -27,7 +27,8 @@ import { cn } from "@/lib/utils";
 
 const UNKNOWN = "—";
 
-/** The difficulty in a word and a bar: "Hard", 42 of 100. Also the keyword table's cell. */
+/** The difficulty as a ring in its level's colour, the level and the number beside it (FB2.9 #690):
+ * "Hard", 42%. Also the keyword table's cell, as a small ring. */
 export function KeywordDifficulty({
   score,
   compact = false,
@@ -39,20 +40,19 @@ export function KeywordDifficulty({
   if (score === null || !band) {
     return <span className="text-muted-foreground">{UNKNOWN}</span>;
   }
-  return (
-    <span className={cn("flex flex-col", compact ? "gap-1" : "gap-1.5")}>
-      <span className="flex items-baseline gap-1.5">
-        <span className={compact ? "text-table" : "text-section"}>{band}</span>
-        <span className="num text-caption text-muted-foreground">
-          {score}/100
-        </span>
+  if (compact) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <DifficultyRing score={score} band={band} size="sm" />
+        <span className="text-table">{band}</span>
+        <span className="num text-caption text-muted-foreground">{score}</span>
       </span>
-      <Meter
-        value={score}
-        max={100}
-        label={`Keyword difficulty, ${score} of 100`}
-        className={compact ? "w-16" : "w-full max-w-40"}
-      />
+    );
+  }
+  return (
+    <span className="flex items-center gap-3">
+      <DifficultyRing score={score} band={band} />
+      <span className="text-section">{band}</span>
     </span>
   );
 }

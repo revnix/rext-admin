@@ -12,7 +12,11 @@
  */
 
 import posthog, { type CaptureResult, type PostHogConfig } from "posthog-js";
-import { redactEventUrls } from "@/lib/analytics-redact";
+import {
+  redactEventUrls,
+  redactStoredAddresses,
+  STORED_ADDRESS_OPTIONS,
+} from "@/lib/analytics-redact";
 
 const SECRETS = ["entry-secret", "referrer-secret"];
 
@@ -83,5 +87,58 @@ describe("posthog-js's own event properties", () => {
 
     const sent = JSON.stringify(seen);
     for (const secret of SECRETS) expect(sent).toContain(secret);
+  });
+});
+
+describe("what posthog-js keeps in the browser", () => {
+  // Both of the browser's stores: posthog-js writes to the tab's session storage as well.
+  const stored = () =>
+    [window.localStorage, window.sessionStorage]
+      .flatMap((store) => Object.keys(store).map((key) => store.getItem(key)))
+      .join("\n");
+
+  function start(name: string, redact: boolean) {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    const client = posthog.init(
+      "phc_test_not_a_real_key",
+      {
+        api_host: "http://127.0.0.1:9", // never reached: every event is dropped
+        persistence: "localStorage",
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        disable_session_recording: true,
+        advanced_disable_flags: true,
+        before_send: () => null,
+        // As the provider does it.
+        ...(redact ? STORED_ADDRESS_OPTIONS : {}),
+      },
+      name,
+    );
+    if (!client) throw new Error("posthog-js didn't start");
+    if (redact) {
+      // As the provider does it.
+      redactStoredAddresses(client);
+      client.onSessionId(() => redactStoredAddresses(client));
+    }
+    // The first event begins the session, whose entry address and referrer are stored.
+    client.capture("$pageview");
+    return client;
+  }
+
+  it("holds no emailed link's token: not the first address, not its referrer", () => {
+    start("stored-redacted", true);
+
+    const kept = stored();
+    expect(kept).toContain("reset-password");
+    for (const secret of SECRETS) expect(kept).not.toContain(secret);
+  });
+
+  it("would hold them without the redaction (so the test above can see a leak)", () => {
+    start("stored-raw", false);
+
+    const kept = stored();
+    for (const secret of SECRETS) expect(kept).toContain(secret);
   });
 });

@@ -5,16 +5,21 @@
  */
 
 // Versioned with the stages' boundaries: #260 moved research out of "draft" and the save into
-// "checks", so samples kept under the first key describe other stages.
-const STORAGE_KEY = "rext-run-stage-times:2";
+// "checks", and #694 split "titles" into the writing and "title-checks", so samples kept under an
+// earlier key describe other stages.
+const STORAGE_KEY = "rext-run-stage-times:3";
 const SAMPLES = 5;
+// A stage that usually ends at once (the title checks, when no title needs rewriting) still reads
+// "about 1 s", never "about 0 s".
+const MIN_MS = 1000;
 
 const TYPICAL_MS: Record<string, number> = {
   "search-results": 10_000,
   competitors: 5_000,
   measure: 15_000,
   "content-type": 10_000,
-  titles: 12_000,
+  titles: 10_000,
+  "title-checks": 2_000,
   "keyword-groups": 8_000,
   outline: 25_000,
   research: 40_000,
@@ -46,8 +51,9 @@ export function expectedStageMs(stageId: string): number | undefined {
     (ms) => typeof ms === "number" && ms > 0,
   );
   if (samples?.length) {
-    return Math.round(
-      samples.reduce((sum, ms) => sum + ms, 0) / samples.length,
+    return Math.max(
+      MIN_MS,
+      Math.round(samples.reduce((sum, ms) => sum + ms, 0) / samples.length),
     );
   }
   return TYPICAL_MS[stageId];

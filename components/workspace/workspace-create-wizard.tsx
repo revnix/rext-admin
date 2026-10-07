@@ -22,6 +22,7 @@ import {
   findFailedEvent,
   workspaceRunStages,
 } from "@/lib/workspace/workspace-run-stages";
+import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-step";
 import { useSSE } from "@/providers/sse-provider";
 import {
   type WorkspaceFormData,
@@ -32,12 +33,13 @@ import type { Route } from "next";
 
 /**
  * Creating a workspace (plans/app/D-pages.md §2.9): a name and the website, then the backend's
- * analysis as the run component, fed by the operation's events. When it completes, the new
- * workspace opens on its Brand voice section with the draft to review: the analysis has already
- * saved the brand voice, the personas and the competitors. A failed analysis says what failed and
- * opens the workspace anyway; a stream that stops before the end offers a retry. A workspace past
- * the plan's limit (the backend's 429, or a limit the page learns of after it loaded) gets a
- * notice with the way to a bigger plan, never a click that does nothing.
+ * analysis as the run component, fed by the operation's events. When it completes, the flow shows
+ * what was read (WorkspaceReviewStep): the brand voice, the personas and the competitors the
+ * analysis has already saved, editable, then Finish, which opens Generate content (FB2.1,
+ * rext-control#682). A failed analysis says what failed and opens the workspace anyway; a stream
+ * that stops before the end offers a retry. A workspace past the plan's limit (the backend's 429,
+ * or a limit the page learns of after it loaded) gets a notice with the way to a bigger plan,
+ * never a click that does nothing.
  */
 export function WorkspaceCreateWizard() {
   const router = useRouter();
@@ -49,7 +51,10 @@ export function WorkspaceCreateWizard() {
   const [website, setWebsite] = useState("");
   const [streamProblem, setStreamProblem] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
+  // The analysis finished: the drafted details are reviewed here, in the flow.
+  const [reviewing, setReviewing] = useState(false);
   const slugRef = useRef<string | null>(null);
+  const idRef = useRef<string | null>(null);
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
@@ -78,9 +83,11 @@ export function WorkspaceCreateWizard() {
   );
 
   const handleComplete = useCallback(() => {
-    toast.success("Your workspace is ready");
-    openBrandVoice(true);
-  }, [openBrandVoice]);
+    if (!idRef.current || !slugRef.current) return;
+    // The new workspace's brand voice, personas and lists are read fresh from here on.
+    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+    setReviewing(true);
+  }, [queryClient]);
 
   // A failed step arrives as an event (shown from `events`); anything else here is the stream itself.
   const handleError = useCallback((error: string) => {
@@ -121,7 +128,15 @@ export function WorkspaceCreateWizard() {
         timezone: data.timezone,
       });
       slugRef.current = workspace.slug;
-      // The switcher's list stays cached for minutes; the sidebar needs the new workspace now.
+      idRef.current = workspace.id;
+      // The switcher's list stays cached for minutes, and the switcher puts back the first
+      // workspace of that list when the current one isn't in it. The new workspace joins the
+      // list first, so the sidebar names it, and links to it, through the analysis and the review.
+      queryClient.setQueryData(workspaceQueries.list().queryKey, (list) =>
+        list && !list.workspaces.some((known) => known.id === workspace.id)
+          ? { ...list, workspaces: [workspace, ...list.workspaces] }
+          : list,
+      );
       setCurrentWorkspace(workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
       // The plan's count above the form ("1 of 1 workspace on your plan") counts this one now.
@@ -222,6 +237,16 @@ export function WorkspaceCreateWizard() {
           </FieldController>
         </FormShell>
       </div>
+    );
+  }
+
+  if (reviewing && idRef.current && slugRef.current) {
+    return (
+      <WorkspaceReviewStep
+        workspaceId={idRef.current}
+        workspaceSlug={slugRef.current}
+        website={website}
+      />
     );
   }
 

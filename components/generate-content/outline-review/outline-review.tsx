@@ -8,6 +8,7 @@ import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useWorkspacePermission } from "@/hooks/use-permission";
 import { usePersonas } from "@/hooks/use-personas";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import {
@@ -29,6 +30,7 @@ import {
   streamedHeadings,
   type TreeRow,
 } from "@/lib/generate-content/outline-review";
+import { PERSONA_PERMISSIONS } from "@/lib/permissions";
 import type {
   KeywordCluster,
   Outline,
@@ -110,8 +112,20 @@ export function OutlineReview({
     );
   }, [sortedLinks]);
 
-  const { data: personasData } = usePersonas(workspaceId || null);
+  const {
+    data: personasData,
+    refetch: refetchPersonas,
+    isFetching: personasFetching,
+    isLoading: personasLoading,
+    isError: personasFailed,
+  } = usePersonas(workspaceId || null);
   const personas = useMemo(() => personasData?.personas ?? [], [personasData]);
+  // Creating a persona here needs the same permission as its page; the backend checks it again.
+  const { hasPermission: mayCreatePersona, isLoading: permissionLoading } =
+    useWorkspacePermission(
+      PERSONA_PERMISSIONS.CREATE,
+      workspaceId ?? undefined,
+    );
   const [personaId, setPersonaId] = useState<string | null>(null);
   // Adopt each recommendation exactly once. Tracking the recommendation already
   // applied, rather than deriving a selection on every render, is what makes
@@ -179,6 +193,12 @@ export function OutlineReview({
       personaRecommendations={outline.persona_recommendations ?? []}
       personaId={personaId}
       onPersonaChange={setPersonaId}
+      onRefreshPersonas={() => void refetchPersonas()}
+      refreshingPersonas={personasFetching}
+      // A list not yet known is neither empty nor there: only a loaded list picks a branch.
+      personasLoading={!personasData && personasLoading}
+      personasFailed={!personasData && personasFailed}
+      canCreatePersona={mayCreatePersona && !permissionLoading}
       brandPromotion={gate.brandPromotion}
       recommendedProminence={gate.recommendedProminence}
       prominence={prominence}

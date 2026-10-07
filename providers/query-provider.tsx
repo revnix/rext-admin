@@ -3,6 +3,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
+import { ServerAwayNotice } from "@/components/server-away-notice";
 import { getQueryClient } from "@/lib/query-client";
 
 interface QueryProviderProps {
@@ -22,6 +23,8 @@ export function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      {/* Says so while the API is away (a deploy's restart), and reloads what failed once it's back. */}
+      <ServerAwayNotice />
       {/* Only include devtools in development builds */}
       {process.env.NODE_ENV === "development" && (
         <ReactQueryDevtools initialIsOpen={false} />

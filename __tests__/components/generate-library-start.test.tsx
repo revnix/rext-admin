@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import GeneratePage from "@/app/w/[workspaceSlug]/generate_content/page";
+import GeneratePage from "@/app/w/[workspaceSlug]/generate-content/page";
 
 // The address names the workspace by its slug; the Library is kept under its id.
 const WORKSPACE_ID = "9f0c2d1e-5b7a-4c3e-8d21-6a4f0b9e1c77";

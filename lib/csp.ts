@@ -46,6 +46,12 @@ export function getCSPHeader(_nonce: string): string {
     // The password breach check on sign-up and reset (lib/password-utils.ts) asks Have I Been
     // Pwned for a five-character hash prefix, from the browser.
     pwnedPasswords: "https://api.pwnedpasswords.com",
+    // The support chat (lib/support-chat/chat.ts, #711), loaded on its first opening only.
+    // Crisp's own list: https://docs.crisp.chat/guides/others/whitelisting-our-systems/crisp-domain-names/
+    crisp: {
+      https: "https://*.crisp.chat",
+      sockets: "wss://*.relay.crisp.chat wss://*.relay.rescue.crisp.chat",
+    },
   };
 
   // Build CSP directives
@@ -56,24 +62,28 @@ export function getCSPHeader(_nonce: string): string {
     // 'unsafe-eval': Required for Turbopack dev hot reload
     // 'unsafe-inline': Required for Webpack production inline scripts
     // Third-party: LemonSqueezy checkout script
-    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.lemonsqueezy.assets}`,
+    `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.lemonsqueezy.assets} ${thirdPartyDomains.crisp.https}`,
 
     // Styles: ALWAYS allow unsafe-inline (React components use inline styles extensively)
     // In production, you may want to generate style hashes or use a CSS-in-JS solution
-    `style-src 'self' 'unsafe-inline'`,
+    `style-src 'self' 'unsafe-inline' ${thirdPartyDomains.crisp.https}`,
 
     // Images: Allow self, data URIs, and blobs
     // In dev: also allow http: for local MinIO (localhost:9000 presigned URLs)
     `img-src 'self' blob: data: https: ${isDev ? "http:" : ""}`.trim(),
 
     // Fonts: Allow self and data URIs
-    "font-src 'self' data:",
+    `font-src 'self' data: ${thirdPartyDomains.crisp.https}`,
+
+    // Media and workers: the support chat's sounds and its worker
+    `media-src 'self' ${thirdPartyDomains.crisp.https}`,
+    `worker-src 'self' blob: ${thirdPartyDomains.crisp.https}`,
 
     // Connect: Allow self, backend API, and third-party services
-    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog} ${thirdPartyDomains.pwnedPasswords}`,
+    `connect-src 'self' ${backendOrigins} ${thirdPartyDomains.lemonsqueezy.app} ${thirdPartyDomains.posthog} ${thirdPartyDomains.pwnedPasswords} ${thirdPartyDomains.crisp.https} ${thirdPartyDomains.crisp.sockets}`,
 
     // Frames: Allow LemonSqueezy checkout overlays
-    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.checkout}`,
+    `frame-src 'self' ${thirdPartyDomains.lemonsqueezy.checkout} ${thirdPartyDomains.crisp.https}`,
 
     // Objects: Block all plugins
     "object-src 'none'",
@@ -111,6 +121,8 @@ export function getCSPHeader(_nonce: string): string {
  *     (checkout URLs are served from the store subdomain, not app.)
  *   - connect-src: Enables API connections to app.lemonsqueezy.com
  * - Have I Been Pwned: the password breach check (connect-src api.pwnedpasswords.com)
+ * - Crisp: the support chat, on its first opening only (Crisp's published list: scripts,
+ *   styles, fonts, media, workers, frames and connections, with its websocket relays)
  * - To add new services: Update thirdPartyDomains object and relevant directives
  *
  * Security Features Still Active:

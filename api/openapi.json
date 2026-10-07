@@ -17302,6 +17302,11 @@
             "type": "array",
             "title": "Permissions",
             "default": []
+          },
+          "is_new_user": {
+            "type": "boolean",
+            "title": "Is New User",
+            "default": false
           }
         },
         "type": "object",

@@ -7,6 +7,7 @@ import {
   settleStages,
   stagesAt,
   startStages,
+  TITLES_WRITTEN,
   timedOutStages,
 } from "@/lib/generate-content/run-stages";
 import {
@@ -167,6 +168,52 @@ describe("timedOutStages, a run the time limit stopped (E22)", () => {
   });
 });
 
+// rext-control#694: the model writes the titles, then the same node checks and repairs them.
+describe("the titles' stages", () => {
+  it("are the writing and the checking", () => {
+    expect(RUN_PHASES.titles.map((def) => def.label)).toEqual([
+      "Writing five titles",
+      "Checking each title",
+    ]);
+  });
+
+  it("move from the writing to the checking when the model's text closes", () => {
+    let stages = startStages("titles", 0);
+    expect(states(stages)).toEqual(["active", "pending"]);
+    // The content-type gate's answer comes first: it ends nothing.
+    expect(finishNode("titles", stages, "content_type", 500)).toBe(stages);
+    stages = finishNode("titles", stages, TITLES_WRITTEN, 9000);
+    expect(states(stages)).toEqual(["complete", "active"]);
+    expect(stages[0]).toMatchObject({ startedAt: 0, endedAt: 9000 });
+    expect(stages[1].startedAt).toBe(9000);
+    // The node's own update repeats the end of a stage already closed.
+    expect(finishNode("titles", stages, "generate_topics", 11_000)).toBe(
+      stages,
+    );
+    stages = settleStages(stages, 11_500);
+    expect(states(stages)).toEqual(["complete", "complete"]);
+    expect(stages[1]).toMatchObject({ startedAt: 9000, endedAt: 11_500 });
+  });
+
+  it("end the writing on the node's update when its text never streamed", () => {
+    let stages = startStages("titles", 0);
+    stages = finishNode("titles", stages, "generate_topics", 11_000);
+    expect(states(stages)).toEqual(["complete", "active"]);
+    expect(states(settleStages(stages, 11_100))).toEqual([
+      "complete",
+      "complete",
+    ]);
+  });
+
+  it("read as the writing from outside the stream, where the two can't be told apart", () => {
+    expect(states(stagesAt("titles", "titles", 4000))).toEqual([
+      "active",
+      "pending",
+    ]);
+    expect(expectedStageMs("title-checks")).toBe(2_000);
+  });
+});
+
 describe("the stage names on screen", () => {
   it("are words, not the graph's node names", () => {
     const labels = Object.values(RUN_PHASES).flatMap((defs) =>
@@ -197,7 +244,7 @@ describe("run timings", () => {
   it("ignores a duration that is not a positive number", () => {
     recordStageMs("titles", 0);
     recordStageMs("titles", Number.NaN);
-    expect(expectedStageMs("titles")).toBe(12_000);
+    expect(expectedStageMs("titles")).toBe(10_000);
   });
 
   it.each([

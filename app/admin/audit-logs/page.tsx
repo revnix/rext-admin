@@ -1,10 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Download, FileText, Search } from "lucide-react";
-import { useState } from "react";
+import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { AuditLogsTable } from "@/components/admin/audit/audit-logs-table";
+import {
+  type AuditLog,
+  AuditLogsTable,
+} from "@/components/admin/audit/audit-logs-table";
 import { ListPage } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
 import { Button } from "@/components/ui/button";
@@ -15,51 +17,59 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useDataTableUrlState } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import { usePermission } from "@/hooks/use-permission";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiClient } from "@/lib/api-client";
 import { AUDIT_PERMISSIONS } from "@/lib/permissions";
+import {
+  ADMIN_AUDIT_LOGS_FACETS,
+  adminAuditLogsParams,
+} from "@/lib/search-params/admin-audit-logs";
+
+const NO_LOGS: AuditLog[] = [];
 
 export default function AuditLogsPage() {
-  const [page, setPage] = useState(0);
-  const [perPage] = useState(50);
-  const [search, setSearch] = useState("");
-  const [actionFilter, setActionFilter] = useState<string | null>(null);
-  const [resourceTypeFilter, setResourceTypeFilter] = useState<string | null>(
-    null,
-  );
-  const debouncedSearch = useDebounce(search, 300);
+  // The search, the filters and the page live in the URL; the server applies them.
+  const tableState = useDataTableUrlState(adminAuditLogsParams, {
+    facets: ADMIN_AUDIT_LOGS_FACETS,
+  });
+  const { pageIndex, pageSize } = tableState.pagination;
+  const debouncedSearch = useDebounce(tableState.globalFilter, 300);
+  const facetValue = (id: string) => {
+    const value = tableState.columnFilters.find((f) => f.id === id)?.value;
+    return Array.isArray(value) ? (value[0] as string | undefined) : undefined;
+  };
+  const actionArea = facetValue("action");
+  const resourceTypeFilter = facetValue("resource");
   const canReadAuditLogs = usePermission(AUDIT_PERMISSIONS.READ);
+
+  // The list and its export ask with the same filters; the backend matches
+  // an action by its prefix, so the user area is "user.".
+  const filters = {
+    user_email: debouncedSearch || undefined,
+    action: actionArea ? `${actionArea}.` : undefined,
+    resource_type: resourceTypeFilter,
+  };
 
   // Fetch audit logs
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [
       "admin",
       "audit-logs",
-      page,
-      perPage,
+      pageIndex,
+      pageSize,
       debouncedSearch,
-      actionFilter,
+      actionArea,
       resourceTypeFilter,
     ],
-    queryFn: async () => {
-      return apiClient.auditLogs.getAllLogs({
-        offset: page * perPage,
-        limit: perPage,
-        user_email: debouncedSearch || undefined,
-        action: actionFilter || undefined,
-        resource_type: resourceTypeFilter || undefined,
-      });
-    },
+    queryFn: () =>
+      apiClient.auditLogs.getAllLogs({
+        offset: pageIndex * pageSize,
+        limit: pageSize,
+        ...filters,
+      }),
     enabled: canReadAuditLogs,
   });
 
@@ -85,17 +95,14 @@ export default function AuditLogsPage() {
     );
   }
 
-  const logs = data?.logs || [];
+  const logs: AuditLog[] = data?.logs ?? NO_LOGS;
   const total = data?.total || 0;
-  const totalPages = Math.ceil(total / perPage);
 
   const handleExport = async (format: "csv" | "json") => {
     try {
       const blob = await apiClient.auditLogs.downloadLogs({
         format,
-        user_email: debouncedSearch || undefined,
-        action: actionFilter || undefined,
-        resource_type: resourceTypeFilter || undefined,
+        ...filters,
       });
 
       // Create download link
@@ -152,101 +159,19 @@ export default function AuditLogsPage() {
           </Card>
         }
       >
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Search & Filter</CardTitle>
-            <CardDescription>Find specific audit log entries</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Search by email */}
-            <div className="relative">
-              <Search className="z-10 pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by user email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Filters row */}
-            <div className="flex flex-wrap items-center gap-4">
-              <Select
-                value={actionFilter || "all"}
-                onValueChange={(value) =>
-                  setActionFilter(value === "all" ? null : value)
-                }
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="All Actions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  <SelectItem value="user.">User Actions</SelectItem>
-                  <SelectItem value="workspace.">Workspace Actions</SelectItem>
-                  <SelectItem value="content.">Content Actions</SelectItem>
-                  <SelectItem value="subscription.">
-                    Subscription Actions
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={resourceTypeFilter || "all"}
-                onValueChange={(value) =>
-                  setResourceTypeFilter(value === "all" ? null : value)
-                }
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="All Resources" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Resources</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="workspace">Workspace</SelectItem>
-                  <SelectItem value="content">Content</SelectItem>
-                  <SelectItem value="subscription">Subscription</SelectItem>
-                  <SelectItem value="role">Role</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {(actionFilter || resourceTypeFilter || search) && (
-                <Button
-                  variant="ghost"
-                  className="ms-auto sm:ms-0"
-                  size="sm"
-                  onClick={() => {
-                    setActionFilter(null);
-                    setResourceTypeFilter(null);
-                    setSearch("");
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <br />
         {/* Audit Logs Table */}
         <Card>
           <CardHeader>
             <CardTitle>
               Audit Trail ({total.toLocaleString()} entries)
             </CardTitle>
-            <CardDescription>
-              {totalPages > 0 && `Page ${page + 1} of ${totalPages}`}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <AuditLogsTable
               logs={logs}
+              total={total}
               isLoading={isLoading}
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              onRefresh={refetch}
+              state={tableState}
             />
           </CardContent>
         </Card>

@@ -66,9 +66,16 @@ import { apiClient } from "@/lib/api-client";
 import { ConnectWordPressDialog } from "@/components/integrations/connect-wordpress-dialog";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
-import { marked } from "marked";
+import { articleHtml } from "@/lib/content/article-html";
 import { cn } from "@/lib/utils";
 import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
+import {
+  PUBLISH_RESULT_COPY,
+  postLink,
+  publishConfirmCopy,
+} from "@/lib/content/publish-copy";
+import { useConfirmation } from "../ui/confirmation-dialog";
+import { Notice } from "../ui/notice";
 import { Skeleton } from "../ui/skeleton";
 
 const TAG_SKELETON_KEYS = Array.from(
@@ -80,98 +87,6 @@ const CONTENT_SKELETON_KEYS = Array.from(
   { length: 3 },
   (_, i) => `content-skeleton-${i + 1}`,
 );
-
-const WORDPRESS_STATUS_DETAILS: Record<
-  WordPressPostStatus,
-  { label: string; successTitle: string; successMessage: string }
-> = {
-  publish: {
-    label: "Publish",
-    successTitle: "Content Published Successfully!",
-    successMessage: "Your content is live on WordPress.",
-  },
-  draft: {
-    label: "Draft",
-    successTitle: "WordPress Draft Created!",
-    successMessage: "Your content was saved as a draft in WordPress.",
-  },
-  pending: {
-    label: "Review",
-    successTitle: "Submitted for Review!",
-    successMessage: "Your content is pending review in WordPress.",
-  },
-};
-
-// Custom renderers: links open in new tab; images get fallback placeholder on error
-marked.use({
-  renderer: {
-    code({ text, lang }: { text: string; lang?: string }) {
-      const languageClass = lang ? `language-${lang}` : "";
-      const escapedText = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-
-      return `<div class="relative group my-6 rounded-md overflow-hidden bg-surface-inset border border-border">
-        ${
-          lang
-            ? `<div class="flex items-center justify-between px-4 py-2 border-b border-border">
-                <span class="text-caption font-mono text-muted-foreground">${lang}</span>
-              </div>`
-            : ""
-        }
-        <div class="px-4 py-4 overflow-x-auto">
-          <pre class="!m-0 !p-0 !bg-transparent"><code class="${languageClass} text-table font-mono text-foreground">${escapedText}</code></pre>
-        </div>
-      </div>`;
-    },
-    link({
-      href,
-      title,
-      text,
-    }: {
-      href: string;
-      title?: string | null;
-      text: string;
-    }) {
-      const titleAttr = title ? ` title="${title}"` : "";
-      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
-    },
-    image({
-      href,
-      title,
-      text,
-    }: {
-      href: string;
-      title?: string | null;
-      text: string;
-    }) {
-      const alt = text || title || "";
-      const caption = title || text || "";
-      const placeholder = `
-        <div class="content-image-placeholder" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>
-            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-          </svg>
-        </div>`;
-      return `
-        <figure class="content-image-figure">
-          <img
-            src="${href}"
-            alt="${alt}"
-            loading="lazy"
-            class="content-image"
-            onerror="this.closest('figure').classList.add('content-image-broken'); this.style.display='none';"
-          />
-          ${placeholder}
-          ${caption ? `<figcaption class="content-image-caption">${caption}</figcaption>` : ""}
-        </figure>`;
-    },
-  },
-});
 
 function InlineToolCard({ tc }: { tc: ToolCall }) {
   const [expanded, setExpanded] = useState(false);
@@ -269,6 +184,9 @@ type ContentEditorProps = {
   toolCalls?: ToolCall[];
   /** The run component while the article is written, at the top of the side panel. */
   runProgress?: React.ReactNode;
+  /** The article is live on a connected site (its status is "published"): a draft or review save
+   *  then takes the post down, so the Publish menu warns first (#676). */
+  isLive?: boolean;
   /** When true, shows the content blurred with a humanizing overlay */
 };
 
@@ -292,6 +210,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     onContentChange,
     toolCalls = [],
     runProgress,
+    isLive = false,
   } = props;
 
   // JSON-LD is not part of content-level on-page SEO: hide those findings and
@@ -312,11 +231,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   // article title) a different title from the one the user picked.
   const displayTitle = allContent?.title || allContent?.meta_title || "";
   const body = generatedContent;
-  const previewHtml = useMemo(() => {
-    if (!body) return "";
-    const result = marked.parse(body);
-    return typeof result === "string" ? result : "";
-  }, [body]);
+  const previewHtml = useMemo(() => articleHtml(body), [body]);
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
   const { displayed: typedIntro } = useTypewriter(
     allContent?.meta_description || "",
@@ -348,6 +263,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     action: "publish" | "save" | "copy";
     message: string;
     showIntegrationLink?: boolean;
+    /** The post on the site, after a publish that made it live. */
+    postUrl?: string | null;
   }>({
     title: "",
     isOpen: false,
@@ -362,11 +279,34 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  // Scheduling publishes to a connected site later, so the dialog first reads whether one is
+  // connected; coming back from the integrations tab reads it again (#705).
+  const scheduleSites = useQuery({
+    ...integrationQueries.list(workspaceId ?? ""),
+    enabled: scheduleDialogOpen && !!workspaceId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const scheduleNeedsSite =
+    scheduleSites.isSuccess &&
+    !scheduleSites.data.some((site) => site.is_active !== false);
+  const checkingScheduleSites =
+    scheduleSites.isPending && scheduleSites.fetchStatus === "fetching";
+  // A list that couldn't be read is no proof of a site, an earlier answer still in the cache
+  // included: the dates wait for a check that worked (review rounds 1 and 2).
+  const scheduleSitesFailed = scheduleSites.isError;
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
-  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
-  const [selectedPublishStatus, setSelectedPublishStatus] =
-    useState<WordPressPostStatus>("publish");
+  const { confirm, ConfirmationComponent } = useConfirmation();
+  // What this editor's own last publish did to the post, ahead of the page's refetch of the article
+  // (the fresh-generation view has no article to read it from at all). It holds only while `isLive`
+  // is still the value it was set against: once the page reads the article again, the page wins.
+  const [liveHere, setLiveHere] = useState<{
+    live: boolean;
+    against: boolean;
+  } | null>(null);
+  const postIsLive =
+    liveHere && liveHere.against === isLive ? liveHere.live : isLive;
   const [pendingPublishStatus, setPendingPublishStatus] =
     useState<WordPressPostStatus>("publish");
 
@@ -561,7 +501,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   ) => {
     if (!isFinal || !workspaceId) return;
     setPendingPublishStatus(selectedStatus);
-    const statusDetails = WORDPRESS_STATUS_DETAILS[selectedStatus];
+    const statusDetails = PUBLISH_RESULT_COPY[selectedStatus];
     log.info("[WordPress Publish] Selected post status", {
       selected_status: selectedStatus,
       content_id: contentSavedId,
@@ -597,11 +537,11 @@ function ContentEditorInner(props: ContentEditorProps) {
       }
 
       setStatusModal({
-        title: `${statusDetails.label} Content...`,
+        title: `${statusDetails.working}...`,
         isOpen: true,
         type: "success",
         action: "publish",
-        message: `Sending content to WordPress with status "${selectedStatus}"...`,
+        message: "Sending the article to your site...",
       });
 
       const cmsType = activeIntegrations[0]?.integration_type;
@@ -648,12 +588,28 @@ function ContentEditorInner(props: ContentEditorProps) {
         content_id: contentSavedId ?? response?.id ?? undefined,
       });
       invalidateContentCache();
+      // A publish makes the post live; a draft or review save takes it down, but only where it
+      // reached the site: one that failed may still show the post, so the warning stays.
+      // When no site took it, nothing changed on any site.
+      const results = response?.publish_results;
+      const someSiteMissed = (results?.failed ?? 0) > 0;
+      const noSiteTookIt = results ? results.successful === 0 : false;
+      setLiveHere({
+        live: noSiteTookIt
+          ? postIsLive
+          : selectedStatus === "publish" || (someSiteMissed && postIsLive),
+        against: isLive,
+      });
       setStatusModal({
         title: statusDetails.successTitle,
         isOpen: true,
         type: "success",
         action: "publish",
         message: statusDetails.successMessage,
+        postUrl:
+          selectedStatus === "publish"
+            ? postLink(response?.content?.wordpress_url)
+            : null,
       });
     } catch (error) {
       const err = error as Error & { statusCode?: number };
@@ -681,8 +637,8 @@ function ContentEditorInner(props: ContentEditorProps) {
       });
       setStatusModal({
         title: isIntegrationIssue
-          ? "Permission Required"
-          : "Failed to Publish Content",
+          ? "Permission required"
+          : "The article wasn't sent to your site",
         isOpen: true,
         type: "error",
         action: "publish",
@@ -846,9 +802,12 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  const openPublishConfirmation = (status: WordPressPostStatus) => {
-    setSelectedPublishStatus(status);
-    setPublishConfirmOpen(true);
+  // Every choice in the menu asks first, in words that name it; on a live article, a draft or review
+  // save says the post leaves the site (#676).
+  const openPublishConfirmation = async (status: WordPressPostStatus) => {
+    if (await confirm(publishConfirmCopy(status, postIsLive))) {
+      publishContent(status);
+    }
   };
 
   const analysisSidebarContent = (
@@ -927,7 +886,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Copy HTML
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-                Copy MD
+                Copy Markdown
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleCopy("formatted")}>
                 Copy Text
@@ -1212,7 +1171,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                 </div>
               </>
             ) : (
-              <div className="relative">
+              // Images span the article's column at their own aspect, the featured one
+              // included (the founder's feedback v2, #704); the editor's image nodes stay
+              // as they are in Edit. Each image's wrappers become blocks, the outer one over
+              // its inline `display: inline-block` (hence `!`), or a narrow image would stay
+              // at its own width (review round 1).
+              <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
                 {!body?.trim() ? (
                   <div className="not-prose space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -1236,6 +1200,15 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 ) : (
                   <>
+                    {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
+                        the article, instead of behind its button (#704). */}
+                    <div className="not-prose mb-8 xl:hidden">
+                      <ArticleChecklist
+                        seoScore={seoScore}
+                        checklist={checklist}
+                        trustScore={trustScore}
+                      />
+                    </div>
                     <header>
                       {tags.length > 0 && (
                         <div className="not-prose mb-4 flex flex-wrap gap-2">
@@ -1385,6 +1358,18 @@ function ContentEditorInner(props: ContentEditorProps) {
                 Go to Integrations
               </Button>
             )}
+            {statusModal.postUrl && (
+              <Button asChild variant="outline" className="mt-2 gap-2">
+                <a
+                  href={statusModal.postUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open the post
+                </a>
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -1392,123 +1377,146 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* Schedule dialog */}
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
         <DialogContent className="sm:max-w-sm max-h-[80vh] sm:h-auto overflow-auto">
-          <DialogTitle>Schedule Publication</DialogTitle>
+          <DialogTitle>Schedule publication</DialogTitle>
           <DialogDescription>
-            Pick a date and time in your account timezone ({accountTimezone}).
-            Content publishes automatically via WordPress.
+            {scheduleNeedsSite
+              ? "A scheduled article is published to your site at the time you pick."
+              : `Pick a date and time in your account timezone (${accountTimezone}). Content publishes automatically via WordPress.`}
           </DialogDescription>
-          {timezoneMismatch && syncTimezoneMutation.isError && (
-            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-foreground">
-              <AlertCircle size={14} className="mt-0.5 shrink-0" />
-              <div className="flex-1">
-                Couldn&apos;t update your account timezone to match your device
-                (<strong>{browserTimezone}</strong>). Scheduled times will use{" "}
-                <strong>{accountTimezone}</strong> until this succeeds.
+          {checkingScheduleSites ? (
+            <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 size={16} className="animate-spin shrink-0" />
+              Checking your connected sites…
+            </div>
+          ) : scheduleSitesFailed ? (
+            <Notice
+              tone="danger"
+              title="Your sites couldn't be checked"
+              className="self-start"
+              action={
                 <Button
-                  type="button"
-                  variant="link"
                   size="sm"
-                  className="h-auto p-0 ml-1 text-foreground underline"
-                  disabled={syncTimezoneMutation.isPending}
-                  onClick={() => syncTimezoneMutation.mutate()}
+                  variant="outline"
+                  disabled={scheduleSites.isFetching}
+                  onClick={() => scheduleSites.refetch()}
                 >
-                  Retry
+                  Try again
                 </Button>
+              }
+            >
+              Scheduling needs a connected site, so the dates show once the
+              check works.
+            </Notice>
+          ) : scheduleNeedsSite ? (
+            <Notice
+              tone="info"
+              title="Connect a site first"
+              className="self-start"
+              action={
+                workspaceSlug ? (
+                  <Button asChild variant="outline" size="sm">
+                    <a
+                      href={`/w/${workspaceSlug}/integrations`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink size={16} aria-hidden />
+                      Set up an integration
+                    </a>
+                  </Button>
+                ) : undefined
+              }
+            >
+              Set one up in a new tab, then come back: this dialog shows the
+              dates once a site is connected.
+            </Notice>
+          ) : (
+            <>
+              {timezoneMismatch && syncTimezoneMutation.isError && (
+                <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-foreground">
+                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    Couldn&apos;t update your account timezone to match your
+                    device (<strong>{browserTimezone}</strong>). Scheduled times
+                    will use <strong>{accountTimezone}</strong> until this
+                    succeeds.
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 ml-1 text-foreground underline"
+                      disabled={syncTimezoneMutation.isPending}
+                      onClick={() => syncTimezoneMutation.mutate()}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {timezoneMismatch && syncTimezoneMutation.isPending && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
+                  <Loader2 size={14} className="animate-spin shrink-0" />
+                  Updating your account timezone to match your device (
+                  {browserTimezone})...
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-4 py-2">
+                <Calendar
+                  mode="single"
+                  selected={scheduleDate}
+                  onSelect={setScheduleDate}
+                  disabled={isDateDisabled}
+                />
+                <div className="w-full space-y-1.5">
+                  <Label htmlFor="schedule-time" className="text-xs">
+                    Time
+                  </Label>
+                  <Input
+                    id="schedule-time"
+                    type="time"
+                    value={scheduleTime}
+                    min={minScheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
-            </div>
+            </>
           )}
-          {timezoneMismatch && syncTimezoneMutation.isPending && (
-            <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2.5 text-xs text-muted-foreground">
-              <Loader2 size={14} className="animate-spin shrink-0" />
-              Updating your account timezone to match your device (
-              {browserTimezone})...
-            </div>
-          )}
-          <div className="flex flex-col items-center gap-4 py-2">
-            <Calendar
-              mode="single"
-              selected={scheduleDate}
-              onSelect={setScheduleDate}
-              disabled={isDateDisabled}
-            />
-            <div className="w-full space-y-1.5">
-              <Label htmlFor="schedule-time" className="text-xs">
-                Time
-              </Label>
-              <Input
-                id="schedule-time"
-                type="time"
-                value={scheduleTime}
-                min={minScheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
           <DialogFooter>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setScheduleDialogOpen(false)}
             >
-              Cancel
+              {scheduleNeedsSite || scheduleSitesFailed ? "Close" : "Cancel"}
             </Button>
-            <Button
-              size="sm"
-              disabled={
-                !scheduleDate ||
-                isPublishing ||
-                isScheduleTimeInPast ||
-                (timezoneMismatch && syncTimezoneMutation.isPending)
-              }
-              onClick={scheduleContent}
-            >
-              {isPublishing ? (
-                <Loader2 size={13} className="animate-spin mr-1" />
-              ) : (
-                <Clock size={13} className="mr-1" />
+            {!scheduleNeedsSite &&
+              !checkingScheduleSites &&
+              !scheduleSitesFailed && (
+                <Button
+                  size="sm"
+                  disabled={
+                    !scheduleDate ||
+                    isPublishing ||
+                    isScheduleTimeInPast ||
+                    (timezoneMismatch && syncTimezoneMutation.isPending)
+                  }
+                  onClick={scheduleContent}
+                >
+                  {isPublishing ? (
+                    <Loader2 size={13} className="animate-spin mr-1" />
+                  ) : (
+                    <Clock size={13} className="mr-1" />
+                  )}
+                  Schedule
+                </Button>
               )}
-              Schedule
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>
-            Confirm {WORDPRESS_STATUS_DETAILS[selectedPublishStatus].label}
-          </DialogTitle>
-
-          <DialogDescription>
-            Are you sure you want to{" "}
-            <strong>
-              {WORDPRESS_STATUS_DETAILS[
-                selectedPublishStatus
-              ].label.toLowerCase()}
-            </strong>{" "}
-            this content?
-          </DialogDescription>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPublishConfirmOpen(false)}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              onClick={() => {
-                setPublishConfirmOpen(false);
-                publishContent(selectedPublishStatus);
-              }}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {ConfirmationComponent}
     </div>
   );
 }

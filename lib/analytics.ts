@@ -1,12 +1,10 @@
-import { log } from "@/lib/logger";
-import { safeJsonParse } from "@/lib/utils";
-
 // ── Event catalog ─────────────────────────────────────────────────────────────
 
 type AnalyticsEvent =
   // Auth events
   | "user_signed_in"
   | "user_signed_up"
+  | "oauth_started"
   | "email_verified"
   // Onboarding events
   | "onboarding_empty_dashboard_view"
@@ -86,12 +84,12 @@ export function registerPostHog(bridge: PostHogBridge): void {
 
 class Analytics {
   private enabled: boolean;
-  private user: AnalyticsUser | null = null;
 
   constructor() {
     this.enabled =
       process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== "false" &&
       typeof window !== "undefined";
+    this.clearStoredEvents();
   }
 
   /**
@@ -100,7 +98,6 @@ class Analytics {
    */
   identify(user: AnalyticsUser) {
     if (!this.enabled) return;
-    this.user = user;
 
     if (user.id) {
       _posthog?.identify(user.id, {
@@ -111,23 +108,14 @@ class Analytics {
     }
   }
 
-  /** Track an analytics event. */
+  /**
+   * Track an analytics event, with the caller's properties only. PostHog adds the time, the person
+   * and the page's address itself, and that address goes out with its credentials redacted
+   * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
+   */
   track(event: AnalyticsEvent, properties?: EventProperties) {
     if (!this.enabled) return;
-
-    const eventData = {
-      event,
-      properties: {
-        ...properties,
-        timestamp: new Date().toISOString(),
-        url: typeof window !== "undefined" ? window.location.href : undefined,
-        user_id: this.user?.id,
-      },
-    };
-
-    _posthog?.capture(event, eventData.properties);
-
-    this.storeEventLocally(eventData);
+    _posthog?.capture(event, { ...properties });
   }
 
   /** Track a page view. */
@@ -137,43 +125,74 @@ class Analytics {
 
   /** Reset analytics state (e.g. on logout). */
   reset() {
-    this.user = null;
     _posthog?.reset();
   }
 
-  // ── Internal helpers ───────────────────────────────────────────────────────
-
-  private storeEventLocally(eventData: unknown) {
-    if (typeof window === "undefined") return;
-
-    try {
-      const key = "wrext_analytics_events";
-      const stored = localStorage.getItem(key);
-      const events = safeJsonParse<unknown[]>(stored, []) ?? [];
-
-      events.push(eventData);
-      const recentEvents = events.slice(-100);
-      localStorage.setItem(key, JSON.stringify(recentEvents));
-    } catch (error) {
-      log.warn("[Analytics] Failed to store event locally:", error);
-    }
-  }
-
-  getStoredEvents(): unknown[] {
-    if (typeof window === "undefined") return [];
-    try {
-      const stored = localStorage.getItem("wrext_analytics_events");
-      return safeJsonParse<unknown[]>(stored, []) ?? [];
-    } catch {
-      return [];
-    }
-  }
-
+  /**
+   * Removes the copy of recent events an earlier version kept in the browser. It held each event's
+   * raw address, so it is deleted when the app loads and again at sign-out.
+   */
   clearStoredEvents() {
     if (typeof window === "undefined") return;
-    localStorage.removeItem("wrext_analytics_events");
+    try {
+      window.localStorage.removeItem("wrext_analytics_events");
+    } catch {
+      // Storage can be unavailable (private mode, blocked site data): nothing is stored then.
+    }
   }
 }
 
 export const analytics = new Analytics();
 export type { AnalyticsEvent, EventProperties, AnalyticsUser };
+
+// ── Linking a provider ───────────────────────────────────────────────────────
+// Linking Google or GitHub from the settings goes through the same OAuth sign-in as logging in, so
+// the link button marks it, with its provider, and the login record (OAuthLoginRecord,
+// providers/posthog-provider.tsx) records no sign-in for it. The mark is in localStorage, shared by the
+// app's tabs: another open tab may refresh its session and record the login before the linking tab
+// does (C13c), and whichever tab records it first takes the mark. A login or sign-up started from the
+// OAuth buttons clears it, so a link that was abandoned can't hide a real sign-in after it.
+
+/** One mark per provider, so two tabs linking Google and GitHub at once don't overwrite each other. */
+const OAUTH_LINKING_PREFIX = "rext-oauth-linking:";
+/** A mark older than this is from a link that was abandoned, not the login now being recorded. */
+const OAUTH_LINKING_MAX_AGE_MS = 10 * 60 * 1000;
+
+/** Called by the link button just before it starts the provider's sign-in. */
+export function markOAuthLinking(provider: string): void {
+  try {
+    window.localStorage.setItem(
+      OAUTH_LINKING_PREFIX + provider,
+      String(Date.now()),
+    );
+  } catch {
+    // Storage refused: the link is recorded as a sign-in, as before.
+  }
+}
+
+/** Called by the login and sign-up OAuth buttons: what they start is never a link, for any provider. */
+export function clearOAuthLinking(): void {
+  try {
+    const keys = Object.keys(window.localStorage).filter((key) =>
+      key.startsWith(OAUTH_LINKING_PREFIX),
+    );
+    for (const key of keys) window.localStorage.removeItem(key);
+  } catch {
+    // Storage refused: there is no mark to clear.
+  }
+}
+
+/**
+ * Whether the login being recorded, through `provider`, is a link: that provider's mark, under ten
+ * minutes old. Clears that mark either way, and leaves another provider's alone.
+ */
+export function takeOAuthLinking(provider: string): boolean {
+  try {
+    const key = OAUTH_LINKING_PREFIX + provider;
+    const at = Number(window.localStorage.getItem(key));
+    window.localStorage.removeItem(key);
+    return at > 0 && Date.now() - at < OAUTH_LINKING_MAX_AGE_MS;
+  } catch {
+    return false;
+  }
+}

@@ -7,15 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  createDataTableColumnHelper,
+  DataTable,
+} from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface TemplateStats {
   template_type: string;
@@ -32,36 +28,53 @@ interface EmailPerformanceTableProps {
   isLoading: boolean;
 }
 
+function formatTemplateName(templateType: string) {
+  return templateType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+const count = (value: number) => value.toLocaleString();
+
+const column = createDataTableColumnHelper<TemplateStats>();
+
+// One row per template, all of them here, so the table sorts them itself. The open and click rates
+// stay off the table, as before.
+const columns = column.columns([
+  column.accessor((template) => formatTemplateName(template.template_type), {
+    id: "template",
+    header: "Template",
+    cell: ({ getValue }) => (
+      <span className="font-medium text-foreground">{getValue()}</span>
+    ),
+  }),
+  column.accessor("sent", {
+    header: "Sent",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => count(getValue()),
+  }),
+  column.accessor("delivered", {
+    header: "Delivered",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => count(getValue()),
+  }),
+  column.accessor("opened", {
+    header: "Opened",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => count(getValue()),
+  }),
+  column.accessor("clicked", {
+    header: "Clicked",
+    meta: { align: "end", numeric: true },
+    cell: ({ getValue }) => count(getValue()),
+  }),
+]);
+
 export function EmailPerformanceTable({
   data,
   isLoading,
 }: EmailPerformanceTableProps) {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-          <Skeleton className="h-4 w-[300px]" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton loader
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const formatTemplateName = (templateType: string) => {
-    return templateType
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -70,59 +83,29 @@ export function EmailPerformanceTable({
           Email engagement metrics broken down by template type
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-auto">
-        {data && data.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Template</TableHead>
-                <TableHead className="text-right">Sent</TableHead>
-                <TableHead className="text-right">Delivered</TableHead>
-                <TableHead className="text-right">Opened</TableHead>
-                {/* <TableHead className="text-right">Open Rate</TableHead> */}
-                <TableHead className="text-right">Clicked</TableHead>
-                {/* <TableHead className="text-right">Click Rate</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((template) => (
-                <TableRow key={template.template_type}>
-                  <TableCell className="font-medium">
-                    {formatTemplateName(template.template_type)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {template.sent.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {template.delivered.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {template.opened.toLocaleString()}
-                  </TableCell>
-                  {/* <TableCell className="text-right">
-                    <span className={getRateColor(template.open_rate, "open")}>
-                      {template.open_rate}%
-                    </span>
-                  </TableCell> */}
-                  <TableCell className="text-right">
-                    {template.clicked.toLocaleString()}
-                  </TableCell>
-                  {/* <TableCell className="text-right">
-                    <span
-                      className={getRateColor(template.click_rate, "click")}
-                    >
-                      {template.click_rate}%
-                    </span>
-                  </TableCell> */}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="flex items-center justify-center h-32 text-muted-foreground">
-            No template data available
-          </div>
-        )}
+      <CardContent>
+        <DataTable
+          caption="Performance by template"
+          columns={columns}
+          data={data}
+          getRowId={(template) => template.template_type}
+          getRowLabel={(template) => formatTemplateName(template.template_type)}
+          isLoading={isLoading}
+          surface="plain"
+          emptyState={<EmptyState title="No template data available" />}
+          renderCard={(template) => (
+            <div className="flex flex-col gap-1.5">
+              <p className="font-medium text-foreground">
+                {formatTemplateName(template.template_type)}
+              </p>
+              <p className="num text-muted-foreground">
+                {count(template.sent)} sent · {count(template.delivered)}{" "}
+                delivered · {count(template.opened)} opened ·{" "}
+                {count(template.clicked)} clicked
+              </p>
+            </div>
+          )}
+        />
       </CardContent>
     </Card>
   );
