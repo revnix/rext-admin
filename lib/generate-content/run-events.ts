@@ -85,6 +85,26 @@ export function readLibraryResearchEvent(
   };
 }
 
+/**
+ * A reuse read from the thread's state, for a run reopened while it analyses
+ * (a dropped stream, the dock, a reload), when the event is not replayed. The
+ * backend keeps the reused analysis's date there (`research_reused_at`); a
+ * refresh keeps nothing, so only a reuse is restored.
+ */
+export function readLibraryResearchState(
+  values: unknown,
+): LibraryResearchEvent | null {
+  const reusedAt = (
+    values as {
+      seo_result?: {
+        keyword_recommendations?: { research_reused_at?: unknown };
+      };
+    } | null
+  )?.seo_result?.keyword_recommendations?.research_reused_at;
+  if (typeof reusedAt !== "string" || !reusedAt) return null;
+  return { reused: true, analysedAt: reusedAt };
+}
+
 /** What the start screen says about it, under the run's progress. */
 export function libraryResearchNote({
   reused,

@@ -3,6 +3,7 @@ import {
   isStoppedRunCode,
   libraryResearchNote,
   readLibraryResearchEvent,
+  readLibraryResearchState,
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
@@ -381,5 +382,29 @@ describe("libraryResearchNote", () => {
     expect(libraryResearchNote({ reused: false, analysedAt: null })).toBe(
       "Reading the search results again.",
     );
+  });
+});
+
+describe("readLibraryResearchState", () => {
+  it("restores a reuse from the run's state", () => {
+    expect(
+      readLibraryResearchState({
+        seo_result: {
+          keyword_recommendations: {
+            research_reused_at: "2026-10-06T09:00:00+00:00",
+          },
+        },
+      }),
+    ).toEqual({ reused: true, analysedAt: "2026-10-06T09:00:00+00:00" });
+  });
+
+  it("restores nothing for a refreshed or an ordinary run", () => {
+    expect(
+      readLibraryResearchState({
+        seo_result: { keyword_recommendations: { research_reused_at: null } },
+      }),
+    ).toBe(null);
+    expect(readLibraryResearchState({ seo_result: {} })).toBe(null);
+    expect(readLibraryResearchState(undefined)).toBe(null);
   });
 });
