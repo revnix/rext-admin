@@ -367,9 +367,9 @@ function ContentEditorInner(props: ContentEditorProps) {
     !scheduleSites.data.some((site) => site.is_active !== false);
   const checkingScheduleSites =
     scheduleSites.isPending && scheduleSites.fetchStatus === "fetching";
-  // A list that couldn't be read is no proof of a site: the dates wait for one that could
-  // (review round 1).
-  const scheduleSitesFailed = scheduleSites.isError && !scheduleSites.data;
+  // A list that couldn't be read is no proof of a site, an earlier answer still in the cache
+  // included: the dates wait for a check that worked (review rounds 1 and 2).
+  const scheduleSitesFailed = scheduleSites.isError;
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
   const [scheduleTime, setScheduleTime] = useState("10:00");
   const { confirm, ConfirmationComponent } = useConfirmation();
