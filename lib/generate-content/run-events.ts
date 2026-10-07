@@ -115,6 +115,42 @@ export function runIsGoing(status: string | undefined): boolean {
   return status === "pending" || status === "running";
 }
 
+/** How one attempt to resume a paused step ended. */
+export type ResumeAttempt = {
+  /** The server announced the run (`run/created`). */
+  created: boolean;
+  /** The page aborted the stream on purpose. */
+  aborted: boolean;
+  /** The stream reached a point the page can show. */
+  settled: boolean;
+  /** The backend refused to start the run (TOO_MANY_RUNS). */
+  refused: boolean;
+};
+
+/**
+ * Whether no second attempt follows. One that ended with no sign of a run is retried once;
+ * a refusal is the backend's answer, already shown, and sending it again would only be
+ * refused again (or start a run after the page said it wouldn't).
+ */
+export function resumeAttemptIsFinal(attempt: ResumeAttempt): boolean {
+  return (
+    attempt.created || attempt.aborted || attempt.settled || attempt.refused
+  );
+}
+
+/**
+ * Whether the page reloads the thread after a resume: a stream that closed while its run
+ * went on, or a refused resume, whose step the page had already moved past while the
+ * thread stayed paused there. A caller that puts its own step back opts out of the second.
+ */
+export function reloadsAfterResume(outcome: {
+  unsettled: boolean;
+  refused: boolean;
+  restoresItsStep: boolean;
+}): boolean {
+  return outcome.unsettled || (outcome.refused && !outcome.restoresItsStep);
+}
+
 /** One model token from the stream, and the graph node whose model wrote it. */
 export type MessageToken = { token: string; node: string | null };
 

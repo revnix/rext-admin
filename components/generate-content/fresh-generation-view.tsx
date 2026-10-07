@@ -71,6 +71,8 @@ import {
   readMessageToken,
   readRunFailedEvent,
   readStoppedRun,
+  reloadsAfterResume,
+  resumeAttemptIsFinal,
   runIsGoing,
   settlesRun,
   TOO_MANY_RUNS,
@@ -347,6 +349,10 @@ export function FreshGenerationView({
   // Set by `run/created`: proof the server actually started a run for the
   // current attempt. A resume that ends without it left nothing behind.
   const runCreatedRef = useRef(false);
+
+  // Set when the backend refused to start the current attempt's run (two already going,
+  // E27): nothing was sent, so a resume neither retries nor waits for a run.
+  const runRefusedRef = useRef(false);
 
   // Track generation completion once per thread to avoid duplicate events
   const trackedThreadRef = useRef<string | null>(null);
@@ -1549,6 +1555,7 @@ export function FreshGenerationView({
       if (_e instanceof RunStreamError && _e.code === TOO_MANY_RUNS) {
         // The backend refused to start the run (two already going, E27): nothing ran, so
         // nothing failed. A resume leaves its step waiting; a new start leaves no dock job.
+        runRefusedRef.current = true;
         if (activeThreadId && (await readLatestRun(activeThreadId))) {
           updateBackgroundJob(activeThreadId, {
             status: "completed",
@@ -1765,6 +1772,7 @@ export function FreshGenerationView({
   const resumeWorkflow = async ({
     payload,
     status: statusMsg,
+    restoresItsStep = false,
   }: ResumeOptions): Promise<boolean> => {
     if (!threadId) return false;
     // Mid-article: the earlier stages are already paid for, so only a fully
@@ -1786,6 +1794,7 @@ export function FreshGenerationView({
     streamBusyRef.current = true;
     streamingThreadRef.current = threadId;
     let unsettled = false;
+    let refused = false;
 
     try {
       dispatch({ type: "SET_MANUAL_LOADING", payload: true });
@@ -1818,6 +1827,7 @@ export function FreshGenerationView({
         const controller = new AbortController();
         abortControllerRef.current = controller;
         runCreatedRef.current = false;
+        runRefusedRef.current = false;
 
         const stream = streamFromSSE(
           `/api/generate/${threadId}/resume`,
@@ -1831,10 +1841,19 @@ export function FreshGenerationView({
         );
         settled = await processStream(stream);
         aborted = controller.signal.aborted;
+        refused = runRefusedRef.current;
 
         // An abort is deliberate (cancelled generation, unmount, a newer
-        // stream taking over) — never retry over it.
-        if (runCreatedRef.current || aborted || settled) break;
+        // stream taking over) — never retry over it; nor a refusal.
+        if (
+          resumeAttemptIsFinal({
+            created: runCreatedRef.current,
+            aborted,
+            settled,
+            refused,
+          })
+        )
+          break;
         // No announcement, but the server may have started the run before the
         // connection went: never resume a thread whose run is still going.
         runGoing = runIsGoing((await readLatestRun(threadId))?.status);
@@ -1847,8 +1866,11 @@ export function FreshGenerationView({
       streamBusyRef.current = false;
       streamingThreadRef.current = null;
       // The stream closed while the run was still going: catch up with it
-      // through the restore path, as for the first stream.
-      if (unsettled) requestBackgroundGenerationRestore(threadId);
+      // through the restore path, as for the first stream. A refused resume left
+      // the thread paused where it was, while the step's view had already moved
+      // on: the same path puts that step back as the server holds it.
+      if (reloadsAfterResume({ unsettled, refused, restoresItsStep }))
+        requestBackgroundGenerationRestore(threadId);
     }
   };
 
@@ -2063,6 +2085,7 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value },
           status: "Regenerating outline...",
+          restoresItsStep: true,
         }).then((started) => {
           if (started) return;
           // Nothing was sent: hand the user back their feedback instead of an
@@ -2070,6 +2093,8 @@ export function FreshGenerationView({
           setPendingTargetWordCount(null);
           dispatch({ type: "SET_REJECTED_REASON", payload: value });
           dispatch({ type: "SET_INSTRUCTION_TYPE", payload: "outline_reject" });
+          // A refusal has already said why, with when to try again.
+          if (runRefusedRef.current) return;
           toast.error("We couldn't send your feedback", {
             description: "Please submit it again.",
           });
