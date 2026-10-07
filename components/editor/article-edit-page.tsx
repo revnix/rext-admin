@@ -334,6 +334,29 @@ function ArticleEditor({
 }
 
 /**
+ * The page's states before the editor itself (loading, no permission, no article), in the same shared
+ * layout as the editor, so their frame and gutters are its.
+ */
+function StatePage({
+  title,
+  ownHeading = true,
+  children,
+}: {
+  title: string;
+  /** False while loading: nothing in the page is a heading yet, so the layout draws the title. */
+  ownHeading?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="min-h-dvh bg-card">
+      <WorkingSurface title={title} ownHeading={ownHeading}>
+        {children}
+      </WorkingSurface>
+    </main>
+  );
+}
+
+/**
  * The full-screen article editor (task 706): the article alone on the page, saved by itself as it
  * is written. The save state shows in the top bar; a save that fails says so and can be retried, and
  * the text stays on this device until a save works. Leaving asks only while a change isn't saved.
@@ -374,31 +397,33 @@ export function ArticleEditPage({
 
   if (isWaiting || permissionLoading) {
     return (
-      <main className="mx-auto flex h-dvh max-w-prose flex-col gap-4 px-4 pt-24">
-        <Skeleton className="h-10 w-4/5" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-2/3" />
-      </main>
+      <StatePage title="Edit article" ownHeading={false}>
+        <div className="mx-auto flex max-w-prose flex-col gap-4 pt-16">
+          <Skeleton className="h-10 w-4/5" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </StatePage>
     );
   }
 
   if (!canUpdate) {
     return (
-      <main className="grid h-dvh place-items-center px-4">
+      <StatePage title="You can't edit this article">
         <EmptyState
           as="h1"
           title="You can't edit this article"
           description="Editing needs the Update content permission: ask the workspace's owner."
           action={{ label: "Back to the article", href: articleHref }}
         />
-      </main>
+      </StatePage>
     );
   }
 
   if (!opened.current) {
     return (
-      <main className="grid h-dvh place-items-center px-4">
+      <StatePage title="This article couldn't be opened">
         <EmptyState
           as="h1"
           title="This article couldn't be opened"
@@ -408,7 +433,7 @@ export function ArticleEditPage({
             href: workspaceRoutes.content(workspaceSlug),
           }}
         />
-      </main>
+      </StatePage>
     );
   }
 
