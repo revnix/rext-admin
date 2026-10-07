@@ -1,4 +1,5 @@
 import type { StreamMode } from "@langchain/langgraph-sdk";
+import { dateFormat } from "@/lib/formatters/date-formatters";
 
 /**
  * The stream modes every generation stream asks LangGraph for. In
@@ -49,6 +50,55 @@ export const TOO_MANY_RUNS = "too_many_runs";
 
 export function isStoppedRunCode(code: unknown): boolean {
   return typeof code === "string" && STOPPED_RUN_CODES.includes(code);
+}
+
+/**
+ * Whether a start from a saved keyword reuses its analysis's search results, as the custom event
+ * the backend sends when it loads the keyword (rext-backend E24, `library_item.py`):
+ * `{type: "library", step: "library.research_reused" | "library.research_refreshed", analysed_at}`.
+ * The founder's rule (2026-10-07): research under a week old is reused, and its search isn't
+ * charged again.
+ */
+export type LibraryResearchEvent = {
+  reused: boolean;
+  analysedAt: string | null;
+};
+
+export function readLibraryResearchEvent(
+  data: unknown,
+): LibraryResearchEvent | null {
+  if (!data || typeof data !== "object") return null;
+  const event = data as Record<string, unknown>;
+  if (event.type !== "library") return null;
+  if (
+    event.step !== "library.research_reused" &&
+    event.step !== "library.research_refreshed"
+  ) {
+    return null;
+  }
+  return {
+    reused: event.step === "library.research_reused",
+    analysedAt:
+      typeof event.analysed_at === "string" && event.analysed_at
+        ? event.analysed_at
+        : null,
+  };
+}
+
+/** What the start screen says about it, under the run's progress. */
+export function libraryResearchNote({
+  reused,
+  analysedAt,
+}: LibraryResearchEvent): string {
+  const date = analysedAt ? dateFormat.short(analysedAt) : "";
+  if (reused) {
+    return date
+      ? `Using your research from ${date}. The search results aren't read or charged again.`
+      : "Using your earlier research. The search results aren't read or charged again.";
+  }
+  return date
+    ? `Your research from ${date} is more than a week old, so the search results are read again.`
+    : "Reading the search results again.";
 }
 
 export function readRunFailedEvent(data: unknown): RunFailedEvent | null {
