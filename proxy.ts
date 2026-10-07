@@ -217,6 +217,9 @@ export default async function proxy(request: NextRequest) {
     // link must open without one. Kept out of AUTH_PAGE_PATHS so that someone
     // signed in as another account isn't bounced away from the link.
     "/account-recovery",
+    // Every email's unsubscribe link: it works without signing in (commercial-email law expects
+    // that), and the token in the link is the proof.
+    "/unsubscribe",
     // The development pages read no data. They open signed out wherever they're on
     // (lib/dev-pages.ts), so pr-checks' accessibility checks reach them.
     ...(devPagesOn() ? ["/dev/"] : []),

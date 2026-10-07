@@ -269,6 +269,8 @@ export const ENDPOINTS = {
     notifications: {
       getPreferences: "/api/v1/user/preferences/notifications",
       updatePreferences: "/api/v1/user/preferences/notifications",
+      /** Needs no sign-in: the token in an email's unsubscribe link is the proof. */
+      unsubscribe: "/api/v1/user/email-preferences/unsubscribe",
     },
     sessions: {
       list: "/api/v1/user/sessions",
