@@ -101,6 +101,32 @@ export function unregisterPostHog(): void {
   pending.length = 0;
 }
 
+// ── Impersonation ────────────────────────────────────────────────────────────
+// While an admin acts as a customer, nothing goes to analytics: what they open and do in that
+// customer's workspaces is neither the admin's own use of the app nor the customer's. The mark is
+// in localStorage, shared by the app's tabs, so a tab opened meanwhile is covered from its first
+// event; signing out clears it with the rest of the storage.
+
+const IMPERSONATING_KEY = "rext-impersonating";
+
+/** Called when impersonation starts or stops, and whenever the backend says which it is. */
+export function setImpersonating(impersonating: boolean): void {
+  try {
+    if (impersonating) window.localStorage.setItem(IMPERSONATING_KEY, "1");
+    else window.localStorage.removeItem(IMPERSONATING_KEY);
+  } catch {
+    // Storage refused: the banner's own check still marks it on each page.
+  }
+}
+
+export function isImpersonating(): boolean {
+  try {
+    return window.localStorage.getItem(IMPERSONATING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 // ── Analytics singleton ───────────────────────────────────────────────────────
 
 class Analytics {
@@ -135,7 +161,7 @@ class Analytics {
    * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
    */
   track(event: AnalyticsEvent, properties?: EventProperties) {
-    if (!this.enabled) return;
+    if (!this.enabled || isImpersonating()) return;
     if (_posthog) {
       _posthog.capture(event, { ...properties });
     } else if (!refused && pending.length < PENDING_LIMIT) {

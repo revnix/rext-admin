@@ -127,8 +127,9 @@ export default function PrivacyPolicyPage() {
             notifications
           </li>
           <li>
-            <strong>Analytics:</strong> Aggregated data only (no personal
-            information)
+            <strong>Analytics:</strong> The plan and billing period of a
+            checkout or a purchase, when usage analytics is on for you (section
+            10). Never card or payment details.
           </li>
           <li>
             <strong>Tax Services:</strong> For tax compliance (as required by
@@ -261,14 +262,50 @@ export default function PrivacyPolicyPage() {
           </li>
         </ul>
 
-        <h2>10. Children's Privacy</h2>
+        <h2>10. Usage Analytics</h2>
+        <p>
+          We measure how the app is used with <strong>PostHog</strong> (PostHog
+          Inc.), on its cloud in the European Union, so we can see which pages
+          and steps work and which don&rsquo;t.
+        </p>
+        <ul>
+          <li>
+            In the EEA, the UK and Switzerland we ask you first, once, after you
+            sign in. Until you answer, nothing is sent.
+          </li>
+          <li>Everywhere else it is on, and you can turn it off.</li>
+          <li>
+            When it is on, PostHog receives the pages you open and what you do
+            on them (for example a keyword analysed, a title chosen, an article
+            published or a plan bought, with that keyword or title), together
+            with your account ID, email, name and role. It keeps an identifier
+            in your browser&rsquo;s storage.
+          </li>
+          <li>
+            When it is off, PostHog receives only anonymous counts of the kinds
+            of page opened: no account, workspace, article or keyword, and
+            nothing is kept in your browser.
+          </li>
+          <li>
+            The links in our emails carry a key in their address. That key, and
+            an email address in a sign-in page&rsquo;s address, are removed
+            before anything is sent.
+          </li>
+          <li>
+            You can change your choice at any time in Settings, Data, under
+            &ldquo;Usage analytics&rdquo;. It is kept in the browser you are
+            using, for six months.
+          </li>
+        </ul>
+
+        <h2>11. Children's Privacy</h2>
         <p>
           We do not knowingly collect payment information from anyone under 16.
           If you believe a child has provided payment details, contact us
           immediately at contact@rext.ai.
         </p>
 
-        <h2>11. Changes to This Policy</h2>
+        <h2>12. Changes to This Policy</h2>
         <p>We may update this privacy policy to reflect:</p>
         <ul>
           <li>Changes in payment processing</li>
@@ -280,7 +317,7 @@ export default function PrivacyPolicyPage() {
           effect.
         </p>
 
-        <h2>12. Contact & Questions</h2>
+        <h2>13. Contact & Questions</h2>
         <p>For privacy or billing questions:</p>
         <ul>
           <li>
