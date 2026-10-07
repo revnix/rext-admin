@@ -88,6 +88,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { RunStageDetail } from "@/lib/generate-content/run-stages";
 
 function Section({
   title,
@@ -411,6 +412,133 @@ const SAMPLE_STAGES = [
   { id: "images", label: "Adding images", state: "skipped" as const },
 ];
 
+// A run saying what it found (rext-control task 694). Fixture findings: on the Generate page they are
+// read from the run's stream (lib/generate-content/run-findings.ts).
+const FOUND_STAGES = [
+  {
+    id: "search-results",
+    label: "Reading the search results",
+    state: "complete" as const,
+    startedAt: NOW - 13_000,
+    endedAt: NOW - 4000,
+  },
+  {
+    id: "competitors",
+    label: "Finding competitors",
+    state: "active" as const,
+    startedAt: NOW - 4000,
+  },
+  { id: "measure", label: "Measuring the keyword", state: "pending" as const },
+];
+const FOUND_DETAILS: Record<string, RunStageDetail> = {
+  "search-results": {
+    result:
+      "10 results from 8 sites · 6 questions people ask · 8 related searches",
+    items: {
+      kind: "results",
+      preview: 3,
+      items: [
+        "Vegetable Garden Planner | The Old Farmer’s Almanac",
+        "Kitchen Garden Planner | Gardener’s Supply",
+        "Garden Planner: Plan Your Vegetable Garden Online",
+        "Free Vegetable Garden Layout Tool",
+        "How to Plan a Vegetable Garden: a Step-by-Step Guide",
+      ].map((title, index) => ({
+        position: index + 1,
+        title,
+        site: [
+          "almanac.com",
+          "gardeners.com",
+          "growveg.com",
+          "smartgardener.com",
+          "thespruce.com",
+        ][index],
+      })),
+    },
+  },
+  competitors: {
+    live: "Working out what each of the 8 sites offers: a guide to learn from, a tool, or a shop.",
+    items: {
+      kind: "chips",
+      items: [
+        "almanac.com",
+        "gardeners.com",
+        "growveg.com",
+        "smartgardener.com",
+        "reddit.com",
+        "burpee.com",
+        "seedtime.us",
+        "thespruce.com",
+      ],
+    },
+  },
+  measure: {
+    waiting:
+      "Monthly searches, how hard it is to rank, and the links behind the top pages.",
+  },
+};
+const TITLE_STAGES = [
+  {
+    id: "titles",
+    label: "Writing five titles",
+    state: "active" as const,
+    startedAt: NOW - 7000,
+  },
+  {
+    id: "title-checks",
+    label: "Checking each title",
+    state: "pending" as const,
+  },
+];
+const TITLE_DETAILS: Record<string, RunStageDetail> = {
+  titles: {
+    live: "3 of 5 written, from 8 related searches and 6 questions people ask.",
+    progress: { done: 3, total: 5, label: "titles written" },
+    items: {
+      kind: "titles",
+      rows: [
+        {
+          title: "Vegetable Garden Planner: Map Your Beds in One Afternoon",
+          state: "written",
+          checks: [
+            { label: "Has the keyword", met: true },
+            { label: "56 characters", met: true },
+          ],
+        },
+        {
+          title: "How to Use a Vegetable Garden Planner in Your First Season",
+          state: "written",
+          checks: [
+            { label: "Has the keyword", met: true },
+            { label: "58 characters", met: true },
+          ],
+          recommended: true,
+          reason: "It answers what most searchers ask first.",
+        },
+        {
+          title:
+            "Vegetable Garden Planner Tips for a Bigger Harvest All Year Round",
+          state: "written",
+          checks: [
+            { label: "Has the keyword", met: true },
+            { label: "65 characters, over 59", met: false },
+          ],
+        },
+        {
+          title: "Free Vegetable Garden Planner Templates for",
+          state: "writing",
+          checks: [],
+        },
+        { title: "Fifth title", state: "next", checks: [] },
+      ],
+    },
+  },
+  "title-checks": {
+    waiting:
+      "Each one must contain “vegetable garden planner” and run 50 to 59 characters. Any that don’t are rewritten.",
+  },
+};
+
 /**
  * The gallery behind /dev/primitives: every primitive in `components/ui` and `components/forms` in
  * its variants and states, on the tokens, at the width the window gives it.
@@ -696,7 +824,7 @@ export function PrimitivesGallery() {
 
         <Section
           title="Progress and scores"
-          description="The credits meter (and its 80 % mark), a score ring, a bar and a run's stages."
+          description="The credits meter (and its 80 % mark), a score ring, a bar and a run's stages: plain, and saying what each one found."
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
@@ -710,6 +838,28 @@ export function PrimitivesGallery() {
               </div>
             </div>
             <RunProgress stages={SAMPLE_STAGES} />
+          </div>
+          <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+            <RunProgress
+              stages={FOUND_STAGES}
+              header={{
+                title: "Analysing “vegetable garden planner”",
+                subtitle: "Google · United States",
+                startedAt: NOW - 13_000,
+              }}
+              details={FOUND_DETAILS}
+              footer="You can leave this page. The analysis keeps going, and we’ll tell you when it’s ready."
+            />
+            <RunProgress
+              stages={TITLE_STAGES}
+              header={{
+                title: "Writing titles for “vegetable garden planner”",
+                subtitle: "How-to guide · for readers who want to learn",
+                startedAt: NOW - 7000,
+              }}
+              details={TITLE_DETAILS}
+              footer="You can leave this page. The titles keep coming, and we’ll tell you when they’re ready."
+            />
           </div>
         </Section>
 
