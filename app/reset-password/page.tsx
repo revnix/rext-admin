@@ -27,10 +27,12 @@ import {
   safeParseErrorBody,
 } from "@/lib/error-utils";
 import { ApiError } from "@/lib/api-client/core";
+import { useHydrated } from "@/hooks/use-hydrated";
 import type { Route } from "next";
 
 function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -160,7 +162,8 @@ function ResetPasswordForm() {
             <CardDescription>Enter your new password below</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+            <form method="post" onSubmit={handleSubmit(onSubmit)}>
               {error && (
                 <div className="mb-4 p-3 bg-danger-50 border border-danger-200 text-danger-700 rounded-md">
                   {error}
@@ -243,7 +246,7 @@ function ResetPasswordForm() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading || success}
+                    disabled={!hydrated || isLoading || success}
                   >
                     {isLoading
                       ? "Resetting password..."

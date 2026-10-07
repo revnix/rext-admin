@@ -21,6 +21,7 @@ import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 import { useToast } from "@/hooks/use-toast";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { checkPasswordBreach } from "@/lib/password-utils";
 import { classifyError } from "@/lib/error-utils";
 import type { Route } from "next";
@@ -30,6 +31,7 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+  const hydrated = useHydrated();
   // Set once the account exists but can't log in until its email is verified.
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const router = useRouter();
@@ -293,7 +295,8 @@ export function SignupForm({
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <FieldGroup>
           <FieldController
             control={form.control}
@@ -366,7 +369,7 @@ export function SignupForm({
           <Button
             type="submit"
             className="w-full"
-            disabled={isLoading || isLoadingInvitation}
+            disabled={!hydrated || isLoading || isLoadingInvitation}
           >
             {isLoading && <Loader2 className="size-4 animate-spin" />}
             {hasValidInvitation
