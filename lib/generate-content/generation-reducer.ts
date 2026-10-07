@@ -10,6 +10,7 @@ export const initialState: PageState = {
   userKeyword: "",
   country: "us",
   analyzedCountry: "",
+  analyzedKeyword: "",
   primaryKeyword: "",
   suggestedKeywords: [],
   generatedContent: "",
@@ -41,6 +42,7 @@ export const initialState: PageState = {
   recommendedContentType: null,
   recommendedTopic: null,
   selectedContentType: null,
+  selectedTopic: null,
 };
 
 export function generationReducer(
@@ -96,6 +98,8 @@ export function generationReducer(
       return { ...state, selectedContentType: action.payload };
     case "SET_RECOMMENDED_TOPIC":
       return { ...state, recommendedTopic: action.payload };
+    case "SET_SELECTED_TOPIC":
+      return { ...state, selectedTopic: action.payload };
     case "SET_TOPICS":
       return { ...state, topics: action.payload };
     case "SET_OUTLINE":
@@ -146,6 +150,7 @@ export function generationReducer(
       return {
         ...state,
         analyzedCountry: "",
+        analyzedKeyword: "",
         suggestedKeywords: [],
         seoResult: null,
         serp: null,
@@ -159,6 +164,7 @@ export function generationReducer(
         recommendedContentType: null,
         recommendedTopic: null,
         selectedContentType: null,
+        selectedTopic: null,
       };
     case "UPDATE_FROM_STREAM":
       return handleStreamUpdate(state, action.payload);
@@ -216,6 +222,10 @@ function handleStreamUpdate(
         }
         if (primaryKeyword && state.primaryKeyword !== primaryKeyword) {
           newState.primaryKeyword = primaryKeyword;
+          changed = true;
+        }
+        if (primaryKeyword && state.analyzedKeyword !== primaryKeyword) {
+          newState.analyzedKeyword = primaryKeyword;
           changed = true;
         }
         const analyzedCountry = interruptValue.Country;
