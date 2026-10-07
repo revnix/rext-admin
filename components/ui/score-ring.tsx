@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * The one chart-like device for a 0 to 100 score (design/app-language.md §6): one colour on a track
- * in the inset surface, the number in the middle. `label` names the score for assistive technology,
- * e.g. "On-page score".
+ * in the inset surface, the number in the middle. `label` names the score, e.g. "On-page score": the
+ * ring is a `meter` for assistive technology, as components/ui/meter.tsx is, and the drawing's title
+ * is the pointer's tooltip.
  *
  * `tone` is the arc's colour class, for a score whose levels have colours of their own (keyword
  * difficulty, FB2.9); every other score keeps the one colour. `compact` is a 20 px mark for a table
@@ -32,9 +33,18 @@ export function ScoreRing({
   const stroke = compact ? 10 : 6;
   const radius = 31 - stroke / 2;
   const circumference = 2 * Math.PI * radius;
+  // Spread, as Meter's: a native <meter> can't be drawn as a ring.
+  const meter = {
+    role: "meter",
+    "aria-label": label,
+    "aria-valuemin": 0,
+    "aria-valuemax": 100,
+    "aria-valuenow": score,
+  };
   return (
     <div
       data-slot="score-ring"
+      {...meter}
       className={cn(
         "relative grid shrink-0 place-items-center",
         compact ? "size-5" : "size-16",
@@ -46,6 +56,7 @@ export function ScoreRing({
       <svg
         viewBox="0 0 64 64"
         className="absolute inset-0 size-full -rotate-90"
+        aria-hidden="true"
       >
         <title>{`${label}: ${score} out of 100`}</title>
         <circle

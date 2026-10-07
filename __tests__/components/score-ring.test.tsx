@@ -32,6 +32,11 @@ describe("ScoreRing", () => {
     const arc = () => container.querySelectorAll("circle")[1];
     expect(arc()).toHaveClass("text-foreground");
     expect(screen.getByText("86")).toBeInTheDocument();
+    // A meter for assistive technology, with the range and the value.
+    const meter = screen.getByRole("meter", { name: "SEO score" });
+    expect(meter).toHaveAttribute("aria-valuemin", "0");
+    expect(meter).toHaveAttribute("aria-valuemax", "100");
+    expect(meter).toHaveAttribute("aria-valuenow", "86");
 
     rerender(
       <ScoreRing value={86} label="Keyword difficulty" tone="text-danger-700">
@@ -55,8 +60,8 @@ describe("ScoreRing", () => {
       "size-5",
     );
     expect(
-      screen.getByTitle("Keyword difficulty: 42 out of 100"),
-    ).toBeInTheDocument();
+      screen.getByRole("meter", { name: "Keyword difficulty" }),
+    ).toHaveAttribute("aria-valuenow", "42");
     expect(screen.queryByText("42%")).toBeNull();
     expect(screen.queryByText("42")).toBeNull();
   });
