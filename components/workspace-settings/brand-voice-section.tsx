@@ -2,6 +2,8 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -15,9 +17,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
+import { usePersonas } from "@/hooks/use-personas";
 import { apiClient } from "@/lib/api-client";
 import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
   BRAND_VOICE_LIMITS,
@@ -122,11 +126,11 @@ export function BrandVoiceSection() {
     <div className="flex flex-col gap-8">
       {/* Arriving from a new workspace's analysis (WorkspaceCreateWizard): the draft is saved already. */}
       {drafted && (
-        <Notice tone="success" title="Your brand voice is drafted">
-          We read your website and saved this brand voice, its personas and
-          competitors. Review the fields below and save any change; the personas
-          are on the Personas page.
-        </Notice>
+        <DraftedNotice
+          workspaceId={workspace.id}
+          workspaceSlug={workspace.slug}
+          website={workspace.url}
+        />
       )}
       <SettingsGroup
         title="Brand voice"
@@ -273,5 +277,75 @@ export function BrandVoiceSection() {
         </fieldset>
       )}
     </div>
+  );
+}
+
+const NAMES_SHOWN = 5;
+
+/** "Ana Ruiz, Ben Ode and 3 more": the people a workspace's personas were drafted from. */
+export function namedPeople(names: string[]): string {
+  const shown = names.slice(0, NAMES_SHOWN);
+  const more = names.length - shown.length;
+  const parts = more > 0 ? [...shown, `${more} more`] : shown;
+  return new Intl.ListFormat("en", { type: "conjunction" }).format(parts);
+}
+
+function siteName(website: string | undefined): string {
+  try {
+    return website ? new URL(website).host : "your website";
+  } catch {
+    return "your website";
+  }
+}
+
+/**
+ * Arriving from a new workspace's analysis (WorkspaceCreateWizard): the draft is saved already. The
+ * personas are drafted from the people named on the customer's own site, so the notice says so and
+ * names them (E26): they're real people, and the user decides whether they stay.
+ */
+function DraftedNotice({
+  workspaceId,
+  workspaceSlug,
+  website,
+}: {
+  workspaceId: string;
+  workspaceSlug: string;
+  website?: string;
+}) {
+  const { data, isSuccess } = usePersonas(workspaceId);
+  const names = (data?.personas ?? [])
+    .map((persona) => persona.full_name || persona.name)
+    .filter(Boolean);
+  const personasLink = (
+    <Link
+      href={workspaceRoutes.personas(workspaceSlug) as Route}
+      className="font-medium text-foreground underline underline-offset-4"
+    >
+      Personas
+    </Link>
+  );
+
+  return (
+    <Notice tone="success" title="Your brand voice is drafted">
+      We read {siteName(website)} and saved this brand voice and its
+      competitors.{" "}
+      {isSuccess &&
+        (names.length > 0 ? (
+          <>
+            We also drafted{" "}
+            {names.length === 1
+              ? "an author persona"
+              : `${names.length} author personas`}{" "}
+            from the people named on your site: {namedPeople(names)}. Edit or
+            delete them in {personasLink}.{" "}
+          </>
+        ) : (
+          <>
+            No one is named on your site, so no author personas were drafted;
+            you can add them in {personasLink}.{" "}
+          </>
+        ))}
+      Review the fields below and save any change.
+    </Notice>
   );
 }

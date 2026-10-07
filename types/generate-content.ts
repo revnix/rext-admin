@@ -32,6 +32,8 @@ export type PersonaRecommendation = {
   name: string;
   /** Weighted 0-100 relevance across topic, title, search intent, content type. */
   score: number;
+  /** The persona's stated expertise covers the article's subject; only such a persona is recommended. */
+  fits_topic?: boolean;
   breakdown?: {
     topic?: number;
     title?: number;
