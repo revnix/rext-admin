@@ -1464,6 +1464,7 @@ function ContentEditorInner(props: ContentEditorProps) {
             <Notice
               tone="info"
               title="Connect a site first"
+              className="self-start"
               action={
                 workspaceSlug ? (
                   <Button asChild variant="outline" size="sm">
