@@ -19,9 +19,10 @@ jest.mock("@/lib/api-client", () => ({
     },
   },
 }));
+// On /w/<slug> pages the provider's workspaceId is the slug; the trash uses the workspace's id.
 jest.mock("@/providers/workspace-provider", () => ({
   useWorkspace: () => ({
-    workspaceId: "w1",
+    workspaceId: "acme",
     workspace: { id: "w1" },
     error: null,
   }),

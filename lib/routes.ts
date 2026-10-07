@@ -20,6 +20,7 @@ export const WORKSPACE_PAGES = [
   "settings",
   "settings/brand-voice",
   "settings/members",
+  "settings/trash",
   "settings/danger-zone",
 ] as const;
 
@@ -175,6 +176,7 @@ export function buildWorkspacePath(
     settings: workspaceRoutes.settings.root,
     "settings/brand-voice": workspaceRoutes.settings.brandVoice,
     "settings/members": workspaceRoutes.settings.members,
+    "settings/trash": workspaceRoutes.settings.trash,
     "settings/danger-zone": workspaceRoutes.settings.dangerZone,
   };
 

@@ -37,7 +37,10 @@ function purgeWords(days: number | undefined) {
  * The backend purges an item when its retention ends (G45).
  */
 export function WorkspaceTrashSection() {
-  const { workspaceId } = useWorkspace();
+  // The provider's workspaceId is the address's slug; the content and persona lists key their
+  // caches by the workspace's own id, so the trash and its refreshes use that.
+  const { workspaceId: workspaceRef, workspace } = useWorkspace();
+  const workspaceId = workspace?.id;
   const trash = useQuery({
     ...workspaceQueries.trash(workspaceId ?? ""),
     enabled: Boolean(workspaceId),
@@ -45,11 +48,11 @@ export function WorkspaceTrashSection() {
   const awaiting = useAwaitingData(trash);
   const { hasPermission: canDeleteArticles } = useWorkspacePermission(
     CONTENT_PERMISSIONS.DELETE,
-    workspaceId,
+    workspaceRef,
   );
   const { hasPermission: canDeletePersonas } = useWorkspacePermission(
     PERSONA_PERMISSIONS.DELETE,
-    workspaceId,
+    workspaceRef,
   );
   const restoreItem = useRestoreTrashItem(workspaceId ?? "");
   const deleteItemForever = useDeleteTrashItemForever(workspaceId ?? "");
