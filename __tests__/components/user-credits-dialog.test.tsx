@@ -1,11 +1,13 @@
 /**
  * The admin's Credits dialog (FB2.28): a user's credits by where they come from, the form that
- * adds, deducts or resets them (a deduct and a reset ask first), the line that says what will
- * happen, the backend's refusals beside their fields, and one history of every change.
+ * adds, deducts or resets them within the limits the API sent (a deduct and a reset ask first),
+ * the line that says what will happen, the backend's refusals beside their fields, one history of
+ * every change, and a close that asks before it drops what was entered.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -13,7 +15,9 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { UserCreditsDialog } from "@/components/admin/users/user-credits-dialog";
+import type { AdminCreditLimits } from "@/lib/api-client/admin-credits";
 import { ApiError } from "@/lib/api-client/core";
 import type { User } from "@/lib/api-client/users";
 
@@ -41,8 +45,21 @@ const USER: User = {
 };
 const REASON = "Compensation for the outage";
 
-/** GET /admin/users/{id}/credits: a Growth plan, one add with its grant, one deduct. */
-const credits = (breakdown: Record<string, unknown> = {}) => ({
+/** `limits` as GET /admin/users/{id}/credits sends them: the dashboard holds no copy. */
+const LIMITS: AdminCreditLimits = {
+  amount_max: 100000,
+  reason_min: 3,
+  reason_max: 500,
+};
+
+/**
+ * GET /admin/users/{id}/credits: a Growth plan, one add with its grant, one deduct, and the
+ * limits (`null` for an API that doesn't send them yet).
+ */
+const credits = (
+  breakdown: Record<string, unknown> = {},
+  limits: AdminCreditLimits | null = LIMITS,
+) => ({
   user_id: "user-1",
   credits: {
     subscription_id: "sub-1",
@@ -104,6 +121,7 @@ const credits = (breakdown: Record<string, unknown> = {}) => ({
       created_at: "2026-10-05T10:00:00Z",
     },
   ],
+  ...(limits ? { limits } : {}),
 });
 
 /** POST /admin/users/{id}/credits (AdminCreditAdjustmentResult). */
@@ -121,27 +139,76 @@ const answer = (fields: Record<string, unknown> = {}) => ({
   ...fields,
 });
 
-function renderDialog() {
-  const client = new QueryClient({
+/** An answer that waits to be given, to look at the dialog while the request is under way. */
+function pending() {
+  let settle: (value: unknown) => void = () => {};
+  const promise = new Promise((resolve) => {
+    settle = resolve;
+  });
+  return { promise, settle };
+}
+
+const queryClient = () =>
+  new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  render(
-    <QueryClientProvider client={client}>
-      <UserCreditsDialog open onOpenChange={() => {}} user={USER} />
-    </QueryClientProvider>,
+
+/** The page's part: it holds whose credits are open and, told to close, lets go of the user. */
+function Page({ onClose }: { onClose: () => void }) {
+  const [user, setUser] = useState<User | null>(USER);
+  return (
+    <UserCreditsDialog
+      open={user !== null}
+      // As the admin users page does: its handler closes whatever it is told.
+      onOpenChange={() => {
+        onClose();
+        setUser(null);
+      }}
+      user={user}
+    />
   );
 }
 
-/** The dialog with the credits loaded, and its form's controls. */
-async function openForm(breakdown: Record<string, unknown> = {}) {
-  adminCredits.get.mockResolvedValue(credits(breakdown));
-  renderDialog();
+function renderDialog() {
+  const onClose = jest.fn();
+  const client = queryClient();
+  render(
+    <QueryClientProvider client={client}>
+      <Page onClose={onClose} />
+    </QueryClientProvider>,
+  );
+  return { onClose, client };
+}
+
+/** The Credits dialog in the page, whether or not a question lies over it. */
+const creditsDialog = () =>
+  document.querySelector('[data-slot="dialog-content"]');
+
+const spinner = (button: HTMLElement) =>
+  button.querySelector("svg.animate-spin");
+
+/** The dialog with the credits loaded, its form's controls, and the page's close. */
+async function openForm(
+  breakdown: Record<string, unknown> = {},
+  limits: AdminCreditLimits | null = LIMITS,
+) {
+  adminCredits.get.mockResolvedValue(credits(breakdown, limits));
+  const { onClose, client } = renderDialog();
   await screen.findByRole("heading", { name: "Change the credits" });
   return {
+    onClose,
+    client,
     amount: () => screen.getByRole("textbox", { name: /Amount/ }),
     reason: () => screen.getByRole("textbox", { name: /Reason/ }),
     choose: (action: RegExp) =>
       userEvent.click(screen.getByRole("radio", { name: action })),
+    /** The form's own submit button, also while a question lies over the form. */
+    submit: (name: string) =>
+      screen
+        .getAllByRole("button", { name, hidden: true })
+        .find(
+          (button) => button.getAttribute("type") === "submit",
+        ) as HTMLElement,
   };
 }
 
@@ -252,36 +319,24 @@ describe("the Credits dialog's history", () => {
 });
 
 describe("the Credits dialog's form", () => {
-  it("states what each action will do before it is sent", async () => {
+  it("states what each action will do before it is sent, and names its button for it", async () => {
     const form = await openForm();
-    const line = () =>
-      screen
-        .getByRole("button", { name: /credits$/ })
-        .getAttribute("aria-describedby") as string;
     const says = (text: string) =>
-      expect(document.getElementById(line())).toHaveTextContent(text);
+      expect(screen.getByText(text)).toBeInTheDocument();
 
     says("Complete the fields above to see what will happen.");
 
     await userEvent.type(form.amount(), "200");
     says("Add 200 credits to x@example.com");
-    expect(
-      screen.getByRole("button", { name: "Add credits" }),
-    ).toHaveAccessibleDescription("Add 200 credits to x@example.com");
+    expect(form.submit("Add credits")).toBeEnabled();
 
     await form.choose(/^Deduct/);
     says("Deduct 200 credits from x@example.com");
-    expect(
-      screen.getByRole("button", { name: "Deduct credits" }),
-    ).toHaveAccessibleDescription("Deduct 200 credits from x@example.com");
+    expect(form.submit("Deduct credits")).toBeEnabled();
 
     await form.choose(/^Reset/);
     says("Reset x@example.com's monthly credits to the plan's 500");
-    expect(
-      screen.getByRole("button", { name: "Reset monthly credits" }),
-    ).toHaveAccessibleDescription(
-      "Reset x@example.com's monthly credits to the plan's 500",
-    );
+    expect(form.submit("Reset monthly credits")).toBeEnabled();
   });
 
   it("asks an amount and an expiry of an add, an amount of a deduct, neither of a reset", async () => {
@@ -326,7 +381,7 @@ describe("the Credits dialog's form", () => {
 
   it("refuses an empty form beside its fields, and sends nothing", async () => {
     const form = await openForm();
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+    await userEvent.click(form.submit("Add credits"));
 
     expect(await screen.findByText("Enter how many credits")).toBeVisible();
     expect(form.amount()).toHaveAttribute("aria-invalid", "true");
@@ -344,7 +399,7 @@ describe("the Credits dialog's form", () => {
       target: { value: "2020-01-01" },
     });
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+    await userEvent.click(form.submit("Add credits"));
 
     expect(form.amount()).toHaveAccessibleDescription(
       "Enter a whole number from 1 to 100,000",
@@ -360,7 +415,7 @@ describe("the Credits dialog's form", () => {
     const form = await openForm();
     await userEvent.type(form.amount(), "200");
     await userEvent.type(form.reason(), `  ${REASON}  `);
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+    await userEvent.click(form.submit("Add credits"));
 
     await waitFor(() =>
       expect(adminCredits.adjust).toHaveBeenCalledWith("user-1", {
@@ -383,6 +438,8 @@ describe("the Credits dialog's form", () => {
     await waitFor(() => expect(form.amount()).toHaveValue(""));
     expect(form.reason()).toHaveValue("");
     expect(adminCredits.get).toHaveBeenCalledTimes(2);
+    // The dialog stays, for the new balance and the history.
+    expect(form.onClose).not.toHaveBeenCalled();
   });
 
   it("sends an add's expiry as the end of the chosen day", async () => {
@@ -394,11 +451,11 @@ describe("the Credits dialog's form", () => {
     });
     await userEvent.type(form.reason(), REASON);
     expect(
-      screen.getByRole("button", { name: "Add credits" }),
-    ).toHaveAccessibleDescription(
-      "Add 200 credits to x@example.com, expiring at the end of Dec 31, 2099",
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+      screen.getByText(
+        "Add 200 credits to x@example.com, expiring at the end of Dec 31, 2099",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(form.submit("Add credits"));
 
     await waitFor(() =>
       expect(adminCredits.adjust).toHaveBeenCalledWith("user-1", {
@@ -415,9 +472,7 @@ describe("the Credits dialog's form", () => {
     await form.choose(/^Deduct/);
     await userEvent.type(form.amount(), "50");
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Deduct credits" }),
-    );
+    await userEvent.click(form.submit("Deduct credits"));
 
     const question = await screen.findByRole("alertdialog", {
       name: "Deduct 50 credits from x@example.com?",
@@ -431,8 +486,9 @@ describe("the Credits dialog's form", () => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
     );
     expect(adminCredits.adjust).not.toHaveBeenCalled();
-    // What was typed is still there.
+    // What was typed is still there, and can be sent after all.
     expect(form.amount()).toHaveValue("50");
+    await waitFor(() => expect(form.submit("Deduct credits")).toBeEnabled());
   });
 
   it("sends a deduct once it is confirmed, with an amount and no expiry", async () => {
@@ -454,9 +510,7 @@ describe("the Credits dialog's form", () => {
     await form.choose(/^Deduct/);
     await userEvent.type(form.amount(), "50");
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Deduct credits" }),
-    );
+    await userEvent.click(form.submit("Deduct credits"));
     const question = await screen.findByRole("alertdialog");
     await userEvent.click(
       within(question).getByRole("button", { name: "Deduct credits" }),
@@ -497,9 +551,7 @@ describe("the Credits dialog's form", () => {
     await userEvent.type(form.amount(), "300");
     await form.choose(/^Reset/);
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Reset monthly credits" }),
-    );
+    await userEvent.click(form.submit("Reset monthly credits"));
 
     const question = await screen.findByRole("alertdialog", {
       name: "Reset x@example.com's monthly credits to the plan's 500?",
@@ -549,7 +601,7 @@ describe("the Credits dialog's form", () => {
     const form = await openForm();
     await userEvent.type(form.amount(), "200");
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+    await userEvent.click(form.submit("Add credits"));
 
     await waitFor(() =>
       expect(form.amount()).toHaveAccessibleDescription(
@@ -580,7 +632,7 @@ describe("the Credits dialog's form", () => {
     const form = await openForm();
     await userEvent.type(form.amount(), "200");
     await userEvent.type(form.reason(), REASON);
-    await userEvent.click(screen.getByRole("button", { name: "Add credits" }));
+    await userEvent.click(form.submit("Add credits"));
 
     expect(
       await screen.findByText("The credits weren't changed"),
@@ -592,5 +644,373 @@ describe("the Credits dialog's form", () => {
     ).toBeInTheDocument();
     expect(form.amount()).toHaveAttribute("aria-invalid", "false");
     expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Credits dialog's limits", () => {
+  it("takes the range, the counter and the refusals from the limits the API sent", async () => {
+    // Not the numbers the backend has today: whatever it sends is what the form says.
+    const form = await openForm(
+      {},
+      { amount_max: 2500, reason_min: 5, reason_max: 120 },
+    );
+    expect(form.amount()).toHaveAccessibleDescription(
+      "A whole number of credits from 1 to 2,500.",
+    );
+    expect(screen.getByText("0 / 120")).toBeInTheDocument();
+
+    await userEvent.type(form.amount(), "2501");
+    await userEvent.type(form.reason(), "Good");
+    expect(screen.getByText("4 / 120")).toBeInTheDocument();
+    await userEvent.click(form.submit("Add credits"));
+
+    await waitFor(() =>
+      expect(form.amount()).toHaveAccessibleDescription(
+        "Enter a whole number from 1 to 2,500",
+      ),
+    );
+    expect(form.amount()).toHaveAttribute("aria-invalid", "true");
+    expect(form.reason()).toHaveAccessibleDescription(
+      "Give a reason of at least 5 characters",
+    );
+    // Nothing will happen as typed, so the line promises nothing.
+    expect(
+      screen.getByText("Complete the fields above to see what will happen."),
+    ).toBeInTheDocument();
+    expect(adminCredits.adjust).not.toHaveBeenCalled();
+  });
+
+  it("holds no ceiling of its own: without limits the API's refusal shows beside the amount", async () => {
+    adminCredits.adjust.mockRejectedValue(
+      new ApiError(422, "Validation failed", "VALIDATION_FAILED", {
+        detail: [
+          {
+            loc: ["body", "amount"],
+            msg: "Input should be less than or equal to 100000",
+          },
+        ],
+      }),
+    );
+    const form = await openForm({}, null);
+    expect(form.amount()).toHaveAccessibleDescription(
+      "A whole number of credits.",
+    );
+    // No counter: the reason's longest length isn't known.
+    expect(screen.queryByText(/^\d+ \/ \d+$/)).not.toBeInTheDocument();
+
+    await userEvent.type(form.amount(), "250000");
+    await userEvent.type(form.reason(), "ok");
+    expect(
+      screen.getByText("Add 250,000 credits to x@example.com"),
+    ).toBeInTheDocument();
+    await userEvent.click(form.submit("Add credits"));
+
+    await waitFor(() =>
+      expect(adminCredits.adjust).toHaveBeenCalledWith("user-1", {
+        action: "add",
+        amount: 250000,
+        reason: "ok",
+      }),
+    );
+    await waitFor(() =>
+      expect(form.amount()).toHaveAccessibleDescription(
+        "Input should be less than or equal to 100000",
+      ),
+    );
+    expect(form.amount()).toHaveAttribute("aria-invalid", "true");
+    expect(form.amount()).toHaveValue("250000");
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it("without limits, still asks for an amount and a reason before it sends", async () => {
+    const form = await openForm({}, null);
+    await userEvent.click(form.submit("Add credits"));
+
+    await waitFor(() =>
+      expect(form.amount()).toHaveAccessibleDescription(
+        "Enter how many credits",
+      ),
+    );
+    expect(form.reason()).toHaveAccessibleDescription("Give a reason");
+    expect(adminCredits.adjust).not.toHaveBeenCalled();
+  });
+});
+
+describe("the Credits dialog's submit button", () => {
+  it("is disabled with its spinner from the click until an add's request ends", async () => {
+    const sent = pending();
+    adminCredits.adjust.mockReturnValue(sent.promise);
+    const form = await openForm();
+    await userEvent.type(form.amount(), "200");
+    await userEvent.type(form.reason(), REASON);
+    expect(form.submit("Add credits")).toBeEnabled();
+    expect(spinner(form.submit("Add credits"))).toBeNull();
+
+    await userEvent.click(form.submit("Add credits"));
+    expect(form.submit("Add credits")).toBeDisabled();
+    expect(spinner(form.submit("Add credits"))).not.toBeNull();
+    await waitFor(() => expect(adminCredits.adjust).toHaveBeenCalledTimes(1));
+
+    // Under way: another click sends nothing more.
+    await userEvent.click(form.submit("Add credits"));
+    expect(form.submit("Add credits")).toBeDisabled();
+    expect(adminCredits.adjust).toHaveBeenCalledTimes(1);
+
+    sent.settle(answer());
+    await waitFor(() => expect(form.submit("Add credits")).toBeEnabled());
+    expect(spinner(form.submit("Add credits"))).toBeNull();
+    expect(adminCredits.adjust).toHaveBeenCalledTimes(1);
+  });
+
+  it("is disabled with its spinner while a deduct's question is open, and on until the request ends", async () => {
+    const sent = pending();
+    adminCredits.adjust.mockReturnValue(sent.promise);
+    const form = await openForm();
+    await form.choose(/^Deduct/);
+    await userEvent.type(form.amount(), "50");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Deduct credits"));
+
+    // The question is open: nothing is sent yet, and the form already waits for its answer.
+    const question = await screen.findByRole("alertdialog", {
+      name: "Deduct 50 credits from x@example.com?",
+    });
+    expect(adminCredits.adjust).not.toHaveBeenCalled();
+    expect(form.submit("Deduct credits")).toBeDisabled();
+    expect(spinner(form.submit("Deduct credits"))).not.toBeNull();
+
+    await userEvent.click(
+      within(question).getByRole("button", { name: "Deduct credits" }),
+    );
+    await waitFor(() => expect(adminCredits.adjust).toHaveBeenCalledTimes(1));
+    expect(form.submit("Deduct credits")).toBeDisabled();
+    expect(spinner(form.submit("Deduct credits"))).not.toBeNull();
+
+    sent.settle(
+      answer({
+        action: "deduct",
+        requested_amount: 50,
+        amount: 50,
+        balance_after: 470,
+        grant_id: null,
+      }),
+    );
+    // Sent: the form is empty again, back on its first action.
+    await waitFor(() => expect(form.submit("Add credits")).toBeEnabled());
+    expect(spinner(form.submit("Add credits"))).toBeNull();
+  });
+
+  it("takes Escape on the question as keeping the credits: nothing is sent and the form waits no longer", async () => {
+    const form = await openForm();
+    await form.choose(/^Deduct/);
+    await userEvent.type(form.amount(), "50");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Deduct credits"));
+    await screen.findByRole("alertdialog", {
+      name: "Deduct 50 credits from x@example.com?",
+    });
+    expect(form.submit("Deduct credits")).toBeDisabled();
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => expect(form.submit("Deduct credits")).toBeEnabled());
+    expect(spinner(form.submit("Deduct credits"))).toBeNull();
+    // Only the question went: the dialog is still there, with what was typed.
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(form.amount()).toHaveValue("50");
+    expect(adminCredits.adjust).not.toHaveBeenCalled();
+    expect(form.onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("closing the Credits dialog", () => {
+  it("asks before Escape drops what was typed, keeps it on Keep editing, and closes on Discard change", async () => {
+    const form = await openForm();
+    await userEvent.type(form.amount(), "50");
+
+    await userEvent.keyboard("{Escape}");
+    const question = await screen.findByRole("alertdialog", {
+      name: "Discard this change?",
+    });
+    expect(question).toHaveAccessibleDescription(
+      "What you've entered hasn't been sent.",
+    );
+    expect(form.onClose).not.toHaveBeenCalled();
+    await userEvent.click(
+      within(question).getByRole("button", { name: "Keep editing" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(form.amount()).toHaveValue("50");
+    expect(form.onClose).not.toHaveBeenCalled();
+
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Discard change" }),
+    );
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+    expect(adminCredits.adjust).not.toHaveBeenCalled();
+  });
+
+  it("asks the same of the close button and of a click outside", async () => {
+    const form = await openForm();
+    await userEvent.type(form.reason(), "Goodwill");
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    const question = await screen.findByRole("alertdialog", {
+      name: "Discard this change?",
+    });
+    await userEvent.click(
+      within(question).getByRole("button", { name: "Keep editing" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(form.reason()).toHaveValue("Goodwill");
+
+    await userEvent.click(
+      document.querySelector('[data-slot="dialog-overlay"]') as HTMLElement,
+    );
+    expect(
+      await screen.findByRole("alertdialog", { name: "Discard this change?" }),
+    ).toBeInTheDocument();
+    expect(creditsDialog()).toBeInTheDocument();
+    expect(form.onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes at once when nothing was entered", async () => {
+    const form = await openForm();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes without asking after a successful add", async () => {
+    adminCredits.adjust.mockResolvedValue(answer());
+    const form = await openForm();
+    await userEvent.type(form.amount(), "200");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Add credits"));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    await waitFor(() => expect(form.submit("Add credits")).toBeEnabled());
+    // The change is sent and the form is empty: nothing is left to discard.
+    expect(form.amount()).toHaveValue("");
+    expect(creditsDialog()).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores the close while the request is under way", async () => {
+    const sent = pending();
+    adminCredits.adjust.mockReturnValue(sent.promise);
+    const form = await openForm();
+    await userEvent.type(form.amount(), "200");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Add credits"));
+    await waitFor(() => expect(adminCredits.adjust).toHaveBeenCalled());
+
+    // The request is out and can't be taken back: neither Escape nor the close button closes the
+    // dialog, and neither offers to discard.
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(creditsDialog()).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(form.onClose).not.toHaveBeenCalled();
+
+    sent.settle(answer());
+    await waitFor(() => expect(form.submit("Add credits")).toBeEnabled());
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("can still be closed when the credits don't load again after a change", async () => {
+    adminCredits.adjust.mockResolvedValue(answer());
+    const form = await openForm();
+    // The change goes through, then reading the credits again fails: the form gives way to that.
+    adminCredits.get.mockRejectedValue(new Error("Service unavailable"));
+    await userEvent.type(form.amount(), "200");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Add credits"));
+    expect(
+      await screen.findByText("The credits didn't load"),
+    ).toBeInTheDocument();
+    expect(toast.success).toHaveBeenCalled();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("isn't left waiting on a form that a failed read took away while its request was out", async () => {
+    const sent = pending();
+    adminCredits.adjust.mockReturnValue(sent.promise);
+    const form = await openForm();
+    await userEvent.type(form.amount(), "200");
+    await userEvent.type(form.reason(), REASON);
+    await userEvent.click(form.submit("Add credits"));
+    await waitFor(() => expect(adminCredits.adjust).toHaveBeenCalled());
+
+    // The credits are read again meanwhile (the window came back into view) and that read fails:
+    // the form, still submitting, gives way to "didn't load" and can report nothing more.
+    adminCredits.get.mockRejectedValue(new Error("Service unavailable"));
+    await act(async () => {
+      await form.client.invalidateQueries();
+    });
+    expect(
+      await screen.findByText("The credits didn't load"),
+    ).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(creditsDialog()).not.toBeInTheDocument());
+    expect(form.onClose).toHaveBeenCalledTimes(1);
+
+    // The change itself still lands, and is still told.
+    await act(async () => {
+      sent.settle(answer());
+      await sent.promise;
+    });
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+  });
+
+  it("starts with nothing unsaved when the page opens another user's credits", async () => {
+    adminCredits.get.mockResolvedValue(credits());
+    const onOpenChange = jest.fn();
+    const client = queryClient();
+    const other: User = { ...USER, id: "user-2", email: "y@example.com" };
+    const page = (user: User) => (
+      <QueryClientProvider client={client}>
+        <UserCreditsDialog open onOpenChange={onOpenChange} user={user} />
+      </QueryClientProvider>
+    );
+    const amount = () => screen.getByRole("textbox", { name: /Amount/ });
+    const { rerender } = render(page(USER));
+    await screen.findByRole("heading", { name: "Change the credits" });
+    rerender(page(other));
+    await screen.findByRole("heading", { name: "Change the credits" });
+    expect(adminCredits.get).toHaveBeenLastCalledWith("user-2");
+    await userEvent.type(amount(), "50");
+
+    // Back to the first user, whose credits are already read: no loading state comes between,
+    // and what was typed for the other user must not carry over.
+    rerender(page(USER));
+    expect(
+      screen.getByRole("dialog", { name: "Credits" }),
+    ).toHaveAccessibleDescription(/x@example\.com/);
+    expect(amount()).toHaveValue("");
+
+    // Nothing was entered for this user, so the page is told to close at once: with `false`.
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledTimes(1));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });

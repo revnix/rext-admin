@@ -15,11 +15,6 @@ import { dateFormat } from "@/lib/formatters/date-formatters";
 import type { CreditAdjustmentAction } from "@/types/subscription";
 import { formatCount, formatCredits } from "./credits";
 
-/** What may be added or deducted at once, and the reason's length (the backend's limits). */
-export const CREDIT_AMOUNT_MAX = 100_000;
-export const CREDIT_REASON_MIN = 3;
-export const CREDIT_REASON_MAX = 500;
-
 /** The form's fields as typed: the amount and the expiry's day are text until they are sent. */
 export interface CreditAdjustmentFields {
   action: CreditAdjustmentAction;
@@ -38,13 +33,19 @@ export function parseCreditAmount(typed: string): number | null {
   return /^\d+$/.test(digits) ? Number(digits) : null;
 }
 
-/** What is wrong with a typed amount, or null: a whole number from 1 to the limit. */
-export function creditAmountError(typed: string): string | null {
+/**
+ * What is wrong with a typed amount, or null: a whole number of at least 1 and, when the backend
+ * said how many one change may carry (`max`, its `limits.amount_max`), no more than that. Without
+ * it there is no ceiling here: the backend refuses what is too much.
+ */
+export function creditAmountError(typed: string, max?: number): string | null {
   if (!typed.trim()) return "Enter how many credits";
   const amount = parseCreditAmount(typed);
   if (amount === null) return "Use a whole number";
-  if (amount < 1 || amount > CREDIT_AMOUNT_MAX)
-    return `Enter a whole number from 1 to ${formatCount(CREDIT_AMOUNT_MAX)}`;
+  if (max === undefined)
+    return amount < 1 ? "Enter a whole number of at least 1" : null;
+  if (amount < 1 || amount > max)
+    return `Enter a whole number from 1 to ${formatCount(max)}`;
   return null;
 }
 
@@ -91,21 +92,22 @@ export function adjustmentRequest(
 }
 
 /**
- * What submitting will do, in one line: "Add 200 credits to x@example.com". null while the amount or
- * the expiry can't be sent as typed, so the line never promises something else than the request.
- * `planCredits` is the plan's monthly amount, which a reset goes back to.
+ * What submitting will do, in one line: "Add 200 credits to x@example.com". null while the amount
+ * or the expiry can't be sent as typed, so the line never promises something else than the request.
+ * `planCredits` is the plan's monthly amount, which a reset goes back to; `amountMax` is the most
+ * one change may carry, where the backend said (`creditAmountError`).
  */
 export function confirmationLine(
   values: Pick<CreditAdjustmentFields, "action" | "amount" | "expires_at">,
   email: string,
   planCredits: number | null,
-  now: number = Date.now(),
+  { amountMax, now = Date.now() }: { amountMax?: number; now?: number } = {},
 ): string | null {
   if (values.action === "reset")
     return `Reset ${email}'s monthly credits to the plan's ${
       planCredits === null ? "amount" : formatCount(planCredits)
     }`;
-  if (creditAmountError(values.amount)) return null;
+  if (creditAmountError(values.amount, amountMax)) return null;
   const amount = formatCredits(parseCreditAmount(values.amount) ?? 0);
   if (values.action === "deduct") return `Deduct ${amount} from ${email}`;
   if (creditExpiryError(values.expires_at, now)) return null;

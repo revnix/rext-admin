@@ -19,13 +19,16 @@ import type {
 import type { ApiClient } from "./core";
 import { ENDPOINTS } from "./endpoints";
 
-/** POST /admin/users/{user_id}/credits (rext-backend AdminCreditAdjustment). */
+/**
+ * POST /admin/users/{user_id}/credits (rext-backend AdminCreditAdjustment). How many credits one
+ * change may carry and how long its reason may be are the backend's to say (`AdminCreditLimits`).
+ */
 export type AdminCreditAdjustmentRequest =
   | {
       action: "add";
-      /** A whole number from 1 to 100,000, as a JSON number: the backend refuses "5" and 5.5. */
+      /** A whole number of at least 1, as a JSON number: the backend refuses "5" and 5.5. */
       amount: number;
-      /** 3 to 500 characters once trimmed; the customer sees it. */
+      /** Trimmed; the customer sees it. */
       reason: string;
       /** In the future. Left out, the credits last and are spent after the month's. */
       expires_at?: string;
@@ -88,12 +91,27 @@ export interface AdminCreditAdjustment extends CreditAdjustmentEntry {
   adjusted_by_email: string | null;
 }
 
+/**
+ * What one change may ask for (rext-backend AdminCreditLimits). They come with the read, so the
+ * form can say them before the request is refused, and the dashboard holds no copy of them.
+ */
+export interface AdminCreditLimits {
+  /** The most credits to add or deduct at once. */
+  amount_max: number;
+  /** The reason's shortest length, once trimmed. */
+  reason_min: number;
+  /** The reason's longest length. */
+  reason_max: number;
+}
+
 /** GET /admin/users/{user_id}/credits: the breakdown and the history, newest first. */
 export interface AdminUserCredits {
   user_id: string;
   credits: AdminCreditBreakdown;
   grants: AdminCreditGrant[];
   adjustments: AdminCreditAdjustment[];
+  /** Not there from an API that doesn't send them yet: the form then leaves those checks to it. */
+  limits?: AdminCreditLimits;
 }
 
 export function createAdminCreditsNamespace(client: ApiClient) {
