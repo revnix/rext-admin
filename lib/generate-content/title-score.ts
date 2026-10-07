@@ -66,7 +66,9 @@ function charCount(text: string): number {
  * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
  * `_normalize_for_match`. A capital dotted İ lowercases to "i" plus a combining dot that no
  * lowercase i carries, so the dot goes: Turkish "İstanbul" is "istanbul" in lowercase. A capital Σ
- * lowercases to the final ς at a word's end, which a user types as σ: both are σ.
+ * lowercases to the final ς at a word's end, which a user types as σ: both are σ. An invisible
+ * format character (a soft hyphen, a zero-width joiner) is no word break, and a mark goes with a
+ * flattened character it sits on (an emoji's variation selector).
  */
 function forMatch(text: string): string {
   return ` ${text
@@ -74,6 +76,8 @@ function forMatch(text: string): string {
     .toLowerCase()
     .replace(/i\u0307/g, "i")
     .replace(/ς/g, "σ")
+    .replace(/\p{Cf}/gu, "")
+    .replace(/([\p{P}\p{S}\p{Z}\p{C}_])\p{M}+/gu, "$1")
     .replace(NON_WORD, " ")
     .trim()
     .replace(/\s+/g, " ")} `;
