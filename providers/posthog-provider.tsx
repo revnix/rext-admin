@@ -6,7 +6,11 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
 import { analytics, registerPostHog, takeOAuthLinking } from "@/lib/analytics";
-import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
+import {
+  redactEventUrls,
+  redactStoredAddresses,
+  redactUrl,
+} from "@/lib/analytics-redact";
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
@@ -120,6 +124,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // PostHog adds the current address to every event; redact the credentials in it.
       before_send: redactEventUrls,
     });
+
+    // The SDK keeps the first address and referrer of the person and of each session in the
+    // browser, raw, whatever before_send does: redacted now, and whenever a session begins.
+    redactStoredAddresses(posthog);
+    posthog.onSessionId(() => redactStoredAddresses(posthog));
 
     // Wire posthog into the analytics singleton so analytics.track() etc. work
     registerPostHog({
