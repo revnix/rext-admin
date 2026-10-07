@@ -147,7 +147,7 @@ export function CalendarBoard({
                         item.id,
                       ) as Route
                     }
-                    className="flex flex-col gap-1 rounded-sm border border-border bg-card p-3 outline-none hover:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex flex-col gap-1 rounded-sm border border-border bg-card p-3 outline-none hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <span className="line-clamp-2 text-sm font-medium text-foreground">
                       {item.title || "Untitled"}
