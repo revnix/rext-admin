@@ -88,7 +88,7 @@ A form is built from `components/forms/`. Its schema lives in `schemas/` (the pe
 - `PasswordInput` is the control of a password field: the Input with a show/hide button at its end.
 - `FormShell` owns the rhythm: sections (`FormSection`) 32 px apart, fields 16 px apart, and the submit row, where Save stays enabled until the submission starts and then shows a spinner. The row can be sticky on long forms, and a `status` slot shows the inline "Saved". It guards against leaving with unsaved changes: the browser's prompt on reload or close, and a dialog for a link inside the app or the form's Cancel (`use-leave-guard.ts`; the App Router has no navigation events, so the guard watches link clicks).
 
-The persona form (create and edit), workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button); the forms on the older `components/ui/form.tsx` move later.
+The persona form (create and edit), workspace settings (General), and the login and sign-up forms are on it (the sign-in forms use the field set without `FormShell`: they have no leave guard and one full-width button). Every form is on it now; the older `components/ui/form.tsx` wrappers are gone (C4a #392).
 
 ## States
 
@@ -103,7 +103,7 @@ One component each (design/app-language.md §8), in `components/ui/`:
 - `Badge` is a word: `neutral` by default, or one of the four status tints, text only. shadcn's variant names draw the same quiet badges;
 - `ConfirmationDialog` and `useConfirmation` ask before an action, with buttons that name it and its opposite ("Delete article", "Keep article"); a `Dialog` takes the whole screen under 640 px.
 
-`alert.tsx` stays only for `components/account-settings/privacy-settings.tsx`, which rext-admin#416 is rewriting; it goes when that last user moves (C5b #449).
+`alert.tsx` is gone: its last user, the data export in Settings, moved to `Notice` (C5b #449).
 
 
 Every primitive renders at `/dev/primitives` (development only), in its variants and states; a change to one is looked at there first, at 390, 820 and 1440 px.
@@ -114,7 +114,7 @@ Every primitive renders at `/dev/primitives` (development only), in its variants
 - **The API client** (`lib/api-client/`, written by hand: `core.ts` for the base request and `ApiError`, one file per area, `endpoints.ts` for the paths) is the one place that knows the backend's URLs, headers and error shapes; `lib/api-error-middleware.ts` turns errors into toasts and redirects. Its request and response shapes come from the backend's OpenAPI spec, area by area: `api/openapi.json` is the spec (exported by the backend's `scripts/export_openapi.py --strict`, which its CI runs), `lib/api-client/schema.d.ts` the types generated from it (`pnpm api:types`; never edit it by hand, and CI fails when it doesn't match the spec), and an area's file aliases `components["schemas"][…]` and checks what it sends with `satisfies` (`integrations.ts` first). After a backend change to a route, export the spec from `stage` into `api/openapi.json` and run `pnpm api:types`. Two older paths remain and are being retired: `services/*` (about ten importers) and raw `fetch(` calls in components. New code uses the client only.
 - **URL state:** a list's search and filters are search params read and set through `nuqs` (`NuqsAdapter` in `app/layout.tsx`). Each list's parsers are one module in `lib/search-params/` (the content library's is `content.ts`), shared by `useQueryStates` in the page and `createLoader` on the server, so both read the URL the same way.
 - **UI state** lives in Zustand stores under `stores/`. The exception is `stores/subscription-store.ts` (870 lines), which fetches the subscription and usage itself with its own throttling; plan F moves it to TanStack Query.
-- **Forms** use react-hook-form with a zod schema from `schemas/` and shadcn's `Form` (`components/ui/form.tsx`).
+- **Forms** use react-hook-form with a zod schema from `schemas/`, on the field set in `components/forms/` (above).
 - **Permissions:** `lib/permissions.ts` names the actions; `hooks/use-permission` and `components/permission/*` (`PermissionGuard`, `RoleGuard`, …) gate the UI; the backend enforces them again. `scripts/audit_action_buttons.mjs` checks that workspace-page actions sit behind a guard.
 - **Notifications** arrive as server-sent events: `providers/sse-provider.tsx` opens `/api/v1/events/{operationId}` on the backend with `@microsoft/fetch-event-source`, validates events with `schemas/sse-schemas.ts`, and `hooks/use-sse-channel.ts` routes them into `stores/notification-store.ts`.
 - **Analytics:** `lib/analytics.ts` wraps `posthog-js`; `providers/posthog-provider.tsx` records page views.
