@@ -10,6 +10,7 @@ import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
 import { useZodForm } from "@/components/forms/use-zod-form";
+import { LegalAgreement } from "@/components/auth/legal-agreement";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { Button } from "@/components/ui/button";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
@@ -287,6 +288,8 @@ export function LoginForm({
       </div>
 
       <OAuthButtons callbackUrl={searchParams.get("redirect") || "/"} />
+      {/* Google or GitHub create an account for someone new: they agree to the same terms as sign-up. */}
+      <LegalAgreement action="continuing with Google or GitHub" />
 
       {/* A submit before the page runs is the browser's own: post keeps the fields out of the address. */}
       <form method="post" onSubmit={form.handleSubmit(onSubmit)} noValidate>
