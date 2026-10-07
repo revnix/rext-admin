@@ -180,6 +180,13 @@ describe("containsKeyphrase in any script, as the backend's", () => {
     ["最佳seo工具推荐", "seo", true],
     ["Maße und Gewichte", "Masse", false],
     ["MASSE UND GEWICHTE", "masse", true],
+    // Turkish: a capital dotted İ is an i; the dotless ı is a letter of its own.
+    ["İstanbul'da En İyi SEO Ajansları", "istanbul", true],
+    ["ISTANBUL İÇİN SEO REHBERİ", "İstanbul", true],
+    ["ıstanbul için seo", "istanbul", false],
+    // CJK ideographs beyond the first plane (Extension B on) are unspaced too.
+    ["𠀀𠀁𠀂", "𠀁", true],
+    ["2026年𠮷野家の店舗", "𠮷野家", true],
   ])("%s / %s → %s", (title, keyphrase, expected) => {
     expect(containsKeyphrase(title, keyphrase)).toBe(expected);
   });

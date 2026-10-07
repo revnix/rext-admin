@@ -50,11 +50,12 @@ const NON_WORD = /[\p{P}\p{S}\p{Z}\p{C}_]+/gu;
 
 /**
  * Scripts written without spaces between words (Thai, Lao, Myanmar, Khmer, kana including the
- * halfwidth forms, CJK ideographs): a phrase's edge in one of them needs no space beside it, and
- * a character of one beside a phrase is a boundary in itself.
+ * halfwidth forms, CJK ideographs, with the supplementary ideographic planes 2 and 3): a phrase's
+ * edge in one of them needs no space beside it, and a character of one beside a phrase is a
+ * boundary in itself. The `u` flag reads a character past the first plane as one code point.
  */
 const UNSPACED_SCRIPT =
-  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u{20000}-\u{3ffff}]/u;
 
 /** A length in characters (code points), as the backend's Python counts it, not UTF-16 units. */
 function charCount(text: string): number {
@@ -63,12 +64,14 @@ function charCount(text: string): number {
 
 /**
  * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
- * `_normalize_for_match`.
+ * `_normalize_for_match`. A capital dotted İ lowercases to "i" plus a combining dot that no
+ * lowercase i carries, so the dot goes: Turkish "İstanbul" is "istanbul" in lowercase.
  */
 function forMatch(text: string): string {
   return ` ${text
     .normalize("NFC")
     .toLowerCase()
+    .replace(/i\u0307/g, "i")
     .replace(NON_WORD, " ")
     .trim()
     .replace(/\s+/g, " ")} `;
