@@ -6,6 +6,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import { FieldController } from "@/components/forms/field-controller";
 import { FormSection, FormShell } from "@/components/forms/form-shell";
@@ -18,10 +19,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { usePersonas } from "@/hooks/use-personas";
+import { useWorkspacePipeline } from "@/hooks/use-workspace-pipeline";
 import { apiClient } from "@/lib/api-client";
 import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
+import { stoppedRunToShow } from "@/lib/workspace/workspace-pipeline";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
   BRAND_VOICE_LIMITS,
@@ -64,10 +67,24 @@ export function BrandVoiceSection() {
   const { hasPermission: canUpdate, isLoading: isUpdateLoading } =
     useWorkspacePermission(BRAND_VOICE_PERMISSIONS.UPDATE, workspaceId);
   // A failed refresh in another workspace isn't this one's.
-  const refreshError = useWorkspaceStore(
-    (state) =>
-      brandVoiceRefreshFor(state.brandVoiceRefresh, workspace?.id).refreshError,
+  const { refreshError, isRefreshing } = useWorkspaceStore(
+    useShallow((state) => {
+      const refresh = brandVoiceRefreshFor(
+        state.brandVoiceRefresh,
+        workspace?.id,
+      );
+      return {
+        refreshError: refresh.refreshError,
+        isRefreshing: refresh.isRefreshing,
+      };
+    }),
   );
+  // The pipeline's last run (G20): one a restart or a failure stopped didn't write the voice below.
+  const { data: pipeline } = useWorkspacePipeline(workspace?.id);
+  const stoppedRun = stoppedRunToShow(pipeline, {
+    busy: Boolean(isRefreshing || refreshError),
+    website: workspace?.url,
+  });
 
   const { data, isLoading } = useQuery({
     ...workspaceQueries.brandVoice(workspace?.id || ""),
@@ -171,6 +188,14 @@ export function BrandVoiceSection() {
         {refreshError && (
           <Notice tone="danger" title="The website couldn't be read">
             {refreshError}
+          </Notice>
+        )}
+        {stoppedRun && (
+          <Notice tone="warning" title={stoppedRun.title}>
+            {stoppedRun.body} The brand voice below wasn't updated by it.{" "}
+            {canUpdate
+              ? "Read the website again to run it once more."
+              : "Someone who can edit the brand voice can read the website again."}
           </Notice>
         )}
       </SettingsGroup>

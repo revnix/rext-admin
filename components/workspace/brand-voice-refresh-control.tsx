@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
+import { useWorkspacePipeline } from "@/hooks/use-workspace-pipeline";
 import { cn } from "@/lib/utils";
+import {
+  businessRuleOf,
+  PIPELINE_RUNNING_RULE,
+  pipelineOutcome,
+} from "@/lib/workspace/workspace-pipeline";
 import { workspaceRunStages } from "@/lib/workspace/workspace-run-stages";
 import {
   brandVoiceRefreshFor,
@@ -96,6 +102,13 @@ export function BrandVoiceRefreshControl({
   );
   const startingRef = useRef(false);
   const startedOperationRef = useRef<string | null>(null);
+  // A run's end is handled once: the stream and the pipeline's record (G20) can both report it.
+  const settledRef = useRef<string | null>(null);
+  const settleOnce = useCallback((id: string | null) => {
+    if (!id || settledRef.current === id) return false;
+    settledRef.current = id;
+    return true;
+  }, []);
 
   // A run started here opens its dialog at once; one found on mount is picked up quietly.
   useEffect(() => {
@@ -142,16 +155,19 @@ export function BrandVoiceRefreshControl({
     {
       autoConnect: true,
       onComplete: async () => {
+        if (!settleOnce(operationId)) return;
         toast.success("The brand voice was read from your website again");
         await reloadBrandVoice();
         closeDialog();
       },
       // Ended while nobody listened, outcome unknown: read the brand voice again, no success toast.
       onEnded: async () => {
+        if (!settleOnce(operationId)) return;
         await reloadBrandVoice();
         closeDialog();
       },
       onError: (errorMessage) => {
+        if (!settleOnce(operationId)) return;
         toast.error(errorMessage || "The website couldn't be read");
         setBrandVoiceRefreshState(workspaceId, {
           refreshError: errorMessage,
@@ -160,6 +176,33 @@ export function BrandVoiceRefreshControl({
       },
     },
   );
+
+  // The run's record (G20), read every few seconds while a run is followed: a restart or a deploy
+  // ends the run without a word on the stream, and a run that ended unseen needs no 15 s of
+  // silence to tell. The section shows a run the record reports stopped.
+  const { data: pipeline, refetch: readPipeline } = useWorkspacePipeline(
+    workspaceId,
+    { poll: Boolean(operationId) },
+  );
+  const outcome = pipelineOutcome(pipeline, operationId);
+  useEffect(() => {
+    if (outcome !== "completed" && outcome !== "stopped") return;
+    if (!settleOnce(operationId)) return;
+    if (outcome === "completed" && isDialogOpen) {
+      toast.success("The brand voice was read from your website again");
+    }
+    disconnect();
+    void reloadBrandVoice();
+    closeDialog();
+  }, [
+    closeDialog,
+    disconnect,
+    isDialogOpen,
+    operationId,
+    outcome,
+    reloadBrandVoice,
+    settleOnce,
+  ]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -224,6 +267,21 @@ export function BrandVoiceRefreshControl({
       });
       toast.success("Reading your website…");
     } catch (error) {
+      if (businessRuleOf(error) === PIPELINE_RUNNING_RULE) {
+        // A run is going already (another tab, or the creation's): follow it instead.
+        const { data } = await readPipeline();
+        if (data?.operation_id) {
+          startedOperationRef.current = data.operation_id;
+          setCurrentOperation({ operationId: data.operation_id, workspaceId });
+          setBrandVoiceRefreshState(workspaceId, {
+            isRefreshing: true,
+            operationId: data.operation_id,
+            refreshError: undefined,
+          });
+          toast.info("Your website is being read already");
+          return;
+        }
+      }
       const message =
         error instanceof Error
           ? error.message
@@ -234,6 +292,7 @@ export function BrandVoiceRefreshControl({
     }
   }, [
     refreshBrandVoice,
+    readPipeline,
     workspaceId,
     setBrandVoiceRefreshState,
     setCurrentOperation,

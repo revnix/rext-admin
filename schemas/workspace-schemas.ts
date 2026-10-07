@@ -228,6 +228,18 @@ export const brandVoiceSchema = z.object({
 /**
  * Core workspace schema matching backend WorkspaceModel response
  */
+/**
+ * The latest run of the pipeline that reads the workspace's website: the creation's analysis, its
+ * retry or a brand-voice refresh (task G20). The run lives inside the API process, so a restart or a
+ * deploy ends it: the backend then reports "interrupted". Null for a workspace created before runs
+ * were recorded.
+ */
+export const workspacePipelineSchema = z.object({
+  status: z.enum(["running", "completed", "failed", "interrupted"]),
+  operation_id: z.string().nullish(),
+  started_at: z.string().nullish(),
+});
+
 export const workspaceSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -242,6 +254,7 @@ export const workspaceSchema = z.object({
   analytics: workspaceAnalyticsSchema.optional(),
   members_count: z.number().optional(),
   content_count: z.number().optional(),
+  pipeline: workspacePipelineSchema.nullish(),
 });
 
 /**
@@ -282,6 +295,11 @@ export const workspacePermissionsResponseSchema = z.object({
 });
 
 export const refreshBrandVoiceResponseSchema = z.object({
+  operation_id: z.string(),
+});
+
+/** Reading the website again after a run that failed or was interrupted: the new run's operation. */
+export const retryWorkspacePipelineResponseSchema = z.object({
   operation_id: z.string(),
 });
 

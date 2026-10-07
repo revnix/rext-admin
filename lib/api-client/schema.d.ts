@@ -5995,6 +5995,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/pipeline/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Workspace Pipeline
+         * @description Read the website again after the last run failed or was interrupted (the pipeline runs
+         *     inside the API process, so a restart or a deploy ends it). Returns the new run's operation
+         *     id for the SSE stream; GET /workspaces/{id} shows its status as `pipeline`.
+         */
+        post: operations["retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -18324,6 +18346,42 @@ export interface components {
             error?: null;
         };
         /**
+         * SuccessResponse[WorkspacePipelineRetryResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_WorkspacePipelineRetryResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["WorkspacePipelineRetryResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
          * SuccessResponse[WorkspaceResponseSchema]
          * @example {
          *       "data": {},
@@ -20120,6 +20178,33 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** WorkspacePipelineRetryResponse */
+        WorkspacePipelineRetryResponse: {
+            /** Operation Id */
+            operation_id: string;
+        };
+        /**
+         * WorkspacePipelineState
+         * @description The latest run of the workspace pipeline that reads the website (creation, retry, refresh)
+         */
+        WorkspacePipelineState: {
+            /**
+             * Status
+             * @description interrupted: a restart or a deploy ended the run; POST .../pipeline/retry runs it again
+             * @enum {string}
+             */
+            status: "running" | "completed" | "failed" | "interrupted";
+            /**
+             * Operation Id
+             * @description The run's SSE operation id
+             */
+            operation_id?: string | null;
+            /**
+             * Started At
+             * @description When the run started
+             */
+            started_at?: string | null;
+        };
         /**
          * WorkspaceResponseSchema
          * @description Full workspace response with ID and metadata
@@ -20183,6 +20268,8 @@ export interface components {
             members_count: number | null;
             brand_voice?: components["schemas"]["BrandVoiceResponseSchema"] | null;
             analytics?: components["schemas"]["WorkspaceAnalyticsSchema"] | null;
+            /** @description The latest pipeline run; null when none is recorded */
+            pipeline?: components["schemas"]["WorkspacePipelineState"] | null;
         };
         /** WorkspaceRestoreResponse */
         WorkspaceRestoreResponse: {
@@ -29580,6 +29667,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_WorkspacePipelineRetryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
