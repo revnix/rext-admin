@@ -192,6 +192,15 @@ describe("containsKeyphrase in any script, as the backend's", () => {
     ["हिन्दी में सबसे अच्छा सॉफ्टवेयर", "हिन्\u200dदी", true],
     // An emoji's variation selector goes with the emoji: one emoji doesn't match another.
     ["\u2600\ufe0f weather guide for travellers", "\u2764\ufe0f", false],
+    // Punctuation between unspaced characters is no word break, either way round.
+    ["生成AI・ツール比較", "生成AIツール", true],
+    ["生成AIツール比較", "生成AI・ツール", true],
+    // Armenian: the ligature և is եւ, as its capital ԵՒ lowercases.
+    ["ՍՈՒՐՃ ԵՒ ԹԵՅ ԳՆԵԼՈՒ ՈՒՂԵՑՈՒՅՑ", "սուրճ և թեյ", true],
+    // The iteration mark 々 is part of a Japanese word.
+    ["人々2026年ガイド", "人々", true],
+    // A letter and accent that lowercasing leaves apart are still the one letter.
+    ["J\u030c guide for beginners", "\u01f0", true],
     // CJK ideographs beyond the first plane (Extension B on) are unspaced too.
     ["𠀀𠀁𠀂", "𠀁", true],
     ["2026年𠮷野家の店舗", "𠮷野家", true],
