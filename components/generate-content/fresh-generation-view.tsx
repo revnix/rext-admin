@@ -657,10 +657,13 @@ export function FreshGenerationView({
         // not the generic restore error (E22, rext-control#451).
         if (payload.run?.status === "timeout" && payload.runStage) {
           setTimedOutStages(stagesWhereTimedOut(payload.runStage, Date.now()));
+          // The run the page joined while restoring is over: no stage stays active elsewhere.
+          clearRunStages();
           setIsBackgroundGenerationActive(false);
           setIsEnhancing(false);
           dispatch({ type: "SET_MANUAL_LOADING", payload: false });
           dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+          dispatch({ type: "SET_RUN_PHASE", payload: null });
           updateBackgroundJob(backgroundThreadId, {
             status: "failed",
             stage: payload.stage ?? "Generation failed",
@@ -2342,7 +2345,23 @@ export function FreshGenerationView({
           )}
         </motion.div>
 
-        {showOutlineReview ? (
+        {timedOutStages && !restoreError ? (
+          // A restored run the time limit stopped: its stages as they stood, in the step's place.
+          <div className="w-full space-y-3">
+            <RunProgress stages={timedOutStages} timedOut />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTimedOutStages(null);
+                onBack();
+              }}
+            >
+              Start a new article
+            </Button>
+          </div>
+        ) : showOutlineReview ? (
           <div className="w-full mt-0">
             <OutlineReview
               outline={parsedOutline}
@@ -2413,23 +2432,6 @@ export function FreshGenerationView({
         )}
       </StepColumn>
 
-      {timedOutStages && !restoreError && (
-        <div className="mx-auto my-8 flex w-full max-w-md flex-col items-start gap-3">
-          <RunProgress stages={timedOutStages} timedOut />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setTimedOutStages(null);
-              onBack();
-            }}
-          >
-            Start a new article
-          </Button>
-        </div>
-      )}
-
       {restoreError && (
         <RunNotice
           title="We could not restore this article"
@@ -2443,7 +2445,7 @@ export function FreshGenerationView({
       )}
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
-      {showContentStream && !restoreError && (
+      {showContentStream && !restoreError && !timedOutStages && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
             // The article's run, while it runs: the same stages as every other
