@@ -48,6 +48,9 @@ export const ENDPOINTS = {
     brandVoice: (id: string) => `/api/v1/workspaces/${id}/brand-voice` as const,
     refreshBrandVoice: (id: string) =>
       `/api/v1/workspaces/${id}/brand-voice/refresh` as const,
+    // The website's pipeline again, after a run that failed or was interrupted (G20)
+    retryPipeline: (id: string) =>
+      `/api/v1/workspaces/${id}/pipeline/retry` as const,
 
     // Permissions
     permissions: {

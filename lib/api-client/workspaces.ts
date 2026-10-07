@@ -38,6 +38,7 @@ import {
   workspaceListResponseSchema,
   createWorkspaceResponseSchema,
   refreshBrandVoiceResponseSchema,
+  retryWorkspacePipelineResponseSchema,
   availableRolesResponseSchema,
   workspacePermissionsResponseSchema,
   workspaceStatsSchema,
@@ -338,6 +339,24 @@ export function createWorkspacesNamespace(client: ApiClient) {
         refreshBrandVoiceResponseSchema,
         response,
         "workspaces.refreshBrandVoice",
+      );
+    },
+
+    /**
+     * Read the website again after the pipeline's last run failed or was interrupted. Returns the
+     * new run's operation id. Refused (400) while a run is going (`workspace_pipeline_running`) and
+     * for a run that completed (`workspace_pipeline_not_retryable`).
+     */
+    retryPipeline: async (workspaceId: string) => {
+      const response = await client.request<{ operation_id: string }>(
+        ENDPOINTS.WORKSPACES.retryPipeline(workspaceId),
+        { method: "POST" },
+      );
+
+      return validateResponse(
+        retryWorkspacePipelineResponseSchema,
+        response,
+        "workspaces.retryPipeline",
       );
     },
 

@@ -14,10 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
+import {
+  useRetryWorkspacePipeline,
+  useWorkspacePipeline,
+} from "@/hooks/use-workspace-pipeline";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
 import { log } from "@/lib/logger";
 import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
+import {
+  businessRuleOf,
+  PIPELINE_NOT_RETRYABLE_RULE,
+  PIPELINE_RUNNING_RULE,
+  pipelineOutcome,
+  stoppedRunCopy,
+} from "@/lib/workspace/workspace-pipeline";
 import {
   findFailedEvent,
   workspaceRunStages,
@@ -34,8 +45,12 @@ import type { Route } from "next";
  * Creating a workspace (plans/app/D-pages.md §2.9): a name and the website, then the backend's
  * analysis as the run component, fed by the operation's events. When it completes, the new
  * workspace opens on its Brand voice section with the draft to review: the analysis has already
- * saved the brand voice, the personas and the competitors. A failed analysis says what failed and
- * opens the workspace anyway; a stream that stops before the end offers a retry. A workspace past
+ * saved the brand voice, the personas and the competitors. While the analysis runs, the workspace's
+ * pipeline record is read too (G20): the run lives in the API process, so a restart or a deploy can
+ * end it without a word on the stream. A run that failed or was interrupted says so and offers
+ * "Read the website again" (the backend's retry, then its new operation is followed); one the record
+ * shows completed goes on as if the stream had said so; a stream that stops while the run is still
+ * going (or for a backend without the record) offers to reconnect. A workspace past
  * the plan's limit (the backend's 429, or a limit the page learns of after it loaded) gets a
  * notice with the way to a bigger plan, never a click that does nothing.
  */
@@ -46,10 +61,13 @@ export function WorkspaceCreateWizard() {
   const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
 
   const [operationId, setOperationId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
   const [streamProblem, setStreamProblem] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   const slugRef = useRef<string | null>(null);
+  // The stream and the pipeline record can both report the end: the first one wins.
+  const completedRef = useRef(false);
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
@@ -78,6 +96,8 @@ export function WorkspaceCreateWizard() {
   );
 
   const handleComplete = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
     toast.success("Your workspace is ready");
     openBrandVoice(true);
   }, [openBrandVoice]);
@@ -103,6 +123,49 @@ export function WorkspaceCreateWizard() {
     };
   }, [operationId, disconnect, clearCompletedOperation]);
 
+  // The run's record, read every few seconds while it's followed.
+  const { data: pipeline, refetch: readPipeline } = useWorkspacePipeline(
+    workspaceId,
+    { poll: Boolean(operationId) },
+  );
+  const outcome = pipelineOutcome(pipeline, operationId);
+  useEffect(() => {
+    if (operationId && outcome === "completed") handleComplete();
+  }, [operationId, outcome, handleComplete]);
+
+  const retry = useRetryWorkspacePipeline();
+  const readWebsiteAgain = async () => {
+    if (!workspaceId) return;
+    try {
+      const next = await retry.mutateAsync(workspaceId);
+      setStreamProblem(null);
+      setOperationId(next);
+      void readPipeline();
+    } catch (error) {
+      const rule = businessRuleOf(error);
+      if (rule === PIPELINE_RUNNING_RULE) {
+        // Another tab or a refresh started it again: follow that run.
+        const { data } = await readPipeline();
+        if (data?.operation_id) {
+          setStreamProblem(null);
+          setOperationId(data.operation_id);
+        }
+        return;
+      }
+      if (rule === PIPELINE_NOT_RETRYABLE_RULE) {
+        // The run completed after all, so the brand voice is drafted.
+        handleComplete();
+        return;
+      }
+      log.error("[Workspace create] Reading the website again failed", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Reading the website again couldn't start. Try again.",
+      );
+    }
+  };
+
   const handleSubmit = async (data: WorkspaceFormData) => {
     if (isLimitReached) {
       setLimitReached(true);
@@ -121,6 +184,7 @@ export function WorkspaceCreateWizard() {
         timezone: data.timezone,
       });
       slugRef.current = workspace.slug;
+      setWorkspaceId(workspace.id);
       // The switcher's list stays cached for minutes; the sidebar needs the new workspace now.
       setCurrentWorkspace(workspace);
       queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
@@ -226,6 +290,16 @@ export function WorkspaceCreateWizard() {
   }
 
   const failed = findFailedEvent(events);
+  // The stream's failure, or the record's: a run a restart ended reports nothing on the stream.
+  const stopped =
+    failed || outcome === "stopped"
+      ? stoppedRunCopy(
+          !failed && pipeline?.status === "interrupted"
+            ? "interrupted"
+            : "failed",
+          { website, reason: failed?.message },
+        )
+      : null;
   return (
     <div className="space-y-4">
       <p className="text-body text-muted-foreground">
@@ -233,18 +307,32 @@ export function WorkspaceCreateWizard() {
         already created, so you can leave this page.
       </p>
       <RunProgress stages={workspaceRunStages(events)} />
-      {failed ? (
+      {stopped ? (
         <Notice
           tone="danger"
-          title="The analysis stopped"
+          title={stopped.title}
           action={
-            <Button size="sm" onClick={() => openBrandVoice(false)}>
-              Open the workspace
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={readWebsiteAgain}
+                disabled={retry.isPending}
+              >
+                {retry.isPending ? "Starting…" : "Read the website again"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openBrandVoice(false)}
+              >
+                Open the workspace
+              </Button>
+            </div>
           }
         >
-          {failed.message} Your workspace is created; you can read the website
-          again from its Brand voice settings.
+          {stopped.body} Your workspace is created: read the website again to
+          draft its brand voice, or open the workspace and do it later from its
+          Brand voice settings.
         </Notice>
       ) : (
         streamProblem && (

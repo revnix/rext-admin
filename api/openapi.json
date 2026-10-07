@@ -15915,6 +15915,59 @@
           }
         }
       }
+    },
+    "/api/v1/workspaces/{workspace_id}/pipeline/retry": {
+      "post": {
+        "tags": [
+          "Workspaces",
+          "workspaces"
+        ],
+        "summary": "Retry Workspace Pipeline",
+        "description": "Read the website again after the last run failed or was interrupted (the pipeline runs\ninside the API process, so a restart or a deploy ends it). Returns the new run's operation\nid for the SSE stream; GET /workspaces/{id} shows its status as `pipeline`.",
+        "operationId": "retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_WorkspacePipelineRetryResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -39257,6 +39310,58 @@
           "success": true
         }
       },
+      "SuccessResponse_WorkspacePipelineRetryResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always true for success responses",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Human-readable message describing the result"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta",
+            "description": "Response metadata"
+          },
+          "data": {
+            "$ref": "#/components/schemas/WorkspacePipelineRetryResponse",
+            "description": "The response payload data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error",
+            "description": "Always null for success responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta",
+          "data"
+        ],
+        "title": "SuccessResponse[WorkspacePipelineRetryResponse]",
+        "example": {
+          "data": {},
+          "message": "Operation completed successfully",
+          "meta": {
+            "processing_time_ms": 250,
+            "request_id": "req_1234567890_abc123",
+            "timestamp": "2024-01-15T10:30:00.123456Z",
+            "version": "1.0"
+          },
+          "success": true
+        }
+      },
       "SuccessResponse_WorkspaceResponseSchema_": {
         "properties": {
           "success": {
@@ -43542,6 +43647,65 @@
         ],
         "title": "WorkspacePermanentDeleteResponse"
       },
+      "WorkspacePipelineRetryResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id"
+        ],
+        "title": "WorkspacePipelineRetryResponse"
+      },
+      "WorkspacePipelineState": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "description": "interrupted: a restart or a deploy ended the run; POST .../pipeline/retry runs it again"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id",
+            "description": "The run's SSE operation id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "When the run started"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "WorkspacePipelineState",
+        "description": "The latest run of the workspace pipeline that reads the website (creation, retry, refresh)"
+      },
       "WorkspaceResponseSchema": {
         "properties": {
           "id": {
@@ -43664,6 +43828,17 @@
                 "type": "null"
               }
             ]
+          },
+          "pipeline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkspacePipelineState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The latest pipeline run; null when none is recorded"
           }
         },
         "type": "object",

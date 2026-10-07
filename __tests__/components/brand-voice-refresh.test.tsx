@@ -6,14 +6,24 @@
  * A run found on mount (D5b): it was started before the section last unmounted, so it may have ended
  * while nobody listened. Its dialog opens only once the stream shows it still going; a stream that
  * says it's complete, or stays silent, settles it.
+ *
+ * The pipeline's record (D21, G20): a run the record shows ended settles at once, with no silence to
+ * wait out, and a refresh refused because a run is going follows that run.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import {
   BrandVoiceRefreshControl,
   RESUMED_RUN_SILENCE_MS,
 } from "@/components/workspace/brand-voice-refresh-control";
+import { ApiError } from "@/lib/api-client/core";
 import {
   brandVoiceRefreshFor,
   useBrandVoiceRefreshStore,
@@ -21,7 +31,9 @@ import {
 import type { SSEEvent } from "@/types/sse";
 
 jest.mock("@/lib/api-client", () => ({
-  apiClient: { workspaces: { refreshBrandVoice: jest.fn() } },
+  apiClient: {
+    workspaces: { refreshBrandVoice: jest.fn(), getBySlug: jest.fn() },
+  },
 }));
 
 // What the stream has delivered for the control's operation, and the control's callbacks.
@@ -48,17 +60,25 @@ jest.mock("@/hooks/use-sse-channel", () => ({
 }));
 
 jest.mock("sonner", () => ({
-  toast: { success: jest.fn(), error: jest.fn() },
+  toast: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));
 
 const toast = jest.requireMock("sonner").toast as {
   success: jest.Mock;
   error: jest.Mock;
+  info: jest.Mock;
 };
 
 const api = jest.requireMock("@/lib/api-client").apiClient as {
-  workspaces: { refreshBrandVoice: jest.Mock };
+  workspaces: { refreshBrandVoice: jest.Mock; getBySlug: jest.Mock };
 };
+
+/** The workspace's pipeline record, as GET /workspaces/slug/{slug} returns it (G20). */
+function recordShows(
+  pipeline: { status: string; operation_id: string } | null,
+) {
+  api.workspaces.getBySlug.mockResolvedValue({ workspace: { pipeline } });
+}
 
 const idle = { isRefreshing: false };
 
@@ -79,6 +99,7 @@ beforeEach(() => {
   mockStreamEvents = [];
   mockStreamOptions = {};
   useBrandVoiceRefreshStore.setState({ brandVoiceRefresh: {} });
+  recordShows(null);
 });
 
 describe("the brand voice refresh state", () => {
@@ -352,5 +373,54 @@ describe("a run started here", () => {
     expect(
       screen.getByRole("dialog", { name: "Reading your website" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("the pipeline's record", () => {
+  it("settles a run found on mount that a restart interrupted, with no silence to wait out", async () => {
+    recordShows({ status: "interrupted", operation_id: "op-1" });
+    runFoundOnMount();
+    const view = renderControl("ws-a");
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Read the website again" }),
+      ).toBeEnabled(),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(view.invalidate).toHaveBeenCalledWith({
+      queryKey: ["workspaces", "brand-voice", "ws-a"],
+    });
+  });
+
+  it("follows the run that's going when a refresh is refused for one", async () => {
+    api.workspaces.refreshBrandVoice.mockRejectedValue(
+      new ApiError(400, "Still being read", "BUSINESS_RULE_VIOLATION", {
+        error: { context: { rule_name: "workspace_pipeline_running" } },
+      }),
+    );
+    recordShows({ status: "running", operation_id: "op-9" });
+    renderControl("ws-a");
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Read the website again" }),
+      );
+    });
+
+    expect(
+      await screen.findByRole("dialog", { name: "Reading your website" }),
+    ).toBeInTheDocument();
+    const refresh = brandVoiceRefreshFor(
+      useBrandVoiceRefreshStore.getState().brandVoiceRefresh,
+      "ws-a",
+    );
+    expect(refresh).toMatchObject({ isRefreshing: true, operationId: "op-9" });
+    expect(refresh.refreshError).toBeUndefined();
+    expect(toast.info).toHaveBeenCalledWith(
+      "Your website is being read already",
+    );
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
