@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { Route } from "next";
 
@@ -94,6 +94,15 @@ export function GuestGuard({
   const { isAuthenticated, isLoading } = useAuthSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Signed in when the page opened: the page isn't for them, so it sends them on. Signed in on
+  // this page (its form just logged them in): the form navigates on its own and stays on screen
+  // until it does. Blanking it and sending them to "/" as well left an empty page for seconds and
+  // a second navigation racing the form's (C11 #554).
+  const signedInOnArrival = useRef<boolean | null>(null);
+  if (signedInOnArrival.current === null && !isLoading) {
+    signedInOnArrival.current = isAuthenticated;
+  }
+  const sendOn = isAuthenticated && signedInOnArrival.current === true;
 
   useEffect(() => {
     if (!isLoading) {
@@ -106,11 +115,11 @@ export function GuestGuard({
         return;
       }
 
-      if (isAuthenticated) {
+      if (sendOn) {
         router.push(redirectTo as Route);
       }
     }
-  }, [isLoading, isAuthenticated, redirectTo, router, searchParams]);
+  }, [isLoading, sendOn, redirectTo, router, searchParams]);
 
   // Show loading state. Only while the session is unknown: the root layout seeds it from the server,
   // so a signed-out visitor gets the page in the first render, with no spinner swapped out after it
@@ -126,8 +135,8 @@ export function GuestGuard({
     );
   }
 
-  // If authenticated, don't render children (redirect happens in useEffect)
-  if (isAuthenticated) {
+  // Signed in on arrival: don't render the page (the redirect happens in useEffect).
+  if (sendOn) {
     return null;
   }
 
