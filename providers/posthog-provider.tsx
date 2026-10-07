@@ -103,15 +103,20 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    if (!key) return;
+    // NEXT_PUBLIC_ANALYTICS_ENABLED=false turns all of it off, page views and identification too.
+    if (!key || process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "false") return;
 
     posthog.init(key, {
+      // The EU cloud, as the Content-Security-Policy's default (lib/csp.ts) and the privacy texts say.
       api_host:
-        process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
+        process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
       capture_pageview: false, // tracked manually via PostHogPageView
       capture_pageleave: true,
       persistence: "localStorage",
       autocapture: false, // keep events intentional
+      // No session is recorded until the app asks for it and masks what a recording shows
+      // (rext-control task 712): a switch in the PostHog project can't start one by itself.
+      disable_session_recording: true,
       // PostHog adds the current address to every event; redact the credentials in it.
       before_send: redactEventUrls,
     });
