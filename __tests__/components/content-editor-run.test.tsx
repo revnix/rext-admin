@@ -62,3 +62,12 @@ describe("ContentEditor while the article is written", () => {
     ).toBeNull();
   });
 });
+
+describe("ContentEditor's toolbar", () => {
+  it("names each of the article's actions (D23)", () => {
+    render(editor({}));
+    for (const name of ["Edit", "Save", "Copy", "Publish"]) {
+      expect(screen.getAllByRole("button", { name }).length).toBeGreaterThan(0);
+    }
+  });
+});

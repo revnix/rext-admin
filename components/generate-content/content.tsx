@@ -854,19 +854,21 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   const analysisSidebarContent = (
     <div className="flex flex-col h-full min-h-0 bg-card pb-20 sm:pb-0">
-      <div className="flex items-center justify-around px-2 gap-2 sticky top-0 bg-card py-3 z-4 border-b border-border">
-        <div className="flex-1">
+      {/* The article's actions, each named (D23): a 2 by 2 grid so the words fit the 288 px pane. */}
+      <div className="grid grid-cols-2 gap-2 px-3 sticky top-0 bg-card py-3 z-4 border-b border-border">
+        <div>
           {canUpdate ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+                  className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                   onClick={onEditToggle}
                   disabled={!isFinal}
                 >
                   {isEditing ? <Eye size={14} /> : <Pencil size={14} />}
+                  {isEditing ? "Preview" : "Edit"}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -878,15 +880,16 @@ function ContentEditorInner(props: ContentEditorProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-8 px-2! text-xs font-bold transition-all flex-1 !w-full"
+                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                 disabled
               >
                 <Pencil size={14} />
+                Edit
               </Button>
             </LockedFeatureTooltip>
           )}
         </div>
-        <div className="flex-1">
+        <div>
           {canUpdate ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -895,9 +898,10 @@ function ContentEditorInner(props: ContentEditorProps) {
                   disabled={!isFinal || isSaving || isPublishing}
                   variant="secondary"
                   size="sm"
-                  className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                  className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                 >
                   <Save size={14} className={isSaving ? "animate-pulse" : ""} />
+                  {isSaving ? "Saving…" : "Save"}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -909,15 +913,16 @@ function ContentEditorInner(props: ContentEditorProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                 disabled
               >
                 <Save size={14} />
+                Save
               </Button>
             </LockedFeatureTooltip>
           )}
         </div>
-        <div className="flex-1">
+        <div>
           <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -926,9 +931,11 @@ function ContentEditorInner(props: ContentEditorProps) {
                     disabled={!isFinal}
                     variant="secondary"
                     size="sm"
-                    className="h-8 px-2! text-xs font-bold transition-all !w-full"
+                    className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
                   >
                     <Copy size={14} />
+                    Copy
+                    <ChevronDown size={12} />
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
@@ -947,19 +954,20 @@ function ContentEditorInner(props: ContentEditorProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="flex-1">
+        <div>
           {canPublish ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
-                  className="h-8 px-2! text-xs font-bold w-full! gap-1"
+                  className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
                 >
                   <Send
                     size={14}
                     className={isPublishing ? "animate-pulse" : ""}
                   />
-                  <ChevronDown size={11} />
+                  {isPublishing ? "Publishing…" : "Publish"}
+                  <ChevronDown size={12} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
@@ -998,10 +1006,11 @@ function ContentEditorInner(props: ContentEditorProps) {
             <LockedFeatureTooltip message="Publishing requires a role above Editor">
               <Button
                 size="sm"
-                className="h-8 px-2! text-xs font-bold w-full!"
+                className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
                 disabled
               >
                 <Send size={14} />
+                Publish
               </Button>
             </LockedFeatureTooltip>
           )}
@@ -1297,8 +1306,9 @@ function ContentEditorInner(props: ContentEditorProps) {
         </aside>
       </div>
 
-      {/* Mobile Responsive Drawers: above the phone's bottom bar, which shows under 1024 px. */}
-      <div className="fixed bottom-[calc(var(--bottom-bar-height,0px)+--spacing(4))] lg:bottom-6 left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
+      {/* Mobile Responsive Drawers: above the phone's bottom bar (under 1024 px) and the run dock
+          (when it shows), so neither one's buttons are covered. */}
+      <div className="fixed bottom-[calc(var(--bottom-bar-height,0px)+var(--dock-height,0px)+--spacing(4))] lg:bottom-[calc(var(--dock-height,0px)+--spacing(6))] left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
         {sidebarSections && sidebarSections.length > 0 && (
           <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>

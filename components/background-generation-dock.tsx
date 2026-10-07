@@ -61,6 +61,26 @@ const isPending = (job: BackgroundGenerationJob) =>
 
 const RUN_DISCOVERY_GRACE_MS = 15_000;
 
+/**
+ * The dock's height as `--dock-height` on the page while it shows (D23), so the controls fixed to
+ * the bottom of a page (the article's Structure and Checklist, a side pane's button) sit above it
+ * instead of over its buttons. A callback ref: React runs the returned cleanup when the dock goes.
+ */
+function publishDockHeight(dock: HTMLElement | null) {
+  if (!dock) return;
+  const root = document.documentElement;
+  const publish = () =>
+    root.style.setProperty("--dock-height", `${dock.offsetHeight}px`);
+  publish();
+  const observer =
+    typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
+  observer?.observe(dock);
+  return () => {
+    observer?.disconnect();
+    root.style.removeProperty("--dock-height");
+  };
+}
+
 export function BackgroundGenerationDock() {
   const router = useRouter();
   const pathname = usePathname();
@@ -513,6 +533,7 @@ export function BackgroundGenerationDock() {
 
   return (
     <section
+      ref={publishDockHeight}
       aria-label="Background generation activity"
       className="sticky bottom-(--bottom-bar-height) z-(--z-sticky) border-t border-border bg-surface-raised lg:bottom-0"
     >
