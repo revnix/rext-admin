@@ -1,6 +1,6 @@
 "use client";
 
-import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/extension";
+import { $createHorizontalRuleNode } from "@lexical/extension";
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
@@ -15,6 +15,7 @@ import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
 import { INSERT_TABLE_COMMAND } from "@lexical/table";
 import {
+  $createParagraphNode,
   $getSelection,
   $isRangeSelection,
   type LexicalEditor,
@@ -46,7 +47,7 @@ const ICONS: Record<BlockId, LucideIcon> = {
 };
 
 /** What each block does where the cursor is. Runs inside an editor update. */
-function insertBlock(editor: LexicalEditor, id: BlockId) {
+export function insertBlock(editor: LexicalEditor, id: BlockId) {
   const selection = $getSelection();
   switch (id) {
     case "h2":
@@ -74,9 +75,24 @@ function insertBlock(editor: LexicalEditor, id: BlockId) {
         includeHeaders: { rows: true, columns: false },
       });
       return;
-    case "divider":
-      editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+    case "divider": {
+      // Put in directly: nothing in this editor answers Lexical's "insert a rule" command.
+      if (!$isRangeSelection(selection)) return;
+      const line = selection.anchor.getNode().getTopLevelElement();
+      if (!line) return;
+      const rule = $createHorizontalRuleNode();
+      if (line.isEmpty()) {
+        // The empty line stays under the rule, to type on.
+        line.insertBefore(rule);
+        return;
+      }
+      line.insertAfter(rule);
+      if (rule.getNextSibling() === null) {
+        rule.insertAfter($createParagraphNode());
+      }
+      rule.selectNext();
       return;
+    }
   }
 }
 
