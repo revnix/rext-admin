@@ -8,9 +8,18 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutlineBrief } from "@/components/generate-content/outline-review/outline-brief";
 import { PersonaPicker } from "@/components/generate-content/outline-review/persona-picker";
-import { namedPeople } from "@/components/workspace-settings/brand-voice-section";
+import {
+  DraftedNotice,
+  namedPeople,
+} from "@/components/workspace-settings/brand-voice-section";
 import type { Outline, PersonaRecommendation } from "@/types/generate-content";
 import type { Persona } from "@/types/workspace";
+
+// The drafted notice reads the workspace's personas; each test sets the answer.
+const mockPersonas = jest.fn();
+jest.mock("@/hooks/use-personas", () => ({
+  usePersonas: () => mockPersonas(),
+}));
 
 const FOUNDER: Persona = {
   id: "founder-1",
@@ -69,7 +78,10 @@ describe("PersonaPicker", () => {
 });
 
 describe("OutlineBrief's author", () => {
-  const brief = (recommendations: PersonaRecommendation[]) =>
+  const brief = (
+    recommendations: PersonaRecommendation[],
+    personaId: string | null = null,
+  ) =>
     render(
       <OutlineBrief
         outline={
@@ -81,7 +93,7 @@ describe("OutlineBrief's author", () => {
         canEdit={false}
         personas={[FOUNDER, PODCASTER]}
         personaRecommendations={recommendations}
-        personaId={null}
+        personaId={personaId}
         onPersonaChange={jest.fn()}
         brandPromotion={null}
         recommendedProminence={null}
@@ -100,6 +112,13 @@ describe("OutlineBrief's author", () => {
     ).toBeInTheDocument();
   });
 
+  it("follows the user's pick when none fits", () => {
+    brief(offTopic, "founder-1");
+    expect(
+      screen.getByText(/the article is written as the one you picked/),
+    ).toBeInTheDocument();
+  });
+
   it("explains the recommendation when one fits", () => {
     brief(oneFits);
     expect(screen.getByText(/Recommended by fit with/)).toBeInTheDocument();
@@ -113,5 +132,52 @@ describe("namedPeople", () => {
     expect(namedPeople(["A", "B", "C", "D", "E", "F", "G"])).toBe(
       "A, B, C, D, E, and 2 more",
     );
+  });
+});
+
+describe("DraftedNotice", () => {
+  const answer = (personas: Persona[]) => ({
+    data: { personas },
+    isSuccess: true,
+  });
+
+  it("names the people the personas were drafted from, as they were on arrival", () => {
+    mockPersonas.mockReturnValue(answer([FOUNDER, PODCASTER]));
+    const { rerender } = render(
+      <DraftedNotice
+        workspaceId="w1"
+        workspaceSlug="acme"
+        website="https://acme.example/about"
+      />,
+    );
+    expect(
+      screen.getByText(
+        /drafted 2 author personas from the people named on your site: Sania Usman and Tom Reyes/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/We read acme\.example/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Personas" })).toHaveAttribute(
+      "href",
+      "/w/acme/personas",
+    );
+
+    // A persona deleted afterwards doesn't change who came from the site.
+    mockPersonas.mockReturnValue(answer([]));
+    rerender(
+      <DraftedNotice
+        workspaceId="w1"
+        workspaceSlug="acme"
+        website="https://acme.example"
+      />,
+    );
+    expect(screen.getByText(/Sania Usman and Tom Reyes/)).toBeInTheDocument();
+  });
+
+  it("says no personas were drafted when the site names no one", () => {
+    mockPersonas.mockReturnValue(answer([]));
+    render(<DraftedNotice workspaceId="w1" workspaceSlug="acme" />);
+    expect(
+      screen.getByText(/No one is named on your site/),
+    ).toBeInTheDocument();
   });
 });

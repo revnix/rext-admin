@@ -183,9 +183,11 @@ export function OutlineBrief({
               onSelect={onPersonaChange}
             />
             <p className="text-caption text-muted-foreground">
-              {noPersonaFits
-                ? "None of your personas covers this subject, so the article has no author persona. You can still pick one."
-                : "Recommended by fit with the keyword, the title, the search intent and the content type."}
+              {!noPersonaFits
+                ? "Recommended by fit with the keyword, the title, the search intent and the content type."
+                : personaId === null
+                  ? "None of your personas covers this subject, so the article has no author persona. You can still pick one."
+                  : "None of your personas covers this subject; the article is written as the one you picked."}
             </p>
           </div>
         </BriefGroup>
