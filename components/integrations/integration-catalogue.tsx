@@ -9,7 +9,38 @@ import { INTEGRATION_REQUEST_URL } from "@/config/integrations";
 import { INTEGRATION_MARKS } from "./integration-logos";
 
 const WordPressMark = INTEGRATION_MARKS.wordpress;
-const ShopifyMark = INTEGRATION_MARKS.shopify;
+
+/** The platforms coming next, each a card with no action (founder's feedback v2, #707). */
+const COMING_SOON = [
+  {
+    name: "Nextly",
+    Mark: INTEGRATION_MARKS.nextly,
+    text: (
+      <>
+        Publish articles to Nextly, our own CMS (
+        <a
+          href="https://nextlyhq.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2"
+        >
+          nextlyhq.com
+        </a>
+        ).
+      </>
+    ),
+  },
+  {
+    name: "Ghost",
+    Mark: INTEGRATION_MARKS.ghost,
+    text: "Publish articles to your Ghost site as posts.",
+  },
+  {
+    name: "Search Console",
+    Mark: INTEGRATION_MARKS.searchConsole,
+    text: "See how each article does in Google Search: its clicks, impressions and queries.",
+  },
+] as const;
 
 /** One platform: its mark and name, what it does, and its one action at the bottom. */
 function PlatformCard({
@@ -40,8 +71,8 @@ function PlatformCard({
 
 /**
  * Where a workspace can publish (plans/app/D-pages.md §2.3, DECISIONS.md): WordPress, through the
- * plugin; Shopify, built and switched off, as "Coming soon" with no action (founder, 2026-10-06 on
- * #243); every other platform as a request, never as a promise, until it is truly planned.
+ * plugin; Nextly, Ghost and Search Console as "Coming soon" with no action, and Shopify not shown
+ * at all (founder's feedback v2, 2026-10-07, #707); every other platform as a request.
  */
 export function IntegrationCatalogue({
   hasSites,
@@ -77,15 +108,16 @@ export function IntegrationCatalogue({
         Publish articles to your site as posts: live, as drafts or for review.
         Needs the Rext AI plugin on your site.
       </PlatformCard>
-      <PlatformCard
-        mark={
-          <ShopifyMark aria-hidden className="size-5 text-muted-foreground" />
-        }
-        name="Shopify"
-        badge={<Badge variant="neutral">Coming soon</Badge>}
-      >
-        Publish articles to your store's blog.
-      </PlatformCard>
+      {COMING_SOON.map(({ name, Mark, text }) => (
+        <PlatformCard
+          key={name}
+          mark={<Mark aria-hidden className="size-5 text-muted-foreground" />}
+          name={name}
+          badge={<Badge variant="neutral">Coming soon</Badge>}
+        >
+          {text}
+        </PlatformCard>
+      ))}
       <PlatformCard
         name="Somewhere else?"
         action={
@@ -97,9 +129,9 @@ export function IntegrationCatalogue({
           </Button>
         }
       >
-        Webflow, Ghost or another platform: tell us where you publish, and the
-        requests decide what we connect next. Meanwhile, any article copies as
-        HTML, Markdown or text from the editor.
+        Webflow or another platform: tell us where you publish, and the requests
+        decide what we connect next. Meanwhile, any article copies as HTML,
+        Markdown or text from the editor.
       </PlatformCard>
     </div>
   );
