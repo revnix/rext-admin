@@ -301,11 +301,67 @@ export interface CreditBalance {
   monthly_credits?: number;
   /** An unexpired bonus (the launch offer's): what's left of it and when it ends. */
   bonus?: CreditBonus | null;
+  /** The credits Rext support added that are still live; part of `current_credits`. */
+  added_credits?: AddedCredits | null;
   /** Whose credits these are: the workspace owner's when a workspace was asked for. */
   target_user_id?: string;
   is_workspace_credits?: boolean;
   /** Each billed button's cost and the balance it leaves (`GET /subscriptions/credits`). */
   runs?: Record<BilledRun, RunCost>;
+}
+
+/** The credits Rext support added, live (rext-backend credit_grants.admin_credit_summary). */
+export interface AddedCredits {
+  /** Credits left of what was added. */
+  credits: number;
+  granted: number;
+  /** The soonest expiry; null when none of them expires. */
+  expires_at: string | null;
+}
+
+// ============================================================================
+// CREDIT HISTORY
+// ============================================================================
+//
+// Written by hand: GET /subscriptions/credits/history and the admin routes beside it are not in
+// api/openapi.json yet (rext-backend's FB2.28 branch, revnix/rext-control#709). Once the spec has
+// them, `pnpm api:types` and these become aliases of its models.
+
+/** What an admin did to the credits: added, took back, or reset the month's credits. */
+export type CreditAdjustmentAction = "add" | "deduct" | "reset";
+
+/** Credits an admin added (a grant), with what is left of them (rext-backend CreditGrantEntry). */
+export interface CreditGrantEntry {
+  id: string;
+  amount: number;
+  remaining: number;
+  /** Taken back by a deduction. */
+  forfeited: number;
+  reason: string | null;
+  /** null: they last. */
+  expires_at: string | null;
+  created_at: string;
+}
+
+/** One admin change to the credits, from the audit log (rext-backend CreditAdjustmentEntry). */
+export interface CreditAdjustmentEntry {
+  id: string;
+  /** `CreditAdjustmentAction`; typed loosely, as the backend reads it back from audit metadata. */
+  action: string | null;
+  /** The credits added or deducted; for a reset, the signed change to the month's credits. */
+  amount: number | null;
+  balance_before: number | null;
+  balance_after: number | null;
+  reason: string | null;
+  /** An add's expiry. */
+  expires_at: string | null;
+  created_at: string;
+}
+
+/** GET /subscriptions/credits/history: the caller's own, newest first; the admin is never named. */
+export interface CreditHistory {
+  grants: (CreditGrantEntry & { granted_by: string })[];
+  adjustments: (CreditAdjustmentEntry & { adjusted_by: string })[];
 }
 
 // ============================================================================

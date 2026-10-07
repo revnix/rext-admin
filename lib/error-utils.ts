@@ -486,6 +486,50 @@ export function extractApiError(data: unknown, fallback?: string): string {
 }
 
 /**
+ * The backend's per-field messages in a refused request, by field name: the first message for each.
+ *
+ * A validation error's body (rext-backend `create_error_response`) lists them in `error.details` as
+ * `{ field, message }`, where a request-model error names its field by its location
+ * (`"body -> amount"`); FastAPI's own handler sends `detail: [{ loc, msg }]`. `ApiError.context`
+ * holds the body, or the `details` list itself when the error came in a `success: false` answer.
+ * A message about the whole body (a model validator's) has no field and is left out.
+ */
+export function extractFieldErrors(error: unknown): Record<string, string> {
+  const context = ApiError.is(error) ? error.context : undefined;
+  if (!context || typeof context !== "object") return {};
+
+  const body = context as {
+    error?: { details?: unknown };
+    detail?: unknown;
+  };
+  const entries: { path: (string | number)[]; message: unknown }[] = [];
+  const details = Array.isArray(context) ? context : body.error?.details;
+  if (Array.isArray(details)) {
+    for (const item of details as { field?: unknown; message?: unknown }[]) {
+      if (typeof item?.field === "string") {
+        entries.push({ path: item.field.split(" -> "), message: item.message });
+      }
+    }
+  }
+  if (Array.isArray(body.detail)) {
+    for (const item of body.detail as { loc?: unknown; msg?: unknown }[]) {
+      if (Array.isArray(item?.loc)) {
+        entries.push({ path: item.loc, message: item.msg });
+      }
+    }
+  }
+
+  const fields: Record<string, string> = {};
+  for (const { path, message } of entries) {
+    const name = String(path[path.length - 1] ?? "");
+    const isWholeBody = path.length === 1 && (name === "body" || name === "");
+    if (isWholeBody || typeof message !== "string" || name in fields) continue;
+    fields[name] = message;
+  }
+  return fields;
+}
+
+/**
  * Safely parses the response body as JSON.
  * Returns an empty object if parsing fails, ensuring it never throws.
  *

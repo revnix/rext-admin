@@ -275,6 +275,27 @@ export const subscriptionQueries = {
 };
 
 // ============================================================================
+// CREDIT QUERIES
+// ============================================================================
+
+/**
+ * The keys of the credits an admin changes (FB2.28); their options are in
+ * lib/query-options/credits.ts.
+ */
+export const creditKeys = {
+  /**
+   * Every read of the signed-in person's credits: `subscriptionQueries.myCredits` and
+   * `workspaceCredits`, and the history. A change to the credits refreshes them all.
+   */
+  mine: () => [...subscriptionQueries.all(), "credits"] as const,
+  /** What Rext support changed in the signed-in person's credits. */
+  history: () => [...creditKeys.mine(), "history"] as const,
+  /** Every user's credits as a super admin reads them. */
+  adminAll: () => ["admin-user-credits"] as const,
+  adminUser: (userId: string) => [...creditKeys.adminAll(), userId] as const,
+};
+
+// ============================================================================
 // PERSONA QUERIES
 // ============================================================================
 
