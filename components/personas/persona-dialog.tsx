@@ -2,6 +2,16 @@
 
 import { type ReactElement, useState } from "react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -25,24 +35,56 @@ export function PersonaDialog({
   onCreated?: (personaId: string | undefined) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [unsaved, setUnsaved] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const close = () => {
+    setOpen(false);
+    setUnsaved(false);
+    setConfirming(false);
+  };
+  // Escape, a click outside or the close button: with anything entered, ask before discarding it.
+  // (The form's own Cancel asks through FormShell's leave guard first.)
+  const requestClose = () => (unsaved ? setConfirming(true) : close());
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create persona</DialogTitle>
-          <DialogDescription>
-            An author with real experience and a voice of their own.
-          </DialogDescription>
-        </DialogHeader>
-        <PersonaForm
-          onSaved={(personaId) => {
-            setOpen(false);
-            onCreated?.(personaId);
-          }}
-          onCancel={() => setOpen(false)}
-        />
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => (next ? setOpen(true) : requestClose())}
+      >
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create persona</DialogTitle>
+            <DialogDescription>
+              An author with real experience and a voice of their own.
+            </DialogDescription>
+          </DialogHeader>
+          <PersonaForm
+            onSaved={(personaId) => {
+              close();
+              onCreated?.(personaId);
+            }}
+            onCancel={close}
+            onDirtyChange={setUnsaved}
+          />
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this persona?</AlertDialogTitle>
+            <AlertDialogDescription>
+              What you've entered isn't saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={close}>
+              Discard persona
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

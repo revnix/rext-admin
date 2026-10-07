@@ -35,6 +35,56 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
   personas: { create: jest.Mock };
 };
 
+function renderDialog(onCreated = jest.fn()) {
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <PersonaDialog
+        trigger={<Button>Create persona</Button>}
+        onCreated={onCreated}
+      />
+    </QueryClientProvider>,
+  );
+  return onCreated;
+}
+
+it("asks before Escape drops what was typed, and keeps it on Keep editing", async () => {
+  renderDialog();
+  await userEvent.click(screen.getByRole("button", { name: "Create persona" }));
+  await screen.findByRole("dialog", { name: "Create persona" });
+  await userEvent.type(screen.getByLabelText(/Display name/), "Nina");
+
+  await userEvent.keyboard("{Escape}");
+  expect(
+    await screen.findByRole("alertdialog", { name: "Discard this persona?" }),
+  ).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  expect(screen.getByLabelText(/Display name/)).toHaveValue("Nina");
+
+  await userEvent.keyboard("{Escape}");
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Discard persona" }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("dialog", { name: "Create persona" }),
+    ).not.toBeInTheDocument(),
+  );
+});
+
+it("closes on Escape at once when nothing was entered", async () => {
+  renderDialog();
+  await userEvent.click(screen.getByRole("button", { name: "Create persona" }));
+  await screen.findByRole("dialog", { name: "Create persona" });
+
+  await userEvent.keyboard("{Escape}");
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("dialog", { name: "Create persona" }),
+    ).not.toBeInTheDocument(),
+  );
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
 it("creates a persona in the dialog, closes, and passes its id without leaving the page", async () => {
   api.personas.create.mockResolvedValue({
     persona: { id: "p9", name: "Nina" },

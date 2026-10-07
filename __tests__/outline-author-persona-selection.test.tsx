@@ -8,6 +8,13 @@ Element.prototype.scrollIntoView = jest.fn();
 jest.mock("@/hooks/use-personas", () => ({
   usePersonas: jest.fn(),
 }));
+const granted = new Set<string>(["persona.create"]);
+jest.mock("@/hooks/use-permission", () => ({
+  useWorkspacePermission: (permission: string) => ({
+    hasPermission: granted.has(permission),
+    isLoading: false,
+  }),
+}));
 
 const baseOutline: Outline = {
   title: "Test Outline",
@@ -202,6 +209,10 @@ describe("OutlineReview author persona selection", () => {
 });
 
 describe("OutlineReview with no persona yet (FB2.20)", () => {
+  afterEach(() => {
+    granted.add("persona.create");
+  });
+
   it("offers Create persona instead of an empty dropdown", () => {
     (usePersonas as jest.Mock).mockReturnValue({
       data: { personas: [] },
@@ -227,5 +238,71 @@ describe("OutlineReview with no persona yet (FB2.20)", () => {
     renderOutline();
     fireEvent.click(screen.getByRole("button", { name: "Refresh personas" }));
     expect(refetch).toHaveBeenCalled();
+  });
+
+  it("offers no Create persona to a role that can't create one", () => {
+    granted.delete("persona.create");
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: { personas: [] },
+      refetch: jest.fn(),
+      isFetching: false,
+    });
+    renderOutline({ selected_persona_id: null, persona_recommendations: [] });
+    expect(screen.getByText(/No author persona yet/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create persona" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("doesn't call the list empty while it loads", () => {
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: undefined,
+      refetch: jest.fn(),
+      isFetching: true,
+      isLoading: true,
+      isError: false,
+    });
+    renderOutline({ selected_persona_id: null, persona_recommendations: [] });
+    expect(screen.queryByText(/No author persona yet/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create persona" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("says the personas didn't load, with a way to try again", () => {
+    const refetch = jest.fn();
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: undefined,
+      refetch,
+      isFetching: false,
+      isLoading: false,
+      isError: true,
+    });
+    renderOutline({ selected_persona_id: null, persona_recommendations: [] });
+    expect(screen.getByText("Your personas didn't load")).toBeInTheDocument();
+    expect(screen.queryByText(/No author persona yet/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create persona" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it("keeps the picker when a refresh fails over a list already loaded", () => {
+    (usePersonas as jest.Mock).mockReturnValue({
+      data: {
+        personas: [{ id: "persona-1", name: "Alpha Persona" }],
+      },
+      refetch: jest.fn(),
+      isFetching: false,
+      isLoading: false,
+      isError: true,
+    });
+    renderOutline();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Your personas didn't load"),
+    ).not.toBeInTheDocument();
   });
 });

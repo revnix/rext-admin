@@ -16,6 +16,9 @@ Element.prototype.scrollIntoView = jest.fn();
 jest.mock("@/hooks/use-personas", () => ({
   usePersonas: () => ({ data: { personas: [] } }),
 }));
+jest.mock("@/hooks/use-permission", () => ({
+  useWorkspacePermission: () => ({ hasPermission: true, isLoading: false }),
+}));
 jest.mock("sonner", () => ({ toast: jest.fn() }));
 
 // No credits loaded unless a test sets them, and no request for them.
