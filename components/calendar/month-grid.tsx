@@ -315,7 +315,7 @@ function DayCell({
       className={cn(
         "relative flex min-h-16 flex-col gap-1 border-r border-b border-border p-1 sm:min-h-28 sm:p-1.5",
         !inMonth && "bg-surface-inset",
-        isOver && "bg-accent ring-2 ring-ring ring-inset",
+        isOver && "bg-accent ring-2 ring-primary ring-inset",
       )}
     >
       <span
@@ -340,7 +340,7 @@ function DayCell({
             aria-pressed={isPicked}
             className={cn(
               "absolute inset-0 rounded-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:hidden",
-              isPicked && "ring-2 ring-ring ring-inset",
+              isPicked && "ring-2 ring-primary ring-inset",
             )}
           />
           {entries.length > 0 && (
