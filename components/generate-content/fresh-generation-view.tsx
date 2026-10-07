@@ -2352,7 +2352,7 @@ export function FreshGenerationView({
       <WorkflowStepIndicator
         steps={WORKFLOW_STEPS}
         current={current}
-        choices={stepChoices(state)}
+        choices={stepChoices(state, _initialKeyword)}
         running={runningStage(runStages.run, current)}
       />
     );

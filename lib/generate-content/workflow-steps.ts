@@ -84,7 +84,8 @@ export function runningStage(
 /**
  * What was chosen at the first four steps: the keyword searched, the keyword picked, the content
  * type and the title. Picking a keyword replaces both keywords in the state, so the searched one is
- * the analysis's own (or, before it answers or on a restored run, the one typed). A restored run's
+ * the analysis's own (or, before it answers or on a restored run, the one typed; for a run started
+ * from the Library, the keyword it was started with). A restored run's
  * content type and title are the thread's own, which the view puts back; the title is else the
  * outline's or the article's. The outline's `schema_type` is no substitute for the type: it is a
  * schema.org name ("HowTo").
@@ -100,9 +101,11 @@ export function stepChoices(
     | "outline"
     | "allContent"
   >,
+  /** The keyword a run from the Library starts with: the state holds none until its analysis answers. */
+  startKeyword?: string | null,
 ): (string | undefined)[] {
   return [
-    state.analyzedKeyword || state.userKeyword || undefined,
+    state.analyzedKeyword || state.userKeyword || startKeyword || undefined,
     state.primaryKeyword || undefined,
     state.selectedContentType
       ? contentTypeLabel(state.selectedContentType)

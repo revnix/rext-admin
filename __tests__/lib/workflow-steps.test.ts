@@ -124,6 +124,19 @@ describe("stepChoices", () => {
     expect(stepChoices(state)[0]).toBe("garden planner");
   });
 
+  it("names the keyword a run from the Library started with, until its analysis answers", () => {
+    // The state holds no keyword yet: the view starts the run with the Library's own.
+    expect(stepChoices(initialState, "raised bed layout")[0]).toBe(
+      "raised bed layout",
+    );
+
+    const typed = reduce(initialState, {
+      type: "SET_USER_KEYWORD",
+      payload: "garden planner",
+    });
+    expect(stepChoices(typed, "raised bed layout")[0]).toBe("garden planner");
+  });
+
   it("keeps the keyword searched apart from the one picked", () => {
     const analysed = reduce(
       initialState,
