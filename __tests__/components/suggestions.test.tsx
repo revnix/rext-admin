@@ -72,9 +72,7 @@ describe("SuggestionsSection", () => {
     expect(within(card).getByText("1.2K")).toBeInTheDocument();
     expect(within(card).getByText("Hard")).toBeInTheDocument();
     expect(
-      within(card).getByRole("meter", {
-        name: "Keyword difficulty, 42 of 100",
-      }),
+      within(card).getByTitle("Keyword difficulty: 42 out of 100"),
     ).toBeInTheDocument();
     expect(
       within(card).getByText(
