@@ -84,6 +84,12 @@ export function OutlineBrief({
   const ids = useId();
   const targetWords = pendingTargetWordCount ?? outline.target_word_count;
   const audience = outline.target_audience?.join(", ") ?? "";
+  // Every persona scored, and none whose expertise covers the subject (E26).
+  const noPersonaFits =
+    personaRecommendations.length > 0 &&
+    personaRecommendations.every(
+      (recommendation) => recommendation.fits_topic === false,
+    );
 
   return (
     <div className="space-y-6">
@@ -177,8 +183,9 @@ export function OutlineBrief({
               onSelect={onPersonaChange}
             />
             <p className="text-caption text-muted-foreground">
-              Recommended by fit with the keyword, the title, the search intent
-              and the content type.
+              {noPersonaFits
+                ? "None of your personas covers this subject, so the article has no author persona. You can still pick one."
+                : "Recommended by fit with the keyword, the title, the search intent and the content type."}
             </p>
           </div>
         </BriefGroup>

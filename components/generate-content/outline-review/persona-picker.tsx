@@ -23,8 +23,9 @@ import type { Persona } from "@/types/workspace";
 
 /**
  * Who the article is written as: the workspace's personas, each with its fit
- * for this outline (the backend scores them; the best fit is recommended), and
- * "No author persona". Choosing the selected persona again clears it.
+ * for this outline (the backend scores them; the best fit whose expertise covers
+ * the subject is recommended, and none when no persona's does), and "No author
+ * persona". Choosing the selected persona again clears it.
  */
 export function PersonaPicker({
   id,
@@ -40,7 +41,11 @@ export function PersonaPicker({
   onSelect: (personaId: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const recommendedId = recommendations[0]?.persona_id ?? null;
+  // A recommendation without the fit (an outline from before E26) still counts as one.
+  const recommendedId =
+    recommendations.find(
+      (recommendation) => recommendation.fits_topic !== false,
+    )?.persona_id ?? null;
   const scoreById = useMemo(
     () =>
       new Map(
