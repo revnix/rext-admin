@@ -66,7 +66,7 @@ import { apiClient } from "@/lib/api-client";
 import { ConnectWordPressDialog } from "@/components/integrations/connect-wordpress-dialog";
 import { log } from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
-import { marked } from "marked";
+import { articleHtml } from "@/lib/content/article-html";
 import { cn } from "@/lib/utils";
 import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
 import {
@@ -87,77 +87,6 @@ const CONTENT_SKELETON_KEYS = Array.from(
   { length: 3 },
   (_, i) => `content-skeleton-${i + 1}`,
 );
-
-// Custom renderers: links open in new tab; images get fallback placeholder on error
-marked.use({
-  renderer: {
-    code({ text, lang }: { text: string; lang?: string }) {
-      const languageClass = lang ? `language-${lang}` : "";
-      const escapedText = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-
-      return `<div class="relative group my-6 rounded-md overflow-hidden bg-surface-inset border border-border">
-        ${
-          lang
-            ? `<div class="flex items-center justify-between px-4 py-2 border-b border-border">
-                <span class="text-caption font-mono text-muted-foreground">${lang}</span>
-              </div>`
-            : ""
-        }
-        <div class="px-4 py-4 overflow-x-auto">
-          <pre class="!m-0 !p-0 !bg-transparent"><code class="${languageClass} text-table font-mono text-foreground">${escapedText}</code></pre>
-        </div>
-      </div>`;
-    },
-    link({
-      href,
-      title,
-      text,
-    }: {
-      href: string;
-      title?: string | null;
-      text: string;
-    }) {
-      const titleAttr = title ? ` title="${title}"` : "";
-      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
-    },
-    image({
-      href,
-      title,
-      text,
-    }: {
-      href: string;
-      title?: string | null;
-      text: string;
-    }) {
-      const alt = text || title || "";
-      const caption = title || text || "";
-      const placeholder = `
-        <div class="content-image-placeholder" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>
-            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-          </svg>
-        </div>`;
-      return `
-        <figure class="content-image-figure">
-          <img
-            src="${href}"
-            alt="${alt}"
-            loading="lazy"
-            class="content-image"
-            onerror="this.closest('figure').classList.add('content-image-broken'); this.style.display='none';"
-          />
-          ${placeholder}
-          ${caption ? `<figcaption class="content-image-caption">${caption}</figcaption>` : ""}
-        </figure>`;
-    },
-  },
-});
 
 function InlineToolCard({ tc }: { tc: ToolCall }) {
   const [expanded, setExpanded] = useState(false);
@@ -302,11 +231,7 @@ function ContentEditorInner(props: ContentEditorProps) {
   // article title) a different title from the one the user picked.
   const displayTitle = allContent?.title || allContent?.meta_title || "";
   const body = generatedContent;
-  const previewHtml = useMemo(() => {
-    if (!body) return "";
-    const result = marked.parse(body);
-    return typeof result === "string" ? result : "";
-  }, [body]);
+  const previewHtml = useMemo(() => articleHtml(body), [body]);
   const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
   const { displayed: typedIntro } = useTypewriter(
     allContent?.meta_description || "",
