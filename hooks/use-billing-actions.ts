@@ -132,7 +132,7 @@ export function useBillingActions() {
       action: () => Promise<unknown>,
       successMessage: string,
       failureMessage: string,
-    ) => {
+    ): Promise<boolean> => {
       setIsLoading(true);
       try {
         await action();
@@ -141,9 +141,11 @@ export function useBillingActions() {
         // guard, so the cards it renders change at once.
         await fetchSubscription({ force: true });
         toast.success(successMessage);
+        return true;
       } catch (error) {
         log.error(failureMessage, error);
         toast.error(error instanceof Error ? error.message : failureMessage);
+        return false;
       } finally {
         setIsLoading(false);
       }

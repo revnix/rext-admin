@@ -49,7 +49,7 @@ export function PlanSection() {
   const current = useQuery(subscriptionQueries.current());
   const credits = useQuery(subscriptionQueries.myCredits());
   const billing = useBillingActions();
-  const { action: billingAction } = useBillingAction();
+  const { action: billingAction, resumed } = useBillingAction();
   const fetchSubscription = useSubscriptionStore(
     (state) => state.fetchSubscription,
   );
@@ -142,11 +142,30 @@ export function PlanSection() {
                     .filter(Boolean)
                     .join(" ")}
                 </p>
+                {resumed &&
+                  (status === SubscriptionStatus.CANCELLED ||
+                    status === SubscriptionStatus.PAUSED) && (
+                    <Notice tone="success" title="Your subscription is resumed">
+                      It renews as before. This page shows it once Lemon Squeezy
+                      confirms, usually within a minute.
+                    </Notice>
+                  )}
                 {paid ? (
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => setChanging(true)}>
-                      Change plan
-                    </Button>
+                    {billingAction?.action === "update_payment_method" ? (
+                      // A failed renewal is fixed with a new card; a plan change waits for it
+                      // (the backend refuses one during a payment retry).
+                      <Button
+                        onClick={billingAction.run}
+                        disabled={billingAction.busy}
+                      >
+                        {billingAction.label}
+                      </Button>
+                    ) : (
+                      <Button onClick={() => setChanging(true)}>
+                        Change plan
+                      </Button>
+                    )}
                     {status === SubscriptionStatus.ACTIVE && (
                       <Button
                         variant="outline"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { TrialBanner } from "@/components/billing/trial-banner";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
@@ -77,10 +78,9 @@ export function useBillingAction() {
   const query = useQuery(subscriptionQueries.billingAction());
   const { isLoading, updatePaymentMethod, resumeSubscription } =
     useBillingActions();
-  // After a resume, the action and the current plan are read again.
-  const resume = async () => {
-    await resumeSubscription();
-    await Promise.all([
+  const [resumed, setResumed] = useState(false);
+  const refresh = () =>
+    Promise.all([
       queryClient.invalidateQueries({
         queryKey: subscriptionQueries.billingAction().queryKey,
       }),
@@ -88,6 +88,13 @@ export function useBillingAction() {
         queryKey: subscriptionQueries.current().queryKey,
       }),
     ]);
+  // After a resume, the action and the current plan are read again, and once more a little
+  // later: our record changes when Lemon Squeezy's webhook lands, usually seconds after.
+  const resume = async () => {
+    if (!(await resumeSubscription())) return;
+    setResumed(true);
+    await refresh();
+    setTimeout(() => void refresh(), RESUME_SETTLE_MS);
   };
   const raw = query.data?.billing_action ?? null;
   const action: ResolvedBillingAction | null = raw
@@ -95,7 +102,11 @@ export function useBillingAction() {
         ...raw,
         ...words(raw),
         label:
-          raw.action === "update_payment_method" ? "Update card" : "Resume",
+          raw.action === "update_payment_method"
+            ? "Update card"
+            : isLoading
+              ? "Resuming…"
+              : "Resume",
         run:
           raw.action === "update_payment_method" ? updatePaymentMethod : resume,
         busy: isLoading,
@@ -103,11 +114,15 @@ export function useBillingAction() {
     : null;
   return {
     action,
+    /** A resume went through in this visit; the plan may still read cancelled for a moment. */
+    resumed,
     settled: query.isSuccess,
     failed: query.isError,
     retry: () => void query.refetch(),
   };
 }
+
+const RESUME_SETTLE_MS = 5000;
 
 function ActionNotice({
   action,
