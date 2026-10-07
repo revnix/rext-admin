@@ -31,21 +31,41 @@ export interface TitleScore {
   total: number;
 }
 
-/** Whitespace and surrounding quotes only, as the backend's `normalize_title`. */
+/** Whitespace, surrounding quotes and NFC only, as the backend's `normalize_title`. */
 export function normalizeTitle(title: string): string {
   return title
+    .normalize("NFC")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^["'`“”‘’ ]+|["'`“”‘’ ]+$/g, "")
     .trim();
 }
 
-/** Lowercase, punctuation flattened, padded with spaces, as the backend's `_normalize_for_match`. */
+/**
+ * Punctuation, symbols, separators, control characters and the underscore: what matching flattens
+ * to a space, in any script (the backend's `_normalize_for_match`, G69b). Letters, marks and
+ * digits of every script are kept.
+ */
+const NON_WORD = /[\p{P}\p{S}\p{Z}\p{C}_]+/gu;
+
+/**
+ * Scripts written without spaces between words (Thai, Lao, Myanmar, Khmer, kana, CJK ideographs):
+ * a phrase in them is matched as a run of characters, since no space marks its word boundaries.
+ */
+const UNSPACED_SCRIPT =
+  /[\u0e00-\u0eff\u1000-\u109f\u1780-\u17ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
+
+/**
+ * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
+ * `_normalize_for_match` (which casefolds: the two differ only for letters like ß).
+ */
 function forMatch(text: string): string {
   return ` ${text
+    .normalize("NFC")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()} `;
+    .replace(NON_WORD, " ")
+    .trim()
+    .replace(/\s+/g, " ")} `;
 }
 
 /**
@@ -66,7 +86,11 @@ export function titleMaxChars(keyphrase?: string | null): number {
  */
 export function containsKeyphrase(title: string, keyphrase: string): boolean {
   const phrase = forMatch(keyphrase).trim();
-  return phrase !== "" && forMatch(title).includes(` ${phrase} `);
+  if (phrase === "") return false;
+  const haystack = forMatch(title);
+  return UNSPACED_SCRIPT.test(phrase)
+    ? haystack.includes(phrase)
+    : haystack.includes(` ${phrase} `);
 }
 
 /** All-capital words that are names, not shouting. Three letters or fewer (SEO, API) always pass. */

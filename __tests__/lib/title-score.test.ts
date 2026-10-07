@@ -150,3 +150,48 @@ describe("the length limit for a long keyphrase", () => {
     );
   });
 });
+
+// The backend matches a keyphrase in any script (G69b): NFC, lowercase, punctuation flattened,
+// letters, marks and digits kept, and scripts without spaces matched as a run of characters.
+describe("containsKeyphrase in any script, as the backend's", () => {
+  const nfd = (text: string) => text.normalize("NFD");
+
+  it.each([
+    ["Recette de crème brûlée facile", "crème brûlée", true],
+    ["Recette de crème brûlée facile", nfd("crème brûlée"), true],
+    [nfd("Recette de crème brûlée facile"), "crème brûlée", true],
+    ["Recette de creme brulee facile", "crème brûlée", false],
+    ["ЛУЧШИЕ программы для небольших команд", "лучшие программы", true],
+    ["أفضل برامج إدارة المشاريع للفرق الصغيرة", "برامج إدارة المشاريع", true],
+    ["أفضل برامجنا لهذا العام", "برامج", false],
+    ["हिन्दी में सबसे अच्छा सॉफ्टवेयर", "हिन्दी", true],
+    ["2026年最佳项目管理软件推荐", "项目管理软件", true],
+    ["2026年最佳项目管理推荐", "项目管理软件", false],
+    [
+      "小規模チーム向けのプロジェクト管理ツール比較",
+      "プロジェクト管理ツール",
+      true,
+    ],
+  ])("%s / %s → %s", (title, keyphrase, expected) => {
+    expect(containsKeyphrase(title, keyphrase)).toBe(expected);
+  });
+
+  it("shows an Arabic keyword's title as having it", () => {
+    const keyphrase = "برامج إدارة المشاريع";
+    const title = "أفضل برامج إدارة المشاريع للفرق الصغيرة: دليل شامل للاختيار"; // 59
+    const score = scoreTitle(title, keyphrase);
+
+    expect(score.checks[0]).toEqual({
+      id: "keyphrase",
+      met: true,
+      label: `Has “${keyphrase}”`,
+    });
+    expect(score.checks[1]).toMatchObject({ id: "length", met: true });
+  });
+
+  it("measures an accented keyphrase the same however it was typed", () => {
+    const keyphrase = "café crème brûlée recipes for beginners at home";
+    expect(titleMaxChars(nfd(keyphrase))).toBe(titleMaxChars(keyphrase));
+    expect(titleMaxChars(keyphrase)).toBe(67);
+  });
+});
