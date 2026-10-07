@@ -127,7 +127,11 @@ export function useConfirmation() {
   };
 
   const ConfirmationComponent = config ? (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    // Escape closes it with no button clicked: that is the cancel too, so `confirm` always answers.
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(open) => (open ? setIsOpen(true) : handleCancel())}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{config.title}</AlertDialogTitle>
