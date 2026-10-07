@@ -9,6 +9,7 @@
  */
 
 import { ApiError } from "@/lib/api-client/core";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
 import { log } from "@/lib/logger";
 
 const transientLogger = log.forComponent("TransientRetry");
@@ -62,9 +63,13 @@ const TRANSIENT_STATUS_CODES = new Set([
  * @returns True if the error is transient and should be retried
  */
 export function isTransientError(error: unknown): boolean {
-  // ApiError with transient status code
+  // ApiError with transient status code, or the API client's "no answer at all" (a network
+  // failure, which reaches here as an ApiError with no status)
   if (error instanceof ApiError) {
-    return TRANSIENT_STATUS_CODES.has(error.statusCode);
+    return (
+      error.code === SERVER_UNREACHABLE ||
+      TRANSIENT_STATUS_CODES.has(error.statusCode)
+    );
   }
 
   // Native fetch/network errors

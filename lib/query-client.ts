@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api-client/core";
+import { alreadyRetried } from "@/lib/api-client/server-away";
 import { redirectToLogin } from "@/lib/auth-utils";
 
 /**
@@ -25,6 +26,8 @@ export function makeQueryClient() {
           ) {
             return false;
           }
+          // The API client already waited out a server that was away (a deploy's restart).
+          if (alreadyRetried(error)) return false;
           return failureCount < 2;
         },
 

@@ -9,6 +9,18 @@ import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { safeJsonParse } from "@/lib/utils";
 import { extractApiError } from "@/lib/error-utils";
+import {
+  AWAY_RETRY_DELAYS_MS,
+  isAwayStatus,
+  isIdempotent,
+  isNetworkFailure,
+  isOffline,
+  markRetried,
+  reportServerAway,
+  SERVER_UNREACHABLE,
+  SERVER_UNREACHABLE_MESSAGE,
+  waitFor,
+} from "./server-away";
 
 const log = logger.forComponent("ApiClient");
 
@@ -74,13 +86,89 @@ export class ApiClient {
   }
 
   /**
-   * Generic request method for all API calls
+   * Generic request method for all API calls. A request that changes nothing is tried again
+   * while the server is away (a deploy's restart); see `ridingOutDeploy`.
    */
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    return this.ridingOutDeploy(options, () =>
+      this.requestOnce<T>(endpoint, options),
+    );
+  }
+
+  /**
+   * The fetch itself. No answer at all (the connection failed or was cut, or the proxy's answer
+   * carried no CORS headers) becomes the "couldn't reach the server" error, apart from any error
+   * raised later while reading an answer.
+   */
+  private async fetchAnswer(
+    url: string,
+    options: RequestInit,
+  ): Promise<Response> {
+    try {
+      return await authenticatedFetch(url, options);
+    } catch (error) {
+      if (!isNetworkFailure(error)) throw error;
+      throw new ApiError(
+        0,
+        SERVER_UNREACHABLE_MESSAGE,
+        SERVER_UNREACHABLE,
+        null,
+      );
+    }
+  }
+
+  /**
+   * Rides out a backend deploy (task 759): the API restarts for about a minute, and meanwhile the
+   * proxy answers 502 or 503, or nothing readable at all. A GET or HEAD is sent again after about
+   * 1, 3 and 8 seconds; when those run out the shell is told the server is away, and the request
+   * fails as usual. Anything else isn't repeated, since it may already have been carried out: it
+   * fails at once with a sentence to show. The backend's own 502 or 503 (a JSON body, with its
+   * own words) is retried the same way but keeps its message.
+   */
+  private async ridingOutDeploy<T>(
+    options: RequestInit,
+    send: () => Promise<T>,
+  ): Promise<T> {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await send();
+      } catch (error) {
+        if (!ApiError.is(error)) throw error;
+        const noAnswer = error.code === SERVER_UNREACHABLE;
+        const proxyAnswer =
+          isAwayStatus(error.statusCode) && error.context == null;
+        if (!noAnswer && !isAwayStatus(error.statusCode)) throw error;
+
+        const failure =
+          noAnswer || !proxyAnswer
+            ? error
+            : new ApiError(
+                error.statusCode,
+                SERVER_UNREACHABLE_MESSAGE,
+                SERVER_UNREACHABLE,
+                null,
+              );
+        if (!isIdempotent(options.method) || isOffline()) throw failure;
+
+        const delay = AWAY_RETRY_DELAYS_MS[attempt];
+        if (delay === undefined) {
+          markRetried(failure);
+          if (failure.code === SERVER_UNREACHABLE) reportServerAway();
+          throw failure;
+        }
+        await waitFor(delay, options.signal);
+      }
+    }
+  }
+
+  private async requestOnce<T>(
+    endpoint: string,
+    options: RequestInit,
+  ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await authenticatedFetch(url, options);
+      const response = await this.fetchAnswer(url, options);
 
       // Handle HTTP errors
       if (!response.ok) {
@@ -309,10 +397,19 @@ export class ApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<Response> {
+    return this.ridingOutDeploy(options, () =>
+      this.requestRawOnce(endpoint, options),
+    );
+  }
+
+  private async requestRawOnce(
+    endpoint: string,
+    options: RequestInit,
+  ): Promise<Response> {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await authenticatedFetch(url, options);
+      const response = await this.fetchAnswer(url, options);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "Unknown error");

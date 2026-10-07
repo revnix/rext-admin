@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { ApiError } from "@/lib/api-client";
+import { alreadyRetried } from "@/lib/api-client/server-away";
 import { workspaceQueries } from "@/lib/query-keys";
 import { log } from "@/lib/logger";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -93,6 +94,7 @@ export function WorkspaceProvider({
       ) {
         return false;
       }
+      if (alreadyRetried(error)) return false;
 
       // Retry server errors (5xx) and network failures up to 2 times
       return failureCount < 2;

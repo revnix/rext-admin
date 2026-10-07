@@ -1,6 +1,12 @@
 import type { RunStreamEvent } from "@/types/generate-content";
 import { RunStreamEventSchema } from "@/schemas/sse-schemas";
+import {
+  isNetworkFailure,
+  SERVER_UNREACHABLE,
+  SERVER_UNREACHABLE_MESSAGE,
+} from "@/lib/api-client/server-away";
 import { authenticatedFetch } from "@/lib/auth-utils";
+import { isAwayResponse } from "@/lib/generate-content/backend-away";
 import { log } from "@/lib/logger";
 
 const sseLogger = log.forComponent("sse-stream");
@@ -20,15 +26,36 @@ export class RunStreamError extends Error {
 }
 
 /**
+ * A start or a step the server couldn't be reached for (a deploy restarts the backend for about a
+ * minute, task 759): nothing ran, and it isn't sent again by itself, since it may have arrived.
+ * The error carries the sentence to show and `SERVER_UNREACHABLE`.
+ */
+async function reaching(send: () => Promise<Response>): Promise<Response> {
+  let res: Response;
+  try {
+    res = await send();
+  } catch (error) {
+    if (!isNetworkFailure(error)) throw error;
+    throw new RunStreamError(SERVER_UNREACHABLE_MESSAGE, SERVER_UNREACHABLE);
+  }
+  if (isAwayResponse(res.status)) {
+    throw new RunStreamError(SERVER_UNREACHABLE_MESSAGE, SERVER_UNREACHABLE);
+  }
+  return res;
+}
+
+/**
  * A new generation thread in the workspace. The backend refuses it unless the
  * user may create content there; the error carries the server's words.
  */
 export async function createThread(workspaceId: string): Promise<string> {
-  const res = await authenticatedFetch("/api/generate/threads", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ workspace_id: workspaceId }),
-  });
+  const res = await reaching(() =>
+    authenticatedFetch("/api/generate/threads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace_id: workspaceId }),
+    }),
+  );
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as {
       error?: string;
@@ -44,12 +71,14 @@ export async function* streamFromSSE(
   body: Record<string, unknown>,
   signal?: AbortSignal,
 ): AsyncGenerator<RunStreamEvent> {
-  const res = await authenticatedFetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal,
-  });
+  const res = await reaching(() =>
+    authenticatedFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    }),
+  );
 
   if (!res.ok || !res.body) throw new Error("Stream failed");
 
