@@ -11,7 +11,10 @@ import { useRunStages } from "@/hooks/use-run-stages";
 import {
   FIRST_ARTICLE_TOKEN,
   type RunPhase,
+  type RunStage,
+  timedOutStages as stagesWhereTimedOut,
 } from "@/lib/generate-content/run-stages";
+import { Button } from "@/components/ui/button";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useStreamingText } from "@/hooks/use-streaming-text";
 import type {
@@ -349,6 +352,8 @@ export function FreshGenerationView({
   const trackedTitleSuggestionsRef = useRef<string | null>(null);
   const trackedOutlineGeneratedRef = useRef<string | null>(null);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  // A restored run that hit the time limit: its stages as they stood, the running one failed (E22).
+  const [timedOutStages, setTimedOutStages] = useState<RunStage[] | null>(null);
   // A run the backend ended early (no search results, a failed lookup).
   const [runError, setRunError] = useState<string | null>(null);
   const [backgroundRestoreRevision, setBackgroundRestoreRevision] = useState(0);
@@ -602,6 +607,7 @@ export function FreshGenerationView({
       setIsBackgroundGenerationActive(false);
     }
     setRestoreError(null);
+    setTimedOutStages(null);
     // A notice belongs to the run it came from, not to the next one opened.
     setRunError(null);
 
@@ -643,6 +649,24 @@ export function FreshGenerationView({
             status: "failed",
             stage: "Generation stopped",
             error: stoppedMessage,
+          });
+          return;
+        }
+
+        // The run hit the time limit where the status says: the run component's Timed out state,
+        // not the generic restore error (E22, rext-control#451).
+        if (payload.run?.status === "timeout" && payload.runStage) {
+          setTimedOutStages(stagesWhereTimedOut(payload.runStage, Date.now()));
+          setIsBackgroundGenerationActive(false);
+          setIsEnhancing(false);
+          dispatch({ type: "SET_MANUAL_LOADING", payload: false });
+          dispatch({ type: "SET_LOADING_STATUS", payload: "" });
+          updateBackgroundJob(backgroundThreadId, {
+            status: "failed",
+            stage: payload.stage ?? "Generation failed",
+            error: payload.error,
+            runStage: payload.runStage,
+            timedOut: true,
           });
           return;
         }
@@ -2388,6 +2412,23 @@ export function FreshGenerationView({
           <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
       </StepColumn>
+
+      {timedOutStages && !restoreError && (
+        <div className="mx-auto my-8 flex w-full max-w-md flex-col items-start gap-3">
+          <RunProgress stages={timedOutStages} timedOut />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTimedOutStages(null);
+              onBack();
+            }}
+          >
+            Start a new article
+          </Button>
+        </div>
+      )}
 
       {restoreError && (
         <RunNotice

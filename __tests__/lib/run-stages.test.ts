@@ -7,6 +7,7 @@ import {
   settleStages,
   stagesAt,
   startStages,
+  timedOutStages,
 } from "@/lib/generate-content/run-stages";
 import {
   expectedStageMs,
@@ -150,6 +151,19 @@ describe("stagesAt, a run seen from the dock's poll", () => {
 
   it("has every stage waiting for a stage it doesn't know", () => {
     expect(states(stagesAt("outline", "nope"))).toEqual(["pending", "pending"]);
+  });
+});
+
+describe("timedOutStages, a run the time limit stopped (E22)", () => {
+  it("fails the stage it stopped in, keeps the ones before done, skips the rest", () => {
+    const stages = timedOutStages({ phase: "article", id: "draft" }, 9000);
+    expect(states(stages)).toEqual([
+      "complete",
+      "failed",
+      "skipped",
+      "skipped",
+    ]);
+    expect(stages[1].endedAt).toBe(9000);
   });
 });
 
