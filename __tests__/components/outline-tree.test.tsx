@@ -165,15 +165,41 @@ describe("the outline as a document outline", () => {
     expect(within(rowOf("Timing")).getByText("H2")).toBeInTheDocument();
   });
 
-  it("is a tree grid whose rows say their level and their place", () => {
+  /** "level position/size", as the row gives them to assistive technology. */
+  const placeOf = (name: string) => {
+    const row = rowOf(name);
+    return `${row.getAttribute("aria-level")} ${row.getAttribute("aria-posinset")}/${row.getAttribute("aria-setsize")}`;
+  };
+
+  it("is a tree grid whose rows say their level and their place among their siblings", () => {
     renderOutline();
 
-    expect(rowOf("Choosing the spot")).toHaveAttribute("aria-level", "1");
-    const soil = rowOf("Soil");
-    expect(soil).toHaveAttribute("aria-level", "2");
-    expect(soil).toHaveAttribute("aria-posinset", "4");
-    expect(soil).toHaveAttribute("aria-setsize", "7");
-    expect(soil).toHaveAccessibleDescription("~200 words");
+    // A section counts among the list's sections, a subsection among those of its section.
+    expect(SECTIONS.map(([heading]) => placeOf(heading))).toEqual([
+      "1 1/4",
+      "1 2/4",
+      "2 1/2",
+      "2 2/2",
+      "1 3/4",
+      "2 1/1",
+      "1 4/4",
+    ]);
+    expect(rowOf("Soil")).toHaveAccessibleDescription("~200 words");
+  });
+
+  it("keeps those places right after a move, while the announcement counts the whole list", async () => {
+    const { user } = renderOutline();
+
+    await focusRow("Bed sizes");
+    await user.keyboard("{Alt>}{ArrowUp}{/Alt}");
+
+    // The third subsection of "Choosing the spot"; "Planning beds" has none left.
+    expect(placeOf("Bed sizes")).toBe("2 3/3");
+    expect(placeOf("Soil")).toBe("2 2/3");
+    expect(placeOf("Planning beds")).toBe("1 3/4");
+    expectSaid(
+      "Moved Bed sizes to position 5 of 7, now a subsection of Choosing the spot.",
+    );
   });
 
   it("shows an H4 with its tag and offers it no change of level", async () => {
@@ -187,6 +213,8 @@ describe("the outline as a document outline", () => {
 
     const clay = rowOf("Clay");
     expect(clay).toHaveAttribute("aria-level", "3");
+    expect(clay).toHaveAttribute("aria-posinset", "1");
+    expect(clay).toHaveAttribute("aria-setsize", "1");
     expect(within(clay).getByText("H4")).toBeInTheDocument();
 
     await focusRow("Clay");
@@ -880,6 +908,82 @@ describe("adding sections", () => {
     expect(sentIds(approval)).toEqual([0, 1, 2, "Wind", 3, "Tools", 4, 5, 6]);
     expect(approval.sections?.[3]).toMatchObject({ heading_level: "H3" });
     expect(approval.sections?.[5]).toMatchObject({ heading_level: "H2" });
+  });
+
+  // Soil (Soil types (Clay, Sand), Drainage) · Watering: a pillar page's H4s.
+  const PILLAR: [string, Level, number][] = [
+    ["Soil", "H2", 300],
+    ["Soil types", "H3", 200],
+    ["Clay", "H4", 100],
+    ["Sand", "H4", 100],
+    ["Drainage", "H3", 200],
+    ["Watering", "H2", 300],
+  ];
+  const insertLine = (name: string) =>
+    rowOf(name).querySelector('button[aria-hidden="true"]');
+
+  it("offers no insert line above an H4, where a new row would take the H4s from their subsection", () => {
+    renderOutline({ sections: PILLAR });
+
+    expect(insertLine("Clay")).not.toBeInTheDocument();
+    expect(insertLine("Sand")).not.toBeInTheDocument();
+    // Everywhere else the line is offered, at the level of the row it sits above.
+    expect(insertLine("Soil")).toHaveTextContent("Add a section here");
+    expect(insertLine("Soil types")).toHaveTextContent("Add a subsection here");
+    expect(insertLine("Drainage")).toHaveTextContent("Add a subsection here");
+    expect(insertLine("Watering")).toHaveTextContent("Add a section here");
+  });
+
+  it("adds below a subsection after its H4s, which stay under it", async () => {
+    const { user, approve } = renderOutline({ sections: PILLAR });
+
+    await chooseFromMenu(user, "Soil types", "Add subsection below");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Texture{Enter}",
+    );
+
+    expect(headings()).toEqual([
+      "Soil",
+      "Soil types",
+      "Clay",
+      "Sand",
+      "Texture",
+      "Drainage",
+      "Watering",
+    ]);
+    expectSaid("Added Texture as a subsection of Soil, position 5 of 7.");
+    const approval = await approve();
+    expect(sentIds(approval)).toEqual([0, 1, 2, 3, "Texture", 4, 5]);
+    expect(approval.sections?.slice(1, 5)).toEqual([
+      { id: `${LIST}:1`, heading: "Soil types", heading_level: "H3" },
+      { id: `${LIST}:2`, heading: "Clay", heading_level: "H4" },
+      { id: `${LIST}:3`, heading: "Sand", heading_level: "H4" },
+      { new: true, list: LIST, heading: "Texture", heading_level: "H3" },
+    ]);
+  });
+
+  it("adds a subsection to a section after everything under it, and offers an H4 no row beside it", async () => {
+    const { user, approve } = renderOutline({ sections: PILLAR });
+
+    await chooseFromMenu(user, "Soil", "Add subsection");
+    await user.type(
+      screen.getByRole("textbox", { name: "New subsection heading" }),
+      "Compost{Enter}",
+    );
+    expect(headings().slice(3)).toEqual([
+      "Sand",
+      "Drainage",
+      "Compost",
+      "Watering",
+    ]);
+    expect(sentIds(await approve())).toEqual([0, 1, 2, 3, 4, "Compost", 5]);
+
+    await user.click(screen.getByRole("button", { name: "Actions for Clay" }));
+    await screen.findByRole("menuitem", { name: "Rename" });
+    expect(
+      screen.queryByRole("menuitem", { name: /^Add / }),
+    ).not.toBeInTheDocument();
   });
 
   it("gives focus back to Add section when the new heading is cancelled", async () => {

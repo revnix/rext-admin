@@ -512,6 +512,60 @@ describe("OutlineReview, the outline tree", () => {
     ).not.toBeInTheDocument();
   });
 
+  // FB2.15: the FAQ shows under a read-only outline too, once. The backend's blocks often hold one
+  // headed "Faqs" (its label for the outline's `faqs`), as a real how-to run's did.
+  const faqs = [
+    "How often should I replace them?",
+    "Do I need a gait analysis?",
+  ];
+  const stepsBlock = {
+    heading: "Steps",
+    items: [{ label: "Measure your foot", points: ["Late in the day"] }],
+  };
+  const renderReadOnly = (blocks: unknown[]) =>
+    renderReview({
+      gate: { type: "outline_review" },
+      current: { ...outline, faqs, _render: { blocks } } as unknown as Outline,
+    });
+
+  it("lists the FAQ under a read-only outline whose blocks don't hold it", () => {
+    renderReadOnly([stepsBlock]);
+
+    expect(screen.getByRole("region", { name: "Steps" })).toBeInTheDocument();
+    const faq = screen.getByRole("region", { name: "FAQ" });
+    expect(
+      within(faq)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(faqs.map((question, index) => `${index + 1}${question}`));
+    expect(
+      within(faq).getByText(/^Answered at the end of the article\./),
+    ).toBeInTheDocument();
+  });
+
+  it("lists the FAQ once when the read-only blocks already hold it", () => {
+    renderReadOnly([
+      stepsBlock,
+      {
+        heading: "Faqs",
+        items: faqs.map((label) => ({ label, points: [] })),
+      },
+    ]);
+
+    // The backend's own block shows the questions; no second list beneath.
+    const block = screen.getByRole("region", { name: "Faqs" });
+    for (const question of faqs) {
+      expect(within(block).getByText(question)).toBeInTheDocument();
+      expect(screen.getAllByText(question)).toHaveLength(1);
+    }
+    expect(
+      screen.queryByRole("region", { name: "FAQ" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/^Answered at the end of the article\./),
+    ).not.toBeInTheDocument();
+  });
+
   it("lists the sections as they stream, with approval held", () => {
     renderReview({
       current: null,

@@ -3,6 +3,7 @@ import {
   addRow,
   addSubsection,
   blockEnd,
+  blocksShowFaqs,
   buildOutlineApproval,
   canAddSection,
   canChangeLevel,
@@ -12,6 +13,7 @@ import {
   dropGaps,
   groupRows,
   insertAnnouncement,
+  insertLevelAt,
   insertRow,
   levelAnnouncement,
   listSummary,
@@ -21,6 +23,7 @@ import {
   moveRow,
   moveTarget,
   nearestGap,
+  placeBelow,
   readOnlyBlocks,
   readOutlineFaqs,
   readOutlineGate,
@@ -34,6 +37,7 @@ import {
   rowsFromGate,
   sectionEdits,
   sectionPlan,
+  siblingPlace,
   streamedField,
   streamedHeadings,
   type TreeRow,
@@ -941,6 +945,172 @@ describe("what the outline says about itself", () => {
     );
     expect(readOutlineFaqs({ sections: [] })).toEqual([]);
     expect(readOutlineFaqs(null)).toEqual([]);
+  });
+});
+
+// A pillar outline: A (A one (Deeper one, Deeper two), A two) · B.
+const pillarRows = [
+  treeRow("a", "A", "H2"),
+  treeRow("a1", "A one", "H3"),
+  treeRow("a11", "Deeper one", "H4"),
+  treeRow("a12", "Deeper two", "H4"),
+  treeRow("a2", "A two", "H3"),
+  treeRow("b", "B", "H2"),
+];
+
+describe("a subsection with H4s under it", () => {
+  it("puts a row added below it after its H4s, which stay its own", () => {
+    expect(placeBelow(pillarRows, 1)).toEqual({ gap: 4, level: "H3" });
+    const added = insertRow(pillarRows, "s", 4, "A one and a half", "H3");
+    expect(shownHeadings(added)).toEqual([
+      "A",
+      "A one",
+      "Deeper one",
+      "Deeper two",
+      "A one and a half",
+      "A two",
+      "B",
+    ]);
+    expect(rowPlace(added, "a11")?.parent?.heading).toBe("A one");
+    expect(rowPlace(added, "a12")?.parent?.heading).toBe("A one");
+    expect(insertAnnouncement(added, "s", 4)).toBe(
+      "Added A one and a half as a subsection of A, position 5 of 7.",
+    );
+  });
+
+  it("puts a section added below an H2 after everything under it, and nothing beside an H4", () => {
+    expect(placeBelow(pillarRows, 0)).toEqual({ gap: 5, level: "H2" });
+    expect(placeBelow(pillarRows, 4)).toEqual({ gap: 5, level: "H3" });
+    expect(placeBelow(pillarRows, 5)).toEqual({ gap: 6, level: "H2" });
+    expect(placeBelow(pillarRows, 2)).toBeNull();
+    const flat = [treeRow("t0", "Trowel"), treeRow("t1", "Fork")];
+    expect(placeBelow(flat, 0)).toEqual({ gap: 1, level: "H2" });
+  });
+
+  it("offers a new row no place above an H4", () => {
+    // Above a section a section, above a subsection a subsection, at the end a section...
+    expect(
+      [0, 1, 4, 5, 6].map((gap) => insertLevelAt(pillarRows, gap)),
+    ).toEqual(["H2", "H3", "H3", "H2", "H2"]);
+    // ...and above an H4 nothing: a new H3 there would take the H4s after it from "A one".
+    expect(insertLevelAt(pillarRows, 2)).toBeNull();
+    expect(insertLevelAt(pillarRows, 3)).toBeNull();
+  });
+
+  it("refuses a row that would come between a row and what is under it", () => {
+    expect(insertRow(pillarRows, "s", 2, "Between", "H3")).toBe(pillarRows);
+    expect(insertRow(pillarRows, "s", 3, "Between", "H3")).toBe(pillarRows);
+    // A new H2 above an H3 would take that H3, and the rest of the section, from "A".
+    expect(insertRow(pillarRows, "s", 1, "Between")).toBe(pillarRows);
+    expect(insertRow(pillarRows, "s", 4, "Between")).toBe(pillarRows);
+  });
+
+  it("adds a subsection to the H2 after its last subsection's H4s", () => {
+    const deep = pillarRows.filter((item) => item.key !== "a2");
+    expect(shownHeadings(addSubsection(deep, "a", "A two"))).toEqual([
+      "A",
+      "A one",
+      "Deeper one",
+      "Deeper two",
+      "A two",
+      "B",
+    ]);
+  });
+});
+
+describe("a row's place among its siblings", () => {
+  const rows = rowsFromGate(readOutlineGate(deepGate).sections);
+  const places = (list: TreeRow[]) =>
+    list.map((_, index) => {
+      const { position, size } = siblingPlace(list, index);
+      return `${position}/${size}`;
+    });
+
+  it("counts a section among the sections, a subsection among those of its section", () => {
+    // Why plan · Choosing the spot (Sun hours, Soil) · Planning beds (Bed sizes) · Timing.
+    expect(places(rows)).toEqual([
+      "1/4",
+      "2/4",
+      "1/2",
+      "2/2",
+      "3/4",
+      "1/1",
+      "4/4",
+    ]);
+    // The live region's position stays the row's place in the whole list.
+    expect(rowPlace(rows, "s:3")).toMatchObject({ position: 4, total: 7 });
+  });
+
+  it("counts an H4 among the H4s of its subsection", () => {
+    expect(places(pillarRows)).toEqual([
+      "1/2",
+      "1/2",
+      "1/2",
+      "2/2",
+      "2/2",
+      "2/2",
+    ]);
+  });
+
+  it("counts every row of a list without levels", () => {
+    const flat = [
+      treeRow("t0", "Trowel"),
+      treeRow("t1", "Fork"),
+      treeRow("t2", "Hose"),
+    ];
+    expect(places(flat)).toEqual(["1/3", "2/3", "3/3"]);
+  });
+
+  it("follows a move and a change of level", () => {
+    // "Bed sizes" joins "Choosing the spot" as its third subsection.
+    const moved = moveRow(rows, "s:5", -1);
+    expect(siblingPlace(groupRows(moved)[0].rows, 4)).toEqual({
+      position: 3,
+      size: 3,
+    });
+    // "Sun hours" becomes a section: five sections, and "Soil" is its only subsection.
+    const changed = changeLevel(rows, "s:2", "H2");
+    expect(places(changed).slice(1, 4)).toEqual(["2/5", "3/5", "1/1"]);
+  });
+});
+
+describe("read-only blocks that already show the FAQ", () => {
+  const questions = ["When to start?", "How big?"];
+  const steps = { heading: "Steps", items: [{ label: "Dig", points: [] }] };
+  const block = (heading: string, labels: string[]) => ({
+    heading,
+    items: labels.map((label) => ({ label, points: [] })),
+  });
+
+  it("knows the backend's block for the outline's faqs by its heading", () => {
+    // `_render.blocks` labels the outline's `faqs` "Faqs" and its `faq` "Faq".
+    for (const heading of ["Faqs", "Faq", "FAQ", "Product FAQs"])
+      expect(
+        blocksShowFaqs([steps, block(heading, questions)], questions),
+      ).toBe(true);
+    expect(
+      blocksShowFaqs([block("Frequently asked questions", [])], questions),
+    ).toBe(true);
+  });
+
+  it("knows a block that lists every question, whatever it is headed", () => {
+    expect(
+      blocksShowFaqs(
+        [steps, block("Questions", [" when to START? ", "How big?", "More"])],
+        questions,
+      ),
+    ).toBe(true);
+    // One question that is also a section's heading is not the FAQ.
+    expect(
+      blocksShowFaqs([block("Sections", ["When to start?"])], questions),
+    ).toBe(false);
+  });
+
+  it("finds no FAQ in blocks that hold none", () => {
+    expect(blocksShowFaqs([steps], questions)).toBe(false);
+    expect(blocksShowFaqs([block("Facts", ["Sun"])], questions)).toBe(false);
+    expect(blocksShowFaqs([steps], [])).toBe(false);
+    expect(blocksShowFaqs([], questions)).toBe(false);
   });
 });
 
