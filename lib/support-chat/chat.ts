@@ -36,15 +36,39 @@ export function supportChatEnabled(): boolean {
 }
 
 let loading: Promise<boolean> | null = null;
+// Crisp's script is on the page (it stays there across an account switch without a reload).
+let scriptLoaded = false;
+// Bumped by a reset: an identity that arrives after it belongs to the account before.
+let generation = 0;
+
+function identify(
+  crisp: { push: (command: CrispCommand) => unknown },
+  identity: Identity,
+) {
+  if (identity.email) crisp.push(["set", "user:email", [identity.email]]);
+  if (identity.name) crisp.push(["set", "user:nickname", [identity.name]]);
+  crisp.push(["set", "session:data", [[["user_id", identity.userId]]]]);
+}
 
 async function load(): Promise<boolean> {
   const websiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
   if (!websiteId) return false;
+  const started = generation;
   const response = await fetch("/api/support-chat/identity", {
     cache: "no-store",
   });
-  if (!response.ok) return false;
+  if (!response.ok || started !== generation) return false;
   const identity = (await response.json()) as Identity;
+  if (started !== generation) return false;
+
+  if (scriptLoaded && window.$crisp) {
+    // Another account in the same page (the invitation switch): a token set after Crisp has
+    // loaded takes a session reset to apply, as Crisp documents.
+    window.CRISP_TOKEN_ID = identity.tokenId;
+    window.$crisp.push(["do", "session:reset"]);
+    identify(window.$crisp, identity);
+    return true;
+  }
 
   // Crisp reads these before its script runs, and plays the queued commands once it has.
   const queue: CrispCommand[] = [];
@@ -58,9 +82,7 @@ async function load(): Promise<boolean> {
     "chat:closed",
     () => window.$crisp?.push(["do", "chat:hide"]),
   ]);
-  if (identity.email) queue.push(["set", "user:email", [identity.email]]);
-  if (identity.name) queue.push(["set", "user:nickname", [identity.name]]);
-  queue.push(["set", "session:data", [[["user_id", identity.userId]]]]);
+  identify(queue, identity);
 
   await new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
@@ -70,6 +92,7 @@ async function load(): Promise<boolean> {
     script.onerror = () => reject(new Error("The support chat didn't load"));
     document.head.appendChild(script);
   });
+  scriptLoaded = true;
   return true;
 }
 
@@ -93,6 +116,9 @@ export async function openSupportChat(): Promise<boolean> {
 
 /** On sign-out or an account switch: the browser's Crisp session ends with the account's. */
 export function resetSupportChat(): void {
+  // The next opening fetches the next account's identity, and one still in flight is dropped.
+  generation += 1;
+  loading = null;
   if (typeof window === "undefined" || !window.$crisp) return;
   // Crisp's order: the token is cleared first, or the reset keeps the old conversation.
   window.CRISP_TOKEN_ID = null;

@@ -115,4 +115,48 @@ describe("the support chat", () => {
     ]);
     expect(window.CRISP_TOKEN_ID).toBeNull(); // cleared before the reset, as Crisp asks
   });
+
+  it("after an account switch in the same page, applies the next account's token", async () => {
+    const chat = await freshModule();
+    await chat.openSupportChat();
+    chat.resetSupportChat();
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ...IDENTITY,
+        tokenId: "b".repeat(64),
+        userId: "u-2",
+      }),
+    })) as unknown as typeof fetch;
+
+    expect(await chat.openSupportChat()).toBe(true);
+
+    expect(global.fetch).toHaveBeenCalledTimes(1); // the new account's identity
+    expect(crispScripts()).toHaveLength(1); // Crisp isn't loaded twice
+    expect(window.CRISP_TOKEN_ID).toBe("b".repeat(64));
+    const queue = window.$crisp as unknown as unknown[][];
+    const resets = queue.filter((c) => c[1] === "session:reset").length;
+    expect(resets).toBe(2); // the sign-out's, then the one that applies the new token
+    expect(queue).toContainEqual([
+      "set",
+      "session:data",
+      [[["user_id", "u-2"]]],
+    ]);
+  });
+
+  it("drops an identity that arrives after a reset", async () => {
+    let answer: (value: unknown) => void = () => {};
+    global.fetch = jest.fn(
+      () => new Promise((resolve) => (answer = resolve)),
+    ) as unknown as typeof fetch;
+    const chat = await freshModule();
+
+    const opening = chat.openSupportChat();
+    chat.resetSupportChat(); // the account signs out while its identity is on the way
+    answer({ ok: true, json: async () => IDENTITY });
+
+    expect(await opening).toBe(false);
+    expect(crispScripts()).toHaveLength(0);
+    expect(window.CRISP_TOKEN_ID).toBeUndefined();
+  });
 });
