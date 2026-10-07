@@ -1,12 +1,21 @@
 "use client";
 
-import posthog from "posthog-js";
+import posthog, { type CaptureResult } from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect, Suspense, useRef, useState } from "react";
-import { analytics, registerPostHog, takeOAuthLinking } from "@/lib/analytics";
+import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
 import {
+  analytics,
+  registerPostHog,
+  takeOAuthLinking,
+  unregisterPostHog,
+} from "@/lib/analytics";
+import { analyticsMode, onConsentChange } from "@/lib/analytics-consent";
+import {
+  anonymousAddress,
+  anonymousEvent,
   redactEventUrls,
   redactStoredAddresses,
   redactUrl,
@@ -15,7 +24,7 @@ import {
 
 // ── Page-view tracker ─────────────────────────────────────────────────────────
 // Wrapped in Suspense because useSearchParams() requires it in App Router.
-function PostHogPageView() {
+function PostHogPageView({ anonymous }: { anonymous: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -24,9 +33,12 @@ function PostHogPageView() {
     let url = window.origin + pathname;
     const qs = searchParams.toString();
     if (qs) url = `${url}?${qs}`;
-    // An emailed link's token (or a sign-in page's email) never reaches analytics.
-    posthog.capture("$pageview", { $current_url: redactUrl(url) });
-  }, [pathname, searchParams]);
+    posthog.capture("$pageview", {
+      // For someone who said no, the page's route and nothing of whose it is. Otherwise the
+      // address without an emailed link's token or a sign-in page's email.
+      $current_url: anonymous ? anonymousAddress(url) : redactUrl(url),
+    });
+  }, [pathname, searchParams, anonymous]);
 
   return null;
 }
@@ -99,62 +111,122 @@ export function OAuthLoginRecord() {
 }
 
 // ── Provider ─────────────────────────────────────────────────────────────────
+
+/** What the person allows, once it is known and posthog-js runs: everything, or anonymous counts. */
+type RunningMode = "full" | "anonymous";
+
+// Read by before_send, which posthog-js keeps for the page's life: a "no" given later applies at once.
+let runningMode: RunningMode | null = null;
+
+/** posthog-js's before_send: the credentials out of every address; for a "no", page routes only. */
+function beforeSend(event: CaptureResult | null): CaptureResult | null {
+  const redacted = redactEventUrls(event);
+  return runningMode === "anonymous" ? anonymousEvent(redacted) : redacted;
+}
+
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  // Set once posthog-js is initialised and wired into `analytics`. A child's effect runs before this
-  // one's, and posthog-js drops an identify or a capture made before init, so the page views, the auth
-  // sync and the OAuth record mount only after it: the sync before the record, so that the record goes
-  // out under the person rather than an anonymous id (siblings' effects run in order).
-  const [registered, setRegistered] = useState(false);
+  // Null until the person's answer is known and posthog-js runs (lib/analytics-consent.ts): in
+  // the EEA, the UK and Switzerland that is after they answer the prompt, and nothing is sent
+  // before. A child's effect runs before this one's, and posthog-js drops an identify or a capture
+  // made before init, so the page views, the auth sync and the OAuth record mount only once it is
+  // set: the sync before the record, so that the record goes out under the person rather than an
+  // anonymous id (siblings' effects run in order).
+  const [mode, setMode] = useState<RunningMode | null>(null);
+  // Whether analytics is set up at all here; without it nobody is asked anything.
+  const [configured, setConfigured] = useState(false);
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     // NEXT_PUBLIC_ANALYTICS_ENABLED=false turns all of it off, page views and identification too.
     if (!key || process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "false") return;
+    setConfigured(true);
 
-    posthog.init(key, {
-      // The EU cloud, as the Content-Security-Policy's default (lib/csp.ts) and the privacy texts say.
-      api_host:
-        process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
-      capture_pageview: false, // tracked manually via PostHogPageView
-      capture_pageleave: true,
-      persistence: "localStorage",
-      autocapture: false, // keep events intentional
-      // No session is recorded until the app asks for it and masks what a recording shows
-      // (rext-control task 712): a switch in the PostHog project can't start one by itself.
-      disable_session_recording: true,
-      // PostHog adds the current address to every event; redact the credentials in it.
-      before_send: redactEventUrls,
-      // And nothing raw in what the SDK stores in the tab (the referrer, on every event).
-      ...STORED_ADDRESS_OPTIONS,
+    let started = false;
+    let cancelled = false;
+
+    /** `explicit`: the person has just chosen, here; otherwise their region or an earlier choice. */
+    const run = (next: RunningMode, explicit: boolean) => {
+      runningMode = next;
+      if (!started) {
+        started = true;
+        posthog.init(key, {
+          // The EU cloud, as the Content-Security-Policy's default (lib/csp.ts) and the privacy texts say.
+          api_host:
+            process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
+          capture_pageview: false, // tracked manually via PostHogPageView
+          capture_pageleave: true,
+          persistence: "localStorage",
+          autocapture: false, // keep events intentional
+          // Nothing is captured or stored until one of the two calls below: opt_in_capturing for
+          // everything, opt_out_capturing for counting without an identity or any storage. The
+          // second needs "Cookieless server hash mode" switched on in the PostHog project;
+          // without it PostHog drops those counts.
+          cookieless_mode: "on_reject",
+          // No session is recorded until the app asks for it and masks what a recording shows
+          // (rext-control task 712): a switch in the PostHog project can't start one by itself.
+          disable_session_recording: true,
+          // PostHog adds the current address to every event; redact the credentials in it.
+          before_send: beforeSend,
+          // And nothing raw in what the SDK stores in the tab (the referrer, on every event).
+          ...STORED_ADDRESS_OPTIONS,
+        });
+
+        // The SDK keeps the first address and referrer of the person and of each session in the
+        // browser, raw, whatever before_send does: redacted now, and whenever a session begins.
+        redactStoredAddresses(posthog);
+        posthog.onSessionId(() => redactStoredAddresses(posthog));
+      }
+
+      if (next === "full") {
+        // `$opt_in` is sent for an explicit yes only, so it counts the people who chose.
+        posthog.opt_in_capturing(
+          explicit ? undefined : { captureEventName: false },
+        );
+        // Wire posthog into the analytics singleton so analytics.track() etc. work
+        registerPostHog({
+          identify: (distinctId, properties) =>
+            posthog.identify(distinctId, properties),
+          capture: (event, properties) => posthog.capture(event, properties),
+          reset: () => posthog.reset(),
+        });
+      } else {
+        // A no: our own events stop, the identity goes, and what is left is counted without one.
+        unregisterPostHog();
+        posthog.reset();
+        posthog.opt_out_capturing();
+      }
+      setMode(next);
+    };
+
+    void analyticsMode().then((allowed) => {
+      // A choice made in the meantime has started it already.
+      if (cancelled || started || allowed === "wait") return;
+      run(allowed, false);
     });
-
-    // The SDK keeps the first address and referrer of the person and of each session in the
-    // browser, raw, whatever before_send does: redacted now, and whenever a session begins.
-    redactStoredAddresses(posthog);
-    posthog.onSessionId(() => redactStoredAddresses(posthog));
-
-    // Wire posthog into the analytics singleton so analytics.track() etc. work
-    registerPostHog({
-      identify: (distinctId, properties) =>
-        posthog.identify(distinctId, properties),
-      capture: (event, properties) => posthog.capture(event, properties),
-      reset: () => posthog.reset(),
-    });
-    setRegistered(true);
+    const stopListening = onConsentChange((choice) =>
+      run(choice === "granted" ? "full" : "anonymous", true),
+    );
+    return () => {
+      cancelled = true;
+      stopListening();
+    };
   }, []);
 
   return (
     <PHProvider client={posthog}>
       <Suspense fallback={null}>
-        {registered && (
+        {mode && <PostHogPageView anonymous={mode === "anonymous"} />}
+        {/* A person's identity and the sign-in's record: only for someone who allows them. */}
+        {mode === "full" && (
           <>
-            <PostHogPageView />
             <PostHogAuthSync />
             <OAuthLoginRecord />
           </>
         )}
       </Suspense>
       {children}
+      {/* Asked once, after signing in, where the law asks for it and nothing is chosen yet. */}
+      {configured && <AnalyticsConsentPrompt />}
     </PHProvider>
   );
 }
