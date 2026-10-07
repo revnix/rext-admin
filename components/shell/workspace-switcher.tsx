@@ -257,10 +257,7 @@ export function WorkspaceSwitcher({
         <SidebarMenuItem>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>{trigger}</SheetTrigger>
-            <SheetContent
-              side="bottom"
-              className="max-h-[80dvh] overflow-y-auto"
-            >
+            <SheetContent side="bottom" className="max-h-dvh overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Workspaces</SheetTitle>
               </SheetHeader>
