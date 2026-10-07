@@ -58,6 +58,7 @@ export async function focusIssues(
   const seen = new Set<string>();
   for (let i = 0; i < maxStops; i++) {
     await page.keyboard.press("Tab");
+    await page.evaluate(settle);
     const stop = await page.evaluate(readFocus);
     // Focus left the page (for the browser's own controls), or came round to an element again.
     if (!stop || seen.has(stop.id)) break;
@@ -150,6 +151,25 @@ export async function motionIssues(page: Page): Promise<Issue[]> {
     }
     return found;
   });
+}
+
+/**
+ * Runs in the page: lets it finish answering a key press before it's read, as a person would see it.
+ * The animations still running end (with reduced motion, each lasts a hundredth of a millisecond), then
+ * two frames pass, so a tooltip or menu that closed is gone and one that opened is in place. Read at
+ * once, a closing tooltip's last frame lay over the next control (/dev/primitives at 390, C10a).
+ */
+async function settle(): Promise<void> {
+  const running = document
+    .getAnimations()
+    .filter((animation) => animation.playState === "running");
+  await Promise.race([
+    Promise.allSettled(running.map((animation) => animation.finished)),
+    new Promise((resolve) => setTimeout(resolve, 500)),
+  ]);
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+  );
 }
 
 /** Runs in the page: the focused element as a Stop, marking it so readRings finds it again. */
