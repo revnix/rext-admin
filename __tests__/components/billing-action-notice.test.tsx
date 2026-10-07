@@ -3,7 +3,7 @@
  * Update card; a cancelled or paused subscription offers Resume; nothing shows without an action.
  */
 
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -179,6 +179,12 @@ describe("BillingActionNotice", () => {
       await screen.findByRole("button", { name: "Resuming…" }),
     ).toBeDisabled();
     finish({});
+    // The resume finishes inside this test, not in the next one: the button comes back and the
+    // action is read again.
+    expect(await screen.findByRole("button", { name: "Resume" })).toBeEnabled();
+    await waitFor(() =>
+      expect(subscriptions.getBillingAction).toHaveBeenCalledTimes(2),
+    );
   });
 
   it("keeps reading the action until Lemon Squeezy's webhook shows the resume (#529)", async () => {
@@ -211,16 +217,14 @@ describe("BillingActionNotice", () => {
     await waitFor(() =>
       expect(subscriptions.getBillingAction).toHaveBeenCalledTimes(2),
     );
-    // Let the resume's state settle (the poll starts in an effect), then let time pass.
-    await act(async () => {});
-    await act(async () => {
-      jest.advanceTimersByTime(RESUME_POLL_MS * 2);
-    });
-
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("button", { name: /Resum/ }),
-      ).not.toBeInTheDocument(),
+    // The poll starts in an effect, so time passes in waitFor's own steps until it has read
+    // again, rather than in one jump that could land before the effect ran.
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole("button", { name: /Resum/ }),
+        ).not.toBeInTheDocument(),
+      { timeout: RESUME_POLL_MS * 3 },
     );
     expect(
       subscriptions.getBillingAction.mock.calls.length,
