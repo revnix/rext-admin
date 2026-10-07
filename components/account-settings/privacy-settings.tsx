@@ -170,7 +170,8 @@ export function PrivacySettings() {
           <Alert>
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>
-              Data export completed. Your file should start downloading automatically, and a copy has been sent to your email.
+              Data export completed. Your file should start downloading
+              automatically, and a copy has been sent to your email.
             </AlertDescription>
           </Alert>
         )}
