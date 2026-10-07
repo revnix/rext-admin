@@ -63,11 +63,6 @@ const SPACE_BESIDE_UNSPACED = new RegExp(
   "gu",
 );
 
-/** A length in characters (code points), as the backend's Python counts it, not UTF-16 units. */
-function charCount(text: string): number {
-  return Array.from(text).length;
-}
-
 /**
  * NFC, lowercase, punctuation flattened, padded with spaces, as the backend's
  * `_normalize_for_match`. A capital dotted İ lowercases to "i" plus a combining dot that no
@@ -96,15 +91,83 @@ function forMatch(text: string): string {
 }
 
 /**
- * The longest a title for this keyphrase may be, as the backend measures it: 59, or the keyphrase
- * (punctuation flattened) plus 20 when that is more, never over 75. A short keyphrase keeps 59.
+ * East Asian Wide and Fullwidth characters (Unicode's East_Asian_Width W and F, as Python's
+ * `unicodedata.east_asian_width` reads them) in the scripts titles use: Hangul Jamo, CJK symbols
+ * and punctuation, kana, CJK ideographs, Hangul syllables, fullwidth forms, the supplementary
+ * ideographic planes, and the common emoji blocks.
  */
-export function titleMaxChars(keyphrase?: string | null): number {
-  const length = charCount(forMatch(keyphrase ?? "").trim());
-  return Math.min(
-    TITLE_MAX_CHARS_CEILING,
-    Math.max(TITLE_MAX_CHARS, length + TITLE_ROOM_BESIDE_KEYPHRASE),
+const WIDE =
+  /[\u1100-\u115f\u2e80-\u303e\u3041-\u33ff\u3400-\u4dbf\u4e00-\u9fff\ua960-\ua97f\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6\u{1f300}-\u{1f64f}\u{1f900}-\u{1f9ff}\u{20000}-\u{3fffd}]/u;
+const THAI = /[\u0e00-\u0e7f]/u;
+const NO_WIDTH = /[\p{Mn}\p{Me}\p{Cf}]/u;
+const LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
+
+/**
+ * How wide a title is on a results page, in Latin letters, as the backend's `title_width` (G69c):
+ * 2 for a wide character, 0 for a mark or an invisible format character, 1 for anything else. For
+ * Latin text it is the length.
+ */
+export function titleWidth(text: string): number {
+  let width = 0;
+  for (const char of text.normalize("NFC")) {
+    if (!NO_WIDTH.test(char)) width += WIDE.test(char) ? 2 : 1;
+  }
+  return width;
+}
+
+export type TitleFamily = "narrow" | "cjk" | "thai";
+
+/**
+ * "cjk" when wide characters take a third of the text's letter width, "thai" when Thai letters
+ * are a third of its letters, else "narrow" (the backend's `_title_family`).
+ */
+export function titleFamily(text: string): TitleFamily {
+  const letters = Array.from(text.normalize("NFC")).filter((char) =>
+    LETTER_OR_DIGIT.test(char),
   );
+  if (letters.length === 0) return "narrow";
+  const wide = letters.filter((char) => WIDE.test(char)).length * 2;
+  if (wide * 3 >= wide + letters.filter((char) => !WIDE.test(char)).length)
+    return "cjk";
+  if (letters.filter((char) => THAI.test(char)).length * 3 >= letters.length)
+    return "thai";
+  return "narrow";
+}
+
+/** Each family's range in width, inclusive, and the ceiling a long keyphrase may take it to. */
+const TITLE_RANGES: Record<TitleFamily, [number, number, number]> = {
+  narrow: [TITLE_MIN_CHARS, TITLE_MAX_CHARS, TITLE_MAX_CHARS_CEILING],
+  cjk: [40, 60, 64],
+  thai: [38, 55, 60],
+};
+
+/**
+ * The widths a title may have, inclusive, as the backend's `title_range`: its family's range, with
+ * room beside a long keyphrase up to the family's ceiling. Without a title, the keyphrase's family.
+ */
+export function titleRange(
+  title: string,
+  keyphrase?: string | null,
+): [number, number] {
+  const phrase = keyphrase ?? "";
+  const [low, high, ceiling] = TITLE_RANGES[titleFamily(title || phrase)];
+  // As matching reads it, with the Armenian ligature և as the one character it takes in a title.
+  const keyphraseWidth = phrase
+    ? titleWidth(forMatch(phrase).trim()) -
+      (phrase.normalize("NFC").match(/և/g) ?? []).length
+    : 0;
+  return [
+    low,
+    Math.min(
+      ceiling,
+      Math.max(high, keyphraseWidth + TITLE_ROOM_BESIDE_KEYPHRASE),
+    ),
+  ];
+}
+
+/** The widest a title for this keyphrase may be (59 for a short Latin keyphrase). */
+export function titleMaxChars(keyphrase?: string | null): number {
+  return titleRange("", keyphrase)[1];
 }
 
 /**
@@ -189,15 +252,18 @@ export function scoreTitle(
     });
   }
 
-  const length = charCount(text);
-  const max = titleMaxChars(phrase);
-  const inRange = length >= TITLE_MIN_CHARS && length <= max;
+  const width = titleWidth(text);
+  const [low, high] = titleRange(text, phrase);
+  const inRange = width >= low && width <= high;
+  // In the characters a reader counts: a Chinese, Japanese or Korean character is two widths.
+  const unit = titleFamily(text) === "cjk" ? 2 : 1;
+  const count = Math.ceil(width / unit);
   checks.push({
     id: "length",
     met: inRange,
     label: inRange
-      ? `${length} characters`
-      : `${length} characters, ${length < TITLE_MIN_CHARS ? `under ${TITLE_MIN_CHARS}` : `over ${max}`}`,
+      ? `${count} characters`
+      : `${count} characters, ${width < low ? `under ${low / unit}` : `over ${high / unit}`}`,
   });
 
   const problem = clarityProblem(text);

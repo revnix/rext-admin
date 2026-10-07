@@ -2,7 +2,10 @@ import {
   containsKeyphrase,
   normalizeTitle,
   scoreTitle,
+  titleFamily,
   titleMaxChars,
+  titleRange,
+  titleWidth,
 } from "@/lib/generate-content/title-score";
 
 // The Title step's score: the backend's title contract (seo_title_rules.py) plus a clarity check.
@@ -231,5 +234,49 @@ describe("containsKeyphrase in any script, as the backend's", () => {
     const keyphrase = "café crème brûlée recipes for beginners at home";
     expect(titleMaxChars(nfd(keyphrase))).toBe(titleMaxChars(keyphrase));
     expect(titleMaxChars(keyphrase)).toBe(67);
+  });
+});
+
+describe("a title's width and its script's range, as the backend's (G69c)", () => {
+  it("measures Latin by length, a wide character as two, a mark as none", () => {
+    expect(titleWidth("SEO Agencies for Small Businesses")).toBe(33);
+    expect(titleWidth("项目管理软件")).toBe(12);
+    expect(titleWidth("プロジェクト")).toBe(12);
+    expect(titleWidth("หิน")).toBe(2);
+    expect(titleWidth("co\u00adoperate")).toBe(9);
+  });
+
+  it("reads each title's family from its own letters", () => {
+    expect(titleFamily("最佳seo工具推荐")).toBe("cjk");
+    expect(titleFamily("소규모 팀을 위한 프로젝트 관리 도구 추천")).toBe("cjk");
+    expect(
+      titleFamily("How to Make Onigiri (おにぎり) at Home for Beginners"),
+    ).toBe("narrow");
+    expect(titleFamily("โปรแกรมจัดการโครงการที่ดีที่สุด")).toBe("thai");
+  });
+
+  it("gives each family its range, with room for a long keyphrase", () => {
+    expect(titleRange("", "项目管理软件")).toEqual([40, 60]);
+    expect(titleRange("", "项".repeat(25))).toEqual([40, 64]);
+    expect(titleRange("", "seo agencies")).toEqual([50, 59]);
+    expect(titleMaxChars("seo agencies")).toBe(59);
+  });
+
+  it("scores a natural Chinese title's length in Chinese characters", () => {
+    const score = scoreTitle(
+      "2026年最佳项目管理软件推荐：小团队如何选择合适的工具",
+      "项目管理软件",
+    );
+    const length = score.checks.find((check) => check.id === "length");
+    expect(length?.met).toBe(true);
+    expect(length?.label).toBe("26 characters");
+  });
+
+  it("says a short Chinese title is under 20 characters", () => {
+    const length = scoreTitle("项目管理软件推荐", "项目管理软件").checks.find(
+      (check) => check.id === "length",
+    );
+    expect(length?.met).toBe(false);
+    expect(length?.label).toBe("8 characters, under 20");
   });
 });
