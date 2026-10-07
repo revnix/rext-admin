@@ -43,6 +43,9 @@ jest.mock("@/stores/workspace", () => {
 });
 
 describe("The plan's workspace count during setup (D22)", () => {
+  // The whole form is typed in; on a busy CI runner that outlasts Jest's default 5 s.
+  jest.setTimeout(15_000);
+
   it("is read again once the workspace exists, so it counts the new one", async () => {
     createWorkspace.mockResolvedValue({ id: "ws-1", slug: "acme" });
     const client = new QueryClient();
@@ -65,7 +68,11 @@ describe("The plan's workspace count during setup (D22)", () => {
       screen.getByRole("button", { name: "Create workspace" }),
     );
 
-    await waitFor(() => expect(createWorkspace).toHaveBeenCalled());
+    // Typing, validation and the submit can take more than waitFor's default second on a busy CI
+    // runner (it took 1.2 s there).
+    await waitFor(() => expect(createWorkspace).toHaveBeenCalled(), {
+      timeout: 5000,
+    });
     // The page's count reads this query (app/w/create/page.tsx).
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ["subscriptions", "usage"],
