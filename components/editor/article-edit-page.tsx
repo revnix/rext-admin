@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, ListChecks, ListTree, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,8 @@ import { DragHandlePlugin } from "@/components/editor/drag-handle-plugin";
 import { FloatingToolbarPlugin } from "@/components/editor/floating-toolbar-plugin";
 import { SlashMenuPlugin } from "@/components/editor/slash-menu-plugin";
 import { useLeaveGuard } from "@/components/forms/use-leave-guard";
+import { ArticleChecklist } from "@/components/generate-content/article-checklist";
+import { StructureTree } from "@/components/generate-content/structure-tree";
 import { WorkingSurface } from "@/components/layouts";
 import {
   AlertDialog,
@@ -24,12 +26,23 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { SafeLexicalEditor } from "@/components/ui/safe-lexical-editor";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAutosave, type SaveState } from "@/hooks/use-autosave";
 import { useAwaitingData } from "@/hooks/use-awaiting-data";
 import { useAutosaveContent, useContentDetail } from "@/hooks/use-content";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorkspacePermission } from "@/hooks/use-permission";
+import {
+  type ArticleChecks,
+  articleChecks,
+} from "@/lib/content/article-checks";
 import { articleHtml } from "@/lib/content/article-html";
 import { deriveImagesData } from "@/lib/content/image-data";
 import {
@@ -38,6 +51,7 @@ import {
   readLocalDraft,
   writeLocalDraft,
 } from "@/lib/content/local-draft";
+import { articleStructure } from "@/lib/generate-content/article-structure";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -89,21 +103,34 @@ type EditorProps = {
   contentId: string;
   title: string;
   serverMarkdown: string;
+  /** The article's checks as stored with it, for the checklist drawer. */
+  checks: ArticleChecks;
   articleHref: Route;
 };
+
+const sameHeading = (a: string, b: string) =>
+  a.replace(/\s+/g, " ").trim().toLowerCase() ===
+  b.replace(/\s+/g, " ").trim().toLowerCase();
 
 function ArticleEditor({
   workspaceId,
   contentId,
   title,
   serverMarkdown,
+  checks,
   articleHref,
 }: EditorProps) {
   const router = useRouter();
   const { mutateAsync: saveArticle } = useAutosaveContent();
   // The text the editor starts from, and a key that restarts it when a draft is restored.
   const [start, setStart] = useState({ markdown: serverMarkdown, key: 0 });
-  const [words, setWords] = useState(() => countWords(serverMarkdown));
+  // The text as it stands: the word count and the outline drawer read it.
+  const [text, setText] = useState(serverMarkdown);
+  const words = useMemo(() => countWords(text), [text]);
+  // The drawers (the founder's pick for task 706): the outline on the left, the checklist on
+  // the right, each over the page and closed again with Escape or a click outside.
+  const [drawer, setDrawer] = useState<"outline" | "checklist" | null>(null);
+  const scroller = useRef<HTMLElement>(null);
   // Text left on this device by an earlier visit whose save never worked.
   const [found, setFound] = useState<LocalDraft | null>(null);
   // Lexical rewrites the Markdown as it loads it, and reports it when the cursor is first placed.
@@ -153,7 +180,7 @@ function ArticleEditor({
 
   const handleChange = useCallback(
     (markdown: string) => {
-      setWords(countWords(markdown));
+      setText(markdown);
       if (!touched.current) {
         rebase(markdown);
         return;
@@ -191,7 +218,7 @@ function ArticleEditor({
     if (!found) return;
     touched.current = true;
     setStart((current) => ({ markdown: found.markdown, key: current.key + 1 }));
-    setWords(countWords(found.markdown));
+    setText(found.markdown);
     change(found.markdown);
     setFound(null);
   };
@@ -210,6 +237,29 @@ function ArticleEditor({
 
   const minutes = Math.max(1, Math.round(words / WORDS_A_MINUTE));
 
+  // Read only while its drawer is open: the text changes with every key.
+  const outline = useMemo(
+    () => (drawer === "outline" ? articleStructure(text, [], false) : []),
+    [drawer, text],
+  );
+  const hasChecks =
+    checks.seoScore !== null ||
+    checks.checklist !== null ||
+    checks.trustScore !== null;
+
+  const goToHeading = (heading: string) => {
+    const target = Array.from(
+      scroller.current?.querySelectorAll("h1, h2, h3") ?? [],
+    ).find((element) => sameHeading(element.textContent ?? "", heading));
+    setDrawer(null);
+    // After the drawer has gone: it holds the page still while it is open.
+    if (target) {
+      requestAnimationFrame(() =>
+        target.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  };
+
   return (
     <div className="flex h-dvh flex-col bg-background">
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-3 md:px-4">
@@ -225,6 +275,26 @@ function ArticleEditor({
         <div className="flex-1 md:flex-none" aria-live="polite">
           <SaveStatus state={state} savedAt={savedAt} />
         </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-label="Outline"
+          onClick={() => setDrawer("outline")}
+        >
+          <ListTree size={16} aria-hidden />
+          <span className="hidden md:inline">Outline</span>
+        </Button>
+        {hasChecks ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Checklist"
+            onClick={() => setDrawer("checklist")}
+          >
+            <ListChecks size={16} aria-hidden />
+            <span className="hidden md:inline">Checklist</span>
+          </Button>
+        ) : null}
         <Button size="sm" onClick={done} disabled={state === "saving"}>
           Done
         </Button>
@@ -270,6 +340,7 @@ function ArticleEditor({
       ) : null}
 
       <main
+        ref={scroller}
         className="min-h-0 flex-1 overflow-y-auto bg-card"
         // What counts as an edit: typing, deleting, a shortcut, a paste, a cut, a drop, or a
         // toolbar button. Placing the cursor or moving it doesn't.
@@ -332,6 +403,51 @@ function ArticleEditor({
           Type / for blocks · select text to format
         </span>
       </footer>
+
+      <Sheet
+        open={drawer === "outline"}
+        onOpenChange={(open) => !open && setDrawer(null)}
+      >
+        <SheetContent side="left" className="w-80 gap-0 p-0">
+          <SheetHeader className="border-b border-border px-6 py-4">
+            <SheetTitle>Outline</SheetTitle>
+            <SheetDescription>
+              The article's headings. Pick one to go to it.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            {outline.length > 0 ? (
+              <StructureTree entries={outline} onPick={goToHeading} />
+            ) : (
+              <p className="px-2 text-table text-muted-foreground">
+                No headings yet. Type / on an empty line to add one.
+              </p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet
+        open={drawer === "checklist"}
+        onOpenChange={(open) => !open && setDrawer(null)}
+      >
+        <SheetContent side="right" className="w-80 gap-0 bg-card p-0">
+          <SheetHeader className="border-b border-border px-6 py-4">
+            <SheetTitle>Checklist</SheetTitle>
+            <SheetDescription>
+              From when the article was written. Changes made here aren't
+              checked again yet.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-3">
+            <ArticleChecklist
+              seoScore={checks.seoScore}
+              checklist={checks.checklist}
+              trustScore={checks.trustScore}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog
         open={guard.isAsking}
@@ -408,14 +524,18 @@ export function ArticleEditPage({
   const content = contentQuery.data?.content;
   // The article as it was when the editor opened: later refetches (the editor's own saves) must not
   // restart the editor under the person's cursor.
-  const opened = useRef<{ id: string; title: string; markdown: string } | null>(
-    null,
-  );
+  const opened = useRef<{
+    id: string;
+    title: string;
+    markdown: string;
+    checks: ArticleChecks;
+  } | null>(null);
   if (content && opened.current?.id !== content.id) {
     opened.current = {
       id: content.id,
       title: content.title,
       markdown: content.body_markdown ?? "",
+      checks: articleChecks(content),
     };
   }
 
@@ -468,6 +588,7 @@ export function ArticleEditPage({
       contentId={contentId}
       title={opened.current.title}
       serverMarkdown={opened.current.markdown}
+      checks={opened.current.checks}
       articleHref={articleHref}
     />
   );

@@ -5,7 +5,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ArticleEditPage } from "@/components/editor/article-edit-page";
 import { writeLocalDraft } from "@/lib/content/local-draft";
@@ -31,17 +31,15 @@ jest.mock("@/hooks/use-awaiting-data", () => ({
   useAwaitingData: () => false,
 }));
 
+const plainArticle: Record<string, unknown> = {
+  id: "c1",
+  title: "How to start a podcast",
+  body_markdown: "Hello",
+};
+let mockArticle = plainArticle;
 jest.mock("@/hooks/use-content", () => ({
   ...jest.requireActual("@/hooks/use-content"),
-  useContentDetail: () => ({
-    data: {
-      content: {
-        id: "c1",
-        title: "How to start a podcast",
-        body_markdown: "Hello",
-      },
-    },
-  }),
+  useContentDetail: () => ({ data: { content: mockArticle } }),
 }));
 
 // The editor itself is Lexical's; a text box stands in for it here.
@@ -65,6 +63,13 @@ jest.mock("@/components/ui/safe-lexical-editor", () => ({
         defaultValue={initialValue}
         onChange={(event) => onChange(event.target.value)}
       />
+      {/* The article's main headings, as the real editor would draw them. */}
+      {initialValue
+        .split("\n")
+        .filter((line) => line.startsWith("## "))
+        .map((line) => (
+          <h2 key={line}>{line.slice(3)}</h2>
+        ))}
       <output aria-label="Editor options">
         {`toolbar=${toolbar} bare=${bare} plugins=${plugins ? "yes" : "no"}`}
       </output>
@@ -101,6 +106,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
   canUpdate = true;
+  mockArticle = plainArticle;
   update.mockResolvedValue({});
 });
 afterEach(() => {
@@ -242,5 +248,96 @@ describe("The full-screen article editor", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("Article text")).toBeNull();
+  });
+});
+
+describe("The editor's drawers", () => {
+  const withHeadings = {
+    ...plainArticle,
+    body_markdown:
+      "Intro.\n\n## Pick a show idea\n\nText.\n\n### Choose one listener\n\nMore.\n\n## Choose a format\n\nText.",
+  };
+
+  it("lists the headings in the Outline drawer by level, and goes to the one picked", async () => {
+    mockArticle = withHeadings;
+    const scrolled = jest.fn();
+    Element.prototype.scrollIntoView = function scrollIntoView() {
+      scrolled(this.textContent);
+    };
+    const user = renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Outline" }));
+    const drawer = screen.getByRole("dialog", { name: "Outline" });
+    expect(
+      within(drawer)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent),
+    ).toEqual([
+      "H2Pick a show idea",
+      "H3Choose one listener",
+      "H2Choose a format",
+    ]);
+
+    await user.click(
+      within(drawer).getByRole("button", { name: /Choose a format/ }),
+    );
+    await wait(50);
+    expect(screen.queryByRole("dialog", { name: "Outline" })).toBeNull();
+    expect(scrolled).toHaveBeenCalledWith("Choose a format");
+
+    // Looking at the outline is not an edit: nothing is saved.
+    await wait(3000);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("lists a heading typed since the editor opened", async () => {
+    mockArticle = withHeadings;
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "\n\n## A new part");
+
+    await user.click(screen.getByRole("button", { name: "Outline" }));
+    expect(
+      within(screen.getByRole("dialog", { name: "Outline" })).getByRole(
+        "button",
+        { name: /A new part/ },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says so in the Outline drawer when the article has no headings", async () => {
+    const user = renderPage();
+    await user.click(screen.getByRole("button", { name: "Outline" }));
+    expect(
+      within(screen.getByRole("dialog", { name: "Outline" })).getByText(
+        /No headings yet/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the article's stored checks in the Checklist drawer, and says when they are from", async () => {
+    mockArticle = {
+      ...plainArticle,
+      seo_data: {
+        seo_details: JSON.stringify({ seo_health_score: 92, issues: [] }),
+        trust_score: 79,
+      },
+    };
+    const user = renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Checklist" }));
+    const drawer = screen.getByRole("dialog", { name: "Checklist" });
+    expect(
+      within(drawer).getByText(/From when the article was written/),
+    ).toBeInTheDocument();
+    expect(within(drawer).getByText("79%")).toBeInTheDocument();
+    expect(within(drawer).getAllByText(/On-page score/).length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("offers no Checklist for an article that has no checks", () => {
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Checklist" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Outline" })).toBeInTheDocument();
   });
 });
