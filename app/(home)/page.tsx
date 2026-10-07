@@ -36,7 +36,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useChecklistAnalytics } from "@/hooks/use-checklist-analytics";
-import { useAllContent } from "@/hooks/use-content";
+import { useAllContent, useContentHealthCounts } from "@/hooks/use-content";
 import { useIntegrations } from "@/hooks/use-integrations";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
@@ -91,6 +91,7 @@ export default function HomePage() {
   const workspaceId = workspace?.id ?? "";
   const slug = workspace?.slug ?? "";
   const content = useAllContent(workspaceId);
+  const healthCounts = useContentHealthCounts(workspaceId);
   // Generation is offered only to someone who may generate, as on Generate (the backend refuses the run).
   const { hasPermission: canGenerate } = useWorkspacePermission(
     CONTENT_PERMISSIONS.CREATE,
@@ -268,6 +269,7 @@ export default function HomePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <ContentHealthCard
                     health={contentHealth(articles, new Date())}
+                    checks={healthCounts.data}
                     libraryHref={libraryHref}
                   />
                   <PublishingCard

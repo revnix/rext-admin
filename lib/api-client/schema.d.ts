@@ -1747,6 +1747,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/keyword-library/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Library Item
+         * @description Remove one keyword, and the search results kept beside it, from the caller's library.
+         */
+        delete: operations["delete_library_item_api_v1_workspaces__workspace_id__keyword_library_items_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/members": {
         parameters: {
             query?: never;
@@ -2103,6 +2123,27 @@ export interface paths {
          *         - Workspace membership verification
          */
         get: operations["list_content_api_v1_content__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Content Health
+         * @description How many published articles lack a meta description or a link to the workspace's own
+         *     sites (the home's content health card).
+         */
+        get: operations["content_health_api_v1_content_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3009,9 +3050,13 @@ export interface paths {
         put?: never;
         /**
          * Resume Subscription
-         * @description Resume a paused subscription.
+         * @description Resume a paused subscription, or a cancelled one before it ends.
          *
-         *     The subscription_resumed webhook updates our local record.
+         *     It resumes exactly the subscription the dashboard's Resume is for (billing_action()
+         *     on the unfinished one), never another of the user's rows: a settled duplicate or an
+         *     older subscription un-cancelled here would bill again.
+         *
+         *     The subscription_resumed / subscription_updated webhook updates our local record.
          */
         post: operations["resume_subscription_api_v1_subscriptions_resume_post"];
         delete?: never;
@@ -3034,6 +3079,30 @@ export interface paths {
          * @description Create billing portal session.
          */
         post: operations["create_portal_session_api_v1_subscriptions_portal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscriptions/billing-action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Billing Action
+         * @description What the user does about a subscription that isn't finished, for the dashboard's banner.
+         *
+         *     "update_payment_method" for a failed renewal, "resume" for a paused subscription or a
+         *     cancelled one before its end, null otherwise. It reads only our database, never the
+         *     payment provider, so the dashboard's shell can ask on every page.
+         */
+        get: operations["get_billing_action_api_v1_subscriptions_billing_action_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6642,6 +6711,27 @@ export interface components {
             /** Timestamp */
             timestamp: number;
         };
+        /**
+         * BillingAction
+         * @description What the customer does with a subscription that isn't finished, instead of a new checkout.
+         */
+        BillingAction: {
+            /** Action */
+            action: string;
+            /** Status */
+            status: string;
+            /** Payment Failed At */
+            payment_failed_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+        };
+        /**
+         * BillingActionResponse
+         * @description GET /subscriptions/billing-action: the action, or null when nothing is unfinished.
+         */
+        BillingActionResponse: {
+            billing_action?: components["schemas"]["BillingAction"] | null;
+        };
         /** BillingNotifications */
         BillingNotifications: {
             /** Payment Success */
@@ -7534,6 +7624,24 @@ export interface components {
             content_published: boolean;
         };
         /**
+         * ContentHealthResponse
+         * @description Response for GET /content/health: counts over the workspace's published articles.
+         */
+        ContentHealthResponse: {
+            /** Published */
+            published: number;
+            /**
+             * Missing Meta Description
+             * @description Published articles with no meta description
+             */
+            missing_meta_description: number;
+            /**
+             * No Internal Links
+             * @description Published articles that link to none of the workspace's own sites; null when the workspace has no website and no connected site
+             */
+            no_internal_links?: number | null;
+        };
+        /**
          * ContentListResponse
          * @description Response for GET /content/ (paginated list).
          *
@@ -7554,6 +7662,32 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /**
+         * ContentPublishingResultSchema
+         * @description One site an article was sent to, and how that went (the content list carries these).
+         */
+        ContentPublishingResultSchema: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Status
+             * @description published, scheduled, draft, pending, failed, ...
+             */
+            status: string;
+            /**
+             * External Url
+             * @description The article's address on the site
+             */
+            external_url?: string | null;
+            /**
+             * Last Synced At
+             * @description When the site was last asked
+             */
+            last_synced_at?: string | null;
         };
         /**
          * ContentResponse
@@ -7626,6 +7760,8 @@ export interface components {
             /** Deleted At */
             deleted_at?: string | null;
             checklist?: components["schemas"]["ContentChecklist"] | null;
+            /** Publishing Results */
+            publishing_results?: components["schemas"]["ContentPublishingResultSchema"][] | null;
         };
         /**
          * ContentSEODataSchema
@@ -8913,6 +9049,14 @@ export interface components {
             target_keyword_analysis?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * LibraryItemDeleted
+         * @description A keyword removed from the caller's library: its store key.
+         */
+        LibraryItemDeleted: {
+            /** Deleted Key */
+            deleted_key: string;
         };
         /**
          * LicenseItem
@@ -12111,6 +12255,7 @@ export interface components {
             /** Portal Url */
             portal_url?: string | null;
             expired_trial?: components["schemas"]["ExpiredTrial"] | null;
+            billing_action?: components["schemas"]["BillingAction"] | null;
         };
         /**
          * SubscriptionUpgradeRequest
@@ -12703,6 +12848,42 @@ export interface components {
             error?: null;
         };
         /**
+         * SuccessResponse[BillingActionResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_BillingActionResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["BillingActionResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
          * SuccessResponse[BillingUrlsResponse]
          * @example {
          *       "data": {},
@@ -13200,6 +13381,42 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["ContentDetailResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[ContentHealthResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_ContentHealthResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["ContentHealthResponse"];
             /**
              * Error
              * @description Always null for success responses
@@ -14429,6 +14646,42 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["KeywordDensityResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[LibraryItemDeleted]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_LibraryItemDeleted_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["LibraryItemDeleted"];
             /**
              * Error
              * @description Always null for success responses
@@ -23142,6 +23395,42 @@ export interface operations {
             };
         };
     };
+    delete_library_item_api_v1_workspaces__workspace_id__keyword_library_items_delete: {
+        parameters: {
+            query: {
+                /** @description The item's store key */
+                key: string;
+            };
+            header: {
+                authorization: string;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_LibraryItemDeleted_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_workspace_members_api_v1_workspaces__workspace_id__members_get: {
         parameters: {
             query?: never;
@@ -23763,6 +24052,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessResponse_ContentListResponse_"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    content_health_api_v1_content_health_get: {
+        parameters: {
+            query: {
+                workspace_id: string;
+            };
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_ContentHealthResponse_"];
                 };
             };
             /** @description Not found */
@@ -25410,6 +25739,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_billing_action_api_v1_subscriptions_billing_action_get: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_BillingActionResponse_"];
                 };
             };
             /** @description Validation Error */
