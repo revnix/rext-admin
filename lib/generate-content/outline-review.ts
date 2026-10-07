@@ -50,6 +50,15 @@ export interface OutlineGate {
   serpResults: SerpResult[];
   questions: string[];
   relatedSearches: string[];
+  /** The ranking pages' H2 and H3, in their order (rext-backend, rext-control#476); empty when none. */
+  competitorHeadings: CompetitorPage[];
+}
+
+/** One ranking page and the headings it was read with. */
+export interface CompetitorPage {
+  url: string;
+  title: string;
+  headings: { level: 2 | 3; text: string }[];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -74,6 +83,33 @@ function readRow(value: unknown): EditableSectionRow | null {
     heading: heading.trim(),
     ...(level === "H2" || level === "H3" ? { heading_level: level } : {}),
   };
+}
+
+/** The gate's `competitor_headings`: pages with an http(s) address and at least one heading. */
+function readCompetitorPages(value: unknown): CompetitorPage[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((page) => {
+    if (!isRecord(page) || typeof page.url !== "string") return [];
+    if (!/^https?:\/\//i.test(page.url)) return [];
+    const headings = (
+      Array.isArray(page.headings) ? page.headings : []
+    ).flatMap((heading) =>
+      isRecord(heading) &&
+      (heading.level === 2 || heading.level === 3) &&
+      typeof heading.text === "string" &&
+      heading.text.trim()
+        ? [{ level: heading.level as 2 | 3, text: heading.text.trim() }]
+        : [],
+    );
+    if (headings.length === 0) return [];
+    return [
+      {
+        url: page.url,
+        title: typeof page.title === "string" ? page.title.trim() : "",
+        headings,
+      },
+    ];
+  });
 }
 
 export function readOutlineGate(value: unknown): OutlineGate {
@@ -104,6 +140,7 @@ export function readOutlineGate(value: unknown): OutlineGate {
     ),
     questions: nonEmptyStrings(gate.serp_questions),
     relatedSearches: nonEmptyStrings(gate.related_searches),
+    competitorHeadings: readCompetitorPages(gate.competitor_headings),
   };
 }
 

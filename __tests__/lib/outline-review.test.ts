@@ -133,6 +133,41 @@ describe("readOutlineGate", () => {
     expect(gate.relatedSearches).toEqual(["running shoes"]);
     expect(gate.addableLists).toEqual(["structure.sections"]);
   });
+
+  it("reads the ranking pages' headings, dropping malformed pages and headings (#476)", () => {
+    const gate = readOutlineGate({
+      competitor_headings: [
+        {
+          url: "https://a.test/guide",
+          title: " A guide ",
+          headings: [
+            { level: 2, text: "What is it?" },
+            { level: 3, text: " Why it matters " },
+            { level: 4, text: "Too deep" },
+            { level: 2, text: "  " },
+          ],
+        },
+        {
+          url: "javascript:alert(1)",
+          title: "Bad",
+          headings: [{ level: 2, text: "x" }],
+        },
+        { url: "https://b.test/", title: "No headings", headings: [] },
+        "not a page",
+      ],
+    });
+    expect(gate.competitorHeadings).toEqual([
+      {
+        url: "https://a.test/guide",
+        title: "A guide",
+        headings: [
+          { level: 2, text: "What is it?" },
+          { level: 3, text: "Why it matters" },
+        ],
+      },
+    ]);
+    expect(readOutlineGate({}).competitorHeadings).toEqual([]);
+  });
 });
 
 describe("the section edits", () => {

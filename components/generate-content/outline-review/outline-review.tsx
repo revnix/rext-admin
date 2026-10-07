@@ -132,6 +132,7 @@ export function OutlineReview({
     serpResults: gate.serpResults,
     questions: gate.questions,
     relatedSearches: gate.relatedSearches,
+    competitorHeadings: gate.competitorHeadings,
     clusters: keywordClusters,
     clusterHeadings: outline?.cluster_heading_map,
   };

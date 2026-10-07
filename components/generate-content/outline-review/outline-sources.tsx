@@ -1,4 +1,5 @@
 import { SerpSnapshot } from "@/components/keywords/serp-snapshot";
+import type { CompetitorPage } from "@/lib/generate-content/outline-review";
 import type { SerpResult } from "@/lib/keywords/serp-results";
 import type {
   ClusterHeadingMapItem,
@@ -9,6 +10,8 @@ export interface OutlineSourcesProps {
   serpResults: SerpResult[];
   questions: string[];
   relatedSearches: string[];
+  /** The ranking pages' H2 and H3, as the run read them (rext-control#476). */
+  competitorHeadings?: CompetitorPage[];
   clusters: KeywordCluster[];
   /** Which planned heading each cluster feeds. */
   clusterHeadings?: ClusterHeadingMapItem[];
@@ -20,6 +23,7 @@ export function hasSources(props: OutlineSourcesProps): boolean {
     props.serpResults.length > 0 ||
     props.questions.length > 0 ||
     props.relatedSearches.length > 0 ||
+    (props.competitorHeadings?.length ?? 0) > 0 ||
     props.clusters.length > 0
   );
 }
@@ -34,6 +38,7 @@ export function OutlineSources({
   serpResults,
   questions,
   relatedSearches,
+  competitorHeadings = [],
   clusters,
   clusterHeadings = [],
 }: OutlineSourcesProps) {
@@ -53,6 +58,49 @@ export function OutlineSources({
           description="The pages ranking for this keyword, which the outline was planned against."
         >
           <SerpSnapshot results={serpResults} heading={null} />
+        </SourceGroup>
+      )}
+
+      {competitorHeadings.length > 0 && (
+        <SourceGroup
+          title="What the ranking pages cover"
+          description="The headings of the top results, in each page's order."
+        >
+          <ul className="divide-y divide-border rounded-md border border-border bg-card">
+            {competitorHeadings.map((page) => (
+              <li key={page.url} className="space-y-1.5 px-3 py-2.5">
+                <p className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                  <a
+                    href={page.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link min-w-0 text-body font-medium wrap-anywhere"
+                  >
+                    {page.title || hostOf(page.url)}
+                  </a>
+                  <span className="text-caption text-muted-foreground">
+                    {hostOf(page.url)}
+                  </span>
+                </p>
+                <ul className="space-y-0.5">
+                  {page.headings.map((heading, index) => (
+                    <li
+                      // A page may repeat a heading at another level.
+                      // biome-ignore lint/suspicious/noArrayIndexKey: headings have no id of their own
+                      key={`${heading.level}-${index}`}
+                      className={
+                        heading.level === 3
+                          ? "pl-4 text-table text-muted-foreground"
+                          : "text-table text-foreground"
+                      }
+                    >
+                      {heading.text}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </SourceGroup>
       )}
 
@@ -150,4 +198,13 @@ function SourceGroup({
       {children}
     </section>
   );
+}
+
+/** A page's site, for the line under its title. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
