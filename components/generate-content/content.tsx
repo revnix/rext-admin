@@ -1112,6 +1112,7 @@ function ContentEditorInner(props: ContentEditorProps) {
                     // sections where they will be written. No grey bars to watch (task 703).
                     (displayTitle || outline?.title) && (
                       <header>
+                        {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
                         <h1>{displayTitle || outline?.title}</h1>
                       </header>
                     )
