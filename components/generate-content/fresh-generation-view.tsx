@@ -506,11 +506,17 @@ export function FreshGenerationView({
         type: "SET_OUTLINE",
         payload: restoredContent?.outline ?? null,
       });
-      // The content type picked, as the thread keeps it, for the steps above (FB2.12).
+      // What the earlier steps chose, as the thread keeps it, for the steps above (FB2.12): the title
+      // picked, not the outline's or the article's, which may have been edited since.
       if (restoredContent?.content_type)
         dispatch({
           type: "SET_SELECTED_CONTENT_TYPE",
           payload: restoredContent.content_type,
+        });
+      if (restoredContent?.selected_topic)
+        dispatch({
+          type: "SET_SELECTED_TOPIC",
+          payload: restoredContent.selected_topic,
         });
       if (finalContent) {
         dispatch({ type: "SET_ALL_CONTENT", payload: finalContent });

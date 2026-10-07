@@ -171,6 +171,21 @@ describe("stepChoices", () => {
     ]);
   });
 
+  it("says the title chosen on a reopened run, not the article's, which may have been edited", () => {
+    const state = reduce(initialState, {
+      type: "SET_SELECTED_TOPIC",
+      payload: "The title chosen",
+    });
+
+    expect(
+      stepChoices({
+        ...state,
+        outline: { title: "The outline's title" } as ContentOutline,
+        allContent: { title: "An edited title" } as FinalContent,
+      })[3],
+    ).toBe("The title chosen");
+  });
+
   it("reads a restored run's title from its outline, then from its article", () => {
     const outline = { title: "The outline's title" } as ContentOutline;
     expect(stepChoices({ ...initialState, outline })[3]).toBe(
