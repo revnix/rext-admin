@@ -139,7 +139,7 @@ export default function AcceptAdminInvitationPage() {
   // Loading state. A link with no token is not loading: it falls through to the invalid card.
   if (token && isValidating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="min-h-screen flex items-center justify-center bg-surface p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center py-8">
@@ -159,7 +159,7 @@ export default function AcceptAdminInvitationPage() {
   // let in.
   if (acceptanceComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="min-h-screen flex items-center justify-center bg-surface p-4">
         <Card className="w-full max-w-md border-success-200">
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
@@ -191,7 +191,7 @@ export default function AcceptAdminInvitationPage() {
   // Invalid token
   if (validationError || !validationData?.valid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="min-h-screen flex items-center justify-center bg-surface p-4">
         <Card className="w-full max-w-md border-destructive">
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
