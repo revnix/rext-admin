@@ -139,7 +139,7 @@ export default function CheckoutSuccessPage() {
     if (tracked.current || phase !== "confirmed" || !subscription) return;
     tracked.current = true;
     analytics.track("subscription_purchased", {
-      plan_name: subscription.plan_display_name ?? undefined,
+      plan: subscription.plan_name ?? undefined,
       billing_period: subscription.billing_period ?? undefined,
       status: subscription.status ?? undefined,
       checkout_id: searchParams.get("checkout_id") ?? undefined,

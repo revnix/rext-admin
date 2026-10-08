@@ -276,10 +276,10 @@ export default function PrivacyPolicyPage() {
           <li>Everywhere else it is on, and you can turn it off.</li>
           <li>
             When it is on, PostHog receives the pages you open and what you do
-            on them (for example a keyword analysed, a title chosen, an article
-            published or a plan bought, with that keyword or title), together
-            with your account ID, email, name and role. It keeps an identifier
-            in your browser&rsquo;s storage.
+            on them (for example that a keyword was analysed, a title chosen, an
+            article published or a plan bought, but not the keyword, the title
+            or the article), together with your account ID, email, name and
+            role. It keeps an identifier in your browser&rsquo;s storage.
           </li>
           <li>
             When it is off, PostHog receives only anonymous counts of the kinds

@@ -65,7 +65,7 @@ export function CheckoutButton({
       onCheckoutStart?.();
       analytics.track("checkout_started", {
         plan_id: plan.id,
-        plan_name: plan.display_name,
+        plan: plan.name,
         billing_period: billingPeriod,
       });
 
@@ -85,9 +85,9 @@ export function CheckoutButton({
       // The checkout couldn't be opened; no payment was attempted.
       analytics.track("checkout_failed", {
         plan_id: plan.id,
-        plan_name: plan.display_name,
+        plan: plan.name,
         billing_period: billingPeriod,
-        error_message: errorMessage,
+        error_kind: error instanceof Error ? error.name : "unknown",
       });
 
       toast.error("Checkout failed", {

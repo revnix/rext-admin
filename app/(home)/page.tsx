@@ -166,7 +166,7 @@ export default function HomePage() {
   const steps = checklistSteps(facts);
   const showChecklist =
     settled && steps.length > 0 && steps.some((step) => !step.done);
-  useChecklistAnalytics(workspaceId || undefined, user?.id, steps, settled);
+  useChecklistAnalytics(workspaceId || undefined, steps, settled);
 
   usePageTitle(
     workspace ? `${getWorkspaceDisplayTitle(workspace)} - Home` : "Home",

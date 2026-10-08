@@ -128,7 +128,7 @@ export function LemonSqueezyProvider() {
                 setCreditsFailed(true);
               });
             analytics.track("subscription_purchased", {
-              plan_name: latest?.plan_display_name ?? undefined,
+              plan: latest?.plan_name ?? undefined,
               billing_period: latest?.billing_period ?? undefined,
               status: latest?.status ?? undefined,
             });

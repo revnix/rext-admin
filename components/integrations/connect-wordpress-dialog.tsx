@@ -108,7 +108,6 @@ export function ConnectWordPressDialog({
       analytics.track("cms_connection_failed", {
         cms_type: "wordpress",
         workspace_id: workspaceId,
-        error_message: message,
       });
     }
   });
