@@ -102,6 +102,7 @@ export default function ContentType({
 
       <div className="mt-6 flex justify-end">
         <Button
+          data-rec="show"
           disabled={!selectedType}
           onClick={() => selectedType && handleContentTypeSelect(selectedType)}
         >

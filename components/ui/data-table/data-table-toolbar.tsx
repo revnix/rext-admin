@@ -170,13 +170,21 @@ export function DataTableViewOptions<TData extends object>({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 max-lg:h-10">
+        <Button
+          data-rec="show"
+          variant="outline"
+          size="sm"
+          className="h-9 max-lg:h-10"
+        >
           <Settings2 />
           View
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
+        <DropdownMenuLabel
+          data-rec="show"
+          className="text-xs text-muted-foreground"
+        >
           Columns
         </DropdownMenuLabel>
         {hideable.map((column) => (

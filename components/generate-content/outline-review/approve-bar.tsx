@@ -42,6 +42,7 @@ export function OutlineApproveBar({
         )}
         <RunCostTooltip run="regenerate_outline">
           <Button
+            data-rec="show"
             variant={canApprove ? "outline" : "default"}
             onClick={onRegenerate}
             disabled={disabled}
@@ -54,6 +55,7 @@ export function OutlineApproveBar({
         {canApprove && (
           <RunCostTooltip run="generate">
             <Button
+              data-rec="show"
               onClick={onApprove}
               disabled={disabled}
               aria-describedby={describedBy}

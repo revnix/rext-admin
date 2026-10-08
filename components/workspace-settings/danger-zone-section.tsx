@@ -119,7 +119,11 @@ export function DangerZoneSection() {
             }}
           >
             <AlertDialogTrigger asChild>
-              <Button variant="outline" disabled={isTransferring}>
+              <Button
+                data-rec="show"
+                variant="outline"
+                disabled={isTransferring}
+              >
                 Transfer ownership
               </Button>
             </AlertDialogTrigger>
@@ -134,7 +138,9 @@ export function DangerZoneSection() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <Field>
-                <FieldLabel htmlFor="new-owner">New owner</FieldLabel>
+                <FieldLabel data-rec="show" htmlFor="new-owner">
+                  New owner
+                </FieldLabel>
                 <Select
                   value={newOwnerId}
                   onValueChange={setNewOwnerId}
@@ -199,7 +205,11 @@ export function DangerZoneSection() {
         action={
           <WorkspaceDeleteDialog
             workspace={workspace}
-            trigger={<Button variant="destructive">Delete workspace</Button>}
+            trigger={
+              <Button data-rec="show" variant="destructive">
+                Delete workspace
+              </Button>
+            }
             onDeleted={() => router.push("/" as Route)}
             onRestored={() => router.refresh()}
           />

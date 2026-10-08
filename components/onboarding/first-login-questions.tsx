@@ -140,6 +140,7 @@ export function FirstLoginQuestions() {
         </form>
         <DialogFooter>
           <Button
+            data-rec="show"
             type="button"
             variant="ghost"
             onClick={() => close(null)}
@@ -148,6 +149,7 @@ export function FirstLoginQuestions() {
             Skip
           </Button>
           <Button
+            data-rec="show"
             type="submit"
             form="first-login-questions"
             disabled={finish.isPending}

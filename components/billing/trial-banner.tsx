@@ -95,7 +95,7 @@ export function TrialBanner() {
   if (!state || !userId || lowCredits === undefined) return null;
 
   const plans = (
-    <Button asChild size="sm">
+    <Button data-rec="show" asChild size="sm">
       <Link href={"/pricing" as Route}>See the plans</Link>
     </Button>
   );

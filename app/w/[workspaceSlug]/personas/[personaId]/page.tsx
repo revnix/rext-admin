@@ -42,7 +42,7 @@ export default function PersonaDetailPage() {
           tone="danger"
           title="This persona couldn't be found"
           action={
-            <Button asChild variant="outline" size="sm">
+            <Button data-rec="show" asChild variant="outline" size="sm">
               <Link href={workspaceRoutes.personas(workspaceSlug) as Route}>
                 All personas
               </Link>

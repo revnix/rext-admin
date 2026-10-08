@@ -104,6 +104,7 @@ export function CheckoutDialog() {
         <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between items-center">
           {checkoutUrl && (
             <Button
+              data-rec="show"
               variant="ghost"
               size="sm"
               asChild
@@ -116,6 +117,7 @@ export function CheckoutDialog() {
             </Button>
           )}
           <Button
+            data-rec="show"
             variant="outline"
             size="sm"
             onClick={closeCheckoutDialog}

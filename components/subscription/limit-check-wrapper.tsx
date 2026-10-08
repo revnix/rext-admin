@@ -96,6 +96,7 @@ export function LimitCheckWrapper({
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
+              data-rec="show"
               size="sm"
               variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
               onClick={handleUpgrade}
@@ -105,6 +106,7 @@ export function LimitCheckWrapper({
             </Button>
 
             <Button
+              data-rec="show"
               size="sm"
               variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
               onClick={() => router.push(settingsRoutes.usage as Route)}
@@ -130,7 +132,12 @@ export function LimitCheckWrapper({
           tone="warning"
           className="mb-4"
           action={
-            <Button size="sm" variant="outline" onClick={handleUpgrade}>
+            <Button
+              data-rec="show"
+              size="sm"
+              variant="outline"
+              onClick={handleUpgrade}
+            >
               Upgrade
             </Button>
           }

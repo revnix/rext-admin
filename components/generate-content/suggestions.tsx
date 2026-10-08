@@ -114,7 +114,11 @@ export function SuggestionsSection({
           onIntentChange={onIntentChange}
           action={
             <StageCostTooltip stage="title_generation">
-              <Button size="lg" onClick={() => onSelect(primaryKeyword)}>
+              <Button
+                data-rec="show"
+                size="lg"
+                onClick={() => onSelect(primaryKeyword)}
+              >
                 Continue with this keyword
                 <ChevronRight />
               </Button>
@@ -248,7 +252,12 @@ export function SuggestionsFilling({
               >
                 Ready when the analysis ends
               </span>
-              <Button size="lg" disabled aria-describedby={reasonId}>
+              <Button
+                data-rec="show"
+                size="lg"
+                disabled
+                aria-describedby={reasonId}
+              >
                 Continue with this keyword
                 <ChevronRight />
               </Button>

@@ -149,6 +149,7 @@ function CalendarBody() {
   const monthNav = (
     <div className="flex items-center gap-2">
       <Button
+        data-rec="show"
         variant="outline"
         size="icon"
         aria-label="Previous month"
@@ -163,6 +164,7 @@ function CalendarBody() {
         {monthName(month)}
       </p>
       <Button
+        data-rec="show"
         variant="outline"
         size="icon"
         aria-label="Next month"
@@ -171,7 +173,11 @@ function CalendarBody() {
         <ChevronRight />
       </Button>
       {month !== monthOf(today) && (
-        <Button variant="outline" onClick={() => goToMonth(null)}>
+        <Button
+          data-rec="show"
+          variant="outline"
+          onClick={() => goToMonth(null)}
+        >
           Today
         </Button>
       )}
@@ -187,6 +193,7 @@ function CalendarBody() {
           title="The calendar didn't load"
           action={
             <Button
+              data-rec="show"
               variant="outline"
               size="sm"
               onClick={() => calendarQuery.refetch()}
@@ -219,9 +226,15 @@ function CalendarBody() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList aria-label="View">
-            <TabsTrigger value="month">Month</TabsTrigger>
-            <TabsTrigger value="board">Board</TabsTrigger>
-            <TabsTrigger value="list">List</TabsTrigger>
+            <TabsTrigger data-rec="show" value="month">
+              Month
+            </TabsTrigger>
+            <TabsTrigger data-rec="show" value="board">
+              Board
+            </TabsTrigger>
+            <TabsTrigger data-rec="show" value="list">
+              List
+            </TabsTrigger>
           </TabsList>
           {view !== "board" && monthNav}
         </div>

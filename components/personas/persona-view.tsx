@@ -238,7 +238,11 @@ export function PersonaActions({ persona }: { persona: Persona }) {
       {canDelete && (
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" className="text-destructive">
+            <Button
+              data-rec="show"
+              variant="ghost"
+              className="text-destructive"
+            >
               Delete
             </Button>
           </AlertDialogTrigger>
@@ -280,7 +284,7 @@ export function PersonaActions({ persona }: { persona: Persona }) {
         </AlertDialog>
       )}
       {canEdit && (
-        <Button asChild>
+        <Button data-rec="show" asChild>
           <Link
             href={
               workspaceRoutes.persona_edit(workspaceSlug, personaId) as Route

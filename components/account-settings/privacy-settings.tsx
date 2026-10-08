@@ -156,6 +156,7 @@ export function PrivacySettings() {
             ))}
 
             <Button
+              data-rec="show"
               type="submit"
               disabled={exportMutation.isPending}
               className="w-full sm:w-auto"

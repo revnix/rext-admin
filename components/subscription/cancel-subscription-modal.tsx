@@ -220,7 +220,7 @@ export function CancelSubscriptionModal({
 
             {/* Feedback Section */}
             <div className="space-y-3">
-              <Label className="text-base">
+              <Label data-rec="show" className="text-base">
                 Help us improve - Why are you cancelling? (Optional)
               </Label>
               <div className="space-y-2">
@@ -244,7 +244,9 @@ export function CancelSubscriptionModal({
 
             {/* Additional Feedback */}
             <div className="space-y-2">
-              <Label htmlFor="feedback">Additional feedback (Optional)</Label>
+              <Label data-rec="show" htmlFor="feedback">
+                Additional feedback (Optional)
+              </Label>
               <Textarea
                 id="feedback"
                 placeholder="Tell us more about your experience or what we could do better..."
@@ -264,6 +266,7 @@ export function CancelSubscriptionModal({
               />
               <div className="flex-1">
                 <Label
+                  data-rec="show"
                   htmlFor="confirm-cancel"
                   className="text-sm font-medium cursor-pointer"
                 >
@@ -282,10 +285,16 @@ export function CancelSubscriptionModal({
         </div>
 
         <DialogFooter className="p-6 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+          <Button
+            data-rec="show"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
             Keep Subscription
           </Button>
           <Button
+            data-rec="show"
             variant="destructive"
             onClick={handleCancel}
             disabled={isLoading || !confirmed}

@@ -170,6 +170,7 @@ export function ImpersonationBanner() {
         </div>
 
         <Button
+          data-rec="show"
           variant="outline"
           size="sm"
           onClick={handleStopImpersonation}

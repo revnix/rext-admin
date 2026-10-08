@@ -128,6 +128,7 @@ export function UserMenu() {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuItem
+                data-rec="show"
                 onSelect={() => {
                   setOpenMobile(false);
                   setDrawerOpen(true);
@@ -138,6 +139,7 @@ export function UserMenu() {
               </DropdownMenuItem>
               {chat.available && (
                 <DropdownMenuItem
+                  data-rec="show"
                   onSelect={() => {
                     setOpenMobile(false);
                     void chat.open();
@@ -149,7 +151,10 @@ export function UserMenu() {
               )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => void performLogout("/login")}>
+            <DropdownMenuItem
+              data-rec="show"
+              onSelect={() => void performLogout("/login")}
+            >
               <LogOut />
               Sign out
             </DropdownMenuItem>

@@ -29,7 +29,7 @@ export default function WorkspaceNotFound() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button asChild variant="default" className="w-full">
+          <Button data-rec="show" asChild variant="default" className="w-full">
             <Link href="/">
               <Home className="h-4 w-4 mr-2" />
               Back to Workspaces

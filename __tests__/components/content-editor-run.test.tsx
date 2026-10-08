@@ -203,6 +203,92 @@ describe("ContentEditor while the article is written, as the page shows it (task
     ]);
   });
 
+  describe("with the writer's whole first draft (task 773)", () => {
+    const draftProps = {
+      ...writingProps,
+      draft: true,
+      enhancingMsg: "Style pass",
+      generatedContent:
+        "Intro.\n\n## Pick a show idea\n\nText.\n\n## Choose a format\n\nA solo show.\n\n## The gear you need\n\nA microphone.",
+    };
+
+    it("marks the text as a first draft, above the article and in the bar", () => {
+      render(editor(draftProps));
+      const article = screen.getByRole("article");
+      const notice = within(article).getByRole("status");
+      expect(notice).toHaveTextContent("First draft");
+      expect(notice).toHaveTextContent(
+        "We're still rewriting and checking the article. The final text replaces this one when it's ready.",
+      );
+      // Above the title: the first thing read.
+      expect(
+        notice.compareDocumentPosition(
+          within(article).getByRole("heading", { level: 1 }),
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      const bar = screen.getByText("Writing the article").parentElement
+        ?.parentElement as HTMLElement;
+      expect(within(bar).getByText("First draft")).toBeInTheDocument();
+    });
+
+    it("names no section as the one being written: they are all there", () => {
+      render(editor(draftProps));
+      expect(
+        screen.getByText("Writing the article").parentElement,
+      ).toHaveTextContent(/^Writing the article · Style pass$/);
+      const nav = screen.getByRole("navigation", { name: "Structure" });
+      expect(
+        within(nav)
+          .getAllByRole("listitem")
+          .map((row) => row.textContent),
+      ).toEqual([
+        "H2Pick a show idea",
+        "H2Choose a format",
+        "H2The gear you need",
+      ]);
+      for (const row of within(nav).getAllByRole("button")) {
+        expect(row).toBeEnabled();
+      }
+      expect(screen.queryByText("Still to come")).toBeNull();
+    });
+
+    it("keeps the actions for the end", () => {
+      render(editor(draftProps));
+      for (const name of ["Edit article", "Copy", "Publish"]) {
+        expect(screen.queryByRole("button", { name })).toBeNull();
+      }
+    });
+
+    it("says nothing of a draft once the article is final", () => {
+      render(
+        editor({
+          ...draftProps,
+          isEnhancing: false,
+          readabilityScore: { flesch_reading_ease: 60 } as never,
+          trustScore: { score: 70 } as never,
+          seoScore: { seo_health_score: 90, issues: [] } as never,
+        }),
+      );
+      expect(screen.queryByText("First draft")).toBeNull();
+      expect(
+        screen.getAllByRole("button", { name: "Publish" }).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it("says nothing of a draft when the run is no longer going", () => {
+      render(editor({ ...draftProps, isEnhancing: false }));
+      expect(screen.queryByText("First draft")).toBeNull();
+    });
+
+    it("is not a draft while the text still arrives piece by piece", () => {
+      render(editor({ ...draftProps, draft: false }));
+      expect(screen.queryByText("First draft")).toBeNull();
+      expect(
+        screen.getByText("Writing the article").parentElement,
+      ).toHaveTextContent("Writing the article · Style pass · section 3 of 3");
+    });
+  });
+
   it("shows the actions once the article is done, and no states in the structure", () => {
     render(
       editor({

@@ -56,6 +56,7 @@ export function AnalyticsConsentPrompt() {
         action={
           <div className="flex gap-2">
             <Button
+              data-rec="show"
               type="button"
               size="sm"
               onClick={() => writeConsent("granted")}
@@ -63,6 +64,7 @@ export function AnalyticsConsentPrompt() {
               Allow
             </Button>
             <Button
+              data-rec="show"
               type="button"
               size="sm"
               variant="outline"

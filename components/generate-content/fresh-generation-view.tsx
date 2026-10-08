@@ -13,6 +13,7 @@ import {
   StartAtTop,
 } from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
+import { useFirstDraft } from "@/hooks/use-first-draft";
 import { useRunStages } from "@/hooks/use-run-stages";
 import { plannedSections } from "@/lib/generate-content/article-structure";
 import { describeRun } from "@/lib/generate-content/run-findings";
@@ -1021,6 +1022,26 @@ export function FreshGenerationView({
 
   const isContentFinal =
     !!allContent && !!readabilityScore && !!seoScore && !!trustScore;
+
+  // The article's run, while one of its stages runs.
+  const articleRunActive =
+    runStages.run?.phase === "article" &&
+    runStages.run.stages.some((stage) => stage.state === "active");
+  // The writer's first draft, held as it arrived until the article is final, then replaced once
+  // (task 773).
+  const firstDraft = useFirstDraft({
+    thread: threadId,
+    body: generatedContent,
+    content: allContent,
+    final: isContentFinal,
+  });
+  // Only while the run goes on: a run that stopped shows what it showed before, not a draft that
+  // nothing will finish.
+  const shownDraft =
+    !isContentFinal &&
+    (isEnhancing || isBackgroundGenerationActive || articleRunActive)
+      ? firstDraft
+      : null;
   const outlineWordCountRange = getContentTypeWordCountRange(
     parsedOutline?.schema_type,
   );
@@ -2722,6 +2743,7 @@ export function FreshGenerationView({
           <div className="w-full space-y-3">
             <RunProgress stages={timedOutStages} timedOut />
             <Button
+              data-rec="show"
               type="button"
               variant="outline"
               size="sm"
@@ -2833,8 +2855,7 @@ export function FreshGenerationView({
             // The article's run, while it runs: the same stages as every other
             // phase, in the editor's side panel (the editor fills the page).
             runProgress={
-              runStages.run?.phase === "article" &&
-              runStages.run.stages.some((stage) => stage.state === "active") ? (
+              articleRunActive && runStages.run ? (
                 <RunProgress
                   stages={runStages.run.stages}
                   {...runView}
@@ -2845,14 +2866,15 @@ export function FreshGenerationView({
             // Below 1280 px that side panel is a sheet: the running stage, its time and how far
             // the run is go on one line in the article's own bar (task 703).
             runStrip={
-              runStages.run?.phase === "article" &&
-              runStages.run.stages.some((stage) => stage.state === "active") ? (
+              articleRunActive && runStages.run ? (
                 <RunProgress variant="compact" stages={runStages.run.stages} />
               ) : null
             }
             threadId={threadId ?? undefined}
             allContent={
-              isContentFinal ? allContent : (allContent ?? streamedAllContent)
+              isContentFinal
+                ? allContent
+                : (shownDraft?.content ?? allContent ?? streamedAllContent)
             }
             isEnhancing={isEnhancing || isBackgroundGenerationActive}
             enhancingMsg={enhancingMsg}
@@ -2862,8 +2884,11 @@ export function FreshGenerationView({
             seoScore={seoScore}
             trustScore={trustScore}
             generatedContent={
-              isContentFinal ? generatedContent : displayedBodyMarkdown
+              isContentFinal
+                ? generatedContent
+                : shownDraft?.body || displayedBodyMarkdown
             }
+            draft={!!shownDraft}
             userKeyword={userKeyword}
             outline={parsedOutline}
             toolCalls={toolCalls}

@@ -317,9 +317,14 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   // An admin acting as a customer: nothing leaves, page views and identification included.
   if (isImpersonating()) return null;
   const redacted = redactEventUrls(event);
-  return runningMode === "anonymous"
-    ? anonymousEvent(redacted, routeOnScreen)
-    : redacted;
+  const sent =
+    runningMode === "anonymous"
+      ? anonymousEvent(redacted, routeOnScreen)
+      : redacted;
+  // Where the event is from, on every one: the website sends "website" to its own project, so
+  // the two sets of numbers can be laid side by side.
+  if (sent) sent.properties = { ...sent.properties, surface: "app" };
+  return sent;
 }
 
 /**
@@ -380,6 +385,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           // No session is recorded until the app asks for it and masks what a recording shows
           // (rext-control task 712): a switch in the PostHog project can't start one by itself.
           disable_session_recording: true,
+          // No code is loaded from PostHog's servers. The library would fetch the project's
+          // settings as a script, which the security policy refuses (and the browser logs on
+          // every page); told this, it reads them as data from the assets host, which the
+          // policy allows for requests only (lib/csp.ts).
+          disable_external_dependency_loading: true,
           // PostHog adds the current address to every event; redact the credentials in it.
           before_send: beforeSend,
           // And nothing raw in what the SDK stores in the tab (the referrer, on every event).

@@ -680,6 +680,7 @@ function OutlineGroup({
               </div>
             ) : (
               <Button
+                data-rec="show"
                 ref={addButtonRef}
                 type="button"
                 variant="ghost"
@@ -1222,6 +1223,7 @@ function RenameField({
         </p>
         <div className="mt-2 flex justify-end gap-2 lg:hidden">
           <Button
+            data-rec="show"
             type="button"
             variant="outline"
             className="h-10"
@@ -1229,12 +1231,13 @@ function RenameField({
           >
             Cancel
           </Button>
-          <Button type="submit" className="h-10">
+          <Button data-rec="show" type="submit" className="h-10">
             Save
           </Button>
         </div>
       </div>
       <Button
+        data-rec="show"
         type="submit"
         variant="ghost"
         size="icon"
@@ -1244,6 +1247,7 @@ function RenameField({
         <Check className="size-4" />
       </Button>
       <Button
+        data-rec="show"
         type="button"
         variant="ghost"
         size="icon"
@@ -1298,6 +1302,7 @@ function AddHeading({
       </div>
       <div className="flex gap-2 max-lg:ml-auto">
         <Button
+          data-rec="show"
           type="submit"
           size="sm"
           className="max-lg:h-10"
@@ -1306,6 +1311,7 @@ function AddHeading({
           Add
         </Button>
         <Button
+          data-rec="show"
           type="button"
           variant="ghost"
           size="sm"

@@ -138,6 +138,7 @@ export function OAuthAccounts() {
                 </div>
               </div>
               <Button
+                data-rec="show"
                 variant="destructive"
                 size="sm"
                 onClick={() => handleUnlink(account)}
@@ -182,6 +183,7 @@ export function OAuthAccounts() {
                   </div>
                 </div>
                 <Button
+                  data-rec="show"
                   variant="outline"
                   size="sm"
                   className="mt-2 sm:mt-0 h-8 w-full sm:w-auto"

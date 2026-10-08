@@ -236,6 +236,7 @@ export function FloatingToolbarPlugin() {
             className="h-8 w-56"
           />
           <button
+            data-rec="show"
             type="submit"
             aria-label="Add the link"
             className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"

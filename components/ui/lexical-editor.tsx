@@ -364,6 +364,7 @@ function ImagePlaceholderSlot({
       </span>
       <span className="inline-flex items-center gap-2">
         <Button
+          data-rec="show"
           type="button"
           size="sm"
           variant="outline"
@@ -379,6 +380,7 @@ function ImagePlaceholderSlot({
           Upload image
         </Button>
         <Button
+          data-rec="show"
           type="button"
           size="sm"
           variant="ghost"
@@ -404,7 +406,9 @@ function ImagePlaceholderSlot({
           </DialogHeader>
           <form onSubmit={describeAndUpload} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor={descriptionId}>Description</Label>
+              <Label data-rec="show" htmlFor={descriptionId}>
+                Description
+              </Label>
               <Input
                 id={descriptionId}
                 value={description}
@@ -414,13 +418,18 @@ function ImagePlaceholderSlot({
             </div>
             <DialogFooter>
               <Button
+                data-rec="show"
                 type="button"
                 variant="outline"
                 onClick={() => setChosen(null)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={altTextFor(description) === ""}>
+              <Button
+                data-rec="show"
+                type="submit"
+                disabled={altTextFor(description) === ""}
+              >
                 Add image
               </Button>
             </DialogFooter>
@@ -485,6 +494,7 @@ function ImageNodeComponent({
       />
       {isEditable && (
         <button
+          data-rec="show"
           type="button"
           title="Remove image"
           onClick={handleRemove}
@@ -1052,6 +1062,7 @@ function ImageInsertPopover() {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
+          data-rec="show"
           className={cn(
             "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
@@ -1083,6 +1094,7 @@ function ImageInsertPopover() {
           onChange={handleFileSelected}
         />
         <Button
+          data-rec="show"
           variant="outline"
           size="sm"
           className="h-8 w-full"
@@ -1107,7 +1119,7 @@ function ImageInsertPopover() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="img-url" className="text-xs">
+          <Label data-rec="show" htmlFor="img-url" className="text-xs">
             Image URL
           </Label>
           <Input
@@ -1127,7 +1139,7 @@ function ImageInsertPopover() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="img-alt" className="text-xs">
+          <Label data-rec="show" htmlFor="img-alt" className="text-xs">
             Alt text (optional)
           </Label>
           <Input
@@ -1163,6 +1175,7 @@ function ImageInsertPopover() {
 
         <div className="flex justify-end gap-2 pt-1">
           <Button
+            data-rec="show"
             variant="outline"
             size="sm"
             className="h-8"
@@ -1172,6 +1185,7 @@ function ImageInsertPopover() {
             Cancel
           </Button>
           <Button
+            data-rec="show"
             size="sm"
             className="h-8"
             onClick={handleInsert}
@@ -1210,6 +1224,7 @@ function TableInsertPopover() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          data-rec="show"
           className={cn(
             "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
             open ? "bg-muted text-foreground" : "text-muted-foreground",
@@ -1224,7 +1239,7 @@ function TableInsertPopover() {
         <h4 className="font-semibold text-sm leading-none">Insert Table</h4>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="tbl-rows" className="text-xs">
+            <Label data-rec="show" htmlFor="tbl-rows" className="text-xs">
               Rows
             </Label>
             <Input
@@ -1238,7 +1253,7 @@ function TableInsertPopover() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tbl-cols" className="text-xs">
+            <Label data-rec="show" htmlFor="tbl-cols" className="text-xs">
               Columns
             </Label>
             <Input
@@ -1254,6 +1269,7 @@ function TableInsertPopover() {
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button
+            data-rec="show"
             variant="outline"
             size="sm"
             className="h-8"
@@ -1263,6 +1279,7 @@ function TableInsertPopover() {
             Cancel
           </Button>
           <Button
+            data-rec="show"
             size="sm"
             className="h-8"
             onClick={handleInsert}
@@ -1587,6 +1604,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
       <Popover open={isLinkPopoverOpen} onOpenChange={onLinkPopoverOpenChange}>
         <PopoverTrigger asChild>
           <button
+            data-rec="show"
             className={cn(
               "p-2 rounded-md hover:bg-muted transition-colors cursor-pointer",
               isLink || isLinkPopoverOpen
@@ -1609,7 +1627,9 @@ function ToolbarPlugin({ className }: { className?: string }) {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center gap-4">
-                <Label htmlFor="link-url">URL</Label>
+                <Label data-rec="show" htmlFor="link-url">
+                  URL
+                </Label>
                 <Input
                   id="link-url"
                   value={tempLinkUrl}
@@ -1627,6 +1647,7 @@ function ToolbarPlugin({ className }: { className?: string }) {
             <div className="flex justify-end gap-2">
               {isLink && (
                 <Button
+                  data-rec="show"
                   variant="outline"
                   size="sm"
                   onClick={removeLink}
@@ -1635,7 +1656,12 @@ function ToolbarPlugin({ className }: { className?: string }) {
                   <X size={14} className="mr-1" /> Remove
                 </Button>
               )}
-              <Button size="sm" onClick={applyLink} className="h-8 px-2">
+              <Button
+                data-rec="show"
+                size="sm"
+                onClick={applyLink}
+                className="h-8 px-2"
+              >
                 <Check size={14} className="mr-1" /> Apply
               </Button>
             </div>

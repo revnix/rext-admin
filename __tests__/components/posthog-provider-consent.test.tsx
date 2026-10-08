@@ -217,6 +217,15 @@ describe("where analytics is on unless switched off", () => {
     expect(question()).toBeNull();
   });
 
+  it("loads no code from PostHog's servers: the project's settings are read as data", async () => {
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+
+    expect(mockPosthog.init.mock.calls[0][1]).toMatchObject({
+      disable_external_dependency_loading: true,
+    });
+  });
+
   it("puts the workspace, the plan and the role on every event, and the plan on the person", async () => {
     renderProvider();
     await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());
@@ -491,6 +500,34 @@ describe("where analytics is on unless switched off", () => {
         },
       }).properties.$current_url,
     ).toBe("https://app.rext.ai/w/:workspaceSlug/content");
+  });
+});
+
+describe("every event that leaves", () => {
+  it("says it is the app's, with what it already carried", async () => {
+    mode.mockResolvedValue("full");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+
+    expect(
+      beforeSend({ event: "title_selected", properties: { keyword: "crm" } })
+        .properties,
+    ).toEqual({ keyword: "crm", surface: "app" });
+  });
+
+  it("says so for someone counted without an identity too", async () => {
+    mode.mockResolvedValue("anonymous");
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+    const beforeSend = mockPosthog.init.mock.calls[0][1].before_send;
+
+    expect(
+      beforeSend({
+        event: "$pageview",
+        properties: { $current_url: "https://app.rext.ai/w/acme/content" },
+      }).properties.surface,
+    ).toBe("app");
   });
 });
 

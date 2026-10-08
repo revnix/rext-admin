@@ -330,6 +330,7 @@ export function PlanChangeModal({
 
           <DialogFooter>
             <Button
+              data-rec="show"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
@@ -337,6 +338,7 @@ export function PlanChangeModal({
               Cancel
             </Button>
             <Button
+              data-rec="show"
               onClick={handlePlanChange}
               disabled={
                 isBusy || selectedPlanId === currentPlanId || !selectedPlan

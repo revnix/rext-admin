@@ -84,7 +84,12 @@ export function PlanSection() {
         tone="danger"
         title="Your plan didn't load"
         action={
-          <Button variant="outline" size="sm" onClick={() => current.refetch()}>
+          <Button
+            data-rec="show"
+            variant="outline"
+            size="sm"
+            onClick={() => current.refetch()}
+          >
             Try again
           </Button>
         }
@@ -158,18 +163,20 @@ export function PlanSection() {
                       // (the backend refuses one during a payment retry). Decided by the plan's
                       // own status, so it holds while the billing action loads or if it fails.
                       <Button
+                        data-rec="show"
                         onClick={() => void billing.updatePaymentMethod()}
                         disabled={billing.isLoading}
                       >
                         Update card
                       </Button>
                     ) : (
-                      <Button onClick={() => setChanging(true)}>
+                      <Button data-rec="show" onClick={() => setChanging(true)}>
                         Change plan
                       </Button>
                     )}
                     {status === SubscriptionStatus.ACTIVE && (
                       <Button
+                        data-rec="show"
                         variant="outline"
                         onClick={() => setCancelling(true)}
                       >
@@ -188,7 +195,7 @@ export function PlanSection() {
                       {billingAction.label}
                     </Button>
                   ) : (
-                    <Button asChild className="self-start">
+                    <Button data-rec="show" asChild className="self-start">
                       <Link href={"/pricing" as Route}>See the plans</Link>
                     </Button>
                   )
@@ -221,6 +228,7 @@ export function PlanSection() {
                   Update payment method
                 </CustomerPortalButton>
                 <Button
+                  data-rec="show"
                   variant="ghost"
                   onClick={() => void billing.openTaxDetails()}
                   disabled={billing.isLoading}

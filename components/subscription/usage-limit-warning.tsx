@@ -197,7 +197,12 @@ export function UsageLimitWarning({
         tone={tone}
         className={className}
         action={
-          <Button size="sm" variant="outline" onClick={handleUpgrade}>
+          <Button
+            data-rec="show"
+            size="sm"
+            variant="outline"
+            onClick={handleUpgrade}
+          >
             Upgrade
           </Button>
         }
@@ -254,6 +259,7 @@ export function UsageLimitWarning({
 
         <div className="flex flex-wrap gap-2">
           <Button
+            data-rec="show"
             size="sm"
             variant={SUBSCRIPTION_ACTION_VARIANTS.upgradePrimary}
             onClick={handleUpgrade}
@@ -263,6 +269,7 @@ export function UsageLimitWarning({
           </Button>
 
           <Button
+            data-rec="show"
             size="sm"
             variant={SUBSCRIPTION_ACTION_VARIANTS.navigateSecondary}
             onClick={() => router.push(settingsRoutes.usage as Route)}

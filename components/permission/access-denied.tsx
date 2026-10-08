@@ -182,7 +182,13 @@ export function AccessDenied({
               Contact your workspace administrator to request access or upgrade
               your role.
             </p>
-            <Button size="sm" variant="outline" asChild className="w-full">
+            <Button
+              data-rec="show"
+              size="sm"
+              variant="outline"
+              asChild
+              className="w-full"
+            >
               <Link href="/w" aria-label="View My Workspaces">
                 View My Workspaces
               </Link>
@@ -193,6 +199,7 @@ export function AccessDenied({
         {/* Actions */}
         <div className="flex gap-2 pt-2">
           <Button
+            data-rec="show"
             variant="outline"
             onClick={() => router.back()}
             className="flex-1"
@@ -201,7 +208,7 @@ export function AccessDenied({
             <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Go Back
           </Button>
-          <Button asChild className="flex-1">
+          <Button data-rec="show" asChild className="flex-1">
             <Link href={backUrl as Route} aria-label="Go to Dashboard">
               Go to Dashboard
             </Link>

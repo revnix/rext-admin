@@ -165,10 +165,18 @@ export function InvoiceDocument({
         <table className="w-full text-sm text-left">
           <thead className="bg-muted text-xs uppercase font-medium text-muted-foreground border-b">
             <tr>
-              <th className="px-4 py-2.5">Description</th>
-              <th className="px-4 py-2.5 text-center">Qty</th>
-              <th className="px-4 py-2.5 text-right">Unit Price</th>
-              <th className="px-4 py-2.5 text-right">Total</th>
+              <th data-rec="show" className="px-4 py-2.5">
+                Description
+              </th>
+              <th data-rec="show" className="px-4 py-2.5 text-center">
+                Qty
+              </th>
+              <th data-rec="show" className="px-4 py-2.5 text-right">
+                Unit Price
+              </th>
+              <th data-rec="show" className="px-4 py-2.5 text-right">
+                Total
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y">

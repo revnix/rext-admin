@@ -203,6 +203,7 @@ export function OutlineBrief({
             action={
               onRefreshPersonas && (
                 <Button
+                  data-rec="show"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -219,6 +220,7 @@ export function OutlineBrief({
         ) : personas.length > 0 ? (
           <div className="space-y-1.5">
             <label
+              data-rec="show"
               htmlFor={`${ids}-persona`}
               className="text-label text-foreground"
             >
@@ -266,7 +268,7 @@ export function OutlineBrief({
               {canCreatePersona && (
                 <PersonaDialog
                   trigger={
-                    <Button type="button" variant="outline">
+                    <Button data-rec="show" type="button" variant="outline">
                       <UserPlus aria-hidden />
                       Create persona
                     </Button>
@@ -406,6 +408,7 @@ function RefreshPersonasButton({
 }) {
   return (
     <Button
+      data-rec="show"
       type="button"
       variant="ghost"
       size="icon"
@@ -561,6 +564,7 @@ function KeywordsSetting({
             }}
           />
           <Button
+            data-rec="show"
             type="button"
             variant="outline"
             disabled={full || !draft.trim()}

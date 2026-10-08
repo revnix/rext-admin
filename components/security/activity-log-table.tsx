@@ -177,7 +177,12 @@ export function ActivityLogTable() {
         query.error ? (
           <div className="flex flex-col items-center gap-3">
             <p>Your activity didn't load.</p>
-            <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+            <Button
+              data-rec="show"
+              variant="outline"
+              size="sm"
+              onClick={() => query.refetch()}
+            >
               Try again
             </Button>
           </div>

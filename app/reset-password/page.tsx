@@ -144,7 +144,9 @@ function ResetPasswordForm() {
             </CardHeader>
             <CardContent>
               <Link href="/forgot-password" className="block">
-                <Button className="w-full">Request New Reset Link</Button>
+                <Button data-rec="show" className="w-full">
+                  Request New Reset Link
+                </Button>
               </Link>
             </CardContent>
           </Card>
@@ -176,7 +178,9 @@ function ResetPasswordForm() {
               )}
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="password">New password</Label>
+                  <Label data-rec="show" htmlFor="password">
+                    New password
+                  </Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -187,6 +191,7 @@ function ResetPasswordForm() {
                       disabled={isLoading || success}
                     />
                     <button
+                      data-rec="show"
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -211,7 +216,9 @@ function ResetPasswordForm() {
                   )}
                 </div>
                 <div className="grid gap-3">
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Label data-rec="show" htmlFor="confirmPassword">
+                    Confirm password
+                  </Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -222,6 +229,7 @@ function ResetPasswordForm() {
                       disabled={isLoading || success}
                     />
                     <button
+                      data-rec="show"
                       type="button"
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -244,6 +252,7 @@ function ResetPasswordForm() {
                 </div>
                 <div className="flex flex-col gap-3">
                   <Button
+                    data-rec="show"
                     type="submit"
                     className="w-full"
                     disabled={!hydrated || isLoading || success}

@@ -273,6 +273,7 @@ export function DataTable<TData extends object>({
       })}
       {state.isFiltered && (
         <Button
+          data-rec="show"
           variant="ghost"
           size="sm"
           className="h-9 max-lg:h-10"
@@ -324,7 +325,12 @@ export function DataTable<TData extends object>({
         <p className="text-sm text-muted-foreground">
           Nothing matches this search or these filters.
         </p>
-        <Button variant="outline" size="sm" onClick={state.resetFilters}>
+        <Button
+          data-rec="show"
+          variant="outline"
+          size="sm"
+          onClick={state.resetFilters}
+        >
           Clear filters
         </Button>
       </div>
@@ -372,8 +378,10 @@ export function DataTable<TData extends object>({
                     const sorted = header.column.getIsSorted();
                     const meta = header.column.columnDef.meta;
                     return (
+                      // A column's header is written in the table's own code, never read from data.
                       <TableHead
                         key={header.id}
+                        data-rec="own"
                         colSpan={header.colSpan}
                         aria-sort={
                           sorted === "asc"
@@ -403,6 +411,7 @@ export function DataTable<TData extends object>({
                   })}
                   {rowActions && (
                     <TableHead
+                      data-rec="show"
                       className={cn("w-12", stickyHeader && STICKY_HEAD)}
                     >
                       <span className="sr-only">Actions</span>
@@ -504,6 +513,7 @@ export function DataTable<TData extends object>({
           <span className="num font-medium">{selected.length} selected</span>
           {bulkActions(selected, clearSelection)}
           <Button
+            data-rec="show"
             variant="ghost"
             size="sm"
             className="ml-auto h-8 max-lg:h-10"
