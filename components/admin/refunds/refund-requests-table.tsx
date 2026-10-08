@@ -33,6 +33,7 @@ import { apiClient } from "@/lib/api-client";
 import type { RefundRequestRow } from "@/lib/api-client/admin-refunds";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { log } from "@/lib/logger";
+import { PlanChangeNotice } from "./plan-change-notice";
 
 type Decision = "approve" | "reject" | "process";
 
@@ -354,6 +355,11 @@ export function RefundRequestsTable({
                     : "No money moves. Your note is shown to the customer, so explain the decision."}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Before the decision and before the money moves: the payment this refund leaves out. */}
+          {(decision === "approve" || decision === "process") && (
+            <PlanChangeNotice charges={active?.plan_change_charges} />
+          )}
 
           {decision !== "process" && (
             <div className="grid gap-2 py-2">

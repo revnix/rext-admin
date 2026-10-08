@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
 import type { RefundableOrder } from "@/lib/api-client/admin-refunds";
+import { PlanChangeNotice } from "./plan-change-notice";
 import { log } from "@/lib/logger";
 
 interface OrderPickerProps {
@@ -101,6 +102,10 @@ export function OrderPicker({ selected, onSelect }: OrderPickerProps) {
             Change
           </button>
         </div>
+        <PlanChangeNotice
+          charges={selected.plan_change_charges}
+          className="mt-3"
+        />
       </div>
     );
   }
