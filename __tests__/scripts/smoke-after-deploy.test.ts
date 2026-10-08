@@ -12,6 +12,12 @@ const expression = (inner: string) => `$\{{ ${inner} }}`;
 const workflow = read(".github/workflows/ci_cd.yaml");
 const [, afterDeploy = ""] = workflow.split(/^ {2}deploy:\n/m);
 const [deployJob = "", smokeJob = ""] = afterDeploy.split(/^ {2}smoke:\n/m);
+const [, fromProduction = ""] = smokeJob.split(
+  "- name: Smoke test on production\n",
+);
+const [production = "", staging = ""] = fromProduction.split(
+  "- name: Smoke test on staging\n",
+);
 
 describe("the deploy workflow's smoke job", () => {
   it("runs after the deploy, and no job waits for it", () => {
@@ -37,23 +43,38 @@ describe("the deploy workflow's smoke job", () => {
   });
 
   it("gives the test itself three minutes and may read, not write, the repository", () => {
-    const [, test = ""] = smokeJob.split("- name: Smoke test\n");
-    expect(test).toMatch(/^ {8}timeout-minutes: 3$/m);
-    expect(test).toContain(
-      "run: pnpm exec playwright test -c playwright.smoke.config.ts",
-    );
+    for (const step of [production, staging]) {
+      expect(step).toMatch(/^ {8}timeout-minutes: 3$/m);
+      expect(step).toContain(
+        "run: pnpm exec playwright test -c playwright.smoke.config.ts",
+      );
+    }
     expect(smokeJob).toMatch(
       /permissions:\n {6}contents: read\n {6}actions: read\n/,
     );
   });
 
-  it("signs in only with a test account from the secrets, production's on main", () => {
-    expect(smokeJob).toContain(
-      `SMOKE_EMAIL: ${expression("github.ref == 'refs/heads/main' && secrets.SMOKE_EMAIL || secrets.SMOKE_STAGING_EMAIL")}`,
+  it("gives each branch its own test account, and never the other's", () => {
+    expect(production).toContain("if: github.ref == 'refs/heads/main'");
+    expect(production).toContain(
+      `SMOKE_EMAIL: ${expression("secrets.SMOKE_EMAIL")}`,
     );
-    expect(smokeJob).toContain(
-      `SMOKE_PASSWORD: ${expression("github.ref == 'refs/heads/main' && secrets.SMOKE_PASSWORD || secrets.SMOKE_STAGING_PASSWORD")}`,
+    expect(production).toContain(
+      `SMOKE_PASSWORD: ${expression("secrets.SMOKE_PASSWORD")}`,
     );
+    expect(production).not.toContain("STAGING");
+
+    expect(staging).toContain("if: github.ref == 'refs/heads/staging'");
+    expect(staging).toContain(
+      `SMOKE_EMAIL: ${expression("secrets.SMOKE_STAGING_EMAIL")}`,
+    );
+    expect(staging).toContain(
+      `SMOKE_PASSWORD: ${expression("secrets.SMOKE_STAGING_PASSWORD")}`,
+    );
+
+    // An unset secret is empty, so "main && its secret || the other's" would hand production the
+    // staging account: no secret is ever one side of a choice.
+    expect(smokeJob).not.toMatch(/secrets\.\w+ (\|\||&&)|(\|\||&&) secrets\./);
   });
 });
 
