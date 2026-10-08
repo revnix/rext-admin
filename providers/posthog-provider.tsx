@@ -153,9 +153,9 @@ function PostHogAuthSync() {
       if (identifiedIdRef.current === userId) return;
       identifiedIdRef.current = userId;
 
+      // By the account's id only: no email and no name goes to PostHog. The person carries
+      // their role here, and their plan from AnalyticsContextSync.
       posthog.identify(userId, {
-        email: session.user.email ?? undefined,
-        name: session.user.name ?? undefined,
         role: session.user.role ?? undefined,
         // The app is light only; the system's preference is kept for a later decision on a dark theme.
         prefers_color_scheme: systemColourScheme(),
