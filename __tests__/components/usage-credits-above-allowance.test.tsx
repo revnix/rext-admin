@@ -47,6 +47,8 @@ it("reads N of M credits left under the allowance", () => {
   });
   expect(screen.getByText("412")).toBeInTheDocument();
   expect(screen.getByText(/of 1,000 credits left/)).toBeInTheDocument();
+  // No bonus: the articles are the plan's credits' alone, and say no more.
+  expect(screen.getByText(/^About 27 articles\.$/)).toBeInTheDocument();
   expect(
     screen.getByRole("meter", { name: "Credits left this period" }),
   ).toHaveAttribute("aria-valuenow", "412");
@@ -84,7 +86,11 @@ it("shows a launch buyer the plan's credits against the allowance, and the bonus
   });
   expect(screen.getByText("1,000")).toBeInTheDocument();
   expect(screen.getByText(/of 1,000 credits left/)).toBeInTheDocument();
+  // The bonus is named before the articles, which count both: beside "1,000 of 1,000", a bare
+  // "About 133 articles" read as a mistake on the first real launch purchase (staging).
   expect(
-    screen.getByText(/Plus 1,000 launch bonus credits, until Oct 14, 2026\./),
+    screen.getByText(
+      /^Plus 1,000 launch bonus credits, until Oct 14, 2026\. About 133 articles in all\./,
+    ),
   ).toBeInTheDocument();
 });

@@ -22,13 +22,17 @@ import { type CreditBalance, SubscriptionStatus } from "@/types/subscription";
 const workspaces = (count: number) =>
   `${count.toLocaleString()} ${count === 1 ? "workspace" : "workspaces"}`;
 
-/** "About 4 articles", "About 1 article", or none left for a whole one. */
-const articlesWords = (count: number | null) =>
+/**
+ * "About 4 articles.", "About 1 article.", or none left for a whole one. The count is of all the
+ * person can spend, so with a bonus in the balance it says "in all": beside "1,000 of 1,000
+ * credits left", a bare "About 133 articles" reads as a mistake (task 784).
+ */
+const articlesWords = (count: number | null, inAll = false) =>
   count === null
     ? null
     : count < 1
       ? "Not enough for a whole article."
-      : `About ${count.toLocaleString()} ${count === 1 ? "article" : "articles"}.`;
+      : `About ${count.toLocaleString()} ${count === 1 ? "article" : "articles"}${inAll ? " in all" : ""}.`;
 
 /** At 80 % of the period's credits used, the meter warns and a notice says what to do. */
 const WARN_USED_SHARE = 0.8;
@@ -133,6 +137,7 @@ function CreditsCard({
   const usedShare = meter ? 1 - meter.value / meter.max : null;
   const warn = usedShare !== null && usedShare >= WARN_USED_SHARE;
   const trialEndsOn = trialEnd ?? credits.credits_reset_date;
+  const bonus = bonusWords(credits);
 
   return (
     <div className="flex flex-col gap-4">
@@ -172,8 +177,10 @@ function CreditsCard({
           )}
           <p className="text-sm text-muted-foreground">
             {[
-              articlesWords(credits.articles_remaining),
-              bonusWords(credits),
+              // The bonus first, then what the plan's credits and the bonus buy together.
+              ...(bonus
+                ? [bonus, articlesWords(credits.articles_remaining, true)]
+                : [articlesWords(credits.articles_remaining)]),
               onTrial
                 ? trialEndsOn &&
                   `The trial ends ${dateFormat.short(trialEndsOn)}; its credits don't renew.`
