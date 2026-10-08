@@ -33,6 +33,13 @@ const profileEnvelopeSchema = z.object({
   }),
 });
 
+/** The answer on usage analytics as the account holds it. */
+export interface StoredAnalyticsAnswer {
+  answer: "granted" | "denied" | null;
+  region: "eea" | "other" | null;
+  answered_at: string | null;
+}
+
 export function createProfileNamespace(client: ApiClient) {
   return {
     /**
@@ -127,6 +134,22 @@ export function createProfileNamespace(client: ApiClient) {
         body: JSON.stringify({ email }),
       });
     },
+
+    /**
+     * Writes the person's answer on usage analytics and where they were asked, and returns what
+     * the account holds afterwards. A null answer never undoes a stored one: it writes the
+     * region only, so a browser with no answer of its own reads the account's this way. The
+     * backend refuses it (403) while an admin acts as a customer.
+     */
+    storeAnalyticsAnswer: async (
+      answer: StoredAnalyticsAnswer["answer"],
+      region: NonNullable<StoredAnalyticsAnswer["region"]>,
+    ): Promise<StoredAnalyticsAnswer> =>
+      client.request<StoredAnalyticsAnswer>(ENDPOINTS.PROFILE.analyticsAnswer, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer, region }),
+      }),
   };
 }
 

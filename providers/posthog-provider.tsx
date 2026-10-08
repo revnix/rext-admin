@@ -629,8 +629,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       if (cancelled || started || allowed === "wait") return;
       run(allowed, false);
     });
-    const stopListening = onConsentChange((choice) =>
-      run(choice === "granted" ? "full" : "anonymous", true),
+    // An answer taken over from the account is not a new one: `$opt_in` counts people who chose.
+    const stopListening = onConsentChange((choice, origin) =>
+      run(choice === "granted" ? "full" : "anonymous", origin === "chosen"),
     );
     return () => {
       cancelled = true;

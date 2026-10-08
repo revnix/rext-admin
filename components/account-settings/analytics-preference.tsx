@@ -19,7 +19,8 @@ import { RECORDING_ON } from "@/lib/analytics-recording";
  * The switch for analytics (rext-control task 712): on measures how this person uses the app,
  * linked to their account; off leaves anonymous counts of the pages opened. It shows the choice
  * as it stands (on by default outside the EEA, the UK and Switzerland; off until answered inside)
- * and applies a change at once. The choice is kept in this browser.
+ * and applies a change at once. The choice is kept in this browser and, through the prompt's
+ * listener in the shell, on the account.
  */
 export function AnalyticsPreference() {
   // Null until the choice, or the region when there is none, has been read.
@@ -51,7 +52,7 @@ export function AnalyticsPreference() {
           {RECORDING_ON &&
             " It includes recordings of the screen, with everything you type and all text hidden except our own buttons, menus and labels."}{" "}
           Off, only anonymous counts of the pages opened are kept. The choice is
-          saved in this browser.
+          saved on your account and in this browser.
         </FieldDescription>
       </FieldContent>
       <Switch

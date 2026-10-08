@@ -12,8 +12,10 @@ import {
   onConsentChange,
   readConsent,
   regionForCountry,
+  reconcileAnswer,
   resetRegionRequest,
   sharedCookieDomain,
+  takeConsent,
   writeConsent,
 } from "@/lib/analytics-consent";
 
@@ -281,5 +283,86 @@ describe("the app's other tabs", () => {
 
     expect(heardHere).toEqual(["denied"]);
     expect(heardThere).toContain("denied");
+  });
+});
+
+describe("an answer taken over from the account", () => {
+  it("is kept and told like a choice, and says it was not made here", () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true }) as unknown as typeof fetch;
+    const heard: string[] = [];
+    const stop = onConsentChange((choice, origin) =>
+      heard.push(`${choice} ${origin}`),
+    );
+
+    takeConsent("denied");
+    writeConsent("granted");
+    stop();
+
+    expect(heard).toEqual(["denied taken", "granted chosen"]);
+    expect(readConsent()).toBe("granted");
+  });
+});
+
+describe("reconcileAnswer", () => {
+  it("does nothing when the two agree, and takes the account's where this browser has none", () => {
+    expect(reconcileAnswer("granted", "granted", "new")).toEqual({
+      put: null,
+      take: null,
+    });
+    expect(reconcileAnswer(null, null, "new")).toEqual({
+      put: null,
+      take: null,
+    });
+    expect(reconcileAnswer(null, "denied", "new")).toEqual({
+      put: null,
+      take: "denied",
+    });
+  });
+
+  it("writes this browser's answer where the account has none", () => {
+    expect(reconcileAnswer("granted", null, "new")).toEqual({
+      put: "granted",
+      take: null,
+    });
+    expect(reconcileAnswer("denied", null, "synced")).toEqual({
+      put: "denied",
+      take: null,
+    });
+  });
+
+  it("keeps a no on the first comparison: it may be older than anything the account knows", () => {
+    expect(reconcileAnswer("denied", "granted", "new")).toEqual({
+      put: "denied",
+      take: null,
+    });
+    // A yes here never overrides a no on the account.
+    expect(reconcileAnswer("granted", "denied", "new")).toEqual({
+      put: null,
+      take: "denied",
+    });
+  });
+
+  it("follows the account once the two have been compared: it holds the latest answer", () => {
+    expect(reconcileAnswer("denied", "granted", "synced")).toEqual({
+      put: null,
+      take: "granted",
+    });
+    expect(reconcileAnswer("granted", "denied", "synced")).toEqual({
+      put: null,
+      take: "denied",
+    });
+  });
+
+  it("sends a choice made here that never reached the account, before anything else", () => {
+    expect(reconcileAnswer("granted", "denied", "unsent")).toEqual({
+      put: "granted",
+      take: null,
+    });
+    expect(reconcileAnswer("denied", "granted", "unsent")).toEqual({
+      put: "denied",
+      take: null,
+    });
   });
 });

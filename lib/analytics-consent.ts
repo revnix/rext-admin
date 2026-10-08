@@ -237,13 +237,64 @@ export function shareOwnConsent(): void {
   sendToServer();
 }
 
-/** Records the choice and tells the app, in this tab and the others. */
-export function writeConsent(choice: ConsentChoice): void {
+/**
+ * How a choice came to this browser: the person has just made it here, or it was taken over
+ * from where they made it before (their account, the website).
+ */
+export type ConsentOrigin = "chosen" | "taken";
+
+function tell(choice: ConsentChoice, origin: ConsentOrigin): void {
   setConsentCookie(choice);
   latestChoice = choice;
   sendToServer();
-  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: choice }));
-  otherTabs()?.postMessage(choice);
+  window.dispatchEvent(
+    new CustomEvent(CHANGE_EVENT, { detail: { choice, origin } }),
+  );
+  otherTabs()?.postMessage({ choice, origin });
+}
+
+/** Records the choice the person has just made and tells the app, in this tab and the others. */
+export function writeConsent(choice: ConsentChoice): void {
+  tell(choice, "chosen");
+}
+
+/**
+ * Takes over a choice the person made before, on their account from another browser: kept and
+ * told like one made here, but not counted as a new answer.
+ */
+export function takeConsent(choice: ConsentChoice): void {
+  tell(choice, "taken");
+}
+
+/**
+ * What this browser knows of its answer and the account's: nothing yet (it never compared the
+ * two), in step, or holding a choice made here that didn't reach the account.
+ */
+export type AnswerStanding = "new" | "synced" | "unsent";
+
+/**
+ * Brings this browser's answer and the account's together: which one to write to the account,
+ * and which to take over here. The account's is the answer the person gave last, wherever they
+ * gave it, so it wins once the two have been compared. Two cases go the other way: a choice
+ * made here that never reached the account is sent first; and a browser comparing for the first
+ * time keeps its own "no", which may be older than the account's record of anything.
+ */
+export function reconcileAnswer(
+  own: ConsentChoice | null,
+  stored: ConsentChoice | null,
+  standing: AnswerStanding,
+): { put: ConsentChoice | null; take: ConsentChoice | null } {
+  const nothing = { put: null, take: null };
+  if (own === stored) return nothing;
+  if (own === null) return { put: null, take: stored };
+  if (stored === null || standing === "unsent") return { put: own, take: null };
+  if (standing === "new" && own === "denied") return { put: own, take: null };
+  return { put: null, take: stored };
+}
+
+/** Where this person is asked first or not: the region as the page knows it. */
+export function consentRegion(): Promise<ConsentRegion> {
+  return resolveRegion();
 }
 
 /**
@@ -253,24 +304,27 @@ export function writeConsent(choice: ConsentChoice): void {
  * stop.
  */
 export function onConsentChange(
-  listener: (choice: ConsentChoice) => void,
+  listener: (choice: ConsentChoice, origin: ConsentOrigin) => void,
 ): () => void {
   let known = readConsent();
-  const heard = (choice: ConsentChoice) => {
+  const heard = (told: unknown) => {
+    // A tab still on an older version of the app tells the choice alone.
+    const { choice, origin } =
+      typeof told === "object" && told !== null
+        ? (told as { choice?: unknown; origin?: unknown })
+        : { choice: told, origin: "chosen" };
+    if (!isConsentChoice(choice)) return;
     known = choice;
-    listener(choice);
+    listener(choice, origin === "taken" ? "taken" : "chosen");
   };
-  const here = (event: Event) => {
-    const choice = (event as CustomEvent).detail;
-    if (isConsentChoice(choice)) heard(choice);
-  };
-  const elsewhere = (event: MessageEvent) => {
-    if (isConsentChoice(event.data)) heard(event.data);
-  };
+  const here = (event: Event) => heard((event as CustomEvent).detail);
+  const elsewhere = (event: MessageEvent) => heard(event.data);
   const back = () => {
     if (document.visibilityState !== "visible") return;
     const choice = readConsent();
-    if (choice !== null && choice !== known) heard(choice);
+    // Changed on the website: the person chose it there.
+    if (choice !== null && choice !== known)
+      heard({ choice, origin: "chosen" });
   };
   const channel = otherTabs();
   window.addEventListener(CHANGE_EVENT, here);
