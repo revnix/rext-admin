@@ -6,6 +6,8 @@ import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import { PageFrame } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
+import { analytics } from "@/lib/analytics";
+import { errorProperties, pathShape } from "@/lib/analytics-failures";
 import { log } from "@/lib/logger";
 
 /**
@@ -53,6 +55,15 @@ export function ErrorBoundary({
               message: error instanceof Error ? error.message : String(error),
               componentStack: info.componentStack,
             });
+            // Only where the person is shown the failure: a part that falls back to a plainer
+            // view of itself shows them nothing.
+            if (fallback === undefined) {
+              analytics.track("error_screen_shown", {
+                where: "part",
+                route: pathShape(window.location.pathname),
+                ...errorProperties(error),
+              });
+            }
             onError?.(error, info);
           }}
           fallbackRender={({ resetErrorBoundary }) => {
