@@ -72,12 +72,12 @@ describe("the keyword analysis's stages", () => {
 });
 
 describe("the article's stages (rext-control #260)", () => {
-  it("are Research, Draft, Style pass and Checks", () => {
+  it("are named in plain words that say what is happening (task 838)", () => {
     expect(startStages("article", 0).map((stage) => stage.label)).toEqual([
-      "Research",
-      "Draft",
-      "Style pass",
-      "Checks",
+      "Researching the topic",
+      "Writing the first draft",
+      "Polishing the wording",
+      "Checking readability and SEO",
     ]);
   });
 

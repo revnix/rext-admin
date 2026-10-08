@@ -1,4 +1,8 @@
-import { NODE_STAGES, type RunPhase } from "@/lib/generate-content/run-stages";
+import {
+  ARTICLE_STAGE_LABELS,
+  NODE_STAGES,
+  type RunPhase,
+} from "@/lib/generate-content/run-stages";
 import { isStoppedRunCode } from "@/lib/generate-content/run-events";
 
 export type GenerationRunStatus =
@@ -242,12 +246,12 @@ function deriveProgressAndStage(
     review?.trust_score,
   ].filter(Boolean).length;
 
-  // The article's stages by the run component's names (rext-control #260): Research and Draft
-  // (one node, so the poll says Draft), Style pass, Checks.
+  // The article's stages by the run component's names (ARTICLE_STAGE_LABELS): the research and
+  // the draft are one node, so the poll says the draft; then the polish, then the checks.
   if (completedReviews > 0) {
     return {
       progress: Math.min(96, 78 + completedReviews * 6),
-      stage: "Checks",
+      stage: ARTICLE_STAGE_LABELS.checks,
     };
   }
 
@@ -256,7 +260,7 @@ function deriveProgressAndStage(
   if (activeNodes.some((node) => REVIEW_STAGE_NAMES.has(node))) {
     return {
       progress: 74,
-      stage: "Checks",
+      stage: ARTICLE_STAGE_LABELS.checks,
     };
   }
 
@@ -264,14 +268,14 @@ function deriveProgressAndStage(
   if (content?.final_content) {
     return {
       progress: 74,
-      stage: "Style pass",
+      stage: ARTICLE_STAGE_LABELS.style,
     };
   }
 
   if (activeNodes.includes("generate_content")) {
     return {
       progress: 42,
-      stage: "Draft",
+      stage: ARTICLE_STAGE_LABELS.draft,
     };
   }
 
