@@ -65,6 +65,20 @@ export interface RefundFilters {
   per_page?: number;
 }
 
+/**
+ * A plan change the customer paid for. Lemon Squeezy charges it as an invoice of the subscription, so
+ * a refund of the order doesn't give it back. Cents.
+ */
+export interface PlanChangeCharge {
+  invoice_id: string;
+  amount: number;
+  refunded_amount: number;
+  /** What Lemon Squeezy still holds of it: the amount to give back in its dashboard. */
+  outstanding_amount: number;
+  currency: string;
+  paid_at: string | null;
+}
+
 /** An order an admin can refund against, from our local orders table. */
 export interface RefundableOrder {
   id: string;
@@ -87,6 +101,8 @@ export interface RefundableOrder {
   refunded_amount: number;
   /** Cents still refundable. The server decides this; never re-derive it. */
   refundable_amount: number;
+  /** Paid plan changes on the subscription this order started, which its refund leaves out. */
+  plan_change_charges?: PlanChangeCharge[];
 }
 
 export interface RefundableOrderListResponse {
@@ -140,6 +156,8 @@ export interface RefundRequestRow {
   refundable_amount: number;
   /** Approved but not yet paid out — the "Process refund" action applies. */
   awaiting_processing: boolean;
+  /** Paid plan changes on the subscription the order started, which this refund leaves out. */
+  plan_change_charges?: PlanChangeCharge[];
 }
 
 export interface RefundRequestListResponse {
