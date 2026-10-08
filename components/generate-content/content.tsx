@@ -42,7 +42,6 @@ import { memo, useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { integrationQueries, profileQueries } from "@/lib/query-keys";
-import { useTypewriter } from "@/hooks/use-typewriter";
 import type { ComponentType } from "react";
 import {
   useCurrentWorkspaceId,
@@ -74,7 +73,13 @@ import {
   postLink,
   publishConfirmCopy,
 } from "@/lib/content/publish-copy";
+import {
+  articleStructure,
+  plannedSections,
+  writingPosition,
+} from "@/lib/generate-content/article-structure";
 import { useConfirmation } from "../ui/confirmation-dialog";
+import { StructureTree } from "./structure-tree";
 import { Notice } from "../ui/notice";
 import { Skeleton } from "../ui/skeleton";
 
@@ -198,7 +203,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     threadId,
     isEnhancing,
     enhancingMsg,
-    enhancingDescription,
     allContent,
     readabilityScore,
     checklist = null,
@@ -235,13 +239,6 @@ function ContentEditorInner(props: ContentEditorProps) {
   const displayTitle = allContent?.title || allContent?.meta_title || "";
   const body = generatedContent;
   const previewHtml = useMemo(() => articleHtml(body), [body]);
-  const { displayed: typedTitle } = useTypewriter(displayTitle, { speed: 55 });
-  const { displayed: typedIntro } = useTypewriter(
-    allContent?.meta_description || "",
-    {
-      speed: 45,
-    },
-  );
   const score = readabilityScore?.flesch_reading_ease ?? 0;
   const workspaceId = useCurrentWorkspaceId();
   const workspaceSlug = useCurrentWorkspaceSlug();
@@ -415,16 +412,31 @@ function ContentEditorInner(props: ContentEditorProps) {
   const [isStructureOpen, setIsStructureOpen] = useState(false);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
-  const sidebarSections = useMemo(() => {
-    if (!body) return outline?.sections || [];
-    const matches = Array.from(body.matchAll(/^#{1,6}\s+(.*)$/gm));
-    if (matches.length > 0) {
-      return matches.map((m) => ({
-        heading: m[1].trim(),
-      }));
+  // The article is still being written (the generation page), not a saved one being read.
+  const writing = !isFinal && (!!isEnhancing || !!runProgress);
+  // Its structure as layers, with what is written, being written and still to come (task 703).
+  const structure = useMemo(
+    () => articleStructure(body ?? "", plannedSections(outline), writing),
+    [body, outline, writing],
+  );
+  const position = writingPosition(structure);
+  const scrollToHeading = (heading: string) => {
+    const wanted = heading.trim().toLowerCase();
+    const element =
+      document.getElementById(slugify(heading)) ||
+      Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).find(
+        (h) => {
+          const text = h.textContent?.trim().toLowerCase() || "";
+          return (
+            text.includes(wanted) || (text !== "" && wanted.includes(text))
+          );
+        },
+      );
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      setIsStructureOpen(false);
     }
-    return outline?.sections || [];
-  }, [body, outline]);
+  };
 
   // Sync active section on scroll
   useEffect(() => {
@@ -813,153 +825,156 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
   };
 
-  const analysisSidebarContent = (
-    <div className="flex flex-col h-full min-h-0 bg-card pb-20 sm:pb-0">
-      {/* The article's actions, each named (D23): a 2 by 2 grid so the words fit the 288 px pane. */}
-      <div className="grid grid-cols-2 gap-2 px-3 sticky top-0 bg-card py-3 z-4 border-b border-border">
-        <div>
-          {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
-          {canUpdate ? (
+  // The article's actions, each named (D23), in one bar above the page (task 703): two by two
+  // on a phone, where four named buttons don't fit one row, and in a row from 640 px.
+  const actionButtons = (
+    <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+      <div>
+        {/* Named in words, so no tooltip: one opened on the sheet's first focus and covered Copy. */}
+        {canUpdate ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+            onClick={onEditToggle}
+            disabled={!isFinal}
+          >
+            {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
+            {isEditing ? "Preview" : "Edit"}
+          </Button>
+        ) : (
+          <LockedFeatureTooltip message="Editing requires Editor role or above">
             <Button
               variant="secondary"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-              onClick={onEditToggle}
+              disabled
+            >
+              <Pencil size={16} />
+              Edit
+            </Button>
+          </LockedFeatureTooltip>
+        )}
+      </div>
+      <div>
+        {canUpdate ? (
+          <Button
+            onClick={saveContent}
+            disabled={!isFinal || isSaving || isPublishing}
+            variant="secondary"
+            size="sm"
+            className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+          >
+            <Save size={16} className={isSaving ? "animate-pulse" : ""} />
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+        ) : (
+          <LockedFeatureTooltip message="Saving requires Editor role or above">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+              disabled
+            >
+              <Save size={16} />
+              Save
+            </Button>
+          </LockedFeatureTooltip>
+        )}
+      </div>
+      <div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
               disabled={!isFinal}
-            >
-              {isEditing ? <Eye size={16} /> : <Pencil size={16} />}
-              {isEditing ? "Preview" : "Edit"}
-            </Button>
-          ) : (
-            <LockedFeatureTooltip message="Editing requires Editor role or above">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-                disabled
-              >
-                <Pencil size={16} />
-                Edit
-              </Button>
-            </LockedFeatureTooltip>
-          )}
-        </div>
-        <div>
-          {canUpdate ? (
-            <Button
-              onClick={saveContent}
-              disabled={!isFinal || isSaving || isPublishing}
               variant="secondary"
               size="sm"
               className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
             >
-              <Save size={16} className={isSaving ? "animate-pulse" : ""} />
-              {isSaving ? "Saving…" : "Save"}
+              <Copy size={16} />
+              Copy
+              <ChevronDown size={16} />
             </Button>
-          ) : (
-            <LockedFeatureTooltip message="Saving requires Editor role or above">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
-                disabled
-              >
-                <Save size={16} />
-                Save
-              </Button>
-            </LockedFeatureTooltip>
-          )}
-        </div>
-        <div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48" align="center">
+            <DropdownMenuItem onClick={() => handleCopy("html")}>
+              Copy HTML
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopy("markdown")}>
+              Copy Markdown
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleCopy("formatted")}>
+              Copy Text
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div>
+        {canPublish ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                disabled={!isFinal}
-                variant="secondary"
                 size="sm"
-                className="h-10 xl:h-8 px-2! text-xs font-bold transition-all !w-full"
+                className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
               >
-                <Copy size={16} />
-                Copy
+                <Send
+                  size={16}
+                  className={isPublishing ? "animate-pulse" : ""}
+                />
+                {isPublishing ? "Publishing…" : "Publish"}
                 <ChevronDown size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48" align="center">
-              <DropdownMenuItem onClick={() => handleCopy("html")}>
-                Copy HTML
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                disabled={!isFinal || isPublishing || isSaving}
+                onClick={() => openPublishConfirmation("publish")}
+              >
+                <Send size={13} className="mr-2" />
+                Publish
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCopy("markdown")}>
-                Copy Markdown
+              <DropdownMenuItem
+                disabled={!isFinal || isPublishing || isSaving}
+                onClick={() => openPublishConfirmation("draft")}
+              >
+                <Save size={13} className="mr-2" />
+                Save as Draft
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleCopy("formatted")}>
-                Copy Text
+              <DropdownMenuItem
+                disabled={!isFinal || isPublishing || isSaving}
+                onClick={() => openPublishConfirmation("pending")}
+              >
+                <Eye size={13} className="mr-2" />
+                Submit for Review
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={!isFinal || isPublishing || isSaving}
+                onClick={() => setScheduleDialogOpen(true)}
+              >
+                <Clock size={13} className="mr-2" />
+                Schedule for Later
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-        <div>
-          {canPublish ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
-                >
-                  <Send
-                    size={16}
-                    className={isPublishing ? "animate-pulse" : ""}
-                  />
-                  {isPublishing ? "Publishing…" : "Publish"}
-                  <ChevronDown size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem
-                  disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => openPublishConfirmation("publish")}
-                >
-                  <Send size={13} className="mr-2" />
-                  Publish
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => openPublishConfirmation("draft")}
-                >
-                  <Save size={13} className="mr-2" />
-                  Save as Draft
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => openPublishConfirmation("pending")}
-                >
-                  <Eye size={13} className="mr-2" />
-                  Submit for Review
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!isFinal || isPublishing || isSaving}
-                  onClick={() => setScheduleDialogOpen(true)}
-                >
-                  <Clock size={13} className="mr-2" />
-                  Schedule for Later
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <LockedFeatureTooltip message="Publishing requires a role above Editor">
-              <Button
-                size="sm"
-                className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
-                disabled
-              >
-                <Send size={16} />
-                Publish
-              </Button>
-            </LockedFeatureTooltip>
-          )}
-        </div>
+        ) : (
+          <LockedFeatureTooltip message="Publishing requires a role above Editor">
+            <Button
+              size="sm"
+              className="h-10 xl:h-8 px-2! text-xs font-bold w-full!"
+              disabled
+            >
+              <Send size={16} />
+              Publish
+            </Button>
+          </LockedFeatureTooltip>
+        )}
       </div>
+    </div>
+  );
 
+  const analysisSidebarContent = (
+    <div className="flex flex-col h-full min-h-0 bg-card pb-20 sm:pb-0">
       <section className="flex-1 min-h-0 overflow-y-auto px-1.5 pt-3 pb-6 space-y-4 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {/* ── The run's stages, while the article is written ── */}
         {/* Its own life: the page passes it while a stage runs, which can outlast the scores
@@ -1007,51 +1022,12 @@ function ContentEditorInner(props: ContentEditorProps) {
   );
 
   const structureSidebarContent = (
-    <div className="px-6 py-6 space-y-8 h-full overflow-y-auto">
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-4">
-          Structure
-        </h3>
-        <nav className="space-y-1">
-          {sidebarSections?.map((sec, _i) => (
-            <button
-              type="button"
-              key={`${sec.heading}-${sec}`}
-              onClick={() => {
-                const id = slugify(sec.heading);
-                const element =
-                  document.getElementById(id) ||
-                  Array.from(
-                    document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
-                  ).find(
-                    (h) =>
-                      h.textContent
-                        ?.trim()
-                        .toLowerCase()
-                        .includes(sec.heading.trim().toLowerCase()) ||
-                      sec.heading
-                        .trim()
-                        .toLowerCase()
-                        .includes(h.textContent?.trim().toLowerCase() || ""),
-                  );
-
-                if (element) {
-                  element.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                  setIsStructureOpen(false);
-                }
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-md group transition-all duration-200 relative text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            >
-              <span className="relative truncate leading-none">
-                {sec.heading}
-              </span>
-            </button>
-          ))}
-        </nav>
-      </div>
+    <div className="h-full overflow-y-auto px-4 py-4">
+      <StructureTree
+        entries={structure}
+        showState={writing}
+        onPick={scrollToHeading}
+      />
     </div>
   );
 
@@ -1061,87 +1037,38 @@ function ContentEditorInner(props: ContentEditorProps) {
     // run dock (when it shows): each column scrolls on its own, so there is one
     // scrollbar per column and none on the page (D23).
     <div className="animate-in fade-in duration-700 bg-background flex flex-col relative -mx-4 md:-mx-6 xl:-mx-8 xl:h-[calc(100dvh-var(--header-height)-var(--dock-height,0px))] xl:overflow-hidden">
+      {/* The top bar (task 703): while the article is written it says where the writing is, and
+          the actions wait; then it holds the actions. It stays in view on narrower screens, where
+          the page scrolls as one. */}
+      <div className="sticky top-[var(--header-height,0px)] z-10 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-card px-3 py-2 xl:static">
+        {writing ? (
+          <p className="text-table text-muted-foreground" aria-live="polite">
+            {/* Always in these words: the stage's name alone ("Draft") read as the article's status. */}
+            <span className="font-medium text-foreground">
+              Writing the article
+            </span>
+            {enhancingMsg ? ` · ${enhancingMsg}` : null}
+            {position.sections > 0 && position.section > 0
+              ? ` · section ${position.section} of ${position.sections}`
+              : null}
+          </p>
+        ) : (
+          <div className="min-w-0 flex-1">{actionButtons}</div>
+        )}
+      </div>
       <div className="flex flex-1 min-h-0 relative">
         {/* Left Sidebar: Outline (never render inside editor body) */}
-        {sidebarSections.length > 0 && (
-          <aside className="hidden xl:flex w-60 border-r border-border bg-card flex-col shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
+        {structure.length > 0 && (
+          <aside className="hidden xl:flex w-64 border-r border-border bg-card flex-col shrink-0 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40">
             <div className="px-3 py-4">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-sm font-semibold text-foreground">
-                  Structure
-                </span>
-              </div>
-              <nav className="space-y-0.5">
-                {sidebarSections.map((sec, i) => {
-                  const sectionWritten = body
-                    ? body
-                        .toLowerCase()
-                        .includes(sec.heading.toLowerCase().slice(0, 12))
-                    : false;
-                  return (
-                    <button
-                      type="button"
-                      key={`${sec.heading}-${sec}`}
-                      onClick={() => {
-                        const id = slugify(sec.heading);
-                        const element =
-                          document.getElementById(id) ||
-                          Array.from(
-                            document.querySelectorAll("h1, h2, h3, h4, h5, h6"),
-                          ).find(
-                            (h) =>
-                              h.textContent
-                                ?.trim()
-                                .toLowerCase()
-                                .includes(sec.heading.trim().toLowerCase()) ||
-                              sec.heading
-                                .trim()
-                                .toLowerCase()
-                                .includes(
-                                  h.textContent?.trim().toLowerCase() || "",
-                                ),
-                          );
-
-                        if (element) {
-                          element.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                        }
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left cursor-pointer rounded-md group transition-all duration-200 relative",
-                        sectionWritten
-                          ? "text-foreground/75 hover:bg-muted/50 hover:text-foreground"
-                          : "text-muted-foreground/30 hover:text-muted-foreground/50",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "text-caption font-bold tabular-nums shrink-0 w-5 text-right leading-none transition-colors",
-                          sectionWritten
-                            ? "text-muted-foreground"
-                            : "text-muted-foreground/20",
-                        )}
-                      >
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className="relative truncate text-caption font-medium flex-1">
-                        {sec.heading}
-                      </span>
-                      {!isFinal && !sectionWritten && (
-                        <span className="shrink-0 w-1 h-1 rounded-full bg-muted-foreground/20" />
-                      )}
-                      {sectionWritten && (
-                        <CheckCircle2
-                          size={10}
-                          className="shrink-0 text-muted-foreground"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
+              <p className="mb-3 px-2 text-label font-medium text-muted-foreground">
+                Structure
+              </p>
+              <StructureTree
+                entries={structure}
+                showState={writing}
+                onPick={scrollToHeading}
+              />
             </div>
           </aside>
         )}
@@ -1182,26 +1109,42 @@ function ContentEditorInner(props: ContentEditorProps) {
               // at its own width (review round 1).
               <div className="relative [&_img]:h-auto [&_img]:w-full [&_span:has(img)]:block!">
                 {!body?.trim() ? (
-                  <div className="not-prose space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {TAG_SKELETON_KEYS.map((key) => (
-                        <Skeleton key={key} className="h-6 w-16 rounded-full" />
+                  writing && structure.length > 0 ? (
+                    // Before the first words arrive: the title, and below it the outline's
+                    // sections where they will be written. No grey bars to watch (task 703).
+                    // The title is the one the person chose (the outline's): what streams in
+                    // meanwhile is unfinished, and showed a section's heading as the title.
+                    (outline?.title || displayTitle) && (
+                      <header>
+                        {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
+                        <h1>{outline?.title || displayTitle}</h1>
+                      </header>
+                    )
+                  ) : (
+                    <div className="not-prose space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {TAG_SKELETON_KEYS.map((key) => (
+                          <Skeleton
+                            key={key}
+                            className="h-6 w-16 rounded-full"
+                          />
+                        ))}
+                      </div>
+                      <div className="space-y-3 pb-4">
+                        <Skeleton className="h-10 w-4/5 rounded-md" />
+                        <Skeleton className="h-10 w-2/3 rounded-md" />
+                      </div>
+                      {allContent?.meta_description && (
+                        <div className="space-y-3 pb-4">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                        </div>
+                      )}
+                      {CONTENT_SKELETON_KEYS.map((key) => (
+                        <Skeleton key={key} className="h-4 rounded-md" />
                       ))}
                     </div>
-                    <div className="space-y-3 pb-4">
-                      <Skeleton className="h-10 w-4/5 rounded-md" />
-                      <Skeleton className="h-10 w-2/3 rounded-md" />
-                    </div>
-                    {allContent?.meta_description && (
-                      <div className="space-y-3 pb-4">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                      </div>
-                    )}
-                    {CONTENT_SKELETON_KEYS.map((key) => (
-                      <Skeleton key={key} className="h-4 rounded-md" />
-                    ))}
-                  </div>
+                  )
                 ) : (
                   <>
                     {/* Below 1280 px the side panel is a sheet: the checklist shows here, above
@@ -1223,9 +1166,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                           ))}
                         </div>
                       )}
-                      <h1>{typedTitle}</h1>
+                      <h1>{displayTitle}</h1>
                       {allContent?.meta_description && (
-                        <p className="lead">{typedIntro}</p>
+                        <p className="lead">{allContent.meta_description}</p>
                       )}
                     </header>
                     <SafeLexicalEditor
@@ -1240,19 +1183,32 @@ function ContentEditorInner(props: ContentEditorProps) {
                     />
                   </>
                 )}
-                {/* Over the article only: the side panel beside it (the run's stages, their
-                    Cancel, the research) stays in reach while the article is written. */}
-                {!isFinal && isEnhancing && (
-                  <div className="not-prose absolute inset-0 flex justify-center bg-background/70 pt-12">
-                    <div className="sticky top-12 h-fit rounded-md border border-border bg-card px-6 py-4">
-                      <div className="text-sm font-semibold text-foreground">
-                        {enhancingMsg}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {enhancingDescription}
-                      </div>
-                    </div>
-                  </div>
+                {/* The sections still to come, where they will be written: no overlay, and
+                    nothing moves but the text itself (task 703). */}
+                {writing && structure.some((e) => e.state === "waiting") && (
+                  <ol className="not-prose mt-10 space-y-3">
+                    {structure
+                      .filter((entry) => entry.state === "waiting")
+                      .map((entry, index) => (
+                        <li
+                          // biome-ignore lint/suspicious/noArrayIndexKey: two sections may share a heading
+                          key={`${index}-${entry.heading}`}
+                          className={cn(
+                            "rounded-md border border-dashed border-border px-4 py-3 text-muted-foreground",
+                            entry.level === 3 && "ml-6",
+                          )}
+                        >
+                          <p
+                            className={
+                              entry.level === 2 ? "text-section" : "text-body"
+                            }
+                          >
+                            {entry.heading}
+                          </p>
+                          <p className="text-caption">Still to come</p>
+                        </li>
+                      ))}
+                  </ol>
                 )}
               </div>
             )}
@@ -1268,7 +1224,7 @@ function ContentEditorInner(props: ContentEditorProps) {
       {/* Mobile Responsive Drawers: above the phone's bottom bar (under 1024 px) and the run dock
           (when it shows), so neither one's buttons are covered. */}
       <div className="fixed bottom-[calc(var(--bottom-bar-height,0px)+var(--dock-height,0px)+--spacing(4))] lg:bottom-[calc(var(--dock-height,0px)+--spacing(6))] left-0 right-0 flex justify-center gap-4 z-50 pointer-events-none px-4">
-        {sidebarSections && sidebarSections.length > 0 && (
+        {structure.length > 0 && (
           <div className="xl:hidden pointer-events-auto">
             <Sheet open={isStructureOpen} onOpenChange={setIsStructureOpen}>
               <Button

@@ -145,6 +145,7 @@ export const ENDPOINTS = {
     // DELETE cancels a scheduled publish, PATCH moves it to another day.
     schedule: (id: string) => `/api/v1/content/${id}/schedule` as const,
     calendar: "/api/v1/content/calendar",
+    health: "/api/v1/content/health",
     uploadBlogImage: (workspaceId: string) =>
       `/api/v1/workspaces/${workspaceId}/media/blog-images/upload` as const,
   },

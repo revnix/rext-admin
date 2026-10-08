@@ -827,3 +827,117 @@ describe("OutlineReview, the sources", () => {
     expect(screen.getByText("shoe fitting")).toBeInTheDocument();
   });
 });
+
+describe("OutlineReview, an outline that came back empty", () => {
+  const emptyGate = { ...baseGate, editable_sections: [] } as Record<
+    string,
+    unknown
+  >;
+
+  it("says so, offers Regenerate as the one action, and no Approve", async () => {
+    const user = userEvent.setup();
+    const onReject = jest.fn();
+    const onApprove = jest.fn();
+    render(
+      <OutlineReview
+        outline={{} as Outline}
+        rawTokens=""
+        isLoading={false}
+        gate={emptyGate}
+        onApprove={onApprove}
+        onReject={onReject}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The outline couldn't be drafted",
+    );
+    expect(
+      screen.queryByRole("button", { name: /approve and generate/i }),
+    ).not.toBeInTheDocument();
+    // Nothing of the empty outline is on screen: no title placeholder, no tabs.
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Regenerate" }));
+    expect(onReject).toHaveBeenCalledTimes(1);
+    expect(onApprove).not.toHaveBeenCalled();
+  });
+
+  it("gives way to a regenerated outline: the tree and Approve are back", () => {
+    const props = {
+      rawTokens: "",
+      isLoading: false,
+      onApprove: jest.fn(),
+      onReject: jest.fn(),
+    };
+    const { rerender } = render(
+      <OutlineReview {...props} outline={{} as Outline} gate={emptyGate} />,
+    );
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    // While it is drafted again the outline is null: the streaming tree, no notice.
+    rerender(<OutlineReview {...props} outline={null} gate={emptyGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    rerender(<OutlineReview {...props} outline={outline} gate={baseGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sectionList()).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
+  });
+
+  it("doesn't go by the title: sections to review are shown, with Approve", () => {
+    // An older outline, kept only as the backend's display blocks, at a gate that offers no edits.
+    render(
+      <OutlineReview
+        outline={
+          {
+            _render: {
+              title: "Running shoes for beginners",
+              blocks: [
+                {
+                  heading: "Sections",
+                  items: [{ label: "Cushioning and support", points: [] }],
+                },
+              ],
+            },
+          } as unknown as Outline
+        }
+        rawTokens=""
+        isLoading={false}
+        gate={emptyGate}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Cushioning and support")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /approve and generate/i }),
+    ).toBeEnabled();
+  });
+
+  it("waits for the outline's own gate before saying so", () => {
+    // The step's update puts the outline on the page a moment before its gate opens; until then
+    // the page still holds the title step's gate, with no sections to read.
+    const props = {
+      rawTokens: "",
+      isLoading: false,
+      onApprove: jest.fn(),
+      onReject: jest.fn(),
+    };
+    const { rerender } = render(
+      <OutlineReview
+        {...props}
+        outline={outline}
+        gate={{ type: "topic_selection" }}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    rerender(<OutlineReview {...props} outline={outline} gate={baseGate} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(sectionList()).toBeInTheDocument();
+  });
+});

@@ -4,7 +4,12 @@
  * proof those pages' endpoints accept.
  */
 
-import { redactEventUrls, redactUrl } from "@/lib/analytics-redact";
+import {
+  anonymousEvent,
+  anonymousRoute,
+  redactEventUrls,
+  redactUrl,
+} from "@/lib/analytics-redact";
 
 describe("redactUrl", () => {
   it("replaces a link's token and keeps the rest of the address", () => {
@@ -111,5 +116,97 @@ describe("redactEventUrls", () => {
 
   it("passes a dropped event through", () => {
     expect(redactEventUrls(null)).toBeNull();
+  });
+});
+
+describe("anonymousRoute", () => {
+  it("names every dynamic part of the path instead of filling it in", () => {
+    expect(
+      anonymousRoute("/w/acme/content/6f1c2d3e", {
+        workspaceSlug: "acme",
+        id: "6f1c2d3e",
+      }),
+    ).toBe("/w/:workspaceSlug/content/:id");
+    // The editor's own route, which names the workspace outside /w.
+    expect(
+      anonymousRoute("/edit/acme/6f1c2d3e", {
+        workspaceSlug: "acme",
+        id: "6f1c2d3e",
+      }),
+    ).toBe("/edit/:workspaceSlug/:id");
+  });
+
+  it("keeps the fixed parts, so each kind of page is counted as itself", () => {
+    expect(
+      anonymousRoute("/w/acme/content/calendar", { workspaceSlug: "acme" }),
+    ).toBe("/w/:workspaceSlug/content/calendar");
+    expect(anonymousRoute("/settings/data", {})).toBe("/settings/data");
+  });
+
+  it("finds a parameter whether the path or the parameter is the encoded one", () => {
+    expect(
+      anonymousRoute("/w/acme/keywords/best%20crm%20software", {
+        workspaceSlug: "acme",
+        key: "best crm software",
+      }),
+    ).toBe("/w/:workspaceSlug/keywords/:key");
+    expect(
+      anonymousRoute("/w/acme/keywords/best%20crm", {
+        workspaceSlug: "acme",
+        key: "best%20crm",
+      }),
+    ).toBe("/w/:workspaceSlug/keywords/:key");
+  });
+
+  it("names each part of a catch-all", () => {
+    expect(anonymousRoute("/docs/a/b", { path: ["a", "b"] })).toBe(
+      "/docs/:path/:path",
+    );
+  });
+});
+
+describe("anonymousEvent", () => {
+  const route = "/w/:workspaceSlug/content";
+
+  it("keeps a page view with the page's route and nothing about the person", () => {
+    const event = {
+      event: "$pageview",
+      properties: {
+        $current_url: "https://app.rext.ai/w/acme/content?q=mary",
+        $pathname: "/w/acme/content",
+        $host: "app.rext.ai",
+        $session_entry_url: "https://app.rext.ai/w/acme",
+        $session_entry_pathname: "/w/acme",
+        $referrer: "https://app.rext.ai/w/acme/keywords/crm",
+        $browser: "Chrome",
+        $set: { email: "mary@example.com" },
+      },
+      $set: { email: "mary@example.com" },
+      $set_once: { $initial_current_url: "https://app.rext.ai/w/acme" },
+    };
+
+    const kept = anonymousEvent(event, route);
+
+    expect(kept).not.toBeNull();
+    expect(JSON.stringify(kept)).not.toContain("acme");
+    expect(JSON.stringify(kept)).not.toContain("mary");
+    expect(kept?.properties).toEqual({
+      $current_url: "https://app.rext.ai/w/:workspaceSlug/content",
+      $pathname: route,
+      $host: "app.rext.ai",
+      $browser: "Chrome",
+    });
+  });
+
+  it("drops every other event, and a page view whose route isn't known", () => {
+    expect(
+      anonymousEvent({ event: "keyword_selected", properties: {} }, route),
+    ).toBeNull();
+    expect(
+      anonymousEvent({ event: "$identify", properties: {} }, route),
+    ).toBeNull();
+    expect(
+      anonymousEvent({ event: "$pageview", properties: {} }, null),
+    ).toBeNull();
   });
 });

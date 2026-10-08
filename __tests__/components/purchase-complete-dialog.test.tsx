@@ -60,6 +60,15 @@ describe("PurchaseCompleteDialog", () => {
     ).toBeInTheDocument();
   });
 
+  it("lets a balance above the plan's allowance stand alone (task 784)", () => {
+    dialog({
+      credits: balance({ current_credits: 550, monthly_credits: 550 }),
+    });
+    expect(
+      screen.getByText("Your balance is 550 credits."),
+    ).toBeInTheDocument();
+  });
+
   it("says the balance is loading, then where it shows if it didn't load", () => {
     const { rerender } = dialog({ credits: null });
     expect(screen.getByText("Loading your balance…")).toBeInTheDocument();

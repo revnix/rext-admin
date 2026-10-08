@@ -2349,11 +2349,8 @@ export function FreshGenerationView({
   // The six steps (FB2.12): across the working area over each step and each wait between two, and
   // atop the article's column on the Article step. While the page waits on a run, the step that run
   // prepares is the current one, with the stage running for it.
-  const stepper = (waiting = false) => {
-    const current = currentStepIndex(
-      instructionType,
-      waiting ? runState?.phase : null,
-    );
+  const stepper = (waiting = false, shown = instructionType) => {
+    const current = currentStepIndex(shown, waiting ? runState?.phase : null);
     return (
       <WorkflowStepIndicator
         steps={WORKFLOW_STEPS}
@@ -2676,8 +2673,10 @@ export function FreshGenerationView({
       {editorShown && (
         <div className={!isContentFinal ? "relative" : undefined}>
           <ContentEditor
-            // The editor fills the page, so the steps go atop the article's own column.
-            steps={stepper()}
+            // The editor fills the page, so the steps go atop the article's own column. It is the
+            // Article step whatever the instruction type says: an approved outline's own update
+            // names the outline step again until the draft is written (task 785).
+            steps={stepper(false, "content")}
             // The article's run, while it runs: the same stages as every other
             // phase, in the editor's side panel (the editor fills the page).
             runProgress={

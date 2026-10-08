@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspacePermission } from "@/hooks/use-permission";
@@ -26,6 +27,7 @@ import {
   moveBlockTo,
   moveRow,
   type OutlineApproval,
+  outlineIsEmpty,
   readOnlyBlocks,
   readOutlineFaqs,
   readOutlineGate,
@@ -340,6 +342,25 @@ export function OutlineReview({
   ) : (
     <ReadOnlyOutline blocks={readOnlyBlocks(outline)} faqs={faqs} />
   );
+
+  // An outline that came back with nothing in it (task 783): say so, and offer only Regenerate.
+  // A regenerated outline arrives as a new gate and takes this notice's place.
+  if (outlineIsEmpty(outline, gate)) {
+    return (
+      <div className="w-full space-y-6 py-3">
+        <Notice tone="warning" title="The outline couldn't be drafted">
+          It came back empty, so there is nothing to approve. Regenerate it to
+          try again.
+        </Notice>
+        <OutlineApproveBar
+          disabled={isLoading}
+          canApprove={false}
+          onRegenerate={onReject}
+          onApprove={approve}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-6 py-3">

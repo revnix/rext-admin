@@ -12,6 +12,7 @@ import { subscriptionQueries } from "@/lib/query-keys";
 import { settingsRoutes } from "@/lib/routes";
 import { SubscriptionStatus } from "@/types/subscription";
 import {
+  againstAllowance,
   bonusWords,
   creditsPlan,
   monthlyCreditsLeft,
@@ -55,7 +56,9 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
     plan_name: planName,
     target_user_id: ownerId,
   } = credits.data;
-  const share = total && total > 0 ? Math.min(1, left / total) : null;
+  // Above the allowance (credits an admin added) the balance stands alone, with the bar full.
+  const { of, meter } = againstAllowance(left, total);
+  const share = meter ? meter.value / meter.max : null;
   // The trial is known from the person's own subscription, so only when the credits are theirs.
   const ownCredits = !ownerId || ownerId === user?.id;
   const onTrial =
@@ -79,17 +82,17 @@ export function CreditsCard({ workspaceId }: { workspaceId: string }) {
           <span className="font-display text-page-title">
             {left.toLocaleString()}
           </span>
-          {total !== null && (
+          {of !== null && (
             <span className="text-sm text-muted-foreground">
               {" "}
-              of {total.toLocaleString()}
+              of {of.toLocaleString()}
             </span>
           )}
         </p>
-        {total !== null && total > 0 && (
+        {meter && (
           <Meter
-            value={left}
-            max={total}
+            value={meter.value}
+            max={meter.max}
             low={share !== null && share < LOW_SHARE}
             label="Credits left this period"
           />

@@ -10,14 +10,18 @@ import { PhoneRunCost, RunCostTooltip } from "../run-cost";
  * tooltip on hover or focus, not on the label (E13, FB2.11); a phone, with no
  * hover, shows the article's cost in a line beneath.
  * `start` sits at the bar's left end (the Brief's button on narrow screens).
+ * With nothing to approve (`canApprove` false: an outline that came back empty, task 783), Approve
+ * isn't offered and Regenerate is the one, primary action.
  */
 export function OutlineApproveBar({
   disabled,
+  canApprove = true,
   onRegenerate,
   onApprove,
   start,
 }: {
   disabled: boolean;
+  canApprove?: boolean;
   onRegenerate: () => void;
   onApprove: () => void;
   start?: ReactNode;
@@ -27,19 +31,25 @@ export function OutlineApproveBar({
       <div className="flex flex-wrap items-center justify-end gap-3">
         {start}
         <RunCostTooltip run="regenerate_outline">
-          <Button variant="outline" onClick={onRegenerate} disabled={disabled}>
+          <Button
+            variant={canApprove ? "outline" : "default"}
+            onClick={onRegenerate}
+            disabled={disabled}
+          >
             <RefreshCw />
             Regenerate
           </Button>
         </RunCostTooltip>
-        <RunCostTooltip run="generate">
-          <Button onClick={onApprove} disabled={disabled}>
-            <Check />
-            Approve and generate
-          </Button>
-        </RunCostTooltip>
+        {canApprove && (
+          <RunCostTooltip run="generate">
+            <Button onClick={onApprove} disabled={disabled}>
+              <Check />
+              Approve and generate
+            </Button>
+          </RunCostTooltip>
+        )}
       </div>
-      <PhoneRunCost run="generate" />
+      <PhoneRunCost run={canApprove ? "generate" : "regenerate_outline"} />
     </div>
   );
 }

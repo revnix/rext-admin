@@ -72,6 +72,75 @@ export function redactEventUrls<
   return event;
 }
 
+/** A page's route parameters, as Next's `useParams` gives them. */
+type RouteParams = Record<string, string | string[] | undefined>;
+
+/**
+ * A page's path with every dynamic part replaced by its name: `/w/acme/content/6f1c…` with
+ * `{ workspaceSlug: "acme", id: "6f1c…" }` becomes `/w/:workspaceSlug/content/:id`. What analytics
+ * may know of a page for someone who said no to being measured (lib/analytics-consent.ts): which
+ * kind of page was opened, never whose. It comes from the route itself, so a new page needs no
+ * entry here; a fixed part that happens to equal a parameter's value is replaced too, the safe
+ * side.
+ */
+export function anonymousRoute(pathname: string, params: RouteParams): string {
+  const names = new Map<string, string>();
+  for (const [name, value] of Object.entries(params)) {
+    for (const part of Array.isArray(value) ? value : [value]) {
+      if (!part) continue;
+      // The path is encoded; the parameter may be either way.
+      names.set(part, `:${name}`);
+      names.set(encodeURIComponent(part), `:${name}`);
+      try {
+        names.set(decodeURIComponent(part), `:${name}`);
+      } catch {
+        // Not an encoded value: the two forms above cover it.
+      }
+    }
+  }
+  return pathname
+    .split("/")
+    .map((segment) => names.get(segment) ?? segment)
+    .join("/");
+}
+
+/**
+ * PostHog's before_send for someone who said no: only page views and page leaves are kept, each
+ * with the page's route for an address (`route`, from `anonymousRoute`) and with nothing that
+ * describes the person. Every other address the library adds (the session's first page, the
+ * referrer) is removed; without a route the event is dropped.
+ */
+export function anonymousEvent<
+  T extends {
+    event?: string;
+    properties?: PropertyBag;
+    $set?: PropertyBag;
+    $set_once?: PropertyBag;
+  },
+>(event: T | null, route: string | null): T | null {
+  if (!event) return event;
+  if (event.event !== "$pageview" && event.event !== "$pageleave") return null;
+  if (route === null) return null;
+  delete event.$set;
+  delete event.$set_once;
+  const bag = event.properties;
+  if (!bag) return event;
+  for (const key of Object.keys(bag)) {
+    if (
+      key === "$set" ||
+      key === "$set_once" ||
+      URL_PROPERTIES.includes(key) ||
+      key.endsWith("pathname")
+    ) {
+      delete bag[key];
+    }
+  }
+  const host = typeof bag.$host === "string" ? bag.$host : "";
+  bag.$current_url = host ? `https://${host}${route}` : route;
+  bag.$pathname = route;
+  return event;
+}
+
 /**
  * posthog-js options that go with `redactStoredAddresses`. With `save_referrer` on, every event
  * writes the page's raw referrer into the tab's session storage, a second store the function below

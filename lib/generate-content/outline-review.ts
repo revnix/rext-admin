@@ -43,6 +43,8 @@ export const BRAND_PROMINENCE_LEVELS: readonly BrandProminence[] = [
 
 /** The outline gate's offer, read defensively: every part may be missing. */
 export interface OutlineGate {
+  /** Whether this is the outline's own gate; false before it opens (an earlier step's gate, or none). */
+  open: boolean;
   sections: EditableSectionRow[];
   /** The lists a new section may be added to; empty while the backend takes no additions. */
   addableLists: string[];
@@ -85,6 +87,7 @@ export function readOutlineGate(value: unknown): OutlineGate {
   const gate = isRecord(value) ? value : {};
   const prominence = gate.recommended_brand_prominence;
   return {
+    open: gate.type === "outline_review",
     sections: (Array.isArray(gate.editable_sections)
       ? gate.editable_sections
       : []
@@ -904,6 +907,39 @@ export function readOnlyBlocks(outline: unknown): OutlineRenderBlock[] {
       points: nonEmptyStrings(section.key_points),
     }));
   return items.length > 0 ? [{ heading: "Sections", items }] : [];
+}
+
+/**
+ * Whether there is nothing to approve: no section the gate offers, no block with anything in it and
+ * no FAQ. The outline model sometimes runs away into whitespace and the run still reaches the gate
+ * (task 783); approving that would write an article from nothing. The title doesn't decide: an
+ * outline with sections to review is shown, whatever its title.
+ * Decided only at the outline's own gate: the page shows an outline as soon as its step sends one,
+ * a moment before that gate opens, and until then there is no offer to read and nothing for
+ * Regenerate to answer. An outline still streaming (null) isn't empty.
+ */
+export function outlineIsEmpty(
+  outline: unknown,
+  gate: Pick<OutlineGate, "open" | "sections">,
+): boolean {
+  if (!gate.open || !isRecord(outline)) return false;
+  return (
+    gate.sections.length === 0 &&
+    !readOnlyBlocks(outline).some(blockShowsSomething) &&
+    readOutlineFaqs(outline).length === 0
+  );
+}
+
+/** Whether a block has an item to read: the blocks come from the backend as they are. */
+function blockShowsSomething(block: OutlineRenderBlock): boolean {
+  return (
+    isRecord(block) &&
+    Array.isArray(block.items) &&
+    block.items.some(
+      (item) =>
+        isRecord(item) && typeof item.label === "string" && item.label.trim(),
+    )
+  );
 }
 
 // ── While the outline streams ────────────────────────────────────────────────

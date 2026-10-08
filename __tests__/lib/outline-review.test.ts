@@ -24,6 +24,7 @@ import {
   moveTarget,
   nearestGap,
   placeBelow,
+  outlineIsEmpty,
   readOnlyBlocks,
   readOutlineFaqs,
   readOutlineGate,
@@ -1592,5 +1593,91 @@ describe("reading the outline", () => {
     expect(streamedField(raw, "title")).toBe("Running shoes");
     expect(streamedField('{"title":"Runn', "title")).toBe("Runn");
     expect(streamedField("{", "title")).toBe("");
+  });
+});
+
+describe("outlineIsEmpty", () => {
+  const offering = (count: number) => ({
+    open: true,
+    sections: Array.from({ length: count }, (_, index) => ({
+      id: `structure.sections:${index}`,
+      list: "structure.sections",
+      heading: `Section ${index + 1}`,
+    })),
+  });
+
+  it("is not empty while the outline still streams", () => {
+    expect(outlineIsEmpty(null, offering(0))).toBe(false);
+    expect(outlineIsEmpty(undefined, offering(0))).toBe(false);
+  });
+
+  it("is empty with nothing to review, with a title or without", () => {
+    expect(outlineIsEmpty({}, offering(0))).toBe(true);
+    expect(outlineIsEmpty({ title: 7, sections: [] }, offering(0))).toBe(true);
+    expect(outlineIsEmpty({ title: "Tea", sections: [] }, offering(0))).toBe(
+      true,
+    );
+    // Blocks with nothing in them are nothing to review.
+    expect(
+      outlineIsEmpty(
+        {
+          title: "Tea",
+          _render: {
+            blocks: [
+              { heading: "Sections", items: [] },
+              { heading: "Steps", items: [{ label: "  ", points: [] }] },
+            ],
+          },
+        },
+        offering(0),
+      ),
+    ).toBe(true);
+  });
+
+  it("doesn't go by the title: an outline with something to review isn't empty without one", () => {
+    expect(outlineIsEmpty({ title: "   " }, offering(3))).toBe(false);
+    // An older outline, kept only as the backend's display blocks.
+    expect(
+      outlineIsEmpty(
+        {
+          _render: {
+            title: "Tea",
+            blocks: [
+              {
+                heading: "Sections",
+                items: [{ label: "Black tea", points: [] }],
+              },
+            ],
+          },
+        },
+        offering(0),
+      ),
+    ).toBe(false);
+  });
+
+  it("is not empty with rows the gate offers, with sections of its own, or with only an FAQ", () => {
+    expect(outlineIsEmpty({ title: "Tea" }, offering(4))).toBe(false);
+    expect(
+      outlineIsEmpty(
+        { title: "Tea", sections: [{ heading: "Black tea", key_points: [] }] },
+        offering(0),
+      ),
+    ).toBe(false);
+    expect(
+      outlineIsEmpty(
+        { title: "Tea", faqs: [{ question: "How hot should the water be?" }] },
+        offering(0),
+      ),
+    ).toBe(false);
+  });
+
+  it("isn't decided before the outline's own gate opens", () => {
+    // The step's update can put an outline on the page beside an earlier gate, or none.
+    const notOpen = { open: false, sections: [] };
+    expect(outlineIsEmpty({}, notOpen)).toBe(false);
+    expect(outlineIsEmpty({ title: "Tea", sections: [] }, notOpen)).toBe(false);
+    expect(readOutlineGate({ type: "topic_selection" }).open).toBe(false);
+    expect(readOutlineGate(undefined).open).toBe(false);
+    expect(readOutlineGate({ type: "outline_review" }).open).toBe(true);
   });
 });

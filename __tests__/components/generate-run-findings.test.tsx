@@ -2,10 +2,19 @@
  * The Generate page's progress box says what the run found (rext-control#694, option A): the page
  * hands each update and each model token of the run's stream to the run's stages, and the box shows
  * the keyword, the results, the sites, the numbers and the titles as they are written. The stream
- * here is the test's own; the page, the stages and the box are the real ones.
+ * here is the test's own; the page, the stages and the box are the real ones. The main run's last
+ * lines follow it past the approval and read the steps row on the article page (rext-control#785).
  */
 
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import type { ReactNode } from "react";
 import { FreshGenerationView } from "@/components/generate-content/fresh-generation-view";
 
 type Chunk = { event: string; data: unknown };
@@ -124,16 +133,40 @@ jest.mock("@/components/generate-content/recent-keywords", () => ({
   RecentKeywords: () => null,
 }));
 jest.mock("@/components/generate-content/workflow-step-indicator", () => ({
-  WorkflowStepIndicator: () => null,
+  WorkflowStepIndicator: ({
+    steps,
+    current,
+    running,
+  }: {
+    steps: { id: string }[];
+    current: number;
+    running?: { label: string };
+  }) => (
+    <p
+      data-testid="steps-row"
+      data-current={steps[current].id}
+      data-running={running?.label}
+    />
+  ),
 }));
 jest.mock("@/components/generate-content/run-notice", () => ({
   RunNotice: ({ message }: { message: string }) => <p>{message}</p>,
 }));
 jest.mock("@/components/generate-content/content", () => ({
-  ContentEditor: () => null,
+  ContentEditor: ({ steps }: { steps?: ReactNode }) => <>{steps}</>,
 }));
 jest.mock("@/components/generate-content/outline-review", () => ({
-  OutlineReview: () => null,
+  OutlineReview: ({
+    onApprove,
+    isLoading,
+  }: {
+    onApprove: (approval: object) => void;
+    isLoading: boolean;
+  }) => (
+    <button type="button" disabled={isLoading} onClick={() => onApprove({})}>
+      Approve the outline
+    </button>
+  ),
   OutlineRejectSection: () => null,
 }));
 jest.mock("@/components/generate-content/keyword", () => ({
@@ -696,6 +729,39 @@ describe("the Generate page's progress box", () => {
       }),
     );
     expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(screen.getByTestId("steps-row")).toHaveAttribute(
+      "data-current",
+      "outline_review",
+    );
+
+    // ── Step 6: the article page is the Article step from the approval on ────
+    const approved = {
+      title: TITLES[0],
+      sections: [{ heading: "Pick your beds" }],
+      target_word_count: 1800,
+      status: "approved",
+    };
+    await send(outlining, gate({ type: "outline_review", data: approved }));
+    await end(outlining);
+    // The outline's run has settled once the step takes actions again.
+    const approve = screen.getByRole("button", { name: "Approve the outline" });
+    await waitFor(() => expect(approve).toBeEnabled(), { timeout: 4000 });
+    fireEvent.click(approve);
+    const drafting = await nextRun(5);
+    expect(screen.getByTestId("steps-row")).toHaveAttribute(
+      "data-current",
+      "content",
+    );
+    // The approved outline's own update names the outline step again, for as long as the draft
+    // takes: the row stays on the article all the same.
+    await send(
+      drafting,
+      update({ review_outline: { content: { outline: approved } } }),
+    );
+    const row = screen.getByTestId("steps-row");
+    expect(row).toHaveAttribute("data-current", "content");
+    // With the stage the article's run is on, as under every other step.
+    expect(row).toHaveAttribute("data-running");
   }, 40_000);
 
   it("says what a run picked up after a reload had already found, from the thread's state", async () => {

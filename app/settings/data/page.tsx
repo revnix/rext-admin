@@ -1,9 +1,10 @@
 import { AccountDeactivation } from "@/components/account-settings/account-deactivation";
+import { AnalyticsPreference } from "@/components/account-settings/analytics-preference";
 import { PrivacySettings } from "@/components/account-settings/privacy-settings";
 import { AccountTrash } from "@/components/settings/account-trash";
 import { SettingsGroup } from "@/components/settings/settings-group";
 
-/** Account settings, Data and trash: export your data, the deleted workspaces, closing the account. */
+/** Account settings, Data and trash: export your data, usage analytics, the deleted workspaces, closing the account. */
 export default function DataAndTrashSettingsPage() {
   return (
     <div className="flex flex-col gap-8">
@@ -12,6 +13,12 @@ export default function DataAndTrashSettingsPage() {
         description="A copy of what your account holds, sent to your email address."
       >
         <PrivacySettings />
+      </SettingsGroup>
+      <SettingsGroup
+        title="Usage analytics"
+        description="Whether we may measure how you use the app."
+      >
+        <AnalyticsPreference />
       </SettingsGroup>
       <AccountTrash />
       <SettingsGroup

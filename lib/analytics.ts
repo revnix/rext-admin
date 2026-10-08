@@ -76,8 +76,29 @@ interface PostHogBridge {
 
 let _posthog: PostHogBridge | null = null;
 
+// Events tracked before the person's answer on analytics is known (lib/analytics-consent.ts): held
+// in memory, nothing sent, until the provider wires posthog-js in. Someone who says no, or never
+// answers, sends none of them; after a no nothing is held either, so a later yes can't send what
+// was done while the answer was no.
+const pending: Array<{ event: string; properties: Record<string, unknown> }> =
+  [];
+const PENDING_LIMIT = 100;
+let refused = false;
+
+/** Called by the provider once the person allows analytics: the held events go out, in order. */
 export function registerPostHog(bridge: PostHogBridge): void {
   _posthog = bridge;
+  refused = false;
+  for (const held of pending.splice(0)) {
+    bridge.capture(held.event, held.properties);
+  }
+}
+
+/** Called by the provider when the person says no: nothing more is sent, held or kept. */
+export function unregisterPostHog(): void {
+  _posthog = null;
+  refused = true;
+  pending.length = 0;
 }
 
 // ── Analytics singleton ───────────────────────────────────────────────────────
@@ -115,7 +136,11 @@ class Analytics {
    */
   track(event: AnalyticsEvent, properties?: EventProperties) {
     if (!this.enabled) return;
-    _posthog?.capture(event, { ...properties });
+    if (_posthog) {
+      _posthog.capture(event, { ...properties });
+    } else if (!refused && pending.length < PENDING_LIMIT) {
+      pending.push({ event, properties: { ...properties } });
+    }
   }
 
   /** Track a page view. */
