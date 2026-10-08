@@ -1081,6 +1081,12 @@ export function FreshGenerationView({
     (isEnhancing || isBackgroundGenerationActive || articleRunActive)
       ? draftSections.body
       : "";
+  // Between two streams of one run the run counts as going on for nobody: a long article's
+  // stream is cut after five minutes, and the page joins again a few seconds later. What the run
+  // has already sent stays on the page meanwhile, so the reader is never left with an empty
+  // one; a run that stopped with an error keeps what it showed before.
+  const keptBody =
+    !isContentFinal && !runError ? firstDraft?.body || generatedContent : "";
   const outlineWordCountRange = getContentTypeWordCountRange(
     parsedOutline?.schema_type,
   );
@@ -2912,7 +2918,10 @@ export function FreshGenerationView({
             generatedContent={
               isContentFinal
                 ? generatedContent
-                : shownDraft?.body || shownSections || displayedBodyMarkdown
+                : shownDraft?.body ||
+                  shownSections ||
+                  displayedBodyMarkdown ||
+                  keptBody
             }
             draft={!!shownDraft}
             draftSoFar={!shownDraft && !!shownSections}

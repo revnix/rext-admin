@@ -353,6 +353,10 @@ describe("the writing page and the writer's first draft (task 773)", () => {
       await new Promise((resolve) => setTimeout(resolve, 1900));
     });
     expect(mockRuns).toHaveLength(1);
+    // Between the two streams the run is going on for nobody: the text stays all the same.
+    expect(screen.getByTestId("body")).toHaveTextContent(
+      "The writer's first words.",
+    );
     act(() => {
       window.dispatchEvent(
         new CustomEvent(BACKGROUND_GENERATION_RESTORE_EVENT, {
