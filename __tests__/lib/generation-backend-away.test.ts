@@ -77,7 +77,20 @@ describe("in a generate route", () => {
       error: SERVER_UNREACHABLE_MESSAGE,
       code: SERVER_UNREACHABLE,
     });
-    expect(streamErrorPayload(sdkError(500))).toEqual({ error: "HTTP 500" });
+    // Any other end of the SDK's making: the app's own sentence, never its status-and-body text
+    // (rext-control task 824).
+    expect(streamErrorPayload(sdkError(500))).toEqual({
+      error: "This run stopped on our side. Try again, or start a new article.",
+    });
+    // A run that isn't there (any more) is said as that, with its code.
+    expect(streamErrorPayload(sdkError(404))).toEqual({
+      error: "This article's run is no longer here. Start a new one.",
+      code: "run_not_found",
+    });
+    // A sentence of the app's own is passed on as it is.
+    expect(
+      streamErrorPayload(new Error("Your role can't create content here.")),
+    ).toEqual({ error: "Your role can't create content here." });
   });
 });
 

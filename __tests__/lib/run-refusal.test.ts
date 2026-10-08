@@ -38,13 +38,14 @@ describe("the backend's refusal", () => {
     expect(await refusalMessage(undefined)).toMatch(/Wait for one to finish/);
   });
 
-  it("is sent with its code; any other error with its message only", () => {
+  it("is sent with its code; the SDK's own error text never is", () => {
     expect(streamErrorPayload(new RunRefusedError(SENTENCE))).toEqual({
       error: SENTENCE,
       code: TOO_MANY_RUNS,
     });
+    // A status code and the remote body are not words for a person (rext-control task 824).
     expect(streamErrorPayload(new Error("HTTP 500: boom"))).toEqual({
-      error: "HTTP 500: boom",
+      error: "This run stopped on our side. Try again, or start a new article.",
     });
   });
 

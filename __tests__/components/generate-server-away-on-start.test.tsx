@@ -135,12 +135,20 @@ jest.mock("@/components/generate-content/workflow-step-indicator", () => ({
 // With `mockBackend.up`, the run is going and the stream the page rejoins breaks at once (the
 // join route reports whatever ended it, with no code).
 const mockRequested: string[] = [];
-const mockBackend = { up: false };
+const mockBackend: {
+  up: boolean;
+  /** What the status route answers instead, when a test sets it. */
+  statusAnswer?: { status: number; body: unknown };
+} = { up: false };
 jest.mock("@/lib/auth-utils", () => ({
   authenticatedFetch: jest.fn(async (url: string) => {
     mockRequested.push(url);
     if (url === "/api/generate/threads") {
       return { ok: true, json: async () => ({ data: { thread_id: THREAD } }) };
+    }
+    if (mockBackend.statusAnswer && url.includes("/status")) {
+      const { status, body } = mockBackend.statusAnswer;
+      return { ok: false, status, json: async () => body };
     }
     if (!mockBackend.up) {
       if (url.endsWith("/stream") || url.includes("/status")) {
@@ -185,6 +193,7 @@ beforeEach(() => {
   jobs.length = 0;
   mockRequested.length = 0;
   mockBackend.up = false;
+  mockBackend.statusAnswer = undefined;
   analytics.track.mockClear();
 });
 
@@ -277,5 +286,62 @@ describe("An article being written while the backend is away", () => {
       "content_generation_failed",
       expect.anything(),
     );
+  });
+});
+
+/**
+ * A run's address that leads nowhere (rext-control task 824): from another account, old, mistyped,
+ * or of a run that was removed. The page says so in plain words; it once showed the runtime's own
+ * answer, a status code with JSON and an id.
+ */
+describe("Opening a run that is no longer there", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("says so in plain words, once, and doesn't ask again", async () => {
+    mockBackend.up = true;
+    mockBackend.statusAnswer = {
+      status: 404,
+      body: {
+        error: "This article's run is no longer here. Start a new one.",
+        code: "run_not_found",
+      },
+    };
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId={THREAD} />,
+    );
+
+    const notice = await screen.findByRole("alert");
+    expect(notice).toHaveTextContent(
+      "This article's run is no longer here. Start a new one.",
+    );
+    expect(notice.textContent).not.toMatch(/HTTP|404|\{|detail/);
+    expect(notice.textContent).not.toContain(THREAD);
+    // A run that isn't there is not asked for a second and third time.
+    expect(mockRequested.filter((url) => url.includes("/status"))).toHaveLength(
+      1,
+    );
+  });
+
+  it("shows its own sentence, never the answer's text, when the run can't be read for another reason", async () => {
+    jest.useFakeTimers();
+    mockBackend.up = true;
+    mockBackend.statusAnswer = {
+      status: 500,
+      body: { error: `HTTP 500: {"detail":"thread ${THREAD} exploded"}` },
+    };
+    render(
+      <FreshGenerationView onBack={jest.fn()} backgroundThreadId={THREAD} />,
+    );
+    // It asks three times before it gives up.
+    await act(() => jest.advanceTimersByTimeAsync(10_000));
+
+    const notice = screen.getByRole("alert");
+    expect(notice).toHaveTextContent(
+      "We couldn't open this article just now. Try again in a moment, or start a new one.",
+    );
+    expect(notice.textContent).not.toMatch(/HTTP|500|\{|detail|exploded/);
+    expect(notice.textContent).not.toContain(THREAD);
   });
 });

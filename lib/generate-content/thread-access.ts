@@ -14,6 +14,13 @@ import {
   backendAwayResponse,
   isBackendAway,
 } from "@/lib/generate-content/backend-away";
+import {
+  isRunGone,
+  ownWords,
+  RUN_NOT_FOUND,
+  RUN_NOT_FOUND_MESSAGE,
+  runGoneResponse,
+} from "@/lib/generate-content/run-gone";
 import { TOO_MANY_RUNS } from "@/lib/generate-content/run-events";
 
 /**
@@ -72,8 +79,17 @@ export function streamErrorPayload(error: unknown): {
   if (isBackendAway(error)) {
     return { error: SERVER_UNREACHABLE_MESSAGE, code: SERVER_UNREACHABLE };
   }
-  return { error: error instanceof Error ? error.message : "Stream error" };
+  // The run isn't there (any more): the page offers a new one.
+  if (isRunGone(error)) {
+    return { error: RUN_NOT_FOUND_MESSAGE, code: RUN_NOT_FOUND };
+  }
+  // A sentence of the app's own is passed on; the SDK's "HTTP 500: {…}" never is.
+  return { error: ownWords(error, STREAM_STOPPED_MESSAGE) };
 }
+
+/** What a stream says when it stops for a reason the app can't name. */
+export const STREAM_STOPPED_MESSAGE =
+  "This run stopped on our side. Try again, or start a new article.";
 
 /**
  * The LangGraph client shared by every `/api/generate/*` proxy route. It sends
@@ -177,7 +193,10 @@ export async function requireThreadOwner(
     return deny("Unable to verify thread ownership", 502);
   }
 
-  if (thread.metadata?.owner !== userId) return deny("Forbidden", 403);
+  // Another account's run reads exactly as one that isn't there: nothing says it exists.
+  if (thread.metadata?.owner !== userId) {
+    return { ok: false, response: runGoneResponse() };
+  }
 
   return { ok: true, userId, accessToken, thread };
 }

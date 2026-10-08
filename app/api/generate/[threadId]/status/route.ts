@@ -5,6 +5,7 @@ import {
   isBackendAway,
 } from "@/lib/generate-content/backend-away";
 import { deriveBackgroundProgress } from "@/lib/generate-content/background-progress";
+import { isRunGone, runGoneResponse } from "@/lib/generate-content/run-gone";
 import {
   getGenerationClient,
   requireThreadOwner,
@@ -19,6 +20,8 @@ export async function GET(
 
   const access = await requireThreadOwner(threadId);
   if (!access.ok) return access.response;
+  // No such run (an old or mistyped address, a removed run): said so, in the app's own words.
+  if (!access.thread) return runGoneResponse();
 
   const runId = request.nextUrl.searchParams.get("runId");
   const includeState =
@@ -76,11 +79,15 @@ export async function GET(
     // The backend is away (a deploy's restart), not the run: the page and the dock ask again.
     if (isBackendAway(error)) return backendAwayResponse();
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to load generation status";
+    // The run went between the two reads.
+    if (isRunGone(error)) return runGoneResponse();
 
-    return Response.json({ error: message }, { status: 500 });
+    // Never the remote error's own text: it is a status code and a body, not words for a person.
+    return Response.json(
+      {
+        error: "This article's status couldn't be read. Try again in a moment.",
+      },
+      { status: 500 },
+    );
   }
 }

@@ -5,6 +5,11 @@ import {
   isBackendAway,
 } from "@/lib/generate-content/backend-away";
 import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
+import {
+  isRunGone,
+  ownWords,
+  runGoneResponse,
+} from "@/lib/generate-content/run-gone";
 import { runWebhookOption } from "@/lib/generate-content/run-webhook";
 import {
   getGenerationClient,
@@ -23,6 +28,8 @@ export async function POST(
 
   const access = await requireThreadOwner(threadId);
   if (!access.ok) return access.response;
+  // No such run: nothing to resume (rext-control task 824).
+  if (!access.thread) return runGoneResponse();
 
   let body: {
     payload: Record<string, unknown>;
@@ -68,11 +75,17 @@ export async function POST(
       );
     } catch (error) {
       if (isBackendAway(error)) return backendAwayResponse();
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to start background generation";
-      return Response.json({ error: message }, { status: 500 });
+      if (isRunGone(error)) return runGoneResponse();
+      // The backend's own sentence (a refusal) is passed on; the SDK's "HTTP 500: {…}" never is.
+      return Response.json(
+        {
+          error: ownWords(
+            error,
+            "The article couldn't be started just now. Try again in a moment.",
+          ),
+        },
+        { status: 500 },
+      );
     }
   }
 

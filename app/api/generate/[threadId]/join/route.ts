@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { GENERATION_STREAM_MODES } from "@/lib/generate-content/run-events";
+import { runGoneResponse } from "@/lib/generate-content/run-gone";
 import {
   getGenerationClient,
   requireThreadOwner,
@@ -21,6 +22,8 @@ export async function POST(
 
   const access = await requireThreadOwner(threadId);
   if (!access.ok) return access.response;
+  // No such run: nothing to join (rext-control task 824).
+  if (!access.thread) return runGoneResponse();
 
   let body: { runId?: string };
   try {
