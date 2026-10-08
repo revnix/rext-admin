@@ -9,7 +9,6 @@ import { PageNotFoundReport } from "@/components/analytics/page-not-found-report
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { RouteError } from "@/components/ui/route-error";
 import { analytics } from "@/lib/analytics";
-import { ApiError } from "@/lib/api-client/core";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
@@ -27,8 +26,12 @@ const sent = (name: string) =>
 
 const SECRET = "Workspace acme-corp of ana@example.com could not be read";
 
+/** The API client's error, as it reaches a screen: its class and the backend's status. */
+const apiError = (status: number) =>
+  Object.assign(new Error(SECRET), { name: "ApiError", statusCode: status });
+
 function Throws(): never {
-  throw new ApiError(500, SECRET);
+  throw apiError(500);
 }
 
 beforeEach(() => {
@@ -41,7 +44,7 @@ afterEach(() => jest.restoreAllMocks());
 
 describe("an error screen", () => {
   it("says it came up for a page: where, the error's class, the backend's status, its digest", () => {
-    const error = Object.assign(new ApiError(503, SECRET), {
+    const error = Object.assign(apiError(503), {
       digest: "3721904455",
     });
 
@@ -109,7 +112,7 @@ describe("an error screen", () => {
   });
 
   it("never carries the error's message or whose page it was", () => {
-    render(<RouteError error={new ApiError(500, SECRET)} reset={jest.fn()} />);
+    render(<RouteError error={apiError(500)} reset={jest.fn()} />);
     render(
       <ErrorBoundary>
         <Throws />
