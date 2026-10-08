@@ -127,7 +127,8 @@ function ArticleEditor({
   const [text, setText] = useState(serverMarkdown);
   const words = useMemo(() => countWords(text), [text]);
   // The drawers (the founder's pick for task 706): the outline on the left, the checklist on
-  // the right, each over the page and closed again with Escape or a click outside.
+  // the right, each over the page, at the shared sheet's own width, and closed again with Escape
+  // or a click outside.
   const [drawer, setDrawer] = useState<"outline" | "checklist" | null>(null);
   // The text's own box: the outline looks for its headings here, not in the page around it.
   const textBox = useRef<HTMLDivElement>(null);
@@ -413,7 +414,7 @@ function ArticleEditor({
         open={drawer === "outline"}
         onOpenChange={(open) => !open && setDrawer(null)}
       >
-        <SheetContent side="left" className="w-80 gap-0 p-0">
+        <SheetContent side="left" className="gap-0 p-0">
           <SheetHeader className="border-b border-border px-6 py-4">
             <SheetTitle>Outline</SheetTitle>
             <SheetDescription>
@@ -436,7 +437,7 @@ function ArticleEditor({
         open={drawer === "checklist"}
         onOpenChange={(open) => !open && setDrawer(null)}
       >
-        <SheetContent side="right" className="w-80 gap-0 bg-card p-0">
+        <SheetContent side="right" className="gap-0 bg-card p-0">
           <SheetHeader className="border-b border-border px-6 py-4">
             <SheetTitle>Checklist</SheetTitle>
             <SheetDescription>
