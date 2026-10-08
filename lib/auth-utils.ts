@@ -466,43 +466,29 @@ async function classifyUnauthorized(
 // How long to wait before each second look at a "session revoked" answer.
 const REVOKED_ASKED_AGAIN_AFTER_MS = [700, 1500];
 
-/**
- * A "session revoked" answer is not believed at once (revnix/rext-control#858). In the minute after
- * the API restarts, a session that exists has been answered "revoked" and accepted again within a
- * second, and signing out on the first answer put people who had just signed in back on the sign-in
- * page. The request never reached its handler, so the same one is sent again, twice at most.
- *
- * Returns the answer to act on, or null when the backend still says the session is gone. A
- * suspended or banned account is not asked again: that answer is the account's status, read from
- * its own row.
- */
-async function askAgainBeforeSigningOut(
-  url: string,
-  options: RequestInit,
-  headers: Headers,
-): Promise<Response | null> {
-  if (blockedAccountError) return null;
-  // A body that is a stream was used up by the first send.
-  if (
-    typeof ReadableStream !== "undefined" &&
-    options.body instanceof ReadableStream
-  ) {
-    return null;
-  }
-  for (const wait of REVOKED_ASKED_AGAIN_AFTER_MS) {
-    await new Promise((resolve) => setTimeout(resolve, wait));
-    if (options.signal?.aborted) return null;
-    let again: Response;
-    try {
-      again = await fetch(url, { ...options, headers });
-    } catch {
-      return null; // unreachable now: the first answer stands
+/** Waits `ms`, or ends at once with the caller's own cancellation. */
+function waitUnlessCancelled(
+  ms: number,
+  signal?: AbortSignal | null,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cancelled = () =>
+      signal?.reason ??
+      new DOMException("The request was aborted", "AbortError");
+    if (signal?.aborted) {
+      reject(cancelled());
+      return;
     }
-    if (again.status !== 401) return again;
-    if ((await classifyUnauthorized(again)) !== "revoked") return again;
-    if (blockedAccountError) return null;
-  }
-  return null;
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(cancelled());
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 /**
@@ -531,24 +517,53 @@ export async function authenticatedFetch(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  // A body that is a stream is used up by the first send, so it can't be sent again.
+  const canAskAgain = !(
+    typeof ReadableStream !== "undefined" &&
+    options.body instanceof ReadableStream
+  );
+  let response: Response;
+  let unauthorizedKind: UnauthorizedKind;
+  for (let asked = 0; ; asked++) {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  if (response.status === 403 && typeof window !== "undefined") {
-    window.dispatchEvent(new Event(PERMISSIONS_STALE_EVENT));
+    if (response.status === 403 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event(PERMISSIONS_STALE_EVENT));
+    }
+
+    if (response.status !== 401 || !retry || typeof window === "undefined") {
+      return response;
+    }
+
+    // A 401 is not necessarily an expired access token. Permission failures,
+    // revoked impersonation sessions, and endpoint-specific authentication
+    // rules must not rotate credentials or sign every tab out. Only the
+    // backend's typed expiry response enters refresh recovery.
+    unauthorizedKind = await classifyUnauthorized(response);
+
+    // A "session revoked" answer is not believed at once (revnix/rext-control#858). In the
+    // minute after the API restarts, a session that exists has been answered "revoked" and
+    // accepted again within a second; signing out on the first answer put people who had just
+    // signed in back on the sign-in page. The request never reached its handler, so the same
+    // one is sent again, twice at most, and whatever comes back is handled as a first answer
+    // would be. A suspended or banned account is not asked again: that is the account's own
+    // status. A caller that cancels meanwhile gets its cancellation, never a sign-out.
+    if (
+      unauthorizedKind !== "revoked" ||
+      blockedAccountError ||
+      !canAskAgain ||
+      asked >= REVOKED_ASKED_AGAIN_AFTER_MS.length
+    ) {
+      break;
+    }
+    await waitUnlessCancelled(
+      REVOKED_ASKED_AGAIN_AFTER_MS[asked],
+      options.signal,
+    );
   }
-
-  if (response.status !== 401 || !retry || typeof window === "undefined") {
-    return response;
-  }
-
-  // A 401 is not necessarily an expired access token. Permission failures,
-  // revoked impersonation sessions, and endpoint-specific authentication
-  // rules must not rotate credentials or sign every tab out. Only the
-  // backend's typed expiry response enters refresh recovery.
-  const unauthorizedKind = await classifyUnauthorized(response);
 
   // The backend has discarded this session entirely — most commonly because the
   // daily cleanup job deleted the UserSession row (it drops rows whose
@@ -565,14 +580,6 @@ export async function authenticatedFetch(
   // redirectToLogin() is debounced, so a burst of parallel 401s (the dashboard
   // fires several at once) still produces exactly one logout.
   if (unauthorizedKind === "revoked") {
-    const again = await askAgainBeforeSigningOut(url, options, headers);
-    if (again) {
-      log.warn(
-        "[AuthJS] A session answered as revoked was accepted when asked again — staying signed in",
-        { url, status: again.status },
-      );
-      return again;
-    }
     log.warn(
       "[AuthJS] Backend reports the session is no longer valid — signing out",
       { url },
