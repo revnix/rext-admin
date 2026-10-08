@@ -73,6 +73,7 @@ describe("eventContext", () => {
       }),
     ).toEqual({
       workspace_id: null,
+      workspace_has_brand_voice: null,
       role: null,
       plan: null,
       plan_status: null,
