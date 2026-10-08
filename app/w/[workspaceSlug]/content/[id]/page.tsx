@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { use, useEffect, useMemo, useState } from "react";
 import { WorkingSurface } from "@/components/layouts";
 import { PermissionGuard } from "@/components/permission/permission-guard";
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { log } from "@/lib/logger";
+import { PUBLISH_INTENTS } from "@/lib/content/publish-copy";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -56,6 +58,11 @@ export default function WorkspaceContentDetailPage({
   const fetchError = contentQuery.error ?? workspaceError;
 
   const content = contentResponse?.content;
+  // A publish asked for from the full-screen editor arrives in the address (task 706).
+  const [publishIntent, setPublishIntent] = useQueryState(
+    "publish",
+    parseAsStringLiteral(PUBLISH_INTENTS),
+  );
   const [contentMarkdown, setContentMarkdown] = useState("");
 
   useEffect(() => {
@@ -390,6 +397,16 @@ export default function WorkspaceContentDetailPage({
             userKeyword={content.seo_data?.focus_keyphrase || ""}
             outline={outline}
             isLive={content.status === "published"}
+            // Only once this page holds the article as the editor saved it: the publish sends
+            // the text shown here, and a copy from before the edit may still be on screen while
+            // the fresh one is read.
+            publishIntent={
+              !contentQuery.isFetching &&
+              contentMarkdown === (content.body_markdown ?? "")
+                ? publishIntent
+                : null
+            }
+            onPublishIntentTaken={() => setPublishIntent(null)}
           />
         )}
       </WorkingSurface>

@@ -6,6 +6,19 @@ import type { WordPressPostStatus } from "@/types/content";
  * Draft" and "Submit for Review" take the live post down. The confirm says so in the destructive style,
  * and its buttons name both choices (design/app-language.md §6).
  */
+/**
+ * What the full-screen editor's Publish menu asks the article page to do (task 706): the three
+ * statuses the page's own menu sends, or the schedule dialog. It travels in the page's address
+ * (`?publish=draft`), so the choice survives the move from the editor to the article.
+ */
+export const PUBLISH_INTENTS = [
+  "publish",
+  "draft",
+  "pending",
+  "schedule",
+] as const;
+export type PublishIntent = (typeof PUBLISH_INTENTS)[number];
+
 export type PublishConfirmCopy = {
   title: string;
   description: string;

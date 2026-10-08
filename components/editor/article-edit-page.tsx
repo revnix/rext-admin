@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowLeft, Check, ListChecks, ListTree, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ListChecks,
+  ListTree,
+  Loader2,
+  Send,
+} from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,6 +31,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { SafeLexicalEditor } from "@/components/ui/safe-lexical-editor";
@@ -44,6 +59,7 @@ import {
   articleChecks,
 } from "@/lib/content/article-checks";
 import { articleHtml } from "@/lib/content/article-html";
+import type { PublishIntent } from "@/lib/content/publish-copy";
 import { deriveImagesData } from "@/lib/content/image-data";
 import {
   clearLocalDraft,
@@ -108,6 +124,8 @@ type EditorProps = {
   serverMarkdown: string;
   /** The article's checks as stored with it, for the checklist drawer. */
   checks: ArticleChecks;
+  /** This person may publish: the top bar offers the Publish menu. */
+  canPublish: boolean;
   articleHref: Route;
 };
 
@@ -117,6 +135,7 @@ function ArticleEditor({
   title,
   serverMarkdown,
   checks,
+  canPublish,
   articleHref,
 }: EditorProps) {
   const router = useRouter();
@@ -236,6 +255,15 @@ function ArticleEditor({
     if (await saveNow()) router.push(articleHref);
   };
 
+  // Publishing is the article page's: it holds the sites, the confirmations and the schedule.
+  // A choice here saves what is unsaved, then goes there with the choice, where it is asked for
+  // as that page's own menu would ask. A save that fails keeps the person here, with its notice.
+  const publish = async (intent: PublishIntent) => {
+    if (await saveNow()) {
+      router.push(`${articleHref}?publish=${intent}` as Route);
+    }
+  };
+
   const minutes = Math.max(1, Math.round(words / WORDS_A_MINUTE));
 
   // Read only while its drawer is open: the text changes with every key.
@@ -297,6 +325,37 @@ function ArticleEditor({
             <ListChecks size={16} aria-hidden />
             <span className="hidden md:inline">Checklist</span>
           </Button>
+        ) : null}
+        {canPublish ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                aria-label="Publish"
+                disabled={state === "saving"}
+              >
+                <Send size={16} aria-hidden />
+                <span className="hidden md:inline">Publish</span>
+                <ChevronDown size={16} aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={() => publish("publish")}>
+                Publish
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => publish("draft")}>
+                Save as draft
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => publish("pending")}>
+                Submit for review
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => publish("schedule")}>
+                Schedule for later
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
         <Button size="sm" onClick={done} disabled={state === "saving"}>
           Done
@@ -523,6 +582,10 @@ export function ArticleEditPage({
       CONTENT_PERMISSIONS.UPDATE,
       workspaceId || undefined,
     );
+  const { hasPermission: canPublish } = useWorkspacePermission(
+    CONTENT_PERMISSIONS.PUBLISH,
+    workspaceId || undefined,
+  );
   const articleHref = useMemo(
     () => workspaceRoutes.contentDetail(workspaceSlug, contentId) as Route,
     [workspaceSlug, contentId],
@@ -595,6 +658,7 @@ export function ArticleEditPage({
       title={opened.current.title}
       serverMarkdown={opened.current.markdown}
       checks={opened.current.checks}
+      canPublish={canPublish}
       articleHref={articleHref}
     />
   );
