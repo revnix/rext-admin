@@ -16,6 +16,8 @@ export type CreateRefusal =
   | "limit"
   | "session"
   | "backend";
+/** How a workspace was asked for: from a website, from a description, or by skipping the form. */
+export type CreateWay = "website" | "description" | "skipped";
 /** The stage a wait is in, in analytics' words. */
 export type WaitStage = "reading" | "voice" | "competitors";
 
@@ -39,6 +41,7 @@ export function useWorkspaceCreateAnalytics({
   firstWorkspace,
   withWebsite,
   stage,
+  settingUp = false,
 }: {
   step: 0 | 1 | 2;
   /** The person has no workspace yet: the newcomer the question is about. */
@@ -46,10 +49,27 @@ export function useWorkspaceCreateAnalytics({
   withWebsite: boolean;
   /** Where the wait is, for the event sent when it is left. */
   stage: WaitStage;
+  /**
+   * The workspace exists already and is being set up later (it was made with "Skip for now"):
+   * not the create funnel, so none of its events; one of its own when the set-up ends well.
+   */
+  settingUp?: boolean;
 }) {
   // What an event says is read when it is sent, not when a handler was made.
-  const now = useRef({ firstWorkspace, withWebsite, stage, step });
-  now.current = { firstWorkspace, withWebsite, stage, step };
+  const now = useRef({ firstWorkspace, withWebsite, stage, step, settingUp });
+  now.current = { firstWorkspace, withWebsite, stage, step, settingUp };
+  const track = useCallback((...event: Parameters<typeof analytics.track>) => {
+    if (now.current.settingUp) return;
+    analytics.track(...event);
+  }, []);
+  const setUpSent = useRef(false);
+  useEffect(() => {
+    if (!settingUp || step !== 2 || setUpSent.current) return;
+    setUpSent.current = true;
+    analytics.track("workspace_setup_finished", {
+      way: now.current.withWebsite ? "website" : "description",
+    });
+  }, [settingUp, step]);
   const typed = useRef(new Set<CreateField>());
   const filled = useRef(new Set<CreateField>());
   const waitStarted = useRef<number | null>(null);
@@ -58,7 +78,7 @@ export function useWorkspaceCreateAnalytics({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: the form is seen once, when the page opens
   useEffect(() => {
-    analytics.track("workspace_create_viewed", {
+    track("workspace_create_viewed", {
       first_workspace: firstWorkspace,
     });
   }, []);
@@ -68,12 +88,12 @@ export function useWorkspaceCreateAnalytics({
     if (step === 1 && waitStarted.current === null) {
       waitStarted.current = Date.now();
       leftSent.current = false;
-      analytics.track("workspace_wait_started", {
+      track("workspace_wait_started", {
         with_website: now.current.withWebsite,
       });
     } else if (step === 2 && reviewStarted.current === null) {
       reviewStarted.current = Date.now();
-      analytics.track("workspace_review_reached", {
+      track("workspace_review_reached", {
         seconds: seconds(waitStarted.current),
         with_website: now.current.withWebsite,
       });
@@ -82,7 +102,7 @@ export function useWorkspaceCreateAnalytics({
       waitStarted.current = null;
       reviewStarted.current = null;
     }
-  }, [step]);
+  }, [step, track]);
 
   // Leaving during the wait: the page hidden or closed, or another page opened. Once per wait,
   // by beacon, and never once the review was reached.
@@ -90,7 +110,7 @@ export function useWorkspaceCreateAnalytics({
     const left = () => {
       if (now.current.step !== 1 || leftSent.current) return;
       leftSent.current = true;
-      analytics.track(
+      track(
         "workspace_wait_left",
         {
           seconds: seconds(waitStarted.current),
@@ -110,12 +130,15 @@ export function useWorkspaceCreateAnalytics({
       document.removeEventListener("visibilitychange", hidden);
       left();
     };
-  }, []);
+  }, [track]);
 
   /** "I don't have a website yet", or back. */
-  const wayChosen = useCallback((way: "website" | "description") => {
-    analytics.track("workspace_create_way_chosen", { way });
-  }, []);
+  const wayChosen = useCallback(
+    (way: "website" | "description") => {
+      track("workspace_create_way_chosen", { way });
+    },
+    [track],
+  );
 
   /** A key was pressed in a field, or something pasted into it: a person, not the browser. */
   const fieldTyped = useCallback((field: CreateField) => {
@@ -126,51 +149,69 @@ export function useWorkspaceCreateAnalytics({
    * A field was left: counted once, when something is in it that a person put there. A form can
    * arrive with values (the browser fills it), so a value alone is no sign of a person.
    */
-  const fieldLeft = useCallback((field: CreateField, value: unknown) => {
-    if (filled.current.has(field) || !typed.current.has(field)) return;
-    if (typeof value !== "string" || !value.trim()) return;
-    filled.current.add(field);
-    analytics.track("workspace_create_field_filled", { field });
-  }, []);
+  const fieldLeft = useCallback(
+    (field: CreateField, value: unknown) => {
+      if (filled.current.has(field) || !typed.current.has(field)) return;
+      if (typeof value !== "string" || !value.trim()) return;
+      filled.current.add(field);
+      track("workspace_create_field_filled", { field });
+    },
+    [track],
+  );
 
   /** Create was pressed with a form that passed its own check. */
   const submitted = useCallback(() => {
-    analytics.track("workspace_create_submitted", {
+    track("workspace_create_submitted", {
       with_website: now.current.withWebsite,
       first_workspace: now.current.firstWorkspace,
     });
-  }, []);
+  }, [track]);
 
-  /** A create that didn't happen, by its kind; the API's status as a number, never its words. */
+  /** "Skip for now" was pressed: a workspace with no website and no description. */
+  const skipped = useCallback(() => {
+    track("workspace_create_skipped", {
+      first_workspace: now.current.firstWorkspace,
+    });
+  }, [track]);
+
+  /**
+   * A create that didn't happen, by its kind and the way it was asked for; the API's status as a
+   * number, never its words.
+   */
   const refused = useCallback(
     (
       kind: CreateRefusal,
-      where: { field?: CreateField; status?: number } = {},
+      where: { field?: CreateField; status?: number; way?: CreateWay } = {},
     ) => {
-      analytics.track("workspace_create_refused", {
+      track("workspace_create_refused", {
         kind,
         field: where.field,
         status: where.status,
+        way: where.way ?? (now.current.withWebsite ? "website" : "description"),
         with_website: now.current.withWebsite,
         first_workspace: now.current.firstWorkspace,
       });
     },
-    [],
+    [track],
   );
 
   /** Finish was pressed on the review. */
-  const reviewFinished = useCallback((changed: boolean) => {
-    analytics.track("workspace_review_finished", {
-      seconds_on_review: seconds(reviewStarted.current),
-      changed,
-    });
-  }, []);
+  const reviewFinished = useCallback(
+    (changed: boolean) => {
+      track("workspace_review_finished", {
+        seconds_on_review: seconds(reviewStarted.current),
+        changed,
+      });
+    },
+    [track],
+  );
 
   return {
     wayChosen,
     fieldTyped,
     fieldLeft,
     submitted,
+    skipped,
     refused,
     reviewFinished,
   };

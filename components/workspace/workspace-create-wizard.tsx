@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   type ReactNode,
   useCallback,
@@ -33,6 +34,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import { useWorkspaceCreateAnalytics } from "@/hooks/use-workspace-create-analytics";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
+import { apiClient } from "@/lib/api-client";
 import { ApiError } from "@/lib/api-client/core";
 import {
   dropCreateDraft,
@@ -59,9 +61,11 @@ import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-ste
 import { useSSE } from "@/providers/sse-provider";
 import {
   DESCRIPTION_LIMITS,
+  defaultWorkspaceName,
   normalizeWebsite,
   type WorkspaceFormData,
   workspaceFormSchema,
+  workspaceNameSchema,
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { Route } from "next";
@@ -90,9 +94,16 @@ import type { Route } from "next";
  */
 export function WorkspaceCreateWizard({
   planCount = null,
+  existing = null,
 }: {
   /** The plan's workspaces before this one, said above the form on the first step only. */
   planCount?: { used: number; max: number } | null;
+  /**
+   * A workspace that exists already and has no brand voice yet: one made with "Skip for now"
+   * (rext-control task 905). The same form without the name, the same wait and review; it sets
+   * this workspace up and makes none.
+   */
+  existing?: { id: string; slug: string; name: string } | null;
 } = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -122,7 +133,9 @@ export function WorkspaceCreateWizard({
   // (the page waits for that read before it shows the form); the store's list alone can still be
   // empty on a direct load of this page, for an account that has workspaces.
   const noneYet =
-    workspaceList.length === 0 && (planCount === null || planCount.used === 0);
+    !existing &&
+    workspaceList.length === 0 &&
+    (planCount === null || planCount.used === 0);
   // The same, as it was when the page opened: what analytics calls a first workspace.
   const startedWithNone = useRef(noneYet);
   const setCurrentWorkspace = useWorkspaceStore(
@@ -132,7 +145,8 @@ export function WorkspaceCreateWizard({
   const form = useZodForm(workspaceFormSchema, {
     defaultValues: {
       from: "website",
-      name: "",
+      // A workspace being set up keeps its name: the form doesn't ask for it.
+      name: existing?.name ?? "",
       url: "",
       description: "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -196,6 +210,7 @@ export function WorkspaceCreateWizard({
     stages.find((stage) => stage.state === "pending");
   const funnel = useWorkspaceCreateAnalytics({
     step,
+    settingUp: Boolean(existing),
     firstWorkspace: startedWithNone.current,
     withWebsite: !withoutSite,
     stage:
@@ -233,7 +248,8 @@ export function WorkspaceCreateWizard({
     // What this tab held when the page was left comes back with it: the way in (the address's
     // own word first, when it has one) and whatever was typed. Nothing restored is checked: no
     // field has been left yet.
-    const draft = readCreateDraft();
+    // (A workspace being set up has no draft: its form asks before it is left, like any other.)
+    const draft = existing ? null : readCreateDraft();
     if (draft) {
       for (const field of ["name", "url", "description"] as const) {
         const kept = draft[field];
@@ -257,7 +273,7 @@ export function WorkspaceCreateWizard({
     window.addEventListener("popstate", follow);
     // And from here on, what the form holds is kept as it changes, until the workspace is made.
     const watching = form.watch((values) => {
-      if (!onForm.current) return;
+      if (!onForm.current || existing) return;
       setDraftKept(
         keepCreateDraft({
           from: values.from,
@@ -271,7 +287,7 @@ export function WorkspaceCreateWizard({
       window.removeEventListener("popstate", follow);
       watching.unsubscribe();
     };
-  }, [form, showWay]);
+  }, [form, showWay, existing]);
   const enter = (from: "website" | "description") => {
     showWay(from);
     window.history.pushState(
@@ -323,6 +339,76 @@ export function WorkspaceCreateWizard({
   const peopleFinal =
     findings.people !== undefined || reviewing || Boolean(failed);
 
+  // "Skip for now" (rext-control task 905): a workspace with no website, no description and no
+  // analysis, so that nobody is stopped by this form. It takes the name already typed when that
+  // is a name, else the person's own ("Ana's workspace"); the home page then offers what this
+  // form asks for, and Generate works meanwhile.
+  const { data: session } = useSession();
+  const [skipping, setSkipping] = useState(false);
+  const skip = async () => {
+    if (skipping) return;
+    funnel.skipped();
+    if (isLimitReached) {
+      setLimitReached(true);
+      funnel.refused("limit", { way: "skipped" });
+      return;
+    }
+    setLimitReached(false);
+    setSessionEnded(false);
+    setRefusal(null);
+    setSkipping(true);
+    const typed = workspaceNameSchema.safeParse(form.getValues("name"));
+    const isFirstWorkspace = workspaceList.length === 0;
+    try {
+      const workspace = await createWorkspace({
+        name: typed.success ? typed.data : defaultWorkspaceName(session?.user),
+        timezone: form.getValues("timezone"),
+      });
+      dropCreateDraft();
+      queryClient.setQueryData(workspaceQueries.list().queryKey, (list) =>
+        list && !list.workspaces.some((known) => known.id === workspace.id)
+          ? { ...list, workspaces: [workspace, ...list.workspaces] }
+          : list,
+      );
+      setCurrentWorkspace(workspace);
+      queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+      queryClient.invalidateQueries({
+        queryKey: subscriptionQueries.usage().queryKey,
+      });
+      analytics.track("workspace_created", {
+        workspace_id: workspace.id,
+        first_workspace: isFirstWorkspace,
+        with_website: false,
+        way: "skipped",
+      });
+      // The workspace's home, where the card to finish setting up is.
+      router.push("/");
+    } catch (error) {
+      setSkipping(false);
+      log.error(
+        "[Workspace create] Failed to make the skipped workspace",
+        error,
+      );
+      const status = error instanceof ApiError ? error.statusCode : undefined;
+      if (status === 429) {
+        setLimitReached(true);
+        funnel.refused("limit", { status, way: "skipped" });
+        queryClient.invalidateQueries({
+          queryKey: subscriptionQueries.usage().queryKey,
+        });
+      } else if (
+        status === 401 ||
+        (status === 422 && /authorization/i.test((error as Error).message))
+      ) {
+        setSessionEnded(true);
+        funnel.refused("session", { status, way: "skipped" });
+      } else {
+        setRefusal(refusalWords(error));
+        funnel.refused("backend", { status, way: "skipped" });
+      }
+    }
+  };
+
   const handleSubmit = async (data: WorkspaceFormData) => {
     funnel.submitted();
     if (isLimitReached) {
@@ -340,6 +426,32 @@ export function WorkspaceCreateWizard({
     const isFirstWorkspace = workspaceList.length === 0;
     try {
       const fromSite = data.from === "website";
+      if (existing) {
+        // Setting up a workspace that is there already. A website is saved first and then read,
+        // the two calls the workspace's settings make; a description starts the voice's draft.
+        // Either answers with the run to follow, and the wait and the review are the create's.
+        let operation: string;
+        if (fromSite) {
+          await apiClient.workspaces.update(existing.id, { url: data.url });
+          operation = (
+            await apiClient.workspaces.refreshBrandVoice(existing.id)
+          ).operation_id;
+        } else {
+          operation = (
+            await apiClient.workspaces.describeLater(
+              existing.id,
+              data.description,
+            )
+          ).operation_id;
+        }
+        slugRef.current = existing.slug;
+        idRef.current = existing.id;
+        setCreatedId(existing.id);
+        queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+        setWebsite(fromSite ? data.url : "");
+        setOperationId(operation);
+        return;
+      }
       const workspace = await createWorkspace({
         name: data.name,
         timezone: data.timezone,
@@ -368,6 +480,7 @@ export function WorkspaceCreateWizard({
         workspace_id: workspace.id,
         first_workspace: isFirstWorkspace,
         with_website: fromSite,
+        way: fromSite ? "website" : "description",
       });
       setWebsite(fromSite ? data.url : "");
       const operation = useWorkspaceCrudStore.getState().currentOperation;
@@ -536,9 +649,13 @@ export function WorkspaceCreateWizard({
     details,
     activity: workspaceActivity(events, site, kind),
   };
-  const plan = withoutSite
-    ? "When you create the workspace, we draft its brand voice from what you tell us. It takes under half a minute, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
-    : "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
+  const plan = existing
+    ? withoutSite
+      ? "We draft the brand voice from what you tell us. It takes under half a minute, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
+      : "We read your website and draft the brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used."
+    : withoutSite
+      ? "When you create the workspace, we draft its brand voice from what you tell us. It takes under half a minute, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
+      : "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
 
   let main: ReactNode;
   if (step === 0) {
@@ -613,37 +730,41 @@ export function WorkspaceCreateWizard({
           submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
           // What is typed here is kept for this tab until the workspace is made, so leaving
           // the page loses nothing and needs no question. Where the tab's storage refuses it
-          // (switched off, or full), nothing is kept and the form asks like any other.
-          keepsDraft={draftKept}
+          // (switched off, or full), nothing is kept and the form asks like any other; so does
+          // the form that sets up a workspace made earlier, which keeps no draft.
+          keepsDraft={!existing && draftKept}
           // Nowhere to cancel to without a workspace: the home page leads straight back here,
           // with the form emptied.
           cancel={noneYet ? undefined : { onCancel: () => router.push("/") }}
         >
-          <FieldController
-            control={form.control}
-            name="name"
-            // The fields ask, and hold no example text: grey words inside an empty field read as
-            // an answer already given, and the form looked finished (rext-control task 854).
-            // The example is in the line under each.
-            label="What is your business called?"
-            description="For example: Luna Bakery. It names the workspace, and you can change it later."
-            required
-          >
-            {(field) => (
-              // The caret waits here on arrival: plainly empty, and the place to start.
-              <Input
-                {...field}
-                autoFocus
-                maxLength={200}
-                onKeyDown={() => funnel.fieldTyped("name")}
-                onPaste={() => funnel.fieldTyped("name")}
-                onBlur={() => {
-                  leave(field);
-                  funnel.fieldLeft("name", field.value);
-                }}
-              />
-            )}
-          </FieldController>
+          {/* A workspace being set up has its name already. */}
+          {!existing && (
+            <FieldController
+              control={form.control}
+              name="name"
+              // The fields ask, and hold no example text: grey words inside an empty field read as
+              // an answer already given, and the form looked finished (rext-control task 854).
+              // The example is in the line under each.
+              label="What is your business called?"
+              description="For example: Luna Bakery. It names the workspace, and you can change it later."
+              required
+            >
+              {(field) => (
+                // The caret waits here on arrival: plainly empty, and the place to start.
+                <Input
+                  {...field}
+                  autoFocus
+                  maxLength={200}
+                  onKeyDown={() => funnel.fieldTyped("name")}
+                  onPaste={() => funnel.fieldTyped("name")}
+                  onBlur={() => {
+                    leave(field);
+                    funnel.fieldLeft("name", field.value);
+                  }}
+                />
+              )}
+            </FieldController>
+          )}
           {withoutSite ? (
             <FieldController
               control={form.control}
@@ -715,6 +836,24 @@ export function WorkspaceCreateWizard({
             </button>
           </p>
         </FormShell>
+        {/* A first workspace needs none of this to begin with: one plain way past the form. */}
+        {noneYet && (
+          <p className="text-table text-muted-foreground">
+            Not now?{" "}
+            <button
+              data-rec="show"
+              type="button"
+              className="font-medium text-foreground underline underline-offset-4 disabled:opacity-60"
+              onClick={() => void skip()}
+              disabled={skipping}
+            >
+              {skipping ? "Setting up your workspace" : "Skip for now"}
+            </button>
+            {skipping
+              ? ""
+              : " and tell Rext about your business later. You can start an article right away."}
+          </p>
+        )}
         {/* Under 1024 px nothing sits beside the form: what happens next follows it. */}
         <section
           aria-label="What happens next"

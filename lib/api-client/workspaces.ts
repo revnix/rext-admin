@@ -350,6 +350,27 @@ export function createWorkspacesNamespace(client: ApiClient) {
     },
 
     /**
+     * Sets up a workspace that was made with no website and no description, from a description
+     * of the business (rext-control task 905). The backend keeps the text as the About and
+     * drafts the voice from it; the answer names the run to follow, as a refresh's does.
+     */
+    describeLater: async (workspaceId: string, description: string) => {
+      const response = await client.request<{
+        operation_id: string;
+      }>(ENDPOINTS.WORKSPACES.retryPipeline(workspaceId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: description.trim() }),
+      });
+
+      return validateResponse(
+        refreshBrandVoiceResponseSchema,
+        response,
+        "workspaces.describeLater",
+      );
+    },
+
+    /**
      * Get brand voice for workspace
      */
     getBrandVoice: async (workspaceId: string) => {

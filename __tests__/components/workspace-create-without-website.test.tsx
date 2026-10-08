@@ -225,6 +225,7 @@ describe("Creating a workspace: the first step's second way in", () => {
       kind: "form",
       field: "description",
       status: undefined,
+      way: "description",
       with_website: false,
       first_workspace: true,
     });
@@ -256,7 +257,7 @@ describe("Creating a workspace: the first step's second way in", () => {
       "workspace_create_way_chosen:description",
       "workspace_create_field_filled:description",
       "workspace_create_submitted",
-      "workspace_created",
+      "workspace_created:description",
       "workspace_wait_started",
     ]);
     expect(analytics.track).toHaveBeenCalledWith("workspace_create_submitted", {
@@ -316,6 +317,7 @@ describe("Creating a workspace without a website: what the backend refuses", () 
       kind: "backend",
       field: "description",
       status: 422,
+      way: "description",
       with_website: false,
       first_workspace: true,
     });

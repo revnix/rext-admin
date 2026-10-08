@@ -30,6 +30,11 @@ type AnalyticsEvent =
   | "workspace_create_field_filled"
   | "workspace_create_submitted"
   | "workspace_create_refused"
+  // "Skip for now": a workspace made with no form at all, and set up later from the home page.
+  | "workspace_create_skipped"
+  | "workspace_setup_card_shown"
+  | "workspace_setup_card_used"
+  | "workspace_setup_finished"
   | "workspace_wait_started"
   | "workspace_wait_left"
   | "workspace_review_reached"
