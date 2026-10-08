@@ -13,7 +13,7 @@
  * - `rext-consent` (`granted` or `denied`), set when the person chooses: here at once, and again
  *   by `/api/consent`, because Safari keeps a cookie written by a script for seven days only.
  *   It is one cookie for rext.ai and the app (`Domain=.rext.ai`): an answer given on either is the
- *   answer on both, and nobody is asked twice.
+ *   answer on both, and nobody is asked twice. Staging and previews keep one of their own.
  */
 
 export type ConsentChoice = "granted" | "denied";
@@ -35,19 +35,20 @@ export function isConsentChoice(value: unknown): value is ConsentChoice {
   return value === "granted" || value === "denied";
 }
 
-/** The site whose hosts share the choice: rext.ai itself and everything under it. */
-const SHARED_SITE = "rext.ai";
+/**
+ * The hosts that share the choice: the website and the app, as people use them. Named one by
+ * one: staging lives under rext.ai too (staging.rext.ai), and a choice made while testing there
+ * must never become a real person's answer on the live site.
+ */
+const SHARED_HOSTS = new Set(["rext.ai", "www.rext.ai", "app.rext.ai"]);
 
 /**
- * The `Domain` the choice's cookie is set for on this host: `.rext.ai` on rext.ai and its
- * subdomains, so the website and the app read one answer. None anywhere else (a preview, a local
- * run): the cookie is then that host's alone.
+ * The `Domain` the choice's cookie is set for on this host: `.rext.ai` on the website and the
+ * app, so both read one answer. None anywhere else (staging, a preview, a local run): the cookie
+ * is then that host's alone.
  */
 export function sharedCookieDomain(hostname: string): string | null {
-  const host = hostname.toLowerCase();
-  return host === SHARED_SITE || host.endsWith(`.${SHARED_SITE}`)
-    ? `.${SHARED_SITE}`
-    : null;
+  return SHARED_HOSTS.has(hostname.toLowerCase()) ? ".rext.ai" : null;
 }
 
 /**
@@ -246,25 +247,41 @@ export function writeConsent(choice: ConsentChoice): void {
 }
 
 /**
- * Runs `listener` whenever the person chooses, in this tab or another of the app's. Returns the
- * way to stop.
+ * Runs `listener` whenever the person chooses: in this tab, in another of the app's, or on
+ * rext.ai. The website can't tell this page (another origin shares the cookie, not a channel),
+ * so the cookie is read again each time the person comes back to the tab. Returns the way to
+ * stop.
  */
 export function onConsentChange(
   listener: (choice: ConsentChoice) => void,
 ): () => void {
+  let known = readConsent();
+  const heard = (choice: ConsentChoice) => {
+    known = choice;
+    listener(choice);
+  };
   const here = (event: Event) => {
     const choice = (event as CustomEvent).detail;
-    if (isConsentChoice(choice)) listener(choice);
+    if (isConsentChoice(choice)) heard(choice);
   };
   const elsewhere = (event: MessageEvent) => {
-    if (isConsentChoice(event.data)) listener(event.data);
+    if (isConsentChoice(event.data)) heard(event.data);
+  };
+  const back = () => {
+    if (document.visibilityState !== "visible") return;
+    const choice = readConsent();
+    if (choice !== null && choice !== known) heard(choice);
   };
   const channel = otherTabs();
   window.addEventListener(CHANGE_EVENT, here);
   channel?.addEventListener("message", elsewhere);
+  document.addEventListener("visibilitychange", back);
+  window.addEventListener("focus", back);
   return () => {
     window.removeEventListener(CHANGE_EVENT, here);
     channel?.removeEventListener("message", elsewhere);
+    document.removeEventListener("visibilitychange", back);
+    window.removeEventListener("focus", back);
   };
 }
 
