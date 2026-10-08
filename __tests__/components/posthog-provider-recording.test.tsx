@@ -8,6 +8,7 @@ import { act, render, waitFor } from "@testing-library/react";
 import { setImpersonating } from "@/lib/analytics";
 import { analyticsMode, writeConsent } from "@/lib/analytics-consent";
 import { loadWords } from "@/lib/analytics-recording";
+import { syncToolbarMark } from "@/lib/analytics-toolbar";
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 let mockStarted = false;
@@ -111,7 +112,16 @@ jest.mock("@/lib/analytics-recording", () => ({
   loadWords: jest.fn(),
 }));
 
+// PostHog's toolbar: only that the page looks at whether it is wanted matters here.
+jest.mock("@/lib/analytics-toolbar", () => ({
+  ...jest.requireActual("@/lib/analytics-toolbar"),
+  syncToolbarMark: jest.fn(() => false),
+}));
+
 const mode = analyticsMode as jest.MockedFunction<typeof analyticsMode>;
+const toolbarLook = syncToolbarMark as jest.MockedFunction<
+  typeof syncToolbarMark
+>;
 const words = loadWords as jest.MockedFunction<typeof loadWords>;
 const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const realFetch = global.fetch;
@@ -153,6 +163,20 @@ const started = () =>
 /** Long enough for the recorder's code and the list to have arrived, had they been asked for. */
 const settled = () =>
   act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
+
+it("looks on every page at whether PostHog's toolbar is wanted, and never for a customer", async () => {
+  const view = render(page());
+  await waitFor(() => expect(toolbarLook).toHaveBeenCalled());
+  const first = toolbarLook.mock.calls.length;
+
+  mockPage.path = "/settings/data";
+  view.rerender(page());
+
+  // Closing the toolbar tells the page nothing, so each page asks again.
+  expect(toolbarLook.mock.calls.length).toBeGreaterThan(first);
+  // The person signed in here is a workspace's owner, not one of our admins.
+  for (const [allowed] of toolbarLook.mock.calls) expect(allowed).toBe(false);
+});
 
 it("starts the heatmap for a person who allows analytics, once its piece has arrived with the app", async () => {
   render(page());
