@@ -13,6 +13,7 @@ import {
   StartAtTop,
 } from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
+import { useDraftSections } from "@/hooks/use-draft-sections";
 import { useFirstDraft } from "@/hooks/use-first-draft";
 import { useRunStages } from "@/hooks/use-run-stages";
 import { plannedSections } from "@/lib/generate-content/article-structure";
@@ -1047,6 +1048,18 @@ export function FreshGenerationView({
     (isEnhancing || isBackgroundGenerationActive || articleRunActive)
       ? firstDraft
       : null;
+  // Before the whole draft is there: its sections as the writer finishes them, on the same terms
+  // and never over it (task 773, part B).
+  const draftSections = useDraftSections({
+    thread: threadId,
+    final: isContentFinal,
+  });
+  const shownSections =
+    !shownDraft &&
+    !isContentFinal &&
+    (isEnhancing || isBackgroundGenerationActive || articleRunActive)
+      ? draftSections.body
+      : "";
   const outlineWordCountRange = getContentTypeWordCountRange(
     parsedOutline?.schema_type,
   );
@@ -1433,6 +1446,9 @@ export function FreshGenerationView({
               }
             }
             content.appendToken(d.content as string);
+          } else if (d?.type === "section") {
+            // A section of the first draft, the moment the writer finishes it (task 773).
+            draftSections.add(d);
           } else if (d?.type === "tool_start") {
             const id = String(d.id ?? "");
             const name = String(d.name ?? "");
@@ -2882,9 +2898,10 @@ export function FreshGenerationView({
             generatedContent={
               isContentFinal
                 ? generatedContent
-                : shownDraft?.body || displayedBodyMarkdown
+                : shownDraft?.body || shownSections || displayedBodyMarkdown
             }
             draft={!!shownDraft}
+            draftSoFar={!shownDraft && !!shownSections}
             userKeyword={userKeyword}
             outline={parsedOutline}
             toolCalls={toolCalls}
