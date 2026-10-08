@@ -70,6 +70,11 @@ export interface AdminCreditBreakdown {
   credits_per_month: number | null;
   /** When the period ends and the monthly credits reset. */
   credits_reset_date: string | null;
+  /**
+   * Whether the month's credits can be reset: the plan has some and isn't a trial (a trial's
+   * credits come once). Absent from a backend older than task 844's change.
+   */
+  can_reset?: boolean;
   bonus: CreditBonus | null;
   added_credits: AddedCredits | null;
   /** What admins changed this period's monthly credits by (deductions negative). */

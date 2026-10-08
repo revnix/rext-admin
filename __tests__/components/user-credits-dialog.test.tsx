@@ -379,6 +379,20 @@ describe("the Credits dialog's form", () => {
     );
   });
 
+  it("doesn't offer a reset the backend says isn't possible, as for a trial's credits", async () => {
+    await openForm({ credits_per_month: 60, can_reset: false });
+    const reset = screen.getByRole("radio", { name: /^Reset/ });
+    expect(reset).toBeDisabled();
+    expect(reset).toHaveAccessibleName(
+      /This plan has no monthly credits to reset to\./,
+    );
+  });
+
+  it("offers a reset the backend says is possible", async () => {
+    await openForm({ credits_per_month: 500, can_reset: true });
+    expect(screen.getByRole("radio", { name: /^Reset/ })).toBeEnabled();
+  });
+
   it("refuses an empty form beside its fields, and sends nothing", async () => {
     const form = await openForm();
     await userEvent.click(form.submit("Add credits"));
