@@ -76,6 +76,24 @@ describe("The sign-in page says why the person is there", () => {
     );
   });
 
+  it("says what to do when a Google or GitHub sign-in didn't go through", () => {
+    // The backend refused the sign-in (its limiter, or a failure of its own): the route guard
+    // sends the person here with OAuthError.
+    openSignInPage("error=OAuthError");
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+    );
+  });
+
+  it("has words a person can act on for a reason it doesn't know", () => {
+    openSignInPage("error=SomethingNew");
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Signing in didn't work just now. Wait a minute and try again.",
+    );
+  });
+
   it("says nothing when the person came by themselves", () => {
     openSignInPage("");
 

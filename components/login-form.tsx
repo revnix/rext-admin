@@ -99,17 +99,27 @@ export function LoginForm({
           "Your account has been suspended. Contact support to have it reviewed.",
         AccountBanned:
           "Your account has been banned. Please contact support for assistance.",
-        OAuthSignin: "Error occurred during OAuth sign in.",
-        OAuthCallback: "Error occurred during OAuth callback.",
-        OAuthCreateAccount: "Could not create OAuth account.",
+        // A sign-in with Google or GitHub that didn't go through: the provider's side, or ours
+        // refusing it (the backend's answer, limiter included, arrives here as OAuthError). None
+        // of it is about the person's details, so each says what to do, not what it was called.
+        OAuthError:
+          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+        OAuthSignin:
+          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+        OAuthCallback:
+          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+        Callback:
+          "Signing in with Google or GitHub didn't work just now. Wait a minute and try again.",
+        OAuthCreateAccount:
+          "We couldn't create your account from that sign-in just now. Wait a minute and try again.",
         EmailCreateAccount: "Could not create email account.",
-        Callback: "Error occurred during callback.",
         OAuthAccountNotLinked:
           "To confirm your identity, sign in with the same account you used originally.",
         EmailSignin: "Check your email for the sign in link.",
         CredentialsSignin:
           "Sign in failed. Check the details you provided are correct.",
-        Default: "An error occurred during authentication.",
+        Default:
+          "Signing in didn't work just now. Wait a minute and try again.",
       };
 
       // Use errorCode if it's a descriptive message (not generic)
