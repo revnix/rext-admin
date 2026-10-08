@@ -296,6 +296,22 @@ export const creditKeys = {
 };
 
 // ============================================================================
+// ADMIN USER QUERIES
+// ============================================================================
+
+/**
+ * The keys of a user's plan as a super admin reads and changes it (FB2.29); their options are in
+ * lib/query-options/admin-plan.ts.
+ */
+export const adminPlanKeys = {
+  /** Every user's plan as a super admin reads it. */
+  all: () => ["admin-user-plan"] as const,
+  user: (userId: string) => [...adminPlanKeys.all(), userId] as const,
+  /** Every page of Admin > Users: its rows show each user's plan. */
+  usersList: () => ["admin-users"] as const,
+};
+
+// ============================================================================
 // PERSONA QUERIES
 // ============================================================================
 

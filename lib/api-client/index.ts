@@ -37,6 +37,7 @@ import { createAdminAccountAllowlistNamespace } from "./admin-account-allowlist"
 import { createAdminAnalyticsNamespace } from "./admin-analytics";
 import { createAdminCreditsNamespace } from "./admin-credits";
 import { createAdminInvitationsNamespace } from "./admin-invitations";
+import { createAdminPlanNamespace } from "./admin-plan";
 import { createAdminRefundsNamespace } from "./admin-refunds";
 import { createAdminWebhooksNamespace } from "./admin-webhooks";
 import { createAccountRecoveryNamespace } from "./account-recovery";
@@ -98,6 +99,7 @@ function createApiClient() {
     auditLogs: createAuditLogsNamespace(client),
     adminAnalytics: createAdminAnalyticsNamespace(client),
     adminCredits: createAdminCreditsNamespace(client),
+    adminPlan: createAdminPlanNamespace(client),
     adminWebhooks: createAdminWebhooksNamespace(client),
     adminRefunds: createAdminRefundsNamespace(client),
     adminInvitations: createAdminInvitationsNamespace(client),

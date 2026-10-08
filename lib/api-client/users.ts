@@ -64,6 +64,14 @@ export interface User {
   /** Soft-delete timestamp, present on rows from the Soft Deleted Users tab. */
   deleted_at?: string | null;
   deactivated_at?: string | null;
+  /**
+   * The plan of the user's newest subscription that grants access, on the rows of the admin's
+   * list (FB2.29): null without one, and not there from an API that doesn't send it yet.
+   */
+  plan_display_name?: string | null;
+  /** Whether that subscription is a trial. */
+  is_trial?: boolean;
+  billing_period?: "monthly" | "yearly" | "lifetime" | null;
 }
 
 export interface UpdateUserRequest {
