@@ -255,6 +255,9 @@ export function BrandVoiceRefreshControl({
   return (
     <>
       <Button
+        // Never a form's submit: the control can sit inside one (General settings' offer to read
+        // a website just added), and a read must not send that form along with it.
+        type="button"
         variant={buttonVariant}
         size={buttonSize}
         disabled={disabled || brandVoiceRefresh.isRefreshing}

@@ -186,6 +186,14 @@ describe("the refresh button", () => {
     expect(screen.getByRole("button", { name: /Reading/ })).toBeDisabled();
   });
 
+  it("is never a form's submit: it can sit inside one", () => {
+    renderControl("ws-b");
+
+    expect(
+      screen.getByRole("button", { name: "Read the website again" }),
+    ).toHaveAttribute("type", "button");
+  });
+
   it("isn't locked by another workspace's run", () => {
     act(() => {
       useBrandVoiceRefreshStore.setState({

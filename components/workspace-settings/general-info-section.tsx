@@ -60,6 +60,17 @@ export function GeneralInfoSection() {
     (state) =>
       brandVoiceRefreshFor(state.brandVoiceRefresh, workspace?.id).refreshError,
   );
+  const reading = useWorkspaceStore(
+    (state) =>
+      brandVoiceRefreshFor(state.brandVoiceRefresh, workspace?.id).isRefreshing,
+  );
+  // The offer was taken and the read ended well: there is nothing left to offer. A read that
+  // failed keeps the offer, under what went wrong.
+  const wasReading = React.useRef(false);
+  React.useEffect(() => {
+    if (wasReading.current && !reading && !readError) setWebsiteAdded(false);
+    wasReading.current = Boolean(reading);
+  }, [reading, readError]);
 
   // Follow the workspace as it loads and refetches, keeping what the person is typing.
   React.useEffect(() => {

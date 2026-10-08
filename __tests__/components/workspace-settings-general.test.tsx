@@ -39,6 +39,8 @@ jest.mock("@/lib/api-client", () => ({
     },
   },
 }));
+/** This workspace's read of its website, as the store holds it. */
+let mockRead: { isRefreshing: boolean; refreshError: string | null };
 jest.mock("@/stores/workspace", () => {
   const state = {
     setCurrentWorkspace: jest.fn(),
@@ -48,7 +50,7 @@ jest.mock("@/stores/workspace", () => {
   return {
     useWorkspaceStore: (selector: (s: typeof state) => unknown) =>
       selector(state),
-    brandVoiceRefreshFor: () => ({ refreshError: null }),
+    brandVoiceRefreshFor: () => mockRead,
   };
 });
 // The control that starts a read and shows its progress has its own tests (brand-voice-refresh).
@@ -83,6 +85,7 @@ beforeEach(() => {
     url: null,
     favicon_url: null,
   };
+  mockRead = { isRefreshing: false, refreshError: null };
   mockUpdate.mockReset();
   // The backend's answer: the workspace as saved.
   mockUpdate.mockImplementation(
@@ -147,6 +150,40 @@ describe("General settings of a workspace with no website", () => {
     expect(
       screen.getByRole("button", { name: "Read the website" }),
     ).toHaveAttribute("data-workspace", "ws-1");
+  });
+
+  it("takes the offer away once the read has ended well, and keeps it under a read that failed", async () => {
+    const view = render(tree());
+    await userEvent.type(website(), "acme-forge.com");
+    await save();
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+    view.rerender(tree());
+    await screen.findByText("Your website is saved. Read it now?");
+
+    // The read is started, then fails: the offer stays, with what went wrong.
+    mockRead = { isRefreshing: true, refreshError: null };
+    view.rerender(tree());
+    mockRead = {
+      isRefreshing: false,
+      refreshError: "The website didn't answer.",
+    };
+    view.rerender(tree());
+    expect(
+      screen.getByText("Your website is saved. Read it now?"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("The website didn't answer.")).toBeInTheDocument();
+
+    // Read again, and it ends well: nothing is left to offer.
+    mockRead = { isRefreshing: true, refreshError: null };
+    view.rerender(tree());
+    mockRead = { isRefreshing: false, refreshError: null };
+    view.rerender(tree());
+    await waitFor(() =>
+      expect(screen.queryByText("Your website is saved. Read it now?")).toBe(
+        null,
+      ),
+    );
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("says what to type when it isn't an address, and saves nothing", async () => {
