@@ -464,8 +464,10 @@ function ContentEditorInner(props: ContentEditorProps) {
         body ?? "",
         plannedSections(outline),
         writing && !showsDraft,
+        // The first draft's sections land whole (part B).
+        draftSoFar,
       ),
-    [body, outline, writing, showsDraft],
+    [body, outline, writing, showsDraft, draftSoFar],
   );
   const position = writingPosition(structure);
   const scrollToHeading = (heading: string) => {

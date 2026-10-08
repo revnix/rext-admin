@@ -101,6 +101,9 @@ export function articleStructure(
   body: string,
   planned: Planned[],
   writing: boolean,
+  /** The text grows a whole section at a time (the first draft's sections as they land), not
+   *  word by word: its last section is finished, with every part planned under it. */
+  landsWhole = false,
 ): StructureEntry[] {
   const prose = (body ?? "").replace(FENCED, "");
   const written = [...prose.matchAll(HEADING_LINE)].map((match) => ({
@@ -111,7 +114,10 @@ export function articleStructure(
 
   const entries: StructureEntry[] = written.map((entry, index) => ({
     ...entry,
-    state: writing && index === written.length - 1 ? "writing" : "done",
+    state:
+      writing && !landsWhole && index === written.length - 1
+        ? "writing"
+        : "done",
   }));
   if (!writing) return entries;
 
@@ -142,6 +148,11 @@ export function articleStructure(
     seen += 1;
     if (seen <= sectionsWritten && index > lastWritten) lastWritten = index;
   });
+  // A section that landed whole holds its parts, under its own headings or inside a typed block
+  // (a how-to's steps): the H3s planned under it are not still to come.
+  if (landsWhole && lastWritten >= 0) {
+    while (planned[lastWritten + 1]?.heading_level === "H3") lastWritten += 1;
+  }
   for (const section of planned.slice(lastWritten + 1)) {
     if (!section.heading?.trim()) continue;
     entries.push({

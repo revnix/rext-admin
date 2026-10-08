@@ -44,6 +44,20 @@ describe("articleStructure", () => {
     ]);
   });
 
+  it("takes a section that landed whole as finished, with the parts planned under it", () => {
+    // The writer's own words for the heading, and its parts inside it, not as H3s of their own.
+    const body =
+      "## Pick a show idea\n\nText.\n\n## Choosing your format\n\nText.\n\n## What gear you need\n\nA list of microphones.";
+    const entries = articleStructure(body, outline, true, true);
+    expect(entries.map((e) => `${e.level} ${e.heading}: ${e.state}`)).toEqual([
+      "2 Pick a show idea: done",
+      "2 Choosing your format: done",
+      "2 What gear you need: done",
+      "2 Questions beginners ask: waiting",
+    ]);
+    expect(writingPosition(entries)).toEqual({ section: 3, sections: 4 });
+  });
+
   it("shows the whole outline as waiting before the first heading is written", () => {
     const entries = articleStructure("An opening line", outline, true);
     expect(entries).toHaveLength(6);
