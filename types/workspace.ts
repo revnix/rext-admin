@@ -155,6 +155,8 @@ export interface CreateWorkspaceRequest {
   /** The website to read, or none: then `description` says what the business does. */
   url?: string;
   description?: string;
+  /** The business's name as the person typed it, sent with a description (rext-control task 922). */
+  brand_name?: string;
 }
 
 /**

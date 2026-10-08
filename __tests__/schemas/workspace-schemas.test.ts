@@ -7,9 +7,12 @@
 import {
   DESCRIPTION_HELP,
   DESCRIPTION_LIMITS,
+  isDefaultWorkspaceName,
   isTimeZone,
   normalizeWebsite,
+  WORKSPACE_NAME_CHARACTERS_MESSAGE,
   workspaceFormSchema,
+  workspaceSetupFormSchema,
 } from "@/schemas/workspace-schemas";
 
 const form = (timezone?: string) => ({
@@ -152,5 +155,82 @@ describe("the workspace form, from a description of the business", () => {
         description: "",
       }).success,
     ).toBe(true);
+  });
+});
+
+/**
+ * Setting up a workspace that is there already (rext-control task 922): with a description the
+ * form asks what the business is called, since a description often names none. The create form
+ * asks the same as the workspace's name, so its own schema needs no second answer.
+ */
+describe("the set-up form, from a description of the business", () => {
+  const SAID =
+    "We sell hand-forged kitchen knives to home cooks who want one that lasts.";
+  const described = (business?: string) => ({
+    from: "description" as const,
+    name: "Ana's workspace",
+    url: "",
+    description: SAID,
+    business,
+  });
+  const refusal = (business?: string) =>
+    workspaceSetupFormSchema
+      .safeParse(described(business))
+      .error?.issues.find((issue) => issue.path[0] === "business")?.message;
+
+  it("takes the business's name, trimmed", () => {
+    const result = workspaceSetupFormSchema.safeParse(
+      described("  Acme Forge  "),
+    );
+    expect(result.success).toBe(true);
+    expect(result.data?.business).toBe("Acme Forge");
+  });
+
+  it.each([undefined, "", "   "])("asks for it when it is %j", (typed) => {
+    expect(refusal(typed)).toBe("Name is required");
+  });
+
+  it("holds it to the workspace name's characters and the backend's length", () => {
+    expect(refusal("<b>Acme</b>")).toBe(WORKSPACE_NAME_CHARACTERS_MESSAGE);
+    expect(refusal("x".repeat(256))).toBe(
+      "Name must be 255 characters or less",
+    );
+    expect(refusal("x".repeat(255))).toBeUndefined();
+  });
+
+  it("does not ask for it with a website, which names its own brand", () => {
+    expect(
+      workspaceSetupFormSchema.safeParse({
+        from: "website",
+        name: "Ana's workspace",
+        url: "acme-forge.com",
+        description: "",
+        business: "",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("is not asked for by the create form, whose name is the answer", () => {
+    expect(workspaceFormSchema.safeParse(described()).success).toBe(true);
+  });
+});
+
+describe("a name the skip gave a workspace", () => {
+  it.each([
+    "My workspace",
+    "Ana's workspace",
+    "Ana’s workspace",
+    " José's workspace ",
+  ])("is known for one: %j", (name) => {
+    expect(isDefaultWorkspaceName(name)).toBe(true);
+  });
+
+  it.each([
+    "Luna Bakery",
+    "Workspace tools",
+    "Ana's Bakery",
+    "My workspace shop",
+  ])("is not taken for %j", (name) => {
+    expect(isDefaultWorkspaceName(name)).toBe(false);
   });
 });

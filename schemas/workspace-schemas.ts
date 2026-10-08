@@ -157,25 +157,68 @@ const descriptionSchema = z
   );
 
 /**
+ * Whether a workspace's name is one "Skip for now" gave it ("Ana's workspace", "My workspace"):
+ * such a name is no business's, and is never offered as the brand's.
+ */
+export function isDefaultWorkspaceName(name: string): boolean {
+  const value = name.trim();
+  return value === "My workspace" || /['’]s workspace$/.test(value);
+}
+
+/**
+ * The business's name, asked with its description when a workspace made earlier is set up
+ * (rext-control task 922): it becomes the brand's name, which a description often does not hold
+ * ("a bakery in Leeds…"). The backend keeps it to the workspace name's characters, 255 at most.
+ */
+export const BUSINESS_NAME_MAX_LENGTH = 255;
+const businessNameSchema = z
+  .string()
+  .trim()
+  .max(
+    BUSINESS_NAME_MAX_LENGTH,
+    `Name must be ${BUSINESS_NAME_MAX_LENGTH} characters or less`,
+  )
+  .optional()
+  .refine((name) => Boolean(name), { message: "Name is required" })
+  .refine((name) => !name || WORKSPACE_NAME_CHARACTERS.test(name), {
+    message: WORKSPACE_NAME_CHARACTERS_MESSAGE,
+  });
+
+const fromWebsite = z.object({
+  from: z.literal("website"),
+  name: workspaceNameSchema,
+  url: urlSchema,
+  description: z.string().optional(),
+  // Asked only where a workspace is set up from a description (workspaceSetupFormSchema).
+  business: z.string().optional(),
+  timezone: timezoneSchema,
+});
+const fromDescription = z.object({
+  from: z.literal("description"),
+  name: workspaceNameSchema,
+  url: z.string().optional(),
+  description: descriptionSchema,
+  business: z.string().optional(),
+  timezone: timezoneSchema,
+});
+
+/**
  * Creating a workspace, two ways in (rext-control#853): from a website, which is read, or from a
  * description of the business, for someone with no website yet. Only the field of the way chosen
  * is checked; what was typed in the other stays in the form, so switching loses nothing.
  */
 export const workspaceFormSchema = z.discriminatedUnion("from", [
-  z.object({
-    from: z.literal("website"),
-    name: workspaceNameSchema,
-    url: urlSchema,
-    description: z.string().optional(),
-    timezone: timezoneSchema,
-  }),
-  z.object({
-    from: z.literal("description"),
-    name: workspaceNameSchema,
-    url: z.string().optional(),
-    description: descriptionSchema,
-    timezone: timezoneSchema,
-  }),
+  fromWebsite,
+  fromDescription,
+]);
+
+/**
+ * Setting up a workspace that is there already: the same two ways in. Its name is its own and is
+ * not asked for, so with a description the form asks what the business is called.
+ */
+export const workspaceSetupFormSchema = z.discriminatedUnion("from", [
+  fromWebsite,
+  fromDescription.extend({ business: businessNameSchema }),
 ]);
 
 /**

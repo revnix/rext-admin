@@ -53,6 +53,11 @@ interface WorkspaceCreatePayload {
   url?: string;
   /** The business in a sentence or two, when there is no website (rext-control#853). */
   description?: string;
+  /**
+   * What the person calls the business, sent with a description: the backend keeps it as the
+   * brand's name (rext-control task 922). A website names its own brand, so none goes with one.
+   */
+  brand_name?: string;
 }
 
 interface WorkspaceUpdatePayload {
@@ -67,6 +72,9 @@ function toCreatePayload(data: WorkspaceCreatePayload): WorkspaceCreatePayload {
     timezone: data.timezone,
     ...(data.url ? { url: data.url } : {}),
     ...(data.description ? { description: data.description } : {}),
+    ...(data.description && data.brand_name
+      ? { brand_name: data.brand_name }
+      : {}),
   };
 }
 
@@ -187,14 +195,26 @@ export function createWorkspacesNamespace(client: ApiClient) {
       timezone?: string;
       url?: string;
       description?: string;
+      brand_name?: string;
     }) => {
       const url = data.url?.trim();
       const description = data.description?.trim();
+      const brandName = data.brand_name?.trim();
       // One of the two: a website is read, and a description is sent only when there is none.
+      // The business's name goes with a description only: a website names its own brand.
       const payload: WorkspaceCreatePayload = {
         name: InputSanitizer.sanitizeText(data.name.trim()),
         timezone: data.timezone,
-        ...(url ? { url } : description ? { description } : {}),
+        ...(url
+          ? { url }
+          : description
+            ? {
+                description,
+                ...(brandName
+                  ? { brand_name: InputSanitizer.sanitizeText(brandName) }
+                  : {}),
+              }
+            : {}),
       };
       const response = await client.request<CreateWorkspaceResponse>(
         ENDPOINTS.WORKSPACES.BASE,
@@ -352,15 +372,24 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Sets up a workspace that was made with no website and no description, from a description
      * of the business (rext-control task 905). The backend keeps the text as the About and
-     * drafts the voice from it; the answer names the run to follow, as a refresh's does.
+     * drafts the voice from it; the answer names the run to follow, as a refresh's does. What
+     * the person calls the business goes with it, and is kept as the brand's name (task 922).
      */
-    describeLater: async (workspaceId: string, description: string) => {
+    describeLater: async (
+      workspaceId: string,
+      description: string,
+      brandName?: string,
+    ) => {
+      const named = brandName?.trim();
       const response = await client.request<{
         operation_id: string;
       }>(ENDPOINTS.WORKSPACES.retryPipeline(workspaceId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: description.trim() }),
+        body: JSON.stringify({
+          description: description.trim(),
+          ...(named ? { brand_name: InputSanitizer.sanitizeText(named) } : {}),
+        }),
       });
 
       return validateResponse(

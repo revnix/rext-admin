@@ -61,12 +61,15 @@ import {
 import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-step";
 import { useSSE } from "@/providers/sse-provider";
 import {
+  BUSINESS_NAME_MAX_LENGTH,
   DESCRIPTION_LIMITS,
   defaultWorkspaceName,
+  isDefaultWorkspaceName,
   normalizeWebsite,
   type WorkspaceFormData,
   workspaceFormSchema,
   workspaceNameSchema,
+  workspaceSetupFormSchema,
 } from "@/schemas/workspace-schemas";
 import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { Route } from "next";
@@ -160,20 +163,31 @@ export function WorkspaceCreateWizard({
     (state) => state.setCurrentWorkspace,
   );
 
-  const form = useZodForm(workspaceFormSchema, {
-    defaultValues: {
-      // A set-up picked up again was started from a description when there is no website.
-      from:
-        existing?.resume && !existing.resume.website
-          ? "description"
-          : "website",
-      // A workspace being set up keeps its name: the form doesn't ask for it.
-      name: existing?.name ?? "",
-      url: "",
-      description: "",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  // A workspace being set up is asked what the business is called when it is described: its
+  // own name is not asked for again, and may be no business's ("Ana's workspace").
+  const form = useZodForm(
+    existing ? workspaceSetupFormSchema : workspaceFormSchema,
+    {
+      defaultValues: {
+        // A set-up picked up again was started from a description when there is no website.
+        from:
+          existing?.resume && !existing.resume.website
+            ? "description"
+            : "website",
+        // A workspace being set up keeps its name: the form doesn't ask for it.
+        name: existing?.name ?? "",
+        url: "",
+        description: "",
+        // The business's name, for the set-up from a description (rext-control task 922). A
+        // name the person gave the workspace is offered; one the skip gave it is not.
+        business:
+          existing && !isDefaultWorkspaceName(existing.name)
+            ? existing.name
+            : "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
     },
-  });
+  );
   // The way in: a website to read, or a description of the business (rext-control#853). The form
   // keeps it through the wait and the review, so the stages and the words follow it there too.
   const withoutSite = form.watch("from") === "description";
@@ -254,7 +268,7 @@ export function WorkspaceCreateWizard({
     (from: "website" | "description") => {
       form.setValue("from", from);
       // The other way's field leaves with its error; what was typed in it stays.
-      form.clearErrors(["url", "description"]);
+      form.clearErrors(["url", "description", "business"]);
     },
     [form],
   );
@@ -463,6 +477,7 @@ export function WorkspaceCreateWizard({
             await apiClient.workspaces.describeLater(
               existing.id,
               data.description,
+              data.business,
             )
           ).operation_id;
         }
@@ -477,7 +492,11 @@ export function WorkspaceCreateWizard({
       const workspace = await createWorkspace({
         name: data.name,
         timezone: data.timezone,
-        ...(fromSite ? { url: data.url } : { description: data.description }),
+        // With a description, the name typed here is the brand's too: a description often
+        // names no business, and a website names its own (rext-control task 922).
+        ...(fromSite
+          ? { url: data.url }
+          : { description: data.description, brand_name: data.name }),
       });
       slugRef.current = workspace.slug;
       idRef.current = workspace.id;
@@ -542,6 +561,17 @@ export function WorkspaceCreateWizard({
       ) {
         setSessionEnded(true);
         funnel.refused("session", { status });
+        return;
+      }
+      // The brand's name is the answer to "What is your business called?": the set-up's own
+      // question, or the create form's name.
+      if (refused.brand_name && withoutSite) {
+        form.setError(
+          existing ? "business" : "name",
+          { type: "server", message: refused.brand_name },
+          { shouldFocus: true },
+        );
+        funnel.refused("backend", { field: "name", status });
         return;
       }
       const shown = (["name", "description", "url"] as const).find(
@@ -808,6 +838,26 @@ export function WorkspaceCreateWizard({
                     leave(field);
                     funnel.fieldLeft("name", field.value);
                   }}
+                />
+              )}
+            </FieldController>
+          )}
+          {/* Set up from a description, it is asked what the business is called: a description
+              often names none ("a bakery in Leeds…"), and its articles then never name it. */}
+          {existing && withoutSite && (
+            <FieldController
+              control={form.control}
+              name="business"
+              label="What is your business called?"
+              description="For example: Luna Bakery. It is the brand's name in your articles, and you can change it in the review."
+              required
+            >
+              {(field) => (
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  maxLength={BUSINESS_NAME_MAX_LENGTH}
+                  onBlur={() => leave(field)}
                 />
               )}
             </FieldController>
