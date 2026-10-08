@@ -62,6 +62,26 @@ describe("creating a workspace", () => {
   });
 });
 
+// A cleaner run over the name after the form took it would send another name than the one
+// accepted: "JavaScript: Daily" went as " Daily".
+describe("a name the form has accepted", () => {
+  it.each(["JavaScript: Daily", "Onward & Co", "R&D (UK): Labs"])(
+    "goes as it was typed: %j",
+    async (name) => {
+      await workspaces.create({
+        name: "Luna Bakery",
+        description: SAID,
+        brand_name: name,
+      });
+      expect(sent().brand_name).toBe(name);
+
+      request.mockClear();
+      await workspaces.describeLater("w1", SAID, name);
+      expect(sent().brand_name).toBe(name);
+    },
+  );
+});
+
 describe("setting a workspace up from a description", () => {
   it("sends the business's name beside it", async () => {
     await workspaces.describeLater("w1", ` ${SAID} `, " Luna Bakery ");
