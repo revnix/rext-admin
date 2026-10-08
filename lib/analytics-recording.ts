@@ -90,6 +90,14 @@ function isOwnWords(text: string): boolean {
   return marks?.has(markOf(normalizeWords(text))) ?? false;
 }
 
+/**
+ * A text as the app's source wrote it, or null when it isn't one of the app's own words (or the
+ * list isn't loaded). For an event that may name a fixed sentence of ours and nothing else.
+ */
+export function ownWords(text: string): string | null {
+  return isOwnWords(text) ? normalizeWords(text) : null;
+}
+
 // ── Text ─────────────────────────────────────────────────────────────────────
 
 // A text may show only inside an element the source marked: `data-rec="show"` promises that the
