@@ -40,14 +40,18 @@ export function readCreateDraft(): CreateDraft | null {
   }
 }
 
-/** Keeps what the form holds now; a form with nothing in it and the first way in keeps nothing. */
-export function keepCreateDraft(draft: CreateDraft): void {
+/**
+ * Keeps what the form holds now; a form with nothing in it and the first way in keeps nothing.
+ * Answers whether it is kept: storage that is off or full keeps nothing, and the form then has
+ * to ask before it is left, as any other form does.
+ */
+export function keepCreateDraft(draft: CreateDraft): boolean {
   try {
     const typed =
       text(draft.name) ?? text(draft.url) ?? text(draft.description);
     if (!typed && draft.from !== "description") {
       window.sessionStorage.removeItem(KEY);
-      return;
+      return true;
     }
     window.sessionStorage.setItem(
       KEY,
@@ -58,8 +62,10 @@ export function keepCreateDraft(draft: CreateDraft): void {
         description: text(draft.description),
       }),
     );
+    return true;
   } catch {
-    // Storage that is off or full: the form works without it.
+    // Storage that is off or full: the form works without it, and says so to its caller.
+    return false;
   }
 }
 

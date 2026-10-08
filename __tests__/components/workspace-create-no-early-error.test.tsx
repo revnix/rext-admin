@@ -312,6 +312,23 @@ describe("What was typed, kept for the tab", () => {
     expect(name()).not.toHaveAttribute("aria-invalid", "true");
   });
 
+  it("asks before it is left after all, where the tab's storage keeps nothing", async () => {
+    // Storage switched off, or full: nothing typed can be kept.
+    const refusing = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("The quota has been exceeded.");
+      });
+    render(tree());
+    await userEvent.type(name(), "Luna Bakery");
+
+    const leaving = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(leaving);
+
+    expect(leaving.defaultPrevented).toBe(true);
+    refusing.mockRestore();
+  });
+
   it("asks nothing on leaving: the browser's own prompt has nothing to protect", async () => {
     render(tree());
     await userEvent.type(name(), "Luna Bakery");

@@ -227,6 +227,8 @@ export function WorkspaceCreateWizard({
   // reload or a link keeps the way; Back returns to the other one, with the name still there.
   const onForm = useRef(true);
   onForm.current = step === 0;
+  // Whether the tab's storage took what the form holds, the last time it was given it.
+  const [draftKept, setDraftKept] = useState(true);
   useEffect(() => {
     // What this tab held when the page was left comes back with it: the way in (the address's
     // own word first, when it has one) and whatever was typed. Nothing restored is checked: no
@@ -256,12 +258,14 @@ export function WorkspaceCreateWizard({
     // And from here on, what the form holds is kept as it changes, until the workspace is made.
     const watching = form.watch((values) => {
       if (!onForm.current) return;
-      keepCreateDraft({
-        from: values.from,
-        name: values.name,
-        url: values.url,
-        description: values.description,
-      });
+      setDraftKept(
+        keepCreateDraft({
+          from: values.from,
+          name: values.name,
+          url: values.url,
+          description: values.description,
+        }),
+      );
     });
     return () => {
       window.removeEventListener("popstate", follow);
@@ -608,8 +612,9 @@ export function WorkspaceCreateWizard({
           // The next step, in its own words: what pressing it starts.
           submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
           // What is typed here is kept for this tab until the workspace is made, so leaving
-          // the page loses nothing and needs no question.
-          keepsDraft
+          // the page loses nothing and needs no question. Where the tab's storage refuses it
+          // (switched off, or full), nothing is kept and the form asks like any other.
+          keepsDraft={draftKept}
           // Nowhere to cancel to without a workspace: the home page leads straight back here,
           // with the form emptied.
           cancel={noneYet ? undefined : { onCancel: () => router.push("/") }}
