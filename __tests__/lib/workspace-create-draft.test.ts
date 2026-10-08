@@ -43,6 +43,22 @@ describe("the create form's draft", () => {
     expect(window.sessionStorage.getItem(KEY)).toBeNull();
   });
 
+  it("says whether it was kept: storage that refuses it keeps nothing", () => {
+    expect(keepCreateDraft({ from: "website", name: "Luna Bakery" })).toBe(
+      true,
+    );
+    const refusing = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("The quota has been exceeded.");
+      });
+
+    expect(keepCreateDraft({ from: "website", name: "Luna Bakery 2" })).toBe(
+      false,
+    );
+    refusing.mockRestore();
+  });
+
   it("is gone once the workspace is made", () => {
     keepCreateDraft({ from: "website", name: "Luna Bakery" });
     dropCreateDraft();
