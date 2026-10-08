@@ -3,7 +3,10 @@ import { leadsWithKeyphrase } from "./keyphrase-match";
 import {
   containsKeyphrase,
   normalizeTitle,
+  titleFamily,
   titleMaxChars,
+  titleRange,
+  titleWidth,
 } from "./title-score";
 
 /**
@@ -16,7 +19,7 @@ export interface SerpTitleFacts {
   total: number;
   /** The positions whose title has the keyphrase, and those that open with it; null without one. */
   keyphrase: { uses: number[]; leads: number[] } | null;
-  /** The median length, the score's limit, and how many titles run past it. */
+  /** The median length and the score's limit, in the characters a reader counts, and how many titles run past it. */
   length: { typical: number; limit: number; over: number };
   /**
    * The words three or more titles share, the most shared first; null where they can't be told:
@@ -25,18 +28,26 @@ export interface SerpTitleFacts {
   sharedWords: { word: string; count: number }[] | null;
 }
 
-/** A title's length as `scoreTitle` measures it: code points, after `normalizeTitle`. */
-export function titleLength(title: string): number {
-  return Array.from(normalizeTitle(title)).length;
+/** The widths one counted character takes: two in a Chinese, Japanese or Korean text, as the score counts. */
+function widthsPerCharacter(text: string): number {
+  return titleFamily(text) === "cjk" ? 2 : 1;
 }
 
-/** A title's length, and whether it runs past the score's limit, where a results page may cut it. */
+/**
+ * A title's length in the characters a reader counts, and whether it runs past the score's limit,
+ * where a results page may cut it. Measured as `scoreTitle`'s length check: by width, after
+ * `normalizeTitle`, against the range of the title's own script.
+ */
 export function measureTitle(
   title: string,
   keyphrase?: string | null,
 ): { length: number; cutOff: boolean } {
-  const length = titleLength(title);
-  return { length, cutOff: length > titleMaxChars(keyphrase) };
+  const text = normalizeTitle(title);
+  const width = titleWidth(text);
+  return {
+    length: Math.ceil(width / widthsPerCharacter(text)),
+    cutOff: width > titleRange(text, keyphrase?.trim())[1],
+  };
 }
 
 export function serpTitleFacts(
@@ -60,7 +71,7 @@ export function serpTitleFacts(
       : null,
     length: {
       typical: median(sizes.map((size) => size.length)),
-      limit: titleMaxChars(phrase),
+      limit: titleMaxChars(phrase) / widthsPerCharacter(phrase ?? ""),
       over: sizes.filter((size) => size.cutOff).length,
     },
     sharedWords: sharedWords(results, phrase),

@@ -152,18 +152,50 @@ describe("serpTitleFacts", () => {
 
 describe("measureTitle", () => {
   it("measures a title as the score does, with the score's limit", () => {
-    // If the score's measure changes (by width, task 637), this has to change with it.
-    for (const title of [
-      ...TOP_TEN.map((result) => result.title),
-      "🌱 Vegetable Garden Planner: Plan Beds, Spacing and Dates",
-    ]) {
-      const { length, cutOff } = measureTitle(title, KEYPHRASE);
-      const check = scoreTitle(title, KEYPHRASE).checks.find(
+    // The score measures by width (task 637): an emoji is two, and a Chinese, Japanese or Korean
+    // title is counted in its own characters against its own range.
+    const cases: [string, string][] = [
+      ...TOP_TEN.map((result): [string, string] => [result.title, KEYPHRASE]),
+      ["🌱 Vegetable Garden Planner: Plan Beds, Spacing and Dates", KEYPHRASE],
+      ["家庭菜園の始め方：初心者向けガイド", "家庭菜園"],
+      [
+        "家庭菜園の始め方：初心者向けガイドと育てやすい野菜の選び方をくわしく解説します",
+        "家庭菜園",
+      ],
+      ["ปลูกผักในบ้าน ง่ายๆ สำหรับมือใหม่", "ปลูกผัก"],
+    ];
+    for (const [title, keyphrase] of cases) {
+      const { length, cutOff } = measureTitle(title, keyphrase);
+      const check = scoreTitle(title, keyphrase).checks.find(
         (c) => c.id === "length",
       );
       expect(check?.label).toMatch(new RegExp(`^${length} characters`));
       expect(cutOff).toBe(check?.label.includes("over") ?? false);
     }
+  });
+
+  it("counts a wide character as the score does, and past the limit of the title's own script", () => {
+    expect(
+      measureTitle(
+        "🌱 Vegetable Garden Planner: Plan Beds, Spacing and Dates",
+        KEYPHRASE,
+      ).length,
+    ).toBe(57);
+    // 39 Japanese characters: 78 widths, past the 60 a results page shows.
+    expect(
+      measureTitle(
+        "家庭菜園の始め方：初心者向けガイドと育てやすい野菜の選び方をくわしく解説します",
+        "家庭菜園",
+      ),
+    ).toEqual({ length: 39, cutOff: true });
+  });
+
+  it("gives the limit in the reader's characters, as the score's own check says it", () => {
+    const japanese = serpTitleFacts(
+      [{ title: "家庭菜園の始め方：初心者向けガイド" }] as SerpResult[],
+      "家庭菜園",
+    );
+    expect(japanese?.length).toEqual({ typical: 17, limit: 30, over: 0 });
   });
 });
 
