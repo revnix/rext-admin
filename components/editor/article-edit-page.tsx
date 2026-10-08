@@ -340,7 +340,7 @@ function ArticleEditor({
                 <ChevronDown size={16} aria-hidden />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => publish("publish")}>
                 Publish
               </DropdownMenuItem>
