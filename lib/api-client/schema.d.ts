@@ -21953,6 +21953,11 @@ export interface components {
              * @description For a workspace with no website: what the business sells and to whom, 20 to 1,000 characters once trimmed. It is kept as the brand voice's `about` and the voice is drafted from it. This is how a workspace made from a name alone is set up
              */
             description?: string | null;
+            /**
+             * Brand Name
+             * @description What the business is called, as its owner types it: kept as the brand voice's brand name, and the draft does not replace it
+             */
+            brand_name?: string | null;
         };
         /** WorkspacePipelineRetryResponse */
         WorkspacePipelineRetryResponse: {
@@ -22093,6 +22098,11 @@ export interface components {
              * @description For a business with no website yet: what it sells and to whom, in the owner's words, 20 to 1,000 characters once trimmed. The brand voice is drafted from it, and it is kept as the brand voice's `about`. Ignored when `url` is sent
              */
             description?: string | null;
+            /**
+             * Brand Name
+             * @description For a workspace with no website: what the business is called, as its owner types it. It is kept as the brand voice's brand name, and the draft does not replace it. Ignored when `url` is sent (the site names the brand)
+             */
+            brand_name?: string | null;
         };
         /** WorkspaceStatsResponse */
         WorkspaceStatsResponse: {
