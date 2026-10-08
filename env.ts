@@ -35,8 +35,13 @@ const server = {
   AUTH_GITHUB_ID: optional,
   AUTH_GITHUB_SECRET: optional,
   // The key this server sends with its Google and GitHub sign-in call (lib/auth/dashboard-server-key.ts);
-  // the backend holds the same value. Unset, the call goes without it.
-  DASHBOARD_SERVER_KEY: optional,
+  // the backend holds the same value and takes none under 32 characters, so a cut-off or mistyped
+  // one stops the build here by name instead of failing sign-ins later. Unset, the call goes without it.
+  DASHBOARD_SERVER_KEY: z
+    .string()
+    .trim()
+    .min(32, "at least 32 characters, the same value as the backend's")
+    .optional(),
   LANGGRAPH_API_URL: optionalUrl,
   LANGGRAPH_RUN_WEBHOOKS: optional,
   LOG_LEVEL: z
