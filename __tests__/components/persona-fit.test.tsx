@@ -152,14 +152,15 @@ describe("DraftedNotice", () => {
     );
     expect(
       screen.getByText(
-        /drafted 2 author personas from the people named on your site: Sania Usman and Tom Reyes/,
+        /2 drafted from the people named on your site: Sania Usman and Tom Reyes/,
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/We read acme\.example/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Personas" })).toHaveAttribute(
-      "href",
-      "/w/acme/personas",
-    );
+    expect(
+      screen.getByRole("heading", { name: "We read acme.example" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /^Author personas/ }),
+    ).toHaveAttribute("href", "/w/acme/personas");
 
     // A persona deleted afterwards doesn't change who came from the site.
     mockPersonas.mockReturnValue(answer([]));
@@ -177,7 +178,60 @@ describe("DraftedNotice", () => {
     mockPersonas.mockReturnValue(answer([]));
     render(<DraftedNotice workspaceId="w1" workspaceSlug="acme" />);
     expect(
-      screen.getByText(/No one is named on your site/),
+      screen.getByText(
+        "None drafted: no one is named on your site. Add them in Personas.",
+      ),
     ).toBeInTheDocument();
+  });
+
+  it("is a plain summary of the three things made, each a row that opens its part (task 846)", () => {
+    mockPersonas.mockReturnValue(answer([FOUNDER]));
+    const { container } = render(
+      <DraftedNotice
+        workspaceId="w1"
+        workspaceSlug="acme"
+        website="https://acme.example"
+        competitors={["Northwind", "Contoso"]}
+        closing="Check each part, change anything that's off, then finish."
+      />,
+    );
+    // Announced as a status, by its own words; not the tinted box of a notice.
+    const summary = screen.getByRole("status", {
+      name: "We read acme.example",
+    });
+    expect(container.querySelector('[data-slot="notice"]')).toBeNull();
+    expect(summary).toHaveTextContent(
+      "Check each part, change anything that's off, then finish.",
+    );
+    const rows = within(summary).getAllByRole("link");
+    expect(rows.map((row) => row.getAttribute("href"))).toEqual([
+      "#field-brand_name",
+      "/w/acme/personas",
+      "#field-competitors",
+    ]);
+    expect(rows[0]).toHaveTextContent(
+      "Brand voiceWhat the brand does, who it's for and how it sounds.Review",
+    );
+    expect(rows[1]).toHaveTextContent(
+      "1 drafted from the people named on your site: Sania Usman.Open",
+    );
+    expect(rows[2]).toHaveTextContent("2 found: Northwind and Contoso.Review");
+  });
+
+  it("says so when no competitor was found, and waits for the ones still loading", () => {
+    mockPersonas.mockReturnValue({ data: undefined, isSuccess: false });
+    const { rerender } = render(
+      <DraftedNotice workspaceId="w1" workspaceSlug="acme" />,
+    );
+    expect(
+      screen.getByText("From the people named on your site."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("The sites yours is compared with."),
+    ).toBeInTheDocument();
+    rerender(
+      <DraftedNotice workspaceId="w1" workspaceSlug="acme" competitors={[]} />,
+    );
+    expect(screen.getByText("None found. Add them below.")).toBeInTheDocument();
   });
 });

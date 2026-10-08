@@ -110,7 +110,8 @@ export function WorkspaceReviewStep({
         workspaceId={workspaceId}
         workspaceSlug={workspaceSlug}
         website={website}
-        closing="Check the details below, change anything that's off, then Finish."
+        competitors={data?.brand_voice?.competitors}
+        closing="Check each part, change anything that's off, then finish."
       />
       <FormShell form={form} onSubmit={finish} submitLabel="Finish" sticky>
         {serverError && (
