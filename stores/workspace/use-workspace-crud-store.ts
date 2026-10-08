@@ -44,6 +44,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
               timezone: data.timezone,
               url: data.url,
               description: data.description,
+              brand_name: data.brand_name,
             },
           );
 

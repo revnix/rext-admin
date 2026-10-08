@@ -78,12 +78,19 @@ jest.mock("@/lib/api-client", () => ({
 }));
 
 const EXISTING = { id: "w1", slug: "my-workspace", name: "My workspace" };
-const open = () =>
+const open = (name = EXISTING.name) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <WorkspaceCreateWizard existing={EXISTING} />
+      <WorkspaceCreateWizard existing={{ ...EXISTING, name }} />
     </QueryClientProvider>,
   );
+const called = () =>
+  screen.getByRole("textbox", { name: /What is your business called/ });
+const noSite = () =>
+  userEvent.click(
+    screen.getByRole("button", { name: "I don't have a website yet" }),
+  );
+const SAID = "We bake sourdough for cafes in Leeds.";
 
 beforeEach(() => {
   window.history.replaceState(null, "", "/w/my-workspace/setup");
@@ -131,14 +138,13 @@ describe("Setting up a workspace that is there already", () => {
     expect(createWorkspace).not.toHaveBeenCalled();
   });
 
-  it("drafts the voice from a description, and follows that run", async () => {
+  it("drafts the voice from a description with the business's name, and follows that run", async () => {
     open();
-    await userEvent.click(
-      screen.getByRole("button", { name: "I don't have a website yet" }),
-    );
+    await noSite();
+    await userEvent.type(called(), "Luna Bakery");
     await userEvent.type(
       screen.getByRole("textbox", { name: /What does your business do/ }),
-      "We bake sourdough for cafes in Leeds.",
+      SAID,
     );
 
     await userEvent.click(
@@ -147,11 +153,87 @@ describe("Setting up a workspace that is there already", () => {
 
     await waitFor(() => expect(connected).toContain("op-draft"));
     expect(calls).toEqual(["describe"]);
-    expect(describeLater).toHaveBeenCalledWith(
-      "w1",
-      "We bake sourdough for cafes in Leeds.",
-    );
+    // The name goes with the description: the backend keeps it as the brand's name.
+    expect(describeLater).toHaveBeenCalledWith("w1", SAID, "Luna Bakery");
     expect(createWorkspace).not.toHaveBeenCalled();
+  });
+
+  // A description often names no business ("a bakery in Leeds…"), and the workspace's articles
+  // then never name it (rext-control task 922).
+  it("asks what the business is called with a description, and sends nothing without an answer", async () => {
+    open();
+    await noSite();
+    // A name the skip gave the workspace is no business's: the question starts empty.
+    expect(called()).toHaveValue("");
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /What does your business do/ }),
+      SAID,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft my brand voice" }),
+    );
+
+    expect(await screen.findByText("Name is required")).toBeInTheDocument();
+    expect(describeLater).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["Luna Bakery", "Luna Bakery"],
+    ["Ana's workspace", ""],
+    ["Ana’s workspace", ""],
+    ["My workspace", ""],
+  ])(
+    "offers the workspace's own name %j as the business's: %j",
+    async (name, offered) => {
+      open(name);
+      await noSite();
+
+      expect(called()).toHaveValue(offered);
+    },
+  );
+
+  it("puts the backend's refusal of the name beside that question", async () => {
+    const { ApiError } = jest.requireActual("@/lib/api-client/core") as {
+      ApiError: new (
+        status: number,
+        message: string,
+        code?: string,
+        context?: unknown,
+      ) => Error;
+    };
+    describeLater.mockRejectedValueOnce(
+      new ApiError(422, "Validation failed", "validation_error", {
+        error: {
+          details: [
+            {
+              field: "brand_name",
+              message:
+                "Use letters, numbers, spaces and ordinary punctuation in the name",
+              code: "field_validation_error",
+            },
+          ],
+        },
+      }),
+    );
+    open("Luna Bakery");
+    await noSite();
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /What does your business do/ }),
+      SAID,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft my brand voice" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Use letters, numbers, spaces and ordinary punctuation in the name",
+      ),
+    ).toBeInTheDocument();
+    // Still on the form, with what was typed.
+    expect(called()).toHaveValue("Luna Bakery");
   });
 
   it("picks a set-up up where it is when the page is opened again during its wait", async () => {

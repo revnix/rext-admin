@@ -241,6 +241,8 @@ describe("Creating a workspace: the first step's second way in", () => {
     const sent = createWorkspace.mock.calls[0][0];
     expect(sent).toMatchObject({ name: "Acme Forge", description: SAID });
     expect(sent).not.toHaveProperty("url");
+    // The name typed is the brand's too: a description often names no business (task 922).
+    expect(sent.brand_name).toBe("Acme Forge");
     // Which way in is counted; what was typed is not.
     expect(analytics.track).toHaveBeenCalledWith(
       "workspace_created",
