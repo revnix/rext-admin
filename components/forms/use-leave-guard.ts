@@ -3,7 +3,7 @@
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { putLeaveGuard } from "@/lib/leave-guard";
+import { leaveGuardsLifted, putLeaveGuard } from "@/lib/leave-guard";
 
 /**
  * Asks before leaving a form with unsaved changes (research 06 §6.2). Closing or reloading the tab
@@ -21,6 +21,8 @@ export function useLeaveGuard(dirty: boolean) {
   useEffect(() => {
     if (!dirty) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      // The person already said to leave, from the signed-out notice (lib/auth/signed-out.ts).
+      if (leaveGuardsLifted()) return;
       event.preventDefault();
     };
     window.addEventListener("beforeunload", onBeforeUnload);

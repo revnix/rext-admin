@@ -22,3 +22,22 @@ export function leaveThroughGuard(action: () => void): void {
   if (inForce) inForce(action);
   else action();
 }
+
+/** Whether a form on the page holds unsaved changes right now. */
+export const leaveGuardInForce = (): boolean => inForce !== null;
+
+// Set once the person has chosen, knowingly, to leave a page that can save nothing any more (the
+// signed-out notice's "Sign in again"): the browser's own "Leave site?" would only ask again.
+let lifted = false;
+
+/** Lets the page be left without the browser's prompt, from here on. */
+export function liftLeaveGuards(): void {
+  lifted = true;
+}
+
+/** Puts the prompt back: the page has a session again, so what is on it can be saved. */
+export function restoreLeaveGuards(): void {
+  lifted = false;
+}
+
+export const leaveGuardsLifted = (): boolean => lifted;
