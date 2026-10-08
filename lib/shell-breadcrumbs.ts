@@ -164,6 +164,13 @@ export function buildBreadcrumbs(
   if (first === "w" && second && second !== "create") {
     return withLinks(workspaceTrail(second, rest, workspaceName));
   }
+  // The article editor (/edit/<workspace>/<article>) is the article's own page, one step on.
+  if (first === "edit" && second && rest[0]) {
+    return withLinks([
+      ...workspaceTrail(second, ["content", rest[0]], workspaceName),
+      { label: "Edit", path: pathname },
+    ]);
+  }
 
   const top = TOP_LEVEL[first];
   const trail = [{ label: top?.label ?? humanize(first), path: `/${first}` }];

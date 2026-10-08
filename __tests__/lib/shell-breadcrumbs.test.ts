@@ -25,6 +25,23 @@ describe("buildBreadcrumbs", () => {
     });
   });
 
+  it("puts the article editor under its article", () => {
+    expect(
+      buildBreadcrumbs(
+        "/edit/nextly/0b7d3f6e-8c1a-4f1e-9d2b-3a4c5d6e7f80",
+        "Nextly",
+      ),
+    ).toEqual([
+      { label: "Nextly", href: "/" },
+      { label: "Content", href: "/w/nextly/content" },
+      {
+        label: "Article",
+        href: "/w/nextly/content/0b7d3f6e-8c1a-4f1e-9d2b-3a4c5d6e7f80",
+      },
+      { label: "Edit" },
+    ]);
+  });
+
   it("puts the calendar beside content, as the sidebar does", () => {
     expect(buildBreadcrumbs("/w/acme/content/calendar", "Acme")).toEqual([
       { label: "Acme", href: "/" },
