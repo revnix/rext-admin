@@ -41,8 +41,8 @@ describe("redactUrl", () => {
   });
 
   it("leaves an address without secrets, and anything that isn't an address, as it was", () => {
-    expect(redactUrl("https://app.rext.ai/w/acme?tab=all")).toBe(
-      "https://app.rext.ai/w/acme?tab=all",
+    expect(redactUrl("https://app.rext.ai/w/acme/content?status=draft")).toBe(
+      "https://app.rext.ai/w/acme/content?status=draft",
     );
     expect(redactUrl("not a url")).toBe("not a url");
   });

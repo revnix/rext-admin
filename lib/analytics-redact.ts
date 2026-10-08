@@ -3,7 +3,15 @@
  * (an unsubscribe, verification, reset or invitation token) and sign-in pages carry an email, so
  * those values are replaced before an event leaves the browser: PostHog adds the current address
  * to every event it sends, not only to page views (rext-control#541).
+ *
+ * An address also carries what a person wrote (rext-control#942). A list keeps its search in the
+ * query (`?q=…`), and a keyword's page and the link that starts an article from the Library name
+ * the keyword itself. So a query parameter's value leaves only when the parameter is one of the
+ * app's own listed below and the value looks as that parameter's does, and a part of the app's
+ * own path that stands where a route takes a parameter leaves only when it is a workspace's
+ * address name or an id.
  */
+import { ROUTE_TREE, type RouteTree } from "@/lib/analytics-failures";
 
 /**
  * Query parameters whose values never go to analytics: these, and any whose name ends in "token"
@@ -14,6 +22,106 @@ const SECRET_PARAMS = new Set(["token", "code", "state", "email"]);
 function isSecretParam(key: string): boolean {
   const name = key.toLowerCase();
   return SECRET_PARAMS.has(name) || name.endsWith("token");
+}
+
+/** A campaign tag, or one of the app's own fixed words (`month`, `created_at.desc`). */
+const WORD = /^[A-Za-z0-9_.~:-]{1,64}$/;
+/** Several of them, as a list's filter writes the ones chosen. */
+const WORDS = /^[A-Za-z0-9_.~:-]{1,64}(?:,[A-Za-z0-9_.~:-]{1,64}){0,19}$/;
+const NUMBER = /^\d{1,9}$/;
+const ID_SHAPE =
+  "(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{16,64}|\\d{1,12})";
+/** What the backend names a thing by: a uuid, a long hexadecimal number, or a number. */
+const ID = new RegExp(`^${ID_SHAPE}$`, "i");
+const IDS = new RegExp(`^${ID_SHAPE}(?:,${ID_SHAPE}){0,19}$`, "i");
+
+/**
+ * The query parameters whose values may go to analytics, each with what its value has to look
+ * like. A parameter that isn't here leaves as its name alone: a list's search (`q`) is what a
+ * person typed, a Library item's key (`library`) is its keyword. A new parameter is added here
+ * only when its values are the app's own words, numbers or ids.
+ */
+const KEPT_PARAMS: Record<string, RegExp> = {
+  // Campaign tags: written into a link by whoever shared it.
+  ref: WORD,
+  utm_source: WORD,
+  utm_medium: WORD,
+  utm_campaign: WORD,
+  utm_content: WORD,
+  // The lists' own words and numbers (components/ui/data-table/url-state.ts, lib/search-params/).
+  sort: WORD,
+  page: NUMBER,
+  size: NUMBER,
+  status: WORDS,
+  role: WORDS,
+  action: WORDS,
+  resource: WORDS,
+  view: WORD,
+  month: /^\d{4}-\d{2}$/,
+  // What a page was opened for.
+  error: WORD,
+  session: WORD,
+  reason: WORD,
+  drafted: WORD,
+  intent: WORD,
+  // What the backend names a run, a thread or a persona by.
+  thread: ID,
+  runId: ID,
+  persona: IDS,
+};
+/** Parameters that hold one of the app's own addresses: kept as that address's path, redacted. */
+const PATH_PARAMS = new Set(["redirect", "callbackUrl"]);
+
+/** The value an address may carry for a parameter, or null when it carries the value it has. */
+function redactedValue(key: string, value: string): string | null {
+  if (isSecretParam(key)) return value === "redacted" ? null : "redacted";
+  if (value === "" || value === "redacted") return null;
+  if (PATH_PARAMS.has(key)) {
+    const path = value.startsWith("/")
+      ? sharedPath(value.split(/[?#]/)[0])
+      : "redacted";
+    return path === value ? null : path;
+  }
+  const shape = Object.hasOwn(KEPT_PARAMS, key) ? KEPT_PARAMS[key] : undefined;
+  return shape?.test(value) ? null : "redacted";
+}
+
+/** Where the routes take a workspace's own address name (`/w/acme`, `/edit/acme/…`). */
+const WORKSPACE_UNDER = new Set(["w", "edit"]);
+
+/**
+ * One of the app's own paths as it may leave. A part the routes have by name stays. A part that
+ * stands where a route takes a parameter, or past the routes the app has, stays only when it is
+ * a workspace's address name (kept like the workspace's id, which every event carries) or an id;
+ * anything else there is a star. `/w/acme/keywords/best crm for dentists` leaves as
+ * `/w/acme/keywords/*`: the keyword is the person's, the rest says which page it was.
+ */
+export function sharedPath(pathname: string): string {
+  let node: RouteTree | undefined = ROUTE_TREE;
+  let depth = 0;
+  let first = "";
+  return pathname
+    .split("/")
+    .map((part) => {
+      if (part === "") return part;
+      const fixed: RouteTree | undefined =
+        node && part !== "*" && Object.hasOwn(node, part)
+          ? node[part]
+          : undefined;
+      const place = depth;
+      depth += 1;
+      if (place === 0) first = part;
+      node = fixed ?? node?.["*"];
+      if (fixed) return part;
+      if (place === 1 && WORKSPACE_UNDER.has(first)) return part;
+      return ID.test(part) ? part : "*";
+    })
+    .join("/");
+}
+
+/** Whether an address is one of the app's own pages: the path rule is the app's routes'. */
+function ownHost(host: string): boolean {
+  return typeof window !== "undefined" && host === window.location.host;
 }
 
 /**
@@ -33,7 +141,12 @@ const URL_PROPERTIES = [
   "$session_entry_referrer",
 ];
 
-/** The address with every secret parameter's value replaced by "redacted". */
+/**
+ * The address as it may leave: every query value that is a secret, or isn't one of the app's own
+ * listed ones, replaced by "redacted", and one of the app's own paths with a star where a person's
+ * words stood. An address that needs neither, and anything that isn't an address, is returned as
+ * it was.
+ */
 export function redactUrl(url: string): string {
   let parsed: URL;
   try {
@@ -42,9 +155,22 @@ export function redactUrl(url: string): string {
     return url;
   }
   let changed = false;
-  for (const key of [...parsed.searchParams.keys()]) {
-    if (isSecretParam(key)) {
-      parsed.searchParams.set(key, "redacted");
+  for (const key of new Set(parsed.searchParams.keys())) {
+    const given = parsed.searchParams.getAll(key);
+    const allowed = given.map((value) => redactedValue(key, value));
+    if (allowed.every((value) => value === null)) continue;
+    // One value where the first stood: a parameter given twice, with a value that has to go,
+    // leaves as one "redacted".
+    parsed.searchParams.set(
+      key,
+      given.length === 1 && allowed[0] !== null ? allowed[0] : "redacted",
+    );
+    changed = true;
+  }
+  if (ownHost(parsed.host)) {
+    const path = sharedPath(parsed.pathname);
+    if (path !== parsed.pathname) {
+      parsed.pathname = path;
       changed = true;
     }
   }
@@ -68,9 +194,26 @@ export function redactEventUrls<
       const value = bag[key];
       if (typeof value === "string") bag[key] = redactUrl(value);
     }
+    redactPaths(bag);
   }
   redactHeatmapAddresses(event.properties);
   return event;
+}
+
+/**
+ * PostHog also writes the path alone: the page's (`$pathname`), the one before it, the session's
+ * first and the person's first. Each is one of the app's own unless the host written beside it
+ * (`$session_entry_host` beside `$session_entry_pathname`) says it was the website's.
+ */
+function redactPaths(bag: NonNullable<PropertyBag>): void {
+  for (const key of Object.keys(bag)) {
+    if (!key.endsWith("pathname")) continue;
+    const value = bag[key];
+    if (typeof value !== "string") continue;
+    const host = bag[`${key.slice(0, -"pathname".length)}host`];
+    if (typeof host === "string" && !ownHost(host)) continue;
+    bag[key] = sharedPath(value);
+  }
 }
 
 /**

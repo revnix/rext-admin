@@ -266,7 +266,7 @@ describe("where analytics is on unless switched off", () => {
       captureEventName: false,
     });
     expect(pageViews()[0][1]).toEqual({
-      $current_url: `${window.origin}/w/acme/content?q=mary`,
+      $current_url: `${window.origin}/w/acme/content?q=redacted`,
     });
     expect(question()).toBeNull();
   });
@@ -394,7 +394,7 @@ describe("where analytics is on unless switched off", () => {
       expect(pageViews()).toEqual([
         [
           "$pageview",
-          { $current_url: "http://localhost/w/acme/content?q=mary" },
+          { $current_url: "http://localhost/w/acme/content?q=redacted" },
         ],
       ]);
       // Once only: the wait running out afterwards doesn't send it again.
@@ -431,13 +431,13 @@ describe("where analytics is on unless switched off", () => {
         [
           "$pageview",
           {
-            $current_url: "http://localhost/w/acme/content?q=mary",
+            $current_url: "http://localhost/w/acme/content?q=redacted",
             workspace_id: null,
           },
         ],
         [
           "$pageview",
-          { $current_url: "http://localhost/settings/data?q=mary" },
+          { $current_url: "http://localhost/settings/data?q=redacted" },
         ],
       ]);
     } finally {
