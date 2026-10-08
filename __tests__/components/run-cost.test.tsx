@@ -201,7 +201,7 @@ describe("useCreditGate", () => {
   });
 
   it("records which billed action met the paywall, and nothing when the action may start", () => {
-    const track = jest.spyOn(analytics, "track").mockImplementation(() => {});
+    const track = jest.spyOn(analytics, "track").mockImplementation(() => true);
     useBalance(balance(5));
     const blocked = renderHook(() => useCreditGate(), {
       wrapper: withQueries(),

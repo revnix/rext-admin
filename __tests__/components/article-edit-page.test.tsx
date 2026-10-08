@@ -123,7 +123,7 @@ function renderPage() {
 }
 
 const wait = (ms: number) => act(async () => jest.advanceTimersByTime(ms));
-const track = jest.spyOn(analytics, "track").mockImplementation(() => {});
+const track = jest.spyOn(analytics, "track").mockImplementation(() => true);
 const tracked = (name: string) =>
   track.mock.calls.filter(([event]) => event === name);
 
