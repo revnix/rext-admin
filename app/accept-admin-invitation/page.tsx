@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  AlertCircle,
   ArrowRight,
   CheckCircle2,
   Loader2,
@@ -27,20 +26,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Notice } from "@/components/ui/notice";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import {
   ADMIN_ROLES,
+  adminInvitationLink,
   adminLandingRoute,
   adminRoleLabel,
+  sameAddress,
 } from "@/types/admin-invitation";
 import type { Route } from "next";
 
 export default function AcceptAdminInvitationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
   const { toast } = useToast();
   const token = searchParams.get("token");
   const [isAccepting, setIsAccepting] = useState(false);
@@ -108,10 +110,13 @@ export default function AcceptAdminInvitationPage() {
 
   const handleAccept = async () => {
     if (!session) {
-      // Redirect to login with return URL
-      router.push(
-        `/login?callbackUrl=${encodeURIComponent(window.location.href as Route)}`,
-      );
+      if (!token) return;
+      // To sign in with the invited address, and back here signed in: the sign-in form follows
+      // this one `redirect` (adminInvitationReturn), as do its Google and GitHub buttons.
+      const params = new URLSearchParams();
+      if (validationData?.email) params.set("email", validationData.email);
+      params.set("redirect", adminInvitationLink(token));
+      router.push(`/login?${params.toString()}` as Route);
       return;
     }
 
@@ -212,6 +217,11 @@ export default function AcceptAdminInvitationPage() {
   const roleInfo = ADMIN_ROLES.find(
     (r) => r.value === validationData.admin_role,
   );
+  // The backend gives the role only to the invited address's own account (and says so when
+  // asked); the page says it before the button is pressed.
+  const signedInAs = session?.user?.email;
+  const otherAccount =
+    !!signedInAs && !sameAddress(signedInAs, validationData.email);
 
   // Main invitation view
   return (
@@ -306,44 +316,22 @@ export default function AcceptAdminInvitationPage() {
             </div>
           </div>
 
-          {/* Permissions Overview */}
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Admin Permissions
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success-600 mt-0.5 shrink-0" />
-                <span>Full platform access</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success-600 mt-0.5 shrink-0" />
-                <span>Manage all workspaces</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success-600 mt-0.5 shrink-0" />
-                <span>View system analytics</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success-600 mt-0.5 shrink-0" />
-                <span>Invite other admins</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Warning if not logged in */}
-          {!session && (
-            <div className="flex items-start gap-3 p-3 bg-muted/40 border border-border rounded-md">
-              <AlertCircle className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-foreground">Account Required</p>
-                <p className="text-muted-foreground mt-1">
-                  You need to sign in with the email address this invitation was
-                  sent to before accepting.
-                </p>
-              </div>
-            </div>
+          {/* What stands between this person and the role, said before they press Accept. */}
+          {status === "unauthenticated" && (
+            <Notice title="Sign in to accept">
+              Sign in with {validationData.email}. If you have no account yet,
+              create one with that address and verify it, then open the email's
+              link again.
+            </Notice>
+          )}
+          {otherAccount && (
+            <Notice
+              tone="warning"
+              title="This invitation is for another address"
+            >
+              You're signed in as {signedInAs}. Sign out, then sign in with{" "}
+              {validationData.email} to accept it.
+            </Notice>
           )}
         </CardContent>
 

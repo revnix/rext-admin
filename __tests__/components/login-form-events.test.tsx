@@ -188,3 +188,29 @@ describe("LoginForm, what it reports", () => {
     expect(sent("user_signed_in")).toEqual([{ method: "credentials" }]);
   });
 });
+
+describe("LoginForm, where it goes after signing in", () => {
+  const INVITATION = "/accept-admin-invitation?token=abc";
+
+  it("goes back to a platform admin invitation it was sent from (task 915)", async () => {
+    query = `email=${encodeURIComponent(EMAIL)}&redirect=${encodeURIComponent(INVITATION)}`;
+    signIn.mockResolvedValue({ error: undefined, ok: true });
+
+    await pressLogIn();
+    await wait(0);
+
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith(INVITATION);
+  });
+
+  it("follows no other address from its own: the person lands in their workspace", async () => {
+    query = `redirect=${encodeURIComponent("/admin/users")}`;
+    signIn.mockResolvedValue({ error: undefined, ok: true });
+
+    await pressLogIn();
+    await wait(0);
+
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push.mock.calls[0][0]).toContain("/w/acme/");
+  });
+});

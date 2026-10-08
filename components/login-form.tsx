@@ -40,6 +40,7 @@ import {
 import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 import { workspaceRoutes } from "@/lib/routes";
+import { adminInvitationReturn } from "@/types/admin-invitation";
 
 /** One notice for "the backend is away", replaced in place by what follows it. */
 const AWAY_TOAST_ID = "sign-in-backend-away";
@@ -234,11 +235,17 @@ export function LoginForm({
     analytics.track("user_signed_in", { method: "credentials" });
     resetAuthRedirectState();
 
+    const adminInvitation = adminInvitationReturn(searchParams.get("redirect"));
+
     if (hasValidInvitation && invitationToken) {
       // Force a fresh auth-headers read before navigating so the accept page's
       // very first request doesn't race the session hydration.
       await getAuthHeaders(true);
       router.push(`/invitations/accept?token=${invitationToken}` as Route);
+    } else if (adminInvitation) {
+      // Sent here from a platform admin invitation: back to it, signed in, to accept it.
+      await getAuthHeaders(true);
+      router.push(adminInvitation as Route);
     } else {
       await getAuthHeaders(true);
 
