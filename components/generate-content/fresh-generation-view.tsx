@@ -1820,6 +1820,13 @@ export function FreshGenerationView({
           if (activeThreadId) removeBackgroundJob(activeThreadId);
           setRunError(_e.message);
         }
+      } else if (_e instanceof RunStreamError && _e.code === RUN_NOT_FOUND) {
+        // The run isn't there any more (removed, or the thread went while the step waited):
+        // nothing ran and nothing is sent again. The page says so in the restore notice, with
+        // the way to a new article, and the dock stops tracking it (rext-control task 824).
+        runRefusedRef.current = true;
+        if (activeThreadId) removeBackgroundJob(activeThreadId);
+        setRestoreError(_e.message);
       } else if (
         _e instanceof RunStreamError &&
         _e.code === SERVER_UNREACHABLE &&

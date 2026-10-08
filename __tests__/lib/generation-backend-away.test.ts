@@ -197,3 +197,52 @@ describe("in the page", () => {
     expect(AWAY_PATIENCE_MS).toBe(180_000);
   });
 });
+
+/**
+ * A step sent to a run that isn't there any more (rext-control task 824): the route answers 404 with
+ * its own sentence and code, not a stream. The reader passes both on, as it does for a stream's
+ * own `{ error, code }` event; it used to say only "Stream failed".
+ */
+describe("a step refused before its stream opens", () => {
+  const refusal = (status: number, body: unknown) => ({
+    ok: false,
+    status,
+    json: async () => body,
+  });
+
+  it("keeps the route's sentence and code", async () => {
+    send.mockResolvedValueOnce(
+      refusal(404, {
+        error: "This article's run is no longer here. Start a new one.",
+        code: "run_not_found",
+      }),
+    );
+
+    const failure = await firstEvent("/api/generate/t1/resume").catch(
+      (error) => error,
+    );
+    expect(failure).toBeInstanceOf(RunStreamError);
+    expect(failure.message).toBe(
+      "This article's run is no longer here. Start a new one.",
+    );
+    expect(failure.code).toBe("run_not_found");
+  });
+
+  it("says only that the stream failed when the refusal has no code of the app's", async () => {
+    send.mockResolvedValueOnce(refusal(400, { error: "runId is required" }));
+    await expect(firstEvent("/api/generate/t1/join")).rejects.toThrow(
+      "Stream failed",
+    );
+
+    send.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new SyntaxError("Unexpected token <");
+      },
+    });
+    await expect(firstEvent("/api/generate/t1/resume")).rejects.toThrow(
+      "Stream failed",
+    );
+  });
+});
