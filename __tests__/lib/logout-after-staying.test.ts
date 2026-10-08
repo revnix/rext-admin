@@ -47,6 +47,8 @@ describe("signing out of a page that holds unsaved text", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
     expect(goTo).not.toHaveBeenCalled();
     expect(isSignedOut()).toBe(true);
+    // The sign-out's mark for this tab: nothing on it counts as signed in.
+    expect(sessionStorage.getItem("session_invalid")).toBe("true");
 
     // Asked again while still signed out: the same sign-out, not a second one.
     await performLogout("/login");
@@ -55,6 +57,7 @@ describe("signing out of a page that holds unsaved text", () => {
     // The person signed in from another tab: a read found a token.
     reportSignedIn();
     expect(isSignedOut()).toBe(false);
+    expect(sessionStorage.getItem("session_invalid")).toBeNull();
 
     await performLogout("/login");
     expect(signOut).toHaveBeenCalledTimes(2);

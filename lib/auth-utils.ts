@@ -615,7 +615,6 @@ export async function authenticatedFetch(
     // again, twice at most, as a "revoked" answer is below. A POST too: it was never carried out.
     if (
       response.status === 503 &&
-      retry &&
       typeof window !== "undefined" &&
       canAskAgain &&
       asked < REVOKED_ASKED_AGAIN_AFTER_MS.length &&
@@ -628,14 +627,17 @@ export async function authenticatedFetch(
       continue;
     }
 
-    if (response.status !== 401 || !retry || typeof window === "undefined") {
+    if (response.status !== 401 || typeof window === "undefined") {
       return response;
     }
 
     // A 401 is not necessarily an expired access token. Permission failures,
     // revoked impersonation sessions, and endpoint-specific authentication
     // rules must not rotate credentials or sign every tab out. Only the
-    // backend's typed expiry response enters refresh recovery.
+    // backend's typed expiry response enters refresh recovery. The request sent
+    // again after a refresh (`retry` false) is read the same way: a session
+    // revoked between the refresh and that request is still a verdict, and
+    // nothing above this wrapper acts on a 401 any more.
     unauthorizedKind = await classifyUnauthorized(response);
 
     // A "session revoked" answer is not believed at once (revnix/rext-control#858). In the
@@ -684,6 +686,13 @@ export async function authenticatedFetch(
 
   if (unauthorizedKind !== "expired") {
     return response;
+  }
+
+  // "Expired" again, for the request sent with the token a refresh has just given: no second
+  // refresh, and no verdict either. The caller is told to try again, as below.
+  if (!retry) {
+    log.warn("[AuthJS] A token just renewed was answered as expired", { url });
+    return ownAnswer(503, SESSION_UNCONFIRMED, SESSION_UNCONFIRMED_MESSAGE);
   }
 
   clearAuthHeadersCache();

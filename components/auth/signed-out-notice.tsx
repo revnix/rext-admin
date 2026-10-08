@@ -17,7 +17,7 @@ import {
   signInAgain,
   subscribeSignedOut,
 } from "@/lib/auth/signed-out";
-import { leaveGuardInForce } from "@/lib/leave-guard";
+import { leaveGuardInForce, watchLeaveGuard } from "@/lib/leave-guard";
 
 const TOAST_ID = "signed-out";
 
@@ -54,8 +54,13 @@ export function SignedOutNotice() {
     };
   }, [signedOut, putAside]);
 
-  // Read as the notice opens: whether a form on the page holds unsaved changes.
-  const unsaved = signedOut && leaveGuardInForce();
+  // Whether a form on the page holds unsaved changes. Watched, not read once: a form lifts its
+  // guard while it submits, and the submit is often what meets the session's end.
+  const unsaved = useSyncExternalStore(
+    watchLeaveGuard,
+    leaveGuardInForce,
+    () => false,
+  );
 
   return (
     <AlertDialog

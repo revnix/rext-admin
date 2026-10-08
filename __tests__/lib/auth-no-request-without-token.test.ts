@@ -374,6 +374,71 @@ describe("an expired token whose refresh did not advance the session", () => {
   });
 });
 
+describe("the request sent again after a refresh", () => {
+  const expired = () =>
+    refusal(401, "token_expired", "Authentication token has expired");
+  const old = token("old", -60);
+  const renewed = token("new", 600);
+
+  /** The first answer is "expired", the refresh advances, and `again` answers the second send. */
+  function refreshedThen(again: () => unknown) {
+    readSession
+      .mockResolvedValueOnce(session(old))
+      .mockResolvedValueOnce(session(old))
+      .mockResolvedValue(session(renewed));
+    send.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === SESSION_URL) return answer(200, session(renewed));
+      const sent = new Headers(init?.headers).get("Authorization");
+      return sent === `Bearer ${renewed}` ? again() : expired();
+    });
+  }
+
+  it("signs out when the session was revoked meanwhile: still a verdict", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    refreshedThen(() =>
+      refusal(401, "unauthorized", "Authentication session has been revoked"),
+    );
+
+    const request = settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(700 + 1500 + 50);
+    const { error } = await request;
+
+    expect(error?.message).toBe("Session expired");
+    expect(signOuts()).toEqual([
+      ["/login?redirect=%2Fw%2Fcreate&error=SessionEnded"],
+    ]);
+  });
+
+  it("is not refreshed a second time when answered as expired again, and signs nobody out", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    refreshedThen(expired);
+
+    const { value } = await settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(50);
+
+    expect(value?.status).toBe(503);
+    const body = await value?.json();
+    expect(body?.error.code).toBe("session_unconfirmed");
+    // Sent once with each token, and the session renewed no more than once.
+    expect(sentTo(URL_ASKED)).toHaveLength(2);
+    expect(sentTo(SESSION_URL).length).toBeLessThanOrEqual(1);
+    expect(signOuts()).toEqual([]);
+  });
+
+  it("gives the endpoint's own 401 to the caller", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    refreshedThen(() =>
+      refusal(401, "unauthorized", "You are not a member of this workspace"),
+    );
+
+    const { value } = await settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(50);
+
+    expect(value?.status).toBe(401);
+    expect(signOuts()).toEqual([]);
+  });
+});
+
 describe("a 401 that is a verdict on the token itself", () => {
   it.each(["Invalid authentication token", "User ID missing in token payload"])(
     "signs out on %p after asking again, as for a revoked session",

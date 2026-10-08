@@ -140,6 +140,25 @@ describe("the signed-out notice", () => {
     expect(browserWouldAsk()).toBe(false);
   });
 
+  it("says so too when the form was submitting as the session's end was met", async () => {
+    // A form lifts its guard while it submits, and puts it back when the submit fails.
+    const { rerender } = renderHook(
+      ({ dirty }: { dirty: boolean }) => useLeaveGuard(dirty),
+      { initialProps: { dirty: false } },
+    );
+    render(<SignedOutNotice />);
+    act(() => reportSignedOut());
+    expect(await screen.findByRole("alertdialog")).not.toHaveTextContent(
+      "won't be kept",
+    );
+
+    rerender({ dirty: true });
+
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "What you typed on this page won't be kept, so copy anything you need first.",
+    );
+  });
+
   it("stays in sight with the same button once put aside", async () => {
     render(<SignedOutNotice />);
     act(() => reportSignedOut());
