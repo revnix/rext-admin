@@ -302,5 +302,19 @@ describe("serp results", () => {
       expect(describeRankingKinds(of(null, "something-new"))).toBeNull();
       expect(describeRankingKinds([])).toBeNull();
     });
+
+    it("are left unsaid when the kind is known of fewer than half the results", () => {
+      // "Among these 6: 1 in-depth guide." would read as if it said it all.
+      expect(
+        describeRankingKinds(of("guide", null, null, null, null, null)),
+      ).toBeNull();
+      expect(
+        describeRankingKinds(of("guide", "list", null, null, null)),
+      ).toBeNull();
+      // Half is enough.
+      expect(describeRankingKinds(of("guide", "list", null, null))).toBe(
+        "Among these 4: 1 in-depth guide and 1 list post.",
+      );
+    });
   });
 });

@@ -43,7 +43,8 @@ const FORMAT_PLURALS: Record<string, string> = {
 
 /**
  * What kinds of pages the results are, the commonest first, in one plain sentence: "Among these
- * 10: 6 how-to guides, 2 list posts and 1 review." Null when no result's kind is known.
+ * 10: 6 how-to guides, 2 list posts and 1 review." Null when the kind is known of fewer than half
+ * of them: "Among these 6: 1 in-depth guide." says little, and reads as if it said it all.
  */
 export function describeRankingKinds(
   results: readonly SerpResult[],
@@ -53,7 +54,8 @@ export function describeRankingKinds(
     if (format && FORMAT_LABELS[format])
       counts.set(format, (counts.get(format) ?? 0) + 1);
   }
-  if (counts.size === 0) return null;
+  const known = [...counts.values()].reduce((sum, count) => sum + count, 0);
+  if (known === 0 || known * 2 < results.length) return null;
   const parts = [...counts]
     .sort((a, b) => b[1] - a[1])
     .map(([format, count]) =>
