@@ -7,30 +7,55 @@ import { z } from "zod";
  * Based on backend requirements and constraints defined in types/workspace.ts
  */
 
-// URL validation schema with proper HTTP/HTTPS checking
+const DOMAIN =
+  /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
+
+/**
+ * A website as people type it, as the address that is read: "mysite.com", "www.MySite.com/shop"
+ * and " http://mysite.com " all become an `https://` address. Null when there is no domain in it
+ * (a word, an email address, something with a space inside).
+ *
+ * On launch morning 30 of 34 newcomers stopped at this field: it took only a full `https://`
+ * address, and a bare domain was refused twice over, by the browser and by the form
+ * (rext-control#854). The backend wants `https`, so the form adds it.
+ */
+export function normalizeWebsite(typed: string): string | null {
+  const value = typed.trim();
+  if (!value || /\s/.test(value)) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(value)
+    ? value
+    : `https://${value}`;
+  let address: URL;
+  try {
+    address = new URL(withScheme);
+  } catch {
+    return null;
+  }
+  if (address.protocol !== "https:" && address.protocol !== "http:")
+    return null;
+  if (address.username || address.password) return null;
+  if (!DOMAIN.test(address.hostname)) return null;
+  address.protocol = "https:";
+  const whole = address.toString();
+  // "https://mysite.com", not "https://mysite.com/": the bare site has no path to show.
+  return address.pathname === "/" && !address.search && !address.hash
+    ? whole.replace(/\/$/, "")
+    : whole;
+}
+
+export const WEBSITE_HELP = "Enter your website's address, like yoursite.com";
+
+// The website, taken as typed and stored as the address read (see normalizeWebsite).
 const urlSchema = z
   .string()
-  .min(1, "Website URL is required")
-  .url("Please enter a valid URL")
-  .refine(
-    (url) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol !== "https:") return false;
-
-        const hostname = parsed.hostname;
-        // Strict domain regex: supports subdomains, valid labels (hyphen in middle), and TLD (at least 2 chars)
-        const domainRegex =
-          /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
-        return domainRegex.test(hostname);
-      } catch {
-        return false;
-      }
-    },
-    {
-      message: "URL must start with https:// and contain a valid domain",
-    },
-  );
+  .trim()
+  .min(1, WEBSITE_HELP)
+  .transform((typed, context) => {
+    const address = normalizeWebsite(typed);
+    if (address) return address;
+    context.addIssue({ code: "custom", message: WEBSITE_HELP });
+    return z.NEVER;
+  });
 
 /**
  * Any time zone the browser's Intl accepts. Not `Intl.supportedValuesOf("timeZone")`: that lists only
