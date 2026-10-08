@@ -1587,6 +1587,34 @@ describe("reading the outline", () => {
     expect(sectionPlan(outline, "nonsense")).toBeNull();
   });
 
+  it("finds a sub-section's own plan by its place in the same flat list (FB3.4)", () => {
+    // Sub-sections are items of the one list, right after their section, each with its own points.
+    const deep = {
+      structure: {
+        sections: [
+          { heading: "Choosing the spot", key_points: ["Sun", "Soil"] },
+          {
+            heading: "Sun hours",
+            heading_level: "H3",
+            description: "How to count them.",
+            suggested_word_count: 150,
+            key_points: ["Six or more"],
+          },
+        ],
+      },
+    };
+    expect(sectionPlan(deep, "structure.sections:0")?.keyPoints).toEqual([
+      "Sun",
+      "Soil",
+    ]);
+    expect(sectionPlan(deep, "structure.sections:1")).toEqual({
+      description: "How to count them.",
+      wordCount: 150,
+      questions: [],
+      keyPoints: ["Six or more"],
+    });
+  });
+
   it("reads the headings and fields of an outline still streaming", () => {
     const raw =
       '{"title":"Running shoes","brief":"How to ch' +

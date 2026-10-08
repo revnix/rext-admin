@@ -157,8 +157,9 @@ jest.mock("@/components/generate-content/content", () => ({
   ContentEditor: ({ steps }: { steps?: ReactNode }) => <>{steps}</>,
 }));
 jest.mock("@/components/generate-content/outline-review", () => ({
-  // While the first outline is written the step shows what the run hands it (`filling`); its own
-  // test covers how (outline-review.test.tsx).
+  // While the first outline is written the step shows what the run hands it (`filling`): the title
+  // and the stages, and nothing of the outline itself (rext-control#836). Its own test covers how
+  // (outline-review.test.tsx); here, everything the page hands it is listed by name.
   OutlineReview: ({
     onApprove,
     isLoading,
@@ -166,17 +167,15 @@ jest.mock("@/components/generate-content/outline-review", () => ({
   }: {
     onApprove: (approval: object) => void;
     isLoading: boolean;
-    filling?: { title?: string; headings: string[]; progress: ReactNode };
+    filling?: { title?: string; progress: ReactNode };
   }) => (
     <>
       {filling && (
         <section aria-label="The outline, being written">
           <h2>{filling.title}</h2>
-          <ol aria-label="Sections, being written">
-            {filling.headings.map((heading) => (
-              <li key={heading}>{heading}</li>
-            ))}
-          </ol>
+          <p data-testid="handed-to-the-outline-step">
+            {Object.keys(filling).sort().join(", ")}
+          </p>
           <aside aria-label="Brief">{filling.progress}</aside>
         </section>
       )}
@@ -768,17 +767,18 @@ describe("the Generate page's progress box", () => {
     );
     const sections = stage("Outlining");
     expect(sections).toHaveTextContent("Writing the sections: 2 so far.");
-    // The headings themselves are the step's: the outline, under the title chosen.
+    // The headings themselves show nowhere yet: the step holds the outline's shape under the title
+    // chosen until the outline is whole (rext-control#836).
     expect(within(sections).queryAllByRole("listitem")).toEqual([]);
     const outlineStep = within(
       screen.getByRole("region", { name: "The outline, being written" }),
     );
     expect(outlineStep.getByRole("heading", { name: TITLES[0] })).toBeVisible();
+    expect(outlineStep.queryByText("Pick your beds")).toBeNull();
+    expect(outlineStep.queryByText(/^Map the rows/)).toBeNull();
     expect(
-      within(outlineStep.getByRole("list", { name: "Sections, being written" }))
-        .getAllByRole("listitem")
-        .map((row) => row.textContent),
-    ).toEqual(["Pick your beds", "Map the rows"]);
+      outlineStep.getByTestId("handed-to-the-outline-step"),
+    ).toHaveTextContent("progress, sources, strip, title");
     expect(
       screen.getByText(
         "You can leave this page. The outline keeps coming, and we’ll tell you when it’s ready.",

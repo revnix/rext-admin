@@ -46,7 +46,6 @@ import {
   rowsEdited,
   rowsFromGate,
   streamedField,
-  streamedHeadings,
   type TreeRow,
 } from "@/lib/generate-content/outline-review";
 import { PERSONA_PERMISSIONS } from "@/lib/permissions";
@@ -62,7 +61,8 @@ import {
   OutlineSources,
   type OutlineSourcesProps,
 } from "./outline-sources";
-import { ADD_CAP_REASON, OutlineTree, StreamingTree } from "./outline-tree";
+import { OutlineSkeleton, SourcesSkeleton } from "./outline-skeleton";
+import { ADD_CAP_REASON, OutlineTree } from "./outline-tree";
 
 export interface OutlineReviewProps {
   /** The parsed outline; null while it streams. */
@@ -80,14 +80,14 @@ export interface OutlineReviewProps {
   onReject: () => void;
   onApprove: (approval: OutlineApproval) => void;
   /**
-   * While the first outline is written (rext-control#694, the second pass): what the run has of it
-   * so far, read by its stages rather than from `rawTokens`, and the stages themselves, for the
-   * side pane from 1024 px (`progress`) and as one line above the outline under it (`strip`).
+   * While the first outline is written (rext-control#694, the second pass): the title it is written
+   * under, and the run's stages, for the side pane from 1024 px (`progress`) and as one line above
+   * the outline under it (`strip`). The outline and its sources show only once the outline is whole
+   * (rext-control#836): until then the step holds their shape.
    */
   filling?: {
     title?: string;
-    headings: string[];
-    /** What the run read before it began the outline: the gate, which carries them later, isn't here yet. */
+    /** What the run read before it began the outline: whether there will be a Sources tab. */
     sources?: Pick<
       OutlineSourcesProps,
       "serpResults" | "questions" | "relatedSearches"
@@ -183,7 +183,9 @@ export function OutlineReview({
 
   const title =
     outline?.title ?? filling?.title ?? streamedField(rawTokens, "title");
-  const brief = outline?.brief ?? streamedField(rawTokens, "brief");
+  // The outline's own line under the title: with the outline, not as it is typed. Many outlines
+  // have none, so nothing holds its place meanwhile: a bar there would only vanish.
+  const brief = outline?.brief;
   const sources = {
     serpResults: filling?.sources?.serpResults ?? gate.serpResults,
     questions: filling?.sources?.questions ?? gate.questions,
@@ -191,9 +193,9 @@ export function OutlineReview({
     clusters: keywordClusters,
     clusterHeadings: outline?.cluster_heading_map,
   };
-  // While the first outline is written the sources sit under it, in the Outline tab.
-  const sourcesTab = !filling && hasSources(sources);
-  const sourcesId = useId();
+  // The tab is there from the start, so nothing moves when the outline lands; until then its
+  // panel holds the sources' shape.
+  const sourcesTab = hasSources(sources);
   const edited = rowsEdited(rows, gate.sections);
   const faqs = useMemo(() => readOutlineFaqs(outline), [outline]);
 
@@ -351,29 +353,9 @@ export function OutlineReview({
   );
 
   const treePane = isDraft ? (
-    filling && hasSources(sources) ? (
-      // The first outline can take half a minute, and its sections often arrive together: what it
-      // is being written from is real, already here, and worth reading meanwhile. Once the outline
-      // is in, the same sources are the Sources tab.
-      <div className="space-y-8">
-        <StreamingTree headings={filling.headings} />
-        <section aria-labelledby={sourcesId} className="space-y-4">
-          <div className="space-y-1">
-            <h3 id={sourcesId} className="text-section text-foreground">
-              What the outline is written from
-            </h3>
-            <p className="text-table text-muted-foreground">
-              The sections take their place above as soon as they are written.
-            </p>
-          </div>
-          <OutlineSources {...sources} />
-        </section>
-      </div>
-    ) : (
-      <StreamingTree
-        headings={filling?.headings ?? streamedHeadings(rawTokens)}
-      />
-    )
+    // Nothing of the outline shows before it is whole (the founder, rext-control#836): its shape
+    // stands in, sections with their sub-sections and points, and the run's stages say how far it is.
+    <OutlineSkeleton />
   ) : rows.length > 0 ? (
     <div className="space-y-6">
       <OutlineTree
@@ -486,7 +468,11 @@ export function OutlineReview({
             </TabsContent>
             {sourcesTab && (
               <TabsContent value="sources" className="mt-4">
-                <OutlineSources {...sources} />
+                {isDraft ? (
+                  <SourcesSkeleton />
+                ) : (
+                  <OutlineSources {...sources} />
+                )}
               </TabsContent>
             )}
           </Tabs>
