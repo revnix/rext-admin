@@ -14,8 +14,7 @@ import { z } from "zod";
  * Key principles:
  * - Minimum 8 characters (the app uses MFA-capable OAuth, so 8 is acceptable per NIST)
  * - Maximum 72 bytes, the limit of the backend's hashing
- * - NO composition rules (no required uppercase/lowercase/numbers/special chars). The backend
- *   still holds four of them, so for now the forms check them too: see PASSWORD_RULES below
+ * - NO composition rules (no required uppercase/lowercase/numbers/special chars)
  * - Allow all printable characters including spaces and Unicode
  * - Breach checking via HIBP API is handled separately at form submission time
  *
@@ -23,20 +22,18 @@ import { z } from "zod";
  * @see https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
  */
 /**
- * What a new password needs, as the forms say it under the field.
- *
- * TEMPORARY in all but the length (rext-control task 938). The backend still asks for the four
- * kinds of character (`validate_password_strength` in rext-backend), and the sign-up and reset
- * forms said only "At least 8 characters": a password the form took was refused by the backend,
- * one rule at a time. Until the backend asks for length alone, the forms say and check all of it.
+ * What a new password needs, as the forms say it under the field: its length, and nothing about
+ * the kinds of character in it (rext-control task 938). The backend asks the same since
+ * rextaihq/rext-backend#1033; before it the backend wanted four kinds of character that the
+ * forms never named. Whether a password is on a list of breached ones is asked when the form is
+ * sent, and by the backend again.
  */
-export const PASSWORD_RULES =
-  "At least 8 characters, with an uppercase and a lowercase letter, a number and a special character.";
+export const PASSWORD_RULES = "At least 8 characters.";
 
 const PASSWORD_MIN_LENGTH = 8;
 // bcrypt's limit, which the backend holds to in bytes.
 const PASSWORD_MAX_BYTES = 72;
-// What the backend counts as a special character: the keyboard's punctuation but "<" and ">".
+// The keyboard's punctuation but "<" and ">", which no password may hold.
 const PASSWORD_SYMBOL = /[!"#$%&'()*+,\-./:;=?@[\\\]^_`{|}~]/;
 
 /** A password's length as the backend counts it: in bytes, where an accented letter is two. */
@@ -50,8 +47,8 @@ function bytesOf(text: string): number {
 }
 
 /**
- * What a password has of what the rule asks, read one way for the check below and for the
- * strength a form shows as it is typed: a form must not call "Strong" what it then refuses.
+ * What a password has, read one way for the check below and for the strength a form shows as it
+ * is typed: a form must not call "Strong" what it then refuses.
  */
 export function passwordHas(password: string) {
   return {
@@ -62,50 +59,25 @@ export function passwordHas(password: string) {
     symbol: PASSWORD_SYMBOL.test(password),
     /** Within the most the backend's hashing takes. */
     fits: bytesOf(password) <= PASSWORD_MAX_BYTES,
+    /** Without "<" or ">", which the backend refuses in any password. */
+    plain: !/[<>]/.test(password),
   };
 }
 
 /**
- * TEMPORARY (rext-control task 938): the kinds of character a password still lacks, of the four
- * the backend asks for, named together. Null when it has them all.
- */
-function kindsMissingFrom(password: string): string | null {
-  const has = passwordHas(password);
-  const missing = [
-    has.uppercase ? null : "an uppercase letter",
-    has.lowercase ? null : "a lowercase letter",
-    has.number ? null : "a number",
-    has.symbol ? null : "a special character such as ! or #",
-  ].filter((kind): kind is string => kind !== null);
-  const last = missing.pop();
-  if (!last) return null;
-  return missing.length > 0 ? `${missing.join(", ")} and ${last}` : last;
-}
-
-/**
- * A new password, checked whole before any request: everything it still needs is said at once,
- * beside the field, where the backend would say it one rule per refusal.
+ * A new password, checked before any request by what the backend itself asks: long enough, not
+ * too long for its hashing, and without "<" or ">". Nothing about the kinds of character.
  */
 export const newPasswordSchema = z.string().superRefine((password, context) => {
   const has = passwordHas(password);
-  if (!has.fits) {
-    context.addIssue({
-      code: "custom",
-      message: `Password must be ${PASSWORD_MAX_BYTES} characters or less (accented letters and emoji count as more than one)`,
-    });
-    return;
-  }
-  const short = !has.length;
-  const missing = kindsMissingFrom(password);
-  if (!short && !missing) return;
-  context.addIssue({
-    code: "custom",
-    message: !missing
+  const message = !has.fits
+    ? `Password must be ${PASSWORD_MAX_BYTES} characters or less (accented letters and emoji count as more than one)`
+    : !has.length
       ? `Password must be at least ${PASSWORD_MIN_LENGTH} characters`
-      : short
-        ? `Use at least ${PASSWORD_MIN_LENGTH} characters, and add ${missing}`
-        : `Add ${missing}`,
-  });
+      : !has.plain
+        ? "Password cannot contain < or >"
+        : null;
+  if (message) context.addIssue({ code: "custom", message });
 });
 const passwordSchema = newPasswordSchema;
 

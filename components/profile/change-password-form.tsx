@@ -15,8 +15,9 @@ import {
 } from "@/schemas/profile-schemas";
 
 /**
- * How strong a new password reads, by how many of the five rules it meets, as the schema itself
- * reads them: "Strong" is said only of a password the form will take.
+ * How strong a new password reads as it is typed, by its length and the kinds of character in
+ * it. A guide only: the form asks for the length alone. "Strong" is said only of a password the
+ * form will take.
  */
 export function strengthOf(password: string) {
   const has = passwordHas(password);
@@ -28,8 +29,8 @@ export function strengthOf(password: string) {
     has.symbol,
   ].filter(Boolean).length;
   if (met <= 2) return { label: "Weak", className: "text-danger-700" };
-  // One too long for the backend's hashing is refused, whatever else it holds.
-  if (met <= 4 || !has.fits) {
+  // One too long for the backend's hashing, or with "<" or ">", is refused whatever else it holds.
+  if (met <= 4 || !has.fits || !has.plain) {
     return { label: "Fair", className: "text-warning-700" };
   }
   return { label: "Strong", className: "text-success-700" };

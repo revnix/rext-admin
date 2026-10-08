@@ -289,9 +289,10 @@ describe("SignupForm, what it reports", () => {
     expect(JSON.stringify(track.mock.calls)).not.toContain("web address");
   });
 
-  // The backend refuses a password without all four kinds of character; the form said only
-  // "At least 8 characters" (rext-control task 938).
-  it("says everything a password still needs before anything is sent", async () => {
+  // The form and the backend ask the same of a password: its length (rext-control task 938).
+  // While the backend also wanted four kinds of character, the form checked those first.
+  it("sends a password of plain words: nothing is asked about the kinds of character in it", async () => {
+    register.mockRejectedValue(new ApiError(503, "Service unavailable"));
     show();
     await userEvent.type(screen.getByLabelText(/Full name/), NAME);
     await userEvent.type(screen.getByLabelText(/^\*?Email/), EMAIL);
@@ -306,13 +307,8 @@ describe("SignupForm, what it reports", () => {
 
     await pressCreate();
 
-    expect(
-      await screen.findByText(
-        "Add an uppercase letter, a number and a special character such as ! or #",
-      ),
-    ).toBeInTheDocument();
-    expect(register).not.toHaveBeenCalled();
-    expect(breach).not.toHaveBeenCalled();
+    await waitFor(() => expect(register).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/uppercase/i)).toBeNull();
   });
 
   it("does not call it a refused sign-up when the account exists and only the login after it fails", async () => {
