@@ -151,6 +151,8 @@ async function createFromDescription() {
 }
 
 beforeEach(() => {
+  // The way in is in the address: each test opens the page at its plain address.
+  window.history.replaceState(null, "", "/w/create");
   mockEvents = [];
   mockComplete = undefined;
   mockPersonasAskedFor.length = 0;

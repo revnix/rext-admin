@@ -260,6 +260,16 @@ beforeEach(() => {
   // Reset all mocks to clean state
   jest.clearAllMocks();
 
+  // The tab's real session storage (jsdom keeps its own; the mock above does not stand in for
+  // it): each test starts with none, so nothing one test kept is found by the next.
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.clear();
+    } catch {
+      // A test without storage has nothing to clear.
+    }
+  }
+
   // Reset localStorage mock
   if (global.localStorage && "mockReturnValue" in global.localStorage.getItem) {
     (global.localStorage.getItem as jest.Mock).mockReturnValue(null);

@@ -200,6 +200,31 @@ describe("A refusal that names no field", () => {
   }, 15_000);
 });
 
+describe("What was typed, once the workspace is made", () => {
+  it("is kept for the tab until then, and gone after", async () => {
+    let made: (workspace: unknown) => void = () => undefined;
+    createWorkspace.mockReturnValue(
+      new Promise((resolve) => {
+        made = resolve;
+      }),
+    );
+    await submit();
+    expect(
+      window.sessionStorage.getItem("rext:workspace-create-draft"),
+    ).toContain("Second");
+
+    made({ id: "w1", slug: "second", name: "Second" });
+
+    await waitFor(
+      () =>
+        expect(
+          window.sessionStorage.getItem("rext:workspace-create-draft"),
+        ).toBeNull(),
+      { timeout: 5000 },
+    );
+  }, 15_000);
+});
+
 describe("The form's way out", () => {
   const open = (planCount?: { used: number; max: number }) =>
     render(
