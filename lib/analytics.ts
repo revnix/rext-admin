@@ -108,18 +108,23 @@ export function unregisterPostHog(): void {
 // event; signing out clears it with the rest of the storage.
 
 const IMPERSONATING_KEY = "rext-impersonating";
+// This page's own copy: what counts when the browser refuses storage (blocked or full), where
+// the banner's check on every page is then the only source.
+let impersonatingHere = false;
 
 /** Called when impersonation starts or stops, and whenever the backend says which it is. */
 export function setImpersonating(impersonating: boolean): void {
+  impersonatingHere = impersonating;
   try {
     if (impersonating) window.localStorage.setItem(IMPERSONATING_KEY, "1");
     else window.localStorage.removeItem(IMPERSONATING_KEY);
   } catch {
-    // Storage refused: the banner's own check still marks it on each page.
+    // Storage refused: this page still knows, from the line above.
   }
 }
 
 export function isImpersonating(): boolean {
+  if (impersonatingHere) return true;
   try {
     return window.localStorage.getItem(IMPERSONATING_KEY) === "1";
   } catch {
