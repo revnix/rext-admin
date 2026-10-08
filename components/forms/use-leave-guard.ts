@@ -3,13 +3,15 @@
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { putLeaveGuard } from "@/lib/leave-guard";
 
 /**
  * Asks before leaving a form with unsaved changes (research 06 §6.2). Closing or reloading the tab
  * gets the browser's own prompt (`beforeunload`, only while dirty). A click on a link inside the app
  * is held, so the caller can ask in a dialog and then `leave()` or `stay()`; so is the form's own way
  * out, through `confirm(action)`. The App Router has no navigation events, so the links are watched
- * at the document, before Next's Link handles them.
+ * at the document, before Next's Link handles them. A navigation the shell makes in code (the
+ * workspace switcher, the Generate shortcut) is held the same way, through lib/leave-guard.ts.
  */
 export function useLeaveGuard(dirty: boolean) {
   const router = useRouter();
@@ -58,6 +60,12 @@ export function useLeaveGuard(dirty: boolean) {
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
   }, [dirty, router]);
+
+  // While dirty, this is the guard the shell's own navigation goes through.
+  useEffect(() => {
+    if (!dirty) return;
+    return putLeaveGuard((action) => setPending(() => action));
+  }, [dirty]);
 
   /** Runs `action` at once on a clean form; on a dirty one, asks first. */
   const confirm = useCallback(

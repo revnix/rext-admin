@@ -53,9 +53,12 @@ function Notifications() {
  */
 export function AppShell({
   defaultPreference,
+  rememberSidebar = true,
   children,
 }: {
   defaultPreference: SidebarPreference;
+  /** False for an area with a sidebar state of its own (the article editor): nothing is saved from it. */
+  rememberSidebar?: boolean;
   children: ReactNode;
 }) {
   const navigation = useShellNavigation();
@@ -71,7 +74,10 @@ export function AppShell({
   useWorkspacePermissions(workspaceSlug ?? currentSlug);
 
   return (
-    <SidebarProvider defaultPreference={defaultPreference}>
+    <SidebarProvider
+      defaultPreference={defaultPreference}
+      remember={rememberSidebar}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-(--z-toast) focus:rounded-sm focus:bg-surface-raised focus:px-3 focus:py-2 focus:text-label focus:shadow-overlay"

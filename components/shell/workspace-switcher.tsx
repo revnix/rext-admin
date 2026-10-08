@@ -1,5 +1,6 @@
 "use client";
 
+import { leaveThroughGuard } from "@/lib/leave-guard";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
@@ -197,12 +198,16 @@ export function WorkspaceSwitcher({
   };
 
   const handleWorkspaceSelect = (workspace: Workspace) => {
-    setCurrentWorkspace(workspace);
     // The shell stays mounted across workspaces, so the phone's sheets would stay open over the page.
     setSheetOpen(false);
     setOpenMobile(false);
-    // A workspace opens on its Home (FB2.5), whatever page the switch was made from.
-    router.push(`/w/${workspace.slug}` as Route);
+    // Not a link click: a page with unsaved changes (the article editor) asks first, and the
+    // workspace changes only if the person leaves.
+    leaveThroughGuard(() => {
+      setCurrentWorkspace(workspace);
+      // A workspace opens on its Home (FB2.5), whatever page the switch was made from.
+      router.push(`/w/${workspace.slug}` as Route);
+    });
   };
 
   const displayWorkspace = currentWorkspace || workspaces[0] || null;
