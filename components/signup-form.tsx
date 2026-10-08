@@ -18,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
-import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
+import {
+  type SignupFormData,
+  signupFormSchema,
+  signupNameAsSent,
+} from "@/schemas/auth-schemas";
 import { ApiError, apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
@@ -128,7 +132,8 @@ export function SignupForm({
 
       // Build request payload
       const payload: Record<string, string> = {
-        full_name: data.full_name,
+        // Temporary: the live backend refuses a name that starts in lower case (task 933).
+        full_name: signupNameAsSent(data.full_name),
         email: data.email,
         password: data.password,
       };
