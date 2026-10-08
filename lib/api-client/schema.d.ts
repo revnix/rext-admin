@@ -1106,6 +1106,37 @@ export interface paths {
         patch: operations["update_user_preferences_api_v1_user_preferences_patch"];
         trace?: never;
     };
+    "/api/v1/user/analytics-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Analytics Consent
+         * @description The caller's stored answer on usage analytics.
+         */
+        get: operations["get_analytics_consent_api_v1_user_analytics_consent_get"];
+        /**
+         * Update Analytics Consent
+         * @description Store what the caller's browser holds: their answer and their region.
+         *
+         *     An answer replaces the stored one. No answer (null) stores the region only and leaves a
+         *     stored answer as it is: a browser that has forgotten a refusal must not undo it. The
+         *     response is what is stored afterwards, so that browser can take the answer back.
+         *
+         *     Refused while impersonating: the browser is then the admin's, and its answer and
+         *     its region are not the customer's to have written on their account.
+         */
+        put: operations["update_analytics_consent_api_v1_user_analytics_consent_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/invitations/pending": {
         parameters: {
             query?: never;
@@ -1349,6 +1380,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/status/banner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Incident Banner
+         * @description The banner showing now, or ``active: false``.
+         *
+         *     **Public on purpose** (no session, no permission): see this module's note. No database.
+         */
+        get: operations["read_incident_banner_api_v1_status_banner_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/": {
         parameters: {
             query?: never;
@@ -1503,6 +1556,30 @@ export interface paths {
          *     Marks the workspace as deleted and sends a confirmation email to the owner.
          */
         delete: operations["delete_workspace_endpoint_api_v1_workspaces__workspace_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/pipeline/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Workspace Pipeline
+         * @description Read the website again after the last run failed or was interrupted (the pipeline runs
+         *     inside the API process, so a restart or a deploy ends it), or set up a workspace that was
+         *     made from a name alone: with a `description` in the body, the voice is drafted from it.
+         *     Returns the new run's operation id for the SSE stream; GET /workspaces/{id} shows its
+         *     status as `pipeline`.
+         */
+        post: operations["retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2315,6 +2392,68 @@ export interface paths {
         patch: operations["reschedule_publish_api_v1_content__content_id__schedule_patch"];
         trace?: never;
     };
+    "/api/v1/content/{content_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Content Versions
+         * @description The article's versions, newest first, without their bodies.
+         */
+        get: operations["list_content_versions_api_v1_content__content_id__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content/{content_id}/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Content Version
+         * @description One version with its text, as the history shows it before a restore.
+         */
+        get: operations["get_content_version_api_v1_content__content_id__versions__version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content/{content_id}/versions/{version_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Content Version
+         * @description Put a version's text back on the article. The text as it stood is kept as a version
+         *     first; the answer is the article, as a save of it answers. The body is optional: the text
+         *     the editor holds unsaved, kept as a version too before the restore, in one transaction.
+         */
+        post: operations["restore_content_version_api_v1_content__content_id__versions__version_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles/": {
         parameters: {
             query?: never;
@@ -2683,6 +2822,29 @@ export interface paths {
          * @description Return current credit balance for the active workspace owner or authenticated user.
          */
         get: operations["get_credit_balance_api_v1_subscriptions_credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscriptions/credits/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Credit History
+         * @description The caller's credits added, deducted or reset by Rext support, newest first.
+         *
+         *     Each change comes with its reason; who made it is always "Rext support", never
+         *     an admin's name or email.
+         */
+        get: operations["get_credit_history_api_v1_subscriptions_credits_history_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3964,6 +4126,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{user_id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Plan
+         * @description A user's plan and what a super admin may change it to (super admin only).
+         *
+         *     Returns:
+         *     - subscription: the plan now, its period, renewal and credits; null without one
+         *     - change: whether the plan may be changed, and how a change is billed by default
+         *     - trial_extension: whether the trial's end may be moved, and between which dates
+         *     - plans: each plan with its list prices and, for each period, whether it can be
+         *       chosen, whether it is an upgrade or a downgrade, and each way it can be billed
+         *       with the month's credits it would leave
+         *     - limits: the reason's shortest and longest length
+         */
+        get: operations["get_user_plan_api_v1_admin_users__user_id__plan_get"];
+        put?: never;
+        /**
+         * Change User Plan
+         * @description Change a user's plan (super admin only).
+         *
+         *     Request Body:
+         *     - plan_id: the plan to move to
+         *     - billing_period: monthly or yearly
+         *     - billing: next_renewal (nothing charged now, the new price from the next
+         *       renewal), charge_now (Lemon Squeezy invoices the prorated difference now; an
+         *       upgrade only) or not_billed (a user without a Lemon Squeezy subscription)
+         *     - reason: why, kept with the audit entry
+         *
+         *     The plan changes at once, through Lemon Squeezy first for a subscription it
+         *     bills, and the month's credits become the new plan's minus what was used this
+         *     period. A trial, a failed renewal, a cancelled or lifetime subscription and a
+         *     Super Admin's account are refused. Every change is in the audit log.
+         */
+        post: operations["change_user_plan_api_v1_admin_users__user_id__plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extend User Trial
+         * @description Move a user's trial to a later end (super admin only).
+         *
+         *     Request Body:
+         *     - ends_at: the new end, later than the trial's own and within the limit the
+         *       plan options give
+         *     - reason: why, kept with the audit entry
+         *
+         *     Only a trial this app runs: one Lemon Squeezy runs is ended or converted by it.
+         */
+        post: operations["extend_user_trial_api_v1_admin_users__user_id__trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/monitoring/system-health": {
         parameters: {
             query?: never;
@@ -4098,6 +4333,84 @@ export interface paths {
         get: operations["get_usage_trends_api_v1_admin_monitoring_usage_stats_trends_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/status/banner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Incident Banner
+         * @description Switch the banner on, or replace the one showing.
+         *
+         *     **Requires security.manage.**
+         *
+         *     - 422 for an empty or over-long message, an unknown area, or a duration outside 15 minutes
+         *       to 24 hours.
+         *     - 503 if the store that holds the banner can't be reached; no banner is showing then.
+         */
+        put: operations["set_incident_banner_api_v1_admin_status_banner_put"];
+        post?: never;
+        /**
+         * Clear Incident Banner
+         * @description Switch the banner off. Answers ``active: false`` whether or not one was showing.
+         *
+         *     **Requires security.manage.** 503 if the store can't be reached: a banner may still show.
+         */
+        delete: operations["clear_incident_banner_api_v1_admin_status_banner_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Credits
+         * @description A user's credits and the history of admin changes to them (super admin only).
+         *
+         *     Returns:
+         *     - credits: what the user can spend now: the month's credits, a promotion's
+         *       bonus and the credits admins added
+         *     - limits: the most credits a change may add or deduct, and the reason's
+         *       shortest and longest length, for the form that sends one
+         *     - grants: the credits admins added, with what is left, what a deduction
+         *       took back, the reason, who added them and the expiry
+         *     - adjustments: every add, deduct and reset from the audit log, with the
+         *       balance before and after; newest first, at most 100 of each
+         */
+        get: operations["get_user_credits_api_v1_admin_users__user_id__credits_get"];
+        put?: never;
+        /**
+         * Adjust User Credits
+         * @description Add, deduct or reset a user's credits (super admin only).
+         *
+         *     Request Body:
+         *     - action: add, deduct or reset
+         *     - amount: credits to add or deduct, 1 to 100,000; left out for a reset
+         *     - reason: why, 3 to 500 characters, shown to the customer
+         *     - expires_at: only for an add: when the credits expire. Left out, they
+         *       last and are spent after the month's credits; with it, before them.
+         *
+         *     A deduction takes what admins added first, then the month's credits, never
+         *     below 0; when less is there than asked for, it takes what there is and
+         *     says so in ``amount``. A reset sets the month's credits to the plan's
+         *     amount (not on a trial). Every change is in the audit log.
+         */
+        post: operations["adjust_user_credits_api_v1_admin_users__user_id__credits_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6068,22 +6381,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /**
-         * APIUsageMetric
-         * @description Schema for API usage metrics including reset date.
-         */
-        APIUsageMetric: {
-            /** Used */
-            used: number;
-            /** Limit */
-            limit?: number | null;
-            /** Percentage */
-            percentage: number;
-            /** Unlimited */
-            unlimited: boolean;
-            /** Reset Date */
-            reset_date?: string | null;
-        };
         /** ActionCount */
         ActionCount: {
             /** Action */
@@ -6120,6 +6417,209 @@ export interface components {
              * @description Email address of the user to invite
              */
             email: string;
+        };
+        /**
+         * AddedCredits
+         * @description Credits Rext support added, live (`admin_credit_summary`, src/services/credit_grants.py).
+         */
+        AddedCredits: {
+            /**
+             * Credits
+             * @description Credits left of what was added
+             */
+            credits: number;
+            /** Granted */
+            granted: number;
+            /**
+             * Expires At
+             * @description ISO 8601, the soonest expiry; null when none expires
+             */
+            expires_at?: string | null;
+        };
+        /**
+         * AdminCreditAdjustment
+         * @description Body for a super admin adding, deducting or resetting a user's credits.
+         *
+         *     add: a grant of ``amount`` credits, lasting unless ``expires_at`` is given.
+         *     deduct: ``amount`` credits, from what admins added first, then from the
+         *     month's credits. reset: the month's credits back to the plan's amount (no
+         *     ``amount``).
+         * @example {
+         *       "action": "add",
+         *       "amount": 150,
+         *       "reason": "Compensation for the outage on 6 October"
+         *     }
+         */
+        AdminCreditAdjustment: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "add" | "deduct" | "reset";
+            /**
+             * Amount
+             * @description Credits to add or deduct; left out for a reset
+             */
+            amount?: number | null;
+            /**
+             * Reason
+             * @description Why, shown to the customer
+             */
+            reason: string;
+            /**
+             * Expires At
+             * @description When added credits expire (in the future); only for an add. Left out, they last and are spent after the month's credits.
+             */
+            expires_at?: string | null;
+        };
+        /** AdminCreditAdjustmentEntry */
+        AdminCreditAdjustmentEntry: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Action */
+            action?: string | null;
+            /** Amount */
+            amount?: number | null;
+            /** Balance Before */
+            balance_before?: number | null;
+            /** Balance After */
+            balance_after?: number | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Expires At
+             * @description ISO 8601, an add's expiry
+             */
+            expires_at?: string | null;
+            /**
+             * Grant Id
+             * @description The grant an add made, by its id
+             */
+            grant_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Requested Amount */
+            requested_amount?: number | null;
+            /** Adjusted By */
+            adjusted_by?: string | null;
+            /** Adjusted By Email */
+            adjusted_by_email?: string | null;
+        };
+        /**
+         * AdminCreditAdjustmentResult
+         * @description POST /admin/users/{user_id}/credits: what the change did.
+         */
+        AdminCreditAdjustmentResult: {
+            /** Action */
+            action: string;
+            /**
+             * Requested Amount
+             * @description Null for a reset
+             */
+            requested_amount?: number | null;
+            /**
+             * Amount
+             * @description Credits added or deducted (less than asked when less was there); for a reset, the change to the month's credits
+             */
+            amount: number;
+            /** Balance Before */
+            balance_before: number;
+            /** Balance After */
+            balance_after: number;
+            /**
+             * Monthly Credits
+             * @description The month's credits after the change
+             */
+            monthly_credits: number;
+            /**
+             * Admin Credits
+             * @description Credits left of what admins added, after it
+             */
+            admin_credits: number;
+            /**
+             * Subscription Id
+             * Format: uuid
+             */
+            subscription_id: string;
+            /**
+             * Grant Id
+             * @description The grant an add made
+             */
+            grant_id?: string | null;
+            /**
+             * Audit Id
+             * Format: uuid
+             */
+            audit_id: string;
+        };
+        /** AdminCreditGrantEntry */
+        AdminCreditGrantEntry: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Amount */
+            amount: number;
+            /** Remaining */
+            remaining: number;
+            /**
+             * Forfeited
+             * @description Taken back by a deduction
+             */
+            forfeited: number;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Expires At
+             * @description Null: they last
+             */
+            expires_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Subscription Id
+             * Format: uuid
+             */
+            subscription_id: string;
+            /**
+             * Granted By
+             * @description Null once that admin is deleted
+             */
+            granted_by?: string | null;
+            /** Granted By Email */
+            granted_by_email?: string | null;
+        };
+        /**
+         * AdminCreditLimits
+         * @description What a change may ask for. The dashboard's form reads them from here, so the
+         *     limits are written in one place (the model's constants).
+         */
+        AdminCreditLimits: {
+            /**
+             * Amount Max
+             * @description The most credits to add or deduct at once
+             */
+            amount_max: number;
+            /**
+             * Reason Min
+             * @description The reason's shortest length, once trimmed
+             */
+            reason_min: number;
+            /**
+             * Reason Max
+             * @description The reason's longest length
+             */
+            reason_max: number;
         };
         /**
          * AdminInvitationListResponse
@@ -6314,6 +6814,211 @@ export interface components {
             days_until_expiry?: number | null;
         };
         /**
+         * AdminPlanChange
+         * @description Body for a super admin changing a user's plan (src/services/admin_plan_changes.py).
+         *
+         *     The plan changes at once. ``billing`` says what happens to the money:
+         *     ``next_renewal`` charges nothing now and the new price applies from the next
+         *     renewal; ``charge_now`` has Lemon Squeezy invoice the prorated difference now
+         *     (an upgrade only); ``not_billed`` is for a user without a Lemon Squeezy
+         *     subscription. The reason's length is checked by the service, which sends its
+         *     limits with the options.
+         * @example {
+         *       "billing": "next_renewal",
+         *       "billing_period": "monthly",
+         *       "plan_id": "0b9d2c1e-6d43-4f6f-9a0b-0d5b8e4c2a11",
+         *       "reason": "Moved to Growth as agreed on the call of 8 October"
+         *     }
+         */
+        AdminPlanChange: {
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /**
+             * Billing Period
+             * @enum {string}
+             */
+            billing_period: "monthly" | "yearly";
+            /**
+             * Billing
+             * @enum {string}
+             */
+            billing: "next_renewal" | "charge_now" | "not_billed";
+            /**
+             * Reason
+             * @description Why, kept with the audit entry
+             */
+            reason: string;
+        };
+        /**
+         * AdminPlanChangeResult
+         * @description POST /admin/users/{user_id}/plan.
+         */
+        AdminPlanChangeResult: {
+            /**
+             * Subscription Id
+             * Format: uuid
+             */
+            subscription_id: string;
+            old_plan: components["schemas"]["AdminPlanRef"];
+            new_plan: components["schemas"]["AdminPlanRef"];
+            /** Old Billing Period */
+            old_billing_period?: string | null;
+            /** New Billing Period */
+            new_billing_period: string;
+            /** Billing */
+            billing: string;
+            /** Monthly Credits Before */
+            monthly_credits_before: number;
+            /** Monthly Credits After */
+            monthly_credits_after: number;
+            /** Renews At */
+            renews_at?: string | null;
+            /**
+             * Audit Id
+             * Format: uuid
+             */
+            audit_id: string;
+        };
+        /** AdminPlanChangeStanding */
+        AdminPlanChangeStanding: {
+            /** Allowed */
+            allowed: boolean;
+            /**
+             * Refused Reason
+             * @description Why not, ready to show
+             */
+            refused_reason?: string | null;
+            /**
+             * Default Billing
+             * @description next_renewal, or not_billed without a Lemon Squeezy subscription
+             */
+            default_billing?: string | null;
+        };
+        /** AdminPlanChoice */
+        AdminPlanChoice: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Price Monthly
+             * @description The list price, as "89.00"
+             */
+            price_monthly?: string | null;
+            /** Price Yearly */
+            price_yearly?: string | null;
+            /** Credits Per Month */
+            credits_per_month?: number | null;
+            /** Periods */
+            periods: components["schemas"]["AdminPlanPeriod"][];
+        };
+        /** AdminPlanLimits */
+        AdminPlanLimits: {
+            /** Reason Min */
+            reason_min: number;
+            /** Reason Max */
+            reason_max: number;
+        };
+        /**
+         * AdminPlanMode
+         * @description One way a change to this plan and period can be billed.
+         */
+        AdminPlanMode: {
+            /**
+             * Billing
+             * @description next_renewal, charge_now or not_billed
+             */
+            billing: string;
+            /**
+             * Plan Changes
+             * @description When the plan changes: always "now"
+             */
+            plan_changes: string;
+            /**
+             * Monthly Credits After
+             * @description The month's credits the change would leave
+             */
+            monthly_credits_after?: number | null;
+        };
+        /** AdminPlanPeriod */
+        AdminPlanPeriod: {
+            /** Billing Period */
+            billing_period: string;
+            /**
+             * Kind
+             * @description upgrade, downgrade or period_change
+             */
+            kind: string;
+            /** Allowed */
+            allowed: boolean;
+            /** Refused Reason */
+            refused_reason?: string | null;
+            /** Modes */
+            modes: components["schemas"]["AdminPlanMode"][];
+        };
+        /** AdminPlanRef */
+        AdminPlanRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+        };
+        /**
+         * AdminPlanSubscription
+         * @description The subscription whose plan would change.
+         */
+        AdminPlanSubscription: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /** Plan Name */
+            plan_name?: string | null;
+            /** Plan Display Name */
+            plan_display_name?: string | null;
+            /** Status */
+            status: string;
+            /** Is Trial */
+            is_trial: boolean;
+            /** Billing Period */
+            billing_period?: string | null;
+            /**
+             * Billed By Provider
+             * @description It has a Lemon Squeezy subscription
+             */
+            billed_by_provider: boolean;
+            /** Renews At */
+            renews_at?: string | null;
+            /** Trial Ends At */
+            trial_ends_at?: string | null;
+            /**
+             * Monthly Credits
+             * @description The month's credits left now
+             */
+            monthly_credits: number;
+            /** Credits Per Month */
+            credits_per_month?: number | null;
+        };
+        /**
          * AdminRefundRequestCreate
          * @description Body for an admin logging a refund a customer asked for by email.
          *
@@ -6336,6 +7041,102 @@ export interface components {
              * @description Cents to refund, for a partial request. Omit to request the order's whole remaining refundable balance.
              */
             requested_amount?: number | null;
+        };
+        /**
+         * AdminTrialExtension
+         * @description Body for a super admin moving a trial's end to a later date.
+         */
+        AdminTrialExtension: {
+            /**
+             * Ends At
+             * Format: date-time
+             * @description The trial's new end, later than its own
+             */
+            ends_at: string;
+            /**
+             * Reason
+             * @description Why, kept with the audit entry
+             */
+            reason: string;
+        };
+        /**
+         * AdminTrialExtensionResult
+         * @description POST /admin/users/{user_id}/trial.
+         */
+        AdminTrialExtensionResult: {
+            /**
+             * Subscription Id
+             * Format: uuid
+             */
+            subscription_id: string;
+            /** Trial Ended At Before */
+            trial_ended_at_before?: string | null;
+            /**
+             * Trial Ends At
+             * Format: date-time
+             */
+            trial_ends_at: string;
+            /**
+             * Audit Id
+             * Format: uuid
+             */
+            audit_id: string;
+        };
+        /** AdminTrialExtensionStanding */
+        AdminTrialExtensionStanding: {
+            /** Allowed */
+            allowed: boolean;
+            /** Refused Reason */
+            refused_reason?: string | null;
+            /**
+             * Earliest Ends At
+             * @description The new end is after this
+             */
+            earliest_ends_at?: string | null;
+            /**
+             * Latest Ends At
+             * @description And no later than this
+             */
+            latest_ends_at?: string | null;
+        };
+        /**
+         * AdminUserCreditsResponse
+         * @description GET /admin/users/{user_id}/credits: the breakdown and the history, newest first.
+         */
+        AdminUserCreditsResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            credits: components["schemas"]["CreditBreakdown"];
+            limits: components["schemas"]["AdminCreditLimits"];
+            /** Grants */
+            grants: components["schemas"]["AdminCreditGrantEntry"][];
+            /** Adjustments */
+            adjustments: components["schemas"]["AdminCreditAdjustmentEntry"][];
+        };
+        /**
+         * AdminUserPlanResponse
+         * @description GET /admin/users/{user_id}/plan.
+         */
+        AdminUserPlanResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Currency
+             * @description The currency of the prices
+             */
+            currency: string;
+            subscription?: components["schemas"]["AdminPlanSubscription"] | null;
+            change: components["schemas"]["AdminPlanChangeStanding"];
+            trial_extension: components["schemas"]["AdminTrialExtensionStanding"];
+            /** Plans */
+            plans: components["schemas"]["AdminPlanChoice"][];
+            limits: components["schemas"]["AdminPlanLimits"];
         };
         /**
          * AllowlistEntryCreateRequest
@@ -6405,6 +7206,18 @@ export interface components {
             entries: components["schemas"]["AllowlistEntryResponse"][];
             /** Total Count */
             total_count: number;
+        };
+        /**
+         * AnalyticsConsentResponse
+         * @description The stored answer.
+         */
+        AnalyticsConsentResponse: {
+            /** Answer */
+            answer?: ("granted" | "denied") | null;
+            /** Region */
+            region?: ("eea" | "other") | null;
+            /** Answered At */
+            answered_at?: string | null;
         };
         /**
          * AnalyticsOverviewResponse
@@ -7851,6 +8664,123 @@ export interface components {
             wordpress_published_at?: string | null;
         };
         /**
+         * ContentVersionDetailResponse
+         * @description Response for GET /content/{content_id}/versions/{version_id}.
+         */
+        ContentVersionDetailResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * @description When a later save of the same sitting last wrote into it
+             */
+            updated_at?: string | null;
+            /** @description null when the account is gone */
+            created_by?: components["schemas"]["ContentVersionMaker"] | null;
+            /**
+             * Source
+             * @description generation, edit, restore or publish
+             */
+            source: string;
+            /** Title */
+            title: string;
+            /**
+             * Word Count
+             * @description Words of the introduction and the body
+             */
+            word_count: number;
+            /** Introduction */
+            introduction?: string | null;
+            /** Body Markdown */
+            body_markdown?: string | null;
+            /** Body Html */
+            body_html?: string | null;
+            /** Images Data */
+            images_data?: unknown | null;
+        };
+        /**
+         * ContentVersionListResponse
+         * @description Response for GET /content/{content_id}/versions: newest first, without bodies.
+         */
+        ContentVersionListResponse: {
+            /** Versions */
+            versions: components["schemas"]["ContentVersionSummary"][];
+        };
+        /**
+         * ContentVersionMaker
+         * @description Who made a version.
+         */
+        ContentVersionMaker: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * ContentVersionRestore
+         * @description The editor's unsaved text, sent with a restore so that it is kept in the history before
+         *     the version is put back. Every field is optional: send those the editor holds unsaved,
+         *     each whole.
+         */
+        ContentVersionRestore: {
+            /** Title */
+            title?: string | null;
+            /** Introduction */
+            introduction?: string | null;
+            /** Body Markdown */
+            body_markdown?: string | null;
+            /** Body Html */
+            body_html?: string | null;
+            /** Images Data */
+            images_data?: unknown | null;
+        };
+        /**
+         * ContentVersionSummary
+         * @description A version in the editor's history: the article's text as a save left it.
+         */
+        ContentVersionSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * @description When a later save of the same sitting last wrote into it
+             */
+            updated_at?: string | null;
+            /** @description null when the account is gone */
+            created_by?: components["schemas"]["ContentVersionMaker"] | null;
+            /**
+             * Source
+             * @description generation, edit, restore or publish
+             */
+            source: string;
+            /** Title */
+            title: string;
+            /**
+             * Word Count
+             * @description Words of the introduction and the body
+             */
+            word_count: number;
+        };
+        /**
          * CreateAdminInvitationRequest
          * @description Schema for creating a new platform admin invitation.
          *
@@ -7900,12 +8830,13 @@ export interface components {
         CreditBalanceResponse: {
             /**
              * Current Credits
-             * @description This month's credits plus the live bonus
+             * @description This month's credits plus the live bonus and added credits
              */
             current_credits: number;
             /** Monthly Credits */
             monthly_credits: number;
             bonus?: components["schemas"]["CreditBonus"] | null;
+            added_credits?: components["schemas"]["AddedCredits"] | null;
             /**
              * Credits Per Month
              * @description Null for an unlimited plan
@@ -7956,6 +8887,119 @@ export interface components {
              * @description ISO 8601, the earliest grant's expiry
              */
             expires_at?: string | null;
+        };
+        /**
+         * CreditBreakdown
+         * @description What a user can spend now, by where it comes from.
+         */
+        CreditBreakdown: {
+            /** Subscription Id */
+            subscription_id?: string | null;
+            /** Plan Name */
+            plan_name?: string | null;
+            /**
+             * Current Credits
+             * @description Everything spendable now
+             */
+            current_credits: number;
+            /** Monthly Credits */
+            monthly_credits: number;
+            /** Credits Per Month */
+            credits_per_month?: number | null;
+            /**
+             * Credits Reset Date
+             * @description ISO 8601
+             */
+            credits_reset_date?: string | null;
+            bonus?: components["schemas"]["CreditBonus"] | null;
+            added_credits?: components["schemas"]["AddedCredits"] | null;
+            /**
+             * Period Adjustment
+             * @description What admins changed this period's monthly credits by (deductions negative)
+             */
+            period_adjustment: number;
+        };
+        /**
+         * CreditHistoryResponse
+         * @description GET /subscriptions/credits/history: the caller's credits changed by Rext support.
+         */
+        CreditHistoryResponse: {
+            /** Grants */
+            grants: components["schemas"]["CustomerCreditGrantEntry"][];
+            /** Adjustments */
+            adjustments: components["schemas"]["CustomerCreditAdjustmentEntry"][];
+        };
+        /** CustomerCreditAdjustmentEntry */
+        CustomerCreditAdjustmentEntry: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Action */
+            action?: string | null;
+            /** Amount */
+            amount?: number | null;
+            /** Balance Before */
+            balance_before?: number | null;
+            /** Balance After */
+            balance_after?: number | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Expires At
+             * @description ISO 8601, an add's expiry
+             */
+            expires_at?: string | null;
+            /**
+             * Grant Id
+             * @description The grant an add made, by its id
+             */
+            grant_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Adjusted By
+             * @description Always "Rext support"
+             */
+            adjusted_by: string;
+        };
+        /** CustomerCreditGrantEntry */
+        CustomerCreditGrantEntry: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Amount */
+            amount: number;
+            /** Remaining */
+            remaining: number;
+            /**
+             * Forfeited
+             * @description Taken back by a deduction
+             */
+            forfeited: number;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Expires At
+             * @description Null: they last
+             */
+            expires_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Granted By
+             * @description Always "Rext support"
+             */
+            granted_by: string;
         };
         /**
          * DataExportRequest
@@ -8191,6 +9235,8 @@ export interface components {
              * @description The site's favicon, fetched once and kept in the media store
              */
             favicon_url?: string | null;
+            /** @description The latest pipeline run; null when none is recorded */
+            pipeline?: components["schemas"]["WorkspacePipelineState"] | null;
             /**
              * Created At
              * Format: date-time
@@ -8757,6 +9803,44 @@ export interface components {
             /** Permissions */
             permissions: string[];
         };
+        /**
+         * IncidentBannerResponse
+         * @description The banner as every signed-in user reads it. `active` false means there is none.
+         */
+        IncidentBannerResponse: {
+            /** Active */
+            active: boolean;
+            /** Message */
+            message?: string | null;
+            /** Areas */
+            areas?: ("generation" | "keyword_research" | "publishing" | "billing" | "sign_in")[];
+            /** Started At */
+            started_at?: string | null;
+            /** Expires At */
+            expires_at?: string | null;
+        };
+        /**
+         * IncidentBannerSetRequest
+         * @description Body for PUT /api/v1/admin/status/banner.
+         */
+        IncidentBannerSetRequest: {
+            /**
+             * Message
+             * @description What is happening, in plain text. Shown as text, never as markup.
+             */
+            message: string;
+            /**
+             * Areas
+             * @description What is affected; may be empty.
+             */
+            areas?: ("generation" | "keyword_research" | "publishing" | "billing" | "sign_in")[];
+            /**
+             * Duration Minutes
+             * @description How long the banner shows unless it is switched off first (15 minutes to 24 hours).
+             * @default 60
+             */
+            duration_minutes: number;
+        };
         /** InvitationAcceptResponse */
         InvitationAcceptResponse: {
             /**
@@ -9057,36 +10141,6 @@ export interface components {
         LibraryItemDeleted: {
             /** Deleted Key */
             deleted_key: string;
-        };
-        /**
-         * LicenseItem
-         * @description Schema for a license item.
-         */
-        LicenseItem: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** License Key */
-            license_key: string;
-            /** Product Name */
-            product_name: string;
-            /** Status */
-            status: string;
-            /** Activation Limit */
-            activation_limit?: number | null;
-            /** Activation Count */
-            activation_count: number;
-            /** Activated At */
-            activated_at?: string | null;
-            /** Expires At */
-            expires_at?: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
         };
         /**
          * LoginDetail
@@ -10238,6 +11292,29 @@ export interface components {
             offer?: components["schemas"]["CatalogOffer"] | null;
         };
         /**
+         * PlanChangeChargeRow
+         * @description A plan change the customer paid for, which a refund of their order doesn't give back.
+         *
+         *     Lemon Squeezy charges it as a subscription invoice, not as an order. Amounts in cents.
+         */
+        PlanChangeChargeRow: {
+            /** Invoice Id */
+            invoice_id: string;
+            /** Amount */
+            amount: number;
+            /**
+             * Refunded Amount
+             * @default 0
+             */
+            refunded_amount: number;
+            /** Outstanding Amount */
+            outstanding_amount: number;
+            /** Currency */
+            currency: string;
+            /** Paid At */
+            paid_at?: string | null;
+        };
+        /**
          * PlanDeleteResponse
          * @description Response schema for plan deletion.
          */
@@ -10278,8 +11355,6 @@ export interface components {
             max_workspaces: number;
             /** Max Members Per Workspace */
             max_members_per_workspace: number;
-            /** Max Api Calls Per Month */
-            max_api_calls_per_month: number;
             /** Is Active */
             is_active: boolean;
             /** Is Public */
@@ -10808,6 +11883,11 @@ export interface components {
              * @default false
              */
             awaiting_processing: boolean;
+            /**
+             * Plan Change Charges
+             * @default []
+             */
+            plan_change_charges: components["schemas"]["PlanChangeChargeRow"][];
         };
         /**
          * RefundStatus
@@ -10900,6 +11980,11 @@ export interface components {
              * @default 0
              */
             refundable_amount: number;
+            /**
+             * Plan Change Charges
+             * @default []
+             */
+            plan_change_charges: components["schemas"]["PlanChangeChargeRow"][];
         };
         /** RegisterResponse */
         RegisterResponse: {
@@ -11979,8 +13064,6 @@ export interface components {
             renews_at?: string | null;
             /** Ends At */
             ends_at?: string | null;
-            /** Current Api Calls */
-            current_api_calls: number;
             /** Usage Reset Date */
             usage_reset_date?: string | null;
             /** Plan Name */
@@ -12008,17 +13091,6 @@ export interface components {
              * @description Available plans list
              */
             plans?: unknown[];
-            /**
-             * Licenses
-             * @description User licenses
-             */
-            licenses?: components["schemas"]["LicenseItem"][];
-            /**
-             * Activations Count
-             * @description Total active license activations
-             * @default 0
-             */
-            activations_count: number;
         };
         /**
          * SubscriptionHistoryResponse
@@ -12045,7 +13117,6 @@ export interface components {
          *       },
          *       "is_active": true,
          *       "is_public": true,
-         *       "max_api_calls_per_month": 30000,
          *       "max_members_per_workspace": 8,
          *       "max_workspaces": 3,
          *       "name": "startup",
@@ -12100,12 +13171,6 @@ export interface components {
              * @default 5
              */
             max_members_per_workspace: number;
-            /**
-             * Max Api Calls Per Month
-             * @description Maximum API calls per month (-1 = unlimited)
-             * @default 10000
-             */
-            max_api_calls_per_month: number;
             /**
              * Is Active
              * @description Whether the plan is active
@@ -12176,11 +13241,6 @@ export interface components {
              * @description Maximum members per workspace (-1 = unlimited)
              */
             max_members_per_workspace?: number | null;
-            /**
-             * Max Api Calls Per Month
-             * @description Maximum API calls per month (-1 = unlimited)
-             */
-            max_api_calls_per_month?: number | null;
             /**
              * Is Active
              * @description Whether the plan is active
@@ -12380,6 +13440,42 @@ export interface components {
             error?: null;
         };
         /**
+         * SuccessResponse[AdminCreditAdjustmentResult]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AdminCreditAdjustmentResult_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AdminCreditAdjustmentResult"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
          * SuccessResponse[AdminInvitationListResponse]
          * @example {
          *       "data": {},
@@ -12445,6 +13541,150 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["AdminInvitationResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[AdminPlanChangeResult]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AdminPlanChangeResult_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AdminPlanChangeResult"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[AdminTrialExtensionResult]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AdminTrialExtensionResult_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AdminTrialExtensionResult"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[AdminUserCreditsResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AdminUserCreditsResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AdminUserCreditsResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[AdminUserPlanResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AdminUserPlanResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AdminUserPlanResponse"];
             /**
              * Error
              * @description Always null for success responses
@@ -12553,6 +13793,42 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["AllowlistListResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[AnalyticsConsentResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_AnalyticsConsentResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["AnalyticsConsentResponse"];
             /**
              * Error
              * @description Always null for success responses
@@ -13496,6 +14772,78 @@ export interface components {
             error?: null;
         };
         /**
+         * SuccessResponse[ContentVersionDetailResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_ContentVersionDetailResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["ContentVersionDetailResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[ContentVersionListResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_ContentVersionListResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["ContentVersionListResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
          * SuccessResponse[CreditBalanceResponse]
          * @example {
          *       "data": {},
@@ -13525,6 +14873,42 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["CreditBalanceResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[CreditHistoryResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_CreditHistoryResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["CreditHistoryResponse"];
             /**
              * Error
              * @description Always null for success responses
@@ -14394,6 +15778,42 @@ export interface components {
             meta: components["schemas"]["ResponseMeta"];
             /** @description The response payload data */
             data: components["schemas"]["ImpersonationStopResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
+         * SuccessResponse[IncidentBannerResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_IncidentBannerResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["IncidentBannerResponse"];
             /**
              * Error
              * @description Always null for success responses
@@ -18577,6 +19997,42 @@ export interface components {
             error?: null;
         };
         /**
+         * SuccessResponse[WorkspacePipelineRetryResponse]
+         * @example {
+         *       "data": {},
+         *       "message": "Operation completed successfully",
+         *       "meta": {
+         *         "processing_time_ms": 250,
+         *         "request_id": "req_1234567890_abc123",
+         *         "timestamp": "2024-01-15T10:30:00.123456Z",
+         *         "version": "1.0"
+         *       },
+         *       "success": true
+         *     }
+         */
+        SuccessResponse_WorkspacePipelineRetryResponse_: {
+            /**
+             * Success
+             * @description Always true for success responses
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message describing the result
+             */
+            message?: string | null;
+            /** @description Response metadata */
+            meta: components["schemas"]["ResponseMeta"];
+            /** @description The response payload data */
+            data: components["schemas"]["WorkspacePipelineRetryResponse"];
+            /**
+             * Error
+             * @description Always null for success responses
+             */
+            error?: null;
+        };
+        /**
          * SuccessResponse[WorkspaceResponseSchema]
          * @example {
          *       "data": {},
@@ -18914,6 +20370,23 @@ export interface components {
             unsubscribed_from: string;
         };
         /**
+         * UpdateAnalyticsConsentRequest
+         * @description What the person's browser holds: their answer, and where they were asked from.
+         */
+        UpdateAnalyticsConsentRequest: {
+            /**
+             * Answer
+             * @description The person's answer on usage analytics, or null for none yet
+             */
+            answer: ("granted" | "denied") | null;
+            /**
+             * Region
+             * @description Where the person was asked from: the EEA asks first, elsewhere doesn't
+             * @enum {string}
+             */
+            region: "eea" | "other";
+        };
+        /**
          * UpdateNotificationPreferencesRequest
          * @description Request schema for updating notification preferences.
          *     Supports partial updates - all fields are optional.
@@ -19114,7 +20587,6 @@ export interface components {
         UsageMetricsResponse: {
             workspaces: components["schemas"]["UsageMetric"];
             members: components["schemas"]["UsageMetric"];
-            api_calls: components["schemas"]["APIUsageMetric"];
             /** Meta */
             meta: {
                 [key: string]: unknown;
@@ -19220,12 +20692,110 @@ export interface components {
         /** UserListResponse */
         UserListResponse: {
             /** Users */
-            users: components["schemas"]["UserResponse"][];
+            users: components["schemas"]["UserListRow"][];
             /** Total Count */
             total_count: number;
             /** Workspace Id */
             workspace_id?: string | null;
             pagination: components["schemas"]["UserListPagination"];
+        };
+        /**
+         * UserListRow
+         * @description A user in the admin's list, with the plan the row shows (FB2.29): from the newest
+         *     subscription that grants access, and empty without one.
+         */
+        UserListRow: {
+            /**
+             * Id
+             * Format: uuid
+             * @description User UUID
+             */
+            id: string;
+            /**
+             * Email
+             * Format: email
+             * @description User email
+             */
+            email: string;
+            /**
+             * Full Name
+             * @description Full name
+             */
+            full_name?: string | null;
+            /**
+             * Display Name
+             * @description Display name
+             */
+            display_name?: string | null;
+            /**
+             * Avatar Url
+             * @description Profile avatar URL
+             */
+            avatar_url?: string | null;
+            /**
+             * Language
+             * @description Language preference
+             * @default en
+             */
+            language: string;
+            /**
+             * Timezone
+             * @description Timezone preference
+             * @default UTC
+             */
+            timezone: string;
+            /**
+             * Status
+             * @description Account status
+             */
+            status: string;
+            /**
+             * Email Verified
+             * @description Whether email is verified
+             */
+            email_verified: boolean;
+            /**
+             * Last Login At
+             * @description Last login timestamp
+             */
+            last_login_at?: string | null;
+            /**
+             * Login Count
+             * @description Total login count
+             * @default 0
+             */
+            login_count: number;
+            /**
+             * Initials
+             * @description User initials (e.g., 'JD')
+             */
+            initials?: string | null;
+            /**
+             * Display Role
+             * @description Primary or highest role for display
+             * @default User
+             */
+            display_role: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * @description Last update timestamp
+             */
+            updated_at?: string | null;
+            /** Plan Display Name */
+            plan_display_name?: string | null;
+            /**
+             * Is Trial
+             * @default false
+             */
+            is_trial: boolean;
+            /** Billing Period */
+            billing_period?: string | null;
         };
         /**
          * UserLoginHistoryResponse
@@ -20374,6 +21944,44 @@ export interface components {
             message: string;
         };
         /**
+         * WorkspacePipelineRetryRequest
+         * @description The optional body of POST /workspaces/{id}/pipeline/retry.
+         */
+        WorkspacePipelineRetryRequest: {
+            /**
+             * Description
+             * @description For a workspace with no website: what the business sells and to whom, 20 to 1,000 characters once trimmed. It is kept as the brand voice's `about` and the voice is drafted from it. This is how a workspace made from a name alone is set up
+             */
+            description?: string | null;
+        };
+        /** WorkspacePipelineRetryResponse */
+        WorkspacePipelineRetryResponse: {
+            /** Operation Id */
+            operation_id: string;
+        };
+        /**
+         * WorkspacePipelineState
+         * @description The latest run of the workspace pipeline that reads the website (creation, retry, refresh)
+         */
+        WorkspacePipelineState: {
+            /**
+             * Status
+             * @description not_started: the workspace was made from a name alone and nothing has been read or drafted yet. interrupted: a restart or a deploy ended the run; POST .../pipeline/retry runs it again
+             * @enum {string}
+             */
+            status: "not_started" | "running" | "completed" | "failed" | "interrupted";
+            /**
+             * Operation Id
+             * @description The run's SSE operation id
+             */
+            operation_id?: string | null;
+            /**
+             * Started At
+             * @description When the run started
+             */
+            started_at?: string | null;
+        };
+        /**
          * WorkspaceResponseSchema
          * @description Full workspace response with ID and metadata
          */
@@ -20415,6 +22023,8 @@ export interface components {
              * @description The site's favicon, fetched once and kept in the media store
              */
             favicon_url?: string | null;
+            /** @description The latest pipeline run; null when none is recorded */
+            pipeline?: components["schemas"]["WorkspacePipelineState"] | null;
             /**
              * Created At
              * Format: date-time
@@ -20475,10 +22085,14 @@ export interface components {
             timezone?: string | null;
             /**
              * Url
-             * Format: uri
-             * @description Workspace URL
+             * @description The website to read. With neither a website nor a `description` the workspace is made from its name alone and set up later (its pipeline reads `not_started`)
              */
-            url: string;
+            url?: string | null;
+            /**
+             * Description
+             * @description For a business with no website yet: what it sells and to whom, in the owner's words, 20 to 1,000 characters once trimmed. The brand voice is drafted from it, and it is kept as the brand voice's `about`. Ignored when `url` is sent
+             */
+            description?: string | null;
         };
         /** WorkspaceStatsResponse */
         WorkspaceStatsResponse: {
@@ -22398,6 +24012,72 @@ export interface operations {
             };
         };
     };
+    get_analytics_consent_api_v1_user_analytics_consent_get: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AnalyticsConsentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_analytics_consent_api_v1_user_analytics_consent_put: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAnalyticsConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AnalyticsConsentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_pending_invitations_api_v1_user_invitations_pending_get: {
         parameters: {
             query?: never;
@@ -22578,6 +24258,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_incident_banner_api_v1_status_banner_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_IncidentBannerResponse_"];
                 };
             };
         };
@@ -22888,6 +24588,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessResponse_WorkspaceDeleteResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_workspace_pipeline_api_v1_workspaces__workspace_id__pipeline_retry_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["WorkspacePipelineRetryRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_WorkspacePipelineRetryResponse_"];
                 };
             };
             /** @description Validation Error */
@@ -24552,6 +26289,138 @@ export interface operations {
             };
         };
     };
+    list_content_versions_api_v1_content__content_id__versions_get: {
+        parameters: {
+            query: {
+                workspace_id: string;
+            };
+            header: {
+                authorization: string;
+            };
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_ContentVersionListResponse_"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_content_version_api_v1_content__content_id__versions__version_id__get: {
+        parameters: {
+            query: {
+                workspace_id: string;
+            };
+            header: {
+                authorization: string;
+            };
+            path: {
+                content_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_ContentVersionDetailResponse_"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_content_version_api_v1_content__content_id__versions__version_id__restore_post: {
+        parameters: {
+            query: {
+                workspace_id: string;
+            };
+            header: {
+                authorization: string;
+            };
+            path: {
+                content_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ContentVersionRestore"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_ContentResponse_"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_roles_api_v1_roles__get: {
         parameters: {
             query?: {
@@ -25243,6 +27112,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessResponse_CreditBalanceResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_credit_history_api_v1_subscriptions_credits_history_get: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_CreditHistoryResponse_"];
                 };
             };
             /** @description Validation Error */
@@ -26974,6 +28874,113 @@ export interface operations {
             };
         };
     };
+    get_user_plan_api_v1_admin_users__user_id__plan_get: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AdminUserPlanResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_user_plan_api_v1_admin_users__user_id__plan_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminPlanChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AdminPlanChangeResult_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extend_user_trial_api_v1_admin_users__user_id__trial_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminTrialExtension"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AdminTrialExtensionResult_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_system_health_api_v1_admin_monitoring_system_health_get: {
         parameters: {
             query?: never;
@@ -27137,6 +29144,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessResponse_UsageTrendsResponseSchema_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_incident_banner_api_v1_admin_status_banner_put: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentBannerSetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_IncidentBannerResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_incident_banner_api_v1_admin_status_banner_delete: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_IncidentBannerResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_credits_api_v1_admin_users__user_id__credits_get: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AdminUserCreditsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adjust_user_credits_api_v1_admin_users__user_id__credits_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCreditAdjustment"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse_AdminCreditAdjustmentResult_"];
                 };
             };
             /** @description Validation Error */
