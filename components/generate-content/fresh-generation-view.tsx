@@ -674,8 +674,12 @@ export function FreshGenerationView({
     // switch: a long article's stream is cut after five minutes and the page joins its own run
     // again. The reader keeps what they are reading, and their place; the thread's state and
     // the joined stream bring the rest (task 773).
+    // Text from any of its three sources: the draft or a later stage's text, the first draft's
+    // sections so far, or what the writer is streaming. None of them is sent again to a page
+    // that joins.
     const reconnecting =
-      threadId === backgroundThreadId && !!generatedContent?.trim();
+      threadId === backgroundThreadId &&
+      !!(generatedContent || shownSections || displayedBodyMarkdown)?.trim();
     dispatch({ type: "SET_THREAD_ID", payload: backgroundThreadId });
     if (!reconnecting) {
       // Clear stale content / scores / outline from a previously-viewed thread
