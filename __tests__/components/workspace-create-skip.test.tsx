@@ -100,6 +100,15 @@ describe("Skip for now", () => {
     expect(screen.queryByRole("button", { name: "Skip for now" })).toBeNull();
   });
 
+  it("comes first on a phone, where the button and what is under it sit below the first screen", () => {
+    open();
+    // One link, moved by the layout: first in the column below the large breakpoint, under the
+    // button from it up.
+    const line = skip().closest("p");
+    expect(line).toHaveClass("order-first", "lg:order-none");
+    expect(line?.parentElement).toHaveClass("flex", "flex-col");
+  });
+
   it("makes a workspace with a name and nothing else, and goes to the app's home", async () => {
     createWorkspace.mockResolvedValue(MADE);
     open();
