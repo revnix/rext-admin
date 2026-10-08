@@ -22,6 +22,7 @@ import type {
   CreateContentRequest,
   UpdateContentRequest,
   WordPressPostStatus,
+  RestoreUnsaved,
 } from "@/types/content";
 import type { ApiClient } from "./core";
 import { buildUrl } from "../url-utils";
@@ -130,10 +131,17 @@ export function createContentNamespace(client: ApiClient) {
       workspaceId: string,
       contentId: string,
       versionId: string,
+      unsaved?: RestoreUnsaved | null,
     ) => {
       return client.request<ContentResponse>(
         `${ENDPOINTS.CONTENT.restoreVersion(contentId, versionId)}?workspace_id=${encodeURIComponent(workspaceId)}`,
-        { method: "POST" },
+        unsaved
+          ? {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(unsaved),
+            }
+          : { method: "POST" },
       );
     },
 

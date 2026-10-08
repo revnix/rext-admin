@@ -23,6 +23,7 @@ import type {
   ContentItem,
   ContentVersion,
   ContentVersionSource,
+  RestoreUnsaved,
 } from "@/types/content";
 
 /** What each kind of version holds, in a word or two. */
@@ -62,7 +63,8 @@ export function HistoryDrawer({
   workspaceId,
   contentId,
   versions,
-  beforeRestore,
+  takeUnsaved,
+  onNotRestored,
   onRestored,
 }: {
   open: boolean;
@@ -70,8 +72,11 @@ export function HistoryDrawer({
   workspaceId: string;
   contentId: string;
   versions: ContentVersion[];
-  /** Saves what the editor still holds unsaved; false when that save failed. */
-  beforeRestore: () => Promise<boolean>;
+  /** What the editor still holds unsaved, with its own saving stopped: it goes with the restore,
+   *  which keeps it as a version. Null when nothing is unsaved. */
+  takeUnsaved: () => Promise<RestoreUnsaved | null>;
+  /** The restore didn't happen: the editor saves by itself again. */
+  onNotRestored: () => void;
   /** The article as the restore left it. */
   onRestored: (article: ContentItem) => void;
 }) {
@@ -119,22 +124,21 @@ export function HistoryDrawer({
     });
     if (!agreed) return;
     setBusy(true);
-    // The text as it stands has to reach the server before it can be kept as a version.
-    if (!(await beforeRestore())) {
-      setProblem(
-        "Your last changes couldn't be saved, so nothing was restored. Try again once they are.",
-      );
-      return;
-    }
+    // The text as it stands goes with the restore itself: the backend keeps it as a version,
+    // restores and trims the history in one step, so no save made just before can cost the
+    // version being restored.
+    const unsaved = await takeUnsaved();
     try {
       const response = await restore.mutateAsync({
         workspaceId,
         contentId,
         versionId,
+        unsaved,
       });
       back();
       onRestored(response.content);
     } catch (error) {
+      onNotRestored();
       setProblem(
         error instanceof Error && error.message
           ? `The version wasn't restored: ${error.message}`

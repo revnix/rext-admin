@@ -580,7 +580,7 @@ describe("The editor's History", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows a version's text, and restores it after asking, saving what is unsaved first", async () => {
+  it("shows a version's text, and restores it after asking, the unsaved text going with the restore", async () => {
     contentApi.versions.mockResolvedValue({ versions: VERSIONS });
     contentApi.version.mockResolvedValue({
       ...VERSIONS[1],
@@ -619,9 +619,14 @@ describe("The editor's History", () => {
     );
     await wait(50);
 
-    // What was typed is saved first, so the backend can keep it as a version.
-    expect(update).toHaveBeenCalledTimes(1);
-    expect(contentApi.restoreVersion).toHaveBeenCalledWith("w1", "c1", "v1");
+    // What was typed goes with the restore, which keeps it as a version: no save of its own.
+    expect(update).not.toHaveBeenCalled();
+    expect(contentApi.restoreVersion).toHaveBeenCalledWith(
+      "w1",
+      "c1",
+      "v1",
+      expect.objectContaining({ body_markdown: "Hello?" }),
+    );
     expect(tracked("article_version_restored")).toEqual([
       ["article_version_restored", { content_id: "c1" }],
     ]);
@@ -634,13 +639,13 @@ describe("The editor's History", () => {
     expect(screen.getByText("Saved")).toBeInTheDocument();
   });
 
-  it("restores nothing when the text as it stands can't be saved first", async () => {
+  it("goes on saving what is unsaved when the restore doesn't happen", async () => {
     contentApi.versions.mockResolvedValue({ versions: VERSIONS });
     contentApi.version.mockResolvedValue({
       ...VERSIONS[1],
       body_markdown: "The first text",
     });
-    update.mockRejectedValue(new Error("offline"));
+    contentApi.restoreVersion.mockRejectedValue(new Error("Server error"));
     const user = renderPage();
     await user.type(screen.getByLabelText("Article text"), "?");
 
@@ -659,32 +664,33 @@ describe("The editor's History", () => {
     );
     await wait(50);
 
-    expect(contentApi.restoreVersion).not.toHaveBeenCalled();
-    expect(
-      within(drawer).getByText("Nothing was restored"),
-    ).toBeInTheDocument();
+    expect(contentApi.restoreVersion).toHaveBeenCalledTimes(1);
+    expect(update).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Article text")).toHaveValue("Hello?");
+    // The text that went with the failed restore is still unsaved: the editor saves it itself.
+    await wait(4000);
+    expect(update).toHaveBeenCalledTimes(1);
   });
 
-  it("lets no second restore start while the save that goes first is on its way", async () => {
+  it("lets no second restore start while one is on its way", async () => {
     contentApi.versions.mockResolvedValue({ versions: VERSIONS });
     contentApi.version.mockResolvedValue({
       ...VERSIONS[1],
       body_markdown: "The first text",
     });
-    contentApi.restoreVersion.mockResolvedValue({
-      id: "c1",
-      content: {
-        id: "c1",
-        title: "The first title",
-        body_markdown: "The first text",
-      },
-    });
     let finish: () => void = () => {};
-    update.mockImplementation(
+    contentApi.restoreVersion.mockImplementation(
       () =>
         new Promise((resolve) => {
-          finish = () => resolve({});
+          finish = () =>
+            resolve({
+              id: "c1",
+              content: {
+                id: "c1",
+                title: "The first title",
+                body_markdown: "The first text",
+              },
+            });
         }),
     );
     const user = renderPage();
@@ -705,18 +711,19 @@ describe("The editor's History", () => {
     );
     await wait(50);
 
-    // The save is slow: until it answers, the button and the way back are off.
+    // The restore is slow: until it answers, the button and the way back are off.
     expect(
       within(drawer).getByRole("button", { name: "Restoring…" }),
     ).toBeDisabled();
     expect(
       within(drawer).getByRole("button", { name: "All versions" }),
     ).toBeDisabled();
-    expect(contentApi.restoreVersion).not.toHaveBeenCalled();
+    expect(contentApi.restoreVersion).toHaveBeenCalledTimes(1);
 
     await act(async () => finish());
     await wait(50);
     expect(contentApi.restoreVersion).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText("Article text")).toHaveValue("The first text");
   });
 
   it("says so when the restore itself fails, and changes nothing", async () => {
