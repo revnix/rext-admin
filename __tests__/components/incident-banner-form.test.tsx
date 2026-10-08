@@ -42,6 +42,23 @@ const showing = (changes: Record<string, unknown> = {}) => ({
   ...changes,
 });
 
+/**
+ * The backend, as far as the form can tell: what it says is showing, which a switch changes. The
+ * form reads again after each switch, so the read has to answer with the new state.
+ */
+function serve(initial: unknown) {
+  let state = initial;
+  api.get.mockImplementation(async () => state);
+  api.set.mockImplementation(async (input) => {
+    state = showing(input);
+    return state;
+  });
+  api.clear.mockImplementation(async () => {
+    state = NONE;
+    return state;
+  });
+}
+
 function renderForm() {
   return render(
     <QueryClientProvider client={new QueryClient()}>
@@ -69,8 +86,7 @@ describe("IncidentBannerForm", () => {
   });
 
   it("shows a banner with its message, what is affected and an hour by default", async () => {
-    api.get.mockResolvedValue(NONE);
-    api.set.mockImplementation(async (input) => showing(input));
+    serve(NONE);
     const user = userEvent.setup();
     renderForm();
     await within(now()).findByText("No banner is showing.");
@@ -105,8 +121,7 @@ describe("IncidentBannerForm", () => {
   });
 
   it("unticks an area", async () => {
-    api.get.mockResolvedValue(NONE);
-    api.set.mockImplementation(async (input) => showing(input));
+    serve(NONE);
     const user = userEvent.setup();
     renderForm();
     await within(now()).findByText("No banner is showing.");
@@ -139,8 +154,7 @@ describe("IncidentBannerForm", () => {
   });
 
   it("switches off the banner that is showing", async () => {
-    api.get.mockResolvedValue(showing());
-    api.clear.mockResolvedValue(NONE);
+    serve(showing());
     const user = userEvent.setup();
     renderForm();
 
@@ -189,5 +203,56 @@ describe("IncidentBannerForm", () => {
     expect(
       screen.getByRole("button", { name: "Show the banner" }),
     ).toBeEnabled();
+  });
+
+  it("stays busy until the request settles, so a second click sends nothing more", async () => {
+    serve(NONE);
+    let settle: () => void = () => {};
+    api.set.mockImplementation(
+      (input) =>
+        new Promise((resolve) => {
+          settle = () => {
+            serve(showing(input));
+            resolve(showing(input));
+          };
+        }),
+    );
+    const user = userEvent.setup();
+    renderForm();
+    await within(now()).findByText("No banner is showing.");
+
+    await user.type(screen.getByLabelText(/Message/), MESSAGE);
+    const submit = screen.getByRole("button", { name: "Show the banner" });
+    await user.click(submit);
+    await waitFor(() => expect(submit).toBeDisabled());
+    await user.click(submit);
+    expect(api.set).toHaveBeenCalledTimes(1);
+
+    settle();
+    expect(await within(now()).findByText("A banner is showing")).toBeVisible();
+  });
+
+  it("doesn't let a read that was already on its way undo a fresh switch", async () => {
+    // The first read is still in flight, holding "none", when the banner is switched on.
+    let answerOldRead: (banner: unknown) => void = () => {};
+    api.get
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            answerOldRead = resolve;
+          }),
+      )
+      .mockResolvedValue(showing());
+    api.set.mockImplementation(async (input) => showing(input));
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.type(screen.getByLabelText(/Message/), MESSAGE);
+    await user.click(screen.getByRole("button", { name: "Show the banner" }));
+    expect(await within(now()).findByText("A banner is showing")).toBeVisible();
+
+    answerOldRead(NONE);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(within(now()).getByText("A banner is showing")).toBeVisible();
   });
 });

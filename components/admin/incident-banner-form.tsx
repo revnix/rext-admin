@@ -52,6 +52,8 @@ const NO_BANNER: IncidentBanner = {
   expires_at: null,
 };
 
+const noop = () => {};
+
 const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 const clock = (time: number) =>
@@ -76,11 +78,20 @@ export function IncidentBannerForm() {
     defaultValues: { message: "", areas: [], duration_minutes: 60 },
   });
 
+  // A read already on its way (the first one, or the minute's) may hold the state from before the
+  // switch: it is dropped first, so it can't land after the switch's answer and undo it on screen.
+  const dropReads = () =>
+    queryClient.cancelQueries({ queryKey: incidentBannerQueries.all() });
+  const readAgain = () =>
+    queryClient.invalidateQueries({ queryKey: incidentBannerQueries.all() });
+
   const show = useMutation({
     mutationFn: (values: IncidentBannerValues) =>
       apiClient.incidentBanner.set(values),
+    onMutate: dropReads,
     onSuccess: (banner, values) => {
       queryClient.setQueryData(incidentBannerQueries.all(), banner);
+      void readAgain();
       form.reset(values);
       toast.success(
         "The banner is showing. Everyone signed in sees it within a minute.",
@@ -92,8 +103,10 @@ export function IncidentBannerForm() {
 
   const switchOff = useMutation({
     mutationFn: () => apiClient.incidentBanner.clear(),
+    onMutate: dropReads,
     onSuccess: () => {
       queryClient.setQueryData(incidentBannerQueries.all(), NO_BANNER);
+      void readAgain();
       toast.success("The banner is off.");
     },
     onError: (error: Error) =>
@@ -112,7 +125,7 @@ export function IncidentBannerForm() {
                 variant="outline"
                 size="sm"
                 onClick={() => switchOff.mutate()}
-                disabled={switchOff.isPending}
+                disabled={switchOff.isPending || show.isPending}
               >
                 Switch it off
               </Button>
@@ -141,7 +154,9 @@ export function IncidentBannerForm() {
 
       <FormShell
         form={form}
-        onSubmit={(values) => show.mutate(values)}
+        // Held until the request settles: the button stays busy, so a second click or an edit
+        // can't send a competing banner. A failure is said by the mutation's own toast.
+        onSubmit={(values) => show.mutateAsync(values).then(noop, noop)}
         submitLabel={showing ? "Replace the banner" : "Show the banner"}
       >
         <FormSection

@@ -2,6 +2,7 @@ import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-prompt";
+import { IncidentBanner } from "@/components/shell/incident-banner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { WorkspaceProvider } from "@/providers/workspace-provider";
 
@@ -28,10 +29,11 @@ export default async function EditLayout({
   return (
     <WorkspaceProvider workspaceId={workspaceSlug}>
       {/* The editor's frame is the whole window. The shell asks the analytics question on every
-          other signed-in page; the editor has no shell, so it is asked here, and the editor takes
-          the height that is left under it. */}
+          other signed-in page and shows the incident banner; the editor has no shell, so both are
+          here, and the editor takes the height that is left under them. */}
       <div className="flex h-dvh flex-col bg-background">
         <div className="shrink-0 pb-4 empty:hidden">
+          <IncidentBanner />
           <AnalyticsConsentPrompt />
         </div>
         <div className="min-h-0 flex-1">
