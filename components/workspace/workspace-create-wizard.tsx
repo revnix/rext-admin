@@ -34,6 +34,7 @@ import { usePersonas } from "@/hooks/use-personas";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
+import { extractFieldErrors } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
 import {
   personaQueries,
@@ -273,13 +274,27 @@ export function WorkspaceCreateWizard({
       }
       // The backend checks the name and that the website answers: say so beside the field.
       const message = (error as Error).message;
-      if (withoutSite && /description/i.test(message)) {
+      // A refusal that names its field goes beside it, in the backend's own words; the field
+      // not on screen (the address, when the business was described) says nothing.
+      const refused = extractFieldErrors(error);
+      const shown = (["name", "description", "url"] as const).find(
+        (field) =>
+          refused[field] &&
+          (field === "name" || (field === "description") === withoutSite),
+      );
+      if (shown) {
+        form.setError(
+          shown,
+          { type: "server", message: refused[shown] },
+          { shouldFocus: true },
+        );
+      } else if (withoutSite && /descri/i.test(message)) {
         form.setError(
           "description",
           { type: "server", message },
           { shouldFocus: true },
         );
-      } else if (/website|url|domain/i.test(message)) {
+      } else if (!withoutSite && /website|url|domain/i.test(message)) {
         form.setError(
           "url",
           { type: "server", message },

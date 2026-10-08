@@ -64,7 +64,9 @@ export function WorkspaceDraft({
     </Nothing>
   );
   // What a part of the voice says when the run gave nothing for it.
-  const missing = withoutSite ? "Not drafted." : "Not found on the site.";
+  const missing = withoutSite
+    ? "Not drafted. You can write it in the review."
+    : "Not found on the site.";
 
   return (
     <div className="flex flex-col gap-8">

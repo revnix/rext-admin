@@ -234,6 +234,50 @@ describe("Creating a workspace: the first step's second way in", () => {
   });
 });
 
+describe("Creating a workspace without a website: what the backend refuses", () => {
+  it("puts a refused description beside its field, in the backend's words", async () => {
+    const { ApiError } = jest.requireActual("@/lib/api-client/core") as {
+      ApiError: new (
+        status: number,
+        message: string,
+        code?: string,
+        context?: unknown,
+      ) => Error;
+    };
+    createWorkspace.mockRejectedValueOnce(
+      new ApiError(422, "Validation failed", "validation_error", {
+        error: {
+          details: [
+            {
+              field: "description",
+              message:
+                "Describe the business in a sentence or two: what it sells, and to whom.",
+              code: "field_validation_error",
+            },
+          ],
+        },
+      }),
+    );
+    render(tree());
+    await userEvent.type(
+      screen.getByRole("textbox", { name: /Workspace name/ }),
+      "Acme Forge",
+    );
+    await noSite();
+    await userEvent.type(business() as HTMLElement, SAID);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create workspace" }),
+    );
+    expect(
+      await screen.findByText(
+        "Describe the business in a sentence or two: what it sells, and to whom.",
+      ),
+    ).toBeInTheDocument();
+    // Still on the form, with what was typed.
+    expect(business()).toHaveValue(SAID);
+  });
+});
+
 describe("Creating a workspace without a website, while its voice is written", () => {
   it("shows one stage, and the competitors and personas settled from the start", async () => {
     const { send } = await createFromDescription();
@@ -283,6 +327,24 @@ describe("Creating a workspace without a website, while its voice is written", (
       within(pane("Behind the scenes")).getAllByText(/2 tone words/).length,
     ).toBeGreaterThan(0);
     expect(mockPersonasAskedFor.every((id) => id === null)).toBe(true);
+  });
+
+  it("leaves the brand's name to the review when the draft gives none", async () => {
+    const { send } = await createFromDescription();
+    // The backend never takes a brand's name from a workspace's label.
+    send(
+      event("brand_voice.started"),
+      event("brand_voice.completed", {
+        brand_name: null,
+        about: SAID,
+        brand_voice: ["Plain"],
+        personas: [],
+      }),
+    );
+    expect(part("The brand")).toHaveTextContent(
+      "Brand nameNot drafted. You can write it in the review.",
+    );
+    expect(part("The brand")).toHaveTextContent(SAID);
   });
 });
 
