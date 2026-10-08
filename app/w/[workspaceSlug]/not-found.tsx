@@ -1,5 +1,6 @@
 import { FileQuestion, Home } from "lucide-react";
 import Link from "next/link";
+import { PageNotFoundReport } from "@/components/analytics/page-not-found-report";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +18,7 @@ import {
 export default function WorkspaceNotFound() {
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-16">
+      <PageNotFoundReport />
       <Card className="max-w-md w-full">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">

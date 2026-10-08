@@ -1,8 +1,10 @@
+import { PageNotFoundReport } from "@/components/analytics/page-not-found-report";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-(--page-gutter)">
+      <PageNotFoundReport />
       <EmptyState
         as="h1"
         eyebrow="404"

@@ -63,6 +63,9 @@ type AnalyticsEvent =
   | "editor_opened"
   | "article_saved"
   | "article_version_restored"
+  // What failed in front of the person (lib/analytics-failures.ts)
+  | "error_screen_shown"
+  | "page_not_found"
   // Plans
   | "paywall_shown"
   | "checkout_started"
