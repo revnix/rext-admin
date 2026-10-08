@@ -37,23 +37,19 @@ jest.mock("@/providers/sse-provider", () => ({
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
 // The personas are read only once the brand-voice step has ended: asked for no workspace before.
 const mockPersonasAskedFor: (string | null)[] = [];
+const ANA = {
+  name: "Ana",
+  full_name: "Ana Ruiz",
+  professional_title: "Head of forging",
+};
+const BEN = { name: "Ben Ode", full_name: null };
+/** The personas the run has saved so far, as the list answers. */
+let mockSaved: object[] = [ANA, BEN];
 jest.mock("@/hooks/use-personas", () => ({
   usePersonas: (workspaceId: string | null) => {
     mockPersonasAskedFor.push(workspaceId);
     return workspaceId
-      ? {
-          isSuccess: true,
-          data: {
-            personas: [
-              {
-                name: "Ana",
-                full_name: "Ana Ruiz",
-                professional_title: "Head of forging",
-              },
-              { name: "Ben Ode", full_name: null },
-            ],
-          },
-        }
+      ? { isSuccess: true, data: { personas: mockSaved } }
       : { isSuccess: false, data: undefined };
   },
 }));
@@ -135,6 +131,7 @@ const currentStep = () =>
 beforeEach(() => {
   mockEvents = [];
   mockPersonasAskedFor.length = 0;
+  mockSaved = [ANA, BEN];
   clock = 0;
 });
 
@@ -239,6 +236,38 @@ describe("Creating a workspace, while its website is read", () => {
         .map((item) => item.textContent),
     ).toEqual(["boltco.example", "hammerworks.example"]);
     expect(screen.getByText("2 competitors found")).toBeInTheDocument();
+  });
+
+  it("never says no one is named while the run can still save a persona", async () => {
+    // On staging the list was empty when the brand-voice step ended, and a persona was saved
+    // after it: the wait said "no one is named", and the review named one.
+    mockSaved = [];
+    const { send } = await create();
+    send(
+      event("scrape.completed", { title: "Acme", word_count: 900 }),
+      event("brand_voice.completed", {
+        about: "Makes anvils.",
+        brand_voice: ["Plain"],
+      }),
+      event("competitor_discovery.started"),
+    );
+    const people = screen.getByRole("region", { name: "Author personas" });
+    expect(people).toHaveAttribute("aria-busy", "true");
+    expect(people).toHaveTextContent(/^Author personas$/);
+    expect(screen.queryByText(/no one/i)).toBeNull();
+    expect(screen.getByText("1 tone word")).toBeInTheDocument();
+
+    // The run saves one; the list is read again when the next step ends.
+    mockSaved = [ANA];
+    send(event("competitor_discovery.completed", { competitors: [] }));
+    expect(
+      within(screen.getByRole("region", { name: "Author personas" }))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Ana RuizHead of forging"]);
+    expect(
+      screen.getByText("1 tone word · 1 person named on the site"),
+    ).toBeInTheDocument();
   });
 
   it("says so when a step ends with nothing to show", async () => {

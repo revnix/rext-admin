@@ -190,9 +190,8 @@ describe("workspaceFindings and the stages' lines (task 845)", () => {
       [],
     );
     expect(after["workspace-scrape"].result).toBe("“Acme” · 1 word read");
-    expect(after["workspace-brand-voice"].result).toBe(
-      "Brand voice drafted · no one named on the site",
-    );
+    // None read yet is not "no one": the run can still save a persona.
+    expect(after["workspace-brand-voice"].result).toBe("Brand voice drafted");
     expect(after["workspace-competitors"].result).toBe("None found");
   });
 });
