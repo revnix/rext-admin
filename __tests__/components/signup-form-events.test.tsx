@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { SignupForm } from "@/components/signup-form";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
 
 const push = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -121,6 +122,22 @@ describe("SignupForm, what it reports", () => {
     expect(sent("signup_started")).toHaveLength(1);
   });
 
+  it("calls a backend it could not reach unreachable, not a refusal of the details", async () => {
+    register.mockRejectedValue(
+      new ApiError(0, "Couldn't reach the server", SERVER_UNREACHABLE),
+    );
+    show();
+    await fillIn();
+
+    await pressCreate();
+
+    await waitFor(() =>
+      expect(sent("signup_refused")).toEqual([
+        { kind: "unreachable", invited: false },
+      ]),
+    );
+  });
+
   it("puts nothing a person typed in any event", async () => {
     register.mockRejectedValue(new ApiError(503, "Service unavailable"));
     show();
@@ -224,7 +241,7 @@ describe("SignupForm, what it reports", () => {
     expect(sent("signup_refused")).toEqual([]);
   });
 
-  it("does not call it a refused sign-up when the login after it throws", async () => {
+  it("reports the login after a sign-up when it throws, and still no refused sign-up", async () => {
     register.mockResolvedValue({
       user: { id: "u1", email: EMAIL, email_verified: true },
       message: "ok",
@@ -235,7 +252,11 @@ describe("SignupForm, what it reports", () => {
 
     await pressCreate();
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(sent("signin_refused")).toEqual([
+        { kind: "unreachable", after_sign_up: true },
+      ]),
+    );
     expect(sent("user_signed_up")).toHaveLength(1);
     expect(sent("signup_refused")).toEqual([]);
   });

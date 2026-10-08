@@ -4,6 +4,7 @@
  * recorded, so these events are all that says where people stop on them.
  */
 import { ApiError } from "@/lib/api-client/core";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
 import { BACKEND_AWAY_CODE } from "@/lib/auth/backend-away";
 
 /** The sign-up form's fields, by their names in the form, as an event names them. */
@@ -50,6 +51,14 @@ export function signUpRefusal(error: unknown): {
   kind: SignUpRefusal;
   status?: number;
 } {
+  // The API client's own "couldn't reach the server": no answer (status 0), or a gateway's in
+  // the backend's place. Neither is the backend turning anything down.
+  if (
+    ApiError.is(error) &&
+    (error.code === SERVER_UNREACHABLE || error.statusCode === 0)
+  ) {
+    return { kind: "unreachable" };
+  }
   const status = ApiError.is(error) ? error.statusCode : undefined;
   if (isDuplicateAccount(error)) return { kind: "exists", status };
   if (status === undefined) {
