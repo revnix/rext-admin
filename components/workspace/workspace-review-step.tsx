@@ -87,7 +87,11 @@ export function WorkspaceReviewStep({
     return (
       <Notice
         tone="danger"
-        title="The details from your website couldn't be loaded"
+        title={
+          website?.trim()
+            ? "The details from your website couldn't be loaded"
+            : "The brand voice couldn't be loaded"
+        }
         action={
           <Button
             data-rec="show"

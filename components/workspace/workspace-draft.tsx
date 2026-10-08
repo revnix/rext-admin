@@ -27,9 +27,15 @@ export function WorkspaceDraft({
   findings,
   people,
   peopleFinal,
+  withoutSite = false,
 }: {
   stages: RunStage[];
   findings: WorkspaceFindings;
+  /**
+   * The workspace is made from a description of the business (rext-control#853): there is no
+   * website, so no one and no competitor is looked for, and those two parts say so from the start.
+   */
+  withoutSite?: boolean;
   /** The author personas, once read after the brand-voice step; undefined before. */
   people?: NamedPerson[];
   /** The run has ended: an empty list of people is then the last word, and said. */
@@ -52,18 +58,28 @@ export function WorkspaceDraft({
     peopleFinal || (people !== undefined && people.length > 0);
   const noVoice = (
     <Nothing>
-      Nothing could be drafted from the site. You can write it in the review.
+      {withoutSite
+        ? "Nothing could be drafted from your description. You can write it in the review."
+        : "Nothing could be drafted from the site. You can write it in the review."}
     </Nothing>
   );
+  // What a part of the voice says when the run gave nothing for it.
+  const missing = withoutSite ? "Not drafted." : "Not found on the site.";
 
   return (
     <div className="flex flex-col gap-8">
       <Part title="The brand" ready={voiceEnded}>
         {voice ? (
           <dl className="flex flex-col gap-4">
-            <Line label="Brand name">{voice.brandName}</Line>
-            <Line label="About">{voice.about}</Line>
-            <Line label="What sets it apart">{voice.sellingPosition}</Line>
+            <Line missing={missing} label="Brand name">
+              {voice.brandName}
+            </Line>
+            <Line missing={missing} label="About">
+              {voice.about}
+            </Line>
+            <Line missing={missing} label="What sets it apart">
+              {voice.sellingPosition}
+            </Line>
           </dl>
         ) : voiceEnded ? (
           noVoice
@@ -81,8 +97,10 @@ export function WorkspaceDraft({
       <Part title="Who it's for" ready={voiceEnded}>
         {voice ? (
           <dl className="flex flex-col gap-4">
-            <Line label="Customers">{voice.customers}</Line>
-            <Line label="Audiences">
+            <Line missing={missing} label="Customers">
+              {voice.customers}
+            </Line>
+            <Line missing={missing} label="Audiences">
               {voice.audience.length > 0 && (
                 <Words label="Audiences" words={voice.audience} />
               )}
@@ -103,12 +121,12 @@ export function WorkspaceDraft({
       <Part title="How it sounds" ready={voiceEnded}>
         {voice ? (
           <dl className="flex flex-col gap-4">
-            <Line label="Voice">
+            <Line missing={missing} label="Voice">
               {voice.tone.length > 0 && (
                 <Words label="Voice" words={voice.tone} />
               )}
             </Line>
-            <Line label="Content pillars">
+            <Line missing={missing} label="Content pillars">
               {voice.pillars.length > 0 && (
                 <Words label="Content pillars" words={voice.pillars} />
               )}
@@ -126,8 +144,10 @@ export function WorkspaceDraft({
         )}
       </Part>
 
-      <Part title="Competitors" ready={competitorsEnded}>
-        {competitors && competitors.length > 0 ? (
+      <Part title="Competitors" ready={withoutSite || competitorsEnded}>
+        {withoutSite ? (
+          <Nothing>None yet. You can add them in the review.</Nothing>
+        ) : competitors && competitors.length > 0 ? (
           <Words label="Competitors" words={competitors} />
         ) : competitorsEnded ? (
           <Nothing>None found. You can add them in the review.</Nothing>
@@ -140,8 +160,13 @@ export function WorkspaceDraft({
         )}
       </Part>
 
-      <Part title="Author personas" ready={peopleKnown}>
-        {peopleKnown ? (
+      <Part title="Author personas" ready={withoutSite || peopleKnown}>
+        {withoutSite ? (
+          <Nothing>
+            None yet: there is no website to read the people from. You can add
+            personas later.
+          </Nothing>
+        ) : peopleKnown ? (
           people ? (
             <AuthorPersonas people={people} />
           ) : (
@@ -232,14 +257,21 @@ function Part({
 }
 
 /** One thing the section holds, under the name its field has in the review. */
-function Line({ label, children }: { label: string; children: ReactNode }) {
+function Line({
+  label,
+  missing = "Not found on the site.",
+  children,
+}: {
+  label: string;
+  /** Said in the value's place when the run gave none. */
+  missing?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1">
       <dt className="text-label text-foreground">{label}</dt>
       <dd className="wrap-anywhere text-body text-foreground">
-        {children || (
-          <span className="text-muted-foreground">Not found on the site.</span>
-        )}
+        {children || <span className="text-muted-foreground">{missing}</span>}
       </dd>
     </div>
   );

@@ -43,6 +43,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
               name: data.name,
               timezone: data.timezone,
               url: data.url,
+              description: data.description,
             },
           );
 
@@ -163,7 +164,7 @@ export const useWorkspaceCrudStore = create<WorkspaceCrudState>()(
             {
               name: duplicateName,
               timezone: sourceWorkspace.timezone,
-              url: sourceWorkspace.url,
+              url: sourceWorkspace.url ?? undefined,
             },
           );
 

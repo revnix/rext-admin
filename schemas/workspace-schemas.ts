@@ -99,13 +99,41 @@ const workspaceNameSchema = z
     message: "Workspace name must contain at least one letter",
   });
 
-export const workspaceFormSchema = z.object({
-  name: workspaceNameSchema,
+/** A business described in place of a website (rext-control#853): the backend's own limits. */
+export const DESCRIPTION_LIMITS = { min: 20, max: 1000 } as const;
+export const DESCRIPTION_HELP =
+  "Say what the business sells and who buys it, in a sentence or two";
 
-  url: urlSchema,
+const descriptionSchema = z
+  .string()
+  .trim()
+  .min(DESCRIPTION_LIMITS.min, DESCRIPTION_HELP)
+  .max(
+    DESCRIPTION_LIMITS.max,
+    `Keep it to ${DESCRIPTION_LIMITS.max.toLocaleString("en")} characters or fewer`,
+  );
 
-  timezone: timezoneSchema,
-});
+/**
+ * Creating a workspace, two ways in (rext-control#853): from a website, which is read, or from a
+ * description of the business, for someone with no website yet. Only the field of the way chosen
+ * is checked; what was typed in the other stays in the form, so switching loses nothing.
+ */
+export const workspaceFormSchema = z.discriminatedUnion("from", [
+  z.object({
+    from: z.literal("website"),
+    name: workspaceNameSchema,
+    url: urlSchema,
+    description: z.string().optional(),
+    timezone: timezoneSchema,
+  }),
+  z.object({
+    from: z.literal("description"),
+    name: workspaceNameSchema,
+    url: z.string().optional(),
+    description: descriptionSchema,
+    timezone: timezoneSchema,
+  }),
+]);
 
 /**
  * Workspace settings, General section: the name and the website (the slug is shown, not edited).
@@ -258,7 +286,8 @@ export const workspaceSchema = z.object({
   name: z.string(),
   slug: z.string(),
   timezone: z.string().optional(),
-  url: z.string(),
+  // Null for a workspace made from a description, until a website is added (rext-control#853).
+  url: z.string().nullable(),
   // The site's favicon, kept by the backend (task G9); null until it was fetched.
   favicon_url: z.string().nullish(),
   created_at: z.string(),

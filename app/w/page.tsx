@@ -129,7 +129,7 @@ export default function WorkspacePage() {
     name: workspace.name, // Keep both for safety
     slug: workspace.slug, // Include slug for URL navigation
     timezone: workspace.timezone,
-    url: workspace.url,
+    url: workspace.url ?? "",
     created_at: workspace.created_at,
     updated_at: workspace.updated_at,
     brand_voice: workspace.brand_voice,
