@@ -173,6 +173,22 @@ export function anonymousEvent<
  */
 export const STORED_ADDRESS_OPTIONS = { save_referrer: false } as const;
 
+/**
+ * Where posthog-js keeps what it knows of the visitor: in the browser's storage and in its own
+ * cookie for `.rext.ai`. rext.ai keeps the same cookie (one PostHog project, one key), so someone
+ * who reads the website and then signs up here is one person, and the page they first landed on
+ * there is on their account. Where that cookie and this browser's stored copy disagree (the
+ * person signed in or out on the other host meanwhile), the cookie is right: without that rule a
+ * returning visitor would keep the id stored here and never be joined.
+ *
+ * Nothing is written before the person allows it. The provider starts posthog-js only then, and
+ * under `cookieless_mode: "on_reject"` a "no" keeps neither the cookie nor the stored copy.
+ */
+export const VISITOR_STORE_OPTIONS = {
+  persistence: "localStorage+cookie",
+  __preview_cookie_wins_on_conflict: true,
+} as const;
+
 /** What the provider needs of posthog-js to read and replace what it keeps in the browser. */
 interface StoredProperties {
   get_property: (name: string) => unknown;
