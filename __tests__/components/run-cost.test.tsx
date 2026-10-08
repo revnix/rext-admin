@@ -21,6 +21,7 @@ import {
 } from "@/components/generate-content/run-cost";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useCreditGate } from "@/hooks/use-credit-gate";
+import { analytics } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import type { CreditBalance, RunCost } from "@/types/subscription";
@@ -197,6 +198,39 @@ describe("useCreditGate", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("The plan grid")).toBeInTheDocument();
+  });
+
+  it("records which billed action met the paywall, and nothing when the action may start", () => {
+    const track = jest.spyOn(analytics, "track").mockImplementation(() => {});
+    useBalance(balance(5));
+    const blocked = renderHook(() => useCreditGate(), {
+      wrapper: withQueries(),
+    });
+    act(() => {
+      blocked.result.current.ensureCredits("generate");
+    });
+    expect(track).toHaveBeenCalledWith("paywall_shown", {
+      action: "generate",
+    });
+
+    track.mockClear();
+    useBalance(balance(60));
+    const allowed = renderHook(() => useCreditGate(), {
+      wrapper: withQueries(),
+    });
+    act(() => {
+      allowed.result.current.ensureCredits("generate");
+    });
+    expect(track).not.toHaveBeenCalled();
+
+    // A run under way that found the balance empty.
+    act(() => {
+      allowed.result.current.openCreditsModal();
+    });
+    expect(track).toHaveBeenCalledWith("paywall_shown", {
+      action: "run_under_way",
+    });
+    track.mockRestore();
   });
 
   it("lets Approve run with the cost in hand, and Analyze only with a whole article", () => {

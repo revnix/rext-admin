@@ -2181,6 +2181,12 @@ export function FreshGenerationView({
           type: "SET_RUN_PHASE",
           payload: { phase: "titles" },
         });
+        analytics.track("content_type_selected", {
+          content_type: value,
+          // Whether the person took the type the analysis suggested.
+          recommended: value === recommendedContentType,
+          thread_id: threadId ?? undefined,
+        });
         return resumeWorkflow({
           payload: { "Selected Content Type": value },
           status: "Suggesting titles...",
@@ -2216,6 +2222,15 @@ export function FreshGenerationView({
         return resumeWorkflow({
           payload: { action: "regenerate", feedback: value || "" },
           status: "Regenerating titles...",
+        }).then((started) => {
+          // Counted when the request went out; what the person asked for is theirs and isn't sent.
+          if (started) {
+            analytics.track("titles_regenerated", {
+              with_feedback: Boolean(value),
+              thread_id: threadId ?? undefined,
+            });
+          }
+          return started;
         });
 
       case "OUTLINE_APPROVE":
@@ -2290,7 +2305,13 @@ export function FreshGenerationView({
           status: "Regenerating outline...",
           restoresItsStep: true,
         }).then((started) => {
-          if (started) return;
+          if (started) {
+            analytics.track("outline_regenerated", {
+              with_feedback: Boolean(value),
+              thread_id: threadId ?? undefined,
+            });
+            return;
+          }
           // Nothing was sent: hand the user back their feedback instead of an
           // empty outline screen that never regenerates.
           setPendingTargetWordCount(null);
@@ -2337,6 +2358,11 @@ export function FreshGenerationView({
     const job = useBackgroundGenerationStore
       .getState()
       .jobs.find((j) => j.threadId === threadId);
+    analytics.track("content_generation_cancelled", {
+      // What was being written when the person stopped it: "outline", "content" or "none".
+      stage: tokenTargetRef.current,
+      thread_id: threadId,
+    });
     cancelStream();
     try {
       await authenticatedFetch(

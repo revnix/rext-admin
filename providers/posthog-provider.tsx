@@ -37,13 +37,46 @@ import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-conte
 // before_send, which turns the page views and leaves of someone who said no into this.
 let routeOnScreen: string | null = null;
 
+/** How long a page load's first view waits for the workspace and the plan before it goes without. */
+const FIRST_VIEW_WAIT_MS = 3000;
+// Whether this page load's first view has gone out. The ones after it find the app's memory filled.
+let firstViewSent = false;
+
 function PostHogPageView({ anonymous }: { anonymous: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const params = useParams();
+  const { status } = useSession();
+  const storedSlug = useWorkspaceStore((state) => state.currentWorkspace?.slug);
+  const planKnown = useSubscriptionStore((state) =>
+    Boolean(state.subscription?.subscription?.plan_name),
+  );
+  // Right after a sign-in or a reload the page is on screen before the workspace and the plan
+  // have loaded, and the view would go out without them (AnalyticsContextSync puts them on
+  // every event once they are known). A signed-in person's first view waits for both, a few
+  // seconds at most; someone signed out, or counted without an identity, has neither to wait for.
+  const routeSlug = pathname ? workspaceSlugOf(pathname) : null;
+  const settled =
+    anonymous ||
+    status === "unauthenticated" ||
+    (status === "authenticated" &&
+      planKnown &&
+      (!routeSlug || storedSlug === routeSlug));
+  const [waitedOut, setWaitedOut] = useState(false);
+  const ready = firstViewSent || settled || waitedOut;
 
   useEffect(() => {
-    if (!pathname) return;
+    if (firstViewSent || settled) return;
+    const timer = window.setTimeout(
+      () => setWaitedOut(true),
+      FIRST_VIEW_WAIT_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [settled]);
+
+  useEffect(() => {
+    if (!pathname || !ready) return;
+    firstViewSent = true;
     routeOnScreen = anonymousRoute(pathname, params ?? {});
     let url = window.origin + pathname;
     const qs = searchParams.toString();
@@ -53,7 +86,7 @@ function PostHogPageView({ anonymous }: { anonymous: boolean }) {
       // address without an emailed link's token or a sign-in page's email.
       $current_url: anonymous ? window.origin + routeOnScreen : redactUrl(url),
     });
-  }, [pathname, searchParams, params, anonymous]);
+  }, [pathname, searchParams, params, anonymous, ready]);
 
   return null;
 }
@@ -366,6 +399,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       stopListening();
       forgetPostHog();
+      firstViewSent = false;
     };
   }, []);
 

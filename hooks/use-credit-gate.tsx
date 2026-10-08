@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { PaywallDialog } from "@/components/billing/paywall-dialog";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { analytics } from "@/lib/analytics";
 import { shortfall } from "@/lib/billing/credits";
 import { subscriptionQueries } from "@/lib/query-keys";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -96,6 +97,8 @@ export function useCreditGate() {
   const isExhausted = !isUnlimited && (credits?.current_credits ?? 0) <= 0;
 
   const openCreditsModal = useCallback(() => {
+    // A run that was going found the balance empty.
+    analytics.track("paywall_shown", { action: "run_under_way" });
     setModalDetail(OUT_OF_CREDITS_MESSAGE);
     setShowModal(true);
   }, []);
@@ -104,6 +107,8 @@ export function useCreditGate() {
     (run: BilledRun = "analyze") => {
       const reason = blockFor(run);
       if (reason) {
+        // The billed action the balance couldn't start.
+        analytics.track("paywall_shown", { action: run });
         setModalDetail(reason);
         setShowModal(true);
         return false;
