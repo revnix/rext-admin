@@ -36,6 +36,7 @@ export function WorkspaceReviewStep({
   workspaceSlug,
   website,
   withoutSite = false,
+  onFinished,
   after,
 }: {
   workspaceId: string;
@@ -43,6 +44,8 @@ export function WorkspaceReviewStep({
   website?: string;
   /** Made from a description of the business: there is no website (rext-control#853). */
   withoutSite?: boolean;
+  /** Finish was pressed and what was changed, if anything, is saved: for analytics. */
+  onFinished?: (changed: boolean) => void;
   /** Under the fields, before Finish: what the draft showed that the fields don't hold. */
   after?: ReactNode;
 }) {
@@ -68,9 +71,11 @@ export function WorkspaceReviewStep({
 
   const finish = async (values: BrandVoiceFormValues) => {
     try {
-      if (form.formState.isDirty) {
+      const changed = form.formState.isDirty;
+      if (changed) {
         await saveBrandVoice(queryClient, workspaceId, values);
       }
+      onFinished?.(changed);
       router.push(workspaceRoutes.generate_content(workspaceSlug) as Route);
     } catch (error) {
       form.setError("root.server", {

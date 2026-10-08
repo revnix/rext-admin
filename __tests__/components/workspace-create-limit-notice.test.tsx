@@ -11,12 +11,13 @@ jest.mock("next/navigation", () => ({
 jest.mock("sonner", () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }));
-// Whether the page already knows the plan's workspaces are all in use.
-const limit = { isLimitReached: false };
+// Whether the page already knows the plan's workspaces are all in use, and whether it knows the
+// plan at all (its call can still be loading, or have failed).
+const limit = { isLimitReached: false, planKnown: true };
 jest.mock("@/components/subscription/limit-check-wrapper", () => ({
   useCheckLimit: () => ({
-    checkLimit: () => true,
-    canCreate: !limit.isLimitReached,
+    checkLimit: () => limit.planKnown,
+    canCreate: limit.planKnown && !limit.isLimitReached,
     isLimitReached: limit.isLimitReached,
   }),
 }));
@@ -32,10 +33,14 @@ jest.mock("@/providers/sse-provider", () => ({
 }));
 jest.mock("@/lib/analytics", () => ({ analytics: { track: jest.fn() } }));
 const createWorkspace = jest.fn();
+// The workspaces the account has when the page opens.
+const account: { workspaces: Array<{ id: string }> } = { workspaces: [] };
 jest.mock("@/stores/workspace", () => {
   const state = {
     createWorkspace: (...args: unknown[]) => createWorkspace(...args),
-    workspaceList: [],
+    get workspaceList() {
+      return account.workspaces;
+    },
     setCurrentWorkspace: jest.fn(),
   };
   return {
@@ -67,6 +72,8 @@ async function submit(client = new QueryClient()) {
 
 beforeEach(() => {
   limit.isLimitReached = false;
+  limit.planKnown = true;
+  account.workspaces = [];
   createWorkspace.mockReset();
   jest.mocked(toast.error).mockClear();
 });
@@ -111,14 +118,100 @@ describe("A workspace past the plan's limit (G72)", () => {
     expect(createWorkspace).not.toHaveBeenCalled();
   }, 15_000);
 
-  it("leaves any other refusal to its field or a toast, as before", async () => {
+  it("sends the create when the plan isn't known: the backend holds the limit", async () => {
+    // The plan's or the usage's call still loading, or failed: the button did nothing at all.
+    limit.planKnown = false;
+    createWorkspace.mockRejectedValue(
+      new ApiError(429, "Workspace limit reached (1/1)."),
+    );
+    await submit();
+
+    await waitFor(() => expect(createWorkspace).toHaveBeenCalledTimes(1), {
+      timeout: 5000,
+    });
+    expect(
+      await screen.findByRole("alert", {}, { timeout: 5000 }),
+    ).toHaveTextContent("Workspace limit reached");
+  }, 15_000);
+});
+
+describe("A refusal that names no field", () => {
+  it("is said above the form in our words when the server failed, and stays there", async () => {
     createWorkspace.mockRejectedValue(new ApiError(500, "Something broke"));
     await submit();
 
-    await waitFor(
-      () => expect(toast.error).toHaveBeenCalledWith("Something broke"),
-      { timeout: 5000 },
+    const notice = await screen.findByRole("alert", {}, { timeout: 5000 });
+    expect(notice).toHaveTextContent("The workspace wasn't created");
+    expect(notice).toHaveTextContent(
+      "Something went wrong on our side. Try again in a moment.",
     );
+    expect(screen.queryByText(/Something broke/)).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
     expect(screen.queryByText("Workspace limit reached")).toBeNull();
   }, 15_000);
+
+  it("says the server couldn't be reached as that", async () => {
+    createWorkspace.mockRejectedValue(
+      new ApiError(
+        0,
+        "We couldn't reach the server. Try again.",
+        "SERVER_UNREACHABLE",
+        null,
+      ),
+    );
+    await submit();
+
+    expect(
+      await screen.findByRole("alert", {}, { timeout: 5000 }),
+    ).toHaveTextContent("We couldn't reach the server. Try again in a moment.");
+  }, 15_000);
+
+  it("keeps the backend's sentence for a refusal of the request itself", async () => {
+    createWorkspace.mockRejectedValue(
+      new ApiError(400, "Verify your email before you create a workspace."),
+    );
+    await submit();
+
+    expect(
+      await screen.findByRole("alert", {}, { timeout: 5000 }),
+    ).toHaveTextContent("Verify your email before you create a workspace.");
+  }, 15_000);
+
+  it("goes when the next try gets through", async () => {
+    createWorkspace
+      .mockRejectedValueOnce(new ApiError(500, "Something broke"))
+      .mockResolvedValueOnce({ id: "w1", slug: "second", name: "Second" });
+    await submit();
+    await screen.findByRole("alert", {}, { timeout: 5000 });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Read my website" }),
+    );
+
+    await waitFor(
+      () =>
+        expect(screen.queryByText("The workspace wasn't created")).toBeNull(),
+      { timeout: 5000 },
+    );
+  }, 15_000);
+});
+
+describe("The form's way out", () => {
+  const open = () =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+
+  it("has no Cancel for a first workspace: the home page leads straight back to this form", () => {
+    open();
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+  });
+
+  it("keeps Cancel for an account that has a workspace to go back to", () => {
+    account.workspaces = [{ id: "w0" }];
+    open();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
 });

@@ -216,6 +216,28 @@ describe("where the person is asked first, and hasn't answered", () => {
     );
   });
 
+  it("sends an event of someone leaving by beacon, and no other", async () => {
+    renderProvider();
+    await userEvent.click(await screen.findByRole("button", { name: "Allow" }));
+    await waitFor(() => expect(mockPosthog.register).toHaveBeenCalled());
+
+    analytics.track(
+      "workspace_wait_left",
+      { seconds: 30, stage: "voice", with_website: true },
+      { leaving: true },
+    );
+    analytics.track("workspace_wait_started", { with_website: true });
+
+    expect(mockPosthog.capture).toHaveBeenCalledWith(
+      "workspace_wait_left",
+      { seconds: 30, stage: "voice", with_website: true },
+      { transport: "sendBeacon" },
+    );
+    expect(mockPosthog.capture).toHaveBeenCalledWith("workspace_wait_started", {
+      with_website: true,
+    });
+  });
+
   it("counts page routes only on No thanks: no identity, nothing of whose page it is", async () => {
     renderProvider();
     await userEvent.click(

@@ -609,7 +609,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         );
         // Wire posthog into the analytics singleton so analytics.track() etc. work
         registerPostHog({
-          capture: (event, properties) => posthog.capture(event, properties),
+          // An event sent while the page is being left goes by beacon, as the first page view of
+          // someone who leaves early does; any other is sent as it always was.
+          capture: (event, properties, options) =>
+            options?.leaving
+              ? posthog.capture(event, properties, { transport: "sendBeacon" })
+              : posthog.capture(event, properties),
           reset: resetIdentity,
         });
       } else {

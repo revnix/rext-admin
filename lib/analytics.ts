@@ -24,6 +24,16 @@ type AnalyticsEvent =
   | "first_login_questions_shown"
   | "first_login_questions_completed"
   | "workspace_created"
+  // Creating a workspace, moment by moment (rext-control task 854): where a newcomer stops
+  | "workspace_create_viewed"
+  | "workspace_create_way_chosen"
+  | "workspace_create_field_filled"
+  | "workspace_create_submitted"
+  | "workspace_create_refused"
+  | "workspace_wait_started"
+  | "workspace_wait_left"
+  | "workspace_review_reached"
+  | "workspace_review_finished"
   | "onboarding_milestone_completed"
   | "onboarding_completed"
   // Generating an article
@@ -66,8 +76,22 @@ type EventProperties = Record<string, string | number | boolean | undefined>;
 // This avoids importing posthog-js directly here, which keeps analytics.ts
 // server-safe (no browser-only globals at module load time).
 
+/** How one event is sent. */
+export interface TrackOptions {
+  /**
+   * Sent while the page is being left (a pagehide, a tab hidden for good): by beacon, since the
+   * library's queue is flushed before a listener of ours runs and an event captured there can be
+   * lost with the page.
+   */
+  leaving?: boolean;
+}
+
 interface PostHogBridge {
-  capture: (event: string, properties?: Record<string, unknown>) => void;
+  capture: (
+    event: string,
+    properties?: Record<string, unknown>,
+    options?: TrackOptions,
+  ) => void;
   reset: () => void;
 }
 
@@ -77,17 +101,31 @@ let _posthog: PostHogBridge | null = null;
 // in memory, nothing sent, until the provider wires posthog-js in. Someone who says no, or never
 // answers, sends none of them; after a no nothing is held either, so a later yes can't send what
 // was done while the answer was no.
-const pending: Array<{ event: string; properties: Record<string, unknown> }> =
-  [];
+const pending: Array<{
+  event: string;
+  properties: Record<string, unknown>;
+  options?: TrackOptions;
+}> = [];
 const PENDING_LIMIT = 100;
 let refused = false;
+
+/** One event to the library: with its way of sending only when it has one. */
+function send(
+  bridge: PostHogBridge,
+  event: string,
+  properties: Record<string, unknown>,
+  options?: TrackOptions,
+) {
+  if (options) bridge.capture(event, properties, options);
+  else bridge.capture(event, properties);
+}
 
 /** Called by the provider once the person allows analytics: the held events go out, in order. */
 export function registerPostHog(bridge: PostHogBridge): void {
   _posthog = bridge;
   refused = false;
   for (const held of pending.splice(0)) {
-    bridge.capture(held.event, held.properties);
+    send(bridge, held.event, held.properties, held.options);
   }
 }
 
@@ -161,12 +199,16 @@ class Analytics {
    * and the page's address itself, and that address goes out with its credentials redacted
    * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
    */
-  track(event: AnalyticsEvent, properties?: EventProperties) {
+  track(
+    event: AnalyticsEvent,
+    properties?: EventProperties,
+    options?: TrackOptions,
+  ) {
     if (!this.enabled || isImpersonating()) return;
     if (_posthog) {
-      _posthog.capture(event, { ...properties });
+      send(_posthog, event, { ...properties }, options);
     } else if (!refused && pending.length < PENDING_LIMIT) {
-      pending.push({ event, properties: { ...properties } });
+      pending.push({ event, properties: { ...properties }, options });
     }
   }
 

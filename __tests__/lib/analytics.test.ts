@@ -37,6 +37,45 @@ describe("analytics.track", () => {
     expect(JSON.stringify(capture.mock.calls)).not.toContain("secret-1");
   });
 
+  it("sends an event of someone leaving with its way of sending, and any other with none", () => {
+    const { analytics, registerPostHog } = loadAnalytics();
+    const capture = jest.fn();
+    registerPostHog({ capture, reset: jest.fn() });
+
+    analytics.track("workspace_wait_started", { with_website: true });
+    analytics.track(
+      "workspace_wait_left",
+      { seconds: 30, stage: "voice", with_website: true },
+      { leaving: true },
+    );
+
+    expect(capture.mock.calls).toEqual([
+      ["workspace_wait_started", { with_website: true }],
+      [
+        "workspace_wait_left",
+        { seconds: 30, stage: "voice", with_website: true },
+        { leaving: true },
+      ],
+    ]);
+  });
+
+  it("keeps the way of sending for an event held until the person's answer is known", () => {
+    const { analytics, registerPostHog } = loadAnalytics();
+    analytics.track(
+      "workspace_wait_left",
+      { seconds: 5, stage: "reading", with_website: true },
+      { leaving: true },
+    );
+    const capture = jest.fn();
+    registerPostHog({ capture, reset: jest.fn() });
+
+    expect(capture).toHaveBeenCalledWith(
+      "workspace_wait_left",
+      { seconds: 5, stage: "reading", with_website: true },
+      { leaving: true },
+    );
+  });
+
   it("keeps no copy of an event in the browser", () => {
     const { analytics, registerPostHog } = loadAnalytics();
     registerPostHog({ capture: jest.fn(), reset: jest.fn() });
