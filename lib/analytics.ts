@@ -13,6 +13,8 @@ type AnalyticsEvent =
   | "oauth_started"
   | "email_verified"
   // Onboarding
+  | "first_login_questions_shown"
+  | "first_login_questions_completed"
   | "workspace_created"
   | "onboarding_milestone_completed"
   | "onboarding_completed"
