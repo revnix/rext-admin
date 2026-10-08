@@ -16,6 +16,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useContentVersion,
+  RestoredUnread,
   useRestoreContentVersion,
 } from "@/hooks/use-content";
 import { dateFormat } from "@/lib/formatters/date-formatters";
@@ -140,6 +141,12 @@ export function HistoryDrawer({
       // The editor starts again on the restored article, and this drawer goes with it.
       onRestored(article);
     } catch (error) {
+      if (error instanceof RestoredUnread) {
+        // The restore happened: the editor's own saving stays stopped, or it would write the
+        // text from before over the restored article.
+        setProblem(error.message);
+        return;
+      }
       onNotRestored();
       setProblem(
         error instanceof Error && error.message
