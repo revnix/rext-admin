@@ -104,8 +104,12 @@ const IMPERSONATING_KEY = "rext-impersonating";
 // the banner's check on every page is then the only source.
 let impersonatingHere = false;
 
+/** Sent to this page when impersonation starts or stops: a recording stops with it. */
+export const IMPERSONATION_EVENT = "rext:impersonation";
+
 /** Called when impersonation starts or stops, and whenever the backend says which it is. */
 export function setImpersonating(impersonating: boolean): void {
+  const changed = impersonatingHere !== impersonating;
   impersonatingHere = impersonating;
   try {
     if (impersonating) window.localStorage.setItem(IMPERSONATING_KEY, "1");
@@ -113,6 +117,7 @@ export function setImpersonating(impersonating: boolean): void {
   } catch {
     // Storage refused: this page still knows, from the line above.
   }
+  if (changed) window.dispatchEvent(new Event(IMPERSONATION_EVENT));
 }
 
 export function isImpersonating(): boolean {

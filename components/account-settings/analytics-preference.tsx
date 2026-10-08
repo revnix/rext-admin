@@ -13,6 +13,7 @@ import {
   onConsentChange,
   writeConsent,
 } from "@/lib/analytics-consent";
+import { RECORDING_ON } from "@/lib/analytics-recording";
 
 /**
  * The switch for analytics (rext-control task 712): on measures how this person uses the app,
@@ -46,8 +47,11 @@ export function AnalyticsPreference() {
         </FieldLabel>
         <FieldDescription id="analytics-allowed-help">
           The pages you open and what you do on them, linked to your account, so
-          we can see what works and what doesn't. Off, only anonymous counts of
-          the pages opened are kept. The choice is saved in this browser.
+          we can see what works and what doesn't.
+          {RECORDING_ON &&
+            " It includes recordings of the screen, with everything you type and all text hidden except our own buttons, menus and labels."}{" "}
+          Off, only anonymous counts of the pages opened are kept. The choice is
+          saved in this browser.
         </FieldDescription>
       </FieldContent>
       <Switch

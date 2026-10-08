@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { PageBand } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
+import { RECORDING_ON } from "@/lib/analytics-recording";
 import {
   analyticsMode,
   onConsentChange,
@@ -76,9 +77,11 @@ export function AnalyticsConsentPrompt() {
         }
       >
         It shows us which pages and steps work and which don&rsquo;t: the pages
-        you open and what you do on them, linked to your account. Later it may
-        include recordings of the screen, with everything you type and all text
-        hidden. You can change this in Settings, Data.{" "}
+        you open and what you do on them, linked to your account.{" "}
+        {RECORDING_ON
+          ? "It includes recordings of the screen, with everything you type and all text hidden except our own buttons, menus and labels."
+          : "Later it may include recordings of the screen, with everything you type and all text hidden."}{" "}
+        You can change this in Settings, Data.{" "}
         <a
           href={PRIVACY_URL}
           target="_blank"

@@ -4,10 +4,11 @@ import posthog, { type CaptureResult } from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, Suspense, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, Suspense, useRef, useState } from "react";
 import {
   analytics,
   forgetPostHog,
+  IMPERSONATION_EVENT,
   isImpersonating,
   registerPostHog,
   takeOAuthLinking,
@@ -19,6 +20,12 @@ import {
   eventContext,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
+import {
+  loadWords,
+  RECORDING_ON,
+  RECORDING_OPTIONS,
+  recordableRoute,
+} from "@/lib/analytics-recording";
 import {
   anonymousEvent,
   anonymousRoute,
@@ -269,6 +276,66 @@ function AnalyticsContextSync() {
   return null;
 }
 
+// ── Session recording ────────────────────────────────────────────────────────
+/**
+ * Starts and stops the recording of the session (lib/analytics-recording.ts says what one holds).
+ * Mounted only where NEXT_PUBLIC_SESSION_RECORDING is "true" and the person allows analytics; it
+ * records while they are signed in, on one of the app's working pages, and nobody is acting as
+ * them. The recorder's code and the list of the app's own words are fetched then, not before, and
+ * from the app itself: without the list nothing is recorded.
+ */
+function SessionRecordingSync() {
+  const pathname = usePathname();
+  const { status } = useSession();
+  const [impersonating, setImpersonatingNow] = useState(isImpersonating);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const changed = () => setImpersonatingNow(isImpersonating());
+    window.addEventListener(IMPERSONATION_EVENT, changed);
+    return () => window.removeEventListener(IMPERSONATION_EVENT, changed);
+  }, []);
+
+  const wanted =
+    status === "authenticated" &&
+    !impersonating &&
+    Boolean(pathname) &&
+    recordableRoute(pathname ?? "");
+
+  useEffect(() => {
+    if (!wanted || ready) return;
+    let gone = false;
+    void Promise.all([import("posthog-js/dist/lazy-recorder"), loadWords()])
+      .then(([, listed]) => {
+        if (!gone && listed) setReady(true);
+      })
+      .catch(() => {
+        // The recorder's code didn't load: no recording.
+      });
+    return () => {
+      gone = true;
+    };
+  }, [wanted, ready]);
+
+  const record = wanted && ready;
+  // A layout effect: a page that isn't recorded stops the recorder before the browser hands it
+  // the new page's content.
+  useLayoutEffect(() => {
+    if (record) posthog.startSessionRecording();
+    else if (posthog.sessionRecordingStarted()) posthog.stopSessionRecording();
+  }, [record]);
+
+  // Unmounted when the person says no, or signs out.
+  useEffect(
+    () => () => {
+      if (posthog.sessionRecordingStarted()) posthog.stopSessionRecording();
+    },
+    [],
+  );
+
+  return null;
+}
+
 /** The logins already recorded, for a browser that refuses storage. */
 const recordedLogins = new Set<number>();
 
@@ -390,13 +457,16 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           // second needs "Cookieless server hash mode" switched on in the PostHog project;
           // without it PostHog drops those counts.
           cookieless_mode: "on_reject",
-          // No session is recorded until the app asks for it and masks what a recording shows
-          // (rext-control task 712): a switch in the PostHog project can't start one by itself.
+          // No session is recorded until the app starts one (SessionRecordingSync): a switch in
+          // the PostHog project can't start one by itself. What one may hold is set here, so it
+          // holds whatever starts it, and the browser's console is never part of it.
           disable_session_recording: true,
+          session_recording: RECORDING_OPTIONS,
+          enable_recording_console_log: false,
           // No code is loaded from PostHog's servers. The library would fetch the project's
           // settings as a script, which the security policy refuses (and the browser logs on
           // every page); told this, it reads them as data from the assets host, which the
-          // policy allows for requests only (lib/csp.ts).
+          // policy allows for requests only (lib/csp.ts). The recorder ships with the app.
           disable_external_dependency_loading: true,
           // PostHog adds the current address to every event; redact the credentials in it.
           before_send: beforeSend,
@@ -432,7 +502,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           reset: resetIdentity,
         });
       } else {
-        // A no: our own events stop, the identity goes, and what is left is counted without one.
+        // A no: a recording stops, our own events stop, the identity goes, and what is left is
+        // counted without one.
+        if (posthog.sessionRecordingStarted()) posthog.stopSessionRecording();
         unregisterPostHog();
         posthog.reset();
         forgetPersonSent();
@@ -469,6 +541,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           <>
             <PostHogAuthSync />
             <OAuthLoginRecord />
+            {RECORDING_ON && <SessionRecordingSync />}
           </>
         )}
       </Suspense>

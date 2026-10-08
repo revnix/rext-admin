@@ -12,6 +12,9 @@ import { AnalyticsConsentPrompt } from "@/components/privacy/analytics-consent-p
 import { PostHogProvider } from "@/providers/posthog-provider";
 
 const mockPosthog = {
+  sessionRecordingStarted: jest.fn(() => false),
+  startSessionRecording: jest.fn(),
+  stopSessionRecording: jest.fn(),
   init: jest.fn(),
   capture: jest.fn(),
   identify: jest.fn(),
@@ -27,6 +30,9 @@ const mockPosthog = {
 jest.mock("posthog-js", () => ({
   __esModule: true,
   default: {
+    sessionRecordingStarted: () => mockPosthog.sessionRecordingStarted(),
+    startSessionRecording: () => mockPosthog.startSessionRecording(),
+    stopSessionRecording: () => mockPosthog.stopSessionRecording(),
     init: (...args: unknown[]) => mockPosthog.init(...args),
     capture: (...args: unknown[]) => mockPosthog.capture(...args),
     identify: (...args: unknown[]) => mockPosthog.identify(...args),
