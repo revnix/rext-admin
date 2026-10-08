@@ -214,6 +214,35 @@ describe("the plan sent beside the email", () => {
     expect(outcome).toMatchObject({ ok: true, identity: { plan: "Growth" } });
   });
 
+  it("is read as well when the plan's fields sit on the answer itself", async () => {
+    // The shape the route's declared model describes; the backend nests it today.
+    const flat = jest.fn(async (url: string) => ({
+      ok: true,
+      json: async () => {
+        if (url.endsWith("/status"))
+          return { data: { is_impersonating: false } };
+        if (url.endsWith("/profile")) {
+          return { data: { profile: { id: "u-1", email: "ana@example.com" } } };
+        }
+        return { data: { plan_name: "growth", plan_display_name: "Growth" } };
+      },
+    })) as unknown as typeof fetch;
+
+    const outcome = await resolveSupportChatIdentity(session(), SECRET, flat);
+
+    expect(outcome).toMatchObject({ ok: true, identity: { plan: "Growth" } });
+  });
+
+  it("is left out for an account with no subscription", async () => {
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      answers(null),
+    );
+
+    expect(outcome).toMatchObject({ ok: true, identity: { plan: null } });
+  });
+
   it("falls back to the plan's own name", async () => {
     const outcome = await resolveSupportChatIdentity(
       session(),

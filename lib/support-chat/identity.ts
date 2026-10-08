@@ -91,14 +91,20 @@ export async function resolveSupportChatIdentity(
       fetchImpl,
     ).then((data) => data?.profile ?? null),
     // The plan's name, for the person who answers the chat. Without it the chat still opens.
-    backendGet<{ subscription?: Subscription }>(
+    // The backend answers `{ data: { subscription: {...}, billing_account } }`, while the
+    // model it declares for this route puts the plan's fields on `data` itself. Both are
+    // read, so the plan isn't lost the day the route is brought in line with its model.
+    backendGet<Subscription & { subscription?: Subscription | null }>(
       "/api/v1/subscriptions/current",
       accessToken,
       fetchImpl,
     ).then(
-      (data) =>
-        text(data?.subscription?.plan_display_name) ??
-        text(data?.subscription?.plan_name),
+      (data) => {
+        const subscription = data?.subscription ?? data;
+        return (
+          text(subscription?.plan_display_name) ?? text(subscription?.plan_name)
+        );
+      },
       () => null,
     ),
   ]);
