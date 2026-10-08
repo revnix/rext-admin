@@ -536,7 +536,7 @@ function KeywordsSetting({
                 }
                 className="flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-surface-inset hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <X aria-hidden className="size-3.5" />
+                <X aria-hidden className="size-4" />
               </button>
             )}
           </li>

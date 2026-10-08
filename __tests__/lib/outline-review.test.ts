@@ -1449,7 +1449,7 @@ describe("buildOutlineApproval", () => {
     });
   });
 
-  it("sends the keywords as the user left them, and none when the outline has none", () => {
+  it("sends the keywords as the user left them, an empty list too, and none when the outline has none", () => {
     // FB2.18: the backend reads the list as the user's, and what is missing from it as removed.
     const approval = buildOutlineApproval({
       ...base,
@@ -1464,10 +1464,12 @@ describe("buildOutlineApproval", () => {
       buildOutlineApproval({ ...base, keywords: ["running shoes"] })
         .keywords_to_include,
     ).toEqual(["running shoes"]);
+    // An outline without a focus keyphrase whose last keyword was removed: the empty list is
+    // sent, since leaving the field out would keep the outline's own keywords.
+    expect(
+      buildOutlineApproval({ ...base, keywords: [] }).keywords_to_include,
+    ).toEqual([]);
     expect(buildOutlineApproval(base)).not.toHaveProperty(
-      "keywords_to_include",
-    );
-    expect(buildOutlineApproval({ ...base, keywords: [] })).not.toHaveProperty(
       "keywords_to_include",
     );
   });
