@@ -18,6 +18,7 @@ import {
   SIGNED_OUT,
   SIGNED_OUT_MESSAGE,
   signInUrlFromHere,
+  subscribeSignedOut,
 } from "@/lib/auth/signed-out";
 import { opensWithoutSession } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
@@ -84,6 +85,11 @@ export const PERMISSIONS_STALE_EVENT = "rext:permissions-stale";
 
 // Debounced redirect state to prevent multiple simultaneous 401 redirects
 let isRedirectingToLogin = false;
+// A page that stayed open through a sign-out and has a session again (the person signed in from
+// another tab) is an ordinary signed-in page: its next sign-out must be able to run.
+subscribeSignedOut(() => {
+  if (!isSignedOut()) isRedirectingToLogin = false;
+});
 // Set by classifyUnauthorized() when the 401 was a suspended/banned account, so
 // the forced sign-out can tell the login page why.
 let blockedAccountError: string | null = null;
