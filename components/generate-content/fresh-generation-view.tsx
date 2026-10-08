@@ -106,6 +106,11 @@ import {
   keepsWaiting,
 } from "@/lib/generate-content/backend-away";
 import {
+  RESTORE_FAILED_MESSAGE,
+  RUN_NOT_FOUND,
+  RUN_NOT_FOUND_MESSAGE,
+} from "@/lib/generate-content/run-gone";
+import {
   GENERATION_STREAM_MODES,
   isOutlineToken,
   type LibraryResearchEvent,
@@ -292,6 +297,9 @@ const extractJsonStringArrayField = (raw: string, field: string) => {
     })
     .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
 };
+
+/** A restore that stops with a sentence of the page's own: the only words its notice shows. */
+class RestoreStop extends Error {}
 
 export function FreshGenerationView({
   onBack,
@@ -755,12 +763,20 @@ export function FreshGenerationView({
           progress?: number;
           stage?: string;
           error?: string;
+          code?: string;
           awaitingInput?: boolean;
           runStage?: { phase: RunPhase; id: string };
         };
 
         if (!response.ok && response.status !== 202) {
-          throw new Error(payload.error || "Unable to restore this article");
+          // The run isn't there (an address from another account, an old one, a removed run):
+          // asking again changes nothing, and the page says so in its own words. Any other
+          // refusal gets the page's sentence too, never the answer's text (rext-control task 824).
+          if (response.status === 404 || payload.code === RUN_NOT_FOUND) {
+            terminalFailure = true;
+            throw new RestoreStop(RUN_NOT_FOUND_MESSAGE);
+          }
+          throw new RestoreStop(RESTORE_FAILED_MESSAGE);
         }
         if (disposed) return;
 
@@ -811,7 +827,7 @@ export function FreshGenerationView({
           payload.error
         ) {
           terminalFailure = true;
-          throw new Error(
+          throw new RestoreStop(
             payload.error || "This article could not be generated.",
           );
         }
@@ -874,7 +890,7 @@ export function FreshGenerationView({
             return;
           }
           terminalFailure = true;
-          throw new Error(
+          throw new RestoreStop(
             payload.awaitingInput
               ? "This generation is waiting on a step we could not restore."
               : "Generation finished, but the article result was unavailable.",
@@ -952,10 +968,12 @@ export function FreshGenerationView({
         retryId = window.setTimeout(restore, 3000);
       } catch (error) {
         if (disposed) return;
+        // What the page chose to say, or its one sentence for anything else: an error's own
+        // text (a failed read, an answer that isn't JSON) is never shown.
         const message =
-          error instanceof Error
+          error instanceof RestoreStop || error instanceof BackendAwayError
             ? error.message
-            : "Unable to restore this article";
+            : RESTORE_FAILED_MESSAGE;
         // The backend is away (a deploy restarts it for about a minute), not the run, which
         // goes on once it's back: keep asking, and count nothing against the run meanwhile.
         if (!terminalFailure && isAwayFailure(error)) {

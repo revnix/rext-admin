@@ -4,6 +4,7 @@ import {
   backendAwayResponse,
   isBackendAway,
 } from "@/lib/generate-content/backend-away";
+import { ownWords } from "@/lib/generate-content/run-gone";
 import {
   getGenerationClient,
   requireThreadOwner,
@@ -87,9 +88,7 @@ export async function POST(
 
     return Response.json({ threadId, runId, cancelled: true });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to cancel this run";
-
-    return Response.json({ error: message }, { status: 500 });
+    // Never the remote error's own text (rext-control task 824).
+    return Response.json({ error: ownWords(error, NOT_NOW) }, { status: 500 });
   }
 }
