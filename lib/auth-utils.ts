@@ -463,6 +463,48 @@ async function classifyUnauthorized(
   }
 }
 
+// How long to wait before each second look at a "session revoked" answer.
+const REVOKED_ASKED_AGAIN_AFTER_MS = [700, 1500];
+
+/**
+ * A "session revoked" answer is not believed at once (revnix/rext-control#858). In the minute after
+ * the API restarts, a session that exists has been answered "revoked" and accepted again within a
+ * second, and signing out on the first answer put people who had just signed in back on the sign-in
+ * page. The request never reached its handler, so the same one is sent again, twice at most.
+ *
+ * Returns the answer to act on, or null when the backend still says the session is gone. A
+ * suspended or banned account is not asked again: that answer is the account's status, read from
+ * its own row.
+ */
+async function askAgainBeforeSigningOut(
+  url: string,
+  options: RequestInit,
+  headers: Headers,
+): Promise<Response | null> {
+  if (blockedAccountError) return null;
+  // A body that is a stream was used up by the first send.
+  if (
+    typeof ReadableStream !== "undefined" &&
+    options.body instanceof ReadableStream
+  ) {
+    return null;
+  }
+  for (const wait of REVOKED_ASKED_AGAIN_AFTER_MS) {
+    await new Promise((resolve) => setTimeout(resolve, wait));
+    if (options.signal?.aborted) return null;
+    let again: Response;
+    try {
+      again = await fetch(url, { ...options, headers });
+    } catch {
+      return null; // unreachable now: the first answer stands
+    }
+    if (again.status !== 401) return again;
+    if ((await classifyUnauthorized(again)) !== "revoked") return again;
+    if (blockedAccountError) return null;
+  }
+  return null;
+}
+
 /**
  * Authenticated fetch wrapper using AuthJS tokens
  * Automatically adds Authorization header from session
@@ -523,6 +565,14 @@ export async function authenticatedFetch(
   // redirectToLogin() is debounced, so a burst of parallel 401s (the dashboard
   // fires several at once) still produces exactly one logout.
   if (unauthorizedKind === "revoked") {
+    const again = await askAgainBeforeSigningOut(url, options, headers);
+    if (again) {
+      log.warn(
+        "[AuthJS] A session answered as revoked was accepted when asked again — staying signed in",
+        { url, status: again.status },
+      );
+      return again;
+    }
     log.warn(
       "[AuthJS] Backend reports the session is no longer valid — signing out",
       { url },
