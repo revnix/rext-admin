@@ -1,5 +1,6 @@
 "use client";
 
+import { leaveThroughGuard } from "@/lib/leave-guard";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -30,7 +31,8 @@ export function useGenerateShortcut(url: string | null) {
       if (event.repeat || event.isComposing || event.defaultPrevented) return;
       if (typingElsewhere(event.target)) return;
       event.preventDefault();
-      router.push(url as Route);
+      // Not a link click: a page with unsaved changes asks first.
+      leaveThroughGuard(() => router.push(url as Route));
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

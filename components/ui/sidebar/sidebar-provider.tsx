@@ -72,12 +72,19 @@ export function useSidebar() {
 
 export function SidebarProvider({
   defaultPreference = "auto",
+  remember = true,
   className,
   style,
   children,
   ...props
 }: React.ComponentProps<"div"> & {
   defaultPreference?: SidebarPreference;
+  /**
+   * False where the sidebar's state is this area's own (the article editor starts collapsed):
+   * opening or closing it there lasts for the visit and is not saved, so the choice made on the
+   * other pages is still theirs afterwards.
+   */
+  remember?: boolean;
 }) {
   const isMobile = useIsMobile();
   const isCompact = useIsCompact();
@@ -87,10 +94,13 @@ export function SidebarProvider({
 
   const open = preference === "auto" ? !isCompact : preference === "expanded";
 
-  const setOpen = React.useCallback((value: boolean) => {
-    setPreference(value ? "expanded" : "collapsed");
-    saveCookie(String(value));
-  }, []);
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      setPreference(value ? "expanded" : "collapsed");
+      if (remember) saveCookie(String(value));
+    },
+    [remember],
+  );
 
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) setOpenMobile((value) => !value);

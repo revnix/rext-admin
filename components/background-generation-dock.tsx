@@ -1,5 +1,6 @@
 "use client";
 
+import { leaveThroughGuard } from "@/lib/leave-guard";
 import {
   AlertCircle,
   ArrowUpRight,
@@ -152,11 +153,14 @@ export function BackgroundGenerationDock() {
 
   const openJob = useCallback(
     (job: BackgroundGenerationJob) => {
-      requestBackgroundGenerationRestore(job.threadId);
-      router.push(job.resultUrl as Route);
-      if (job.status === "completed" && job.awaitingInput !== true) {
-        dismissJob(job);
-      }
+      // Not a link click: a page with unsaved changes (the article editor) asks first.
+      leaveThroughGuard(() => {
+        requestBackgroundGenerationRestore(job.threadId);
+        router.push(job.resultUrl as Route);
+        if (job.status === "completed" && job.awaitingInput !== true) {
+          dismissJob(job);
+        }
+      });
     },
     [dismissJob, router],
   );

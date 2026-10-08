@@ -13,8 +13,8 @@ import { AppShell } from "./app-shell";
  * layout (`app/w`, `app/(home)`, the account pages, legal, admin); a page never mounts it.
  *
  * `sidebar="collapsed"` is for an area that wants the room (the article editor, task 839): the
- * sidebar starts as icons there whatever was saved, and opens from its trigger as anywhere. Only
- * that click is saved, so the choice made on the other pages comes back on leaving.
+ * sidebar starts as icons there whatever was saved, and opens and closes from its trigger for the
+ * visit. Nothing is saved from there, so the choice made on the other pages is theirs on leaving.
  */
 export async function ShellLayout({
   children,
@@ -27,5 +27,9 @@ export async function ShellLayout({
   const preference =
     sidebar ??
     parseSidebarPreference(cookieStore.get(SIDEBAR_COOKIE_NAME)?.value);
-  return <AppShell defaultPreference={preference}>{children}</AppShell>;
+  return (
+    <AppShell defaultPreference={preference} rememberSidebar={!sidebar}>
+      {children}
+    </AppShell>
+  );
 }
