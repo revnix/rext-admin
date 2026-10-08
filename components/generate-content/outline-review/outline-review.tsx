@@ -17,6 +17,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspacePermission } from "@/hooks/use-permission";
+import { useShowAfter } from "@/hooks/use-show-after";
 import { usePersonas } from "@/hooks/use-personas";
 import type { WordCountRange } from "@/lib/generate-content/content-type-word-count";
 import {
@@ -121,7 +122,14 @@ export function OutlineReview({
 }: OutlineReviewProps) {
   const gate = useMemo(() => readOutlineGate(gateValue), [gateValue]);
   const isDraft = !outline;
-  const editable = !isDraft && !isLoading;
+  // An outline written again (Regenerate) isn't shown either until the new one is whole: the page
+  // keeps the old one meanwhile, and it is back here if the run can't start.
+  const rewriting = !isDraft && isLoading;
+  const waiting = isDraft || rewriting;
+  const editable = !waiting;
+  // A restored outline can arrive a moment after the step does: the shape shows only when the wait
+  // is longer than that, so it never flashes.
+  const showShape = useShowAfter(waiting);
 
   // The tree starts from what the gate offers, and again when it offers a new
   // outline (after a regeneration): any change to a row's id, list, heading or
@@ -352,10 +360,15 @@ export function OutlineReview({
     <BriefSkeleton />
   );
 
-  const treePane = isDraft ? (
+  const treePane = waiting ? (
     // Nothing of the outline shows before it is whole (the founder, rext-control#836): its shape
-    // stands in, sections with their sub-sections and points, and the run's stages say how far it is.
-    <OutlineSkeleton />
+    // stands in, sections with their sub-sections and points, and the run's stages say how far it
+    // is. Until the shape shows, its room is held, so the buttons under it don't move.
+    showShape ? (
+      <OutlineSkeleton />
+    ) : (
+      <div aria-hidden="true" className="min-h-96" />
+    )
   ) : rows.length > 0 ? (
     <div className="space-y-6">
       <OutlineTree
@@ -468,8 +481,8 @@ export function OutlineReview({
             </TabsContent>
             {sourcesTab && (
               <TabsContent value="sources" className="mt-4">
-                {isDraft ? (
-                  <SourcesSkeleton />
+                {waiting ? (
+                  showShape && <SourcesSkeleton />
                 ) : (
                   <OutlineSources {...sources} />
                 )}
@@ -480,7 +493,7 @@ export function OutlineReview({
           <OutlineApproveBar
             disabled={isLoading || isDraft}
             reason={
-              filling
+              filling || rewriting
                 ? "You can approve once the outline is written."
                 : undefined
             }
