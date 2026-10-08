@@ -100,6 +100,9 @@ const SHOWN = [
   "option",
   '[role="tab"]',
   "nav a",
+  // The sidebar's own menu, a link of which can sit outside the navigation (Generate).
+  '[data-slot="sidebar-menu-button"]',
+  '[data-slot="sidebar-menu-sub-button"]',
   "label",
   "legend",
   "th",
@@ -138,7 +141,7 @@ const STRUCTURE = new Set(
   preserveAspectRatio focusable mask filter marker-end marker-start text-anchor
   dominant-baseline font-size font-family font-weight charset http-equiv as crossorigin
   integrity nonce fetchpriority referrerpolicy async defer nomodule blocking
-  rr_width rr_height rr_dataURL rr_scrollLeft rr_scrollTop rr_mediaState
+  rr_width rr_height rr_left rr_top rr_position rr_dataURL rr_scrollLeft rr_scrollTop rr_mediaState
   rr_mediaCurrentTime rr_mediaPlaybackRate rr_mediaMuted rr_mediaLoop rr_mediaVolume
   _cssText popover popovertarget inert translate part slot is aria-controls
   aria-labelledby aria-describedby aria-owns aria-activedescendant aria-details
