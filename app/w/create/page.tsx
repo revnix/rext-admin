@@ -21,7 +21,7 @@ import { subscriptionQueries } from "@/lib/query-keys";
 export default function CreateWorkspacePage() {
   usePageTitle(
     "Create workspace",
-    "A workspace for one website: its brand voice, personas and content",
+    "A workspace for one brand: its voice, personas and content",
   );
 
   // The plan's workspaces, from GET /subscriptions/usage: the wizard refreshes it once the new
@@ -58,7 +58,7 @@ export default function CreateWorkspacePage() {
       <FormPage
         centered
         title="Create workspace"
-        description="A workspace for one website: its brand voice, personas and content."
+        description="A workspace for one brand: its voice, personas and content."
       >
         <EmptyState
           title="Workspace limit reached"
@@ -81,7 +81,7 @@ export default function CreateWorkspacePage() {
   return (
     <WorkingSurface
       title="Create workspace"
-      description="A workspace for one website: its brand voice, personas and content."
+      description="A workspace for one brand: its voice, personas and content."
     >
       <StepColumn withSidePane>
         <WorkspaceCreateWizard

@@ -25,6 +25,31 @@ export const WORKSPACE_ANALYSIS_STAGES = [
   },
 ] as const;
 
+/**
+ * A workspace made from a description of the business has no website to read (rext-control#853):
+ * its run is the brand voice only, drafted from what the person wrote. No personas, no competitors.
+ */
+export const WORKSPACE_DESCRIPTION_STAGES = [
+  {
+    step: "brand_voice",
+    id: "workspace-brand-voice",
+    label: "Writing your brand voice",
+  },
+] as const;
+
+/** Which run the page follows: the website's three steps, or the description's one. */
+export interface WorkspaceRunKind {
+  withoutSite?: boolean;
+}
+
+const stagesOf = ({
+  withoutSite,
+}: WorkspaceRunKind = {}): ReadonlyArray<{
+  step: string;
+  id: string;
+  label: string;
+}> => (withoutSite ? WORKSPACE_DESCRIPTION_STAGES : WORKSPACE_ANALYSIS_STAGES);
+
 /** The step an event is about ("scrape" from "scrape.started"), and what happened to it. */
 function readEvent(event: SSEEvent): { step: string; outcome: string } {
   const [step, suffix] = event.step.split(".");
@@ -48,8 +73,12 @@ function closeEarlier(stages: RunStage[], index: number, time?: number) {
 }
 
 /** Where the operation's events put each stage; with no event yet, every stage waits. */
-export function workspaceRunStages(events: SSEEvent[]): RunStage[] {
-  const stages: RunStage[] = WORKSPACE_ANALYSIS_STAGES.map((stage) => ({
+export function workspaceRunStages(
+  events: SSEEvent[],
+  kind: WorkspaceRunKind = {},
+): RunStage[] {
+  const defined = stagesOf(kind);
+  const stages: RunStage[] = defined.map((stage) => ({
     id: stage.id,
     label: stage.label,
     state: "pending",
@@ -74,7 +103,7 @@ export function workspaceRunStages(events: SSEEvent[]): RunStage[] {
       continue;
     }
 
-    const index = WORKSPACE_ANALYSIS_STAGES.findIndex((s) => s.step === step);
+    const index = defined.findIndex((s) => s.step === step);
     if (index === -1) continue;
     const stage = stages[index];
     if (outcome === "started" && stage.state === "pending") {
@@ -218,8 +247,24 @@ export function workspaceStageDetails(
    * nothing yet.
    */
   peopleFinal = false,
+  kind: WorkspaceRunKind = {},
 ): Record<string, RunStageDetail> {
   const { site: read, voice, competitors } = findings;
+  if (kind.withoutSite) {
+    // No website: the voice comes from the description, and nobody is looked for.
+    return {
+      "workspace-brand-voice": {
+        waiting:
+          "How the brand sounds and who it's for, from what you tell us.",
+        live: "Working out how the brand sounds and who it's for, from your description.",
+        result: voice
+          ? voice.tone.length > 0
+            ? `${plural(voice.tone.length, "tone word", "tone words")}`
+            : "Brand voice drafted"
+          : undefined,
+      },
+    };
+  }
   return {
     "workspace-scrape": {
       waiting: `The pages of ${site}.`,
@@ -403,9 +448,16 @@ function progressLines(
 export function workspaceActivity(
   events: SSEEvent[],
   site: string,
+  kind: WorkspaceRunKind = {},
 ): WorkspaceActivity[] {
   const lines: WorkspaceActivity[] = [];
-  const details = workspaceStageDetails(workspaceFindings(events), site);
+  const details = workspaceStageDetails(
+    workspaceFindings(events),
+    site,
+    undefined,
+    false,
+    kind,
+  );
   for (const event of events) {
     const { step, outcome } = readEvent(event);
     const time = Date.parse(event.timestamp);
@@ -438,7 +490,7 @@ export function workspaceActivity(
         });
       continue;
     }
-    const stage = WORKSPACE_ANALYSIS_STAGES.find((item) => item.step === step);
+    const stage = stagesOf(kind).find((item) => item.step === step);
     if (!stage) continue;
     if (outcome === "started") {
       line("started", details[stage.id]?.live);

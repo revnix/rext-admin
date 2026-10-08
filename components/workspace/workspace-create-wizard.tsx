@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Meter } from "@/components/ui/meter";
 import { Notice } from "@/components/ui/notice";
+import { Textarea } from "@/components/ui/textarea";
 import { usePersonas } from "@/hooks/use-personas";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
@@ -49,6 +50,7 @@ import {
 import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-step";
 import { useSSE } from "@/providers/sse-provider";
 import {
+  DESCRIPTION_LIMITS,
   normalizeWebsite,
   type WorkspaceFormData,
   workspaceFormSchema,
@@ -67,6 +69,11 @@ import type { Route } from "next";
  *   and the work as it happens, newest on top, all from the operation's events.
  * - **Review and finish:** the same sections, where they were, as fields to edit
  *   (WorkspaceReviewStep), then Finish, which opens Generate content (FB2.1, rext-control#682).
+ *
+ * **Without a website** (rext-control#853): "I don't have a website yet" on the first step swaps
+ * the address for a description of the business. The run then writes the brand voice only, from
+ * that description: one stage beside the workspace, and the competitors and personas say from the
+ * start that there are none yet. Everything else is the same surface.
  *
  * A failed analysis says what failed and opens the workspace anyway; a stream that stops before
  * the end offers a retry. A workspace past the plan's limit (the backend's 429, or a limit the page
@@ -103,11 +110,25 @@ export function WorkspaceCreateWizard({
 
   const form = useZodForm(workspaceFormSchema, {
     defaultValues: {
+      from: "website",
       name: "",
       url: "",
+      description: "",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   });
+  // The way in: a website to read, or a description of the business (rext-control#853). The form
+  // keeps it through the wait and the review, so the stages and the words follow it there too.
+  const withoutSite = form.watch("from") === "description";
+  const kind = { withoutSite };
+  const enter = (from: "website" | "description") => {
+    form.setValue("from", from);
+    // The other way's field leaves with its error; what was typed in it stays.
+    form.clearErrors(["url", "description"]);
+    window.requestAnimationFrame(() =>
+      form.setFocus(from === "website" ? "url" : "description"),
+    );
+  };
 
   const openBrandVoice = useCallback(
     (drafted: boolean) => {
@@ -152,13 +173,16 @@ export function WorkspaceCreateWizard({
   // The analysis as it goes (rext-control#845): where each stage stands and what it found, from
   // the operation's events. The author personas are saved inside the brand-voice step, so they
   // are read once that step has ended.
-  const stages = workspaceRunStages(events);
+  const stages = workspaceRunStages(events, kind);
   const findings = workspaceFindings(events);
   const voiceStage = stages.find(
     (stage) => stage.id === "workspace-brand-voice",
   )?.state;
   const voiceEnded = voiceStage === "complete";
-  const personas = usePersonas(voiceEnded ? idRef.current : null);
+  // A workspace made from a description has no one to read: its personas are not asked for.
+  const personas = usePersonas(
+    voiceEnded && !withoutSite ? idRef.current : null,
+  );
   // The personas are saved during the run, and the save can land after this step's event (it did,
   // on staging: "no one named" during the wait, then a persona in the review). So the list is read
   // again as each later step ends, and an empty answer is the last word only once the run has
@@ -167,11 +191,12 @@ export function WorkspaceCreateWizard({
     (stage) => stage.state === "complete",
   ).length;
   useEffect(() => {
-    if (!voiceEnded || stepsEnded === 0 || !idRef.current) return;
+    if (!voiceEnded || withoutSite || stepsEnded === 0 || !idRef.current)
+      return;
     queryClient.invalidateQueries({
       queryKey: personaQueries.lists(idRef.current),
     });
-  }, [voiceEnded, stepsEnded, queryClient]);
+  }, [voiceEnded, withoutSite, stepsEnded, queryClient]);
   const failed = findFailedEvent(events);
   const read = personas.isSuccess
     ? (personas.data?.personas ?? []).flatMap((persona) => {
@@ -199,10 +224,11 @@ export function WorkspaceCreateWizard({
     // Before creation: the list doesn't hold the new workspace yet.
     const isFirstWorkspace = workspaceList.length === 0;
     try {
+      const fromSite = data.from === "website";
       const workspace = await createWorkspace({
         name: data.name,
-        url: data.url,
         timezone: data.timezone,
+        ...(fromSite ? { url: data.url } : { description: data.description }),
       });
       slugRef.current = workspace.slug;
       idRef.current = workspace.id;
@@ -224,8 +250,9 @@ export function WorkspaceCreateWizard({
       analytics.track("workspace_created", {
         workspace_id: workspace.id,
         first_workspace: isFirstWorkspace,
+        with_website: fromSite,
       });
-      setWebsite(data.url);
+      setWebsite(fromSite ? data.url : "");
       const operation = useWorkspaceCrudStore.getState().currentOperation;
       if (operation?.operationId) {
         setOperationId(operation.operationId);
@@ -246,7 +273,13 @@ export function WorkspaceCreateWizard({
       }
       // The backend checks the name and that the website answers: say so beside the field.
       const message = (error as Error).message;
-      if (/website|url|domain/i.test(message)) {
+      if (withoutSite && /description/i.test(message)) {
+        form.setError(
+          "description",
+          { type: "server", message },
+          { shouldFocus: true },
+        );
+      } else if (/website|url|domain/i.test(message)) {
         form.setError(
           "url",
           { type: "server", message },
@@ -340,14 +373,16 @@ export function WorkspaceCreateWizard({
     site,
     people?.map((person) => person.name),
     peopleFinal,
+    kind,
   );
   const scenes = {
     stages,
     details,
-    activity: workspaceActivity(events, site),
+    activity: workspaceActivity(events, site, kind),
   };
-  const plan =
-    "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
+  const plan = withoutSite
+    ? "When you create the workspace, we draft its brand voice from what you tell us. It takes a few seconds, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
+    : "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
 
   let main: ReactNode;
   if (step === 0) {
@@ -396,34 +431,66 @@ export function WorkspaceCreateWizard({
               <Input {...field} maxLength={200} placeholder="e.g. My company" />
             )}
           </FieldController>
-          <FieldController
-            control={form.control}
-            name="url"
-            label="Website"
-            // The address that will be read, once what is typed makes one: "mysite.com" is
-            // enough, and the form says where it goes.
-            description={
-              reads
-                ? `We'll read ${reads} to draft the workspace's brand voice, personas and competitors.`
-                : "We read it to draft the workspace's brand voice, personas and competitors."
-            }
-            required
-          >
-            {(field) => (
-              // A text field: `type="url"` makes the browser refuse a bare domain in its own
-              // words before the form can take it (rext-control#854).
-              <Input
-                {...field}
-                type="text"
-                inputMode="url"
-                autoCapitalize="none"
-                autoCorrect="off"
-                autoComplete="url"
-                spellCheck={false}
-                placeholder="yoursite.com"
-              />
-            )}
-          </FieldController>
+          {withoutSite ? (
+            <FieldController
+              control={form.control}
+              name="description"
+              label="What does the business do?"
+              description="What it sells and who buys it, in a sentence or two. We draft the brand voice from this, and you can change every word of it in the review."
+              maxLength={DESCRIPTION_LIMITS.max}
+              required
+            >
+              {(field) => (
+                <Textarea
+                  {...field}
+                  value={field.value ?? ""}
+                  rows={4}
+                  placeholder="e.g. We sell hand-forged kitchen knives to home cooks who want one knife that lasts."
+                />
+              )}
+            </FieldController>
+          ) : (
+            <FieldController
+              control={form.control}
+              name="url"
+              label="Website"
+              // The address that will be read, once what is typed makes one: "mysite.com" is
+              // enough, and the form says where it goes.
+              description={
+                reads
+                  ? `We'll read ${reads} to draft the workspace's brand voice, personas and competitors.`
+                  : "We read it to draft the workspace's brand voice, personas and competitors."
+              }
+              required
+            >
+              {(field) => (
+                // A text field: `type="url"` makes the browser refuse a bare domain in its own
+                // words before the form can take it (rext-control#854).
+                <Input
+                  {...field}
+                  type="text"
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="url"
+                  spellCheck={false}
+                  placeholder="yoursite.com"
+                />
+              )}
+            </FieldController>
+          )}
+          {/* The other way in: for someone with no website yet, and back. */}
+          <p className="text-table text-muted-foreground">
+            {withoutSite ? "Have a website after all? " : "No website yet? "}
+            <button
+              data-rec="show"
+              type="button"
+              className="font-medium text-foreground underline underline-offset-4"
+              onClick={() => enter(withoutSite ? "website" : "description")}
+            >
+              {withoutSite ? "I have a website" : "I don't have a website yet"}
+            </button>
+          </p>
         </FormShell>
         {/* Under 1024 px nothing sits beside the form: what happens next follows it. */}
         <section
@@ -442,14 +509,29 @@ export function WorkspaceCreateWizard({
         workspaceSlug={slugRef.current}
         website={website}
         after={
-          people !== undefined && (
+          withoutSite ? (
             <section
               aria-label="Author personas"
               className="flex flex-col gap-3"
             >
               <h2 className="text-section text-foreground">Author personas</h2>
-              <AuthorPersonas people={people} />
+              <p className="text-table text-muted-foreground">
+                None yet: there is no website to read the people from. You can
+                add personas later.
+              </p>
             </section>
+          ) : (
+            people !== undefined && (
+              <section
+                aria-label="Author personas"
+                className="flex flex-col gap-3"
+              >
+                <h2 className="text-section text-foreground">
+                  Author personas
+                </h2>
+                <AuthorPersonas people={people} />
+              </section>
+            )
           )
         }
       />
@@ -467,15 +549,18 @@ export function WorkspaceCreateWizard({
         }
       >
         Something went wrong on our side while it was being created, and it
-        isn't there. Your name and address are still in the form.
+        isn't there. Your name and {withoutSite ? "description" : "address"} are
+        still in the form.
       </Notice>
     );
   } else {
     main = (
       <div className="space-y-6">
         <p className="text-body text-muted-foreground">
-          Reading {website}. It usually takes about a minute. The workspace is
-          already created, so you can leave this page.
+          {withoutSite
+            ? "Drafting your brand voice from your description. It takes a few seconds."
+            : `Reading ${website}. It usually takes about a minute.`}{" "}
+          The workspace is already created, so you can leave this page.
         </p>
         <BehindTheScenesStrip {...scenes} />
         {failed ? (
@@ -492,8 +577,10 @@ export function WorkspaceCreateWizard({
               </Button>
             }
           >
-            {failed.message} Your workspace is created; you can read the website
-            again from its Brand voice settings.
+            {failed.message} Your workspace is created;{" "}
+            {withoutSite
+              ? "you can write its brand voice in its settings."
+              : "you can read the website again from its Brand voice settings."}
           </Notice>
         ) : (
           (streamProblem || quiet) && (
@@ -533,6 +620,7 @@ export function WorkspaceCreateWizard({
           findings={findings}
           people={people}
           peopleFinal={peopleFinal}
+          withoutSite={withoutSite}
         />
       </div>
     );
@@ -540,7 +628,7 @@ export function WorkspaceCreateWizard({
 
   return (
     <div className="space-y-6">
-      <CreationSteps current={step} />
+      <CreationSteps current={step} withoutSite={withoutSite} />
       {/* From 1024 px the stages sit beside the workspace; under it the first step lists them
           after its form and the wait shows them as one line, so the pane's sheet gets no button. */}
       <WithSidePane

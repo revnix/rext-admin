@@ -120,7 +120,7 @@ export function BrandVoiceSection() {
         <DraftedNotice
           workspaceId={workspace.id}
           workspaceSlug={workspace.slug}
-          website={workspace.url}
+          website={workspace.url ?? ""}
           competitors={voice?.competitors}
         />
       )}

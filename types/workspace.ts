@@ -26,7 +26,8 @@ export interface Workspace {
   name: string; // unique, required — workspace display name
   slug: string; // URL-safe identifier for workspace
   timezone?: string; // optional IANA timezone
-  url: string; // required
+  // Null for a workspace made from a description, until a website is added (rext-control#853).
+  url: string | null;
   // The site's favicon as an absolute URL, kept by the backend (G9); null until fetched.
   favicon_url?: string | null;
   // Not returned by the backend yet (pending workspace-validation PR); the
@@ -141,7 +142,9 @@ export type WorkspaceStatus = "active" | "inactive" | "archived" | "deleted";
 export interface CreateWorkspaceRequest {
   name: string;
   timezone?: string;
-  url: string;
+  /** The website to read, or none: then `description` says what the business does. */
+  url?: string;
+  description?: string;
 }
 
 /**

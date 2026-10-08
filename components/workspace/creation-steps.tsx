@@ -9,19 +9,34 @@ export const CREATION_STEPS = [
   "Review and finish",
 ] as const;
 
+/** The same three for a workspace made from a description of the business (rext-control#853). */
+export const CREATION_STEPS_WITHOUT_SITE = [
+  "Your business",
+  "Drafting the voice",
+  "Review and finish",
+] as const;
+
 /**
  * Where one is in creating a workspace (rext-control#845): the three steps in a row, the ones done
  * with a tick, the current one filled, the rest hollow, as the Generate flow's own row marks its
  * six. Under 30 rem of its own width only the current step is named.
  */
-export function CreationSteps({ current }: { current: 0 | 1 | 2 }) {
+export function CreationSteps({
+  current,
+  withoutSite = false,
+}: {
+  current: 0 | 1 | 2;
+  /** The workspace is made from a description: there is no site to read. */
+  withoutSite?: boolean;
+}) {
+  const steps = withoutSite ? CREATION_STEPS_WITHOUT_SITE : CREATION_STEPS;
   return (
     <nav
       aria-label="Workspace steps"
       className="@container border-b border-border pb-4"
     >
       <ol className="flex items-start gap-3">
-        {CREATION_STEPS.map((label, index) => {
+        {steps.map((label, index) => {
           const state =
             index < current
               ? "done"

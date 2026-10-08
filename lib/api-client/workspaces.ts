@@ -49,7 +49,10 @@ import { validateResponse } from "@/lib/api-response-validator";
 interface WorkspaceCreatePayload {
   name: string;
   timezone?: string;
-  url: string;
+  /** The website to read; left out for a workspace made from a description. */
+  url?: string;
+  /** The business in a sentence or two, when there is no website (rext-control#853). */
+  description?: string;
 }
 
 interface WorkspaceUpdatePayload {
@@ -58,15 +61,12 @@ interface WorkspaceUpdatePayload {
   url?: string;
 }
 
-function toCreatePayload(data: {
-  name: string;
-  timezone?: string;
-  url: string;
-}): WorkspaceCreatePayload {
+function toCreatePayload(data: WorkspaceCreatePayload): WorkspaceCreatePayload {
   return {
     name: data.name,
     timezone: data.timezone,
-    url: data.url,
+    ...(data.url ? { url: data.url } : {}),
+    ...(data.description ? { description: data.description } : {}),
   };
 }
 
@@ -182,11 +182,19 @@ export function createWorkspacesNamespace(client: ApiClient) {
     /**
      * Create workspace
      */
-    create: async (data: { name: string; timezone?: string; url: string }) => {
-      const payload = {
+    create: async (data: {
+      name: string;
+      timezone?: string;
+      url?: string;
+      description?: string;
+    }) => {
+      const url = data.url?.trim();
+      const description = data.description?.trim();
+      // One of the two: a website is read, and a description is sent only when there is none.
+      const payload: WorkspaceCreatePayload = {
         name: InputSanitizer.sanitizeText(data.name.trim()),
         timezone: data.timezone,
-        url: data.url.trim(),
+        ...(url ? { url } : description ? { description } : {}),
       };
       const response = await client.request<CreateWorkspaceResponse>(
         ENDPOINTS.WORKSPACES.BASE,

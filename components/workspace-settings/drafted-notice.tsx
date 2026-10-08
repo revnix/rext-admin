@@ -51,6 +51,9 @@ export function DraftedNotice({
   /** What to do next where it's shown. */
   closing?: string;
 }) {
+  // A workspace made from a description has no website (rext-control#853): the voice came from
+  // what the person wrote, and nobody and no competitor was looked for.
+  const withoutSite = !website?.trim();
   const titleId = useId();
   const { data, isSuccess } = usePersonas(workspaceId);
   // The personas as they were on arrival, the ones drafted from the site: a later change to the
@@ -72,7 +75,9 @@ export function DraftedNotice({
     >
       <div className="flex flex-col gap-1 px-4 py-3">
         <h2 id={titleId} className="text-section text-foreground">
-          We read {siteName(website)}
+          {withoutSite
+            ? "Drafted from your description"
+            : `We read ${siteName(website)}`}
         </h2>
         <p className="text-table text-muted-foreground">{closing}</p>
       </div>
@@ -89,22 +94,26 @@ export function DraftedNotice({
           href={workspaceRoutes.personas(workspaceSlug) as Route}
           action="Open"
         >
-          {names === null
-            ? "From the people named on your site."
-            : names.length > 0
-              ? `${names.length} drafted from the people named on your site: ${namedPeople(names)}.`
-              : "None drafted: no one is named on your site. Add them in Personas."}
+          {withoutSite && !names?.length
+            ? "None yet: there is no website to read the people from. Add them in Personas."
+            : names === null
+              ? "From the people named on your site."
+              : names.length > 0
+                ? `${names.length} drafted from the people named on your site: ${namedPeople(names)}.`
+                : "None drafted: no one is named on your site. Add them in Personas."}
         </DraftedRow>
         <DraftedRow
           label="Competitors"
           href="#field-competitors"
           action="Review"
         >
-          {competitors === undefined
-            ? "The sites yours is compared with."
-            : competitors.length > 0
-              ? `${competitors.length} found: ${namedPeople(competitors)}.`
-              : "None found. Add them below."}
+          {withoutSite && !competitors?.length
+            ? "None yet. Add them below."
+            : competitors === undefined
+              ? "The sites yours is compared with."
+              : competitors.length > 0
+                ? `${competitors.length} found: ${namedPeople(competitors)}.`
+                : "None found. Add them below."}
         </DraftedRow>
       </ul>
     </section>

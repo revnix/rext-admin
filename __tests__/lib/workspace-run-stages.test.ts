@@ -442,3 +442,69 @@ describe("workspaceActivity: the work as it happens, newest first", () => {
     ]);
   });
 });
+
+/**
+ * A workspace made from a description of the business (rext-control#853): the run is the brand
+ * voice only, `brand_voice.started` → `brand_voice.completed` → `pipeline.completed`.
+ */
+describe("a workspace made without a website", () => {
+  const kind = { withoutSite: true };
+  const drafted: SSEEvent = {
+    ...event("brand_voice.completed", "completed", 9),
+    payload: {
+      brand_name: "Acme Forge",
+      brand_voice: ["Plain", "Warm"],
+      personas: [],
+    },
+  };
+
+  it("has one stage, the brand voice, and no word of personas in its name", () => {
+    expect(workspaceRunStages([], kind)).toEqual([
+      {
+        id: "workspace-brand-voice",
+        label: "Writing your brand voice",
+        state: "pending",
+      },
+    ]);
+  });
+
+  it("moves that stage on the run's three events", () => {
+    const started = event("brand_voice.started", "started", 1);
+    expect(workspaceRunStages([started], kind)[0].state).toBe("active");
+    const done = workspaceRunStages(
+      [started, drafted, event("pipeline.completed", "completed", 10)],
+      kind,
+    );
+    expect(done.map((stage) => stage.state)).toEqual(["complete"]);
+    expect((done[0].endedAt ?? 0) - (done[0].startedAt ?? 0)).toBe(8000);
+  });
+
+  it("says the voice comes from the description, and names no site and no people", () => {
+    const details = workspaceStageDetails(
+      workspaceFindings([drafted]),
+      "your website",
+      [],
+      true,
+      kind,
+    );
+    expect(Object.keys(details)).toEqual(["workspace-brand-voice"]);
+    expect(details["workspace-brand-voice"]).toEqual({
+      waiting: "How the brand sounds and who it's for, from what you tell us.",
+      live: "Working out how the brand sounds and who it's for, from your description.",
+      result: "2 tone words",
+    });
+    expect(JSON.stringify(details)).not.toMatch(/site|named/);
+  });
+
+  it("lists the one step's start and end as they happen, newest first", () => {
+    const lines = workspaceActivity(
+      [event("brand_voice.started", "started", 1), drafted],
+      "your website",
+      kind,
+    ).map((line) => line.text);
+    expect(lines).toEqual([
+      "Writing your brand voice: 2 tone words",
+      "Working out how the brand sounds and who it's for, from your description.",
+    ]);
+  });
+});
