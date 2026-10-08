@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { watchForErrors } from "./errors";
+import { reportWarnings, watchForErrors } from "./errors";
 import { field } from "./fields";
 
 // What a customer gets after signing in: Home, and Generate up to its first step. It needs a test account
@@ -10,12 +10,15 @@ import { field } from "./fields";
 const email = process.env.SMOKE_EMAIL;
 const password = process.env.SMOKE_PASSWORD;
 
-test("a signed-in account opens Home and Generate", async ({ page }) => {
+test("a signed-in account opens Home and Generate", async ({
+  page,
+  baseURL,
+}) => {
   test.skip(
     !email || !password,
     "no test account is set (SMOKE_EMAIL, SMOKE_PASSWORD)",
   );
-  const errors = watchForErrors(page);
+  const seen = watchForErrors(page, baseURL ?? "");
   // Opening a page reads; the dashboard's reads are GET, and POST for a search. Anything else would be
   // this run changing something.
   const changes: string[] = [];
@@ -57,5 +60,6 @@ test("a signed-in account opens Home and Generate", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Analyze" })).toBeVisible();
 
   expect(changes, "the run changed nothing").toEqual([]);
-  expect(errors(), "no error on the pages").toEqual([]);
+  reportWarnings(seen, "signed in");
+  expect(seen.errors, "no error of our own on the pages").toEqual([]);
 });
