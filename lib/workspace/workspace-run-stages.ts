@@ -181,8 +181,8 @@ const plural = (count: number, one: string, many: string) =>
 
 /**
  * What each stage will do, is doing and found, for the run's box (`RunProgress`'s `details`): only
- * what the run reported. `people` are the author personas saved by the brand-voice step, once the
- * page has read them; undefined before.
+ * what the run reported. `people` are the author personas the run has saved so far, once the page
+ * has read some; none yet says nothing, since "no one" is only known when the run has ended.
  */
 export function workspaceStageDetails(
   findings: WorkspaceFindings,
@@ -211,11 +211,10 @@ export function workspaceStageDetails(
             voice.tone.length > 0
               ? `${plural(voice.tone.length, "tone word", "tone words")}`
               : "Brand voice drafted",
-            people === undefined
-              ? null
-              : people.length > 0
-                ? `${plural(people.length, "person", "people")} named on the site`
-                : "no one named on the site",
+            // Only once there are some: the run can still save a persona after this step.
+            people && people.length > 0
+              ? `${plural(people.length, "person", "people")} named on the site`
+              : null,
           ]
             .filter(Boolean)
             .join(" · ")

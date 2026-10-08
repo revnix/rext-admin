@@ -20,7 +20,11 @@ import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
 import { log } from "@/lib/logger";
-import { subscriptionQueries, workspaceQueries } from "@/lib/query-keys";
+import {
+  personaQueries,
+  subscriptionQueries,
+  workspaceQueries,
+} from "@/lib/query-keys";
 import {
   findFailedEvent,
   workspaceFindings,
@@ -123,17 +127,27 @@ export function WorkspaceCreateWizard() {
   const voiceStage = stages.find(
     (stage) => stage.id === "workspace-brand-voice",
   )?.state;
-  const personas = usePersonas(
-    voiceStage === "complete" ? idRef.current : null,
-  );
-  const people = personas.isSuccess
-    ? (personas.data?.personas ?? []).flatMap((persona) => {
-        const name = persona.full_name || persona.name;
-        return name
-          ? [{ name, title: persona.professional_title ?? undefined }]
-          : [];
-      })
-    : undefined;
+  const voiceEnded = voiceStage === "complete";
+  const personas = usePersonas(voiceEnded ? idRef.current : null);
+  // The people are shown once there are some. An empty answer is not "no one": the run can still
+  // save a persona after this step's event (it did, on staging), so the list is read again as each
+  // later step ends, and only the review, after the run, says that no one is named.
+  const named = (personas.data?.personas ?? []).flatMap((persona) => {
+    const name = persona.full_name || persona.name;
+    return name
+      ? [{ name, title: persona.professional_title ?? undefined }]
+      : [];
+  });
+  const people = named.length > 0 ? named : undefined;
+  const stepsEnded = stages.filter(
+    (stage) => stage.state === "complete",
+  ).length;
+  useEffect(() => {
+    if (!voiceEnded || stepsEnded === 0 || !idRef.current) return;
+    queryClient.invalidateQueries({
+      queryKey: personaQueries.lists(idRef.current),
+    });
+  }, [voiceEnded, stepsEnded, queryClient]);
 
   const handleSubmit = async (data: WorkspaceFormData) => {
     if (isLimitReached) {

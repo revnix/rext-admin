@@ -27,7 +27,10 @@ export function WorkspaceTakingShape({
 }: {
   stages: RunStage[];
   findings: WorkspaceFindings;
-  /** The author personas, once read after the brand-voice step; undefined before. */
+  /**
+   * The people named on the site, once the run has saved some; undefined until then. Never an
+   * empty list: while the run goes on, "none yet" is not "no one".
+   */
   people?: NamedPerson[];
 }) {
   const ended = (id: string) => {
@@ -93,32 +96,29 @@ export function WorkspaceTakingShape({
         )}
       </Part>
 
-      <Part title="Author personas" ready={people !== undefined}>
-        {people !== undefined ? (
-          people.length > 0 ? (
-            <ul className="divide-y divide-border rounded-md border border-border bg-card">
-              {people.map((person, index) => (
-                <li
-                  // biome-ignore lint/suspicious/noArrayIndexKey: two people on a site may share a name
-                  key={`${index}-${person.name}`}
-                  className="flex flex-col gap-0.5 px-3 py-2.5"
-                >
-                  <span className="text-body font-medium text-foreground">
-                    {person.name}
+      <Part
+        title="Author personas"
+        ready={people !== undefined && people.length > 0}
+      >
+        {people !== undefined && people.length > 0 ? (
+          <ul className="divide-y divide-border rounded-md border border-border bg-card">
+            {people.map((person, index) => (
+              <li
+                // biome-ignore lint/suspicious/noArrayIndexKey: two people on a site may share a name
+                key={`${index}-${person.name}`}
+                className="flex flex-col gap-0.5 px-3 py-2.5"
+              >
+                <span className="text-body font-medium text-foreground">
+                  {person.name}
+                </span>
+                {person.title && (
+                  <span className="text-table text-muted-foreground">
+                    {person.title}
                   </span>
-                  {person.title && (
-                    <span className="text-table text-muted-foreground">
-                      {person.title}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Nothing>
-              No one is named on your site. You can add personas later.
-            </Nothing>
-          )
+                )}
+              </li>
+            ))}
+          </ul>
         ) : (
           showShapes && (
             <div
