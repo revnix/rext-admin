@@ -3,8 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Ban,
+  CalendarPlus,
   CheckCircle2,
   Coins,
+  CreditCard,
   Mail,
   PauseCircle,
   Pencil,
@@ -20,6 +22,7 @@ import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { ManageUserRolesDialog } from "@/components/admin/users/manage-user-roles-dialog";
 import { UserCreditsDialog } from "@/components/admin/users/user-credits-dialog";
+import { UserPlanDialog } from "@/components/admin/users/user-plan-dialog";
 import { UserStatusDialog } from "@/components/admin/users/user-status-dialog";
 import { AccountRecoveryTable } from "@/components/admin/users/account-recovery-table";
 import { DeletedUsersTable } from "@/components/admin/users/deleted-users-table";
@@ -58,8 +61,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDebounce } from "@/hooks/useDebounce";
+import {
+  planActionLabel,
+  planCell,
+  planWords,
+} from "@/lib/billing/plan-changes";
 import { dateFormat } from "@/lib/formatters/date-formatters";
 import { ROLES, USER_PERMISSIONS } from "@/lib/permissions";
+import { adminPlanKeys } from "@/lib/query-keys";
 import {
   ADMIN_USER_STATUSES,
   ADMIN_USERS_FACETS,
@@ -82,6 +91,9 @@ interface UserData {
   last_login_at: string | null | undefined;
   login_count: number;
   created_at: string | null | undefined;
+  plan_display_name: string | null | undefined;
+  is_trial: boolean | undefined;
+  billing_period: User["billing_period"];
 }
 
 type UsersTab = "all" | "deleted" | "recovery";
@@ -94,6 +106,7 @@ type UsersDialogState =
   | { type: "manageRoles"; user: User }
   | { type: "edit"; user: User }
   | { type: "credits"; user: User }
+  | { type: "plan"; user: User }
   | { type: "delete"; user: User };
 
 // Never "Active" for a status the page doesn't know: it reads Unknown.
@@ -200,6 +213,24 @@ function RoleBadges({ roles }: { roles: UserRoleSummary[] }) {
   );
 }
 
+/**
+ * The plan that grants the user access (FB2.29), with the trial or the billing period under it.
+ * A row whose plan the API didn't send is not known, which is not "No plan".
+ */
+function PlanCell({ row }: { row: UserData }) {
+  const plan = planCell(row);
+  if (plan === "unknown")
+    return <span className="text-muted-foreground">Not known</span>;
+  if (plan === "none")
+    return <span className="text-muted-foreground">No plan</span>;
+  return (
+    <div className="min-w-0">
+      <p className="wrap-anywhere">{plan.name}</p>
+      {plan.detail && <p className="text-muted-foreground">{plan.detail}</p>}
+    </div>
+  );
+}
+
 const column = createDataTableColumnHelper<UserData>();
 
 // The server searches, filters and pages; the table only draws the page.
@@ -214,6 +245,12 @@ const columns = column.columns([
     id: "role",
     header: "Role",
     cell: ({ row }) => <RoleBadges roles={row.original.roles} />,
+    enableSorting: false,
+  }),
+  column.accessor("plan_display_name", {
+    id: "plan",
+    header: "Plan",
+    cell: ({ row }) => <PlanCell row={row.original} />,
     enableSorting: false,
   }),
   column.accessor("status", {
@@ -236,7 +273,10 @@ const columns = column.columns([
     meta: { align: "end", numeric: true },
     cell: ({ row, getValue }) => (
       <div className="min-w-0">
-        <p>{dateFormat.short(getValue()) || "Never"}</p>
+        {/* One line: with the Plan column the date would otherwise break at 1024 px. */}
+        <p className="whitespace-nowrap">
+          {dateFormat.short(getValue()) || "Never"}
+        </p>
         {row.original.login_count > 0 && (
           <p className="text-muted-foreground">
             {row.original.login_count}{" "}
@@ -277,8 +317,8 @@ export default function AdminUsersPage() {
   });
 
   // Only Super Admins can permanently delete a soft-deleted user; the Soft
-  // Deleted tab greys that one action out for everyone else. The Credits row
-  // action is theirs alone, too.
+  // Deleted tab greys that one action out for everyone else. The Credits and
+  // the plan row actions are theirs alone, too.
   const viewerIsSuperAdmin = useIsSuperAdmin();
 
   const handleTabChange = (value: string) => {
@@ -309,7 +349,7 @@ export default function AdminUsersPage() {
   // Fetch users with server-side pagination, search, and filters
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [
-      "admin-users",
+      ...adminPlanKeys.usersList(),
       pageIndex + 1,
       pageSize,
       searchQuery,
@@ -367,6 +407,9 @@ export default function AdminUsersPage() {
       last_login_at: user.last_login_at,
       login_count: user.login_count ?? 0,
       created_at: user.created_at,
+      plan_display_name: user.plan_display_name,
+      is_trial: user.is_trial,
+      billing_period: user.billing_period,
     };
   });
 
@@ -481,6 +524,14 @@ export default function AdminUsersPage() {
               icon: Coins,
               disabled: locked,
               onSelect: open({ type: "credits", user }),
+            },
+            {
+              // Theirs alone as well: another plan, or for a trial a later
+              // end. The dialog reads what the backend allows for this user.
+              label: planActionLabel(user),
+              icon: user.is_trial ? CalendarPlus : CreditCard,
+              disabled: locked,
+              onSelect: open({ type: "plan", user }),
             },
           ]
         : []),
@@ -695,6 +746,11 @@ export default function AdminUsersPage() {
                             <StatusBadge status={user.status} />
                             <RoleBadges roles={user.roles} />
                           </div>
+                          {planWords(user) && (
+                            <p className="wrap-anywhere text-muted-foreground">
+                              Plan: {planWords(user)}
+                            </p>
+                          )}
                         </div>
                         {actions}
                       </div>
@@ -766,6 +822,11 @@ export default function AdminUsersPage() {
             open={dialogState.type === "credits"}
             onOpenChange={closeDialog}
             user={dialogState.type === "credits" ? dialogState.user : null}
+          />
+          <UserPlanDialog
+            open={dialogState.type === "plan"}
+            onOpenChange={closeDialog}
+            user={dialogState.type === "plan" ? dialogState.user : null}
           />
           <DeleteUserDialog
             open={dialogState.type === "delete"}

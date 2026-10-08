@@ -362,6 +362,11 @@ export const ENDPOINTS = {
     // A user's credits: read them, or add, deduct or reset them (super admin only)
     userCredits: (userId: string) =>
       `/api/v1/admin/users/${userId}/credits` as const,
+    // A user's plan: read it with the changes allowed, or change it (super admin only)
+    userPlan: (userId: string) => `/api/v1/admin/users/${userId}/plan` as const,
+    // A trial's end, moved later (super admin only)
+    userTrial: (userId: string) =>
+      `/api/v1/admin/users/${userId}/trial` as const,
     // Workspaces
     workspaces: "/api/v1/admin/workspaces",
     // Invitations
