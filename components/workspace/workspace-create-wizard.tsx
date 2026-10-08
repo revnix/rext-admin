@@ -11,7 +11,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { toast } from "sonner";
 import { FieldController } from "@/components/forms/field-controller";
 import { FormShell } from "@/components/forms/form-shell";
 import { useZodForm } from "@/components/forms/use-zod-form";
@@ -32,9 +31,12 @@ import { Meter } from "@/components/ui/meter";
 import { Notice } from "@/components/ui/notice";
 import { Textarea } from "@/components/ui/textarea";
 import { usePersonas } from "@/hooks/use-personas";
+import { useWorkspaceCreateAnalytics } from "@/hooks/use-workspace-create-analytics";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
 import { analytics } from "@/lib/analytics";
 import { ApiError } from "@/lib/api-client/core";
+import { SERVER_UNREACHABLE } from "@/lib/api-client/server-away";
+import { redirectToLogin } from "@/lib/auth-utils";
 import { extractFieldErrors } from "@/lib/error-utils";
 import { log } from "@/lib/logger";
 import {
@@ -91,12 +93,18 @@ export function WorkspaceCreateWizard({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
-  const { checkLimit, canCreate, isLimitReached } = useCheckLimit("workspaces");
+  const { isLimitReached } = useCheckLimit("workspaces");
 
   const [operationId, setOperationId] = useState<string | null>(null);
   const [website, setWebsite] = useState("");
   const [streamProblem, setStreamProblem] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
+  // The API refused the session itself (rext-control tasks 854 and 858): said as that, with the
+  // way to sign in again, never as a field's error.
+  const [sessionEnded, setSessionEnded] = useState(false);
+  // A refusal that names no field: said above the form until the next try, not in a toast that
+  // is gone before it is read.
+  const [refusal, setRefusal] = useState<string | null>(null);
   // The analysis finished: the drafted details are reviewed here, in the flow.
   const [reviewing, setReviewing] = useState(false);
   const slugRef = useRef<string | null>(null);
@@ -106,6 +114,8 @@ export function WorkspaceCreateWizard({
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
+  // Whether this is the person's first workspace, as it was when the page opened.
+  const startedWithNone = useRef(workspaceList.length === 0);
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
@@ -123,14 +133,6 @@ export function WorkspaceCreateWizard({
   // keeps it through the wait and the review, so the stages and the words follow it there too.
   const withoutSite = form.watch("from") === "description";
   const kind = { withoutSite };
-  const enter = (from: "website" | "description") => {
-    form.setValue("from", from);
-    // The other way's field leaves with its error; what was typed in it stays.
-    form.clearErrors(["url", "description"]);
-    window.requestAnimationFrame(() =>
-      form.setFocus(from === "website" ? "url" : "description"),
-    );
-  };
 
   const openBrandVoice = useCallback(
     (drafted: boolean) => {
@@ -177,6 +179,32 @@ export function WorkspaceCreateWizard({
   // are read once that step has ended.
   const stages = workspaceRunStages(events, kind);
   const findings = workspaceFindings(events);
+  const step: 0 | 1 | 2 = !operationId ? 0 : reviewing ? 2 : 1;
+  // Where a newcomer stops, for analytics (rext-control task 854): each moment of the form, the
+  // wait and the review, with nothing that was typed.
+  const running =
+    stages.find((stage) => stage.state === "active") ??
+    stages.find((stage) => stage.state === "pending");
+  const funnel = useWorkspaceCreateAnalytics({
+    step,
+    firstWorkspace: startedWithNone.current,
+    withWebsite: !withoutSite,
+    stage:
+      running?.id === "workspace-scrape"
+        ? "reading"
+        : running?.id === "workspace-competitors"
+          ? "competitors"
+          : "voice",
+  });
+  const enter = (from: "website" | "description") => {
+    form.setValue("from", from);
+    funnel.wayChosen(from);
+    // The other way's field leaves with its error; what was typed in it stays.
+    form.clearErrors(["url", "description"]);
+    window.requestAnimationFrame(() =>
+      form.setFocus(from === "website" ? "url" : "description"),
+    );
+  };
   const voiceStage = stages.find(
     (stage) => stage.id === "workspace-brand-voice",
   )?.state;
@@ -215,14 +243,18 @@ export function WorkspaceCreateWizard({
     findings.people !== undefined || reviewing || Boolean(failed);
 
   const handleSubmit = async (data: WorkspaceFormData) => {
+    funnel.submitted();
     if (isLimitReached) {
       setLimitReached(true);
+      funnel.refused("limit");
       return;
     }
-    if (!canCreate || !checkLimit("create a workspace")) {
-      return;
-    }
+    // A plan or a usage count that isn't known (still loading, or its call failed) stops nothing:
+    // the backend holds the limit and answers 429 below. The button used to do nothing at all
+    // then, with no word of why (rext-control task 858).
     setLimitReached(false);
+    setSessionEnded(false);
+    setRefusal(null);
     // Before creation: the list doesn't hold the new workspace yet.
     const isFirstWorkspace = workspaceList.length === 0;
     try {
@@ -268,16 +300,32 @@ export function WorkspaceCreateWizard({
         // The plan's workspaces are all in use (another tab, or the plan changed): the count
         // above the form reads the usage again.
         setLimitReached(true);
+        funnel.refused("limit", { status: 429 });
         queryClient.invalidateQueries({
           queryKey: subscriptionQueries.usage().queryKey,
         });
         return;
       }
+      // What the API answered, as a number: the refusal's words are never sent to analytics.
+      const status = error instanceof ApiError ? error.statusCode : undefined;
       // The backend checks the name and that the website answers: say so beside the field.
       const message = (error as Error).message;
       // A refusal that names its field goes beside it, in the backend's own words; the field
       // not on screen (the address, when the business was described) says nothing.
       const refused = extractFieldErrors(error);
+      // A session the API doesn't accept: 401, or a request that left without its token, which
+      // the API answers as a missing "Authorization" field. No retyping fixes it, and the
+      // backend's sentence for it is not for a person.
+      if (
+        status === 401 ||
+        (status === 422 &&
+          (Object.keys(refused).some((field) => /authorization/i.test(field)) ||
+            /authorization/i.test(message)))
+      ) {
+        setSessionEnded(true);
+        funnel.refused("session", { status });
+        return;
+      }
       const shown = (["name", "description", "url"] as const).find(
         (field) =>
           refused[field] &&
@@ -289,26 +337,36 @@ export function WorkspaceCreateWizard({
           { type: "server", message: refused[shown] },
           { shouldFocus: true },
         );
+        // A website the form took and the backend refused is one it couldn't reach.
+        if (shown === "url") {
+          funnel.refused("unreachable", { field: "website", status });
+        } else {
+          funnel.refused("backend", { field: shown, status });
+        }
       } else if (withoutSite && /descri/i.test(message)) {
         form.setError(
           "description",
           { type: "server", message },
           { shouldFocus: true },
         );
+        funnel.refused("backend", { field: "description", status });
       } else if (!withoutSite && /website|url|domain/i.test(message)) {
         form.setError(
           "url",
           { type: "server", message },
           { shouldFocus: true },
         );
+        funnel.refused("unreachable", { field: "website", status });
       } else if (/name/i.test(message)) {
         form.setError(
           "name",
           { type: "server", message },
           { shouldFocus: true },
         );
+        funnel.refused("backend", { field: "name", status });
       } else {
-        toast.error(message);
+        setRefusal(refusalWords(error));
+        funnel.refused("backend", { status });
       }
     }
   };
@@ -382,7 +440,6 @@ export function WorkspaceCreateWizard({
   const reads =
     typeof typedWebsite === "string" ? normalizeWebsite(typedWebsite) : null;
 
-  const step: 0 | 1 | 2 = !operationId ? 0 : reviewing ? 2 : 1;
   const site = siteHost(website || reads || "");
   const details = workspaceStageDetails(
     findings,
@@ -417,6 +474,29 @@ export function WorkspaceCreateWizard({
             />
           </div>
         )}
+        {sessionEnded && (
+          <Notice
+            tone="warning"
+            title="You've been signed out"
+            action={
+              <Button
+                data-rec="show"
+                size="sm"
+                onClick={() => redirectToLogin("SessionExpired")}
+              >
+                Sign in again
+              </Button>
+            }
+          >
+            The workspace wasn't created. Sign in again and you come straight
+            back to this page.
+          </Notice>
+        )}
+        {refusal && (
+          <Notice tone="danger" title="The workspace wasn't created">
+            {refusal}
+          </Notice>
+        )}
         {limitReached && (
           <Notice
             tone="warning"
@@ -434,9 +514,27 @@ export function WorkspaceCreateWizard({
         <FormShell
           form={form}
           onSubmit={handleSubmit}
+          // The button pressed with a field the form itself refuses: which one, never what it holds.
+          onInvalid={(errors) =>
+            funnel.refused("form", {
+              field: errors.name
+                ? "name"
+                : errors.url
+                  ? "website"
+                  : errors.description
+                    ? "description"
+                    : undefined,
+            })
+          }
           // The next step, in its own words: what pressing it starts.
           submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
-          cancel={{ onCancel: () => router.push("/") }}
+          // Nowhere to cancel to without a workspace: the home page leads straight back here,
+          // with the form emptied.
+          cancel={
+            startedWithNone.current
+              ? undefined
+              : { onCancel: () => router.push("/") }
+          }
         >
           <FieldController
             control={form.control}
@@ -457,6 +555,8 @@ export function WorkspaceCreateWizard({
                 {...field}
                 autoFocus
                 maxLength={200}
+                onKeyDown={() => funnel.fieldTyped("name")}
+                onPaste={() => funnel.fieldTyped("name")}
                 onBlur={(event) => {
                   if (
                     field.value ||
@@ -465,6 +565,7 @@ export function WorkspaceCreateWizard({
                   ) {
                     field.onBlur();
                   }
+                  funnel.fieldLeft("name", field.value);
                 }}
               />
             )}
@@ -479,7 +580,17 @@ export function WorkspaceCreateWizard({
               required
             >
               {(field) => (
-                <Textarea {...field} value={field.value ?? ""} rows={4} />
+                <Textarea
+                  {...field}
+                  onKeyDown={() => funnel.fieldTyped("description")}
+                  onPaste={() => funnel.fieldTyped("description")}
+                  onBlur={() => {
+                    field.onBlur();
+                    funnel.fieldLeft("description", field.value);
+                  }}
+                  value={field.value ?? ""}
+                  rows={4}
+                />
               )}
             </FieldController>
           ) : (
@@ -501,6 +612,12 @@ export function WorkspaceCreateWizard({
                 // words before the form can take it (rext-control#854).
                 <Input
                   {...field}
+                  onKeyDown={() => funnel.fieldTyped("website")}
+                  onPaste={() => funnel.fieldTyped("website")}
+                  onBlur={() => {
+                    field.onBlur();
+                    funnel.fieldLeft("website", field.value);
+                  }}
                   type="text"
                   inputMode="url"
                   autoCapitalize="none"
@@ -541,6 +658,7 @@ export function WorkspaceCreateWizard({
         workspaceSlug={slugRef.current}
         website={website}
         withoutSite={withoutSite}
+        onFinished={funnel.reviewFinished}
         after={
           withoutSite ? (
             <section
@@ -694,6 +812,26 @@ function focusWasTaken(event: FocusEvent<HTMLElement>): boolean {
     return next.closest('[role="dialog"]') !== null;
   }
   return document.activeElement === event.target;
+}
+
+/**
+ * What to say for a refusal that names no field. The backend's own sentence when the refusal is
+ * the request's (a 4xx) and reads as one; ours when the server failed or couldn't be reached.
+ */
+function refusalWords(error: unknown): string {
+  if (!(error instanceof ApiError)) {
+    return "Something went wrong on our side. Try again in a moment.";
+  }
+  if (error.code === SERVER_UNREACHABLE) {
+    return "We couldn't reach the server. Try again in a moment.";
+  }
+  if (error.statusCode >= 400 && error.statusCode < 500) {
+    const said = error.message.trim();
+    return said && !/^request failed|field required|[{}<>]/i.test(said)
+      ? said
+      : "Check the name and the website, then try again.";
+  }
+  return "Something went wrong on our side. Try again in a moment.";
 }
 
 /** "rext.ai" from the address typed, for the stages' lines. */

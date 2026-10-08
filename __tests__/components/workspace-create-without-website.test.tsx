@@ -218,6 +218,18 @@ describe("Creating a workspace: the first step's second way in", () => {
       ),
     ).toBeInTheDocument();
     expect(createWorkspace).not.toHaveBeenCalled();
+    // The form's own refusal, with the field it sits beside.
+    expect(analytics.track).toHaveBeenCalledWith("workspace_create_refused", {
+      kind: "form",
+      field: "description",
+      status: undefined,
+      with_website: false,
+      first_workspace: true,
+    });
+    expect(analytics.track).not.toHaveBeenCalledWith(
+      "workspace_create_submitted",
+      expect.anything(),
+    );
   });
 
   it("creates the workspace from the description, with no address", async () => {
@@ -232,6 +244,27 @@ describe("Creating a workspace: the first step's second way in", () => {
       expect.objectContaining({ with_website: false }),
     );
     expect(JSON.stringify(analytics.track.mock.calls)).not.toContain("knives");
+    // The moments on the way, in order, for the funnel (rext-control task 854).
+    const moments = analytics.track.mock.calls.map(([event, said]) =>
+      [event, said?.way ?? said?.field ?? ""].filter(Boolean).join(":"),
+    );
+    expect(moments).toEqual([
+      "workspace_create_viewed",
+      "workspace_create_field_filled:name",
+      "workspace_create_way_chosen:description",
+      "workspace_create_field_filled:description",
+      "workspace_create_submitted",
+      "workspace_created",
+      "workspace_wait_started",
+    ]);
+    expect(analytics.track).toHaveBeenCalledWith("workspace_create_submitted", {
+      with_website: false,
+      first_workspace: true,
+    });
+    // Not one of them carries what was typed.
+    expect(JSON.stringify(analytics.track.mock.calls)).not.toMatch(
+      /Acme|forged|cooks/i,
+    );
   });
 });
 
@@ -276,6 +309,89 @@ describe("Creating a workspace without a website: what the backend refuses", () 
     ).toBeInTheDocument();
     // Still on the form, with what was typed.
     expect(business()).toHaveValue(SAID);
+    // Counted as the backend's refusal of that field, by its status and never its words.
+    expect(analytics.track).toHaveBeenCalledWith("workspace_create_refused", {
+      kind: "backend",
+      field: "description",
+      status: 422,
+      with_website: false,
+      first_workspace: true,
+    });
+    expect(JSON.stringify(analytics.track.mock.calls)).not.toContain(
+      "Describe the business",
+    );
+  });
+});
+
+describe("Creating a workspace when the API refuses the session itself", () => {
+  // A request that left without its token is answered as a missing "Authorization" field, with
+  // 422; a token the API doesn't accept, with 401 (rext-control tasks 854 and 858).
+  const refusals = (): Array<[string, Error]> => {
+    const { ApiError } = jest.requireActual("@/lib/api-client/core") as {
+      ApiError: new (
+        status: number,
+        message: string,
+        code?: string,
+        context?: unknown,
+      ) => Error;
+    };
+    return [
+      [
+        "a request with no token",
+        new ApiError(422, "Authorization: Field required", "validation_error", {
+          error: {
+            details: [{ field: "Authorization", message: "Field required" }],
+          },
+        }),
+      ],
+      [
+        "a token it doesn't accept",
+        new ApiError(401, "Invalid authentication token", "unauthorized"),
+      ],
+      [
+        // The page's own answer when it has no session to send (lib/auth-utils.ts).
+        "a page with no session",
+        new ApiError(
+          401,
+          "You've been signed out. Sign in again to carry on.",
+          "signed_out",
+        ),
+      ],
+    ];
+  };
+
+  it("says the person was signed out, with the way back in, and never the API's sentence", async () => {
+    for (const [, refusal] of refusals()) {
+      createWorkspace.mockRejectedValueOnce(refusal);
+      analytics.track.mockClear();
+      const view = render(tree());
+      await userEvent.type(
+        screen.getByRole("textbox", { name: /What is your business called/ }),
+        "Acme Forge",
+      );
+      await userEvent.type(website() as HTMLElement, "acme-forge.com");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Read my website" }),
+      );
+
+      expect(
+        await screen.findByText("You've been signed out"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Sign in again" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Field required/)).toBeNull();
+      expect(screen.queryByText(/Invalid authentication token/)).toBeNull();
+      // Its own kind in the numbers: no retyping fixes it.
+      expect(analytics.track).toHaveBeenCalledWith(
+        "workspace_create_refused",
+        expect.objectContaining({ kind: "session" }),
+      );
+      expect(JSON.stringify(analytics.track.mock.calls)).not.toMatch(
+        /Field required|Invalid authentication/,
+      );
+      view.unmount();
+    }
   });
 });
 
