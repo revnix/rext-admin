@@ -96,6 +96,8 @@ function PostHogAuthSync() {
  */
 /** How long the person's properties are left to settle before they are sent, once. */
 const PERSON_SETTLE_MS = 1500;
+/** Where the person's properties as last sent are remembered, to send them only when they change. */
+const PERSON_SENT_KEY = "rext-analytics-person";
 
 function AnalyticsContextSync() {
   const { data: session } = useSession();
@@ -142,13 +144,23 @@ function AnalyticsContextSync() {
   useEffect(() => {
     if (!planName || !planStatus) return;
     const settle = window.setTimeout(() => {
-      posthog.setPersonProperties({
+      const properties = {
         plan: planName,
         plan_status: planStatus,
         billing_period: billingPeriod,
         trial_ends_at: trialEnds ?? null,
         workspaces: workspaceCount,
-      });
+      };
+      // Once per change, not once per page load: what was sent last is remembered in the
+      // browser (signing out clears it, so the next sign-in sends it again).
+      const sent = JSON.stringify(properties);
+      try {
+        if (window.localStorage.getItem(PERSON_SENT_KEY) === sent) return;
+        window.localStorage.setItem(PERSON_SENT_KEY, sent);
+      } catch {
+        // Storage refused: it is sent on each page load instead.
+      }
+      posthog.setPersonProperties(properties);
     }, PERSON_SETTLE_MS);
     return () => window.clearTimeout(settle);
   }, [planName, planStatus, billingPeriod, trialEnds, workspaceCount]);
