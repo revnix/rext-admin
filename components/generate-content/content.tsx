@@ -734,6 +734,9 @@ function ContentEditorInner(props: ContentEditorProps) {
       // wall-clock time in the user's account timezone (accountTimezone),
       // not the browser's, so scheduling is consistent regardless of device.
       const scheduledAt = `${scheduleDateStr}T${scheduleTime}:00`;
+      // The article's id for the event below: the one it has, or the one the save returns
+      // (the state set from it isn't readable inside this call).
+      let scheduledId = contentSavedId;
 
       if (contentSavedId) {
         // Same as publish: the schedule endpoint publishes the stored row, so
@@ -755,11 +758,14 @@ function ContentEditorInner(props: ContentEditorProps) {
           payload,
           scheduledAt,
         );
-        if (response?.id) setContentSavedId(response.id);
+        if (response?.id) {
+          setContentSavedId(response.id);
+          scheduledId = response.id;
+        }
       }
       analytics.track("content_scheduled", {
         workspace_id: workspaceId ?? undefined,
-        content_id: contentSavedId ?? undefined,
+        content_id: scheduledId ?? undefined,
         scheduled_at: scheduledAt,
       });
       invalidateContentCache();
