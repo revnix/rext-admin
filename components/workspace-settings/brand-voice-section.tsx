@@ -3,18 +3,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { Route } from "next";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { FormShell } from "@/components/forms/form-shell";
 import { useSavedStatus } from "@/components/forms/use-saved-status";
 import { useZodForm } from "@/components/forms/use-zod-form";
+import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrandVoiceRefreshControl } from "@/components/workspace";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { BRAND_VOICE_PERMISSIONS } from "@/lib/permissions";
 import { workspaceQueries } from "@/lib/query-keys";
+import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
 import {
   type BrandVoiceFormValues,
@@ -128,12 +131,25 @@ export function BrandVoiceSection() {
       <SettingsGroup
         title="Brand voice"
         description={
-          form.formState.isDirty && canUpdate
-            ? "How every article sounds and who it's written for. Save or undo your changes before reading the website again: it replaces the fields below."
-            : "How every article sounds and who it's written for. It was read from your website when the workspace was created; reading the website again replaces the fields below."
+          !workspace.url
+            ? "How every article sounds and who it's written for. It was drafted from your description of the business; add a website and it can be read from there."
+            : form.formState.isDirty && canUpdate
+              ? "How every article sounds and who it's written for. Save or undo your changes before reading the website again: it replaces the fields below."
+              : "How every article sounds and who it's written for. It was read from your website when the workspace was created; reading the website again replaces the fields below."
         }
         action={
-          canUpdate && (
+          canUpdate &&
+          (!workspace.url ? (
+            // No website to read (a workspace made from a description, rext-control#853): the
+            // way to add one, in place of a button that could only be refused.
+            <Button data-rec="show" asChild variant="outline">
+              <Link
+                href={workspaceRoutes.settings.root(workspace.slug) as Route}
+              >
+                Add a website
+              </Link>
+            </Button>
+          ) : (
             <BrandVoiceRefreshControl
               workspaceId={workspace.id}
               buttonVariant="outline"
@@ -144,7 +160,7 @@ export function BrandVoiceSection() {
               <RefreshCw aria-hidden />
               Read the website again
             </BrandVoiceRefreshControl>
-          )
+          ))
         }
       >
         {refreshError && (

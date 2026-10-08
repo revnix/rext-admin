@@ -12,6 +12,7 @@ import { FormSection, FormShell } from "@/components/forms/form-shell";
 import { useSavedStatus } from "@/components/forms/use-saved-status";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { WorkspaceFavicon } from "@/components/shell/workspace-favicon";
+import { BrandVoiceRefreshControl } from "@/components/workspace/brand-voice-refresh-control";
 import { Field, FieldDescription, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
@@ -24,11 +25,15 @@ import {
   type WorkspaceGeneralInfo,
   workspaceGeneralInfoSchema,
 } from "@/schemas/workspace-schemas";
-import { useWorkspaceStore } from "@/stores/workspace";
+import { brandVoiceRefreshFor, useWorkspaceStore } from "@/stores/workspace";
 
 /**
  * Workspace settings, General: the name and the website, the slug and the icon shown. Every member
  * sees them; changing them needs workspace.update, so without it the form is shown disabled.
+ *
+ * A workspace made from a description of the business has no website (rext-control#853): the field
+ * is then empty and can stay so. Adding one saves it and starts nothing; the page then offers to
+ * read it, since a read replaces the brand voice and must be asked for.
  */
 export function GeneralInfoSection() {
   const { workspace, workspaceId } = useWorkspace();
@@ -49,6 +54,12 @@ export function GeneralInfoSection() {
     defaultValues: { name: "", slug: "", url: "" },
   });
   const { status, markSaved } = useSavedStatus(form.formState.isDirty);
+  // A website was just added to a workspace that had none: the offer to read it.
+  const [websiteAdded, setWebsiteAdded] = React.useState(false);
+  const readError = useWorkspaceStore(
+    (state) =>
+      brandVoiceRefreshFor(state.brandVoiceRefresh, workspace?.id).refreshError,
+  );
 
   // Follow the workspace as it loads and refetches, keeping what the person is typing.
   React.useEffect(() => {
@@ -72,9 +83,19 @@ export function GeneralInfoSection() {
         throw new Error("The workspace hasn't loaded yet. Try again.");
       }
 
+      const hadWebsite = Boolean(workspace.url);
+      if (hadWebsite && !data.url) {
+        // The backend keeps the address it has when none is sent: say so, not "saved".
+        form.setError(
+          "url",
+          { message: "A website can be changed here, but not removed." },
+          { shouldFocus: true },
+        );
+        return;
+      }
       const response = await apiClient.workspaces.update(workspace.id, {
         name: data.name,
-        url: data.url,
+        ...(data.url ? { url: data.url } : {}),
       });
 
       // Update local store immediately.
@@ -118,6 +139,7 @@ export function GeneralInfoSection() {
         slug: saved?.slug ?? data.slug,
         url: saved?.url ?? data.url,
       });
+      if (!hadWebsite && data.url) setWebsiteAdded(true);
 
       // Rename can regenerate the workspace slug.
       const newSlug = saved?.slug;
@@ -153,6 +175,32 @@ export function GeneralInfoSection() {
             {serverError}
           </Notice>
         )}
+        {websiteAdded && workspace?.url && (
+          <Notice
+            tone="info"
+            title="Your website is saved. Read it now?"
+            action={
+              <BrandVoiceRefreshControl
+                workspaceId={workspace.id}
+                buttonVariant="default"
+                buttonSize="sm"
+              >
+                Read the website
+              </BrandVoiceRefreshControl>
+            }
+          >
+            We can read it for the brand voice, the people named on it and your
+            competitors. What the site says replaces the brand voice as it is
+            now, your own changes included, and the list of competitors;
+            personas you added yourself stay. You can also do this later, from
+            Brand voice.
+          </Notice>
+        )}
+        {websiteAdded && readError && (
+          <Notice tone="danger" title="The website couldn't be read">
+            {readError}
+          </Notice>
+        )}
         <FormSection
           title="General"
           description={
@@ -174,11 +222,25 @@ export function GeneralInfoSection() {
             control={form.control}
             name="url"
             label="Website"
-            required
-            description="The site the brand voice is read from."
+            description={
+              workspace && !workspace.url
+                ? "None yet. Add your website and we can read it for the brand voice, the people named on it and your competitors."
+                : "The site the brand voice is read from."
+            }
           >
             {(field) => (
-              <Input {...field} type="url" placeholder="https://example.com" />
+              // A text field, as on the create form: `type="url"` makes the browser refuse a
+              // bare domain in its own words (rext-control#854).
+              <Input
+                {...field}
+                type="text"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="url"
+                spellCheck={false}
+                placeholder="yoursite.com"
+              />
             )}
           </FieldController>
           <FieldController
@@ -199,7 +261,9 @@ export function GeneralInfoSection() {
               <FieldDescription>
                 {workspace?.favicon_url
                   ? "Your website's icon, as the workspace switcher shows it."
-                  : "No icon could be read from your website, so the name's first letter stands in."}
+                  : workspace && !workspace.url
+                    ? "The name's first letter stands in until there is a website to take an icon from."
+                    : "No icon could be read from your website, so the name's first letter stands in."}
               </FieldDescription>
             </div>
           </Field>

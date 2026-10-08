@@ -137,7 +137,8 @@ export const workspaceFormSchema = z.discriminatedUnion("from", [
 
 /**
  * Workspace settings, General section: the name and the website (the slug is shown, not edited).
- * Unlike the create form's `urlSchema`, an http:// address is accepted here, as it always was.
+ * Unlike the create form's `urlSchema`, an http:// address is accepted here, as it always was, and
+ * so is no website at all.
  */
 export const workspaceGeneralInfoSchema = z.object({
   name: z
@@ -147,21 +148,26 @@ export const workspaceGeneralInfoSchema = z.object({
     .max(200, "Workspace name must be 200 characters or less")
     .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
   slug: z.string(),
+  // Empty for a workspace with no website (one made from a description, rext-control#853). A bare
+  // domain is enough, as on the create form; an address typed with http:// or https:// is kept
+  // as it is.
   url: z
     .string()
     .trim()
-    .min(1, "Website URL is required")
-    .url("Must be a valid URL")
-    .refine((value) => {
+    .transform((typed, context) => {
+      if (!typed) return "";
+      const address = /^[a-z][a-z\d+.-]*:\/\//i.test(typed)
+        ? typed
+        : `https://${typed}`;
       try {
-        const hostname = new URL(value).hostname;
-        return /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/.test(
-          hostname,
-        );
+        const { protocol, hostname } = new URL(address);
+        if (/^https?:$/.test(protocol) && DOMAIN.test(hostname)) return address;
       } catch {
-        return false;
+        // Not an address: said below.
       }
-    }, "URL must include a valid domain extension"),
+      context.addIssue({ code: "custom", message: WEBSITE_HELP });
+      return z.NEVER;
+    }),
 });
 
 export type WorkspaceGeneralInfo = z.infer<typeof workspaceGeneralInfoSchema>;
