@@ -7,11 +7,13 @@
 import {
   analyticsMode,
   consentCookie,
+  consentCookies,
   fromThisSite,
   onConsentChange,
   readConsent,
   regionForCountry,
   resetRegionRequest,
+  sharedCookieDomain,
   writeConsent,
 } from "@/lib/analytics-consent";
 
@@ -165,6 +167,28 @@ describe("writeConsent", () => {
     expect(consentCookie("denied", false)).toBe(
       "rext-consent=denied; Max-Age=15724800; Path=/; SameSite=Lax",
     );
+  });
+
+  it("is one cookie for rext.ai and everything under it, and a host's own anywhere else", () => {
+    for (const host of ["rext.ai", "app.rext.ai", "APP.REXT.AI"]) {
+      expect(sharedCookieDomain(host)).toBe(".rext.ai");
+    }
+    for (const host of [
+      "localhost",
+      "rext-abc123-it-rx.vercel.app",
+      "notrext.ai",
+      "rext.ai.example.com",
+    ]) {
+      expect(sharedCookieDomain(host)).toBeNull();
+    }
+    expect(consentCookie("granted", true, "app.rext.ai")).toBe(
+      "rext-consent=granted; Max-Age=15724800; Path=/; SameSite=Lax; Domain=.rext.ai; Secure",
+    );
+    // Where it is shared, the one the host kept for itself goes first.
+    expect(consentCookies("granted", true, "app.rext.ai")).toHaveLength(2);
+    expect(consentCookies("granted", false, "localhost")).toEqual([
+      "rext-consent=granted; Max-Age=15724800; Path=/; SameSite=Lax",
+    ]);
   });
 });
 

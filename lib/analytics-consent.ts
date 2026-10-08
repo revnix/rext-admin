@@ -9,9 +9,11 @@
  *
  * Two first-party cookies hold it, both readable by the page and named as on rext.ai:
  * - `rext-region` (`eea` or `other`), set by `/api/region` from Vercel's country header. A missing
- *   or unknown country, or a failed request, counts as the EEA.
+ *   or unknown country, or a failed request, counts as the EEA. Each host keeps its own.
  * - `rext-consent` (`granted` or `denied`), set when the person chooses: here at once, and again
  *   by `/api/consent`, because Safari keeps a cookie written by a script for seven days only.
+ *   It is one cookie for rext.ai and the app (`Domain=.rext.ai`): an answer given on either is the
+ *   answer on both, and nobody is asked twice.
  */
 
 export type ConsentChoice = "granted" | "denied";
@@ -33,9 +35,52 @@ export function isConsentChoice(value: unknown): value is ConsentChoice {
   return value === "granted" || value === "denied";
 }
 
-/** The `rext-consent` cookie, the same whether the page or the server sets it. */
-export function consentCookie(choice: ConsentChoice, secure: boolean): string {
-  return `${CONSENT_COOKIE}=${choice}; Max-Age=${CONSENT_MAX_AGE}; Path=/; SameSite=Lax${secure ? "; Secure" : ""}`;
+/** The site whose hosts share the choice: rext.ai itself and everything under it. */
+const SHARED_SITE = "rext.ai";
+
+/**
+ * The `Domain` the choice's cookie is set for on this host: `.rext.ai` on rext.ai and its
+ * subdomains, so the website and the app read one answer. None anywhere else (a preview, a local
+ * run): the cookie is then that host's alone.
+ */
+export function sharedCookieDomain(hostname: string): string | null {
+  const host = hostname.toLowerCase();
+  return host === SHARED_SITE || host.endsWith(`.${SHARED_SITE}`)
+    ? `.${SHARED_SITE}`
+    : null;
+}
+
+/**
+ * The `rext-consent` cookie, the same whether the page or the server sets it. With the host it is
+ * set from, it is the shared one where that host has one.
+ */
+export function consentCookie(
+  choice: ConsentChoice,
+  secure: boolean,
+  hostname?: string,
+): string {
+  const domain = hostname ? sharedCookieDomain(hostname) : null;
+  return `${CONSENT_COOKIE}=${choice}; Max-Age=${CONSENT_MAX_AGE}; Path=/; SameSite=Lax${domain ? `; Domain=${domain}` : ""}${secure ? "; Secure" : ""}`;
+}
+
+/**
+ * Takes away the `rext-consent` cookie a host kept for itself alone, before the choice was
+ * shared. Left beside the shared one it would answer for this host with an older choice.
+ */
+export function ownConsentCookieRemoval(secure: boolean): string {
+  return `${CONSENT_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
+/** The two cookies a choice is written as on this host: its own taken away, then the shared one. */
+export function consentCookies(
+  choice: ConsentChoice,
+  secure: boolean,
+  hostname: string,
+): string[] {
+  const shared = consentCookie(choice, secure, hostname);
+  return sharedCookieDomain(hostname)
+    ? [ownConsentCookieRemoval(secure), shared]
+    : [shared];
 }
 
 /**
@@ -59,22 +104,32 @@ export function regionForCountry(
   return CONSENT_COUNTRIES.has(country.toUpperCase()) ? "eea" : "other";
 }
 
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
+/** Every value the page can see under a cookie's name: a host's own and a shared one can both be there. */
+function readCookies(name: string): string[] {
+  if (typeof document === "undefined") return [];
   const prefix = `${name}=`;
+  const values: string[] = [];
   for (const part of document.cookie.split(";")) {
     const cookie = part.trim();
     if (cookie.startsWith(prefix)) {
-      return decodeURIComponent(cookie.slice(prefix.length));
+      values.push(decodeURIComponent(cookie.slice(prefix.length)));
     }
   }
-  return null;
+  return values;
 }
 
-/** The person's own choice, or null when they haven't made one in this browser. */
+function readCookie(name: string): string | null {
+  return readCookies(name)[0] ?? null;
+}
+
+/**
+ * The person's own choice, or null when they haven't made one in this browser. Where a choice
+ * kept by this host sits beside a different one from rext.ai, a no stays a no.
+ */
 export function readConsent(): ConsentChoice | null {
-  const value = readCookie(CONSENT_COOKIE);
-  return isConsentChoice(value) ? value : null;
+  const choices = readCookies(CONSENT_COOKIE).filter(isConsentChoice);
+  if (choices.length === 0) return null;
+  return choices.includes("denied") ? "denied" : "granted";
 }
 
 let regionRequest: Promise<ConsentRegion> | null = null;
@@ -94,6 +149,7 @@ function resolveRegion(): Promise<ConsentRegion> {
 
 /** What this person's choice and region allow. */
 export async function analyticsMode(): Promise<AnalyticsMode> {
+  shareOwnConsent();
   const choice = readConsent();
   if (choice === "granted") return "full";
   if (choice === "denied") return "anonymous";
@@ -103,11 +159,15 @@ export async function analyticsMode(): Promise<AnalyticsMode> {
 const CHANGE_EVENT = "rext:analytics-consent";
 
 function setConsentCookie(choice: ConsentChoice): void {
-  // biome-ignore lint/suspicious/noDocumentCookie: the choice is read back synchronously, here and by the server
-  document.cookie = consentCookie(
+  const { hostname, protocol } = window.location;
+  for (const cookie of consentCookies(
     choice,
-    window.location.protocol === "https:",
-  );
+    protocol === "https:",
+    hostname,
+  )) {
+    // biome-ignore lint/suspicious/noDocumentCookie: the choice is read back synchronously, here and by the server
+    document.cookie = cookie;
+  }
 }
 
 // The same cookie from the server lasts the full six months in Safari too. One request at a time,
@@ -151,6 +211,29 @@ function otherTabs(): BroadcastChannel | null {
         : new BroadcastChannel(CHANGE_EVENT);
   }
   return tabs;
+}
+
+/**
+ * Moves a choice this host kept for itself alone to the shared cookie, where rext.ai reads it
+ * too. A choice made here before the cookie was shared is such a one. A script can't see which of
+ * two cookies of one name is which, so this host's own is taken away and what is left is looked
+ * at: nothing changed means there was none, and nothing more is done.
+ */
+export function shareOwnConsent(): void {
+  if (typeof document === "undefined") return;
+  const { hostname, protocol } = window.location;
+  if (!sharedCookieDomain(hostname)) return;
+  const before = readCookies(CONSENT_COOKIE).filter(isConsentChoice);
+  if (before.length === 0) return;
+  // biome-ignore lint/suspicious/noDocumentCookie: only this host's own cookie of that name goes
+  document.cookie = ownConsentCookieRemoval(protocol === "https:");
+  const after = readCookies(CONSENT_COOKIE).filter(isConsentChoice);
+  if (after.length === before.length) return;
+  // A no stays a no, whichever of the two said it.
+  const choice = before.includes("denied") ? "denied" : "granted";
+  setConsentCookie(choice);
+  latestChoice = choice;
+  sendToServer();
 }
 
 /** Records the choice and tells the app, in this tab and the others. */

@@ -6,11 +6,13 @@
  * The page writes the cookie itself at once and then asks here, because Safari keeps a cookie
  * written by a script for seven days only; one set by the app's own server lasts the six months
  * it asks for. Only a JSON request from the app itself is answered, so another site cannot change
- * a person's choice with a form. The cookie holds the choice and nothing about the person.
+ * a person's choice with a form. The cookie holds the choice and nothing about the person. On
+ * rext.ai's hosts it is the one cookie the website and the app share, and the one this host kept
+ * for itself before that is taken away with it.
  */
 
 import {
-  consentCookie,
+  consentCookies,
   fromThisSite,
   isConsentChoice,
 } from "@/lib/analytics-consent";
@@ -31,11 +33,13 @@ export async function POST(request: Request) {
       headers: { "Cache-Control": "no-store" },
     });
   }
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Cache-Control": "no-store",
-      "Set-Cookie": consentCookie(choice, url.protocol === "https:"),
-    },
-  });
+  const headers = new Headers({ "Cache-Control": "no-store" });
+  for (const cookie of consentCookies(
+    choice,
+    url.protocol === "https:",
+    url.hostname,
+  )) {
+    headers.append("Set-Cookie", cookie);
+  }
+  return new Response(null, { status: 204, headers });
 }
