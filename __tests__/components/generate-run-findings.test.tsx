@@ -3,7 +3,7 @@
  * hands each update and each model token of the run's stream to the run's stages, and the box shows
  * the keyword, the results, the sites, the numbers and the titles as they are written. The stream
  * here is the test's own; the page, the stages and the box are the real ones. The main run's last
- * lines follow it past the approval and read the steps row on the article page (rext-control#785).
+ * lines follow it past the approval: from there on the page shows no steps row (rext-control#833).
  */
 
 import {
@@ -806,7 +806,7 @@ describe("the Generate page's progress box", () => {
       "outline_review",
     );
 
-    // ── Step 6: the article page is the Article step from the approval on ────
+    // ── Step 6: from the approval on, the article has the page to itself: no steps row ────
     const approved = {
       title: TITLES[0],
       sections: [{ heading: "Pick your beds" }],
@@ -820,20 +820,14 @@ describe("the Generate page's progress box", () => {
     await waitFor(() => expect(approve).toBeEnabled(), { timeout: 4000 });
     fireEvent.click(approve);
     const drafting = await nextRun(5);
-    expect(screen.getByTestId("steps-row")).toHaveAttribute(
-      "data-current",
-      "content",
-    );
+    expect(screen.queryByTestId("steps-row")).toBeNull();
     // The approved outline's own update names the outline step again, for as long as the draft
-    // takes: the row stays on the article all the same.
+    // takes: the row stays away all the same.
     await send(
       drafting,
       update({ review_outline: { content: { outline: approved } } }),
     );
-    const row = screen.getByTestId("steps-row");
-    expect(row).toHaveAttribute("data-current", "content");
-    // With the stage the article's run is on, as under every other step.
-    expect(row).toHaveAttribute("data-running");
+    expect(screen.queryByTestId("steps-row")).toBeNull();
   }, 40_000);
 
   it("says what a run picked up after a reload had already found, from the thread's state", async () => {

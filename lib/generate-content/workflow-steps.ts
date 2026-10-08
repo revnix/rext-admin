@@ -72,6 +72,20 @@ export function currentStepIndex(
   return index === -1 ? WORKFLOW_STEPS.length - 1 : index;
 }
 
+/**
+ * Whether the six steps show: on steps 1 to 5 and on each wait before one of them. Not on the
+ * Article step, neither while the article is written (its wait and its page) nor once it is there:
+ * the article has the page to itself (the founder, 2026-10-08, rext-control#833).
+ */
+export function showsSteps(
+  instructionType: string,
+  waitingOn?: RunPhase | null,
+): boolean {
+  return (
+    currentStepIndex(instructionType, waitingOn) !== WORKFLOW_STEPS.length - 1
+  );
+}
+
 /** The stage running for the current step, when the run on screen is the one preparing it. */
 export function runningStage(
   run: { phase: RunPhase; stages: RunStage[] } | null,

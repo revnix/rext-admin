@@ -193,8 +193,6 @@ type ContentEditorProps = {
   runProgress?: React.ReactNode;
   /** The same run on one line, for the bar below 1280 px, where the side panel is a sheet. */
   runStrip?: React.ReactNode;
-  /** The Generate flow's steps, atop the article's column: inside it, since each column scrolls on its own. */
-  steps?: React.ReactNode;
   /** The body is the writer's first draft, whole, shown while the later stages rewrite and check
    *  it: marked as a draft until the final text takes its place (task 773). */
   draft?: boolean;
@@ -226,7 +224,6 @@ function ContentEditorInner(props: ContentEditorProps) {
     toolCalls = [],
     runProgress,
     runStrip,
-    steps,
     draft = false,
     isLive = false,
     publishIntent = null,
@@ -1118,7 +1115,6 @@ function ContentEditorInner(props: ContentEditorProps) {
           ref={scrollRef}
           className="w-full min-w-0 flex-1 bg-card px-4 md:px-6 xl:px-8 scroll-smooth xl:overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40"
         >
-          {steps && <div className="pt-4 md:pt-6">{steps}</div>}
           {/* The article is one prose container (design/app-language.md §7): the title,
               the intro and the body share its measure and its type. overflow-clip (not
               overflow-hidden) contains wide tables and images without making a scroll
