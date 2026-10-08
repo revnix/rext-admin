@@ -1382,9 +1382,15 @@ describe("dragging a section by its handle", () => {
       fireEvent.pointerMove(document, { clientX: 10, clientY: toY });
     });
   };
+  // The drag library stops every click on the document for 50 ms after a drag ends, so the release
+  // isn't taken as a click on what was dragged (@dnd-kit/core's sensor removes its click listener
+  // on a 50 ms timer). A test that clicks Approve straight after the drop would race that timer
+  // and, when it lost, find the button never clicked. Wait the guard out.
+  const CLICK_GUARD_MS = 50;
   const drop = () =>
     act(async () => {
       fireEvent.pointerUp(document);
+      await new Promise((resolve) => setTimeout(resolve, CLICK_GUARD_MS + 30));
     });
 
   it("moves a section with its subsections to the gap between whole sections", async () => {
