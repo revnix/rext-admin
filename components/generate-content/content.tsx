@@ -194,6 +194,9 @@ type ContentEditorProps = {
   runStrip?: React.ReactNode;
   /** The Generate flow's steps, atop the article's column: inside it, since each column scrolls on its own. */
   steps?: React.ReactNode;
+  /** The body is the writer's first draft, whole, shown while the later stages rewrite and check
+   *  it: marked as a draft until the final text takes its place (task 773). */
+  draft?: boolean;
   /** The article is live on a connected site (its status is "published"): a draft or review save
    *  then takes the post down, so the Publish menu warns first (#676). */
   isLive?: boolean;
@@ -223,6 +226,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     runProgress,
     runStrip,
     steps,
+    draft = false,
     isLive = false,
     publishIntent = null,
     onPublishIntentTaken,
@@ -422,10 +426,18 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   // The article is still being written (the generation page), not a saved one being read.
   const writing = !isFinal && (!!isEnhancing || !!runProgress);
+  // The whole first draft is on the page while the run goes on (task 773): every section is there,
+  // so none is "being written" or "still to come".
+  const showsDraft = writing && draft && !!body?.trim();
   // Its structure as layers, with what is written, being written and still to come (task 703).
   const structure = useMemo(
-    () => articleStructure(body ?? "", plannedSections(outline), writing),
-    [body, outline, writing],
+    () =>
+      articleStructure(
+        body ?? "",
+        plannedSections(outline),
+        writing && !showsDraft,
+      ),
+    [body, outline, writing, showsDraft],
   );
   const position = writingPosition(structure);
   const scrollToHeading = (heading: string) => {
@@ -1019,7 +1031,7 @@ function ContentEditorInner(props: ContentEditorProps) {
     <div className="h-full overflow-y-auto px-4 py-4">
       <StructureTree
         entries={structure}
-        showState={writing}
+        showState={writing && !showsDraft}
         onPick={scrollToHeading}
       />
     </div>
@@ -1048,10 +1060,12 @@ function ContentEditorInner(props: ContentEditorProps) {
                   {` · ${enhancingMsg}`}
                 </span>
               ) : null}
-              {position.sections > 0 && position.section > 0
+              {/* A whole draft has no section being written: the bar says it is a draft instead. */}
+              {!showsDraft && position.sections > 0 && position.section > 0
                 ? ` · section ${position.section} of ${position.sections}`
                 : null}
             </p>
+            {showsDraft ? <Badge variant="neutral">First draft</Badge> : null}
             {/* The run's stages are in the side panel, a sheet below 1280 px: there the bar holds
                 the running stage on one line, with its time and how far the run is (task 703). */}
             {runStrip ? (
@@ -1072,7 +1086,7 @@ function ContentEditorInner(props: ContentEditorProps) {
               </p>
               <StructureTree
                 entries={structure}
-                showState={writing}
+                showState={writing && !showsDraft}
                 onPick={scrollToHeading}
               />
             </div>
@@ -1141,6 +1155,14 @@ function ContentEditorInner(props: ContentEditorProps) {
                       trustScore={trustScore}
                     />
                   </div>
+                  {/* The first draft, said once where the reading starts; the bar keeps the word
+                      in view (task 773). */}
+                  {showsDraft && (
+                    <Notice title="First draft" className="not-prose mb-8">
+                      We're still rewriting and checking the article. The final
+                      text replaces this one when it's ready.
+                    </Notice>
+                  )}
                   <header>
                     {tags.length > 0 && (
                       <div className="not-prose mb-4 flex flex-wrap gap-2">
