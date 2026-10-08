@@ -67,7 +67,10 @@ const api = jest.requireMock("@/lib/api-client").apiClient as {
   content: { update: jest.Mock; publish: jest.Mock };
 };
 
-const editor = (isLive: boolean) => (
+const editor = (
+  isLive: boolean,
+  more: Partial<React.ComponentProps<typeof ContentEditor>> = {},
+) => (
   <QueryClientProvider client={new QueryClient()}>
     <ContentEditor
       contentId="c1"
@@ -79,6 +82,7 @@ const editor = (isLive: boolean) => (
       generatedContent="Body"
       userKeyword="start a podcast"
       outline={null}
+      {...more}
     />
   </QueryClientProvider>
 );
@@ -257,5 +261,68 @@ describe("The article's Publish menu", () => {
       "href",
       "https://example.com/how-to-start/",
     );
+  });
+});
+
+describe("A publish asked for from the full-screen editor (task 706)", () => {
+  it("asks this page's own question for it, once, and says it has", async () => {
+    const taken = jest.fn();
+    const view = render(
+      editor(true, { publishIntent: "draft", onPublishIntentTaken: taken }),
+    );
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText("Take the post down from your site?"),
+    ).toBeInTheDocument();
+    expect(taken).toHaveBeenCalledTimes(1);
+
+    // The page clears the request and renders again: nothing is asked a second time.
+    view.rerender(
+      editor(true, { publishIntent: null, onPublishIntentTaken: taken }),
+    );
+    expect(screen.getAllByRole("alertdialog")).toHaveLength(1);
+    expect(taken).toHaveBeenCalledTimes(1);
+    expect(api.content.publish).not.toHaveBeenCalled();
+  });
+
+  it("publishes only once the question is answered", async () => {
+    api.content.publish.mockResolvedValue({ content: {} });
+    render(editor(false, { publishIntent: "publish" }));
+
+    const dialog = await screen.findByRole("alertdialog");
+    expect(api.content.publish).not.toHaveBeenCalled();
+    const confirm = within(dialog)
+      .getAllByRole("button")
+      .find((button) => button.textContent !== "Cancel");
+    await userEvent.click(confirm as HTMLElement);
+
+    await waitFor(
+      () =>
+        expect(api.content.publish).toHaveBeenCalledWith(
+          "w1",
+          expect.anything(),
+          "c1",
+          "publish",
+        ),
+      { timeout: 4000 },
+    );
+  });
+
+  it("opens the schedule dialog for a schedule", async () => {
+    const taken = jest.fn();
+    render(
+      editor(false, { publishIntent: "schedule", onPublishIntentTaken: taken }),
+    );
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(taken).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for the request: none, nothing asked", () => {
+    render(editor(true));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

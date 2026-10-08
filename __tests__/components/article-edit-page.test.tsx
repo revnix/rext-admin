@@ -20,9 +20,10 @@ jest.mock("@/providers/workspace-provider", () => ({
 }));
 
 let canUpdate = true;
+let canPublish = true;
 jest.mock("@/hooks/use-permission", () => ({
-  useWorkspacePermission: () => ({
-    hasPermission: canUpdate,
+  useWorkspacePermission: (permission: string) => ({
+    hasPermission: permission === "content.publish" ? canPublish : canUpdate,
     isLoading: false,
   }),
 }));
@@ -107,6 +108,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
   canUpdate = true;
+  canPublish = true;
   mockArticle = plainArticle;
   update.mockResolvedValue({});
 });
@@ -373,5 +375,67 @@ describe("The editor's drawers", () => {
     renderPage();
     expect(screen.queryByRole("button", { name: "Checklist" })).toBeNull();
     expect(screen.getByRole("button", { name: "Outline" })).toBeInTheDocument();
+  });
+});
+
+describe("The editor's Publish menu", () => {
+  /** Opened by the keyboard: the menu takes its pointer events from a real browser. */
+  async function choose(
+    user: ReturnType<typeof userEvent.setup>,
+    item: string,
+  ) {
+    screen.getByRole("button", { name: "Publish" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(await screen.findByRole("menuitem", { name: item }));
+  }
+
+  it("offers the article page's four choices", async () => {
+    const user = renderPage();
+    screen.getByRole("button", { name: "Publish" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      (await screen.findAllByRole("menuitem")).map((item) => item.textContent),
+    ).toEqual([
+      "Publish",
+      "Save as draft",
+      "Submit for review",
+      "Schedule for later",
+    ]);
+  });
+
+  it("saves what is unsaved, then goes to the article with the choice", async () => {
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+    await choose(user, "Save as draft");
+
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith("/w/nextly/content/c1?publish=draft");
+  });
+
+  it("goes straight there when everything is saved", async () => {
+    const user = renderPage();
+    await choose(user, "Schedule for later");
+
+    expect(update).not.toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith("/w/nextly/content/c1?publish=schedule");
+  });
+
+  it("stays in the editor when that save fails", async () => {
+    update.mockRejectedValue(new Error("offline"));
+    const user = renderPage();
+    await user.type(screen.getByLabelText("Article text"), "?");
+    await choose(user, "Publish");
+
+    expect(push).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Your last changes aren't saved yet"),
+    ).toBeInTheDocument();
+  });
+
+  it("isn't offered to someone who may not publish", () => {
+    canPublish = false;
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
   });
 });

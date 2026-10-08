@@ -73,6 +73,7 @@ import { workspaceRoutes } from "@/lib/routes";
 import { excludeJsonLdFromSeoResult } from "@/lib/generate-content/seo-issues";
 import {
   PUBLISH_RESULT_COPY,
+  type PublishIntent,
   postLink,
   publishConfirmCopy,
 } from "@/lib/content/publish-copy";
@@ -196,6 +197,11 @@ type ContentEditorProps = {
   /** The article is live on a connected site (its status is "published"): a draft or review save
    *  then takes the post down, so the Publish menu warns first (#676). */
   isLive?: boolean;
+  /** A publish asked for from the full-screen editor (task 706): this page asks its usual question
+   *  for it, once, and says it has by `onPublishIntentTaken`. Pass it only once the article shown is
+   *  the saved one: the publish sends what the page holds. */
+  publishIntent?: PublishIntent | null;
+  onPublishIntentTaken?: () => void;
   /** When true, shows the content blurred with a humanizing overlay */
 };
 
@@ -218,6 +224,8 @@ function ContentEditorInner(props: ContentEditorProps) {
     runStrip,
     steps,
     isLive = false,
+    publishIntent = null,
+    onPublishIntentTaken,
   } = props;
 
   // JSON-LD is not part of content-level on-page SEO: hide those findings and
@@ -816,6 +824,22 @@ function ContentEditorInner(props: ContentEditorProps) {
       publishContent(status);
     }
   };
+
+  // The editor's Publish menu left the choice in the page's address: ask for it here, as this
+  // page's own menu would, once per arrival and only when this person may publish.
+  const intentTaken = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: asked once when the request arrives, not again when the page's handlers are rebuilt
+  useEffect(() => {
+    if (!publishIntent) {
+      intentTaken.current = false;
+      return;
+    }
+    if (intentTaken.current || !isFinal || !canPublish) return;
+    intentTaken.current = true;
+    onPublishIntentTaken?.();
+    if (publishIntent === "schedule") setScheduleDialogOpen(true);
+    else void openPublishConfirmation(publishIntent);
+  }, [publishIntent, isFinal, canPublish]);
 
   // The article's actions, each named (D23), in one bar above the page (task 703). "Edit article"
   // leads (task 706); Copy and Publish are menus beside it. On a phone the lead takes a row of
