@@ -26,8 +26,11 @@ jest.mock("posthog-js", () => ({
     register: jest.fn(),
     unregister: jest.fn(),
     setPersonProperties: jest.fn(),
+    set_config: jest.fn(),
   },
 }));
+// The heatmap's piece of the library: only that it is asked for matters here.
+jest.mock("posthog-js/dist/dead-clicks-autocapture", () => ({}));
 // The workspace and the plan are already known, so the first page view doesn't wait for them
 // (that wait has its own tests, in posthog-provider-consent.test.tsx).
 const mockPlan = {

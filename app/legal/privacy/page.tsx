@@ -300,6 +300,11 @@ export default function PrivacyPolicyPage() {
             </li>
           )}
           <li>
+            When it is on, it also receives where on a page you click and move
+            the pointer, as positions on the page and nothing of what was there,
+            so we can see which parts of a page are used.
+          </li>
+          <li>
             When it is off, PostHog receives only anonymous counts of the kinds
             of page opened: no account, workspace, article or keyword, and
             nothing is kept in your browser.

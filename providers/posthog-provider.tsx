@@ -36,6 +36,11 @@ import {
   STORED_ADDRESS_OPTIONS,
   VISITOR_STORE_OPTIONS,
 } from "@/lib/analytics-redact";
+import {
+  mayUseToolbar,
+  syncToolbarMark,
+  toolbarMarked,
+} from "@/lib/analytics-toolbar";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
@@ -360,6 +365,51 @@ function SessionRecordingSync() {
   return null;
 }
 
+/**
+ * Heatmaps: where on a page people click and move, as positions only, for a person who allows
+ * analytics. posthog-js would fetch one piece for them from PostHog's servers (it tells a click
+ * that did nothing from one that did); that piece ships with the app and is loaded here before
+ * the heatmap is switched on, so nothing is asked for from outside.
+ */
+function HeatmapSync() {
+  useEffect(() => {
+    let gone = false;
+    void import("posthog-js/dist/dead-clicks-autocapture")
+      .then(() => {
+        if (!gone) posthog.set_config({ capture_heatmaps: true });
+      })
+      .catch(() => {
+        // The piece didn't load: no heatmap, and nothing fetched in its place.
+      });
+    return () => {
+      gone = true;
+      posthog.set_config({ capture_heatmaps: false });
+    };
+  }, []);
+
+  return null;
+}
+
+/**
+ * PostHog's toolbar, for an admin of ours who opened it from PostHog (lib/analytics-toolbar.ts).
+ * Marks their browser and loads the page once more, so the server answers with the policy that
+ * lets the toolbar's script in; takes the mark away once the launch is over, or the person
+ * signed in is not one of ours.
+ */
+function ToolbarAccess() {
+  const { data: session, status } = useSession();
+  const role = session?.user?.role;
+
+  useEffect(() => {
+    if (status === "loading") return;
+    const allowed =
+      status === "authenticated" && mayUseToolbar(role) && !isImpersonating();
+    if (syncToolbarMark(allowed)) window.location.reload();
+  }, [status, role]);
+
+  return null;
+}
+
 /** The logins already recorded, for a browser that refuses storage. */
 const recordedLogins = new Set<number>();
 
@@ -472,14 +522,20 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           // The visitor's id, in the cookie rext.ai shares (lib/analytics-redact.ts).
           ...VISITOR_STORE_OPTIONS,
           autocapture: false, // keep events intentional
-          // Decided here, not by a switch in the PostHog project. Heatmaps stay off until the
-          // piece the library fetches for them ships with the app: asked for from outside, it
-          // is refused (no outside code is loaded) and logged on every page. Their addresses
-          // are redacted already (redactEventUrls). A rage click or a dead click would send
-          // the clicked element's own text, which can be a person's: off.
+          // Decided here, not by a switch in the PostHog project. Heatmaps are started by
+          // HeatmapSync, once the one piece the library would fetch for them has arrived with
+          // the app's own code. A heatmap holds positions on a page, never what was there, and
+          // its addresses are redacted (redactEventUrls). A rage click or a dead click event
+          // would send the clicked element's own text, which can be a person's: off.
           capture_heatmaps: false,
           rageclick: false,
           capture_dead_clicks: false,
+          // Everything else the library can fetch and run is off by name, so that letting the
+          // toolbar in (below) lets nothing else in.
+          capture_exceptions: false,
+          disable_surveys: true,
+          disable_product_tours: true,
+          disable_conversations: true,
           // Nothing is captured or stored until one of the two calls below: opt_in_capturing for
           // everything, opt_out_capturing for counting without an identity or any storage. The
           // second needs "Cookieless server hash mode" switched on in the PostHog project;
@@ -495,7 +551,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           // settings as a script, which the security policy refuses (and the browser logs on
           // every page); told this, it reads them as data from the assets host, which the
           // policy allows for requests only (lib/csp.ts). The recorder ships with the app.
-          disable_external_dependency_loading: true,
+          // The one exception is PostHog's toolbar, for an admin of ours who opened it from
+          // PostHog (lib/analytics-toolbar.ts): their browser carries a mark, and the server's
+          // policy, which checks the role, decides whether that script may load at all.
+          disable_external_dependency_loading: !toolbarMarked(),
           // PostHog adds the current address to every event; redact the credentials in it.
           before_send: beforeSend,
           // And nothing raw in what the SDK stores in the tab (the referrer, on every event).
@@ -569,9 +628,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           <>
             <PostHogAuthSync />
             <OAuthLoginRecord />
+            <HeatmapSync />
             {RECORDING_ON && <SessionRecordingSync />}
           </>
         )}
+        <ToolbarAccess />
       </Suspense>
       {children}
     </PHProvider>

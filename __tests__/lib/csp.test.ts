@@ -36,6 +36,61 @@ describe("getCSPHeader", () => {
     }
   });
 
+  it("lets PostHog's toolbar in only when asked to, and never otherwise", () => {
+    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    delete process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    const withToolbar = (name: string) =>
+      (
+        getCSPHeader("", { posthogToolbar: true })
+          .split("; ")
+          .find((d) => d.startsWith(`${name} `)) ?? ""
+      ).split(" ");
+    try {
+      for (const name of [
+        "script-src",
+        "style-src",
+        "font-src",
+        "connect-src",
+      ]) {
+        expect(withToolbar(name)).toEqual(
+          expect.arrayContaining([
+            "https://eu-assets.i.posthog.com",
+            "https://eu.posthog.com",
+          ]),
+        );
+      }
+      // Still nobody's frame, and nothing else gained.
+      expect(withToolbar("frame-ancestors")).toEqual([
+        "frame-ancestors",
+        "'none'",
+      ]);
+      expect(withToolbar("frame-src").join(" ")).not.toContain("posthog");
+
+      // Everyone else: no code from PostHog, and no calls to its app.
+      expect(directive("script-src")).not.toContain("posthog");
+      expect(directive("style-src")).not.toContain("posthog");
+      expect(directive("connect-src").split(" ")).not.toContain(
+        "https://eu.posthog.com",
+      );
+      expect(getCSPHeader("", { posthogToolbar: false })).toBe(
+        getCSPHeader(""),
+      );
+    } finally {
+      if (host !== undefined) process.env.NEXT_PUBLIC_POSTHOG_HOST = host;
+    }
+  });
+
+  it("has no toolbar to let in where analytics goes through a host of our own", () => {
+    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    process.env.NEXT_PUBLIC_POSTHOG_HOST = "https://stats.example.com";
+    try {
+      expect(getCSPHeader("", { posthogToolbar: true })).toBe(getCSPHeader(""));
+    } finally {
+      if (host === undefined) delete process.env.NEXT_PUBLIC_POSTHOG_HOST;
+      else process.env.NEXT_PUBLIC_POSTHOG_HOST = host;
+    }
+  });
+
   it("names a host of our own once, when analytics goes through one", () => {
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
     process.env.NEXT_PUBLIC_POSTHOG_HOST = "https://stats.example.com";
