@@ -59,9 +59,10 @@ const fine = () => answer(200, { data: { workspaces: [] } });
 
 let send: jest.Mock;
 
-async function freshWrapper(): Promise<typeof AuthUtils> {
+/** The real wrapper, loaded afresh: jest.setup.ts stands a mock in for it everywhere else. */
+function freshWrapper(): typeof AuthUtils {
   jest.resetModules();
-  return import("@/lib/auth-utils");
+  return jest.requireActual("@/lib/auth-utils") as typeof AuthUtils;
 }
 
 const signedOutWith = () =>
@@ -87,7 +88,7 @@ afterEach(() => {
 
 describe("a 401 that says the session is revoked", () => {
   it("is asked again, and the person stays signed in when it is then accepted", async () => {
-    const { authenticatedFetch } = await freshWrapper();
+    const { authenticatedFetch } = freshWrapper();
     send.mockResolvedValueOnce(revoked()).mockResolvedValueOnce(fine());
 
     const request = settle(authenticatedFetch(URL_ASKED));
@@ -107,7 +108,7 @@ describe("a 401 that says the session is revoked", () => {
   });
 
   it("is accepted on the second asking too", async () => {
-    const { authenticatedFetch } = await freshWrapper();
+    const { authenticatedFetch } = freshWrapper();
     send
       .mockResolvedValueOnce(revoked())
       .mockResolvedValueOnce(revoked())
@@ -124,7 +125,7 @@ describe("a 401 that says the session is revoked", () => {
   });
 
   it("signs the person out when the backend still says so", async () => {
-    const { authenticatedFetch } = await freshWrapper();
+    const { authenticatedFetch } = freshWrapper();
     send.mockResolvedValue(revoked());
 
     const request = settle(authenticatedFetch(URL_ASKED));
@@ -138,7 +139,7 @@ describe("a 401 that says the session is revoked", () => {
   });
 
   it("gives back another kind of refusal met on asking again, without a sign-out", async () => {
-    const { authenticatedFetch } = await freshWrapper();
+    const { authenticatedFetch } = freshWrapper();
     const noPermission = answer(401, {
       error: { code: "unauthorized", message: "Incorrect password" },
     });
@@ -154,9 +155,84 @@ describe("a 401 that says the session is revoked", () => {
   });
 });
 
+describe("what comes back on asking again", () => {
+  it("is handled as a first answer would be: an expired token goes on to be refreshed", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    const expired = answer(401, {
+      error: {
+        code: "token_expired",
+        message: "Authentication token has expired",
+      },
+    });
+    send.mockResolvedValueOnce(revoked()).mockResolvedValue(expired);
+
+    const request = settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(700);
+    await jest.advanceTimersByTimeAsync(3000);
+    await request;
+
+    // Handed straight back, it would have ended at two sends. The refresh path sends more:
+    // the session's refresh, or the request again with a newer token.
+    expect(send.mock.calls.length).toBeGreaterThan(2);
+  });
+
+  it("tells the page its permissions may be stale when it is a 403", async () => {
+    const { authenticatedFetch, PERMISSIONS_STALE_EVENT } = freshWrapper();
+    const stale = jest.fn();
+    window.addEventListener(PERMISSIONS_STALE_EVENT, stale);
+    send
+      .mockResolvedValueOnce(revoked())
+      .mockResolvedValueOnce(answer(403, { error: { message: "Forbidden" } }));
+
+    const request = settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(700);
+    const { value } = await request;
+    window.removeEventListener(PERMISSIONS_STALE_EVENT, stale);
+
+    expect(value?.status).toBe(403);
+    expect(stale).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a caller that cancels while the answer is being asked again", () => {
+  it("gets its cancellation, and nobody is signed out", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    send.mockResolvedValue(revoked());
+    const cancel = new AbortController();
+
+    const request = settle(
+      authenticatedFetch(URL_ASKED, { signal: cancel.signal }),
+    );
+    await jest.advanceTimersByTimeAsync(300);
+    cancel.abort();
+    const { error } = await request;
+
+    expect(error?.name).toBe("AbortError");
+    expect(send).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(3000);
+    expect(signedOutWith()).toEqual([]);
+  });
+
+  it("gets the failure of the second send, and nobody is signed out", async () => {
+    // The API away at that moment (a restart): the request fails as any other does then.
+    const { authenticatedFetch } = freshWrapper();
+    send
+      .mockResolvedValueOnce(revoked())
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    const request = settle(authenticatedFetch(URL_ASKED));
+    await jest.advanceTimersByTimeAsync(700);
+    const { error } = await request;
+
+    expect(error?.message).toBe("Failed to fetch");
+    await jest.advanceTimersByTimeAsync(3000);
+    expect(signedOutWith()).toEqual([]);
+  });
+});
+
 describe("a suspended or banned account", () => {
   it("is signed out at once: that answer is the account's own status", async () => {
-    const { authenticatedFetch } = await freshWrapper();
+    const { authenticatedFetch } = freshWrapper();
     send.mockResolvedValue(
       answer(401, {
         error: {
