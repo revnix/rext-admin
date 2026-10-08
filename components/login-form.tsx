@@ -99,11 +99,14 @@ export function LoginForm({
           "Your account has been suspended. Contact support to have it reviewed.",
         AccountBanned:
           "Your account has been banned. Please contact support for assistance.",
-        // A sign-in with Google or GitHub that didn't go through: the provider's side, or ours
-        // refusing it (the backend's answer arrives here as OAuthError). Most often that is the
-        // backend's limiter, ten such sign-ins in five minutes shared by everyone who signs in
-        // through this server: the person did nothing wrong and only needs to hear when to try
-        // again. None of it is about their details, so each says what to do, not what it was.
+        // The backend's limiter refused a Google or GitHub sign-in: it counts them for everyone
+        // who signs in through this server, so the person did nothing wrong.
+        OAuthRateLimited:
+          "Too many sign-ins from here just now. Try again in a few minutes.",
+        // A sign-in with Google or GitHub that didn't go through for any other reason: the
+        // provider's side, or a failure of ours (the backend's answer arrives here as
+        // OAuthError). None of it is about the person's details, so each says what to do, not
+        // what it was.
         OAuthError:
           "Signing in with Google or GitHub didn't work just now. Try again in a few minutes.",
         OAuthSignin:

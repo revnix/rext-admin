@@ -99,4 +99,12 @@ describe("The sign-in page says why the person is there", () => {
 
     expect(toast.error).not.toHaveBeenCalled();
   });
+
+  it("says when to try again when the limiter refused a Google or GitHub sign-in", () => {
+    openSignInPage("error=OAuthRateLimited");
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "Too many sign-ins from here just now. Try again in a few minutes.",
+    );
+  });
 });
