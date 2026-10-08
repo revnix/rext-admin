@@ -76,6 +76,24 @@ describe("analytics.track", () => {
     );
   });
 
+  it("says whether the event was taken: sent or held, and not after a no or while acting as a customer", () => {
+    const { analytics, registerPostHog, unregisterPostHog, setImpersonating } =
+      loadAnalytics();
+
+    // Held, while the person's answer isn't known.
+    expect(analytics.track("email_verified")).toBe(true);
+
+    registerPostHog({ capture: jest.fn(), reset: jest.fn() });
+    expect(analytics.track("email_verified")).toBe(true);
+
+    setImpersonating(true);
+    expect(analytics.track("email_verified")).toBe(false);
+    setImpersonating(false);
+
+    unregisterPostHog();
+    expect(analytics.track("email_verified")).toBe(false);
+  });
+
   it("keeps no copy of an event in the browser", () => {
     const { analytics, registerPostHog } = loadAnalytics();
     registerPostHog({ capture: jest.fn(), reset: jest.fn() });

@@ -47,7 +47,9 @@ const sent = () =>
 const WORKSPACE = "6f1c2d3e-0000-4000-8000-000000000001";
 
 beforeEach(() => {
-  track.mockClear();
+  track.mockReset();
+  // Analytics takes the event, as it does for a person who allows it.
+  track.mockReturnValue(true);
   send.mockReset();
   forgetReportedFailures();
 });
@@ -155,6 +157,20 @@ describe("reportApiFailure", () => {
       reportApiFailure("GET", route, new ApiError(500 + i, "many"));
     }
     expect(sent()).toHaveLength(30);
+  });
+
+  it("holds a failure as said only when analytics took it", () => {
+    // After a no, or while an admin acts as a customer: nothing is taken.
+    track.mockReturnValue(false);
+    reportApiFailure("GET", route, new ApiError(500, "not taken"));
+    reportApiFailure("GET", route, new ApiError(500, "not taken"));
+    expect(sent()).toHaveLength(2);
+
+    // The switch is turned on, or the acting ends: the same failure is still new, once.
+    track.mockReturnValue(true);
+    reportApiFailure("GET", route, new ApiError(500, "taken"));
+    reportApiFailure("GET", route, new ApiError(500, "said already"));
+    expect(sent()).toHaveLength(3);
   });
 
   it("says nothing from a browser that is offline: that failure is its connection's", () => {
