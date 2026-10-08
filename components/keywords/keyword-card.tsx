@@ -133,6 +133,18 @@ function Fact({
   );
 }
 
+/** A fact its step hasn't sent yet: a dash, and what it waits for. */
+function Pending({ note }: { note: string }) {
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span className="text-muted-foreground" aria-hidden="true">
+        {UNKNOWN}
+      </span>
+      <span className="text-caption text-muted-foreground">{note}</span>
+    </span>
+  );
+}
+
 function Count({ value }: { value: number | null }) {
   return value === null ? (
     <span className="text-muted-foreground">{UNKNOWN}</span>
@@ -159,6 +171,11 @@ export interface KeywordCardProps {
   eyebrow?: ReactNode;
   /** Beside the keyword: what to do with it ("Use this keyword"). */
   action?: ReactNode;
+  /**
+   * While the keyword is still analysed (expanded size): the note in place of the figures not
+   * measured yet ("Measured next"), and of the intent not yet read from the results.
+   */
+  pending?: { metrics?: string; intent?: string };
   className?: string;
 }
 
@@ -177,6 +194,7 @@ export function KeywordCard({
   onIntentChange,
   eyebrow,
   action,
+  pending,
   className,
 }: KeywordCardProps) {
   if (size === "compact") {
@@ -255,26 +273,46 @@ export function KeywordCard({
       )}
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Fact label="Monthly searches">
-          <MonthlyVolume
-            volume={metrics.volume}
-            status={metrics.volumeStatus}
-          />
+          {pending?.metrics ? (
+            <Pending note={pending.metrics} />
+          ) : (
+            <MonthlyVolume
+              volume={metrics.volume}
+              status={metrics.volumeStatus}
+            />
+          )}
         </Fact>
         <Fact label="Difficulty">
-          <KeywordDifficulty score={metrics.difficulty} />
+          {pending?.metrics ? (
+            <Pending note={pending.metrics} />
+          ) : (
+            <KeywordDifficulty score={metrics.difficulty} />
+          )}
         </Fact>
         <Fact label="Search intent" className="col-span-2 sm:col-span-1">
-          <Intent
-            intents={metrics.intents}
-            intent={intent}
-            onIntentChange={onIntentChange}
-          />
+          {pending?.intent ? (
+            <Pending note={pending.intent} />
+          ) : (
+            <Intent
+              intents={metrics.intents}
+              intent={intent}
+              onIntentChange={onIntentChange}
+            />
+          )}
         </Fact>
         <Fact label="Backlinks">
-          <Count value={metrics.backlinks} />
+          {pending?.metrics ? (
+            <Pending note={pending.metrics} />
+          ) : (
+            <Count value={metrics.backlinks} />
+          )}
         </Fact>
         <Fact label="Referring domains">
-          <Count value={metrics.referringDomains} />
+          {pending?.metrics ? (
+            <Pending note={pending.metrics} />
+          ) : (
+            <Count value={metrics.referringDomains} />
+          )}
         </Fact>
       </dl>
     </section>

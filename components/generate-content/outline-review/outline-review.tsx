@@ -1,7 +1,14 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 import { SidePaneTrigger, WithSidePane } from "@/components/layouts";
@@ -68,6 +75,17 @@ export interface OutlineReviewProps {
   onUpdate?: (outline: Outline) => void;
   onReject: () => void;
   onApprove: (approval: OutlineApproval) => void;
+  /**
+   * While the first outline is written (rext-control#694, the second pass): what the run has of it
+   * so far, read by its stages rather than from `rawTokens`, and the stages themselves, for the
+   * side pane from 1024 px (`progress`) and as one line above the outline under it (`strip`).
+   */
+  filling?: {
+    title?: string;
+    headings: string[];
+    progress: ReactNode;
+    strip: ReactNode;
+  };
 }
 
 /**
@@ -90,6 +108,7 @@ export function OutlineReview({
   onUpdate,
   onReject,
   onApprove,
+  filling,
 }: OutlineReviewProps) {
   const gate = useMemo(() => readOutlineGate(gateValue), [gateValue]);
   const isDraft = !outline;
@@ -153,7 +172,8 @@ export function OutlineReview({
     setPersonaId(recommendation);
   }, [outline]);
 
-  const title = outline?.title ?? streamedField(rawTokens, "title");
+  const title =
+    outline?.title ?? filling?.title ?? streamedField(rawTokens, "title");
   const brief = outline?.brief ?? streamedField(rawTokens, "brief");
   const sources = {
     serpResults: gate.serpResults,
@@ -318,7 +338,9 @@ export function OutlineReview({
   );
 
   const treePane = isDraft ? (
-    <StreamingTree headings={streamedHeadings(rawTokens)} />
+    <StreamingTree
+      headings={filling?.headings ?? streamedHeadings(rawTokens)}
+    />
   ) : rows.length > 0 ? (
     <div className="space-y-6">
       <OutlineTree
@@ -378,8 +400,22 @@ export function OutlineReview({
 
       {/* Under 1024 px the Brief opens from the approve bar: a floating button would cover the
           right-aligned Regenerate and Approve that end the page (E28). */}
-      <WithSidePane side={briefPane} sideTitle="Brief" trigger="inline">
+      <WithSidePane
+        side={
+          filling ? (
+            <div className="space-y-6">
+              {filling.progress}
+              {briefPane}
+            </div>
+          ) : (
+            briefPane
+          )
+        }
+        sideTitle="Brief"
+        trigger="inline"
+      >
         <div className="space-y-6">
+          {filling?.strip}
           <Tabs defaultValue="outline">
             <div className="flex items-center justify-between gap-2">
               <TabsList>

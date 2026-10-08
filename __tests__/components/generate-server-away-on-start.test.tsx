@@ -103,11 +103,18 @@ jest.mock("@/components/generate-content/keyword", () => ({
 jest.mock("@/components/generate-content/recent-keywords", () => ({
   RecentKeywords: () => null,
 }));
+// A step while its run fills it in: only the run's stages, which it shows in its side pane, matter here.
 jest.mock("@/components/generate-content/suggestions", () => ({
   SuggestionsSection: () => null,
+  SuggestionsFilling: ({ progress }: { progress: React.ReactNode }) => (
+    <>{progress}</>
+  ),
 }));
 jest.mock("@/components/generate-content/title-step", () => ({
   TitleStep: () => null,
+  TitleStepFilling: ({ progress }: { progress: React.ReactNode }) => (
+    <>{progress}</>
+  ),
 }));
 jest.mock("@/components/generate-content/outline-review", () => ({
   OutlineReview: () => null,
