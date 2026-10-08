@@ -21,7 +21,7 @@ import {
  */
 export const adminInvitationSchema = z.object({
   email: z.string().trim().email("Enter a valid email address"),
-  admin_role: z.enum(["super_admin", "support_admin", "platform_admin"]),
+  admin_role: z.enum(["super_admin", "admin", "support"]),
   message: z
     .string()
     .max(1000, "Keep the message under 1,000 characters")

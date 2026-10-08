@@ -26,7 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
-import { ADMIN_ROLES } from "@/types/admin-invitation";
+import { ADMIN_ROLES, adminRoleLabel } from "@/types/admin-invitation";
 import type { Route } from "next";
 
 export default function AcceptAdminInvitationPage() {
@@ -64,13 +64,14 @@ export default function AcceptAdminInvitationPage() {
       toast.success(
         "Welcome to the admin team! You now have platform admin access.",
       );
-      // Redirect to admin dashboard after 2 seconds
+      // A full load, not a step inside the app: the role is held at once, but the session's own
+      // data has to be read again before the admin area shows (task 915).
       setTimeout(() => {
-        router.push("/admin" as Route);
+        window.location.assign("/admin");
       }, 2000);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to accept invitation: ${error.message}`);
+      toast.error(`The invitation wasn't accepted: ${error.message}`);
     },
   });
 
@@ -85,7 +86,7 @@ export default function AcceptAdminInvitationPage() {
       router.push("/" as Route);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to decline invitation: ${error.message}`);
+      toast.error(`The invitation wasn't declined: ${error.message}`);
     },
   });
 
@@ -114,8 +115,8 @@ export default function AcceptAdminInvitationPage() {
     }
   };
 
-  // Loading state
-  if (!token || isValidating) {
+  // Loading state. A link with no token is not loading: it falls through to the invalid card.
+  if (token && isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <Card className="w-full max-w-md">
@@ -146,7 +147,9 @@ export default function AcceptAdminInvitationPage() {
             <CardTitle className="text-center">Invalid Invitation</CardTitle>
             <CardDescription className="text-center">
               {validationData?.error_message ||
-                "This invitation link is invalid or has expired"}
+                (token
+                  ? "This invitation link is invalid or has expired"
+                  : "This link is incomplete. Open the link from the invitation email again.")}
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-center">
@@ -176,8 +179,8 @@ export default function AcceptAdminInvitationPage() {
             </div>
             <CardTitle className="text-center">Invitation Accepted!</CardTitle>
             <CardDescription className="text-center">
-              You now have {validationData.admin_role.replace("_", " ")} access
-              to the platform
+              You now have {adminRoleLabel(validationData.admin_role)} access to
+              the platform
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -237,14 +240,14 @@ export default function AcceptAdminInvitationPage() {
 
             <Separator />
 
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Invited By
-              </p>
-              <p className="text-sm mt-1">
-                {validationData.invited_by_name || validationData.email}
-              </p>
-            </div>
+            {validationData.invited_by_name ? (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Invited by
+                </p>
+                <p className="text-sm mt-1">{validationData.invited_by_name}</p>
+              </div>
+            ) : null}
 
             {validationData.message && (
               <>

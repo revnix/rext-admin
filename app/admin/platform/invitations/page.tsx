@@ -60,7 +60,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
-import type { AdminInvitation } from "@/types/admin-invitation";
+import { type AdminInvitation, adminRoleLabel } from "@/types/admin-invitation";
 
 const STATUS_CONFIG = {
   pending: {
@@ -116,7 +116,9 @@ export default function AdminInvitationsPage() {
     mutationFn: (invitationId: string) =>
       apiClient.adminInvitations.resend(invitationId),
     onSuccess: () => {
-      toast.success("Invitation resent - A new invitation email has been sent");
+      toast.success(
+        "The invitation was sent again. Its new link replaces the old one.",
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-invitations"] });
     },
     onError: (error: Error) => {
@@ -313,7 +315,7 @@ export default function AdminInvitationsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {invitation.admin_role.replace("_", " ")}
+                            {adminRoleLabel(invitation.admin_role)}
                           </Badge>
                         </TableCell>
                         <TableCell>

@@ -5,10 +5,18 @@
  * Separate from workspace invitations for clarity.
  */
 
+/** A platform role as the API names it. */
+export type AdminRole = "super_admin" | "admin" | "support";
+
+/** The screen's word for a role; a name it doesn't know is shown as it came. */
+export const adminRoleLabel = (role: string) =>
+  ADMIN_ROLES.find((known) => known.value === role)?.label ??
+  role.replaceAll("_", " ");
+
 export interface AdminInvitation {
   id: string;
   email: string;
-  admin_role: "super_admin" | "support_admin" | "platform_admin";
+  admin_role: AdminRole;
   status: "pending" | "accepted" | "declined" | "revoked" | "expired";
   message?: string;
   permissions?: Record<string, unknown>;
@@ -45,7 +53,7 @@ export interface AdminInvitation {
 
 export interface CreateAdminInvitationRequest {
   email: string;
-  admin_role: "super_admin" | "support_admin" | "platform_admin";
+  admin_role: AdminRole;
   message?: string;
   permissions?: Record<string, unknown>;
   expiry_days?: number;
@@ -83,21 +91,25 @@ export interface AdminInvitationStats {
   average_acceptance_time_hours?: number;
 }
 
+// The roles the backend has and takes (task 915): any other name is refused with a 422, which is
+// why no invitation from this screen was ever stored while it offered "support_admin" and
+// "platform_admin". The labels are the screen's; the values are the API's.
 export const ADMIN_ROLES = [
   {
     value: "super_admin",
-    label: "Super Admin",
-    description: "Full platform access",
+    label: "Super admin",
+    description:
+      "Everything on the platform, and the only role that can invite admins",
   },
   {
-    value: "support_admin",
-    label: "Support Admin",
-    description: "Customer support and monitoring",
+    value: "admin",
+    label: "Platform admin",
+    description: "Administers the platform",
   },
   {
-    value: "platform_admin",
-    label: "Platform Admin",
-    description: "Platform management without user data access",
+    value: "support",
+    label: "Support admin",
+    description: "Customer support",
   },
 ] as const;
 
