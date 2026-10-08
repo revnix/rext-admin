@@ -78,7 +78,14 @@ export async function resolveSupportChatIdentity(
       accessToken,
       fetchImpl,
     ),
-    backendGet<Profile>("/api/v1/user/profile", accessToken, fetchImpl),
+    // The backend answers `{ data: { profile: {...} } }` (lib/api-client/profile.ts reads
+    // it the same way). Reading the id one level up found none, so every signed-in user was
+    // answered 401 and the chat never opened.
+    backendGet<{ profile?: Profile }>(
+      "/api/v1/user/profile",
+      accessToken,
+      fetchImpl,
+    ).then((data) => data?.profile ?? null),
   ]);
   const userId = text(profile?.id);
   if (!status || !userId) return { ok: false, status: 401 };

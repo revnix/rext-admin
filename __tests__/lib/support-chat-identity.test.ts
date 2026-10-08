@@ -36,9 +36,10 @@ function backend({
 } = {}) {
   return jest.fn(async (url: string) => {
     if (!ok) return { ok: false, json: async () => ({}) } as Response;
+    // As the backend answers: the profile is one level down, under `profile`.
     const data = url.endsWith("/api/v1/user/impersonate/status")
       ? { is_impersonating: impersonating }
-      : profile;
+      : { profile };
     return { ok: true, json: async () => ({ data }) } as Response;
   }) as unknown as typeof fetch;
 }
@@ -121,5 +122,69 @@ describe("resolveSupportChatIdentity", () => {
       supportChatTokenId("u-1", "another-secret"),
     );
     expect(supportChatTokenId("u-1", SECRET)).not.toContain("u-1");
+  });
+});
+
+describe("the backend's profile answer", () => {
+  // Recorded from staging's GET /api/v1/user/profile on 2026-10-08 (values replaced): the route
+  // read `data.id`, which this shape doesn't have, and answered 401 to every signed-in user.
+  const recorded = {
+    success: true,
+    message: "Profile retrieved successfully",
+    data: {
+      profile: {
+        id: "0b0f6a52-8f0e-4b0e-9d58-1c2f3a4b5c6d",
+        email: "ana@example.com",
+        full_name: "Ana Costa",
+        display_name: null,
+        avatar_url: null,
+        bio: null,
+        email_verified: true,
+        language: "en",
+        status: "active",
+        timezone: "UTC",
+        created_at: "2026-10-01T00:00:00Z",
+        updated_at: "2026-10-01T00:00:00Z",
+      },
+    },
+  };
+
+  it("is read where the backend puts it", async () => {
+    const fetchImpl = jest.fn(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url.endsWith("/status")
+          ? { data: { is_impersonating: false } }
+          : recorded,
+    })) as unknown as typeof fetch;
+
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      fetchImpl,
+    );
+
+    expect(outcome).toMatchObject({
+      ok: true,
+      identity: {
+        userId: "0b0f6a52-8f0e-4b0e-9d58-1c2f3a4b5c6d",
+        email: "ana@example.com",
+        name: "Ana Costa",
+      },
+    });
+  });
+
+  it("answers 401 when it carries no profile", async () => {
+    const fetchImpl = jest.fn(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url.endsWith("/status")
+          ? { data: { is_impersonating: false } }
+          : { data: { id: "u-1" } },
+    })) as unknown as typeof fetch;
+
+    expect(
+      await resolveSupportChatIdentity(session(), SECRET, fetchImpl),
+    ).toEqual({ ok: false, status: 401 });
   });
 });
