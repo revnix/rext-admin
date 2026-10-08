@@ -9,7 +9,7 @@ import { useEffect } from "react";
 export function usePageTitle(title: string, description?: string) {
   useEffect(() => {
     if (title) {
-      document.title = `${title} | Rext AI Admin`;
+      document.title = `${title} · Rext AI`;
     }
 
     // Update meta description if provided
@@ -31,7 +31,7 @@ export function usePageTitle(title: string, description?: string) {
         ogTitle.setAttribute("property", "og:title");
         document.head.appendChild(ogTitle);
       }
-      ogTitle.setAttribute("content", `${title} | Rext Admin`);
+      ogTitle.setAttribute("content", `${title} · Rext AI`);
     }
 
     // Update Open Graph description if provided
