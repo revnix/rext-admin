@@ -13,6 +13,14 @@ export const adminRoleLabel = (role: string) =>
   ADMIN_ROLES.find((known) => known.value === role)?.label ??
   role.replaceAll("_", " ");
 
+/**
+ * Where a new admin lands after accepting, by what the route guard lets each role open
+ * (proxy.ts): the admin home is for super admins and platform admins; a support admin's place
+ * is the users list, and the admin home would turn them away.
+ */
+export const adminLandingRoute = (role: string) =>
+  role === "support" ? "/admin/users" : "/admin";
+
 export interface AdminInvitation {
   id: string;
   email: string;
