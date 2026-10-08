@@ -92,6 +92,18 @@ describe("useDraftSections (task 773, part B)", () => {
     expect(result.current.body).toBe(text(1, 4));
   });
 
+  it("shows no sections of a run joined part-way: the ones before them were never sent again", () => {
+    const { result } = start();
+    act(() => {
+      result.current.add(event(4));
+      result.current.add(event(5));
+    });
+    act(() => {
+      jest.advanceTimersByTime(SECTION_GAP_WAIT_MS * 3);
+    });
+    expect(result.current.body).toBe("");
+  });
+
   it("takes a section sent again in the first one's place", () => {
     const { result } = start();
     act(() => {

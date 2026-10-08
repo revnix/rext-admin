@@ -26,7 +26,8 @@ interface Held {
  *
  * `add` takes any custom event of the stream and keeps the ones that are a section. `body` is
  * the article's text so far: the sections that may be shown, in the article's order. Empty before
- * the first one, for another thread, and once the article is final (a later run starts clean).
+ * the article's first section, for another thread, and once the article is final (a later run
+ * starts clean).
  */
 export function useDraftSections({
   thread,
@@ -56,9 +57,14 @@ export function useDraftSections({
     () => sectionsInOrder(sections, givenUp),
     [sections, givenUp],
   );
-  // The place before the first section that is held back: what it waits for.
+  // The place before the first section that is held back: what it waits for. Only once the
+  // article's start is on the page: the stream doesn't send again what a reloaded or joined run
+  // missed, so sections with nothing before them would be the middle of an article shown as its
+  // start. Those wait for the whole draft, as the page did before.
   const gap =
-    sections.length > shown.length ? sections[shown.length].index - 1 : 0;
+    shown.length > 0 && sections.length > shown.length
+      ? sections[shown.length].index - 1
+      : 0;
   const arrived = shown.length;
   // biome-ignore lint/correctness/useExhaustiveDependencies: an earlier section arriving starts the wait again
   useEffect(() => {
