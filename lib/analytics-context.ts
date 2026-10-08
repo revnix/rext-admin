@@ -24,6 +24,22 @@ export function environmentOf(hostname: string): EventEnvironment {
   return "development";
 }
 
+/** The mark on a browser of our own team, set once on rext.ai for `.rext.ai` (`?internal=1`). */
+export const INTERNAL_COOKIE = "rext-internal";
+
+/**
+ * Whether this browser is one of the team's own: marked once on rext.ai, for both hosts. Its
+ * events say so (`internal: true`), so the team's own visits can be left out of every number.
+ * A preference of the browser, holding nothing about a person, read whatever their answer on
+ * analytics.
+ */
+export function isTeamBrowser(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((part) => part.trim() === `${INTERNAL_COOKIE}=1`);
+}
+
 export interface EventContext {
   /** The workspace on screen, or null on a page that belongs to none. */
   workspace_id: string | null;

@@ -6,6 +6,7 @@
 import {
   environmentOf,
   eventContext,
+  isTeamBrowser,
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 
@@ -97,5 +98,21 @@ describe("environmentOf", () => {
     for (const host of ["localhost", "127.0.0.1", "rext.ai", ""]) {
       expect(environmentOf(host)).toBe("development");
     }
+  });
+});
+
+describe("isTeamBrowser", () => {
+  const set = (cookie: string) => {
+    // biome-ignore lint/suspicious/noDocumentCookie: the function under test reads document.cookie
+    document.cookie = cookie;
+  };
+  afterEach(() => set("rext-internal=; Max-Age=0; Path=/"));
+
+  it("is a browser carrying the team's mark, and no other", () => {
+    expect(isTeamBrowser()).toBe(false);
+    set("rext-internal=0; Path=/");
+    expect(isTeamBrowser()).toBe(false);
+    set("rext-internal=1; Path=/");
+    expect(isTeamBrowser()).toBe(true);
   });
 });
