@@ -12,6 +12,11 @@ import {
 } from "@/lib/auth/backend-away";
 import { dashboardServerKeyHeader } from "@/lib/auth/dashboard-server-key";
 import type { components } from "@/lib/api-client/schema";
+import {
+  isOAuthSignInError,
+  oauthSignInError,
+  signInPageError,
+} from "@/lib/auth/oauth-sign-in-error";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
 import {
@@ -650,8 +655,22 @@ export default {
               log.error(
                 "[AuthJS] OAuth login failed with message:",
                 errorMessage,
+                { status: oauthResponse.status },
               );
-              return { ...token, error: "OAuthBackendError" };
+              // A 403 here is the backend asking for this server's key and not getting the right
+              // one. Nothing the person did, and nothing they can do: only this deployment's
+              // settings fix it, so the log says which one.
+              if (oauthResponse.status === 403) {
+                log.error(
+                  "[AuthJS] The backend refused this server's sign-in call (403): DASHBOARD_SERVER_KEY is missing or wrong in this deployment's settings",
+                );
+              }
+              // The limiter's refusal keeps its own name, so the sign-in page can say when to
+              // try again; every other failure is the one general error.
+              return {
+                ...token,
+                error: oauthSignInError(oauthResponse.status),
+              };
             }
 
             const oauthResponseText = await oauthResponse.text();
@@ -871,7 +890,7 @@ export default {
     async authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user && !auth?.error;
       const hasRefreshError = auth?.error === "RefreshAccessTokenError";
-      const hasOAuthError = auth?.error === "OAuthBackendError";
+      const hasOAuthError = isOAuthSignInError(auth?.error);
       const pathname = nextUrl.pathname;
       const isOnAuthPage = isAuthPage(pathname);
       const isInvitationPage =
@@ -894,7 +913,7 @@ export default {
           return true;
         }
         // Redirect to login from any protected page
-        const errorParam = hasOAuthError ? "OAuthError" : "SessionExpired";
+        const errorParam = signInPageError(auth?.error);
         return Response.redirect(
           new URL(`/login?error=${errorParam}`, nextUrl),
         );

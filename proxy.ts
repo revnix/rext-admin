@@ -1,3 +1,4 @@
+import { signInPageError } from "@/lib/auth/oauth-sign-in-error";
 import { AUTH_PAGES, AUTH_PAGE_PATHS, isAuthPage } from "@/lib/auth-routes";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -232,10 +233,7 @@ export default async function proxy(request: NextRequest) {
 
   if (session?.error && !isPublicRoute) {
     const loginUrl = new URL("/login", nextUrl.origin);
-    loginUrl.searchParams.set(
-      "error",
-      session.error === "OAuthBackendError" ? "OAuthError" : "SessionExpired",
-    );
+    loginUrl.searchParams.set("error", signInPageError(session.error));
     return NextResponse.redirect(loginUrl);
   }
 
