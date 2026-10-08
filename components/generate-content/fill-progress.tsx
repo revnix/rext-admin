@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { Button } from "@/components/ui/button";
@@ -102,4 +102,25 @@ export function FillBoundary({
       {children}
     </ErrorBoundary>
   );
+}
+
+/**
+ * A filling wait is a new screen, and a long one: it starts at its top. The step before it ends on
+ * a button at the foot of its page, and the scroll would else stay there, with the steps row and
+ * the wait's first lines out of sight. Mounted once per wait (give it the phase as its key).
+ */
+export function StartAtTop() {
+  const anchor = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    // Whichever ancestor scrolls (the shell's main column, or the window on a phone).
+    for (
+      let node = anchor.current?.parentElement;
+      node;
+      node = node.parentElement
+    ) {
+      if (node.scrollTop > 0) node.scrollTop = 0;
+    }
+    if (window.scrollY > 0) window.scrollTo(0, 0);
+  }, []);
+  return <span ref={anchor} hidden />;
 }

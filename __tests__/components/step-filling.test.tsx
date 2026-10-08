@@ -12,6 +12,7 @@ import {
   FillBoundary,
   FillProgressBox,
   FillProgressStrip,
+  StartAtTop,
 } from "@/components/generate-content/fill-progress";
 import { SuggestionsFilling } from "@/components/generate-content/suggestions";
 import { TitleStepFilling } from "@/components/generate-content/title-step";
@@ -291,5 +292,26 @@ describe("a filling view that throws", () => {
     );
     expect(screen.getByText("The plain progress box")).toBeVisible();
     error.mockRestore();
+  });
+});
+
+describe("a filling wait's start", () => {
+  it("is at the top of the page, wherever the step before it was left", () => {
+    // The shell's column, scrolled down to the last step's button.
+    const column = document.createElement("div");
+    const inner = document.createElement("div");
+    column.appendChild(inner);
+    document.body.appendChild(column);
+    let scrolled = 320;
+    Object.defineProperty(column, "scrollTop", {
+      get: () => scrolled,
+      set: (value: number) => {
+        scrolled = value;
+      },
+    });
+
+    render(<StartAtTop />, { container: inner });
+    expect(scrolled).toBe(0);
+    column.remove();
   });
 });

@@ -10,6 +10,7 @@ import {
   FillBoundary,
   FillProgressBox,
   FillProgressStrip,
+  StartAtTop,
 } from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
@@ -2505,6 +2506,7 @@ export function FreshGenerationView({
     return stepperRow(
       true,
       <FillBoundary fallback={box}>
+        <StartAtTop key={fill} />
         <StepColumn
           withSidePane
           className={stepColumnClass("filling", fill === "outline")}
