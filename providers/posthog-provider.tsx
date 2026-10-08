@@ -50,6 +50,11 @@ import {
   TOOLBAR_RECHECK_MS,
   toolbarMarked,
 } from "@/lib/analytics-toolbar";
+import {
+  WEB_VITALS_ON,
+  WEB_VITALS_OPTIONS,
+  webVitalsNumbers,
+} from "@/lib/analytics-web-vitals";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useWorkspaceContextStore } from "@/stores/workspace/use-workspace-context-store";
@@ -434,6 +439,34 @@ function ExceptionSync() {
 }
 
 /**
+ * How fast a page loaded and answered, for a person who allows analytics (lib/analytics-web-vitals.ts
+ * says what leaves). Mounted only where NEXT_PUBLIC_WEB_VITALS is "true". The piece that measures
+ * ships with the app and is loaded here before the library is asked for the measures, so nothing
+ * is fetched from outside. The library can't be told to stop measuring: after a no, what it still
+ * measures is dropped in before_send with every other event of a person.
+ */
+function WebVitalsSync() {
+  useEffect(() => {
+    let gone = false;
+    void import("posthog-js/dist/web-vitals")
+      .then(() => {
+        if (gone) return;
+        posthog.set_config({ capture_performance: WEB_VITALS_OPTIONS });
+        // set_config doesn't start it by itself.
+        posthog.webVitalsAutocapture?.startIfEnabled();
+      })
+      .catch(() => {
+        // The piece didn't load: no measures, and nothing fetched in its place.
+      });
+    return () => {
+      gone = true;
+    };
+  }, []);
+
+  return null;
+}
+
+/**
  * PostHog's toolbar, for an admin of ours who opened it from PostHog (lib/analytics-toolbar.ts).
  * Marks their browser and loads the page once more, so the server answers with the policy that
  * lets the toolbar's script in; takes the mark away once the launch is over, or the person
@@ -521,8 +554,11 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
   // (lib/analytics-exceptions.ts).
   const classed = exceptionByClass(sent);
   if (!classed) return null;
+  // A page's speed leaves as its numbers and the address's shape (lib/analytics-web-vitals.ts).
+  const measured = webVitalsNumbers(classed);
+  if (!measured) return null;
   // A recording's batch leaves with no field's value readable (lib/analytics-recording.ts).
-  const shown = hideTypedValues(classed);
+  const shown = hideTypedValues(measured);
   // Where the event is from, on every one: the website sends "website" to the same project and
   // the backend "server", so the sets of numbers can be told apart; and which deploy, so a
   // chart can be read for real customers only.
@@ -599,7 +635,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           // Everything else the library can fetch and run is off by name, so that letting the
           // toolbar in (below) lets nothing else in. (Web vitals only: a recording's list of
           // requests reads the same option's other half, which stays as the project has it.
-          // Errors nobody caught are started by ExceptionSync, where the deploy asks for them.)
+          // Errors nobody caught are started by ExceptionSync and a page's speed by
+          // WebVitalsSync, where the deploy asks for them.)
           capture_exceptions: false,
           capture_performance: { web_vitals: false },
           disable_surveys: true,
@@ -705,6 +742,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             <OAuthLoginRecord />
             <HeatmapSync />
             {EXCEPTIONS_ON && <ExceptionSync />}
+            {WEB_VITALS_ON && <WebVitalsSync />}
             {RECORDING_ON && <SessionRecordingSync />}
           </>
         )}
