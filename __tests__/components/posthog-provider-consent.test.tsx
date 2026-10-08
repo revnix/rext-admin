@@ -196,15 +196,28 @@ describe("where analytics is on unless switched off", () => {
       plan_status: "active",
       billing_period: "monthly",
     });
+    // The person's properties go once, together, after they have settled.
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1),
+      { timeout: 4000 },
+    );
     expect(mockPosthog.setPersonProperties).toHaveBeenCalledWith({
       plan: "growth",
       plan_status: "active",
       billing_period: "monthly",
       trial_ends_at: null,
-    });
-    expect(mockPosthog.setPersonProperties).toHaveBeenCalledWith({
       workspaces: 2,
     });
+  });
+
+  it("sets a page's workspace before that page's view goes out", async () => {
+    renderProvider();
+    await waitFor(() => expect(pageViews()).toHaveLength(1));
+
+    const order = (mock: jest.Mock) => mock.mock.invocationCallOrder[0];
+    expect(order(mockPosthog.register)).toBeLessThan(
+      order(mockPosthog.capture),
+    );
   });
 
   it("puts the choice back after a sign-out's reset, which posthog-js forgets it on", async () => {

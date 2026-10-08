@@ -94,6 +94,9 @@ function PostHogAuthSync() {
  * from then on, page views included. The workspace is the one on screen, so an account page (no
  * workspace in its address) carries none.
  */
+/** How long the person's properties are left to settle before they are sent, once. */
+const PERSON_SETTLE_MS = 1500;
+
 function AnalyticsContextSync() {
   const { data: session } = useSession();
   const { workspaceSlug } = useParams<{ workspaceSlug?: string }>() ?? {};
@@ -131,19 +134,24 @@ function AnalyticsContextSync() {
       plan_status: planStatus,
       billing_period: billingPeriod,
     });
-    posthog.setPersonProperties({
-      plan: planName,
-      plan_status: planStatus,
-      billing_period: billingPeriod,
-      trial_ends_at: trialEnds ?? null,
-    });
-  }, [planName, planStatus, billingPeriod, trialEnds]);
+  }, [planName, planStatus, billingPeriod]);
 
+  // The person's own properties, sent together once they have settled: the plan and the
+  // workspaces load one after the other, and two updates would each look new to posthog-js,
+  // which sends one again only when it differs from the last.
   useEffect(() => {
-    if (workspaceCount > 0) {
-      posthog.setPersonProperties({ workspaces: workspaceCount });
-    }
-  }, [workspaceCount]);
+    if (!planName || !planStatus) return;
+    const settle = window.setTimeout(() => {
+      posthog.setPersonProperties({
+        plan: planName,
+        plan_status: planStatus,
+        billing_period: billingPeriod,
+        trial_ends_at: trialEnds ?? null,
+        workspaces: workspaceCount,
+      });
+    }, PERSON_SETTLE_MS);
+    return () => window.clearTimeout(settle);
+  }, [planName, planStatus, billingPeriod, trialEnds, workspaceCount]);
 
   return null;
 }
@@ -302,12 +310,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   return (
     <PHProvider client={posthog}>
       <Suspense fallback={null}>
+        {/* Before the page view: siblings' effects run in order, and a page's view must carry
+            that page's workspace, not the one before it. */}
+        {mode === "full" && <AnalyticsContextSync />}
         {mode && <PostHogPageView anonymous={mode === "anonymous"} />}
         {/* A person's identity and the sign-in's record: only for someone who allows them. */}
         {mode === "full" && (
           <>
             <PostHogAuthSync />
-            <AnalyticsContextSync />
             <OAuthLoginRecord />
           </>
         )}
