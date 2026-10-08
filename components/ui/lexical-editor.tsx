@@ -319,8 +319,10 @@ function ImagePlaceholderSlot({
       <span className="inline-flex items-start gap-2 text-muted-foreground">
         <ImageIcon size={16} className="mt-0.5 shrink-0" />
         <span>
-          Suggested image{altText ? `: ${altText}` : ""} — optional. Upload one
-          here, or remove this slot and publish without it.
+          {/* A slot with no description is one the person put in themselves. */}
+          {altText
+            ? `Suggested image: ${altText} — optional. Upload one here, or remove this slot and publish without it.`
+            : "Upload an image here, or remove this slot."}
         </span>
       </span>
       <span className="inline-flex items-center gap-2">
@@ -543,6 +545,18 @@ export function $createImageNode({
   height?: number;
 }): ImageNode {
   return new ImageNode(src, altText, width, height);
+}
+
+/**
+ * An empty upload slot, as the "/" menu's Image block puts in (task 706): the same placeholder the
+ * pipeline leaves where it suggests an image, so it saves, loads and is left out of a publish the
+ * same way until an image is uploaded into it.
+ */
+export function $createImageSlotNode(): ImageNode {
+  return $createImageNode({
+    src: `${IMAGE_PLACEHOLDER_SCHEME}${crypto.randomUUID()}`,
+    altText: "",
+  });
 }
 
 export function $isImageNode(

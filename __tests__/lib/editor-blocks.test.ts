@@ -23,6 +23,8 @@ describe("matchBlocks", () => {
     expect(titles("steps")).toEqual(["Numbered list"]);
     expect(titles("hr")).toEqual(["Divider"]);
     expect(titles("grid")).toEqual(["Table"]);
+    expect(titles("photo")).toEqual(["Image"]);
+    expect(titles("upload")).toEqual(["Image"]);
   });
 
   it("offers nothing for a word no block has", () => {
