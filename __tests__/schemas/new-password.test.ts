@@ -1,17 +1,16 @@
 /**
- * A password the form takes is one the backend takes (rext-control task 938). The sign-up and
- * reset forms said "At least 8 characters" and checked only that, while the backend also asks for
- * an uppercase letter, a lowercase letter, a number and a special character: a person who did what
- * the form said was refused, one rule at a time. The forms now check all of it, and say everything
- * a password still needs at once.
+ * A password the form takes is one the backend takes, and the other way about (rext-control task
+ * 938). The forms said "At least 8 characters" while the backend also asked for four kinds of
+ * character, so a person who did what the form said was refused, one rule at a time. Both now ask
+ * for the length alone: 8 characters at least, 72 bytes at most, and no "<" or ">".
  */
 
+import { strengthOf } from "@/components/profile/change-password-form";
 import {
   newPasswordSchema,
   resetPasswordSchema,
   signupFormSchema,
 } from "@/schemas/auth-schemas";
-import { strengthOf } from "@/components/profile/change-password-form";
 import { changePasswordSchema } from "@/schemas/profile-schemas";
 
 const said = (password: string) =>
@@ -19,65 +18,41 @@ const said = (password: string) =>
 
 describe("a new password", () => {
   it.each([
+    "blueberry pancakes",
+    "12345678",
     "Blueberry-pancakes-7",
-    "Aa1!aaaa",
-    "correct Horse battery staple 9?",
+    "pässwörd",
     // 72 bytes, the most the backend's hashing takes.
-    `Aa1!${"x".repeat(68)}`,
-  ])("is taken when it has everything: %j", (password) => {
+    "x".repeat(72),
+  ])("is taken whatever kinds of character it holds: %j", (password) => {
     expect(said(password)).toBeUndefined();
   });
 
-  it("is told everything it still needs at once, not one rule per try", () => {
-    expect(said("blueberry pancakes")).toBe(
-      "Add an uppercase letter, a number and a special character such as ! or #",
-    );
-    expect(said("BLUEBERRY-PANCAKES-7")).toBe("Add a lowercase letter");
-    expect(said("Blueberry pancakes")).toBe(
-      "Add a number and a special character such as ! or #",
-    );
-    expect(said("Blueberry7pancakes")).toBe(
-      "Add a special character such as ! or #",
-    );
+  it("is asked for 8 characters at least", () => {
+    expect(said("abc")).toBe("Password must be at least 8 characters");
+    expect(said("Aa1!aaa")).toBe("Password must be at least 8 characters");
   });
 
-  it("is told its length and its kinds of character together when it lacks both", () => {
-    expect(said("abc")).toBe(
-      "Use at least 8 characters, and add an uppercase letter, a number and a special character such as ! or #",
-    );
-    expect(said("Aa1!")).toBe("Password must be at least 8 characters");
-  });
-
-  it.each(Array.from("!\"#$%&'()*+,-./:;=?@[\\]^_`{|}~"))(
-    "counts %j as a special character, as the backend does",
-    (symbol) => {
-      expect(said(`Blueberry7${symbol}pancakes`)).toBeUndefined();
-    },
-  );
-
-  it.each(["<", ">", " ", "é"])(
-    "does not count %j as one: the backend doesn't",
-    (character) => {
-      expect(said(`Blueberry7${character}pancakes`)).toBe(
-        "Add a special character such as ! or #",
-      );
-    },
-  );
-
-  it("is measured as the backend measures it, in bytes", () => {
+  it("is measured at its upper end as the backend measures it, in bytes", () => {
     const tooLong =
       "Password must be 72 characters or less (accented letters and emoji count as more than one)";
-    expect(said(`Aa1!${"x".repeat(69)}`)).toBe(tooLong);
-    // 4 bytes and 35 letters of two bytes each: 74.
-    expect(said(`Aa1!${"é".repeat(35)}`)).toBe(tooLong);
-    expect(said(`Aa1!${"é".repeat(34)}`)).toBeUndefined();
+    expect(said("x".repeat(73))).toBe(tooLong);
+    // 37 letters of two bytes each: 74.
+    expect(said("é".repeat(37))).toBe(tooLong);
+    expect(said("é".repeat(36))).toBeUndefined();
   });
+
+  it.each(["blueberry<pancakes", "blueberry>pancakes"])(
+    'is refused with "<" or ">" in it, as the backend refuses it: %j',
+    (password) => {
+      expect(said(password)).toBe("Password cannot contain < or >");
+    },
+  );
 });
 
 describe("the forms that ask for a new password", () => {
-  const WEAK = "blueberry pancakes";
-  const NEEDS =
-    "Add an uppercase letter, a number and a special character such as ! or #";
+  const SHORT = "abc";
+  const NEEDS = "Password must be at least 8 characters";
   const at = (
     result: { error?: { issues: { path: PropertyKey[]; message: string }[] } },
     field: string,
@@ -93,18 +68,18 @@ describe("the forms that ask for a new password", () => {
     expect(at(signupFormSchema.safeParse(form("")), "password")).toBe(
       "Enter password",
     );
-    expect(at(signupFormSchema.safeParse(form(WEAK)), "password")).toBe(NEEDS);
-    expect(
-      signupFormSchema.safeParse(form("Blueberry-pancakes-7")).success,
-    ).toBe(true);
+    expect(at(signupFormSchema.safeParse(form(SHORT)), "password")).toBe(NEEDS);
+    expect(signupFormSchema.safeParse(form("blueberry pancakes")).success).toBe(
+      true,
+    );
   });
 
   it("reset: holds the new password to the rule", () => {
     expect(
       at(
         resetPasswordSchema.safeParse({
-          password: WEAK,
-          confirmPassword: WEAK,
+          password: SHORT,
+          confirmPassword: SHORT,
         }),
         "password",
       ),
@@ -116,29 +91,34 @@ describe("the forms that ask for a new password", () => {
       at(
         changePasswordSchema.safeParse({
           currentPassword: "anything",
-          newPassword: WEAK,
-          confirmPassword: WEAK,
+          newPassword: SHORT,
+          confirmPassword: SHORT,
         }),
         "newPassword",
       ),
     ).toBe(NEEDS);
+    expect(
+      changePasswordSchema.safeParse({
+        currentPassword: "anything",
+        newPassword: "blueberry pancakes",
+        confirmPassword: "blueberry pancakes",
+      }).success,
+    ).toBe(true);
   });
 });
 
-// The change-password form rates a password as it is typed. It read the rules its own way and
-// could call "Strong" a password the schema then refused.
+// The change-password form rates a password as it is typed: a guide, by its length and the kinds
+// of character in it. It never calls "Strong" a password the form then refuses.
 describe("the strength the change-password form shows", () => {
-  it.each([
-    "Blueberry7<pancakes",
-    "Blueberry7 pancakes",
-    "Blueberry7épancakes",
-    `Aa1!${"x".repeat(69)}`,
-  ])("is never Strong for a password the form refuses: %j", (password) => {
-    expect(newPasswordSchema.safeParse(password).success).toBe(false);
-    expect(strengthOf(password).label).not.toBe("Strong");
-  });
+  it.each(["Blueberry7!<pancakes", `Aa1!${"x".repeat(69)}`, "Aa1!aaa"])(
+    "is never Strong for a password the form refuses: %j",
+    (password) => {
+      expect(newPasswordSchema.safeParse(password).success).toBe(false);
+      expect(strengthOf(password).label).not.toBe("Strong");
+    },
+  );
 
-  it("is Strong for one the form takes, and less for less", () => {
+  it("is Strong for a long password of every kind, and less for less", () => {
     expect(strengthOf("Blueberry-pancakes-7").label).toBe("Strong");
     expect(strengthOf("Blueberry pancakes").label).toBe("Fair");
     expect(strengthOf("blue").label).toBe("Weak");
