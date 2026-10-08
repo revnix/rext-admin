@@ -32,6 +32,8 @@ const openSupportChat = jest.fn(async () => true);
 jest.mock("@/lib/support-chat/chat", () => ({
   supportChatEnabled: () => Boolean(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID),
   openSupportChat: () => openSupportChat(),
+  resumeSupportChat: async () => false,
+  onSupportChatUnread: () => () => {},
 }));
 
 function renderHeader(impersonating: boolean | "unknown") {

@@ -15,11 +15,15 @@ import { resolveApiBaseUrl } from "@/lib/api-base-url";
  * read from the token here: a session's token can be replaced from the browser (the
  * impersonation swap), so only the backend's check of its signature says who it belongs to.
  */
+type Subscription = { plan_display_name?: unknown; plan_name?: unknown };
+
 export interface SupportChatIdentity {
   tokenId: string;
   userId: string;
   email: string | null;
   name: string | null;
+  /** The plan's name as the customer sees it ("Growth", "Trial"), when the backend gives one. */
+  plan: string | null;
 }
 
 /** The session's token for Crisp: hex HMAC-SHA256 of the user id. */
@@ -72,7 +76,7 @@ export async function resolveSupportChatIdentity(
   const accessToken = session?.user?.accessToken;
   if (!accessToken) return { ok: false, status: 401 };
 
-  const [status, profile] = await Promise.all([
+  const [status, profile, plan] = await Promise.all([
     backendGet<{ is_impersonating?: unknown }>(
       "/api/v1/user/impersonate/status",
       accessToken,
@@ -86,6 +90,17 @@ export async function resolveSupportChatIdentity(
       accessToken,
       fetchImpl,
     ).then((data) => data?.profile ?? null),
+    // The plan's name, for the person who answers the chat. Without it the chat still opens.
+    backendGet<{ subscription?: Subscription }>(
+      "/api/v1/subscriptions/current",
+      accessToken,
+      fetchImpl,
+    ).then(
+      (data) =>
+        text(data?.subscription?.plan_display_name) ??
+        text(data?.subscription?.plan_name),
+      () => null,
+    ),
   ]);
   const userId = text(profile?.id);
   if (!status || !userId) return { ok: false, status: 401 };
@@ -98,6 +113,7 @@ export async function resolveSupportChatIdentity(
       userId,
       email: text(profile?.email),
       name: text(profile?.full_name) ?? text(profile?.display_name),
+      plan,
     },
   };
 }

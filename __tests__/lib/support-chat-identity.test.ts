@@ -63,6 +63,7 @@ describe("resolveSupportChatIdentity", () => {
         userId: "u-1",
         email: "ana@example.com",
         name: "Ana",
+        plan: null,
       },
     });
     expect(fetchImpl).toHaveBeenCalledWith(
@@ -186,5 +187,53 @@ describe("the backend's profile answer", () => {
     expect(
       await resolveSupportChatIdentity(session(), SECRET, fetchImpl),
     ).toEqual({ ok: false, status: 401 });
+  });
+});
+
+describe("the plan sent beside the email", () => {
+  const answers = (subscription: unknown) =>
+    jest.fn(async (url: string) => ({
+      ok: !(subscription instanceof Error && url.endsWith("/current")),
+      json: async () => {
+        if (url.endsWith("/status"))
+          return { data: { is_impersonating: false } };
+        if (url.endsWith("/profile")) {
+          return { data: { profile: { id: "u-1", email: "ana@example.com" } } };
+        }
+        return { data: { subscription } };
+      },
+    })) as unknown as typeof fetch;
+
+  it("is the plan's name as the customer sees it", async () => {
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      answers({ plan_name: "growth", plan_display_name: "Growth" }),
+    );
+
+    expect(outcome).toMatchObject({ ok: true, identity: { plan: "Growth" } });
+  });
+
+  it("falls back to the plan's own name", async () => {
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      answers({ plan_name: "trial", plan_display_name: null }),
+    );
+
+    expect(outcome).toMatchObject({ ok: true, identity: { plan: "trial" } });
+  });
+
+  it("is left out when the backend can't say, and the chat still opens", async () => {
+    const outcome = await resolveSupportChatIdentity(
+      session(),
+      SECRET,
+      answers(new Error("the subscription route failed")),
+    );
+
+    expect(outcome).toMatchObject({
+      ok: true,
+      identity: { userId: "u-1", plan: null },
+    });
   });
 });

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useSupportChat } from "@/hooks/use-support-chat";
 import { buildBreadcrumbs } from "@/lib/shell-breadcrumbs";
+import { cn } from "@/lib/utils";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -132,10 +133,19 @@ function HelpMenu() {
               data-rec="show"
               variant="ghost"
               size="icon"
-              aria-label="Help"
-              className={iconButton}
+              aria-label={
+                chat.unread > 0 ? "Help, a chat reply is unread" : "Help"
+              }
+              className={cn(iconButton, "relative")}
             >
               <CircleQuestionMark />
+              {chat.unread > 0 && (
+                <span
+                  aria-hidden
+                  data-slot="chat-unread"
+                  className="absolute top-2 right-2 size-2 rounded-full bg-primary"
+                />
+              )}
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>

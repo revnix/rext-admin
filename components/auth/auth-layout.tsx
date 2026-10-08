@@ -1,4 +1,5 @@
 import { Logo } from "@/components/brand-logo";
+import { VisitorChatLink } from "@/components/support/visitor-chat-link";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -33,7 +34,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <Logo className="h-7" />
         </div>
 
-        <div className="w-full max-w-[420px]">{children}</div>
+        <div className="w-full max-w-[420px]">
+          {children}
+          <VisitorChatLink />
+        </div>
       </div>
     </div>
   );

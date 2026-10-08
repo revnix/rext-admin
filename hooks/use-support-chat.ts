@@ -1,11 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { impersonationQueries } from "@/lib/query-keys";
-import { openSupportChat, supportChatEnabled } from "@/lib/support-chat/chat";
+import {
+  onSupportChatUnread,
+  openSupportChat,
+  resumeSupportChat,
+  supportChatEnabled,
+} from "@/lib/support-chat/chat";
 
 /**
  * Whether "Chat with us" is offered, and what it does (revnix/rext-control#711). Never while
@@ -31,8 +36,17 @@ export function useSupportChat() {
   }, []);
 
   // Only once the status says no: unknown (still loading, or failed) offers nothing.
-  return {
-    available: enabled && impersonation?.is_impersonating === false,
-    open,
-  };
+  const available = enabled && impersonation?.is_impersonating === false;
+
+  // Someone who opened the chat before may have a reply waiting: the chat is loaded again,
+  // closed, and says how many they haven't read. Anyone else loads nothing here.
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!available) return;
+    const stop = onSupportChatUnread(setUnread);
+    void resumeSupportChat();
+    return stop;
+  }, [available]);
+
+  return { available, open, unread: available ? unread : 0 };
 }
