@@ -60,7 +60,7 @@ jest.mock("@/lib/api-client", () => {
 
 const NAME = "New Writer";
 const EMAIL = "new.writer@example.com";
-const PASSWORD = "a-long-passphrase-1";
+const PASSWORD = "A-long-passphrase-1";
 
 const track = analytics.track as jest.Mock;
 const sent = (name: string) =>
@@ -236,6 +236,32 @@ describe("SignupForm, what it reports", () => {
       email: EMAIL,
     });
     expect(screen.getByLabelText(/Full name/)).toHaveValue("john smith");
+  });
+
+  // The backend refuses a password without all four kinds of character; the form said only
+  // "At least 8 characters" (rext-control task 938).
+  it("says everything a password still needs before anything is sent", async () => {
+    show();
+    await userEvent.type(screen.getByLabelText(/Full name/), NAME);
+    await userEvent.type(screen.getByLabelText(/^\*?Email/), EMAIL);
+    await userEvent.type(
+      screen.getByLabelText(/^\*?Password/),
+      "blueberry pancakes",
+    );
+    await userEvent.type(
+      screen.getByLabelText(/Confirm password/),
+      "blueberry pancakes",
+    );
+
+    await pressCreate();
+
+    expect(
+      await screen.findByText(
+        "Add an uppercase letter, a number and a special character such as ! or #",
+      ),
+    ).toBeInTheDocument();
+    expect(register).not.toHaveBeenCalled();
+    expect(breach).not.toHaveBeenCalled();
   });
 
   it("does not call it a refused sign-up when the account exists and only the login after it fails", async () => {

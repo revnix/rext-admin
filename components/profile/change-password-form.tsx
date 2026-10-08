@@ -8,13 +8,11 @@ import { PasswordInput } from "@/components/forms/password-input";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { PASSWORD_RULES } from "@/schemas/auth-schemas";
 import {
   type ChangePasswordFormData,
   changePasswordSchema,
 } from "@/schemas/profile-schemas";
-
-const RULES =
-  "At least 8 characters, with an uppercase and a lowercase letter, a number and a special character.";
 
 /** How strong a new password reads, by how many of the five rules it meets. */
 function strengthOf(password: string) {
@@ -88,7 +86,7 @@ export function ChangePasswordForm() {
           required
           description={
             <>
-              {RULES}
+              {PASSWORD_RULES}
               {newPassword && (
                 <>
                   {" "}

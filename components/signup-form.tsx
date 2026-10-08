@@ -19,6 +19,7 @@ import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
 import {
+  PASSWORD_RULES,
   type SignupFormData,
   signupFormSchema,
   signupNameAsSent,
@@ -409,7 +410,7 @@ export function SignupForm({
             control={form.control}
             name="password"
             label="Password"
-            description="At least 8 characters."
+            description={PASSWORD_RULES}
             required
           >
             {(field) => (
