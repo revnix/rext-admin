@@ -6,6 +6,7 @@
 import {
   articleStructure,
   plannedSections,
+  sameHeading,
   writingPosition,
 } from "@/lib/generate-content/article-structure";
 
@@ -151,6 +152,20 @@ describe("articleStructure, text that only looks like headings or differs from t
       "How long should it be?: waiting",
     ]);
     expect(writingPosition(entries)).toEqual({ section: 3, sections: 3 });
+  });
+});
+
+describe("sameHeading", () => {
+  it("reads past numbering, marks and case, but not past other words", () => {
+    expect(sameHeading("1. Pick a show idea", "**Pick a Show Idea**")).toBe(
+      true,
+    );
+    expect(sameHeading("Benefits", "Benefits of a co-host")).toBe(false);
+  });
+
+  it("compares a heading with no words by its text", () => {
+    expect(sameHeading("🎙️", " 🎙️ ")).toBe(true);
+    expect(sameHeading("🎙️", "🎧")).toBe(false);
   });
 });
 

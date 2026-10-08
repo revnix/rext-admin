@@ -67,8 +67,9 @@ jest.mock("@/components/ui/safe-lexical-editor", () => ({
       {initialValue
         .split("\n")
         .filter((line) => line.startsWith("## "))
-        .map((line) => (
-          <h2 key={line}>{line.slice(3)}</h2>
+        .map((line, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list, and two may read the same
+          <h2 key={index}>{line.slice(3)}</h2>
         ))}
       <output aria-label="Editor options">
         {`toolbar=${toolbar} bare=${bare} plugins=${plugins ? "yes" : "no"}`}
@@ -251,6 +252,18 @@ describe("The full-screen article editor", () => {
   });
 });
 
+/** Records each heading scrolled to: its text, and its place among the page's h2s. */
+function watchScrolls() {
+  const scrolled = jest.fn();
+  Element.prototype.scrollIntoView = function scrollIntoView() {
+    scrolled(
+      this.textContent,
+      Array.from(document.querySelectorAll("h2")).indexOf(this as HTMLElement),
+    );
+  };
+  return scrolled;
+}
+
 describe("The editor's drawers", () => {
   const withHeadings = {
     ...plainArticle,
@@ -260,10 +273,7 @@ describe("The editor's drawers", () => {
 
   it("lists the headings in the Outline drawer by level, and goes to the one picked", async () => {
     mockArticle = withHeadings;
-    const scrolled = jest.fn();
-    Element.prototype.scrollIntoView = function scrollIntoView() {
-      scrolled(this.textContent);
-    };
+    const scrolled = watchScrolls();
     const user = renderPage();
 
     await user.click(screen.getByRole("button", { name: "Outline" }));
@@ -283,11 +293,33 @@ describe("The editor's drawers", () => {
     );
     await wait(50);
     expect(screen.queryByRole("dialog", { name: "Outline" })).toBeNull();
-    expect(scrolled).toHaveBeenCalledWith("Choose a format");
+    expect(scrolled).toHaveBeenCalledWith("Choose a format", 1);
 
     // Looking at the outline is not an edit: nothing is saved.
     await wait(3000);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("goes to the second of two headings that read the same", async () => {
+    mockArticle = {
+      ...plainArticle,
+      body_markdown:
+        "## Overview\n\nA.\n\n## Setup\n\nB.\n\n## 3. Overview\n\nC.",
+    };
+    const scrolled = watchScrolls();
+    const user = renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Outline" }));
+    const rows = within(
+      screen.getByRole("dialog", { name: "Outline" }),
+    ).getAllByRole("button", { name: /Overview/ });
+    expect(rows).toHaveLength(2);
+    await user.click(rows[1]);
+    await wait(50);
+
+    // The third heading on the page, not the first one of that name.
+    expect(scrolled).toHaveBeenCalledTimes(1);
+    expect(scrolled).toHaveBeenCalledWith("3. Overview", 2);
   });
 
   it("lists a heading typed since the editor opened", async () => {

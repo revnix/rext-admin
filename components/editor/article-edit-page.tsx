@@ -51,7 +51,10 @@ import {
   readLocalDraft,
   writeLocalDraft,
 } from "@/lib/content/local-draft";
-import { articleStructure } from "@/lib/generate-content/article-structure";
+import {
+  articleStructure,
+  sameHeading,
+} from "@/lib/generate-content/article-structure";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { workspaceRoutes } from "@/lib/routes";
 import { useWorkspace } from "@/providers/workspace-provider";
@@ -108,10 +111,6 @@ type EditorProps = {
   articleHref: Route;
 };
 
-const sameHeading = (a: string, b: string) =>
-  a.replace(/\s+/g, " ").trim().toLowerCase() ===
-  b.replace(/\s+/g, " ").trim().toLowerCase();
-
 function ArticleEditor({
   workspaceId,
   contentId,
@@ -130,7 +129,8 @@ function ArticleEditor({
   // The drawers (the founder's pick for task 706): the outline on the left, the checklist on
   // the right, each over the page and closed again with Escape or a click outside.
   const [drawer, setDrawer] = useState<"outline" | "checklist" | null>(null);
-  const scroller = useRef<HTMLElement>(null);
+  // The text's own box: the outline looks for its headings here, not in the page around it.
+  const textBox = useRef<HTMLDivElement>(null);
   // Text left on this device by an earlier visit whose save never worked.
   const [found, setFound] = useState<LocalDraft | null>(null);
   // Lexical rewrites the Markdown as it loads it, and reports it when the cursor is first placed.
@@ -247,10 +247,12 @@ function ArticleEditor({
     checks.checklist !== null ||
     checks.trustScore !== null;
 
-  const goToHeading = (heading: string) => {
-    const target = Array.from(
-      scroller.current?.querySelectorAll("h1, h2, h3") ?? [],
-    ).find((element) => sameHeading(element.textContent ?? "", heading));
+  // Two sections may share a heading: `occurrence` says which of them was picked.
+  const goToHeading = (heading: string, occurrence: number) => {
+    const matches = Array.from(
+      textBox.current?.querySelectorAll("h1, h2, h3") ?? [],
+    ).filter((element) => sameHeading(element.textContent ?? "", heading));
+    const target = matches[occurrence] ?? matches[0];
     setDrawer(null);
     // After the drawer has gone: it holds the page still while it is open.
     if (target) {
@@ -340,7 +342,6 @@ function ArticleEditor({
       ) : null}
 
       <main
-        ref={scroller}
         className="min-h-0 flex-1 overflow-y-auto bg-card"
         // What counts as an edit: typing, deleting, a shortcut, a paste, a cut, a drop, or a
         // toolbar button. Placing the cursor or moving it doesn't.
@@ -371,7 +372,11 @@ function ArticleEditor({
             {/* layout-ok: the article's own title, in its prose (WorkingSurface's ownHeading) */}
             <h1>{title}</h1>
             {/* The gutter the drag handle sits in, where there is room for one. */}
-            <div data-drag-gutter className="relative lg:-ml-8 lg:pl-8">
+            <div
+              ref={textBox}
+              data-drag-gutter
+              className="relative lg:-ml-8 lg:pl-8"
+            >
               <SafeLexicalEditor
                 key={start.key}
                 readOnly={false}

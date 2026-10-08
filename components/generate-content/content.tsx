@@ -48,6 +48,7 @@ import {
   useCurrentWorkspaceId,
   useCurrentWorkspaceSlug,
 } from "@/stores/workspace/use-workspace-context-store";
+import { useSaveGeneratedContent } from "@/hooks/use-content";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { CONTENT_PERMISSIONS } from "@/lib/permissions";
 import { LockedFeatureTooltip } from "@/components/permission/locked-feature-tooltip";
@@ -667,6 +668,7 @@ function ContentEditorInner(props: ContentEditorProps) {
 
   // "Edit article" (task 706) opens the full-screen editor, which works on the saved article. One
   // written just now is saved first: the backend keeps one row for a run, so this is that row.
+  const { mutateAsync: saveForEditing } = useSaveGeneratedContent();
   const openEditor = async () => {
     if (!isFinal || !workspaceId || !workspaceSlug || isOpeningEditor) return;
     const open = (id: string) =>
@@ -677,13 +679,12 @@ function ContentEditorInner(props: ContentEditorProps) {
     }
     try {
       setIsOpeningEditor(true);
-      const response = await apiClient.content.save(
+      const response = await saveForEditing({
         workspaceId,
-        getContentPayload(),
-      );
+        data: getContentPayload(),
+      });
       if (!response.id) throw new Error("The save returned no article");
       setContentSavedId(response.id);
-      invalidateContentCache();
       open(response.id);
     } catch (error) {
       log.error("Saving the article before editing failed", error);
