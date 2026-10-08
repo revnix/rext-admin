@@ -145,7 +145,6 @@ export function WorkspaceCreateWizard() {
       });
       analytics.track("workspace_created", {
         workspace_id: workspace.id,
-        workspace_slug: workspace.slug,
         first_workspace: isFirstWorkspace,
       });
       setWebsite(data.url);

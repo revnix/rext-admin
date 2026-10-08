@@ -1054,7 +1054,6 @@ export function FreshGenerationView({
     trackedThreadRef.current = threadId;
 
     analytics.track("content_generation_completed", {
-      keyword: userKeyword,
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       word_count: allContent?.word_count,
@@ -1068,7 +1067,6 @@ export function FreshGenerationView({
   }, [
     isContentFinal,
     threadId,
-    userKeyword,
     workspaceId,
     allContent?.word_count,
     updateBackgroundJob,
@@ -1081,12 +1079,11 @@ export function FreshGenerationView({
     trackedKeywordSearchRef.current = threadId;
 
     analytics.track("keyword_search_completed", {
-      keyword: userKeyword,
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       suggested_keyword_count: suggestedKeywords.length,
     });
-  }, [threadId, suggestedKeywords.length, userKeyword, workspaceId]);
+  }, [threadId, suggestedKeywords.length, workspaceId]);
 
   // Track title_suggestions_generated once per thread when topics arrive
   useEffect(() => {
@@ -1095,12 +1092,11 @@ export function FreshGenerationView({
     trackedTitleSuggestionsRef.current = threadId;
 
     analytics.track("title_suggestions_generated", {
-      keyword: primaryKeyword,
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       title_count: topics.length,
     });
-  }, [threadId, topics.length, primaryKeyword, workspaceId]);
+  }, [threadId, topics.length, workspaceId]);
 
   // Track outline_generated once per thread when the parsed outline arrives
   useEffect(() => {
@@ -1109,12 +1105,11 @@ export function FreshGenerationView({
     trackedOutlineGeneratedRef.current = threadId;
 
     analytics.track("outline_generated", {
-      keyword: primaryKeyword,
       workspace_id: workspaceId ?? undefined,
       thread_id: threadId,
       section_count: parsedOutline.sections?.length ?? 0,
     });
-  }, [threadId, parsedOutline, primaryKeyword, workspaceId]);
+  }, [threadId, parsedOutline, workspaceId]);
 
   const liveBodyMarkdown = (() => {
     const buf = normalizeEscapedJsonish(content.streamedText);
@@ -1785,11 +1780,10 @@ export function FreshGenerationView({
         }
       } else if (!isAbort) {
         analytics.track("content_generation_failed", {
-          keyword: userKeyword,
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
-          error_message:
-            _e instanceof Error ? _e.message : "Unknown stream error",
+          // The kind of failure, not its text: an error's message can quote an address or a title.
+          error_kind: _e instanceof Error ? _e.name : "unknown",
         });
         if (activeThreadId) {
           updateBackgroundJob(activeThreadId, {
@@ -1927,7 +1921,6 @@ export function FreshGenerationView({
       });
 
       analytics.track("content_generation_started", {
-        keyword,
         country,
         workspace_id: workspaceId ?? undefined,
         thread_id: newThreadId,
@@ -2163,7 +2156,6 @@ export function FreshGenerationView({
           updateBackgroundJob(threadId, { title: value, keyword: value });
         }
         analytics.track("keyword_selected", {
-          keyword: value,
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
@@ -2222,8 +2214,6 @@ export function FreshGenerationView({
           payload: { phase: "outline" },
         });
         analytics.track("title_selected", {
-          title: value,
-          keyword: primaryKeyword,
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
@@ -2269,7 +2259,6 @@ export function FreshGenerationView({
           payload: { phase: "article" },
         });
         analytics.track("outline_approved", {
-          keyword: primaryKeyword,
           workspace_id: workspaceId ?? undefined,
           thread_id: threadId ?? undefined,
         });
@@ -2791,7 +2780,6 @@ export function FreshGenerationView({
                     payload: { phase: "article" },
                   });
                   analytics.track("outline_approved", {
-                    keyword: primaryKeyword,
                     workspace_id: workspaceId ?? undefined,
                     thread_id: threadId ?? undefined,
                   });

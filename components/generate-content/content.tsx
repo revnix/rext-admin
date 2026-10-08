@@ -607,8 +607,6 @@ function ContentEditorInner(props: ContentEditorProps) {
           );
 
       analytics.track("content_published", {
-        title: displayTitle,
-        keyword: userKeyword,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? response?.id ?? undefined,
         seo_score: seoScore?.seo_health_score,
@@ -666,7 +664,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
         wordpress_status: selectedStatus,
-        error_message: err.message,
+        error_kind: err.name,
       });
       setStatusModal({
         title: isIntegrationIssue
@@ -760,8 +758,6 @@ function ContentEditorInner(props: ContentEditorProps) {
         if (response?.id) setContentSavedId(response.id);
       }
       analytics.track("content_scheduled", {
-        title: displayTitle,
-        keyword: userKeyword,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
         scheduled_at: scheduledAt,

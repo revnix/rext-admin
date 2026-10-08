@@ -21,7 +21,6 @@ const LEGACY_REQUIRED = ["workspace", "topic", "content"];
  */
 export function useChecklistAnalytics(
   workspaceId: string | undefined,
-  userId: string | undefined,
   steps: ChecklistStep[],
   ready: boolean,
 ) {
@@ -46,7 +45,6 @@ export function useChecklistAnalytics(
         milestone_id: step.id,
         milestone_label: step.label,
         workspace_id: workspaceId,
-        user_id: userId,
         progress_percentage: Math.round(
           (doneCount / CHECKLIST_STEP_COUNT) * 100,
         ),
@@ -63,10 +61,9 @@ export function useChecklistAnalytics(
       changed = true;
       analytics.track("onboarding_completed", {
         workspace_id: workspaceId,
-        user_id: userId,
       });
     }
 
     if (changed) local.setJSON(key, Array.from(tracked));
-  }, [ready, workspaceId, userId, signature]);
+  }, [ready, workspaceId, signature]);
 }
