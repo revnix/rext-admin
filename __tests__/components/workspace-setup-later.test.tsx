@@ -154,6 +154,30 @@ describe("Setting up a workspace that is there already", () => {
     expect(createWorkspace).not.toHaveBeenCalled();
   });
 
+  it("picks a set-up up where it is when the page is opened again during its wait", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard
+          existing={{
+            ...EXISTING,
+            resume: { operationId: "op-under-way", website: null },
+          }}
+        />
+      </QueryClientProvider>,
+    );
+
+    // The wait, following the run that is under way: no form to fill in again.
+    await waitFor(() => expect(connected).toContain("op-under-way"));
+    expect(
+      screen.queryByRole("textbox", { name: /What does the business do/ }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Draft my brand voice" }),
+    ).toBeNull();
+    expect(calls).toEqual([]);
+    expect(createWorkspace).not.toHaveBeenCalled();
+  });
+
   it("sends none of the create form's events, and keeps no draft for the tab", async () => {
     open();
     await userEvent.type(

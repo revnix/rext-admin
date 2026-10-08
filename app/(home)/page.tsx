@@ -43,7 +43,10 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { useWorkspacePermission } from "@/hooks/use-permission";
 import { useWorkspaceAutoSelect } from "@/hooks/use-workspace-auto-select";
 import { isActiveGenerationJob } from "@/lib/generate-content/active-generation";
-import { CONTENT_PERMISSIONS } from "@/lib/permissions";
+import {
+  BRAND_VOICE_PERMISSIONS,
+  CONTENT_PERMISSIONS,
+} from "@/lib/permissions";
 import { libraryQueries, workspaceQueries } from "@/lib/query-keys";
 import { workspaceRoutes } from "@/lib/routes";
 import { getWorkspaceDisplayTitle } from "@/lib/workspace";
@@ -106,7 +109,13 @@ export default function HomePage() {
     ...workspaceQueries.detail(workspaceId),
     enabled: Boolean(workspaceId),
   });
-  const notSetUp = detail.data?.workspace.pipeline?.status === "not_started";
+  // Offered to someone who may set it up: the right to change the brand voice, as in the settings.
+  const { hasPermission: canSetUp } = useWorkspacePermission(
+    BRAND_VOICE_PERMISSIONS.UPDATE,
+    workspaceId,
+  );
+  const notSetUp =
+    canSetUp && detail.data?.workspace.pipeline?.status === "not_started";
   const library = useQuery(libraryQueries.list(workspaceId, user?.id ?? ""));
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
 

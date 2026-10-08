@@ -47,6 +47,16 @@ export interface Workspace {
   };
   members_count?: number;
   content_count?: number;
+  /**
+   * The workspace's latest analysis run, on its detail: "not_started" for a workspace made with
+   * "Skip for now" (rext-control task 905), then running, completed, failed or interrupted.
+   * Absent on a list.
+   */
+  pipeline?: {
+    status: string;
+    operation_id?: string | null;
+    started_at?: string | null;
+  } | null;
 }
 
 /**

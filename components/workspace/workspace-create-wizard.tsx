@@ -103,15 +103,26 @@ export function WorkspaceCreateWizard({
    * (rext-control task 905). The same form without the name, the same wait and review; it sets
    * this workspace up and makes none.
    */
-  existing?: { id: string; slug: string; name: string } | null;
+  existing?: {
+    id: string;
+    slug: string;
+    name: string;
+    /**
+     * Its set-up is under way already (the page was left during the wait and opened again):
+     * the run to follow, and the way it was started with. The wait is shown, not the form.
+     */
+    resume?: { operationId: string; website: string | null };
+  } | null;
 } = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
   const { isLimitReached } = useCheckLimit("workspaces");
 
-  const [operationId, setOperationId] = useState<string | null>(null);
-  const [website, setWebsite] = useState("");
+  const [operationId, setOperationId] = useState<string | null>(
+    existing?.resume?.operationId ?? null,
+  );
+  const [website, setWebsite] = useState(existing?.resume?.website ?? "");
   const [streamProblem, setStreamProblem] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   // The API refused the session itself (rext-control tasks 854 and 858): said as that, with the
@@ -122,10 +133,14 @@ export function WorkspaceCreateWizard({
   const [refusal, setRefusal] = useState<string | null>(null);
   // The analysis finished: the drafted details are reviewed here, in the flow.
   const [reviewing, setReviewing] = useState(false);
-  const slugRef = useRef<string | null>(null);
-  const idRef = useRef<string | null>(null);
+  const slugRef = useRef<string | null>(
+    existing?.resume ? existing.slug : null,
+  );
+  const idRef = useRef<string | null>(existing?.resume ? existing.id : null);
   // The same id as state, for the query that looks the workspace up when the wait goes quiet.
-  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [createdId, setCreatedId] = useState<string | null>(
+    existing?.resume ? existing.id : null,
+  );
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
@@ -144,7 +159,11 @@ export function WorkspaceCreateWizard({
 
   const form = useZodForm(workspaceFormSchema, {
     defaultValues: {
-      from: "website",
+      // A set-up picked up again was started from a description when there is no website.
+      from:
+        existing?.resume && !existing.resume.website
+          ? "description"
+          : "website",
       // A workspace being set up keeps its name: the form doesn't ask for it.
       name: existing?.name ?? "",
       url: "",
