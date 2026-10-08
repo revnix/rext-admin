@@ -68,11 +68,11 @@ async function signUp() {
   await userEvent.type(screen.getByLabelText(/^\*?Email/), EMAIL);
   await userEvent.type(
     screen.getByLabelText(/^\*?Password/),
-    "a-long-passphrase-1",
+    "A-long-passphrase-1",
   );
   await userEvent.type(
     screen.getByLabelText(/Confirm password/),
-    "a-long-passphrase-1",
+    "A-long-passphrase-1",
   );
   await userEvent.click(screen.getByRole("button", { name: "Create account" }));
 }

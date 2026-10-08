@@ -18,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
-import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
+import {
+  PASSWORD_RULES,
+  type SignupFormData,
+  signupFormSchema,
+} from "@/schemas/auth-schemas";
 import { ApiError, apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
@@ -438,7 +442,7 @@ export function SignupForm({
             control={form.control}
             name="password"
             label="Password"
-            description="At least 8 characters."
+            description={PASSWORD_RULES}
             required
           >
             {(field) => (

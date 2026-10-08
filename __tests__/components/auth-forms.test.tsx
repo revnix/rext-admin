@@ -138,10 +138,16 @@ describe("SignupForm", () => {
     }
   });
 
-  it("asks for a length, not character rules", () => {
+  // The backend still asks for four kinds of character, so the form says so before it is
+  // pressed (rext-control task 938): it said only "At least 8 characters", and a password it
+  // took was refused by the backend one rule at a time.
+  it("says under the field everything a password needs", () => {
     renderSignup();
-    expect(screen.getByText("At least 8 characters.")).toBeVisible();
-    expect(screen.queryByText(/uppercase/i)).toBeNull();
+    expect(
+      screen.getByText(
+        "At least 8 characters, with an uppercase and a lowercase letter, a number and a special character.",
+      ),
+    ).toBeVisible();
   });
 
   it("re-checks a typed confirmation when the password changes", async () => {

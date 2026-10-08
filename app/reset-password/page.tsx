@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  PASSWORD_RULES,
   type ResetPasswordData,
   resetPasswordSchema,
 } from "@/schemas/auth-schemas";
@@ -207,7 +208,7 @@ function ResetPasswordForm() {
                     </button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    At least 8 characters.
+                    {PASSWORD_RULES}
                   </p>
                   {errors.password && (
                     <p className="text-sm text-danger-600">
