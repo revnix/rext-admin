@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import {
   AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
   PERMISSIONS_STALE_EVENT,
+  inTurnWithTokenRefresh,
 } from "@/lib/auth-utils";
 
 // A request that is genuinely forbidden keeps returning 403, and a sync
@@ -40,9 +41,13 @@ export function PermissionSync() {
       if (inFlight.current || document.visibilityState !== "visible") return;
       inFlight.current = true;
       try {
-        await updateRef.current({
-          authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
-        });
+        // In turn with a token refresh: this write's answer sets the session cookie again, and
+        // beside a refresh it could put the cookie of before the refresh back.
+        await inTurnWithTokenRefresh(() =>
+          updateRef.current({
+            authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
+          }),
+        );
       } catch {
         // Keep the current permissions; the next trigger retries.
       } finally {
