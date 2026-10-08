@@ -7,6 +7,7 @@ import {
   isDuplicateAccount,
   SIGN_IN_FIELDS,
   SIGN_UP_FIELDS,
+  shownErrorCode,
   signInRefusal,
   signUpRefusal,
 } from "@/lib/analytics-forms";
@@ -83,6 +84,17 @@ describe("signInRefusal", () => {
     [null, "other"],
   ])("%s is %s", (code, kind) => {
     expect(signInRefusal(code)).toBe(kind);
+  });
+});
+
+describe("shownErrorCode", () => {
+  it("keeps a plain code and nothing else", () => {
+    expect(shownErrorCode("OAuthError")).toBe("OAuthError");
+    expect(shownErrorCode("SessionExpired")).toBe("SessionExpired");
+    expect(shownErrorCode("ana@example.com")).toBe("other");
+    expect(shownErrorCode("Your account is locked")).toBe("other");
+    expect(shownErrorCode("")).toBe("other");
+    expect(shownErrorCode("A".repeat(41))).toBe("other");
   });
 });
 

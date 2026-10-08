@@ -99,6 +99,14 @@ export function signInRefusal(code: string | null | undefined): SignInRefusal {
   return "other";
 }
 
+/**
+ * The error the sign-in page arrived with, as an event may carry it: its code as the address has
+ * it (`OAuthError`, `SessionExpired`), letters only. Anything else in that place is "other".
+ */
+export function shownErrorCode(code: string): string {
+  return /^[A-Za-z]{1,40}$/.test(code) ? code : "other";
+}
+
 /** The first of a form's fields with an error, as an event names it. */
 export function firstRefusedField(
   errors: Record<string, unknown>,
