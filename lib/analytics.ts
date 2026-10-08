@@ -208,18 +208,25 @@ class Analytics {
    * Track an analytics event, with the caller's properties only. PostHog adds the time, the person
    * and the page's address itself, and that address goes out with its credentials redacted
    * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
+   *
+   * Says whether the event was taken: sent, or held until the person's answer is known. It is
+   * not while an admin acts as a customer, after a no, or with analytics off.
    */
   track(
     event: AnalyticsEvent,
     properties?: EventProperties,
     options?: TrackOptions,
-  ) {
-    if (!this.enabled || isImpersonating()) return;
+  ): boolean {
+    if (!this.enabled || isImpersonating()) return false;
     if (_posthog) {
       send(_posthog, event, { ...properties }, options);
-    } else if (!refused && pending.length < PENDING_LIMIT) {
-      pending.push({ event, properties: { ...properties }, options });
+      return true;
     }
+    if (!refused && pending.length < PENDING_LIMIT) {
+      pending.push({ event, properties: { ...properties }, options });
+      return true;
+    }
+    return false;
   }
 
   /** Reset analytics state (e.g. on logout). */

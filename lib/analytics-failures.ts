@@ -156,13 +156,16 @@ export function reportApiFailure(
   const kind = `${verb} ${route} ${status}`;
   if (failuresReported.has(kind)) return;
   if (failuresReported.size >= FAILURES_PER_PAGE) return;
-  failuresReported.add(kind);
-  analytics.track("api_request_failed", {
+  // Counted as said only when analytics took it: after a no, or while an admin acts as a
+  // customer, nothing was said, and the same failure met later (the switch turned on, the
+  // acting ended) is still new.
+  const taken = analytics.track("api_request_failed", {
     route,
     method: verb,
     status,
     ...(away ? { away: true } : {}),
   });
+  if (taken) failuresReported.add(kind);
 }
 
 /** For the tests: a fresh page. */
