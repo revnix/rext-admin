@@ -258,7 +258,9 @@ function watchScrolls() {
   Element.prototype.scrollIntoView = function scrollIntoView() {
     scrolled(
       this.textContent,
-      Array.from(document.querySelectorAll("h2")).indexOf(this as HTMLElement),
+      Array.from(document.querySelectorAll("h2")).indexOf(
+        this as HTMLHeadingElement,
+      ),
     );
   };
   return scrolled;
