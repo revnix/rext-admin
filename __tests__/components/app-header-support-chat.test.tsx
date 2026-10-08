@@ -34,6 +34,7 @@ jest.mock("@/lib/support-chat/chat", () => ({
   openSupportChat: () => openSupportChat(),
   resumeSupportChat: async () => false,
   onSupportChatUnread: () => () => {},
+  onSupportChatOpenChange: () => () => {},
 }));
 
 function renderHeader(impersonating: boolean | "unknown") {

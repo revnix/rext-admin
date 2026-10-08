@@ -112,6 +112,29 @@ describe("someone who opened the chat before", () => {
     expect(window.$crisp).toBeUndefined();
   });
 
+  it("hears when the chat's box opens and closes", async () => {
+    const chat = await freshModule();
+    const heard: boolean[] = [];
+    const stop = chat.onSupportChatOpenChange((open) => heard.push(open));
+    expect(heard).toEqual([false]); // told at once: closed
+
+    await chat.openSupportChat();
+    const listeners = queued().filter((command) => command[0] === "on");
+    const on = (event: string) =>
+      (listeners.find((c) => c[1] === event) as unknown[])[2] as () => void;
+    window.$crisp = { push: jest.fn(), get: () => 0 };
+    on("chat:opened")();
+    expect(heard.at(-1)).toBe(true);
+
+    on("chat:closed")();
+    expect(heard.at(-1)).toBe(false);
+    expect(window.$crisp.push).toHaveBeenCalledWith(["do", "chat:hide"]);
+
+    stop();
+    on("chat:opened")();
+    expect(heard.at(-1)).toBe(false); // no longer listening
+  });
+
   it("hears how many replies are unread, and nothing after a reset", async () => {
     window.localStorage.setItem(OPENED_KEY, "u-1");
     const chat = await freshModule();

@@ -74,6 +74,15 @@ function publishUnread() {
   const count = Number(window.$crisp?.get?.("chat:unread:count") ?? 0) || 0;
   for (const listener of unreadListeners) listener(count);
 }
+// Whether the chat's box is open on the page: Crisp then shows its own round button to close
+// it, in the corner our Chat button sits in.
+const openListeners = new Set<(open: boolean) => void>();
+let boxOpen = false;
+
+function publishOpen(open: boolean) {
+  boxOpen = open;
+  for (const listener of openListeners) listener(open);
+}
 // Crisp's script is on the page (it stays there across an account switch without a reload).
 let scriptLoaded = false;
 // Bumped by a reset: an identity that arrives after it belongs to the account before.
@@ -122,8 +131,12 @@ async function attach(websiteId: string, identity: Identity | null) {
   queue.push([
     "on",
     "chat:closed",
-    () => window.$crisp?.push(["do", "chat:hide"]),
+    () => {
+      window.$crisp?.push(["do", "chat:hide"]);
+      publishOpen(false);
+    },
   ]);
+  queue.push(["on", "chat:opened", () => publishOpen(true)]);
   // A reply that arrives, and the chat being read, change the unread mark.
   for (const event of ["session:loaded", "message:received", "chat:opened"]) {
     queue.push(["on", event, publishUnread]);
@@ -225,6 +238,17 @@ export function onSupportChatUnread(
   unreadListeners.add(listener);
   return () => {
     unreadListeners.delete(listener);
+  };
+}
+
+/** Tells `listener` whether the chat's box is open, now and at every change; returns how to stop. */
+export function onSupportChatOpenChange(
+  listener: (open: boolean) => void,
+): () => void {
+  openListeners.add(listener);
+  listener(boxOpen);
+  return () => {
+    openListeners.delete(listener);
   };
 }
 
