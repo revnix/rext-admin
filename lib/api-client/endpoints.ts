@@ -255,6 +255,8 @@ export const ENDPOINTS = {
       delete: "/api/v1/user/avatar",
     },
     resendVerification: "/api/v1/user/resend-verification",
+    /** The person's answer on usage analytics, kept on the account (rext-backend src/api/routes/users/analytics_consent.py). */
+    analyticsAnswer: "/api/v1/user/analytics-consent",
   },
 
   /**
