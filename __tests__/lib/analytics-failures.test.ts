@@ -7,10 +7,13 @@ import path from "node:path";
 import {
   errorKind,
   errorProperties,
+  errorToastProperties,
   pathShape,
   ROUTE_TREE,
   type RouteTree,
 } from "@/lib/analytics-failures";
+import { setWords } from "@/lib/analytics-recording";
+import { markOf } from "@/lib/recording-words";
 import { ApiError } from "@/lib/api-client/core";
 
 describe("errorKind", () => {
@@ -111,6 +114,50 @@ describe("pathShape", () => {
   });
 });
 
+describe("errorToastProperties", () => {
+  const OWN = "Couldn't save. Try again.";
+  const realFetch = global.fetch;
+
+  beforeEach(() => {
+    setWords(null);
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [markOf(OWN)],
+    }) as unknown as typeof fetch;
+  });
+  afterEach(() => {
+    global.fetch = realFetch;
+  });
+
+  it("quotes one of the app's own sentences, with white space as the list holds it", async () => {
+    await expect(
+      errorToastProperties(3, `  ${OWN}  `, "/settings/security"),
+    ).resolves.toEqual({
+      route: "/settings/security",
+      own_words: true,
+      message: OWN,
+    });
+  });
+
+  it("quotes nothing else: a backend's sentence, or a title that is not a text", async () => {
+    await expect(
+      errorToastProperties(4, "ana@example.com has no access", "/w/acme"),
+    ).resolves.toEqual({ route: "/w/*", own_words: false });
+    await expect(
+      errorToastProperties(5, { not: "a text" }, "/"),
+    ).resolves.toEqual({ route: "/", own_words: false });
+  });
+
+  it("keeps a name the code gave the toast, never a number or a text made into an id", async () => {
+    const named = await errorToastProperties("upload-failed", OWN, "/");
+    expect(named.toast).toBe("upload-failed");
+    const numbered = await errorToastProperties(17, OWN, "/");
+    expect(numbered).not.toHaveProperty("toast");
+    const odd = await errorToastProperties("ana@example.com", OWN, "/");
+    expect(odd).not.toHaveProperty("toast");
+  });
+});
+
 describe("ROUTE_TREE", () => {
   /**
    * The folders under app/ as a tree: a fixed folder under its own name, a parameter as "*", a
@@ -140,7 +187,22 @@ describe("ROUTE_TREE", () => {
     return node;
   }
 
+  /** A tree with its parts in one order, to print and to compare. */
+  const sorted = (node: RouteTree): RouteTree =>
+    Object.fromEntries(
+      Object.keys(node)
+        .sort()
+        .map((key) => [key, sorted(node[key])]),
+    );
+
   it("is the app's pages as the folders lay them out, so a new page can't fall out of it", () => {
-    expect(ROUTE_TREE).toEqual(tree(path.join(process.cwd(), "app")));
+    const folders = sorted(tree(path.join(process.cwd(), "app")));
+    // A page was added, moved or removed: the message is the tree to paste in its place.
+    if (JSON.stringify(folders) !== JSON.stringify(sorted(ROUTE_TREE))) {
+      throw new Error(
+        `ROUTE_TREE in lib/analytics-failures.ts no longer matches the folders under app/. Replace it with:\n${JSON.stringify(folders)}`,
+      );
+    }
+    expect(sorted(ROUTE_TREE)).toEqual(folders);
   });
 });

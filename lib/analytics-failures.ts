@@ -5,6 +5,7 @@
  * and never a part of an address that isn't one of the app's own words.
  */
 import { analytics } from "@/lib/analytics";
+import { loadWords, ownWords } from "@/lib/analytics-recording";
 
 /** A class from the code (`TypeError`, `ApiError`, `ChunkLoadError`): letters and digits only. */
 const CLASS = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
@@ -118,4 +119,33 @@ export function reportErrorScreen(
     route: pathShape(window.location.pathname),
     ...errorProperties(error),
   });
+}
+
+/** An id the code gave a toast (`sign-in-backend-away`): a name of ours, never a number sonner made. */
+const TOAST_NAME = /^[a-z][a-z0-9-]{1,59}$/;
+
+/**
+ * What an event says about an error toast: where it came up, the name the code gave it where it
+ * gave one, and its sentence only when that is one of the app's own fixed texts, as the build
+ * listed them from the source (lib/recording-words.ts). A toast that carries a backend's answer,
+ * or anything put together from a person's data, is on no such list: it is counted and not quoted.
+ */
+export async function errorToastProperties(
+  id: string | number,
+  title: unknown,
+  pathname: string,
+): Promise<{
+  route: string;
+  toast?: string;
+  own_words: boolean;
+  message?: string;
+}> {
+  const text = typeof title === "string" ? title : null;
+  const own = text !== null && (await loadWords()) ? ownWords(text) : null;
+  return {
+    route: pathShape(pathname),
+    ...(typeof id === "string" && TOAST_NAME.test(id) ? { toast: id } : {}),
+    own_words: own !== null,
+    ...(own !== null ? { message: own } : {}),
+  };
 }
