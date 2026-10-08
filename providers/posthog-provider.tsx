@@ -377,11 +377,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           capture_pageleave: true,
           persistence: "localStorage",
           autocapture: false, // keep events intentional
-          // Decided here, not by a switch in the PostHog project. Heatmaps are on: where people
-          // click, as positions on a page, with the page's address redacted like every other
-          // (redactEventUrls). A rage click or a dead click would send the clicked element's own
-          // text, which can be a person's: off.
-          capture_heatmaps: true,
+          // Decided here, not by a switch in the PostHog project. Heatmaps stay off until the
+          // piece the library fetches for them ships with the app: asked for from outside, it
+          // is refused (no outside code is loaded) and logged on every page. Their addresses
+          // are redacted already (redactEventUrls). A rage click or a dead click would send
+          // the clicked element's own text, which can be a person's: off.
+          capture_heatmaps: false,
           rageclick: false,
           capture_dead_clicks: false,
           // Nothing is captured or stored until one of the two calls below: opt_in_capturing for
