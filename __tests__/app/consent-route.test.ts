@@ -26,12 +26,14 @@ it("sets the shared cookie on the app's own address, and takes the host's own aw
   ]);
 });
 
-it("sets a cookie of the host's own anywhere else: a preview shares nothing with rext.ai", async () => {
-  const response = await post("rext-abc123-it-rx.vercel.app", "denied");
+it("sets a cookie of the host's own anywhere else: staging and a preview share nothing with rext.ai", async () => {
+  for (const host of ["staging.rext.ai", "rext-abc123-it-rx.vercel.app"]) {
+    const response = await post(host, "denied");
 
-  expect(response.headers.getSetCookie()).toEqual([
-    "rext-consent=denied; Max-Age=15724800; Path=/; SameSite=Lax; Secure",
-  ]);
+    expect(response.headers.getSetCookie()).toEqual([
+      "rext-consent=denied; Max-Age=15724800; Path=/; SameSite=Lax; Secure",
+    ]);
+  }
 });
 
 it("sets nothing for another site's request, or for a choice that isn't one", async () => {

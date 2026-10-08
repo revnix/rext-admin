@@ -170,10 +170,17 @@ describe("writeConsent", () => {
   });
 
   it("is one cookie for rext.ai and everything under it, and a host's own anywhere else", () => {
-    for (const host of ["rext.ai", "app.rext.ai", "APP.REXT.AI"]) {
+    for (const host of [
+      "rext.ai",
+      "www.rext.ai",
+      "app.rext.ai",
+      "APP.REXT.AI",
+    ]) {
       expect(sharedCookieDomain(host)).toBe(".rext.ai");
     }
     for (const host of [
+      // Under rext.ai too, and never to share a real person's answer.
+      "staging.rext.ai",
       "localhost",
       "rext-abc123-it-rx.vercel.app",
       "notrext.ai",

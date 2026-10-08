@@ -11,6 +11,7 @@
 
 import {
   analyticsMode,
+  onConsentChange,
   readConsent,
   resetRegionRequest,
   shareOwnConsent,
@@ -112,4 +113,25 @@ it("leaves a shared answer alone, and has nothing to move without one", () => {
 
   expect(seen()).toEqual(["granted"]);
   expect(global.fetch).not.toHaveBeenCalled();
+});
+
+it("hears an answer changed on rext.ai when the person comes back to this tab", () => {
+  setCookie(`rext-consent=granted; ${SHARED}`);
+  const heard: string[] = [];
+  const stop = onConsentChange((choice) => heard.push(choice));
+
+  // Nothing changed: coming back tells nobody anything.
+  window.dispatchEvent(new Event("focus"));
+  expect(heard).toEqual([]);
+
+  // The website's own switch, in another tab: only the shared cookie changes.
+  setCookie(`rext-consent=denied; ${SHARED}`);
+  document.dispatchEvent(new Event("visibilitychange"));
+  window.dispatchEvent(new Event("focus"));
+  expect(heard).toEqual(["denied"]);
+
+  stop();
+  setCookie(`rext-consent=granted; ${SHARED}`);
+  window.dispatchEvent(new Event("focus"));
+  expect(heard).toEqual(["denied"]);
 });
