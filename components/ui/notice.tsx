@@ -21,7 +21,9 @@ const noticeVariants = cva(
         info: "border-info-200 bg-info-50 text-info-700",
         warning: "border-warning-200 bg-warning-50 text-warning-700",
         danger: "border-danger-200 bg-danger-50 text-danger-700",
-        success: "border-success-200 bg-success-50 text-success-700",
+        // On the page's own surface: the tick and the words say it went well. A tinted slab read
+        // as a generic success box (the founder's feedback v3, rext-control#846).
+        success: "border-border bg-card text-foreground",
       },
     },
     defaultVariants: { tone: "info" },
@@ -38,6 +40,8 @@ const ICON: Record<NoticeTone, LucideIcon> = {
 /**
  * The one box for something the person should know (design/app-language.md §6 and §8): what
  * happened and what to do. A tone, its icon, a title, a sentence or two, and at most one action.
+ * Warning and danger are tinted, since they ask for attention; info is neutral, and success is
+ * the page's own surface with a green tick.
  * Danger and warning are announced at once (`role="alert"`); info and success wait their turn.
  * `onDismiss` adds a close button for a notice the person may put away.
  */
@@ -68,7 +72,13 @@ export function Notice({
       role={tone === "danger" || tone === "warning" ? "alert" : "status"}
       className={cn(noticeVariants({ tone }), className)}
     >
-      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <Icon
+        className={cn(
+          "mt-0.5 size-4 shrink-0",
+          tone === "success" && "text-success-600",
+        )}
+        aria-hidden
+      />
       {/* The action sits beside the words while they keep 16 rem, and goes under them when the
           notice is narrower (a phone, a dialog, a card's column). */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
