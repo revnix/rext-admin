@@ -570,6 +570,8 @@ function ContentEditorInner(props: ContentEditorProps) {
       content_id: contentSavedId,
       workspace_id: workspaceId,
     });
+    // The site's kind, once it is known: a failure before that has none to name.
+    let cmsType: string | undefined;
     try {
       setIsPublishing(true);
       setStatusModal({
@@ -607,7 +609,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         message: "Sending the article to your site...",
       });
 
-      const cmsType = activeIntegrations[0]?.integration_type;
+      cmsType = activeIntegrations[0]?.integration_type;
       analytics.track("cms_publish_attempted", {
         cms_type: cmsType,
         wordpress_status: selectedStatus,
@@ -693,7 +695,7 @@ function ContentEditorInner(props: ContentEditorProps) {
         errorMessage.includes("misconfigured") ||
         errorMessage.includes("permission");
       analytics.track("cms_publish_failed", {
-        cms_type: activeIntegrations[0]?.integration_type,
+        cms_type: cmsType,
         workspace_id: workspaceId ?? undefined,
         content_id: contentSavedId ?? undefined,
         wordpress_status: selectedStatus,
