@@ -52,6 +52,12 @@ function stageList<Kind extends RunStageItems["kind"]>(
 /** The places the titles take before the first is begun, named as the run names the ones to come. */
 const TITLE_PLACES = ["First", "Second", "Third", "Fourth", "Fifth"];
 
+/** A title's place by name, for a row with no words yet: "Third title". */
+export function titlePlace(index: number): string {
+  const place = TITLE_PLACES[index];
+  return place ? `${place} title` : `Title ${index + 1}`;
+}
+
 /**
  * The title rows as the run has them: written, being written, and a place for each one to come.
  * Before the model begins the first, every place waits.
@@ -62,8 +68,8 @@ export function fillTitleRows(view: RunView): RunTitleRow[] {
     stageList(view, "title-checks", "titles")?.rows ??
     [];
   if (rows.length > 0) return rows;
-  return TITLE_PLACES.map((place) => ({
-    title: `${place} title`,
+  return TITLE_PLACES.map((_, index) => ({
+    title: titlePlace(index),
     state: "next",
     checks: [],
   }));

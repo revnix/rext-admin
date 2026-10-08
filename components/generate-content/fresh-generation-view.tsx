@@ -2394,6 +2394,7 @@ export function FreshGenerationView({
     <KeywordForm
       userKeyword={userKeyword}
       country={country}
+      readOnly={waiting}
       disabled={
         waiting ||
         isManualLoading ||
@@ -2545,12 +2546,18 @@ export function FreshGenerationView({
                 isLoading
                 gate={undefined}
                 workspaceId={workspaceId}
+                keywordClusters={keywordClusters}
                 onApprove={() => {}}
                 onReject={() => {}}
                 filling={{
                   title:
                     findings.selectedTitle || state.selectedTopic || undefined,
                   headings: findings.headings ?? [],
+                  sources: {
+                    serpResults: findings.results ?? [],
+                    questions: findings.questions ?? [],
+                    relatedSearches: findings.relatedSearches ?? [],
+                  },
                   progress: stages,
                   strip,
                 }}

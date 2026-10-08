@@ -203,6 +203,21 @@ describe("the Title step while its titles are written", () => {
     expect(rows[2]).toHaveTextContent("Third titleNext");
   });
 
+  it("names the place of a title just begun, which has no words yet", () => {
+    renderStep({
+      drafts: [
+        { title: "", complete: false, recommended: false, reason: null },
+      ],
+    });
+    expect(titles()).toEqual([
+      "First titleBeing written",
+      "Second titleNext",
+      "Third titleNext",
+      "Fourth titleNext",
+      "Fifth titleNext",
+    ]);
+  });
+
   it("has the top ten beside the titles from the start, under the run's stages", () => {
     renderStep({});
     const pane = screen.getByRole("complementary", {

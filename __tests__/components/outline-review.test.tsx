@@ -955,6 +955,11 @@ describe("OutlineReview, while the first outline is written", () => {
         filling={{
           title: "Running shoes for beginners",
           headings: ["Why the right shoe matters", "Cushioning and support"],
+          sources: {
+            serpResults: [],
+            questions: ["How often should I replace them?"],
+            relatedSearches: ["shoe fitting"],
+          },
           progress: <p>The run's stages</p>,
           strip: <p>The run's stages, one line</p>,
         }}
@@ -976,11 +981,50 @@ describe("OutlineReview, while the first outline is written", () => {
     const pane = screen.getByRole("complementary", { name: "Brief" });
     expect(within(pane).getByText("The run's stages")).toBeInTheDocument();
     expect(screen.getByText("The run's stages, one line")).toBeInTheDocument();
-    // Nothing acts before the outline is whole.
+    // What it is written from is under it meanwhile, in the Outline tab: no Sources tab yet.
+    const from = within(
+      screen.getByRole("region", { name: "What the outline is written from" }),
+    );
     expect(
-      screen.getByRole("button", { name: /approve and generate/i }),
-    ).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Regenerate" })).toBeDisabled();
+      from.getByText("How often should I replace them?"),
+    ).toBeInTheDocument();
+    expect(from.getByText("shoe fitting")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Sources" })).toBeNull();
+    // Nothing acts before the outline is whole, and the buttons say why.
+    for (const name of [/approve and generate/i, "Regenerate"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAccessibleDescription(
+        "You can approve once the outline is written.",
+      );
+    }
+  });
+
+  it("shows the streaming tree alone when the run read no sources", () => {
+    render(
+      <OutlineReview
+        outline={null}
+        rawTokens=""
+        isLoading
+        gate={undefined}
+        onApprove={jest.fn()}
+        onReject={jest.fn()}
+        filling={{
+          title: "Running shoes for beginners",
+          headings: [],
+          progress: <p>The run's stages</p>,
+          strip: null,
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("list", { name: "Sections, being written" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", {
+        name: "What the outline is written from",
+      }),
+    ).toBeNull();
   });
 
   it("reads the model's text as before when the run gives no headings of its own", () => {
