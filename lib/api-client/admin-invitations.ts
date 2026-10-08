@@ -109,9 +109,11 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     validateToken: async (token: string) => {
       return client.request<ValidateAdminInvitationResponse>(
-        ENDPOINTS.ADMIN_INVITATIONS.validate(token),
+        ENDPOINTS.ADMIN_INVITATIONS.validate,
         {
-          method: "GET",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
         },
       );
     },
@@ -121,9 +123,11 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     accept: async (token: string) => {
       return client.request<AdminInvitation>(
-        ENDPOINTS.ADMIN_INVITATIONS.accept(token),
+        ENDPOINTS.ADMIN_INVITATIONS.accept,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
         },
       );
     },
@@ -133,11 +137,11 @@ export function createAdminInvitationsNamespace(client: ApiClient) {
      */
     decline: async (token: string, reason?: string) => {
       return client.request<{ success: boolean; message: string }>(
-        ENDPOINTS.ADMIN_INVITATIONS.decline(token),
+        ENDPOINTS.ADMIN_INVITATIONS.decline,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason }),
+          body: JSON.stringify({ token, reason }),
         },
       );
     },
