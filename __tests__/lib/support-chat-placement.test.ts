@@ -120,6 +120,9 @@ describe("someone who opened the chat before", () => {
 
     await chat.openSupportChat();
     const listeners = queued().filter((command) => command[0] === "on");
+    // Crisp keeps one callback per event, the last registered: none may be registered twice.
+    const events = listeners.map((command) => command[1]);
+    expect(new Set(events).size).toBe(events.length);
     const on = (event: string) =>
       (listeners.find((c) => c[1] === event) as unknown[])[2] as () => void;
     window.$crisp = { push: jest.fn(), get: () => 0 };
