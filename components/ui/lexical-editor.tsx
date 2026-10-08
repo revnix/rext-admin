@@ -133,6 +133,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { altTextFor } from "@/lib/editor/alt-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -329,7 +330,7 @@ function ImagePlaceholderSlot({
     event.preventDefault();
     const file = chosen;
     setChosen(null);
-    if (file) void upload(file, description.trim());
+    if (file) void upload(file, altTextFor(description));
   };
 
   const handleDismiss = useCallback(() => {
@@ -419,7 +420,7 @@ function ImagePlaceholderSlot({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={description.trim() === ""}>
+              <Button type="submit" disabled={altTextFor(description) === ""}>
                 Add image
               </Button>
             </DialogFooter>
@@ -949,7 +950,10 @@ function ImageInsertPopover() {
         if (savedSelectionRef.current) {
           $setSelection(savedSelectionRef.current);
         }
-        const imageNode = $createImageNode({ src, altText: alt || "image" });
+        const imageNode = $createImageNode({
+          src,
+          altText: altTextFor(alt) || "image",
+        });
         $insertNodes([imageNode]);
       });
     },

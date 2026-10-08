@@ -75,6 +75,24 @@ describe("the image slot", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("keeps a description with brackets or quotes readable as Markdown", async () => {
+    const { lastMarkdown, choose } = renderWith("![](rext-placeholder:abc)");
+    await choose();
+    await screen.findByRole("dialog", { name: "Describe the image" });
+    // "[[" types one "[" (user-event's own escape).
+    await userEvent.type(
+      screen.getByLabelText("Description"),
+      'Chart [[2025] of "plays"',
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Add image" }));
+
+    await waitFor(() =>
+      expect(lastMarkdown()).toContain(
+        "![Chart (2025) of 'plays'](https://cdn.rext.test/mic.png \"Chart (2025) of 'plays'\")",
+      ),
+    );
+  });
+
   it("uploads nothing when the description is cancelled", async () => {
     const { choose } = renderWith("![](rext-placeholder:abc)");
     await choose();
