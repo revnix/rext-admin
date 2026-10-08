@@ -63,6 +63,9 @@ const client = {
   NEXT_PUBLIC_ANALYTICS_ENABLED: optional,
   // "true" records sessions, masked (lib/analytics-recording.ts); unset or anything else, none.
   NEXT_PUBLIC_SESSION_RECORDING: optional,
+  // "true" reports errors nobody caught, by class and place in the code, never by message
+  // (lib/analytics-exceptions.ts); unset or anything else, none.
+  NEXT_PUBLIC_EXCEPTION_CAPTURE: optional,
   // The Crisp website the support chat opens (lib/support-chat/chat.ts); unset, no chat.
   NEXT_PUBLIC_CRISP_WEBSITE_ID: optional,
 };
@@ -101,6 +104,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_ANALYTICS_ENABLED: process.env.NEXT_PUBLIC_ANALYTICS_ENABLED,
     NEXT_PUBLIC_SESSION_RECORDING: process.env.NEXT_PUBLIC_SESSION_RECORDING,
+    NEXT_PUBLIC_EXCEPTION_CAPTURE: process.env.NEXT_PUBLIC_EXCEPTION_CAPTURE,
     NEXT_PUBLIC_CRISP_WEBSITE_ID: process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID,
   },
   createFinalSchema: (shape, isServer) =>

@@ -24,6 +24,11 @@ import {
   workspaceSlugOf,
 } from "@/lib/analytics-context";
 import {
+  EXCEPTION_CAPTURE,
+  EXCEPTIONS_ON,
+  exceptionByClass,
+} from "@/lib/analytics-exceptions";
+import {
   hideTypedValues,
   loadWords,
   RECORDING_ON,
@@ -404,6 +409,31 @@ function HeatmapSync() {
 }
 
 /**
+ * Errors nobody caught, for a person who allows analytics (lib/analytics-exceptions.ts says what
+ * a report holds). Mounted only where NEXT_PUBLIC_EXCEPTION_CAPTURE is "true". posthog-js would
+ * fetch the piece that listens for them from PostHog's servers; it ships with the app and is
+ * loaded here before the listening is switched on, so nothing is asked for from outside.
+ */
+function ExceptionSync() {
+  useEffect(() => {
+    let gone = false;
+    void import("posthog-js/dist/exception-autocapture")
+      .then(() => {
+        if (!gone) posthog.startExceptionAutocapture(EXCEPTION_CAPTURE);
+      })
+      .catch(() => {
+        // The piece didn't load: no reports, and nothing fetched in its place.
+      });
+    return () => {
+      gone = true;
+      posthog.stopExceptionAutocapture();
+    };
+  }, []);
+
+  return null;
+}
+
+/**
  * PostHog's toolbar, for an admin of ours who opened it from PostHog (lib/analytics-toolbar.ts).
  * Marks their browser and loads the page once more, so the server answers with the policy that
  * lets the toolbar's script in; takes the mark away once the launch is over, or the person
@@ -487,8 +517,12 @@ function beforeSend(event: CaptureResult | null): CaptureResult | null {
       ? anonymousEvent(redacted, routeOnScreen)
       : redacted;
   if (!sent) return null;
+  // An error's report leaves by its class and its place in the code, never with its message
+  // (lib/analytics-exceptions.ts).
+  const classed = exceptionByClass(sent);
+  if (!classed) return null;
   // A recording's batch leaves with no field's value readable (lib/analytics-recording.ts).
-  const shown = hideTypedValues(sent);
+  const shown = hideTypedValues(classed);
   // Where the event is from, on every one: the website sends "website" to the same project and
   // the backend "server", so the sets of numbers can be told apart; and which deploy, so a
   // chart can be read for real customers only.
@@ -564,7 +598,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
           capture_dead_clicks: false,
           // Everything else the library can fetch and run is off by name, so that letting the
           // toolbar in (below) lets nothing else in. (Web vitals only: a recording's list of
-          // requests reads the same option's other half, which stays as the project has it.)
+          // requests reads the same option's other half, which stays as the project has it.
+          // Errors nobody caught are started by ExceptionSync, where the deploy asks for them.)
           capture_exceptions: false,
           capture_performance: { web_vitals: false },
           disable_surveys: true,
@@ -669,6 +704,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
             <PostHogAuthSync />
             <OAuthLoginRecord />
             <HeatmapSync />
+            {EXCEPTIONS_ON && <ExceptionSync />}
             {RECORDING_ON && <SessionRecordingSync />}
           </>
         )}
