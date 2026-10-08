@@ -20,6 +20,37 @@ describe("getCSPHeader", () => {
     expect(directive("frame-ancestors")).toBe("frame-ancestors 'none'");
   });
 
+  it("lets analytics send and read its settings, and loads no code from PostHog", () => {
+    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    delete process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    try {
+      expect(directive("connect-src").split(" ")).toEqual(
+        expect.arrayContaining([
+          "https://eu.i.posthog.com",
+          "https://eu-assets.i.posthog.com",
+        ]),
+      );
+      expect(directive("script-src")).not.toContain("posthog");
+    } finally {
+      if (host !== undefined) process.env.NEXT_PUBLIC_POSTHOG_HOST = host;
+    }
+  });
+
+  it("names a host of our own once, when analytics goes through one", () => {
+    const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    process.env.NEXT_PUBLIC_POSTHOG_HOST = "https://stats.example.com";
+    try {
+      const connect = directive("connect-src").split(" ");
+      expect(
+        connect.filter((source) => source === "https://stats.example.com"),
+      ).toHaveLength(1);
+      expect(directive("connect-src")).not.toContain("assets");
+    } finally {
+      if (host === undefined) delete process.env.NEXT_PUBLIC_POSTHOG_HOST;
+      else process.env.NEXT_PUBLIC_POSTHOG_HOST = host;
+    }
+  });
+
   it("lets the support chat load, from Crisp's published list (#711)", () => {
     const crisp = "https://*.crisp.chat";
     for (const name of [
