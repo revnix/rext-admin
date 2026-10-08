@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import {
   Card,
   CardContent,
@@ -100,7 +101,7 @@ export default function AdminInvitationsPage() {
   }>({ open: false });
 
   // Fetch invitations
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin-invitations", selectedStatus],
     queryFn: () =>
       apiClient.adminInvitations.list({
@@ -253,9 +254,21 @@ export default function AdminInvitationsPage() {
                 ))}
               </div>
             ) : error ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Failed to load invitations
-              </div>
+              // What failed, in the server's own words, and a way to ask again: "Failed to load"
+              // alone left a super admin with nothing to act on (task 915).
+              <Notice
+                tone="danger"
+                title="The invitations couldn't be loaded"
+                action={
+                  <Button size="sm" variant="outline" onClick={() => refetch()}>
+                    Try again
+                  </Button>
+                }
+              >
+                {error instanceof Error && error.message
+                  ? error.message
+                  : "The server didn't answer. Try again in a moment."}
+              </Notice>
             ) : invitations.length === 0 ? (
               <div className="text-center py-12">
                 <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
