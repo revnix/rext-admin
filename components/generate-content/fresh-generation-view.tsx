@@ -2763,6 +2763,19 @@ export function FreshGenerationView({
   return (
     <div className="relative">
       {!editorShown && stepperRow(false)}
+      {/* Why the run asked for isn't on screen, before anything else: under the start screen it
+          sat below the fold, out of sight on a phone (rext-control task 824). */}
+      {restoreError && (
+        <RunNotice
+          title="We could not restore this article"
+          message={restoreError}
+          actionLabel="Start a new article"
+          onAction={() => {
+            setRestoreError(null);
+            onBack();
+          }}
+        />
+      )}
       <StepColumn
         // A step with a side pane beside it (the search results, on the Select keyword and Title
         // steps; the brief, on the outline step) gets the room for both.
@@ -2885,18 +2898,6 @@ export function FreshGenerationView({
           <div className="w-full">{instructionViewMap[instructionType]}</div>
         )}
       </StepColumn>
-
-      {restoreError && (
-        <RunNotice
-          title="We could not restore this article"
-          message={restoreError}
-          actionLabel="Start a new article"
-          onAction={() => {
-            setRestoreError(null);
-            onBack();
-          }}
-        />
-      )}
 
       {/* ── Content: stream tokens live, then hand off to ContentEditor ── */}
       {editorShown && (
