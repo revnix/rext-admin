@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Meter } from "@/components/ui/meter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useShowAfter } from "@/hooks/use-show-after";
 import {
   comparePick,
   measureTitle,
@@ -389,6 +390,9 @@ export function TitleStepFilling({
     () => serpTitleFacts(results, keyphrase),
     [results, keyphrase],
   );
+  // The results are usually here already, or come within a moment of the state being read: the
+  // panel's shape shows only when they take longer, so it never flashes.
+  const showPanelShape = useShowAfter(!facts);
   const topTen = (
     <SerpSnapshot
       results={results}
@@ -444,6 +448,9 @@ export function TitleStepFilling({
                 className="mt-1 size-4 rounded-full"
               />
             )}
+            {/* The bars are not held back as a loading skeleton is: a title takes the model seconds,
+                and the rows are the list's own height from the first frame, so a delay would only
+                show five empty cards first. */}
             <div className="min-w-0 flex-1 space-y-2">
               {row.state === "written" ? (
                 <p className="text-base text-foreground">
@@ -553,7 +560,7 @@ export function TitleStepFilling({
               {topTen}
             </TopTenPanel>
           ) : (
-            <TopTenSkeleton />
+            showPanelShape && <TopTenSkeleton />
           )}
         </div>
       }

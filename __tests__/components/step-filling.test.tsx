@@ -5,7 +5,7 @@
  * a filling view throws.
  */
 
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -290,13 +290,15 @@ describe("the Title step while its titles are written", () => {
     expect(skeletons(pane)).toHaveLength(0);
   });
 
-  it("holds the panel's shape under the stages until the search results are there (FB3.3)", () => {
+  it("holds the panel's shape under the stages when the search results take more than a moment (FB3.3)", async () => {
     renderStep({}, []);
     const pane = screen.getByRole("complementary", {
       name: "Top search results",
     });
     expect(within(pane).getByText("The run's stages")).toBeVisible();
-    expect(skeletons(pane).length).toBeGreaterThan(8);
+    // Not at once: results that come within a moment never flash a shape first.
+    expect(skeletons(pane)).toHaveLength(0);
+    await waitFor(() => expect(skeletons(pane).length).toBeGreaterThan(8));
     expect(
       within(pane).getByText("The top search results are being read."),
     ).toHaveClass("sr-only");
