@@ -508,6 +508,7 @@ export function WorkspaceCreateWizard({
         workspaceId={idRef.current}
         workspaceSlug={slugRef.current}
         website={website}
+        withoutSite={withoutSite}
         after={
           withoutSite ? (
             <section

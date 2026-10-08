@@ -42,6 +42,7 @@ export function DraftedNotice({
   website,
   competitors,
   closing = "Review each part and save any change.",
+  withoutSite = false,
 }: {
   workspaceId: string;
   workspaceSlug: string;
@@ -50,10 +51,13 @@ export function DraftedNotice({
   competitors?: string[];
   /** What to do next where it's shown. */
   closing?: string;
+  /**
+   * The workspace was made from a description of the business and has no website
+   * (rext-control#853): the voice came from what the person wrote, and nobody and no competitor
+   * was looked for.
+   */
+  withoutSite?: boolean;
 }) {
-  // A workspace made from a description has no website (rext-control#853): the voice came from
-  // what the person wrote, and nobody and no competitor was looked for.
-  const withoutSite = !website?.trim();
   const titleId = useId();
   const { data, isSuccess } = usePersonas(workspaceId);
   // The personas as they were on arrival, the ones drafted from the site: a later change to the

@@ -121,6 +121,7 @@ export function BrandVoiceSection() {
           workspaceId={workspace.id}
           workspaceSlug={workspace.slug}
           website={workspace.url ?? ""}
+          withoutSite={!workspace.url}
           competitors={voice?.competitors}
         />
       )}
