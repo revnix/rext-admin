@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import { FormShell } from "@/components/forms/form-shell";
 import { useZodForm } from "@/components/forms/use-zod-form";
@@ -35,10 +35,13 @@ export function WorkspaceReviewStep({
   workspaceId,
   workspaceSlug,
   website,
+  after,
 }: {
   workspaceId: string;
   workspaceSlug: string;
   website?: string;
+  /** Under the fields, before Finish: what the draft showed that the fields don't hold. */
+  after?: ReactNode;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -120,6 +123,7 @@ export function WorkspaceReviewStep({
           </Notice>
         )}
         <BrandVoiceFields control={form.control} />
+        {after}
       </FormShell>
     </div>
   );

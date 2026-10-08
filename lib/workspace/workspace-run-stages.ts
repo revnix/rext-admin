@@ -114,6 +114,8 @@ export interface DraftedVoice {
   brandName?: string;
   about?: string;
   sellingPosition?: string;
+  /** Who buys from the brand, in a sentence or two. */
+  customers?: string;
   audience: string[];
   tone: string[];
   pillars: string[];
@@ -128,6 +130,12 @@ export interface WorkspaceFindings {
   site?: { title?: string; words?: number };
   voice?: DraftedVoice;
   competitors?: string[];
+  /**
+   * The people named on the site, from the run's own word that it saved them as author personas
+   * (a `personas` progress event, some seconds after the brand voice). An empty list is the run
+   * saying it saved no one; undefined is a run that hasn't said, or a backend that doesn't yet.
+   */
+  people?: { name: string; title?: string }[];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -139,11 +147,26 @@ const text = (value: unknown): string | undefined =>
 const texts = (value: unknown): string[] =>
   (Array.isArray(value) ? value : []).flatMap((item) => text(item) ?? []);
 
+/** The people a `personas` event lists: each with a name, and a title where it has one. */
+function readPeople(people: unknown[]): { name: string; title?: string }[] {
+  return people.flatMap((item) => {
+    const name = isRecord(item) ? text(item.person ?? item.name) : undefined;
+    return name
+      ? [{ name, title: isRecord(item) ? text(item.title) : undefined }]
+      : [];
+  });
+}
+
 export function workspaceFindings(events: SSEEvent[]): WorkspaceFindings {
   const findings: WorkspaceFindings = {};
   for (const event of events) {
     const { step, outcome } = readEvent(event);
-    if (outcome !== "completed" || !isRecord(event.payload)) continue;
+    if (!isRecord(event.payload)) continue;
+    if (step === "personas" && Array.isArray(event.payload.people)) {
+      findings.people = readPeople(event.payload.people);
+      continue;
+    }
+    if (outcome !== "completed") continue;
     const payload = event.payload;
     if (step === "scrape") {
       const words = payload.word_count;
@@ -156,6 +179,7 @@ export function workspaceFindings(events: SSEEvent[]): WorkspaceFindings {
         brandName: text(payload.brand_name),
         about: text(payload.about),
         sellingPosition: text(payload.selling_position),
+        customers: text(payload.customer_profile),
         audience: texts(payload.target_audience),
         tone: texts(payload.brand_voice),
         pillars: texts(payload.content_pillar ?? payload.content_strategy),
@@ -188,6 +212,12 @@ export function workspaceStageDetails(
   findings: WorkspaceFindings,
   site: string,
   people?: string[],
+  /**
+   * Whether `people` is the last word. The personas are saved during the run and can arrive after
+   * the first read of them: unless the caller says the run has had its say, an empty list says
+   * nothing yet.
+   */
+  peopleFinal = false,
 ): Record<string, RunStageDetail> {
   const { site: read, voice, competitors } = findings;
   return {
@@ -211,10 +241,13 @@ export function workspaceStageDetails(
             voice.tone.length > 0
               ? `${plural(voice.tone.length, "tone word", "tone words")}`
               : "Brand voice drafted",
-            // Only once there are some: the run can still save a persona after this step.
-            people && people.length > 0
-              ? `${plural(people.length, "person", "people")} named on the site`
-              : null,
+            people === undefined
+              ? null
+              : people.length > 0
+                ? `${plural(people.length, "person", "people")} named on the site`
+                : peopleFinal
+                  ? "no one named on the site"
+                  : null,
           ]
             .filter(Boolean)
             .join(" · ")
@@ -230,4 +263,194 @@ export function workspaceStageDetails(
         : undefined,
     },
   };
+}
+
+// ── The work as it happens, newest first (rext-control#845) ───────────────────
+
+/** One thing the analysis did, in a line. */
+export interface WorkspaceActivity {
+  id: string;
+  text: string;
+  /** When, in milliseconds; undefined when the event's time can't be read. */
+  at?: number;
+  /** A step's own end, which sums it up; the lines between are what it met on the way. */
+  kind: "started" | "progress" | "done" | "failed";
+}
+
+const quoted = (value: string) => `“${value}”`;
+
+/** "acme.example/about" from a page's address, without the scheme, "www." or a trailing slash. */
+function pageName(address: string): string {
+  try {
+    const url = new URL(address);
+    const path = url.pathname.replace(/\/$/, "");
+    return `${url.host.replace(/^www\./, "")}${path}`;
+  } catch {
+    return address;
+  }
+}
+
+/** How a kind of page is counted in a line: "the home page", "3 articles". */
+const PAGE_KINDS: [kind: string, one: string, many: string][] = [
+  ["home", "the home page", "home pages"],
+  ["about", "the about page", "about pages"],
+  ["team", "the team page", "team pages"],
+  ["article", "1 article", "articles"],
+];
+
+/** "the home page, the about page, 6 articles and 3 other pages" from the pages a read lists. */
+function pagesRead(pages: unknown[], count: number): string {
+  const kinds = pages.map((page) =>
+    isRecord(page) ? (text(page.kind) ?? "other") : "other",
+  );
+  const named = PAGE_KINDS.flatMap(([kind, one, many]) => {
+    const found = kinds.filter((item) => item === kind).length;
+    return found === 0 ? [] : [found === 1 ? one : `${found} ${many}`];
+  });
+  // The list holds at most the first pages; the count is all of them.
+  const known = kinds.filter((kind) =>
+    PAGE_KINDS.some(([name]) => name === kind),
+  ).length;
+  const others = Math.max(count, pages.length) - known;
+  if (others > 0)
+    named.push(
+      named.length > 0
+        ? plural(others, "other page", "other pages")
+        : plural(others, "page", "pages"),
+    );
+  return named.length > 1
+    ? `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}`
+    : (named[0] ?? "");
+}
+
+/**
+ * What a progress event says the run just did, as lines (rext-backend's `<step>` events with the
+ * status "progress"): the pages it read, the people it saved as personas, the phase of the
+ * competitors' search. An event this page can't read gives no line.
+ */
+function progressLines(
+  step: string,
+  payload: Record<string, unknown>,
+): string[] {
+  if (step === "scrape") {
+    if (Array.isArray(payload.pages)) {
+      const listed = payload.pages.length;
+      const count =
+        typeof payload.count === "number" && payload.count > listed
+          ? payload.count
+          : listed;
+      if (count === 0) return [];
+      const read = pagesRead(payload.pages, count);
+      const pages = plural(count, "page", "pages");
+      // With no kind to tell them apart, the count says it all.
+      if (read === pages) return [`Read ${pages}`];
+      return [count === 1 ? `Read ${read}` : `Read ${pages}: ${read}`];
+    }
+    const page = text(payload.page) ?? text(payload.url);
+    if (!page) return [];
+    const title = text(payload.title);
+    return [
+      title
+        ? `Read ${quoted(title)} (${pageName(page)})`
+        : `Read ${pageName(page)}`,
+    ];
+  }
+  if (step === "personas" || step === "brand_voice") {
+    if (Array.isArray(payload.people)) {
+      const people = readPeople(payload.people);
+      return people.length > 0
+        ? people.map(({ name, title }) =>
+            title ? `Found ${name}, ${title}` : `Found ${name}`,
+          )
+        : ["No one is named on the site"];
+    }
+    const person = text(payload.person);
+    if (!person) return [];
+    const title = text(payload.title);
+    return [title ? `Found ${person}, ${title}` : `Found ${person}`];
+  }
+  if (step === "competitor_discovery") {
+    const number = (value: unknown) =>
+      typeof value === "number" && value > 0 ? value : null;
+    if (payload.stage === "searching") {
+      const queries = number(payload.queries);
+      return [
+        queries
+          ? `Running ${plural(queries, "search", "searches")} your customers would make`
+          : "Searching where your customers would",
+      ];
+    }
+    if (payload.stage === "checking") {
+      const candidates = number(payload.candidates);
+      return [
+        candidates
+          ? `Checking ${plural(candidates, "site", "sites")} that came up`
+          : "Checking the sites that came up",
+      ];
+    }
+    const domain = text(payload.domain);
+    if (domain) return [`Found ${domain}`];
+  }
+  return [];
+}
+
+/**
+ * Everything the analysis has reported, newest first: each step as it starts, what it meets on the
+ * way (a `<step>.progress` event: a page read, a person found, a competitor confirmed) and what it
+ * found when it ends. Only what the run reports is here; an event this page can't read adds no
+ * line, so nothing is made up.
+ */
+export function workspaceActivity(
+  events: SSEEvent[],
+  site: string,
+): WorkspaceActivity[] {
+  const lines: WorkspaceActivity[] = [];
+  const details = workspaceStageDetails(workspaceFindings(events), site);
+  for (const event of events) {
+    const { step, outcome } = readEvent(event);
+    const time = Date.parse(event.timestamp);
+    const at = Number.isNaN(time) ? undefined : time;
+    const line = (
+      kind: WorkspaceActivity["kind"],
+      said: string | null | undefined,
+      part = 0,
+    ) => {
+      if (said)
+        lines.push({
+          id: part === 0 ? event.id : `${event.id}:${part}`,
+          text: said,
+          at,
+          kind,
+        });
+    };
+    if (outcome === "progress") {
+      // Also from a step with no stage of its own (the personas are saved inside the brand
+      // voice's). One event can say several things, which arrived together: they keep the order
+      // the run gave them, so they go in last first, since the whole list is reversed at the end.
+      const said = isRecord(event.payload)
+        ? progressLines(step, event.payload)
+        : [];
+      said
+        .slice()
+        .reverse()
+        .forEach((text, part) => {
+          line("progress", text, part);
+        });
+      continue;
+    }
+    const stage = WORKSPACE_ANALYSIS_STAGES.find((item) => item.step === step);
+    if (!stage) continue;
+    if (outcome === "started") {
+      line("started", details[stage.id]?.live);
+    } else if (outcome === "completed") {
+      const result = details[stage.id]?.result;
+      line(
+        "done",
+        result ? `${stage.label}: ${result}` : `${stage.label}: done`,
+      );
+    } else if (outcome === "failed") {
+      line("failed", `${stage.label} stopped`);
+    }
+  }
+  return lines.reverse();
 }

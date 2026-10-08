@@ -3,17 +3,31 @@
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { FieldController } from "@/components/forms/field-controller";
 import { FormShell } from "@/components/forms/form-shell";
 import { useZodForm } from "@/components/forms/use-zod-form";
-import { RunProgress } from "@/components/generate-content/run-progress";
+import { WithSidePane } from "@/components/layouts";
 import { CreationSteps } from "@/components/workspace/creation-steps";
-import { WorkspaceTakingShape } from "@/components/workspace/workspace-taking-shape";
+import {
+  BehindTheScenes,
+  BehindTheScenesStrip,
+} from "@/components/workspace/workspace-behind-scenes";
+import {
+  AuthorPersonas,
+  WorkspaceDraft,
+} from "@/components/workspace/workspace-draft";
 import { useCheckLimit } from "@/components/subscription/limit-check-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Meter } from "@/components/ui/meter";
 import { Notice } from "@/components/ui/notice";
 import { usePersonas } from "@/hooks/use-personas";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
@@ -27,6 +41,7 @@ import {
 } from "@/lib/query-keys";
 import {
   findFailedEvent,
+  workspaceActivity,
   workspaceFindings,
   workspaceRunStages,
   workspaceStageDetails,
@@ -42,16 +57,28 @@ import { useWorkspaceCrudStore, useWorkspaceStore } from "@/stores/workspace";
 import type { Route } from "next";
 
 /**
- * Creating a workspace (plans/app/D-pages.md §2.9): a name and the website, then the backend's
- * analysis as the run component, fed by the operation's events. When it completes, the flow shows
- * what was read (WorkspaceReviewStep): the brand voice, the personas and the competitors the
- * analysis has already saved, editable, then Finish, which opens Generate content (FB2.1,
- * rext-control#682). A failed analysis says what failed and opens the workspace anyway; a stream
- * that stops before the end offers a retry. A workspace past the plan's limit (the backend's 429,
- * or a limit the page learns of after it loaded) gets a notice with the way to a bigger plan,
- * never a click that does nothing.
+ * Creating a workspace (plans/app/D-pages.md §2.9), as one surface from the address to the review
+ * (rext-control#845): the workspace on the left, and behind the scenes on the right, with the
+ * three steps in a row above both.
+ * - **Your website:** a name and the address, beside the plan of what will happen: the three
+ *   stages, each waiting, with what it does and about how long it takes.
+ * - **Reading the site:** the workspace's draft takes shape in the sections the review will hold,
+ *   each in its shape and then with what the run found; beside it the stages with what each found
+ *   and the work as it happens, newest on top, all from the operation's events.
+ * - **Review and finish:** the same sections, where they were, as fields to edit
+ *   (WorkspaceReviewStep), then Finish, which opens Generate content (FB2.1, rext-control#682).
+ *
+ * A failed analysis says what failed and opens the workspace anyway; a stream that stops before
+ * the end offers a retry. A workspace past the plan's limit (the backend's 429, or a limit the page
+ * learns of after it loaded) gets a notice with the way to a bigger plan, never a click that does
+ * nothing.
  */
-export function WorkspaceCreateWizard() {
+export function WorkspaceCreateWizard({
+  planCount = null,
+}: {
+  /** The plan's workspaces before this one, said above the form on the first step only. */
+  planCount?: { used: number; max: number } | null;
+} = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { clearCompletedOperation } = useSSE();
@@ -130,16 +157,10 @@ export function WorkspaceCreateWizard() {
   )?.state;
   const voiceEnded = voiceStage === "complete";
   const personas = usePersonas(voiceEnded ? idRef.current : null);
-  // The people are shown once there are some. An empty answer is not "no one": the run can still
-  // save a persona after this step's event (it did, on staging), so the list is read again as each
-  // later step ends, and only the review, after the run, says that no one is named.
-  const named = (personas.data?.personas ?? []).flatMap((persona) => {
-    const name = persona.full_name || persona.name;
-    return name
-      ? [{ name, title: persona.professional_title ?? undefined }]
-      : [];
-  });
-  const people = named.length > 0 ? named : undefined;
+  // The personas are saved during the run, and the save can land after this step's event (it did,
+  // on staging: "no one named" during the wait, then a persona in the review). So the list is read
+  // again as each later step ends, and an empty answer is the last word only once the run has
+  // ended.
   const stepsEnded = stages.filter(
     (stage) => stage.state === "complete",
   ).length;
@@ -149,6 +170,20 @@ export function WorkspaceCreateWizard() {
       queryKey: personaQueries.lists(idRef.current),
     });
   }, [voiceEnded, stepsEnded, queryClient]);
+  const failed = findFailedEvent(events);
+  const read = personas.isSuccess
+    ? (personas.data?.personas ?? []).flatMap((persona) => {
+        const name = persona.full_name || persona.name;
+        return name
+          ? [{ name, title: persona.professional_title ?? undefined }]
+          : [];
+      })
+    : undefined;
+  // The run's own word on who it saved, once it gives it (a `personas` event); until then, and
+  // from a backend that doesn't send it, the list read above.
+  const people = findings.people ?? read;
+  const peopleFinal =
+    findings.people !== undefined || reviewing || Boolean(failed);
 
   const handleSubmit = async (data: WorkspaceFormData) => {
     if (isLimitReached) {
@@ -231,10 +266,39 @@ export function WorkspaceCreateWizard() {
   const reads =
     typeof typedWebsite === "string" ? normalizeWebsite(typedWebsite) : null;
 
-  if (!operationId) {
-    return (
+  const step: 0 | 1 | 2 = !operationId ? 0 : reviewing ? 2 : 1;
+  const site = siteHost(website || reads || "");
+  const details = workspaceStageDetails(
+    findings,
+    site,
+    people?.map((person) => person.name),
+    peopleFinal,
+  );
+  const scenes = {
+    stages,
+    details,
+    activity: workspaceActivity(events, site),
+  };
+  const plan =
+    "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
+
+  let main: ReactNode;
+  if (step === 0) {
+    main = (
       <div className="space-y-6">
-        <CreationSteps current={0} />
+        {planCount && (
+          <div className="space-y-2">
+            <p className="num text-table text-muted-foreground">
+              {planCount.used} of {planCount.max}{" "}
+              {planCount.max === 1 ? "workspace" : "workspaces"} on your plan
+            </p>
+            <Meter
+              value={planCount.used}
+              max={planCount.max}
+              low={planCount.used + 1 >= planCount.max}
+            />
+          </div>
+        )}
         {limitReached && (
           <Notice
             tone="warning"
@@ -294,95 +358,118 @@ export function WorkspaceCreateWizard() {
             )}
           </FieldController>
         </FormShell>
+        {/* Under 1024 px nothing sits beside the form: what happens next follows it. */}
+        <section
+          aria-label="What happens next"
+          className="space-y-3 border-t border-border pt-6 lg:hidden"
+        >
+          <h2 className="text-section text-foreground">What happens next</h2>
+          <BehindTheScenes {...scenes} intro={plan} />
+        </section>
       </div>
     );
-  }
-
-  if (reviewing && idRef.current && slugRef.current) {
-    return (
-      <div className="flex flex-col gap-8">
-        <CreationSteps current={2} />
-        <WorkspaceReviewStep
-          workspaceId={idRef.current}
-          workspaceSlug={slugRef.current}
-          website={website}
+  } else if (step === 2 && idRef.current && slugRef.current) {
+    main = (
+      <WorkspaceReviewStep
+        workspaceId={idRef.current}
+        workspaceSlug={slugRef.current}
+        website={website}
+        after={
+          people !== undefined && (
+            <section
+              aria-label="Author personas"
+              className="flex flex-col gap-3"
+            >
+              <h2 className="text-section text-foreground">Author personas</h2>
+              <AuthorPersonas people={people} />
+            </section>
+          )
+        }
+      />
+    );
+  } else {
+    main = (
+      <div className="space-y-6">
+        <p className="text-body text-muted-foreground">
+          Reading {website}. It usually takes about a minute. The workspace is
+          already created, so you can leave this page.
+        </p>
+        <BehindTheScenesStrip {...scenes} />
+        {failed ? (
+          <Notice
+            tone="danger"
+            title="The analysis stopped"
+            action={
+              <Button
+                data-rec="show"
+                size="sm"
+                onClick={() => openBrandVoice(false)}
+              >
+                Open the workspace
+              </Button>
+            }
+          >
+            {failed.message} Your workspace is created; you can read the website
+            again from its Brand voice settings.
+          </Notice>
+        ) : (
+          streamProblem && (
+            <Notice
+              tone="warning"
+              title="We lost touch with the analysis"
+              action={
+                <Button
+                  data-rec="show"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setStreamProblem(null);
+                    connect();
+                  }}
+                >
+                  Retry
+                </Button>
+              }
+            >
+              It may still be running. Retry to reconnect, or{" "}
+              <button
+                data-rec="show"
+                type="button"
+                className="font-medium underline underline-offset-4"
+                onClick={() => openBrandVoice(false)}
+              >
+                open the workspace
+              </button>
+              .
+            </Notice>
+          )
+        )}
+        {/* The workspace's draft: each section in its shape, then with what the run found. */}
+        <WorkspaceDraft
+          stages={stages}
+          findings={findings}
+          people={people}
+          peopleFinal={peopleFinal}
         />
       </div>
     );
   }
 
-  const failed = findFailedEvent(events);
   return (
     <div className="space-y-6">
-      <CreationSteps current={1} />
-      <p className="text-body text-muted-foreground">
-        Reading {website}. It usually takes one to two minutes. The workspace is
-        already created, so you can leave this page.
-      </p>
-      {/* The stages with what each found, as the run reports it. */}
-      <RunProgress
-        stages={stages}
-        details={workspaceStageDetails(
-          findings,
-          siteHost(website),
-          people?.map((person) => person.name),
-        )}
-      />
-      {failed ? (
-        <Notice
-          tone="danger"
-          title="The analysis stopped"
-          action={
-            <Button
-              data-rec="show"
-              size="sm"
-              onClick={() => openBrandVoice(false)}
-            >
-              Open the workspace
-            </Button>
-          }
-        >
-          {failed.message} Your workspace is created; you can read the website
-          again from its Brand voice settings.
-        </Notice>
-      ) : (
-        streamProblem && (
-          <Notice
-            tone="warning"
-            title="We lost touch with the analysis"
-            action={
-              <Button
-                data-rec="show"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setStreamProblem(null);
-                  connect();
-                }}
-              >
-                Retry
-              </Button>
-            }
-          >
-            It may still be running. Retry to reconnect, or{" "}
-            <button
-              data-rec="show"
-              type="button"
-              className="font-medium underline underline-offset-4"
-              onClick={() => openBrandVoice(false)}
-            >
-              open the workspace
-            </button>
-            .
-          </Notice>
-        )
-      )}
-      {/* The workspace taking shape: each part in its shape, then the part itself. */}
-      <WorkspaceTakingShape
-        stages={stages}
-        findings={findings}
-        people={people}
-      />
+      <CreationSteps current={step} />
+      {/* From 1024 px the stages sit beside the workspace; under it the first step lists them
+          after its form and the wait shows them as one line, so the pane's sheet gets no button. */}
+      <WithSidePane
+        sideTitle={step === 0 ? "What happens next" : "Behind the scenes"}
+        showTitle
+        trigger="inline"
+        side={
+          <BehindTheScenes {...scenes} intro={step === 0 ? plan : undefined} />
+        }
+      >
+        {main}
+      </WithSidePane>
     </div>
   );
 }

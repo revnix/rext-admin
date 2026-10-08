@@ -4,7 +4,7 @@
  * analysis has saved the draft already.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
 import { apiClient } from "@/lib/api-client";
@@ -124,7 +124,14 @@ describe("The drafted details in the creation flow", () => {
     expect(screen.getByRole("textbox", { name: /Competitors/ })).toHaveValue(
       "Bolt Co",
     );
-    expect(screen.getByText(/Ana Ruiz/)).toBeTruthy();
+    // The person named on the site: in the notice, and listed under the fields where the draft
+    // showed them, so nothing the wait showed goes away in the review.
+    expect(
+      within(screen.getByRole("region", { name: "Author personas" })).getByText(
+        "Ana Ruiz",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Ana Ruiz/).length).toBeGreaterThan(1);
 
     await userEvent.click(screen.getByRole("button", { name: "Finish" }));
 
