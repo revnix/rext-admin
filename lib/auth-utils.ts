@@ -8,6 +8,7 @@
 import type { Session } from "next-auth";
 import { getCsrfToken, getSession } from "next-auth/react";
 import { auth } from "@/auth";
+import { analytics } from "@/lib/analytics";
 import {
   isSignedOut,
   leaveSignedOut,
@@ -306,6 +307,7 @@ async function forceSessionRefresh(): Promise<Session | null> {
  * Performs full cleanup of state and storage.
  */
 export function redirectToLogin(errorCode: string = "SessionExpired"): void {
+  unconfirmedRunEnds();
   if (isRedirectingToLogin) return;
   isRedirectingToLogin = true;
 
@@ -624,6 +626,42 @@ function ownAnswer(status: number, code: string, message: string): Response {
   );
 }
 
+// One "session unconfirmed" answer is a failure in passing: the person stays signed in and the
+// next request tries the renewal again. A tab that keeps getting them can't renew its token at
+// all, and nothing said so to anyone (revnix/rext-control#858). So the failures in a row are
+// counted, and analytics hears of the third and of the tenth, with how long the run has lasted.
+// Requests that fail on one renewal come back together, so answers less than a second apart
+// count once. The run ends when the API takes a request's token, or the session is over.
+const UNCONFIRMED_SAID_AT = [3, 10];
+const UNCONFIRMED_APART_MS = 1000;
+let unconfirmedInARow = 0;
+let unconfirmedSince = 0;
+let unconfirmedCountedAt = 0;
+
+/** The answer to a request whose session could be neither renewed nor called over. */
+function sessionUnconfirmed(): Response {
+  const now = Date.now();
+  if (
+    unconfirmedInARow === 0 ||
+    now - unconfirmedCountedAt >= UNCONFIRMED_APART_MS
+  ) {
+    if (unconfirmedInARow === 0) unconfirmedSince = now;
+    unconfirmedInARow += 1;
+    unconfirmedCountedAt = now;
+    if (UNCONFIRMED_SAID_AT.includes(unconfirmedInARow)) {
+      analytics.track("session_confirmation_failed", {
+        in_a_row: unconfirmedInARow,
+        seconds: Math.round((now - unconfirmedSince) / 1000),
+      });
+    }
+  }
+  return ownAnswer(503, SESSION_UNCONFIRMED, SESSION_UNCONFIRMED_MESSAGE);
+}
+
+function unconfirmedRunEnds(): void {
+  unconfirmedInARow = 0;
+}
+
 /**
  * Whether a 503 says the server could not run its session check (rextaihq/rext-backend#1000: the
  * check's own reads failed, in a stopping process's last seconds). The request never reached its
@@ -672,6 +710,7 @@ export async function authenticatedFetch(
         url,
       });
       reportSignedOut();
+      unconfirmedRunEnds();
       return ownAnswer(401, SIGNED_OUT, SIGNED_OUT_MESSAGE);
     }
   }
@@ -730,6 +769,10 @@ export async function authenticatedFetch(
     }
 
     if (response.status !== 401 || typeof window === "undefined") {
+      // Any answer under 500 that is not a 401 is the API's answer to a token it took.
+      if (response.status < 500 && headers.has("Authorization")) {
+        unconfirmedRunEnds();
+      }
       return response;
     }
 
@@ -795,7 +838,7 @@ export async function authenticatedFetch(
   // refresh, and no verdict either. The caller is told to try again, as below.
   if (!retry) {
     log.warn("[AuthJS] A token just renewed was answered as expired", { url });
-    return ownAnswer(503, SESSION_UNCONFIRMED, SESSION_UNCONFIRMED_MESSAGE);
+    return sessionUnconfirmed();
   }
 
   clearAuthHeadersCache();
@@ -886,6 +929,7 @@ export async function authenticatedFetch(
     // No session at all: it ended somewhere else (another tab signed out).
     log.warn("[AuthJS] The session is gone after an expired token", { url });
     if (pageNeedsSession()) reportSignedOut();
+    unconfirmedRunEnds();
     return ownAnswer(401, SIGNED_OUT, SIGNED_OUT_MESSAGE);
   }
   // Still signed in, with a token that could not be renewed just now. This request fails as a
@@ -895,7 +939,7 @@ export async function authenticatedFetch(
     "[AuthJS] Access-token refresh did not advance and was not refused: the request fails, the session stays",
     { url },
   );
-  return ownAnswer(503, SESSION_UNCONFIRMED, SESSION_UNCONFIRMED_MESSAGE);
+  return sessionUnconfirmed();
 }
 
 /**

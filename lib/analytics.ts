@@ -73,6 +73,7 @@ type AnalyticsEvent =
   | "error_toast_shown"
   | "page_not_found"
   | "api_request_failed"
+  | "session_confirmation_failed"
   // Plans
   | "paywall_shown"
   | "checkout_started"
