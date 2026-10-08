@@ -14,6 +14,7 @@ import {
 } from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useDraftSections } from "@/hooks/use-draft-sections";
+import { isSectionReset } from "@/lib/generate-content/draft-sections";
 import { useFirstDraft } from "@/hooks/use-first-draft";
 import { useRunStages } from "@/hooks/use-run-stages";
 import { plannedSections } from "@/lib/generate-content/article-structure";
@@ -1447,7 +1448,10 @@ export function FreshGenerationView({
             }
             content.appendToken(d.content as string);
           } else if (d?.type === "section") {
-            // A section of the first draft, the moment the writer finishes it (task 773).
+            // A section of the first draft, the moment the writer finishes it (task 773). When
+            // the writer starts its answer again, the tokens of the answer before go with its
+            // sections: they are not the new answer's text, and must not show in its place.
+            if (isSectionReset(d)) content.resetStream();
             draftSections.add(d);
           } else if (d?.type === "tool_start") {
             const id = String(d.id ?? "");
