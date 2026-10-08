@@ -584,7 +584,7 @@ export async function authenticatedFetch(
       "[AuthJS] Backend reports the session is no longer valid — signing out",
       { url },
     );
-    redirectToLogin(blockedAccountError ?? "SessionExpired");
+    redirectToLogin(blockedAccountError ?? "SessionEnded");
     throw new Error(blockedAccountError ?? "Session expired");
   }
 

@@ -77,6 +77,10 @@ export function LoginForm({
     if (urlError) {
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
+        // The backend ended this session (a sign-out elsewhere, a password change, an admin):
+        // "expired" would be untrue for someone who signed in a minute ago.
+        SessionEnded:
+          "You were signed out because this session was ended. Please log in again.",
         AccountSuspended:
           "Your account has been suspended. Contact support to have it reviewed.",
         AccountBanned:

@@ -135,7 +135,8 @@ describe("a 401 that says the session is revoked", () => {
     expect(error?.message).toBe("Session expired");
     expect(send).toHaveBeenCalledTimes(3);
     await jest.advanceTimersByTimeAsync(50);
-    expect(signedOutWith()).toEqual([["/login?error=SessionExpired"]]);
+    // The sign-in page then says the session was ended, not that it "expired".
+    expect(signedOutWith()).toEqual([["/login?error=SessionEnded"]]);
   });
 
   it("gives back another kind of refusal met on asking again, without a sign-out", async () => {
