@@ -8,6 +8,18 @@
 import type { Session } from "next-auth";
 import { getCsrfToken, getSession } from "next-auth/react";
 import { auth } from "@/auth";
+import {
+  isSignedOut,
+  leaveSignedOut,
+  reportSignedIn,
+  reportSignedOut,
+  SESSION_UNCONFIRMED,
+  SESSION_UNCONFIRMED_MESSAGE,
+  SIGNED_OUT,
+  SIGNED_OUT_MESSAGE,
+  signInUrlFromHere,
+} from "@/lib/auth/signed-out";
+import { opensWithoutSession } from "@/lib/auth-routes";
 import { log } from "@/lib/logger";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -275,14 +287,7 @@ export function redirectToLogin(errorCode: string = "SessionExpired"): void {
         // Use dynamic import to avoid circular dependency
         const { performLogout } = await import("./logout-utils");
 
-        const { pathname } = window.location;
-        const currentPath = pathname + window.location.search;
-        const redirectParam =
-          pathname !== "/login" && pathname !== "/"
-            ? `?redirect=${encodeURIComponent(currentPath)}&error=${errorCode}`
-            : `?error=${errorCode}`;
-
-        await performLogout(`/login${redirectParam}`);
+        await performLogout(signInUrlFromHere(errorCode));
       } catch (error) {
         log.error(
           "[AuthJS] Failed to perform controlled logout, falling back to basic redirect",
@@ -291,7 +296,7 @@ export function redirectToLogin(errorCode: string = "SessionExpired"): void {
         // Fallback cleanup
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = `/login?error=${errorCode}`;
+        leaveSignedOut(`/login?error=${errorCode}`);
       }
     }
   }, 0);
@@ -346,6 +351,7 @@ export async function getAuthHeaders(
 
   if (session?.user?.accessToken) {
     headers.Authorization = `Bearer ${session.user.accessToken}`;
+    reportSignedIn();
     log.debug("[AuthJS] Got access token from session", {
       tokenLength: session.user.accessToken.length,
       tokenPreview: `${session.user.accessToken.substring(0, 10)}...`,
@@ -404,6 +410,9 @@ const REVOKED_SESSION_MESSAGES = [
   "invalid authentication credentials",
   "invalid token",
   "token is invalid",
+  // The token itself failed its check (a bad signature, a malformed token, no user in it).
+  "invalid authentication token",
+  "user id missing in token payload",
   "invalid refresh token",
   "refresh token revoked",
   "refresh token expired",
@@ -491,6 +500,46 @@ function waitUnlessCancelled(
   });
 }
 
+// How long an empty session read waits before it is read once more.
+const SESSION_READ_AGAIN_AFTER_MS = 300;
+
+/** Whether the page this runs on is one the route guard opens only with a session. */
+function pageNeedsSession(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    !opensWithoutSession(window.location.pathname)
+  );
+}
+
+/**
+ * An answer the dashboard gives itself, in the shape of the API's own refusals, so that every
+ * caller reads it the way it reads any other: a status, a code and a sentence to show.
+ */
+function ownAnswer(status: number, code: string, message: string): Response {
+  return new Response(
+    JSON.stringify({ success: false, error: { code, message } }),
+    { status, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+/**
+ * Whether a 503 says the server could not run its session check (rextaihq/rext-backend#1000: the
+ * check's own reads failed, in a stopping process's last seconds). The request never reached its
+ * handler then, so sending it again repeats nothing, whatever its method.
+ */
+async function sessionCheckCouldNotRun(response: Response): Promise<boolean> {
+  try {
+    const body = await response.clone().json();
+    const error = body?.error ?? body;
+    const message = String(
+      error?.message ?? body?.message ?? body?.detail ?? "",
+    ).toLowerCase();
+    return message.includes("could not check your session");
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Authenticated fetch wrapper using AuthJS tokens
  * Automatically adds Authorization header from session
@@ -502,7 +551,29 @@ export async function authenticatedFetch(
   retry: boolean = true,
 ): Promise<Response> {
   // Pass skipCache=true if we are in a retry to get the fresh token
-  const authHeaders = await getAuthHeaders(!retry);
+  let authHeaders = await getAuthHeaders(!retry);
+
+  // No request leaves a signed-in page without its token (revnix/rext-control#858). Sent bare,
+  // it was answered 422 "Authorization: Field required", which nothing retried and the person
+  // read as it stood. An empty read can be a passing failure, so the session is read once more;
+  // still nothing means the page outlived its session. Nothing is sent, the page says so
+  // (lib/auth/signed-out.ts), and the caller gets a refusal in plain words. Nobody is signed
+  // out on this: a later read that finds a token puts everything back. A page that opens
+  // without a session (an invitation looked up before signing in) sends as before.
+  if (!authHeaders.Authorization && pageNeedsSession()) {
+    if (!isSignedOut()) {
+      await waitUnlessCancelled(SESSION_READ_AGAIN_AFTER_MS, options.signal);
+      authHeaders = await getAuthHeaders(true);
+    }
+    if (!authHeaders.Authorization) {
+      log.warn("[AuthJS] No session on a signed-in page: request not sent", {
+        url,
+      });
+      reportSignedOut();
+      return ownAnswer(401, SIGNED_OUT, SIGNED_OUT_MESSAGE);
+    }
+  }
+
   const isFormDataBody =
     typeof FormData !== "undefined" && options.body instanceof FormData;
 
@@ -532,6 +603,23 @@ export async function authenticatedFetch(
 
     if (response.status === 403 && typeof window !== "undefined") {
       window.dispatchEvent(new Event(PERMISSIONS_STALE_EVENT));
+    }
+
+    // The server could not check the session (a 503 in its own words): the same request is sent
+    // again, twice at most, as a "revoked" answer is below. A POST too: it was never carried out.
+    if (
+      response.status === 503 &&
+      retry &&
+      typeof window !== "undefined" &&
+      canAskAgain &&
+      asked < REVOKED_ASKED_AGAIN_AFTER_MS.length &&
+      (await sessionCheckCouldNotRun(response))
+    ) {
+      await waitUnlessCancelled(
+        REVOKED_ASKED_AGAIN_AFTER_MS[asked],
+        options.signal,
+      );
+      continue;
     }
 
     if (response.status !== 401 || !retry || typeof window === "undefined") {
@@ -667,15 +755,29 @@ export async function authenticatedFetch(
     throw new Error("Session expired");
   }
 
-  // Access-token refresh did not advance the session after an expired 401.
-  // The refresh token is either invalid or expired. Sign out cleanly to prevent
-  // stale auth loops and 500 error pages.
+  // The refresh did not advance the session and was not refused either: every try failed in
+  // passing (the API restarting, a network error), or the session update itself gave no answer.
+  // That is not a verdict on the session, and signing out on it ended sessions whose refresh
+  // token was good for days (revnix/rext-control#858). What the session says now decides.
+  const sessionNow = await fetchSessionSingleFlight();
+  if (sessionNow?.error === "RefreshAccessTokenError") {
+    redirectToLogin();
+    throw new Error("Session expired");
+  }
+  if (!sessionNow?.user?.accessToken) {
+    // No session at all: it ended somewhere else (another tab signed out).
+    log.warn("[AuthJS] The session is gone after an expired token", { url });
+    if (pageNeedsSession()) reportSignedOut();
+    return ownAnswer(401, SIGNED_OUT, SIGNED_OUT_MESSAGE);
+  }
+  // Still signed in, with a token that could not be renewed just now. This request fails as a
+  // server that is away does (a GET is tried again by the API client), and the next one tries
+  // the refresh again.
   log.warn(
-    "[AuthJS] Access-token refresh did not advance the session — redirecting to login",
+    "[AuthJS] Access-token refresh did not advance and was not refused: the request fails, the session stays",
     { url },
   );
-  redirectToLogin("SessionExpired");
-  throw new Error("Session expired");
+  return ownAnswer(503, SESSION_UNCONFIRMED, SESSION_UNCONFIRMED_MESSAGE);
 }
 
 /**

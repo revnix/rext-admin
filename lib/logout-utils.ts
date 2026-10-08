@@ -1,6 +1,7 @@
 import { signOut } from "next-auth/react";
 import { log } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
+import { leaveSignedOut } from "@/lib/auth/signed-out";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { apiClient } from "@/lib/api-client";
 import { resetSupportChat } from "@/lib/support-chat/chat";
@@ -98,16 +99,17 @@ async function executeLogout(callbackUrl: string): Promise<void> {
     log.info("[Auth] Calling NextAuth signOut...");
     await signOut({ redirect: false });
 
-    // 7. Force a hard reload to ensure all in-memory state is wiped.
+    // 7. Force a hard reload to ensure all in-memory state is wiped. A page that can't be left
+    // at once (a form with unsaved changes) says it is signed out instead of looking alive.
     log.info(`[Auth] Redirecting to ${callbackUrl}`);
-    window.location.href = callbackUrl;
+    leaveSignedOut(callbackUrl);
   } catch (error) {
     log.error("[Auth] Logout failed", error);
     // Fallback force reload even if something failed
     if (typeof window !== "undefined") {
       localStorage.clear();
       sessionStorage.clear();
-      window.location.href = callbackUrl;
+      leaveSignedOut(callbackUrl);
     }
   }
 }

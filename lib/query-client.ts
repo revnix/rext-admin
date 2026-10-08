@@ -1,7 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api-client/core";
 import { alreadyRetried } from "@/lib/api-client/server-away";
-import { redirectToLogin } from "@/lib/auth-utils";
 
 /**
  * Create a new QueryClient instance with smart retry and caching defaults.
@@ -31,16 +30,10 @@ export function makeQueryClient() {
           return failureCount < 2;
         },
 
-        // Global safety net for unhandled auth errors: bounce to login instead of throwing to ErrorBoundary
-        throwOnError: (error) => {
-          if (error instanceof ApiError && error.statusCode === 401) {
-            if (typeof window !== "undefined") {
-              redirectToLogin("SessionExpired");
-            }
-            return false;
-          }
-          return false;
-        },
+        // A 401 from a query signs nobody out here (revnix/rext-control#858). Whether a 401 is a
+        // verdict on the session is decided where its body is read, in authenticatedFetch:
+        // revoked, or expired and refused a refresh. Any other 401 is the endpoint's own (not a
+        // member of this workspace, a wrong password), and the query shows it as its error.
 
         // Exponential backoff: 1s, 2s (capped at 3s)
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
