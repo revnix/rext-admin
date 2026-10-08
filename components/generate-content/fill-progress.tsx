@@ -1,10 +1,9 @@
 "use client";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 
 import { Button } from "@/components/ui/button";
-import { log } from "@/lib/logger";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import type { RunView } from "@/lib/generate-content/run-findings";
 import type { RunStage } from "@/lib/generate-content/run-stages";
 import { withoutLists } from "@/lib/generate-content/step-fill";
@@ -80,8 +79,8 @@ export function FillProgressStrip({
 
 /**
  * A step's filling view is an extra over the wait's own box: if it throws, the box alone takes its
- * place and the run goes on. The shared ErrorBoundary would put a danger notice with "Try again"
- * where a wait belongs.
+ * place and the run goes on. The shared boundary, with the box as its fallback in place of its
+ * danger notice, which doesn't belong where a wait is.
  */
 export function FillBoundary({
   fallback,
@@ -90,19 +89,7 @@ export function FillBoundary({
   fallback: ReactNode;
   children: ReactNode;
 }) {
-  return (
-    <ErrorBoundary
-      fallback={fallback}
-      onError={(error, info) =>
-        log.error("A step's filling view threw:", {
-          message: error instanceof Error ? error.message : String(error),
-          componentStack: info.componentStack,
-        })
-      }
-    >
-      {children}
-    </ErrorBoundary>
-  );
+  return <ErrorBoundary fallback={fallback}>{children}</ErrorBoundary>;
 }
 
 /**

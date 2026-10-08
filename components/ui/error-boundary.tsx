@@ -12,6 +12,10 @@ import { log } from "@/lib/logger";
  * The one error boundary (design/app-language.md §8): a part of a page that throws shows a danger
  * Notice in its place, saying what happened, with Try again. Trying again also retries the
  * TanStack queries that failed inside it. A route segment's own error.tsx uses RouteError instead.
+ *
+ * `fallback` is for a part that is an extra over something plainer (a wait's filling view over the
+ * wait's own box): that plainer view takes its place, with no notice and nothing to try again, and
+ * the error is logged the same way.
  */
 export function ErrorBoundary({
   children,
@@ -20,8 +24,11 @@ export function ErrorBoundary({
   onError,
   resetKeys,
   framed = false,
+  fallback,
 }: {
   children: ReactNode;
+  /** Shown in place of the danger Notice: a plainer view of the same part, not a message. */
+  fallback?: ReactNode;
   /** What failed, in the Notice's title: "The editor didn't load". */
   title?: string;
   /** After the boundary resets, before its children render again. */
@@ -49,6 +56,7 @@ export function ErrorBoundary({
             onError?.(error, info);
           }}
           fallbackRender={({ resetErrorBoundary }) => {
+            if (fallback !== undefined) return fallback;
             const notice = (
               <Notice
                 tone="danger"
