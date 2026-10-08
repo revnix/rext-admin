@@ -100,13 +100,40 @@ describe("Skip for now", () => {
     expect(screen.queryByRole("button", { name: "Skip for now" })).toBeNull();
   });
 
-  it("comes first on a phone, where the button and what is under it sit below the first screen", () => {
-    open();
-    // One link, moved by the layout: first in the column below the large breakpoint, under the
-    // button from it up.
-    const line = skip().closest("p");
-    expect(line).toHaveClass("order-first", "lg:order-none");
-    expect(line?.parentElement).toHaveClass("flex", "flex-col");
+  it("comes before the form on a phone, in the page as on the screen, and under the button on a wide screen", () => {
+    const name = () =>
+      screen.getByRole("textbox", { name: /What is your business called/ });
+    const create = () =>
+      screen.getByRole("button", { name: "Read my website" });
+    const standsBefore = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+    // A wide screen: the link follows the form's button.
+    const wide = open();
+    expect(standsBefore(create(), skip())).toBe(true);
+    expect(
+      screen.getAllByRole("button", { name: "Skip for now" }),
+    ).toHaveLength(1);
+    wide.unmount();
+
+    // Under 1024 px the button and anything under it sit below the first screen, so the link
+    // comes first: one link, standing before the first field for a keyboard and a screen reader too.
+    const matchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes("max-width: 1023px"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      open();
+      expect(standsBefore(skip(), name())).toBe(true);
+      expect(
+        screen.getAllByRole("button", { name: "Skip for now" }),
+      ).toHaveLength(1);
+    } finally {
+      window.matchMedia = matchMedia;
+    }
   });
 
   it("makes a workspace with a name and nothing else, and goes to the app's home", async () => {
