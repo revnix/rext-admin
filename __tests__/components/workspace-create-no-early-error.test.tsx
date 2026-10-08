@@ -59,8 +59,50 @@ describe("Creating a workspace on a new account", () => {
     });
 
     expect(
-      screen.getByRole("textbox", { name: /Workspace name/ }),
+      screen.getByRole("textbox", { name: /What is your business called/ }),
     ).not.toHaveFocus();
     expect(screen.queryByText("Name is required")).toBeNull();
+  });
+  it("arrives with the caret in the first field, which holds no example text and asks its question", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+
+    const name = screen.getByRole("textbox", {
+      name: /What is your business called/,
+    });
+    expect(name).toHaveFocus();
+    expect(name).toHaveValue("");
+    expect(name).not.toHaveAttribute("placeholder");
+    // The example is under the field, where it can't be taken for an answer.
+    expect(screen.getByText(/For example: Luna Bakery/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    ).not.toHaveAttribute("placeholder");
+    expect(screen.getByText(/yoursite.com is enough/)).toBeInTheDocument();
+    // The button says what pressing it starts.
+    expect(
+      screen.getByRole("button", { name: "Read my website" }),
+    ).toBeInTheDocument();
+  });
+
+  it("checks the name once something was typed in it and it was left", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+    const name = screen.getByRole("textbox", {
+      name: /What is your business called/,
+    });
+    await userEvent.type(name, "12345");
+    await userEvent.tab();
+    expect(
+      await screen.findByText(
+        "Workspace name must contain at least one letter",
+      ),
+    ).toBeInTheDocument();
   });
 });

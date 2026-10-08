@@ -62,9 +62,9 @@ function form() {
     </QueryClientProvider>,
   );
   return {
-    name: screen.getByRole("textbox", { name: /Workspace name/ }),
-    website: screen.getByRole("textbox", { name: /Website/ }),
-    create: screen.getByRole("button", { name: "Create workspace" }),
+    name: screen.getByRole("textbox", { name: /What is your business called/ }),
+    website: screen.getByRole("textbox", { name: /What is its website/ }),
+    create: screen.getByRole("button", { name: "Read my website" }),
   };
 }
 
@@ -81,7 +81,8 @@ describe("The Website field when creating a workspace", () => {
     expect(website).toHaveAttribute("inputmode", "url");
     expect(website).toHaveAttribute("autocapitalize", "none");
     expect(website).toHaveAttribute("autocorrect", "off");
-    expect(website).toHaveAttribute("placeholder", "yoursite.com");
+    // No example text inside the field: grey words in an empty field read as an answer.
+    expect(website).not.toHaveAttribute("placeholder");
   });
 
   it.each([

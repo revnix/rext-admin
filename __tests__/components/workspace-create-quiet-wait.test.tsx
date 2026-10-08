@@ -82,14 +82,14 @@ async function create() {
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
   const view = render(tree());
   await user.type(
-    screen.getByRole("textbox", { name: /Workspace name/ }),
+    screen.getByRole("textbox", { name: /What is your business called/ }),
     "My company",
   );
   await user.type(
-    screen.getByRole("textbox", { name: /Website/ }),
+    screen.getByRole("textbox", { name: /What is its website/ }),
     "mysite.com",
   );
-  await user.click(screen.getByRole("button", { name: "Create workspace" }));
+  await user.click(screen.getByRole("button", { name: "Read my website" }));
   await screen.findByText(/Reading https:\/\/mysite.com/);
   return { user, view };
 }
@@ -144,14 +144,14 @@ describe("The wait for a new workspace's analysis, when nothing comes", () => {
     await user.click(screen.getByRole("button", { name: "Create it again" }));
     // The shell lets go of it too: no sidebar naming a workspace that isn't there.
     expect(mockSetCurrent).toHaveBeenLastCalledWith(null);
-    expect(screen.getByRole("textbox", { name: /Workspace name/ })).toHaveValue(
-      "My company",
-    );
-    expect(screen.getByRole("textbox", { name: /Website/ })).toHaveValue(
-      "mysite.com",
-    );
     expect(
-      screen.getByRole("button", { name: "Create workspace" }),
+      screen.getByRole("textbox", { name: /What is your business called/ }),
+    ).toHaveValue("My company");
+    expect(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    ).toHaveValue("mysite.com");
+    expect(
+      screen.getByRole("button", { name: "Read my website" }),
     ).toBeEnabled();
   });
 
