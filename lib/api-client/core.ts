@@ -4,6 +4,7 @@
  * Base client class with generic request handling
  */
 
+import { reportApiFailure } from "@/lib/analytics-failures";
 import { resolveApiBaseUrl } from "@/lib/api-base-url";
 import { authenticatedFetch } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
@@ -91,9 +92,29 @@ export class ApiClient {
    * while the server is away (a deploy's restart); see `ridingOutDeploy`.
    */
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    return this.ridingOutDeploy(options, () =>
-      this.requestOnce<T>(endpoint, options),
+    return this.reportingFailure(endpoint, options, () =>
+      this.ridingOutDeploy(options, () =>
+        this.requestOnce<T>(endpoint, options),
+      ),
     );
+  }
+
+  /**
+   * A request's end, said to analytics when the backend failed it (an answer of 500 or over, or
+   * none once the tries were spent): which route and which status, never the answer's words
+   * (lib/analytics-failures.ts). The error goes on to the caller as it was.
+   */
+  private async reportingFailure<T>(
+    endpoint: string,
+    options: RequestInit,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await run();
+    } catch (error) {
+      reportApiFailure(options.method, endpoint, error);
+      throw error;
+    }
   }
 
   /**
@@ -396,8 +417,10 @@ export class ApiClient {
     endpoint: string,
     options: RequestInit = {},
   ): Promise<Response> {
-    return this.ridingOutDeploy(options, () =>
-      this.requestRawOnce(endpoint, options),
+    return this.reportingFailure(endpoint, options, () =>
+      this.ridingOutDeploy(options, () =>
+        this.requestRawOnce(endpoint, options),
+      ),
     );
   }
 
