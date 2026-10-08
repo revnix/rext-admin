@@ -287,6 +287,18 @@ function ArticleEditor({
     };
   }, [hold, title]);
 
+  // A restore took the unsaved text with it and kept it as a version: the copy of that text on
+  // this device is spent. Left there, the editor that starts on the restored article would
+  // offer it as changes an earlier visit couldn't save, and taking the offer would write it over
+  // the version just restored.
+  const restoredHere = (article: ContentItem) => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = null;
+    uncopied.current = null;
+    clearLocalDraft(contentId);
+    onRestored(article);
+  };
+
   const guard = useLeaveGuard(state !== "saved");
   const isMobile = useIsMobile();
 
@@ -625,7 +637,7 @@ function ArticleEditor({
           versions={versions}
           takeUnsaved={takeUnsaved}
           onNotRestored={resume}
-          onRestored={onRestored}
+          onRestored={restoredHere}
         />
       ) : null}
 

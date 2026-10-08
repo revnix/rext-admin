@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ArticleEditPage } from "@/components/editor/article-edit-page";
 import { analytics } from "@/lib/analytics";
-import { writeLocalDraft } from "@/lib/content/local-draft";
+import { readLocalDraft, writeLocalDraft } from "@/lib/content/local-draft";
 
 const push = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -619,6 +619,11 @@ describe("The editor's History", () => {
     );
     await wait(50);
 
+    // The copy of what was typed on this device went with it: nothing is offered back over the
+    // restored article, now or on the next visit.
+    await wait(3000);
+    expect(readLocalDraft("c1")).toBeNull();
+    expect(screen.queryByText(/earlier visit/)).toBeNull();
     // What was typed goes with the restore, which keeps it as a version: no save of its own.
     expect(update).not.toHaveBeenCalled();
     expect(contentApi.restoreVersion).toHaveBeenCalledWith(
