@@ -81,6 +81,15 @@ describe("maskText", () => {
     ).toBe("Status");
   });
 
+  it("shows them on a link of the sidebar's menu that sits outside the navigation", () => {
+    const link = element(
+      '<a data-slot="sidebar-menu-button" href="/w/acme/generate-content"><span id="it">Save</span></a>',
+    );
+    expect(maskText("Save", link)).toBe("Save");
+    expect(maskText("Acme Ltd", link)).toBe("**** ***");
+    expect(maskText("Save", element('<a href="/x">Save</a>'))).toBe("****");
+  });
+
   it("reads the words as the page shows them, through an element inside the button", () => {
     const inner = element('<button><span id="it"> Save </span></button>');
     expect(maskText(" Save ", inner)).toBe(" Save ");
