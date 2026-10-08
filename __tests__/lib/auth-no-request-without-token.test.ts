@@ -32,6 +32,9 @@ jest.mock("@/lib/logout-utils", () => ({
   performLogout: jest.fn(async () => undefined),
 }));
 jest.mock("@/lib/auth/go-to", () => ({ goTo: jest.fn() }));
+jest.mock("@/lib/analytics", () => ({
+  analytics: { track: jest.fn(() => true) },
+}));
 
 const URL_ASKED = "https://api.example.test/api/v1/workspaces/";
 const SESSION_URL = "/api/auth/session";
@@ -461,6 +464,121 @@ describe("the request sent again after a refresh", () => {
 
     expect(value?.status).toBe(401);
     expect(signOuts()).toEqual([]);
+  });
+});
+
+describe("a tab that keeps failing to confirm its session", () => {
+  const expired = () =>
+    refusal(401, "token_expired", "Authentication token has expired");
+  // Time left by this browser's clock for the whole test, so nothing renews it ahead.
+  const old = token("old", 600);
+  /** What analytics was told, in order. */
+  const told = () =>
+    (
+      jest.requireMock("@/lib/analytics").analytics.track as jest.Mock
+    ).mock.calls.filter(([event]) => event === "session_confirmation_failed");
+
+  /** The API answers "expired" and the renewal brings the same token back, until `mended`. */
+  function stuck() {
+    const state = { mended: false };
+    readSession.mockResolvedValue(session(old));
+    send.mockImplementation(async (url: string) => {
+      if (url === SESSION_URL) return answer(200, session(old));
+      return state.mended ? fine() : expired();
+    });
+    return state;
+  }
+
+  /** `count` requests one after another, `apartMs` apart; the last answer's status. */
+  async function ask(
+    wrapper: typeof AuthUtils,
+    count: number,
+    apartMs = 2000,
+  ): Promise<number | undefined> {
+    let status: number | undefined;
+    for (let i = 0; i < count; i += 1) {
+      const { value } = await settle(wrapper.authenticatedFetch(URL_ASKED));
+      status = value?.status;
+      await jest.advanceTimersByTimeAsync(apartMs);
+    }
+    return status;
+  }
+
+  it("says nothing of one failure or two: those pass", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    expect(await ask(wrapper, 2)).toBe(503);
+
+    expect(told()).toEqual([]);
+  });
+
+  it("says so at the third in a row, with how long it has lasted", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    await ask(wrapper, 3);
+
+    expect(told()).toEqual([
+      ["session_confirmation_failed", { in_a_row: 3, seconds: 4 }],
+    ]);
+    expect(signOuts()).toEqual([]);
+  });
+
+  it("says so once more at the tenth, and never again in that run", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    await ask(wrapper, 14);
+
+    expect(told()).toEqual([
+      ["session_confirmation_failed", { in_a_row: 3, seconds: 4 }],
+      ["session_confirmation_failed", { in_a_row: 10, seconds: 18 }],
+    ]);
+  });
+
+  it("counts requests that failed together on one renewal as one failure", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    const together = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        settle(wrapper.authenticatedFetch(URL_ASKED)),
+      ),
+    );
+
+    expect(together.map(({ value }) => value?.status)).toEqual(
+      Array(6).fill(503),
+    );
+    expect(told()).toEqual([]);
+  });
+
+  it("starts again from nought once the API takes the token", async () => {
+    const wrapper = freshWrapper();
+    const state = stuck();
+
+    await ask(wrapper, 2);
+    state.mended = true;
+    expect(await ask(wrapper, 1)).toBe(200);
+    state.mended = false;
+    await ask(wrapper, 2);
+
+    expect(told()).toEqual([]);
+  });
+
+  it("does not take a server that is away for the token being taken", async () => {
+    const wrapper = freshWrapper();
+    stuck();
+
+    await ask(wrapper, 2);
+    send.mockImplementation(async () => answer(502, {}));
+    expect(await ask(wrapper, 1)).toBe(502);
+    stuck();
+    await ask(wrapper, 1);
+
+    expect(told()).toEqual([
+      ["session_confirmation_failed", { in_a_row: 3, seconds: 6 }],
+    ]);
   });
 });
 
