@@ -223,7 +223,9 @@ export class ApiClient {
             ? "AccountSuspended"
             : lowerMsg.includes("banned")
               ? "AccountBanned"
-              : "SessionExpired";
+              : lowerMsg.includes("revoked") || lowerMsg.includes("blacklisted")
+                ? "SessionEnded"
+                : "SessionExpired";
 
           import("@/lib/logout-utils").then(({ performLogout }) => {
             performLogout(`/login?error=${errorParam}`);
