@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -92,6 +92,8 @@ export function WorkspaceCreateWizard({
   const [reviewing, setReviewing] = useState(false);
   const slugRef = useRef<string | null>(null);
   const idRef = useRef<string | null>(null);
+  // The same id as state, for the query that looks the workspace up when the wait goes quiet.
+  const [createdId, setCreatedId] = useState<string | null>(null);
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
@@ -204,6 +206,7 @@ export function WorkspaceCreateWizard({
       });
       slugRef.current = workspace.slug;
       idRef.current = workspace.id;
+      setCreatedId(workspace.id);
       // The switcher's list stays cached for minutes, and the switcher puts back the first
       // workspace of that list when the current one isn't in it. The new workspace joins the
       // list first, so the sidebar names it, and links to it, through the analysis and the review.
@@ -259,6 +262,70 @@ export function WorkspaceCreateWizard({
         toast.error(message);
       }
     }
+  };
+
+  // The wait has gone quiet: no event at all some seconds after the workspace was made, or none
+  // for a long while since the last one. The stream can die with the server (every deploy restarts
+  // it) without an error ever reaching the page, and the wait then counted for ever. It looks the
+  // workspace up instead and says what it finds (rext-control#845).
+  const waiting = !!operationId && !reviewing;
+  const eventsSeen = events.length;
+  const [quiet, setQuiet] = useState(false);
+  // Each new event starts the wait for the next one over.
+  useEffect(() => {
+    setQuiet(false);
+    if (!waiting) return;
+    const timer = window.setTimeout(
+      () => setQuiet(true),
+      eventsSeen === 0 ? FIRST_EVENT_WAIT_MS : QUIET_WAIT_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [waiting, eventsSeen]);
+  const lookedUp = useQuery({
+    ...workspaceQueries.detail(createdId ?? ""),
+    enabled: waiting && quiet && !!createdId,
+    retry: false,
+    staleTime: 0,
+  });
+  // The workspace isn't there: the create was answered and nothing was kept (seen once on staging,
+  // in the minute after a restart). The person makes it again; what they typed is still in the form.
+  const gone =
+    waiting &&
+    quiet &&
+    lookedUp.error instanceof ApiError &&
+    lookedUp.error.statusCode === 404;
+  // Its run finished without the page hearing of it: on to the review.
+  const finishedUnheard =
+    waiting &&
+    quiet &&
+    lookedUp.data?.workspace.pipeline?.status === "completed";
+  useEffect(() => {
+    if (finishedUnheard) handleComplete();
+  }, [finishedUnheard, handleComplete]);
+
+  const createAgain = () => {
+    disconnect();
+    // The workspace that isn't there leaves the shell too: the switcher keeps the current one
+    // when the list comes back empty, and would go on naming and linking to it.
+    const lostId = idRef.current;
+    queryClient.setQueryData(workspaceQueries.list().queryKey, (list) =>
+      list
+        ? {
+            ...list,
+            workspaces: list.workspaces.filter((known) => known.id !== lostId),
+          }
+        : list,
+    );
+    setCurrentWorkspace(null);
+    slugRef.current = null;
+    idRef.current = null;
+    setCreatedId(null);
+    setStreamProblem(null);
+    setOperationId(null);
+    queryClient.invalidateQueries({ queryKey: workspaceQueries.all() });
+    queryClient.invalidateQueries({
+      queryKey: subscriptionQueries.usage().queryKey,
+    });
   };
 
   // What the Website field holds, as the address it will be read at (null until it makes one).
@@ -387,6 +454,22 @@ export function WorkspaceCreateWizard({
         }
       />
     );
+  } else if (gone) {
+    // Nothing of the wait is true any more: the notice stands alone.
+    main = (
+      <Notice
+        tone="danger"
+        title="This workspace wasn't saved"
+        action={
+          <Button data-rec="show" size="sm" onClick={createAgain}>
+            Create it again
+          </Button>
+        }
+      >
+        Something went wrong on our side while it was being created, and it
+        isn't there. Your name and address are still in the form.
+      </Notice>
+    );
   } else {
     main = (
       <div className="space-y-6">
@@ -413,7 +496,7 @@ export function WorkspaceCreateWizard({
             again from its Brand voice settings.
           </Notice>
         ) : (
-          streamProblem && (
+          (streamProblem || quiet) && (
             <Notice
               tone="warning"
               title="We lost touch with the analysis"
@@ -473,6 +556,11 @@ export function WorkspaceCreateWizard({
     </div>
   );
 }
+
+// How long the wait may hear nothing before it looks the workspace up: the first event comes at
+// once, and the longest step (the competitor search) says something within a minute.
+const FIRST_EVENT_WAIT_MS = 20_000;
+const QUIET_WAIT_MS = 150_000;
 
 /** "rext.ai" from the address typed, for the stages' lines. */
 function siteHost(website: string): string {

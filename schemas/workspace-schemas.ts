@@ -267,6 +267,18 @@ export const workspaceSchema = z.object({
   analytics: workspaceAnalyticsSchema.optional(),
   members_count: z.number().optional(),
   content_count: z.number().optional(),
+  /**
+   * The workspace pipeline's latest run, as the backend gives it on the workspace's detail (the
+   * resumable-creation work, rextaihq/rext-backend#901): running, completed, failed, or interrupted
+   * when a restart ended it. Absent on a list, and before a first run.
+   */
+  pipeline: z
+    .object({
+      status: z.string(),
+      operation_id: z.string().nullish(),
+      started_at: z.string().nullish(),
+    })
+    .nullish(),
 });
 
 /**

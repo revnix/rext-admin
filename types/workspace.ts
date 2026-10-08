@@ -100,6 +100,12 @@ export interface WorkspaceData extends BaseTableRow {
   };
   brand_voice?: BrandVoice;
   status: string;
+  /** The pipeline's latest run, on the workspace's detail: running, completed, failed or interrupted. */
+  pipeline?: {
+    status: string;
+    operation_id?: string | null;
+    started_at?: string | null;
+  } | null;
 }
 
 export interface BrandVoice {
