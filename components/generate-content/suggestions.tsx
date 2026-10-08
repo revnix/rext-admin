@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { type ReactNode, useId, useMemo } from "react";
 import { KeywordCard } from "@/components/keywords/keyword-card";
 import {
   type KeywordGroup,
@@ -19,6 +19,9 @@ import {
   keywordMetrics,
   type SearchIntent,
 } from "@/lib/keywords/keyword-metrics";
+import type { RunFindings } from "@/lib/generate-content/run-findings";
+import type { RunStage } from "@/lib/generate-content/run-stages";
+import { fillKeywordFacts } from "@/lib/generate-content/step-fill";
 import { serpResultsFromGate } from "@/lib/keywords/serp-results";
 import type { KeywordCluster, SEORESULT } from "@/types/generate-content";
 import { StageCostTooltip } from "./run-cost";
@@ -166,6 +169,73 @@ export function SuggestionsSection({
       side={<SerpSnapshot results={serpTitles} heading={null} />}
     >
       {step}
+    </WithSidePane>
+  );
+}
+
+/**
+ * Step 2 while its analysis runs (rext-control#694, the second pass): the step's own layout, filling
+ * in. The keyword card shows the keyword at once, the intent once the results are read and the
+ * figures once they are measured; the side pane holds the run's stages over the search results,
+ * which come first. Nothing here acts: the step takes over, with the suggestions, when the run ends.
+ */
+export function SuggestionsFilling({
+  keyword,
+  findings,
+  stages,
+  progress,
+  strip,
+}: {
+  keyword: string;
+  findings: RunFindings;
+  stages: RunStage[];
+  /** The run's stages, for the side pane (from 1024 px). */
+  progress: ReactNode;
+  /** The same as one line, above the card (under 1024 px). */
+  strip: ReactNode;
+}) {
+  const reasonId = useId();
+  const results = findings.results ?? [];
+  const { metrics, pending } = fillKeywordFacts(findings, stages);
+  return (
+    <WithSidePane
+      sideTitle="Top search results"
+      trigger="inline"
+      side={
+        <div className="space-y-6">
+          {progress}
+          {results.length > 0 && <SerpSnapshot results={results} />}
+        </div>
+      }
+    >
+      <div className="flex w-full flex-col gap-6 pt-4 pb-4">
+        {strip}
+        <KeywordCard
+          keyword={keyword}
+          metrics={metrics}
+          pending={pending}
+          eyebrow="Searched keyword"
+          action={
+            <div className="flex flex-col items-end gap-1">
+              <Button size="lg" disabled aria-describedby={reasonId}>
+                Continue with this keyword
+                <ChevronRight />
+              </Button>
+              <span
+                id={reasonId}
+                className="text-caption text-muted-foreground"
+              >
+                Ready when the analysis ends
+              </span>
+            </div>
+          }
+        />
+        {results.length > 0 && (
+          <div className="flex justify-end">
+            <SidePaneTrigger />
+          </div>
+        )}
+      </div>
     </WithSidePane>
   );
 }
