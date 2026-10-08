@@ -14,6 +14,7 @@ import {
 } from "@/components/generate-content/fill-progress";
 import { RunProgress } from "@/components/generate-content/run-progress";
 import { useRunStages } from "@/hooks/use-run-stages";
+import { plannedSections } from "@/lib/generate-content/article-structure";
 import { describeRun } from "@/lib/generate-content/run-findings";
 import { fillPhase, fillTitleRows } from "@/lib/generate-content/step-fill";
 import {
@@ -1172,6 +1173,11 @@ export function FreshGenerationView({
         country,
         contentType: selectedContentType || recommendedContentType,
         intent: selectedIntent || seoResult?.intent,
+        // The outline as approved: the user may have added or removed sections at its step.
+        outlineSections:
+          plannedSections(parsedOutline).filter(
+            (section) => section.heading_level !== "H3",
+          ).length || null,
       })
     : null;
 
@@ -2805,8 +2811,17 @@ export function FreshGenerationView({
               runStages.run.stages.some((stage) => stage.state === "active") ? (
                 <RunProgress
                   stages={runStages.run.stages}
+                  {...runView}
                   onCancel={_handleCancelGeneration}
                 />
+              ) : null
+            }
+            // Below 1280 px that side panel is a sheet: the running stage, its time and how far
+            // the run is go on one line in the article's own bar (task 703).
+            runStrip={
+              runStages.run?.phase === "article" &&
+              runStages.run.stages.some((stage) => stage.state === "active") ? (
+                <RunProgress variant="compact" stages={runStages.run.stages} />
               ) : null
             }
             threadId={threadId ?? undefined}
