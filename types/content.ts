@@ -1,4 +1,5 @@
 // Content management types
+import type { components } from "@/lib/api-client/schema";
 import type { ContentChecklist, SchemaMarkup } from "./generate-content";
 
 /**
@@ -116,17 +117,9 @@ export interface UpdateContentRequest {
   schema_markup?: SchemaMarkup | Record<string, unknown>;
 }
 
-export interface PublishingResult {
-  site_id: string;
-  site_name?: string;
-  status: string;
-  external_url?: string;
-  last_synced_at?: string;
-  /** The content list's names for the two fields above: it sends these, and no site name (the
-   * field isn't in the API's spec yet, so this is read from the backend's `list_content`). */
-  url?: string | null;
-  last_synced?: string | null;
-}
+/** One site an article was sent to, as the content list sends it: the site's id and no name. */
+export type PublishingResult =
+  components["schemas"]["ContentPublishingResultSchema"];
 
 /**
  * Content item schema

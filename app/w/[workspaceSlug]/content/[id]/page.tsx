@@ -340,7 +340,7 @@ export default function WorkspaceContentDetailPage({
                         className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30"
                       >
                         <span className="text-sm font-semibold text-foreground flex-1 truncate">
-                          {result.site_name || result.site_id}
+                          {result.site_id}
                         </span>
                         <span
                           className={cn(

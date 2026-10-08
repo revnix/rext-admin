@@ -264,7 +264,6 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
           publishing_results: [
             {
               site_id: "s",
-              site_name: "Blog",
               status: "published",
               last_synced_at: "2026-10-01T00:00:00Z",
             },
@@ -276,7 +275,6 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
           publishing_results: [
             {
               site_id: "s",
-              site_name: "Blog",
               status: "failed",
               last_synced_at: "2026-10-06T00:00:00Z",
             },
@@ -288,7 +286,7 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
           ],
         }),
       ],
-      new Map(),
+      new Map([["s", "Blog"]]),
       2,
     );
     expect(items.map((item) => [item.title, item.site, item.state])).toEqual([
@@ -298,8 +296,7 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
     expect(failed).toBe(1);
   });
 
-  it("reads the content list's own names, and names each site by its address", () => {
-    // What the backend's list sends: `url` and `last_synced`, and no site name.
+  it("names each site by its address, as the content list sends none", () => {
     const { items } = recentPublishes(
       [
         article({
@@ -309,8 +306,8 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
             {
               site_id: "wp",
               status: "published",
-              url: "https://www.example.com/first",
-              last_synced: "2026-10-02T00:00:00+00:00",
+              external_url: "https://www.example.com/first",
+              last_synced_at: "2026-10-02T00:00:00+00:00",
             },
           ],
         }),
@@ -321,7 +318,7 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
             {
               site_id: "gone",
               status: "scheduled",
-              last_synced: "2026-10-04T00:00:00+00:00",
+              last_synced_at: "2026-10-04T00:00:00+00:00",
             },
           ],
         }),
@@ -347,7 +344,7 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
           title: "Older, dated",
           updated_at: "2026-10-01T00:00:00Z",
           publishing_results: [
-            { site_id: "a", status: "published", last_synced: "2026-10-03" },
+            { site_id: "a", status: "published", last_synced_at: "2026-10-03" },
           ],
         }),
         article({
@@ -372,11 +369,11 @@ describe("content health and publishing on the home (FB2.27 #708)", () => {
         id: "1",
         title: "Mixed",
         publishing_results: [
-          { site_id: "a", status: "trashed", last_synced: "2026-10-05" },
-          { site_id: "b", status: "deleted", last_synced: "2026-10-05" },
-          { site_id: "c", status: "unknown", last_synced: "2026-10-05" },
-          { site_id: "d", status: "draft", last_synced: "2026-10-03" },
-          { site_id: "e", status: "pending", last_synced: "2026-10-02" },
+          { site_id: "a", status: "trashed", last_synced_at: "2026-10-05" },
+          { site_id: "b", status: "deleted", last_synced_at: "2026-10-05" },
+          { site_id: "c", status: "unknown", last_synced_at: "2026-10-05" },
+          { site_id: "d", status: "draft", last_synced_at: "2026-10-03" },
+          { site_id: "e", status: "pending", last_synced_at: "2026-10-02" },
         ],
       }),
     ]);

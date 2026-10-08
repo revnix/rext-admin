@@ -60,8 +60,8 @@ function ContentTitle({ item }: { item: ContentItem }) {
 }
 
 /**
- * The sites an article went out to: each publishing result's site by name, the unnamed ones counted by
- * their site id, else WordPress for an older row.
+ * The sites an article went out to, counted by their site id (a publishing result names no site), else
+ * WordPress for an older row.
  */
 function publishedTo(item: ContentItem): string[] {
   const sent = (item.publishing_results ?? []).filter(
@@ -70,17 +70,10 @@ function publishedTo(item: ContentItem): string[] {
       result.status === "published" ||
       result.status === "synced",
   );
-  const named = new Set(
-    sent.flatMap((result) => (result.site_name ? [result.site_name] : [])),
-  );
-  const unnamed = new Set(
-    sent.filter((result) => !result.site_name).map((result) => result.site_id),
-  ).size;
-  const sites = [...named];
-  if (unnamed > 0)
-    sites.push(
-      unnamed === 1 ? "A connected site" : `${unnamed} connected sites`,
-    );
+  const count = new Set(sent.map((result) => result.site_id)).size;
+  const sites: string[] = [];
+  if (count > 0)
+    sites.push(count === 1 ? "A connected site" : `${count} connected sites`);
   if (sites.length === 0 && item.wordpress_url) sites.push("WordPress");
   return sites;
 }

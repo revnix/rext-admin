@@ -266,8 +266,7 @@ export function siteLabels(
 }
 
 /** The latest publishes to the workspace's sites, newest first (FB2.27 #708), and how many of all
- * of them failed. The content list names a result's address and time `url` and `last_synced`, and
- * no site: `sites` names it (siteLabels). */
+ * of them failed. A result carries its site's id and no name: `sites` names it (siteLabels). */
 export function recentPublishes(
   content: ContentItem[],
   sites: Map<string, string> = new Map(),
@@ -280,18 +279,14 @@ export function recentPublishes(
       // A result the site hasn't been asked about yet (a publish that just failed) has no time of
       // its own: the article's last change stands in, so it isn't sorted behind every dated one.
       const at = Date.parse(
-        result.last_synced_at ??
-          result.last_synced ??
-          item.updated_at ??
-          item.created_at ??
-          "",
+        result.last_synced_at ?? item.updated_at ?? item.created_at ?? "",
       );
       return [
         {
           articleId: item.id,
           siteId: result.site_id,
           title: item.title,
-          site: result.site_name || sites.get(result.site_id) || "Your site",
+          site: sites.get(result.site_id) || "Your site",
           state,
           at: Number.isFinite(at) ? at : null,
         },
