@@ -1016,9 +1016,10 @@ export function buildOutlineApproval(
     ...(input.targetWordCount
       ? { target_word_count: input.targetWordCount }
       : {}),
-    // The list as the user left it, even with every secondary keyword removed (it then
-    // holds the focus keyphrase alone): the backend reads what is missing as removed.
-    ...(input.keywords?.length ? { keywords_to_include: input.keywords } : {}),
+    // The list as the user left it, even empty (an outline with no focus keyphrase, its last
+    // keyword removed): the backend reads what is missing from the list as removed, and no
+    // list at all as "keep the outline's".
+    ...(input.keywords ? { keywords_to_include: input.keywords } : {}),
     ...(gate.internalLinks.length
       ? { selected_internal_links: input.selectedLinks }
       : {}),
