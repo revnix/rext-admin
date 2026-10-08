@@ -6,6 +6,7 @@ import {
   adminLandingRoute,
   adminRoleLabel,
   sameAddress,
+  tokenNamesRole,
 } from "@/types/admin-invitation";
 
 const invitation = (admin_role: string) =>
@@ -82,5 +83,27 @@ describe("an invitation opened signed out comes back after signing in (task 915)
     expect(sameAddress("new.admin@example.com", "other@example.com")).toBe(
       false,
     );
+  });
+});
+
+describe("the roles written in a backend access token (task 915)", () => {
+  const token = (payload: object) =>
+    `head.${btoa(JSON.stringify(payload)).replace(/=+$/, "")}.sig`;
+
+  it("says whether the token names the role: one signed before the role was given doesn't", () => {
+    expect(
+      tokenNamesRole(token({ roles: ["user", "support"] }), "support"),
+    ).toBe(true);
+    expect(tokenNamesRole(token({ roles: ["user"] }), "support")).toBe(false);
+    expect(
+      tokenNamesRole(token({ roles: ["Super_Admin"] }), "super_admin"),
+    ).toBe(true);
+  });
+
+  it("holds nobody back on a token it can't read", () => {
+    expect(tokenNamesRole(undefined, "support")).toBeNull();
+    expect(tokenNamesRole("not-a-token", "support")).toBeNull();
+    expect(tokenNamesRole(token({ sub: "someone" }), "support")).toBeNull();
+    expect(tokenNamesRole("head.%%%.sig", "support")).toBeNull();
   });
 });

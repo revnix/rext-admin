@@ -13,7 +13,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
+  AUTH_SESSION_UPDATE_ACTION,
   inTurnWithTokenRefresh,
+  requestBackendTokenRefresh,
 } from "@/lib/auth-utils";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,7 @@ import {
   adminLandingRoute,
   adminRoleLabel,
   sameAddress,
+  tokenNamesRole,
 } from "@/types/admin-invitation";
 import type { Route } from "next";
 
@@ -50,23 +53,32 @@ export default function AcceptAdminInvitationPage() {
   // After accepting: "reading" while the session reads the new role, "unread" when it couldn't.
   const [roleRead, setRoleRead] = useState<"reading" | "unread">("reading");
 
-  // The backend holds the role at once; the session still carries the roles it was signed in
-  // with, and the route guard reads those. They are read again from the backend, the way a role
-  // change is picked up anywhere else in the app, and the admin area is opened only once the
-  // session shows the role: a reading that fails leaves the session as it was without saying so,
-  // and the guard would turn the new admin away (task 915).
+  // The backend holds the role at once, but two copies of the account's roles are older than it:
+  // the session's, which the route guard reads, and the ones written in the backend's access
+  // token, by which the backend lets a support admin into the users list. So the session takes a
+  // new token (the backend signs it with the roles the account holds now), reads the role from
+  // the backend if the new token's answer didn't bring it, and the admin area is opened only once
+  // both show the role. A reading that fails leaves the session as it was without saying so, and
+  // the new admin would be turned away (task 915).
   const openAdminArea = async (role: string) => {
     setRoleRead("reading");
     let held: string | undefined;
+    let inToken: boolean | null = null;
     try {
-      const synced = await inTurnWithTokenRefresh(() =>
-        update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION }),
+      let current = await requestBackendTokenRefresh(() =>
+        update({ authAction: AUTH_SESSION_UPDATE_ACTION }),
       );
-      held = synced?.user?.role;
+      if (current?.user?.role !== role) {
+        current = await inTurnWithTokenRefresh(() =>
+          update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION }),
+        );
+      }
+      held = current?.user?.role;
+      inToken = tokenNamesRole(current?.user?.accessToken, role);
     } catch {
       // Said on the page, with a way to ask again.
     }
-    if (role && held === role) {
+    if (role && held === role && inToken !== false) {
       window.location.assign(adminLandingRoute(role));
       return;
     }
