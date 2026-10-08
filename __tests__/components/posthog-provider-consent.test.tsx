@@ -101,6 +101,7 @@ afterAll(() => {
 });
 beforeEach(() => {
   jest.clearAllMocks();
+  window.localStorage.clear();
   // The choice is also sent to the app's own server.
   global.fetch = jest
     .fn()
@@ -208,6 +209,20 @@ describe("where analytics is on unless switched off", () => {
       trial_ends_at: null,
       workspaces: 2,
     });
+  });
+
+  it("doesn't send the person's properties again on the next page load when nothing changed", async () => {
+    const first = renderProvider();
+    await waitFor(
+      () => expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1),
+      { timeout: 4000 },
+    );
+    first.unmount();
+
+    renderProvider();
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    expect(mockPosthog.setPersonProperties).toHaveBeenCalledTimes(1);
   });
 
   it("sets a page's workspace before that page's view goes out", async () => {
