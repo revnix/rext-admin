@@ -18,11 +18,7 @@ import { Input } from "@/components/ui/input";
 import { OAuthButtons } from "@/components/oauth-buttons";
 import { useInvitationValidation } from "@/hooks/use-invitation-validation";
 import { cn } from "@/lib/utils";
-import {
-  type SignupFormData,
-  signupFormSchema,
-  signupNameAsSent,
-} from "@/schemas/auth-schemas";
+import { type SignupFormData, signupFormSchema } from "@/schemas/auth-schemas";
 import { ApiError, apiClient } from "@/lib/api-client";
 import { getAuthHeaders } from "@/lib/auth-utils";
 import { log } from "@/lib/logger";
@@ -38,7 +34,7 @@ import { useFormProgress } from "@/hooks/use-form-progress";
 import { useToast } from "@/hooks/use-toast";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { checkPasswordBreach } from "@/lib/password-utils";
-import { classifyError } from "@/lib/error-utils";
+import { classifyError, extractFieldErrors } from "@/lib/error-utils";
 import type { Route } from "next";
 import { workspaceRoutes } from "@/lib/routes";
 
@@ -132,8 +128,7 @@ export function SignupForm({
 
       // Build request payload
       const payload: Record<string, string> = {
-        // Temporary: the live backend refuses a name that starts in lower case (task 933).
-        full_name: signupNameAsSent(data.full_name),
+        full_name: data.full_name,
         email: data.email,
         password: data.password,
       };
@@ -277,6 +272,24 @@ export function SignupForm({
         }
         const loginUrl = `/login?${params.toString()}`;
         router.push(loginUrl as Route);
+        return;
+      }
+
+      // What the backend refused about a field goes beside that field, in its own words, and
+      // the first of them takes the focus. It used to be a toast, away from the field it was
+      // about and gone in seconds (rext-control task 933).
+      const refused = extractFieldErrors(err);
+      const beside = (["full_name", "email", "password"] as const).filter(
+        (field) => refused[field],
+      );
+      if (beside.length > 0) {
+        beside.forEach((field, index) => {
+          form.setError(
+            field,
+            { type: "server", message: refused[field] },
+            { shouldFocus: index === 0 },
+          );
+        });
         return;
       }
 

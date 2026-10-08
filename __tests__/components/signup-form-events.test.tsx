@@ -217,10 +217,9 @@ describe("SignupForm, what it reports", () => {
     expect(register).not.toHaveBeenCalled();
   });
 
-  // The live backend refuses a name that starts in lower case; on launch day that refused one
-  // person three times in nine seconds (rext-control task 933). Until its rule is gone the name
-  // is sent with its first letter raised, and the form keeps what was typed.
-  it("sends a name typed in lower case so that the backend takes it, and leaves the field as typed", async () => {
+  // The backend takes a name as it is written since rext-control task 933; while it asked for
+  // a capital, the name went out with its first letter raised.
+  it("sends the name as it was typed", async () => {
     register.mockRejectedValue(new ApiError(503, "Service unavailable"));
     show();
     await userEvent.type(screen.getByLabelText(/Full name/), "john smith");
@@ -232,10 +231,38 @@ describe("SignupForm, what it reports", () => {
 
     await waitFor(() => expect(register).toHaveBeenCalledTimes(1));
     expect(register.mock.calls[0][0]).toMatchObject({
-      full_name: "John smith",
+      full_name: "john smith",
       email: EMAIL,
     });
-    expect(screen.getByLabelText(/Full name/)).toHaveValue("john smith");
+  });
+
+  it("puts what the backend refused about the name beside the name, not in a toast", async () => {
+    register.mockRejectedValue(
+      new ApiError(422, "Validation failed", "validation_error", {
+        error: {
+          details: [
+            {
+              field: "full_name",
+              message: "Full name cannot contain a web address",
+              code: "field_validation_error",
+            },
+          ],
+        },
+      }),
+    );
+    show();
+    await fillIn();
+
+    await pressCreate();
+
+    expect(
+      await screen.findByText("Full name cannot contain a web address"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Full name/)).toHaveFocus();
+    expect(toast.error).not.toHaveBeenCalled();
+    // Counted as a refusal all the same, and never by its words.
+    expect(sent("signup_refused")).toHaveLength(1);
+    expect(JSON.stringify(track.mock.calls)).not.toContain("web address");
   });
 
   it("does not call it a refused sign-up when the account exists and only the login after it fails", async () => {

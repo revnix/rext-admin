@@ -4,7 +4,7 @@
  * and the form itself refused every name without a Latin letter.
  */
 
-import { signupFormSchema, signupNameAsSent } from "@/schemas/auth-schemas";
+import { signupFormSchema } from "@/schemas/auth-schemas";
 
 const form = (full_name: string) => ({
   full_name,
@@ -33,30 +33,13 @@ describe("the sign-up form's name", () => {
     expect(signupFormSchema.parse(form(`  ${name} `)).full_name).toBe(name);
   });
 
-  it("still asks for a name, with a letter in it, of 50 characters at most", () => {
+  it("still asks for a name, with a letter in it, of 100 characters at most", () => {
     expect(refusal("")).toBe("Full name is required");
     expect(refusal("   ")).toBe("Full name is required");
     expect(refusal("12345")).toBe("Name must contain at least one letter");
-    expect(refusal("x".repeat(51))).toBe(
-      "Full name must be 50 characters or less",
+    expect(refusal("x".repeat(101))).toBe(
+      "Full name must be 100 characters or less",
     );
-    expect(refusal("x".repeat(50))).toBeUndefined();
-  });
-});
-
-describe("the name as the sign-up request sends it, while the backend asks for a capital", () => {
-  it.each([
-    ["john smith", "John smith"],
-    ["  john smith ", "John smith"],
-    ["John Smith", "John Smith"],
-    ["éric", "Éric"],
-    ["José Álvarez", "José Álvarez"],
-    ["de la Cruz", "De la Cruz"],
-    // Scripts with no capitals go as they are.
-    ["李雷", "李雷"],
-    ["محمد", "محمد"],
-    ["", ""],
-  ])("sends %j as %j", (typed, sent) => {
-    expect(signupNameAsSent(typed)).toBe(sent);
+    expect(refusal("x".repeat(100))).toBeUndefined();
   });
 });

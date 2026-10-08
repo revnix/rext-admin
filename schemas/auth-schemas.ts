@@ -27,28 +27,15 @@ const passwordSchema = z
   .max(128, "Password must be 128 characters or less");
 
 // A person's name as they write it (rext-control task 933): any script and any case, with its
-// accents, apostrophes and hyphens. The form asked for a Latin letter and refused a digit, so
-// "李雷" and "محمد" never got as far as the backend. Only that there is a name, that it holds a
-// letter and how long it is are asked here; markup and hidden characters are the backend's to
-// refuse, in its own words beside the field.
+// accents, apostrophes and hyphens, and stored as written. Only that there is a name, that it
+// holds a letter and how long it is are asked here, as the backend asks them; markup, hidden
+// characters and a web address are the backend's to refuse, in its own words beside the field.
 const signupFullNameSchema = z
   .string()
   .trim()
   .min(1, "Full name is required")
-  .max(50, "Full name must be 50 characters or less")
+  .max(100, "Full name must be 100 characters or less")
   .regex(/\p{L}/u, "Name must contain at least one letter");
-
-/**
- * TEMPORARY (rext-control task 933). The name as the sign-up request sends it: with its first
- * letter raised, where its script has capitals. The live backend still refuses a full name that
- * starts in lower case ("Full name must start with a capital letter"); on 8 October 2026 that
- * refused one person three times in nine seconds. What the person typed stays as it is in the
- * form. Remove this, and its one use in the sign-up form, once the backend's rule is gone.
- */
-export function signupNameAsSent(typed: string): string {
-  const [first = "", ...rest] = Array.from(typed.trim());
-  return first.toUpperCase() + rest.join("");
-}
 
 const signupEmailSchema = z
   .string()
