@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Meter } from "@/components/ui/meter";
 import { Notice } from "@/components/ui/notice";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { usePersonas } from "@/hooks/use-personas";
 import { useWorkspaceCreateAnalytics } from "@/hooks/use-workspace-create-analytics";
 import { useSSEChannel } from "@/hooks/use-sse-channel";
@@ -151,6 +152,8 @@ export function WorkspaceCreateWizard({
     !existing &&
     workspaceList.length === 0 &&
     (planCount === null || planCount.used === 0);
+  // Under 1024 px the way past the form comes before it (see where it is rendered).
+  const narrow = useIsMobile();
   // The same, as it was when the page opened: what analytics calls a first workspace.
   const startedWithNone = useRef(noneYet);
   const setCurrentWorkspace = useWorkspaceStore(
@@ -676,11 +679,35 @@ export function WorkspaceCreateWizard({
       ? "When you create the workspace, we draft its brand voice from what you tell us. It takes under half a minute, and you review everything before any of it is used. You can add a website later in the workspace's settings, and we read it then."
       : "When you create the workspace, we read your website and draft its brand voice, author personas and competitors. It takes about a minute, you can leave the page meanwhile, and you review everything before any of it is used.";
 
+  // A first workspace needs none of this to begin with: one plain way past the form. Under the
+  // button where there is room for it. On a phone the button and anything under it sit below the
+  // first screen and behind the tab bar, so there it comes first, where someone looking for a way
+  // on will see it (rext-control task 905: the newcomer who opened this form eight times and
+  // touched nothing was on a phone 360 wide). It is rendered once, in the place it is seen, so a
+  // keyboard and a screen reader meet it in the same order as the eye does.
+  const wayPast = noneYet ? (
+    <p className="text-table text-muted-foreground">
+      Not now?{" "}
+      <button
+        data-rec="show"
+        type="button"
+        className="font-medium text-foreground underline underline-offset-4 disabled:opacity-60"
+        onClick={() => void skip()}
+        disabled={skipping}
+      >
+        {skipping ? "Setting up your workspace" : "Skip for now"}
+      </button>
+      {skipping
+        ? ""
+        : " and tell Rext about your business later. You can start an article right away."}
+    </p>
+  ) : null;
+
   let main: ReactNode;
   if (step === 0) {
     main = (
-      // A column, so that the way past the form can come first on a phone (below).
-      <div className="flex flex-col gap-6">
+      <div className="space-y-6">
+        {narrow && wayPast}
         {planCount && (
           <div className="space-y-2">
             <p className="num text-table text-muted-foreground">
@@ -862,28 +889,7 @@ export function WorkspaceCreateWizard({
             </button>
           </p>
         </FormShell>
-        {/* A first workspace needs none of this to begin with: one plain way past the form.
-            Under the button where there is room for it; on a phone the button and anything
-            under it sit below the first screen and behind the tab bar, so there it comes first,
-            where someone looking for a way on will see it (rext-control task 905: the newcomer
-            who opened this form eight times and touched nothing was on a phone 360 wide). */}
-        {noneYet && (
-          <p className="order-first text-table text-muted-foreground lg:order-none">
-            Not now?{" "}
-            <button
-              data-rec="show"
-              type="button"
-              className="font-medium text-foreground underline underline-offset-4 disabled:opacity-60"
-              onClick={() => void skip()}
-              disabled={skipping}
-            >
-              {skipping ? "Setting up your workspace" : "Skip for now"}
-            </button>
-            {skipping
-              ? ""
-              : " and tell Rext about your business later. You can start an article right away."}
-          </p>
-        )}
+        {!narrow && wayPast}
         {/* Under 1024 px nothing sits beside the form: what happens next follows it. */}
         <section
           aria-label="What happens next"
