@@ -66,6 +66,22 @@ it("never marks the browser of someone who isn't one of our admins, launch link 
   expect(marked()).toBe(false);
 });
 
+it("keeps a launch used before signing in, for the page a sign-in loads afterwards", async () => {
+  // Signed out on the sign-in page, with the link: no mark, but the launch's two hours start.
+  const signedOut = await load(LAUNCH);
+  expect(signedOut.syncToolbarMark(false, 1_000)).toBe(false);
+  expect(marked()).toBe(false);
+  expect(Number(window.localStorage.getItem(UNTIL_KEY))).toBe(1_000 + 2 * HOUR);
+
+  // Signing in with Google loads a new page: the link is gone from the address, and
+  // posthog-js has kept the launch.
+  window.localStorage.setItem(STATE_KEY, "{}");
+  const signedIn = await load("");
+  expect(signedIn.syncToolbarMark(true, 60_000)).toBe(true);
+  expect(marked()).toBe(true);
+  expect(window.localStorage.getItem(STATE_KEY)).not.toBeNull();
+});
+
 it("marks on a later page while posthog-js still holds the launch and its two hours aren't over", async () => {
   // The link was used on the sign-in page; this is the page after signing in.
   const { syncToolbarMark } = await load("");

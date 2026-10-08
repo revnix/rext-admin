@@ -19,6 +19,12 @@ import { ROLES } from "@/lib/permissions";
 /** The mark on a browser whose admin opened the toolbar: present or absent, nothing in it. */
 export const TOOLBAR_COOKIE = "rext-toolbar";
 
+/**
+ * How often a page with the mark looks again at whether the toolbar is still wanted: closing
+ * the toolbar changes nothing the page is told about, so it has to ask.
+ */
+export const TOOLBAR_RECHECK_MS = 15_000;
+
 /** Two hours, after which the launch link has to be used again. */
 const TOOLBAR_SECONDS = 60 * 60 * 2;
 
@@ -91,7 +97,10 @@ function launchUnderWay(now: number): boolean {
  */
 export function syncToolbarMark(allowed: boolean, now = Date.now()): boolean {
   if (typeof window === "undefined") return false;
-  const wanted = allowed && launchUnderWay(now);
+  // Looked at whoever the person is: a link used before signing in has its two hours stamped
+  // then, and is still there on the page a sign-in loads afterwards.
+  const underWay = launchUnderWay(now);
+  const wanted = allowed && underWay;
   const marked = toolbarMarked();
   if (wanted && !marked) {
     writeMark(TOOLBAR_SECONDS);

@@ -39,6 +39,7 @@ import {
 import {
   mayUseToolbar,
   syncToolbarMark,
+  TOOLBAR_RECHECK_MS,
   toolbarMarked,
 } from "@/lib/analytics-toolbar";
 import { useSubscriptionStore } from "@/stores/subscription-store";
@@ -399,13 +400,24 @@ function HeatmapSync() {
 function ToolbarAccess() {
   const { data: session, status } = useSession();
   const role = session?.user?.role;
+  // Looked at again on every page: closing the toolbar tells the page nothing.
+  const pathname = usePathname();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the path is the reason to look again
   useEffect(() => {
     if (status === "loading") return;
-    const allowed =
-      status === "authenticated" && mayUseToolbar(role) && !isImpersonating();
-    if (syncToolbarMark(allowed)) window.location.reload();
-  }, [status, role]);
+    const look = () => {
+      const allowed =
+        status === "authenticated" && mayUseToolbar(role) && !isImpersonating();
+      if (syncToolbarMark(allowed)) window.location.reload();
+    };
+    look();
+    // And while the browser carries the mark, every few seconds: the mark goes soon after
+    // the toolbar is closed, not at the next page.
+    if (!toolbarMarked()) return;
+    const again = window.setInterval(look, TOOLBAR_RECHECK_MS);
+    return () => window.clearInterval(again);
+  }, [status, role, pathname]);
 
   return null;
 }
