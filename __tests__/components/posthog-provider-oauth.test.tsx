@@ -28,20 +28,33 @@ jest.mock("posthog-js", () => ({
     setPersonProperties: jest.fn(),
   },
 }));
+// The workspace and the plan are already known, so the first page view doesn't wait for them
+// (that wait has its own tests, in posthog-provider-consent.test.tsx).
+const mockPlan = {
+  subscription: {
+    subscription: {
+      plan_name: "trial",
+      status: "trial",
+      billing_period: "monthly",
+    },
+  },
+};
+const mockWorkspace = {
+  currentWorkspace: { id: "ws-1", slug: "acme" },
+  workspaceList: [{}],
+};
 jest.mock("@/stores/subscription-store", () => ({
   useSubscriptionStore: Object.assign(
-    (selector: (state: unknown) => unknown) => selector({ subscription: null }),
-    { getState: () => ({ subscription: null }) },
+    (selector: (state: unknown) => unknown) => selector(mockPlan),
+    { getState: () => mockPlan },
   ),
 }));
 jest.mock("@/stores/workspace", () => ({
   useWorkspaceStore: (selector: (state: unknown) => unknown) =>
-    selector({ currentWorkspace: null, workspaceList: [] }),
+    selector(mockWorkspace),
 }));
 jest.mock("@/stores/workspace/use-workspace-context-store", () => ({
-  useWorkspaceContextStore: {
-    getState: () => ({ currentWorkspace: null, workspaceList: [] }),
-  },
+  useWorkspaceContextStore: { getState: () => mockWorkspace },
 }));
 // Analytics is on for this person (a region that isn't asked first): the provider starts.
 jest.mock("@/lib/analytics-consent", () => ({

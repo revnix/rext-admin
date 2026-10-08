@@ -243,11 +243,49 @@ describe("where analytics is on unless switched off", () => {
     });
   });
 
-  it("carries no workspace while the app still holds another than the page's own", async () => {
+  it("holds a page load's first view until the page's workspace is known, and sends it with it", async () => {
+    // Right after a sign-in the app still remembers another workspace, or none.
+    mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
+    try {
+      const view = renderProvider();
+      await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+      await act(() => new Promise<void>((resolve) => setTimeout(resolve, 300)));
+      expect(pageViews()).toHaveLength(0);
+
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+      view.rerender(
+        <PostHogProvider>
+          <AnalyticsConsentPrompt />
+          <p>The page</p>
+        </PostHogProvider>,
+      );
+
+      await waitFor(() => expect(pageViews()).toHaveLength(1));
+      const withWorkspace = mockPosthog.register.mock.calls.findIndex(
+        ([properties]) => properties.workspace_id === "ws-1",
+      );
+      expect(withWorkspace).toBeGreaterThan(-1);
+      expect(
+        mockPosthog.register.mock.invocationCallOrder[withWorkspace],
+      ).toBeLessThan(
+        mockPosthog.capture.mock.invocationCallOrder[
+          mockPosthog.capture.mock.calls.findIndex(
+            ([event]) => event === "$pageview",
+          )
+        ],
+      );
+    } finally {
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+    }
+  });
+
+  it("sends the first view without a workspace when it isn't known in time, never another's", async () => {
     mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
     try {
       renderProvider();
-      await waitFor(() => expect(pageViews()).toHaveLength(1));
+      await waitFor(() => expect(pageViews()).toHaveLength(1), {
+        timeout: 4500,
+      });
 
       const registered = Object.assign(
         {},
@@ -255,6 +293,27 @@ describe("where analytics is on unless switched off", () => {
       );
       expect(registered).not.toHaveProperty("workspace_id");
       expect(mockPosthog.unregister).toHaveBeenCalledWith("workspace_id");
+    } finally {
+      mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
+    }
+  }, 8000);
+
+  it("doesn't wait for the views after the first", async () => {
+    const view = renderProvider();
+    await waitFor(() => expect(pageViews()).toHaveLength(1));
+
+    // Another workspace's page, before the app has switched to it.
+    mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
+    try {
+      view.rerender(
+        <PostHogProvider>
+          <AnalyticsConsentPrompt />
+          <p>Another page</p>
+        </PostHogProvider>,
+      );
+      // A render is a new view here (the mocked route hooks answer with new objects each time):
+      // it goes out at once, though the app's workspace is not this page's.
+      expect(pageViews()).toHaveLength(2);
     } finally {
       mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
     }

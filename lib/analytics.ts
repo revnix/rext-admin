@@ -20,12 +20,16 @@ type AnalyticsEvent =
   | "content_generation_started"
   | "keyword_search_completed"
   | "keyword_selected"
+  | "content_type_selected"
   | "title_suggestions_generated"
+  | "titles_regenerated"
   | "title_selected"
   | "outline_generated"
+  | "outline_regenerated"
   | "outline_approved"
   | "content_generation_completed"
   | "content_generation_failed"
+  | "content_generation_cancelled"
   // Publishing
   | "content_published"
   | "content_scheduled"
@@ -35,6 +39,7 @@ type AnalyticsEvent =
   | "cms_publish_succeeded"
   | "cms_publish_failed"
   // Plans
+  | "paywall_shown"
   | "checkout_started"
   | "checkout_failed"
   | "subscription_purchased";
