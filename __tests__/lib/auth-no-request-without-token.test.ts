@@ -411,6 +411,29 @@ describe("a 401 that is a verdict on the token itself", () => {
     ]);
   });
 
+  it("signs out again on a page that stayed open through a sign-out and has a session again", async () => {
+    const { authenticatedFetch } = freshWrapper();
+    readSession.mockResolvedValue(session("access-token"));
+    send.mockResolvedValue(
+      refusal(401, "unauthorized", "Authentication session has been revoked"),
+    );
+    const refusedAndSignedOut = async () => {
+      const request = settle(authenticatedFetch(URL_ASKED));
+      await jest.advanceTimersByTimeAsync(700 + 1500 + 50);
+      await request;
+    };
+
+    await refusedAndSignedOut();
+    expect(signOuts()).toHaveLength(1);
+
+    // The person stayed on the page (a form with text in it), then signed in from another tab.
+    signedOut.reportSignedOut("/login?error=SessionEnded");
+    signedOut.reportSignedIn();
+
+    await refusedAndSignedOut();
+    expect(signOuts()).toHaveLength(2);
+  });
+
   it("gives any other 401 to the caller and signs nobody out", async () => {
     const { authenticatedFetch } = freshWrapper();
     readSession.mockResolvedValue(session("access-token"));

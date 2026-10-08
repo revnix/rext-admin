@@ -1,13 +1,22 @@
 import { signOut } from "next-auth/react";
 import { log } from "@/lib/logger";
 import { getQueryClient } from "@/lib/query-client";
-import { leaveSignedOut } from "@/lib/auth/signed-out";
+import {
+  isSignedOut,
+  leaveSignedOut,
+  subscribeSignedOut,
+} from "@/lib/auth/signed-out";
 import { clearAuthHeadersCache } from "@/lib/auth-utils";
 import { apiClient } from "@/lib/api-client";
 import { resetSupportChat } from "@/lib/support-chat/chat";
 import { resetAllStores } from "./store-registry";
 
 let logoutPromise: Promise<void> | null = null;
+// A page that stayed open through a sign-out and has a session again is signed in like any
+// other: its next sign-out is a new one, not the first one's settled promise.
+subscribeSignedOut(() => {
+  if (!isSignedOut()) logoutPromise = null;
+});
 
 /**
  * Performs a comprehensive and secure logout operation.
