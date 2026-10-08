@@ -140,7 +140,7 @@ function DraftedRow({
     </>
   );
   const className =
-    "flex items-start gap-4 px-4 py-3 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none";
+    "flex items-start gap-4 px-4 py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset";
   return (
     <li>
       {href.startsWith("#") ? (
