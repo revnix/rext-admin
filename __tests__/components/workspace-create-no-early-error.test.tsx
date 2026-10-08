@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WorkspaceCreateWizard } from "@/components/workspace/workspace-create-wizard";
 
@@ -46,7 +46,9 @@ describe("Creating a workspace on a new account", () => {
       <QueryClientProvider client={new QueryClient()}>
         <WorkspaceCreateWizard />
         {/* The first-login questions open over the page as a dialog and take the focus. */}
-        <button type="button">Your industry</button>
+        <div role="dialog" aria-label="A few questions before you start">
+          <button type="button">Your industry</button>
+        </div>
       </QueryClientProvider>,
     );
 
@@ -86,6 +88,42 @@ describe("Creating a workspace on a new account", () => {
     expect(
       screen.getByRole("button", { name: "Read my website" }),
     ).toBeInTheDocument();
+  });
+
+  it("says the name is required once the person leaves the empty field", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+    expect(
+      screen.getByRole("textbox", { name: /What is your business called/ }),
+    ).toHaveFocus();
+
+    // On to the website, nothing typed: the person left the field, nothing took the focus.
+    await userEvent.tab();
+
+    expect(
+      screen.getByRole("textbox", { name: /What is its website/ }),
+    ).toHaveFocus();
+    expect(await screen.findByText("Name is required")).toBeInTheDocument();
+  });
+
+  it("keeps quiet while the window is away and the caret is still in the empty field", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WorkspaceCreateWizard />
+      </QueryClientProvider>,
+    );
+    const name = screen.getByRole("textbox", {
+      name: /What is your business called/,
+    });
+
+    // Another tab or window: the field hears a blur and is still the document's active element.
+    fireEvent.blur(name);
+
+    expect(name).toHaveFocus();
+    expect(screen.queryByText("Name is required")).toBeNull();
   });
 
   it("checks the name once something was typed in it and it was left", async () => {
