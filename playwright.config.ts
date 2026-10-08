@@ -17,6 +17,8 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "e2e",
+  // e2e/smoke is the smoke test a deploy ends with: its own config, playwright.smoke.config.ts.
+  testIgnore: "**/smoke/**",
   globalSetup: "./e2e/global-setup.ts",
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
