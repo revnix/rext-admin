@@ -114,8 +114,13 @@ export function WorkspaceCreateWizard({
 
   const createWorkspace = useWorkspaceStore((state) => state.createWorkspace);
   const workspaceList = useWorkspaceStore((state) => state.workspaceList);
-  // Whether this is the person's first workspace, as it was when the page opened.
-  const startedWithNone = useRef(workspaceList.length === 0);
+  // Whether the person has no workspace yet. The plan's own count says so when the page has it
+  // (the page waits for that read before it shows the form); the store's list alone can still be
+  // empty on a direct load of this page, for an account that has workspaces.
+  const noneYet =
+    workspaceList.length === 0 && (planCount === null || planCount.used === 0);
+  // The same, as it was when the page opened: what analytics calls a first workspace.
+  const startedWithNone = useRef(noneYet);
   const setCurrentWorkspace = useWorkspaceStore(
     (state) => state.setCurrentWorkspace,
   );
@@ -530,11 +535,7 @@ export function WorkspaceCreateWizard({
           submitLabel={withoutSite ? "Draft my brand voice" : "Read my website"}
           // Nowhere to cancel to without a workspace: the home page leads straight back here,
           // with the form emptied.
-          cancel={
-            startedWithNone.current
-              ? undefined
-              : { onCancel: () => router.push("/") }
-          }
+          cancel={noneYet ? undefined : { onCancel: () => router.push("/") }}
         >
           <FieldController
             control={form.control}
