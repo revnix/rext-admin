@@ -14,7 +14,7 @@
  */
 
 import type { CapturedNetworkRequest, PostHogConfig } from "posthog-js";
-import { normalizeWords } from "@/lib/recording-words";
+import { markOf, normalizeWords } from "@/lib/recording-words";
 
 /** Off unless the deploy says "true": merged switched off, and switched on by a variable. */
 export const RECORDING_ON =
@@ -54,33 +54,34 @@ function onRecordablePage(): boolean {
 
 // ── The app's own words ──────────────────────────────────────────────────────
 
-let words: ReadonlySet<string> | null = null;
-let wordsRequest: Promise<boolean> | null = null;
+// The marks of the app's own words (markOf), as the build listed them.
+let marks: ReadonlySet<string> | null = null;
+let marksRequest: Promise<boolean> | null = null;
 
 /** The list, as the build made it. Returns false when there is none: nothing is recorded then. */
 export function loadWords(): Promise<boolean> {
-  wordsRequest ||= fetch("/api/recording-words")
+  marksRequest ||= fetch("/api/recording-words")
     .then((response) => (response.ok ? response.json() : []))
     .then((list: unknown) => {
-      const texts = Array.isArray(list)
-        ? list.filter((text): text is string => typeof text === "string")
+      const listed = Array.isArray(list)
+        ? list.filter((mark): mark is string => typeof mark === "string")
         : [];
-      words = new Set(texts);
-      return texts.length > 0;
+      marks = new Set(listed);
+      return listed.length > 0;
     })
     .catch(() => false);
-  return wordsRequest;
+  return marksRequest;
 }
 
-/** For the tests: the list, or none. */
+/** For the tests: the app's own words, as texts, or none. */
 export function setWords(list: Iterable<string> | null): void {
-  words = list ? new Set(list) : null;
-  wordsRequest = null;
+  marks = list ? new Set([...list].map(markOf)) : null;
+  marksRequest = null;
   lastPath = "";
 }
 
 function isOwnWords(text: string): boolean {
-  return words?.has(normalizeWords(text)) ?? false;
+  return marks?.has(markOf(normalizeWords(text))) ?? false;
 }
 
 // ── Text ─────────────────────────────────────────────────────────────────────

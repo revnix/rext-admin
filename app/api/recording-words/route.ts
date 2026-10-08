@@ -1,7 +1,7 @@
 /**
  * The app's own words, for a session recording (lib/recording-words.ts says why).
  *
- * GET /api/recording-words -> ["Save", "Status", …]
+ * GET /api/recording-words -> the mark of each text ("1x2abc.9zk3q", …), not the texts
  *
  * Read from the source once, when the app is built, with the TypeScript compiler's parser: the
  * answer is static, so the running app serves the build's list and reads no file. Where the
@@ -10,7 +10,7 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { wordsInSource } from "@/lib/recording-words";
+import { markOf, wordsInSource } from "@/lib/recording-words";
 
 export const dynamic = "force-static";
 
@@ -56,7 +56,8 @@ async function appWords(): Promise<string[]> {
       }
     }
   }
-  return [...words].sort();
+  // As marks: the address answers anyone, and gives them nothing to read.
+  return [...new Set([...words].map(markOf))].sort();
 }
 
 export async function GET() {
