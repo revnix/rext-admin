@@ -442,10 +442,18 @@ function ContentEditorInner(props: ContentEditorProps) {
   const articleTitle =
     (writing && draftSoFar && outline?.title) || displayTitle;
   // The text is replaced at once twice, by the whole draft and then by the final text: the
-  // heading being read stays where it is on the screen.
+  // heading being read stays where it is on the screen. So it does while the sections land: one
+  // more below moves nothing, but one that comes late, or is written again, changes the page
+  // above the reader.
   useKeepReadingPlace(
     scrollRef,
-    isFinal ? "final" : showsDraft ? "draft" : marksDraft ? "sections" : "none",
+    isFinal
+      ? "final"
+      : showsDraft
+        ? "draft"
+        : marksDraft
+          ? `sections:${body}`
+          : "none",
   );
   // Its structure as layers, with what is written, being written and still to come (task 703).
   const structure = useMemo(
