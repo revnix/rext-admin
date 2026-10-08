@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/data-table/data-table-row-actions";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   addedSections,
   blockEnd,
@@ -97,7 +96,8 @@ export const ADD_CAP_REASON = `One approval adds at most ${MAX_ADDED_SECTIONS} s
 /**
  * The outline as a document's outline (rext-control#696, option A): the title as its root (H1), one
  * row per section with a text tag for its level, subsections indented under a guide line, and each
- * section's plan (what it covers, the questions it answers, its key points) folded under it.
+ * section's plan (what it covers, the questions it answers, its key points) under it, open from
+ * the start and folded away by its chevron.
  *
  * Each list is a tree grid and one stop in the Tab order: ↑ ↓ Home End move between sections, Enter or
  * F2 renames in place, Alt+↑ ↓ moves a section (an H2 with its subsections), Alt+→ ← makes it a
@@ -196,7 +196,12 @@ function OutlineGroup({
   const id = useId();
   const labelId = `${id}-label`;
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  const [openPlans, setOpenPlans] = useState<ReadonlySet<string>>(new Set());
+  // Every section's plan shows from the start, so the outline reads in depth without a click
+  // (rext-control#836); the ones a person folds away stay folded.
+  const [closedPlans, setClosedPlans] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const planOpen = (key: string) => !closedPlans.has(key);
   const [renamingKey, setRenamingKey] = useState<string | null>(null);
   const [menuKey, setMenuKey] = useState<string | null>(null);
   const [adding, setAdding] = useState<Adding | null>(null);
@@ -258,11 +263,11 @@ function OutlineGroup({
   };
 
   const setPlan = (key: string, open: boolean) =>
-    setOpenPlans((current) => {
-      if (current.has(key) === open) return current;
+    setClosedPlans((current) => {
+      if (current.has(key) !== open) return current;
       const next = new Set(current);
-      if (open) next.add(key);
-      else next.delete(key);
+      if (open) next.delete(key);
+      else next.add(key);
       return next;
     });
 
@@ -352,7 +357,7 @@ function OutlineGroup({
       case "ArrowLeft":
         return () => setPlan(row.key, false);
       case " ":
-        return () => setPlan(row.key, !openPlans.has(row.key));
+        return () => setPlan(row.key, !planOpen(row.key));
       case "Enter":
       case "F2":
         return editable ? () => startRename(row.key) : null;
@@ -558,7 +563,7 @@ function OutlineGroup({
                     editable={editable}
                     active={row.key === currentKey}
                     lastInSection={!next || levelRank(next) < rank}
-                    planOpen={openPlans.has(row.key)}
+                    planOpen={planOpen(row.key)}
                     renaming={renamingKey === row.key}
                     menuOpen={menuKey === row.key}
                     moving={
@@ -599,7 +604,7 @@ function OutlineGroup({
                     onKeyDown={(event) => onRowKeyDown(event, row, index)}
                     onFocus={() => setActiveKey(row.key)}
                     onTogglePlan={() => {
-                      setPlan(row.key, !openPlans.has(row.key));
+                      setPlan(row.key, !planOpen(row.key));
                       focusRow(row.key);
                     }}
                     onStartRename={() => startRename(row.key)}
@@ -1322,43 +1327,5 @@ function AddHeading({
         </Button>
       </div>
     </form>
-  );
-}
-
-/** The sections as the model writes them, before the outline parses. */
-export function StreamingTree({ headings }: { headings: string[] }) {
-  return (
-    <ol
-      aria-busy="true"
-      aria-label="Sections, being written"
-      className="divide-y divide-border rounded-md border border-border bg-card"
-    >
-      {headings.map((heading, index) => (
-        <li
-          // biome-ignore lint/suspicious/noArrayIndexKey: the streamed list only grows at its end, so a heading's place is its identity
-          key={`${index}-${heading}`}
-          className="flex min-h-11 items-center gap-2 py-1.5 pl-1.5 pr-1.5"
-        >
-          <span className="size-8 shrink-0" />
-          <span className="w-6 shrink-0 text-right font-mono text-table text-muted-foreground num">
-            {index + 1}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-4 shrink-0" />
-            <span className="text-body font-medium text-foreground">
-              {heading}
-            </span>
-          </span>
-        </li>
-      ))}
-      <li className="flex min-h-11 items-center gap-2 py-1.5 pl-1.5 pr-1.5">
-        <span className="size-8 shrink-0" />
-        <span className="w-6 shrink-0" />
-        <span className="flex flex-1 items-center gap-1.5">
-          <span className="size-4 shrink-0" />
-          <Skeleton className="h-4 w-2/3" />
-        </span>
-      </li>
-    </ol>
   );
 }

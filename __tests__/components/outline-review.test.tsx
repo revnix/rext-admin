@@ -149,7 +149,7 @@ async function chooseFromMenu(
 describe("OutlineReview, the outline tree", () => {
   beforeEach(() => (toast as unknown as jest.Mock).mockClear());
 
-  it("shows the gate's sections in order with their word budgets, the plan folded", async () => {
+  it("shows the gate's sections in order with their word budgets, each one's plan open under it (FB3.4)", async () => {
     const user = userEvent.setup();
     renderReview();
 
@@ -161,17 +161,28 @@ describe("OutlineReview, the outline tree", () => {
     expect(
       screen.getByRole("row", { name: "Cushioning and support" }),
     ).toHaveAccessibleDescription("~400 words");
+    // Open from the start: the questions and the points of every section, without a click.
+    for (const heading of headings()) {
+      expect(screen.getByText(`Why ${heading}?`)).toBeInTheDocument();
+      expect(screen.getByText(`${heading} point`)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: heading })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+    }
+
+    // A section's chevron folds its plan away, and only its own; a second click brings it back.
+    const toggle = screen.getByRole("button", {
+      name: "Cushioning and support",
+    });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(
       screen.queryByText("Why Cushioning and support?"),
     ).not.toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole("button", { name: "Cushioning and support" }),
-    );
+    expect(screen.getByText("Why How to get fitted?")).toBeInTheDocument();
+    await user.click(toggle);
     expect(screen.getByText("Why Cushioning and support?")).toBeInTheDocument();
-    expect(
-      screen.getByText("Cushioning and support point"),
-    ).toBeInTheDocument();
   });
 
   it("sends no sections when nothing changed", async () => {
@@ -566,7 +577,7 @@ describe("OutlineReview, the outline tree", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("lists the sections as they stream, with approval held", () => {
+  it("holds the outline's shape while it is written, with approval held (FB3.4)", () => {
     renderReview({
       current: null,
       rawTokens:
@@ -576,12 +587,20 @@ describe("OutlineReview, the outline tree", () => {
     expect(
       screen.getByRole("heading", { name: "Running shoes" }),
     ).toBeInTheDocument();
-    const streaming = screen.getByRole("list", {
-      name: "Sections, being written",
-    });
+    // Nothing of the outline shows before it is whole: not a heading as the model types it.
+    expect(screen.queryByText("Why the right shoe matters")).toBeNull();
+    expect(screen.queryByText(/^Cush/)).toBeNull();
     expect(
-      within(streaming).getByText("Why the right shoe matters"),
-    ).toBeInTheDocument();
+      screen.queryByRole("list", { name: "Sections, being written" }),
+    ).toBeNull();
+    expect(screen.getByText("The outline is being written.")).toHaveClass(
+      "sr-only",
+    );
+    expect(
+      document.querySelectorAll(
+        '[data-slot="outline-skeleton"] [data-slot="skeleton"]',
+      ).length,
+    ).toBeGreaterThan(12);
     expect(
       screen.getByRole("button", { name: /approve and generate/i }),
     ).toBeDisabled();
@@ -943,7 +962,8 @@ describe("OutlineReview, an outline that came back empty", () => {
 });
 
 describe("OutlineReview, while the first outline is written", () => {
-  it("shows the chosen title and the headings so far, with the run's stages beside them", () => {
+  it("shows the chosen title over the outline's shape, with the run's stages beside it (FB3.4)", async () => {
+    const user = userEvent.setup();
     render(
       <OutlineReview
         outline={null}
@@ -954,7 +974,6 @@ describe("OutlineReview, while the first outline is written", () => {
         onReject={jest.fn()}
         filling={{
           title: "Running shoes for beginners",
-          headings: ["Why the right shoe matters", "Cushioning and support"],
           sources: {
             serpResults: [],
             questions: ["How often should I replace them?"],
@@ -968,28 +987,38 @@ describe("OutlineReview, while the first outline is written", () => {
     expect(
       screen.getByRole("heading", { name: "Running shoes for beginners" }),
     ).toBeInTheDocument();
-    const written = screen.getByRole("list", {
-      name: "Sections, being written",
-    });
+    // The outline's shape: sections with nested sub-sections and points, and no words of it.
+    const shape = document.querySelector('[data-slot="outline-skeleton"]');
     expect(
-      within(written).getByText("Why the right shoe matters"),
-    ).toBeInTheDocument();
+      shape?.querySelectorAll('[data-slot="skeleton"]').length,
+    ).toBeGreaterThan(12);
+    expect(shape?.querySelector(".border-l")).not.toBeNull();
     expect(
-      within(written).getByText("Cushioning and support"),
-    ).toBeInTheDocument();
+      screen.queryByRole("list", { name: "Sections, being written" }),
+    ).toBeNull();
     // The stages head the brief's pane, and sit above the outline as one line under 1024 px.
     const pane = screen.getByRole("complementary", { name: "Brief" });
     expect(within(pane).getByText("The run's stages")).toBeInTheDocument();
     expect(screen.getByText("The run's stages, one line")).toBeInTheDocument();
-    // What it is written from is under it meanwhile, in the Outline tab: no Sources tab yet.
-    const from = within(
-      screen.getByRole("region", { name: "What the outline is written from" }),
-    );
+    // The sources wait for the outline too: their tab is there, so nothing moves when it lands,
+    // and until then it holds their shape, not what the run has read.
     expect(
-      from.getByText("How often should I replace them?"),
-    ).toBeInTheDocument();
-    expect(from.getByText("shoe fitting")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Sources" })).toBeNull();
+      screen.queryByRole("region", {
+        name: "What the outline is written from",
+      }),
+    ).toBeNull();
+    expect(screen.queryByText("How often should I replace them?")).toBeNull();
+    await user.click(screen.getByRole("tab", { name: "Sources" }));
+    expect(
+      screen.getByText("The sources show once the outline is written."),
+    ).toHaveClass("sr-only");
+    expect(
+      document.querySelectorAll(
+        '[data-slot="sources-skeleton"] [data-slot="skeleton"]',
+      ).length,
+    ).toBeGreaterThan(8);
+    expect(screen.queryByText("How often should I replace them?")).toBeNull();
+    expect(screen.queryByText("shoe fitting")).toBeNull();
     // Nothing acts before the outline is whole, and the buttons say why.
     for (const name of [/approve and generate/i, "Regenerate"]) {
       const button = screen.getByRole("button", { name });
@@ -1000,7 +1029,7 @@ describe("OutlineReview, while the first outline is written", () => {
     }
   });
 
-  it("shows the streaming tree alone when the run read no sources", () => {
+  it("has no Sources tab when the run read no sources", () => {
     render(
       <OutlineReview
         outline={null}
@@ -1011,23 +1040,18 @@ describe("OutlineReview, while the first outline is written", () => {
         onReject={jest.fn()}
         filling={{
           title: "Running shoes for beginners",
-          headings: [],
           progress: <p>The run's stages</p>,
           strip: null,
         }}
       />,
     );
     expect(
-      screen.getByRole("list", { name: "Sections, being written" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("region", {
-        name: "What the outline is written from",
-      }),
-    ).toBeNull();
+      document.querySelector('[data-slot="outline-skeleton"]'),
+    ).not.toBeNull();
+    expect(screen.queryByRole("tab", { name: "Sources" })).toBeNull();
   });
 
-  it("reads the model's text as before when the run gives no headings of its own", () => {
+  it("shows the title and the outline's shape when an outline is written again, not the model's text", () => {
     render(
       <OutlineReview
         outline={null}
@@ -1043,6 +1067,9 @@ describe("OutlineReview, while the first outline is written", () => {
     expect(
       screen.getByRole("heading", { name: "Tea at home" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Black tea")).toBeInTheDocument();
+    expect(screen.queryByText("Black tea")).toBeNull();
+    expect(
+      document.querySelector('[data-slot="outline-skeleton"]'),
+    ).not.toBeNull();
   });
 });

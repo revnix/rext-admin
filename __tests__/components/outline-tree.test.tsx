@@ -144,6 +144,41 @@ async function chooseFromMenu(
   await user.click(await screen.findByRole("menuitem", { name: item }));
 }
 
+describe("the outline in depth (FB3.4)", () => {
+  it("shows every section's and sub-section's points from the start, nested by level", () => {
+    renderOutline();
+
+    for (const [heading, level] of SECTIONS) {
+      // Under each heading, its own points: nothing waits behind a click.
+      expect(screen.getByText(`${heading} point`)).toBeInTheDocument();
+      expect(rowOf(heading)).toHaveAttribute(
+        "aria-level",
+        level === "H2" ? "1" : "2",
+      );
+      expect(screen.getByRole("button", { name: heading })).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+    }
+  });
+
+  it("folds one plan away with Left and brings it back with Right, leaving the others open", async () => {
+    const { user } = renderOutline();
+
+    await focusRow("Choosing the spot");
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.queryByText("Choosing the spot point")).toBeNull();
+    // Its sub-sections keep theirs, and so does every other section.
+    expect(screen.getByText("Sun hours point")).toBeInTheDocument();
+    expect(screen.getByText("Why plan point")).toBeInTheDocument();
+
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByText("Choosing the spot point")).toBeInTheDocument();
+    await user.keyboard(" ");
+    expect(screen.queryByText("Choosing the spot point")).toBeNull();
+  });
+});
+
 describe("the outline as a document outline", () => {
   it("shows the title as its root, a tag per level, and the summary", () => {
     renderOutline();

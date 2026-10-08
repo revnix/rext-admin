@@ -2616,7 +2616,6 @@ export function FreshGenerationView({
                 filling={{
                   title:
                     findings.selectedTitle || state.selectedTopic || undefined,
-                  headings: findings.headings ?? [],
                   sources: {
                     serpResults: findings.results ?? [],
                     questions: findings.questions ?? [],
