@@ -69,7 +69,31 @@ export function redactEventUrls<
       if (typeof value === "string") bag[key] = redactUrl(value);
     }
   }
+  redactHeatmapAddresses(event.properties);
   return event;
+}
+
+/**
+ * A heatmap event holds where people clicked, listed under the address of the page they were on
+ * (`$heatmap_data: { "<address>": [{ x, y, … }] }`). The address is a key there, not a property,
+ * so it is rewritten here: positions clicked on a sign-in or an invitation page never leave
+ * under an address that carries the link's token or the email.
+ */
+function redactHeatmapAddresses(properties: PropertyBag): void {
+  const data = properties?.$heatmap_data;
+  if (!properties || !data || typeof data !== "object" || Array.isArray(data)) {
+    return;
+  }
+  const redacted: Record<string, unknown[]> = {};
+  for (const [address, clicks] of Object.entries(data)) {
+    const key = redactUrl(address);
+    // Two addresses that differed only by what was taken out are one page.
+    redacted[key] = [
+      ...(redacted[key] ?? []),
+      ...(Array.isArray(clicks) ? clicks : [clicks]),
+    ];
+  }
+  properties.$heatmap_data = redacted;
 }
 
 /** A page's route parameters, as Next's `useParams` gives them. */

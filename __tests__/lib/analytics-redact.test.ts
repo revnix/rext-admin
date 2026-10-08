@@ -48,6 +48,66 @@ describe("redactUrl", () => {
   });
 });
 
+describe("redactEventUrls, on a heatmap event", () => {
+  it("redacts the addresses the clicks are listed under", () => {
+    const event = {
+      event: "$$heatmap",
+      properties: {
+        $heatmap_data: {
+          "https://app.rext.ai/login?email=mary%40example.com&invitation_token=abc123":
+            [{ x: 10, y: 20, target_fixed: false, type: "click" }],
+          "https://app.rext.ai/w/acme/content": [
+            { x: 5, y: 6, target_fixed: false, type: "click" },
+          ],
+        },
+      },
+    };
+
+    redactEventUrls(event);
+
+    const sent = JSON.stringify(event);
+    expect(sent).not.toContain("abc123");
+    expect(sent).not.toContain("mary");
+    expect(Object.keys(event.properties.$heatmap_data)).toEqual([
+      "https://app.rext.ai/login?email=redacted&invitation_token=redacted",
+      "https://app.rext.ai/w/acme/content",
+    ]);
+    // The clicks themselves are untouched.
+    expect(
+      event.properties.$heatmap_data["https://app.rext.ai/w/acme/content"],
+    ).toEqual([{ x: 5, y: 6, target_fixed: false, type: "click" }]);
+  });
+
+  it("keeps the clicks of two addresses that become the same one", () => {
+    const event = {
+      event: "$$heatmap",
+      properties: {
+        $heatmap_data: {
+          "https://app.rext.ai/reset-password?token=one": [{ x: 1, y: 1 }],
+          "https://app.rext.ai/reset-password?token=two": [{ x: 2, y: 2 }],
+        } as Record<string, unknown[]>,
+      },
+    };
+
+    redactEventUrls(event);
+
+    expect(event.properties.$heatmap_data).toEqual({
+      "https://app.rext.ai/reset-password?token=redacted": [
+        { x: 1, y: 1 },
+        { x: 2, y: 2 },
+      ],
+    });
+  });
+
+  it("leaves an event without heatmap data as it was", () => {
+    const event = { event: "title_selected", properties: { thread_id: "t1" } };
+    expect(redactEventUrls(event)).toEqual({
+      event: "title_selected",
+      properties: { thread_id: "t1" },
+    });
+  });
+});
+
 describe("redactEventUrls", () => {
   it("redacts an address an event of ours carries as url", () => {
     const event = {

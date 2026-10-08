@@ -217,6 +217,19 @@ describe("where analytics is on unless switched off", () => {
     expect(question()).toBeNull();
   });
 
+  it("decides in code what the PostHog project's switches can't: heatmaps on, element text never", async () => {
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
+
+    expect(mockPosthog.init.mock.calls[0][1]).toMatchObject({
+      autocapture: false,
+      capture_heatmaps: true,
+      rageclick: false,
+      capture_dead_clicks: false,
+      disable_session_recording: true,
+    });
+  });
+
   it("loads no code from PostHog's servers: the project's settings are read as data", async () => {
     renderProvider();
     await waitFor(() => expect(mockPosthog.init).toHaveBeenCalled());
