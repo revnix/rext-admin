@@ -34,6 +34,9 @@ const server = {
   AUTH_GOOGLE_SECRET: optional,
   AUTH_GITHUB_ID: optional,
   AUTH_GITHUB_SECRET: optional,
+  // The key this server sends with its Google and GitHub sign-in call (lib/auth/dashboard-server-key.ts);
+  // the backend holds the same value. Unset, the call goes without it.
+  DASHBOARD_SERVER_KEY: optional,
   LANGGRAPH_API_URL: optionalUrl,
   LANGGRAPH_RUN_WEBHOOKS: optional,
   LOG_LEVEL: z
