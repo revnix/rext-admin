@@ -5,7 +5,7 @@
  * and never a part of an address that isn't one of the app's own words.
  */
 import { analytics } from "@/lib/analytics";
-import { loadWords, ownWords } from "@/lib/analytics-recording";
+import { ownWords, wordsLoaded } from "@/lib/analytics-recording";
 
 /** A class from the code (`TypeError`, `ApiError`, `ChunkLoadError`): letters and digits only. */
 const CLASS = /^[A-Za-z][A-Za-z0-9]{0,39}$/;
@@ -129,23 +129,27 @@ const TOAST_NAME = /^[a-z][a-z0-9-]{1,59}$/;
  * gave one, and its sentence only when that is one of the app's own fixed texts, as the build
  * listed them from the source (lib/recording-words.ts). A toast that carries a backend's answer,
  * or anything put together from a person's data, is on no such list: it is counted and not quoted.
+ *
+ * Worked out there and then, with no waiting: the event has to leave while the page, the
+ * workspace and the person are still the ones the toast came up for. So while the list hasn't
+ * been read, the event says nothing of whose words they were (`own_words` is left out).
  */
-export async function errorToastProperties(
+export function errorToastProperties(
   id: string | number,
   title: unknown,
   pathname: string,
-): Promise<{
+): {
   route: string;
   toast?: string;
-  own_words: boolean;
+  own_words?: boolean;
   message?: string;
-}> {
-  const text = typeof title === "string" ? title : null;
-  const own = text !== null && (await loadWords()) ? ownWords(text) : null;
+} {
+  const listed = wordsLoaded();
+  const own = listed && typeof title === "string" ? ownWords(title) : null;
   return {
     route: pathShape(pathname),
     ...(typeof id === "string" && TOAST_NAME.test(id) ? { toast: id } : {}),
-    own_words: own !== null,
+    ...(listed ? { own_words: own !== null } : {}),
     ...(own !== null ? { message: own } : {}),
   };
 }

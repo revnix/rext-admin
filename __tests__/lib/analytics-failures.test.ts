@@ -13,7 +13,6 @@ import {
   type RouteTree,
 } from "@/lib/analytics-failures";
 import { setWords } from "@/lib/analytics-recording";
-import { markOf } from "@/lib/recording-words";
 import { ApiError } from "@/lib/api-client/core";
 
 describe("errorKind", () => {
@@ -116,45 +115,44 @@ describe("pathShape", () => {
 
 describe("errorToastProperties", () => {
   const OWN = "Couldn't save. Try again.";
-  const realFetch = global.fetch;
 
   beforeEach(() => {
-    setWords(null);
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => [markOf(OWN)],
-    }) as unknown as typeof fetch;
-  });
-  afterEach(() => {
-    global.fetch = realFetch;
+    setWords([OWN]);
   });
 
-  it("quotes one of the app's own sentences, with white space as the list holds it", async () => {
-    await expect(
-      errorToastProperties(3, `  ${OWN}  `, "/settings/security"),
-    ).resolves.toEqual({
-      route: "/settings/security",
-      own_words: true,
-      message: OWN,
+  it("quotes one of the app's own sentences, with white space as the list holds it", () => {
+    expect(errorToastProperties(3, `  ${OWN}  `, "/settings/security")).toEqual(
+      {
+        route: "/settings/security",
+        own_words: true,
+        message: OWN,
+      },
+    );
+  });
+
+  it("quotes nothing else: a backend's sentence, or a title that is not a text", () => {
+    expect(
+      errorToastProperties(4, "ana@example.com has no access", "/w/acme"),
+    ).toEqual({ route: "/w/*", own_words: false });
+    expect(errorToastProperties(5, { not: "a text" }, "/")).toEqual({
+      route: "/",
+      own_words: false,
     });
   });
 
-  it("quotes nothing else: a backend's sentence, or a title that is not a text", async () => {
-    await expect(
-      errorToastProperties(4, "ana@example.com has no access", "/w/acme"),
-    ).resolves.toEqual({ route: "/w/*", own_words: false });
-    await expect(
-      errorToastProperties(5, { not: "a text" }, "/"),
-    ).resolves.toEqual({ route: "/", own_words: false });
+  it("says nothing of whose words they were while the list hasn't been read", () => {
+    setWords(null);
+    expect(errorToastProperties(6, OWN, "/")).toEqual({ route: "/" });
   });
 
-  it("keeps a name the code gave the toast, never a number or a text made into an id", async () => {
-    const named = await errorToastProperties("upload-failed", OWN, "/");
-    expect(named.toast).toBe("upload-failed");
-    const numbered = await errorToastProperties(17, OWN, "/");
-    expect(numbered).not.toHaveProperty("toast");
-    const odd = await errorToastProperties("ana@example.com", OWN, "/");
-    expect(odd).not.toHaveProperty("toast");
+  it("keeps a name the code gave the toast, never a number or a text made into an id", () => {
+    expect(errorToastProperties("upload-failed", OWN, "/").toast).toBe(
+      "upload-failed",
+    );
+    expect(errorToastProperties(17, OWN, "/")).not.toHaveProperty("toast");
+    expect(
+      errorToastProperties("ana@example.com", OWN, "/"),
+    ).not.toHaveProperty("toast");
   });
 });
 

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Toaster as Sonner, useSonner } from "sonner";
 import { analytics } from "@/lib/analytics";
 import { errorToastProperties } from "@/lib/analytics-failures";
+import { loadWords, wordsLoaded } from "@/lib/analytics-recording";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -25,11 +26,15 @@ function ErrorToastReport() {
     for (const toast of toasts) {
       if (toast.type !== "error" || reported.current.has(toast.id)) continue;
       reported.current.add(toast.id);
-      void errorToastProperties(
-        toast.id,
-        toast.title,
-        window.location.pathname,
-      ).then((properties) => analytics.track("error_toast_shown", properties));
+      // Sent now, not after a wait: the page, the workspace and the person are the ones the
+      // toast came up for only at this moment.
+      analytics.track(
+        "error_toast_shown",
+        errorToastProperties(toast.id, toast.title, window.location.pathname),
+      );
+      // The app's word list is read for the toasts that follow, where a recording hasn't
+      // read it already.
+      if (!wordsLoaded()) void loadWords();
     }
   }, [toasts]);
 
