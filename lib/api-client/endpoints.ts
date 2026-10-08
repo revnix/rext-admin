@@ -474,13 +474,11 @@ export const ENDPOINTS = {
     revoke: (invitationId: string) =>
       `/api/v1/admin/platform/invitations/${invitationId}` as const,
 
-    // Token-based operations (public)
-    validate: (token: string) =>
-      `/api/v1/admin-invitations/${token}/validate` as const,
-    accept: (token: string) =>
-      `/api/v1/admin-invitations/${token}/accept` as const,
-    decline: (token: string) =>
-      `/api/v1/admin-invitations/${token}/decline` as const,
+    // Token-based operations. The token goes in the request's body, never in its address: a
+    // path is written to the request and error logs as it is (task 915).
+    validate: "/api/v1/admin-invitations/validate",
+    accept: "/api/v1/admin-invitations/accept",
+    decline: "/api/v1/admin-invitations/decline",
   },
 
   /**
