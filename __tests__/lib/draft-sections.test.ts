@@ -1,5 +1,6 @@
 import {
   type DraftSection,
+  isSectionReset,
   readSectionEvent,
   sectionsInOrder,
   sectionsMarkdown,
@@ -65,6 +66,17 @@ describe("the first draft's sections (task 773, part B)", () => {
       expect(readSectionEvent(event({ index: 0 }))).toBeNull();
       expect(readSectionEvent(event({ index: 1.5 }))).toBeNull();
       expect(readSectionEvent(event({ index: "two" }))).toBeNull();
+    });
+  });
+
+  describe("isSectionReset", () => {
+    it("knows the writer's new start, and nothing else, as one", () => {
+      expect(isSectionReset({ type: "section", phase: "reset" })).toBe(true);
+      expect(isSectionReset(event())).toBe(false);
+      expect(isSectionReset({ type: "token", phase: "reset" })).toBe(false);
+      expect(isSectionReset(null)).toBe(false);
+      // A reset is no section to draw.
+      expect(readSectionEvent({ type: "section", phase: "reset" })).toBeNull();
     });
   });
 
