@@ -13,9 +13,14 @@ import { resetAllStores } from "./store-registry";
 
 let logoutPromise: Promise<void> | null = null;
 // A page that stayed open through a sign-out and has a session again is signed in like any
-// other: its next sign-out is a new one, not the first one's settled promise.
+// other: its next sign-out is a new one, not the first one's settled promise, and the mark the
+// sign-out left for this tab ("session_invalid", read by hooks/use-auth-session.ts) goes with it.
 subscribeSignedOut(() => {
-  if (!isSignedOut()) logoutPromise = null;
+  if (isSignedOut()) return;
+  logoutPromise = null;
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem("session_invalid");
+  }
 });
 
 /**

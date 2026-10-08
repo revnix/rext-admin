@@ -8,12 +8,18 @@
 type Guard = (action: () => void) => void;
 
 let inForce: Guard | null = null;
+const watchers = new Set<() => void>();
+
+const setInForce = (guard: Guard | null) => {
+  inForce = guard;
+  for (const watcher of watchers) watcher();
+};
 
 /** Puts a guard in force; the answer takes it out again, if it is still the one in force. */
 export function putLeaveGuard(guard: Guard): () => void {
-  inForce = guard;
+  setInForce(guard);
   return () => {
-    if (inForce === guard) inForce = null;
+    if (inForce === guard) setInForce(null);
   };
 }
 
@@ -25,6 +31,14 @@ export function leaveThroughGuard(action: () => void): void {
 
 /** Whether a form on the page holds unsaved changes right now. */
 export const leaveGuardInForce = (): boolean => inForce !== null;
+
+/** Tells `watcher` whenever a guard is put in force or taken out. */
+export function watchLeaveGuard(watcher: () => void): () => void {
+  watchers.add(watcher);
+  return () => {
+    watchers.delete(watcher);
+  };
+}
 
 // Set once the person has chosen, knowingly, to leave a page that can save nothing any more (the
 // signed-out notice's "Sign in again"): the browser's own "Leave site?" would only ask again.
