@@ -5,6 +5,11 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { AUTH_PAGES, isAuthPage } from "@/lib/auth-routes";
+import {
+  BACKEND_AWAY_CODE,
+  isGatewayAway,
+  SIGN_IN_ANSWER_WITHIN_MS,
+} from "@/lib/auth/backend-away";
 import type { components } from "@/lib/api-client/schema";
 import { log } from "@/lib/logger";
 import { loginSchema } from "@/schemas/auth-schemas";
@@ -406,6 +411,13 @@ async function performRefreshWithRetries(
   return token;
 }
 
+/** The sign-in's failure when the backend gave no answer of its own. */
+function backendAway(): CredentialsSignin {
+  const error = new CredentialsSignin("The backend did not answer the sign-in");
+  error.code = BACKEND_AWAY_CODE;
+  return error;
+}
+
 export default {
   trustHost:
     process.env.NODE_ENV === "development" ||
@@ -434,16 +446,34 @@ export default {
             (credentials as { confirmReactivation?: string })
               .confirmReactivation === "true";
 
-          // Call backend login endpoint
-          const response = await fetch(`${authApiBaseUrl}/api/v1/user/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email,
-              password,
-              confirm_reactivation: confirmReactivation,
-            }),
-          });
+          // Call backend login endpoint. No answer of the backend's own (it is restarting, or
+          // can't be reached) is reported as that, so the form can say so and try once more;
+          // without a limit a sign-in pressed during a restart waited in silence.
+          let response: Response;
+          try {
+            response = await fetch(`${authApiBaseUrl}/api/v1/user/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email,
+                password,
+                confirm_reactivation: confirmReactivation,
+              }),
+              signal: AbortSignal.timeout(SIGN_IN_ANSWER_WITHIN_MS),
+            });
+          } catch (error) {
+            log.error(
+              "[AuthJS] The backend gave no answer to a sign-in",
+              error,
+            );
+            throw backendAway();
+          }
+          if (isGatewayAway(response.status)) {
+            log.error("[AuthJS] The backend is away for a sign-in", {
+              status: response.status,
+            });
+            throw backendAway();
+          }
 
           if (!response.ok) {
             // Extract detailed error message from backend using shared utility

@@ -27,9 +27,16 @@ import { useHydrated } from "@/hooks/use-hydrated";
 import { apiClient } from "@/lib/api-client";
 import { analytics } from "@/lib/analytics";
 import { classifyError } from "@/lib/error-utils";
+import {
+  BACKEND_AWAY_CODE,
+  SIGN_IN_AGAIN_AFTER_MS,
+} from "@/lib/auth/backend-away";
 import { type LoginData, loginSchema } from "@/schemas/auth-schemas";
 import type { Route } from "next";
 import { workspaceRoutes } from "@/lib/routes";
+
+/** One notice for "the backend is away", replaced in place by what follows it. */
+const AWAY_TOAST_ID = "sign-in-backend-away";
 
 export function LoginForm({
   className,
@@ -99,11 +106,14 @@ export function LoginForm({
     }
   }, [searchParams, toast]);
 
-  /** Whether it signed in: then it navigates, and the form stays busy until the next page shows. */
+  /**
+   * Whether it signed in: then it navigates, and the form stays busy until the next page shows.
+   * "away" when the backend gave no answer (it is restarting): nothing was wrong with the details.
+   */
   const attemptSignIn = async ({
     email,
     password,
-  }: LoginData): Promise<boolean> => {
+  }: LoginData): Promise<boolean | "away"> => {
     // Backend validated successfully, now use NextAuth for session creation.
     // There is deliberately no "confirm reactivation" flag here — a deactivated
     // account is only reactivated by opening the emailed link.
@@ -119,6 +129,8 @@ export function LoginForm({
     });
 
     if (result?.error) {
+      if (result.code === BACKEND_AWAY_CODE) return "away";
+
       if (result.code === "ACCOUNT_DEACTIVATED") {
         // Reactivation is deliberately NOT granted by signing in again: the
         // password alone doesn't prove the mailbox owner wants the account
@@ -224,9 +236,30 @@ export function LoginForm({
       sessionStorage.removeItem("session_invalid");
     }
 
-    let signedIn = false;
+    let signedIn: boolean | "away" = false;
     try {
       signedIn = await attemptSignIn(values);
+      if (signedIn === "away") {
+        // A backend deploy takes the API away for under a minute. Pressing "Log in" then used
+        // to end in silence: the form says so, and tries once more by itself.
+        toast.info("Rext is updating", {
+          id: AWAY_TOAST_ID,
+          description: "Signing you in again in a few seconds.",
+          duration: SIGN_IN_AGAIN_AFTER_MS + 10_000,
+        });
+        await new Promise((resolve) =>
+          setTimeout(resolve, SIGN_IN_AGAIN_AFTER_MS),
+        );
+        signedIn = await attemptSignIn(values);
+        if (signedIn === "away") {
+          toast.error("Rext is updating", {
+            id: AWAY_TOAST_ID,
+            description: "Try again in a few seconds.",
+          });
+        } else {
+          toast.dismiss(AWAY_TOAST_ID);
+        }
+      }
     } catch (error) {
       log.error("[AuthJS] Sign in failed:", error);
       const classifiedError = classifyError(error);
@@ -238,7 +271,7 @@ export function LoginForm({
       );
     } finally {
       // Signed in: the next page takes over; re-enabling the button meanwhile would invite a second login.
-      if (!signedIn) setIsLoading(false);
+      if (signedIn !== true) setIsLoading(false);
     }
   };
 
