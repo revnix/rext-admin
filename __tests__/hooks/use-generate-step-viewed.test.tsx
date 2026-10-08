@@ -14,7 +14,7 @@ type Props = Parameters<typeof useGenerateStepViewed>[0];
 const start: Props = {
   index: 0,
   threadId: null,
-  restored: false,
+  openedRun: null,
   fromLibrary: false,
 };
 
@@ -59,7 +59,7 @@ describe("useGenerateStepViewed", () => {
     const { rerender } = renderHook(
       (props: Props) => useGenerateStepViewed(props),
       {
-        initialProps: { ...start, threadId: "thread-9", restored: true },
+        initialProps: { ...start, threadId: "thread-9", openedRun: "thread-9" },
       },
     );
     // The first step shows for a moment while the run is read: not an arrival.
@@ -68,7 +68,7 @@ describe("useGenerateStepViewed", () => {
     rerender({
       index: 3,
       threadId: "thread-9",
-      restored: true,
+      openedRun: "thread-9",
       fromLibrary: false,
     });
     expect(track).toHaveBeenCalledTimes(1);
@@ -77,6 +77,73 @@ describe("useGenerateStepViewed", () => {
       step_name: "title",
       restored: true,
       thread_id: "thread-9",
+    });
+  });
+
+  it("counts another run opened on the same page from its own start, also on the same step", () => {
+    // A page on one run's Title step; a job picked from the dock opens another run here.
+    const first = {
+      index: 3,
+      threadId: "run-a",
+      openedRun: "run-a",
+      fromLibrary: false,
+    };
+    const { rerender } = renderHook(
+      (props: Props) => useGenerateStepViewed(props),
+      {
+        initialProps: first,
+      },
+    );
+    expect(track).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersByTime(40_000);
+    // The address names the other run; the screen still shows the step of the one left behind.
+    rerender({ ...first, openedRun: "run-b" });
+    expect(track).toHaveBeenCalledTimes(1);
+    // The page goes back to its first step while the run is read, then shows the run's own step.
+    rerender({
+      index: 0,
+      threadId: "run-b",
+      openedRun: "run-b",
+      fromLibrary: false,
+    });
+    expect(track).toHaveBeenCalledTimes(1);
+    rerender({
+      index: 3,
+      threadId: "run-b",
+      openedRun: "run-b",
+      fromLibrary: false,
+    });
+    expect(track).toHaveBeenCalledTimes(2);
+    // Its own first view: marked, and with no time carried over from the other run.
+    expect(track).toHaveBeenLastCalledWith("generate_step_viewed", {
+      step: 4,
+      step_name: "title",
+      restored: true,
+      thread_id: "run-b",
+    });
+  });
+
+  it("keeps counting one article when the run this page started gets its id", () => {
+    const { rerender } = renderHook(
+      (props: Props) => useGenerateStepViewed(props),
+      {
+        initialProps: start,
+      },
+    );
+    jest.advanceTimersByTime(9_000);
+    // The address now names the run, but the page started it: not a run it was opened on.
+    rerender({
+      index: 1,
+      threadId: "thread-1",
+      openedRun: null,
+      fromLibrary: false,
+    });
+    expect(track).toHaveBeenLastCalledWith("generate_step_viewed", {
+      step: 2,
+      step_name: "select_keyword",
+      seconds_on_previous: 9,
+      thread_id: "thread-1",
     });
   });
 

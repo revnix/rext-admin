@@ -2527,7 +2527,7 @@ export function FreshGenerationView({
       waitingOnRun ? runState?.phase : null,
     ),
     threadId,
-    restored: openedOnRun,
+    openedRun: openedOnRun ? (backgroundThreadId ?? null) : null,
     fromLibrary: isLibrary,
   });
 
