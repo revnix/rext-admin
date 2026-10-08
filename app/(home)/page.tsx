@@ -11,6 +11,7 @@ import { ContentHealthCard } from "@/components/home/content-health-card";
 import { ContinueRow } from "@/components/home/continue-row";
 import { CreditsCard } from "@/components/home/credits-card";
 import { HomeChecklist } from "@/components/home/home-checklist";
+import { WorkspaceSetupCard } from "@/components/home/workspace-setup-card";
 import { PaywallCard } from "@/components/home/paywall-card";
 import {
   articlesToContinue,
@@ -99,6 +100,13 @@ export default function HomePage() {
   );
   const sites = useIntegrations(workspaceId || null);
   const brandVoice = useQuery(workspaceQueries.brandVoice(workspaceId));
+  // A workspace made with "Skip for now" has had no analysis at all: its detail says so, and the
+  // page offers the one card that sets it up (rext-control task 905).
+  const detail = useQuery({
+    ...workspaceQueries.detail(workspaceId),
+    enabled: Boolean(workspaceId),
+  });
+  const notSetUp = detail.data?.workspace.pipeline?.status === "not_started";
   const library = useQuery(libraryQueries.list(workspaceId, user?.id ?? ""));
   const jobs = useBackgroundGenerationStore((state) => state.jobs);
 
@@ -209,6 +217,7 @@ export default function HomePage() {
         >
           <div className="flex flex-col gap-10">
             <PaywallCard workspaceId={workspaceId} />
+            {notSetUp && <WorkspaceSetupCard slug={slug} />}
             {showChecklist && (
               <SettingsGroup
                 title="Get started"

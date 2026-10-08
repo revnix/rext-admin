@@ -87,7 +87,18 @@ export const WORKSPACE_CONSTRAINTS = {
   URL_PATTERN: /^https?:\/\/.+/,
 } as const;
 
-const workspaceNameSchema = z
+/**
+ * What a workspace's name may hold, as the backend checks it (rextaihq/rext-backend#1004): letters
+ * and digits of any script, spaces, the underscore and ordinary punctuation. Markup, braces, a
+ * backslash and the like are refused there; the form says so first, beside the field, in the
+ * backend's own sentence.
+ */
+export const WORKSPACE_NAME_CHARACTERS =
+  /^[\p{L}\p{N}_ .,&'’‘"“”()[\]/+\-–—:;!?|@#%*·•™®©]+$/u;
+export const WORKSPACE_NAME_CHARACTERS_MESSAGE =
+  "Use letters, numbers, spaces and ordinary punctuation in the name";
+
+export const workspaceNameSchema = z
   .string()
   .trim()
   .min(WORKSPACE_CONSTRAINTS.TITLE_MIN_LENGTH, "Name is required")
@@ -97,7 +108,39 @@ const workspaceNameSchema = z
   )
   .refine((name) => /\p{L}/u.test(name), {
     message: "Workspace name must contain at least one letter",
+  })
+  .refine((name) => WORKSPACE_NAME_CHARACTERS.test(name), {
+    message: WORKSPACE_NAME_CHARACTERS_MESSAGE,
   });
+
+/**
+ * The name a workspace gets when the person skips the form (rext-control task 905): theirs, as
+ * "Ana's workspace", else "My workspace". They can rename it in the workspace's settings.
+ */
+export function defaultWorkspaceName(
+  person:
+    | {
+        display_name?: string | null;
+        full_name?: string | null;
+        name?: string | null;
+      }
+    | null
+    | undefined,
+): string {
+  const own = [person?.display_name, person?.full_name, person?.name]
+    .map((value) => value?.trim().split(/\s+/)[0] ?? "")
+    .find(
+      (first) =>
+        /\p{L}/u.test(first) &&
+        // A name, not an address or anything the name rule would refuse.
+        !first.includes("@") &&
+        WORKSPACE_NAME_CHARACTERS.test(first),
+    );
+  const name = own ? `${own}'s workspace` : "My workspace";
+  return name.length <= WORKSPACE_CONSTRAINTS.TITLE_MAX_LENGTH
+    ? name
+    : "My workspace";
+}
 
 /** A business described in place of a website (rext-control#853): the backend's own limits. */
 export const DESCRIPTION_LIMITS = { min: 20, max: 1000 } as const;
@@ -146,7 +189,8 @@ export const workspaceGeneralInfoSchema = z.object({
     .trim()
     .min(1, "Workspace name is required")
     .max(200, "Workspace name must be 200 characters or less")
-    .regex(/\p{L}/u, "Workspace name must contain at least one letter"),
+    .regex(/\p{L}/u, "Workspace name must contain at least one letter")
+    .regex(WORKSPACE_NAME_CHARACTERS, WORKSPACE_NAME_CHARACTERS_MESSAGE),
   slug: z.string(),
   // Empty for a workspace with no website (one made from a description, rext-control#853). A bare
   // domain is enough, as on the create form; an address typed with http:// or https:// is kept

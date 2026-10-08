@@ -85,6 +85,7 @@ describe("the create form, for analytics", () => {
         kind: "form",
         field: "description",
         status: undefined,
+        way: "description",
         with_website: false,
         first_workspace: true,
       },
@@ -92,6 +93,7 @@ describe("the create form, for analytics", () => {
         kind: "backend",
         field: undefined,
         status: 500,
+        way: "description",
         with_website: false,
         first_workspace: true,
       },
@@ -170,6 +172,79 @@ describe("the wait and the review, for analytics", () => {
     result.current.reviewFinished(true);
     expect(sent("workspace_review_finished")).toEqual([
       ["workspace_review_finished", { seconds_on_review: 41, changed: true }],
+    ]);
+  });
+});
+
+describe("a workspace set up later, which is not the create funnel", () => {
+  it("sends none of the create form's events, and one of its own when the set-up ends well", () => {
+    const view = renderHook(
+      (now: Props & { settingUp: boolean }) => useWorkspaceCreateAnalytics(now),
+      {
+        initialProps: {
+          step: 0,
+          firstWorkspace: false,
+          withWebsite: false,
+          stage: "voice",
+          settingUp: true,
+        },
+      },
+    );
+    view.result.current.wayChosen("description");
+    view.result.current.fieldTyped("description");
+    view.result.current.fieldLeft("description", "We bake sourdough.");
+    view.result.current.submitted();
+    view.rerender({
+      step: 1,
+      firstWorkspace: false,
+      withWebsite: false,
+      stage: "voice",
+      settingUp: true,
+    });
+    expect(track).not.toHaveBeenCalled();
+
+    const reviewed = {
+      step: 2,
+      firstWorkspace: false,
+      withWebsite: false,
+      stage: "voice",
+      settingUp: true,
+    } as const;
+    view.rerender(reviewed);
+    view.rerender(reviewed);
+
+    expect(track.mock.calls).toEqual([
+      ["workspace_setup_finished", { way: "description" }],
+    ]);
+  });
+
+  it("counts a skip, and names the way on a refused one", () => {
+    const view = renderHook((now: Props) => useWorkspaceCreateAnalytics(now), {
+      initialProps: {
+        step: 0,
+        firstWorkspace: true,
+        withWebsite: true,
+        stage: "reading",
+      },
+    });
+    track.mockClear();
+
+    view.result.current.skipped();
+    view.result.current.refused("backend", { status: 500, way: "skipped" });
+
+    expect(track.mock.calls).toEqual([
+      ["workspace_create_skipped", { first_workspace: true }],
+      [
+        "workspace_create_refused",
+        {
+          kind: "backend",
+          field: undefined,
+          status: 500,
+          way: "skipped",
+          with_website: true,
+          first_workspace: true,
+        },
+      ],
     ]);
   });
 });

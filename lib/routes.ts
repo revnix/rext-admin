@@ -50,6 +50,9 @@ export const workspaceRoutes = {
    */
   root: (_workspaceSlug: string) => `/`,
 
+  /** Setting up a workspace made with "Skip for now": its website, or a description. */
+  setup: (workspaceSlug: string) => `/w/${workspaceSlug}/setup`,
+
   /**
    * Content routes
    */
