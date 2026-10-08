@@ -16,8 +16,8 @@ const charge = (over: Partial<PlanChangeCharge> = {}): PlanChangeCharge => ({
 });
 
 describe("PlanChangeNotice", () => {
-  it("names the payment, its day and what to do", () => {
-    render(<PlanChangeNotice charges={[charge()]} />);
+  it("names the payment, its day and what to do for a refund in full", () => {
+    render(<PlanChangeNotice charges={[charge()]} full />);
 
     const notice = screen.getByRole("alert");
     expect(notice).toHaveTextContent(
@@ -41,9 +41,21 @@ describe("PlanChangeNotice", () => {
     );
   });
 
+  it("leaves how much to give back to the person for a part refund", () => {
+    render(<PlanChangeNotice charges={[charge()]} />);
+
+    const notice = screen.getByRole("alert");
+    expect(notice).toHaveTextContent("$99.96 on Oct 8, 2026.");
+    expect(notice).toHaveTextContent(
+      "A refund here comes out of the first payment only. If the customer is to get any of the plan change's payment back as well, refund that invoice in Lemon Squeezy, under the subscription's invoices.",
+    );
+    expect(notice).not.toHaveTextContent("Squeezy too");
+  });
+
   it("lists each payment when there are several", () => {
     render(
       <PlanChangeNotice
+        full
         charges={[
           charge(),
           charge({
