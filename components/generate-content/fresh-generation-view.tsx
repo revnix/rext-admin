@@ -23,6 +23,7 @@ import {
   useOncePerKey,
 } from "@/hooks/use-strict-mode-safe";
 import {
+  ARTICLE_STAGE_LABELS,
   FIRST_ARTICLE_TOKEN,
   type RunPhase,
   type RunStage,
@@ -428,7 +429,10 @@ export function FreshGenerationView({
   const [isBackgroundGenerationActive, setIsBackgroundGenerationActive] =
     useState(Boolean(backgroundThreadId));
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancingMsg, setEnhancingMsg] = useState("Enhancing content...");
+  // The stage the article's run is in, by its name: the research is always the first.
+  const [enhancingMsg, setEnhancingMsg] = useState<string>(
+    ARTICLE_STAGE_LABELS.research,
+  );
   const [enhancingDescription, setEnhancingDescription] = useState("");
   const [pendingTargetWordCount, setPendingTargetWordCount] = useState<
     number | null
@@ -1417,14 +1421,14 @@ export function FreshGenerationView({
             if (!writing) {
               writing = true;
               runStages.nodeDone(FIRST_ARTICLE_TOKEN);
-              setEnhancingMsg("Draft");
+              setEnhancingMsg(ARTICLE_STAGE_LABELS.draft);
               setEnhancingDescription(
                 "Writing the article from the approved outline and its sources.",
               );
               if (activeThreadId) {
                 updateBackgroundJob(activeThreadId, {
                   status: "running",
-                  stage: "Draft",
+                  stage: ARTICLE_STAGE_LABELS.draft,
                 });
               }
             }
@@ -1538,42 +1542,42 @@ export function FreshGenerationView({
 
         if (updates?.review_outline) {
           setIsEnhancing(true);
-          setEnhancingMsg("Research");
+          setEnhancingMsg(ARTICLE_STAGE_LABELS.research);
           setEnhancingDescription(
             "Searching for sources for the approved outline.",
           );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Research",
+              stage: ARTICLE_STAGE_LABELS.research,
               progress: ARTICLE_PHASE_PROGRESS,
             });
           }
         }
 
         if (updates?.generate_content) {
-          setEnhancingMsg("Style pass");
+          setEnhancingMsg(ARTICLE_STAGE_LABELS.style);
           setEnhancingDescription(
             "Checking the draft against the outline and smoothing its wording and flow.",
           );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Style pass",
+              stage: ARTICLE_STAGE_LABELS.style,
               progress: 58,
             });
           }
         }
 
         if (updates?.humanize_content) {
-          setEnhancingMsg("Checks");
+          setEnhancingMsg(ARTICLE_STAGE_LABELS.checks);
           setEnhancingDescription(
             "Validation, readability, on-page SEO and trust.",
           );
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Checks",
+              stage: ARTICLE_STAGE_LABELS.checks,
               progress: 78,
             });
           }
@@ -1583,7 +1587,7 @@ export function FreshGenerationView({
           if (activeThreadId) {
             updateBackgroundJob(activeThreadId, {
               status: "running",
-              stage: "Checks",
+              stage: ARTICLE_STAGE_LABELS.checks,
               progress: 90,
             });
           }
@@ -2102,7 +2106,7 @@ export function FreshGenerationView({
       title: parsedOutline?.title || primaryKeyword || "Untitled article",
       keyword: primaryKeyword,
       status: "running",
-      stage: "Research",
+      stage: ARTICLE_STAGE_LABELS.research,
       // The article phase's first stage, at the derived article milestone, so
       // the shared record keeps climbing from the earlier steps instead of rewinding.
       progress: ARTICLE_PHASE_PROGRESS,

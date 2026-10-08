@@ -157,31 +157,31 @@ describe("deriveBackgroundProgress, the article's stage words", () => {
     values,
   });
 
-  it("says Draft while the agent writes", () => {
+  it("names the draft while the agent writes", () => {
     expect(
       deriveBackgroundProgress("running", running("generate_content")).stage,
-    ).toBe("Draft");
+    ).toBe("Writing the first draft");
   });
 
-  it("says Style pass once the draft exists and before any check", () => {
+  it("names the polish once the draft exists and before any check", () => {
     expect(
       deriveBackgroundProgress(
         "running",
         running("humanize_content", { content: { final_content: {} } }),
       ).stage,
-    ).toBe("Style pass");
+    ).toBe("Polishing the wording");
   });
 
-  it("says Checks while a check runs, even with the draft there", () => {
+  it("names the checks while a check runs, even with the draft there", () => {
     expect(
       deriveBackgroundProgress(
         "running",
         running("calculate_readability", { content: { final_content: {} } }),
       ).stage,
-    ).toBe("Checks");
+    ).toBe("Checking readability and SEO");
     expect(
       deriveBackgroundProgress("running", running("final_validate_content"))
         .stage,
-    ).toBe("Checks");
+    ).toBe("Checking readability and SEO");
   });
 });

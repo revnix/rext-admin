@@ -94,6 +94,18 @@ export type RunPhase =
   | "outline"
   | "article";
 
+/**
+ * The article's four stages by name, in plain words that say what is happening (the founder's
+ * feedback v3, rext-control#838: "Draft", "Style pass" and "Checks" read as jargon). One list, so
+ * a stage is called the same in the run's box, the article's bar, the dock and a restored run.
+ */
+export const ARTICLE_STAGE_LABELS = {
+  research: "Researching the topic",
+  draft: "Writing the first draft",
+  style: "Polishing the wording",
+  checks: "Checking readability and SEO",
+} as const;
+
 export const RUN_PHASES: Record<RunPhase, RunStageDef[]> = {
   analysis: [
     {
@@ -130,18 +142,26 @@ export const RUN_PHASES: Record<RunPhase, RunStageDef[]> = {
     { id: "outline", label: "Outlining", endsAfter: [] },
   ],
   // rext-control #260: each name says what its nodes do. The article agent searches first and then
-  // writes, inside one node: the first token it writes ends Research (FIRST_ARTICLE_TOKEN).
+  // writes, inside one node: the first token it writes ends the research (FIRST_ARTICLE_TOKEN).
   article: [
     {
       id: "research",
-      label: "Research",
+      label: ARTICLE_STAGE_LABELS.research,
       endsAfter: [FIRST_ARTICLE_TOKEN, "generate_content"],
     },
-    { id: "draft", label: "Draft", endsAfter: ["generate_content"] },
+    {
+      id: "draft",
+      label: ARTICLE_STAGE_LABELS.draft,
+      endsAfter: ["generate_content"],
+    },
     // validate, repair when a check fails, and humanize: the wording and the flow.
-    { id: "style", label: "Style pass", endsAfter: ["humanize_content"] },
+    {
+      id: "style",
+      label: ARTICLE_STAGE_LABELS.style,
+      endsAfter: ["humanize_content"],
+    },
     // The final validation, readability, on-page SEO and trust, then the save.
-    { id: "checks", label: "Checks", endsAfter: [] },
+    { id: "checks", label: ARTICLE_STAGE_LABELS.checks, endsAfter: [] },
   ],
 };
 

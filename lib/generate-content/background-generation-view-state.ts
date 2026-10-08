@@ -1,3 +1,5 @@
+import { ARTICLE_STAGE_LABELS } from "@/lib/generate-content/run-stages";
+
 type ActiveGenerationViewState = {
   message: string;
   description: string;
@@ -22,7 +24,8 @@ export const deriveActiveGenerationViewState = (
     (!stage && progress >= 78);
   const isStylePass =
     !isChecks &&
-    (words.includes("style") ||
+    (words.includes("polish") ||
+      words.includes("style") ||
       words.includes("human") ||
       words.includes("refining") ||
       (!stage && progress >= 58));
@@ -35,25 +38,25 @@ export const deriveActiveGenerationViewState = (
   }
   if (isChecks) {
     return {
-      message: "Checks",
+      message: ARTICLE_STAGE_LABELS.checks,
       description: "Validation, readability, on-page SEO and trust.",
     };
   }
   if (isStylePass) {
     return {
-      message: "Style pass",
+      message: ARTICLE_STAGE_LABELS.style,
       description:
         "Checking the draft against the outline and smoothing its wording and flow.",
     };
   }
   if (words.includes("research")) {
     return {
-      message: "Research",
+      message: ARTICLE_STAGE_LABELS.research,
       description: "Searching for sources for the approved outline.",
     };
   }
   return {
-    message: "Draft",
+    message: ARTICLE_STAGE_LABELS.draft,
     description:
       "Writing the article from the approved outline and its sources.",
   };

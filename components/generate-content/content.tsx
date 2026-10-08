@@ -1027,7 +1027,9 @@ function ContentEditorInner(props: ContentEditorProps) {
                   </div>
                 </div>
                 <div className="space-y-1.5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-                  {toolCalls.map((tc) => (
+                  {/* Newest first: the list changes at the top as searches are added, with
+                      no scrolling to see what is new (task 838). */}
+                  {[...toolCalls].reverse().map((tc) => (
                     <InlineToolCard key={tc.id} tc={tc} />
                   ))}
                 </div>
@@ -1068,16 +1070,30 @@ function ContentEditorInner(props: ContentEditorProps) {
         {writing ? (
           <>
             <p className="text-table text-muted-foreground" aria-live="polite">
-              {/* Always in these words: the stage's name alone ("Draft") read as the article's status. */}
-              <span className="font-medium text-foreground">
-                Writing the article
-              </span>
-              {/* Where the strip below shows, it names the stage. */}
+              {/* The stage by its own name, which says what is being done to the article
+                  (task 838). Where the strip below shows, the strip names the stage and the
+                  bar says the whole. */}
               {enhancingMsg ? (
-                <span className={runStrip ? "hidden xl:inline" : undefined}>
-                  {` · ${enhancingMsg}`}
+                <>
+                  <span
+                    className={cn(
+                      "font-medium text-foreground",
+                      runStrip && "hidden xl:inline",
+                    )}
+                  >
+                    {enhancingMsg}
+                  </span>
+                  {runStrip ? (
+                    <span className="font-medium text-foreground xl:hidden">
+                      Writing the article
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                <span className="font-medium text-foreground">
+                  Writing the article
                 </span>
-              ) : null}
+              )}
               {/* A whole draft has no section being written: the bar says it is a draft instead. */}
               {!showsDraft && position.sections > 0 && position.section > 0
                 ? ` · section ${position.section} of ${position.sections}`
@@ -1133,12 +1149,20 @@ function ContentEditorInner(props: ContentEditorProps) {
                   // sections where they will be written. No grey bars to watch (task 703).
                   // The title is the one the person chose (the outline's): what streams in
                   // meanwhile is unfinished, and showed a section's heading as the title.
-                  (outline?.title || displayTitle) && (
-                    <header>
-                      {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
-                      <h1>{outline?.title || displayTitle}</h1>
-                    </header>
-                  )
+                  <>
+                    {(outline?.title || displayTitle) && (
+                      <header>
+                        {/* layout-ok: the article's own title, as in the article below (WorkingSurface's ownHeading) */}
+                        <h1>{outline?.title || displayTitle}</h1>
+                      </header>
+                    )}
+                    {/* The introduction's place, shaped like the paragraph it will be. */}
+                    <div className="not-prose space-y-2.5" aria-hidden="true">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-11/12" />
+                      <Skeleton className="h-4 w-3/5" />
+                    </div>
+                  </>
                 ) : (
                   <div className="not-prose space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -1208,26 +1232,33 @@ function ContentEditorInner(props: ContentEditorProps) {
               {/* The sections still to come, where they will be written: no overlay, and
                     nothing moves but the text itself (task 703). */}
               {writing && structure.some((e) => e.state === "waiting") && (
-                <ol className="not-prose mt-10 space-y-3">
+                <ol className="not-prose mt-10 space-y-8">
                   {structure
                     .filter((entry) => entry.state === "waiting")
                     .map((entry, index) => (
                       <li
                         // biome-ignore lint/suspicious/noArrayIndexKey: two sections may share a heading
                         key={`${index}-${entry.heading}`}
-                        className={cn(
-                          "rounded-md border border-dashed border-border px-4 py-3 text-muted-foreground",
-                          entry.level === 3 && "ml-6",
-                        )}
+                        className={cn("space-y-3", entry.level === 3 && "ml-6")}
                       >
                         <p
-                          className={
-                            entry.level === 2 ? "text-section" : "text-body"
-                          }
+                          className={cn(
+                            "text-muted-foreground",
+                            entry.level === 2 ? "text-section" : "text-body",
+                          )}
                         >
                           {entry.heading}
                         </p>
-                        <p className="text-caption">Still to come</p>
+                        <p className="sr-only">Still to come</p>
+                        {/* Its text's place, shaped like the paragraph it will be (the
+                            founder's feedback v3, task 838): a subsection's is shorter. */}
+                        <div className="space-y-2.5" aria-hidden="true">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-11/12" />
+                          {entry.level === 2 && (
+                            <Skeleton className="h-4 w-4/5" />
+                          )}
+                        </div>
                       </li>
                     ))}
                 </ol>

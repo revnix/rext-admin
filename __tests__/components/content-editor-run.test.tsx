@@ -86,7 +86,7 @@ describe("ContentEditor's toolbar", () => {
 describe("ContentEditor while the article is written, as the page shows it (task 703)", () => {
   const writingProps = {
     isEnhancing: true,
-    enhancingMsg: "Draft",
+    enhancingMsg: "Writing the first draft",
     allContent: {
       title: "How to start a podcast",
       meta_description: "Pick a show you can keep up.",
@@ -116,10 +116,11 @@ describe("ContentEditor while the article is written, as the page shows it (task
 
   it("says where the writing is, and keeps the actions for the end", () => {
     render(editor(writingProps));
-    // In these words always: the stage's name alone ("Draft") read as the article's status.
+    // The stage by its own name, which says what is being done (task 838).
     expect(
-      screen.getByText("Writing the article").parentElement,
-    ).toHaveTextContent("Writing the article · Draft · section 2 of 3");
+      screen.getByText("Writing the first draft").parentElement,
+    ).toHaveTextContent(/^Writing the first draft · section 2 of 3$/);
+    expect(screen.queryByText("Writing the article")).toBeNull();
     for (const name of ["Edit article", "Copy", "Publish"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
@@ -133,12 +134,17 @@ describe("ContentEditor while the article is written, as the page shows it (task
       }),
     );
     const bar = screen.getByText("Writing the article").parentElement;
-    // The strip is the bar's next line; the stage's name in the first line gives way to it
+    // The strip is the bar's next line and names the stage there, so the first line says the
+    // whole ("Writing the article") where the strip shows and the stage where it doesn't
     // (both are shown or hidden by width, which jsdom doesn't lay out).
     expect(bar?.nextElementSibling).toContainElement(
       screen.getByText("Draft 22 s"),
     );
-    expect(screen.getByText("· Draft")).toHaveClass("hidden", "xl:inline");
+    expect(screen.getByText("Writing the first draft")).toHaveClass(
+      "hidden",
+      "xl:inline",
+    );
+    expect(screen.getByText("Writing the article")).toHaveClass("xl:hidden");
   });
 
   it("lists the structure by level, with what is written, being written and to come", () => {
@@ -163,15 +169,15 @@ describe("ContentEditor while the article is written, as the page shows it (task
     expect(within(article).getByText("The gear you need")).toBeInTheDocument();
     expect(within(article).getAllByText("Still to come")).toHaveLength(2);
     // What is being written is said in the bar only, not on a panel over the text.
-    expect(screen.getAllByText("Writing the article")).toHaveLength(1);
-    expect(within(article).queryByText("Writing the article")).toBeNull();
+    expect(screen.getAllByText("Writing the first draft")).toHaveLength(1);
+    expect(within(article).queryByText("Writing the first draft")).toBeNull();
   });
 
-  it("shows the title and the outline's sections before the first words arrive, not grey bars", () => {
+  it("shows the title and the outline's sections before the first words arrive, each over the lines its text will take", () => {
     const { container } = render(
       editor({
         isEnhancing: true,
-        enhancingMsg: "Research",
+        enhancingMsg: "Researching the topic",
         generatedContent: "",
         // What streams in meanwhile is unfinished: the chosen title wins over it.
         allContent: { title: "Export and validate" } as never,
@@ -195,7 +201,24 @@ describe("ContentEditor while the article is written, as the page shows it (task
       }),
     ).toBeInTheDocument();
     expect(within(article).getAllByText("Still to come")).toHaveLength(2);
-    expect(container.querySelector('[data-slot="skeleton"]')).toBeNull();
+    // Placeholders shaped like the article (task 838): the introduction's three lines, then
+    // each planned section's heading over its own, a subsection's shorter. No anonymous
+    // block of grey bars, and no row of tag pills.
+    const sections = within(article).getAllByRole("listitem");
+    expect(
+      sections.map((section) => section.firstElementChild?.textContent),
+    ).toEqual(["Pick a show idea", "Choose one listener"]);
+    expect(
+      sections.map(
+        (section) => section.querySelectorAll('[data-slot="skeleton"]').length,
+      ),
+    ).toEqual([3, 2]);
+    expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(
+      8,
+    );
+    expect(
+      container.querySelector('[data-slot="skeleton"].rounded-full'),
+    ).toBeNull();
     expect(
       within(screen.getByRole("navigation", { name: "Structure" }))
         .getAllByRole("listitem")
@@ -206,11 +229,37 @@ describe("ContentEditor while the article is written, as the page shows it (task
     ]);
   });
 
+  it("lists the newest search first in the Research box (task 838)", () => {
+    render(
+      editor({
+        ...writingProps,
+        toolCalls: [
+          { id: "1", name: "search", query: "podcast formats", status: "done" },
+          { id: "2", name: "search", query: "podcast gear", status: "done" },
+          {
+            id: "3",
+            name: "search",
+            query: "podcast hosting",
+            status: "running",
+          },
+        ] as never,
+      }),
+    );
+    const queries = screen
+      .getAllByText(/^"?podcast (formats|gear|hosting)"?$/)
+      .map((query) => query.textContent?.replace(/"/g, ""));
+    expect(queries.slice(0, 3)).toEqual([
+      "podcast hosting",
+      "podcast gear",
+      "podcast formats",
+    ]);
+  });
+
   describe("with the writer's whole first draft (task 773)", () => {
     const draftProps = {
       ...writingProps,
       draft: true,
-      enhancingMsg: "Style pass",
+      enhancingMsg: "Polishing the wording",
       generatedContent:
         "Intro.\n\n## Pick a show idea\n\nText.\n\n## Choose a format\n\nA solo show.\n\n## The gear you need\n\nA microphone.",
     };
@@ -229,7 +278,7 @@ describe("ContentEditor while the article is written, as the page shows it (task
           within(article).getByRole("heading", { level: 1 }),
         ) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
-      const bar = screen.getByText("Writing the article").parentElement
+      const bar = screen.getByText("Polishing the wording").parentElement
         ?.parentElement as HTMLElement;
       expect(within(bar).getByText("First draft")).toBeInTheDocument();
     });
@@ -237,8 +286,8 @@ describe("ContentEditor while the article is written, as the page shows it (task
     it("names no section as the one being written: they are all there", () => {
       render(editor(draftProps));
       expect(
-        screen.getByText("Writing the article").parentElement,
-      ).toHaveTextContent(/^Writing the article · Style pass$/);
+        screen.getByText("Polishing the wording").parentElement,
+      ).toHaveTextContent(/^Polishing the wording$/);
       const nav = screen.getByRole("navigation", { name: "Structure" });
       expect(
         within(nav)
@@ -287,8 +336,8 @@ describe("ContentEditor while the article is written, as the page shows it (task
       render(editor({ ...draftProps, draft: false }));
       expect(screen.queryByText("First draft")).toBeNull();
       expect(
-        screen.getByText("Writing the article").parentElement,
-      ).toHaveTextContent("Writing the article · Style pass · section 3 of 3");
+        screen.getByText("Polishing the wording").parentElement,
+      ).toHaveTextContent(/^Polishing the wording · section 3 of 3$/);
     });
   });
 
