@@ -257,6 +257,11 @@ export function SignupForm({
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
+      // The fields the backend's answer names as refused, in the form's order.
+      const refused = extractFieldErrors(err);
+      const beside = (["full_name", "email", "password"] as const).filter(
+        (field) => refused[field],
+      );
       if (created) {
         // The account exists: what failed is the login that follows it.
         analytics.track("signin_refused", {
@@ -264,7 +269,13 @@ export function SignupForm({
           after_sign_up: true,
         });
       } else {
-        analytics.track("signup_refused", { ...signUpRefusal(err), invited });
+        analytics.track("signup_refused", {
+          ...signUpRefusal(err),
+          // Which field the backend refused, when it names one: the field's id, never its
+          // words. A refused name and a refused password were one and the same event.
+          ...(beside[0] ? { field: SIGN_UP_FIELDS[beside[0]] } : {}),
+          invited,
+        });
       }
 
       // Account already exists - the user is trying to "create" an account they
@@ -288,10 +299,6 @@ export function SignupForm({
       // What the backend refused about a field goes beside that field, in its own words, and
       // the first of them takes the focus. It used to be a toast, away from the field it was
       // about and gone in seconds (rext-control task 933).
-      const refused = extractFieldErrors(err);
-      const beside = (["full_name", "email", "password"] as const).filter(
-        (field) => refused[field],
-      );
       if (beside.length > 0) {
         for (const field of beside) {
           form.setError(field, { type: "server", message: refused[field] });

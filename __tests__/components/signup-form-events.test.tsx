@@ -278,8 +278,14 @@ describe("SignupForm, what it reports", () => {
     );
     expect(screen.getByLabelText(/Full name/)).toBeEnabled();
     expect(toast.error).not.toHaveBeenCalled();
-    // Counted as a refusal all the same, and never by its words.
-    expect(sent("signup_refused")).toHaveLength(1);
+    // Counted as a refusal all the same, by the field it was about and never by its words.
+    expect(sent("signup_refused")).toEqual([
+      expect.objectContaining({
+        kind: "rejected",
+        status: 422,
+        field: "full_name",
+      }),
+    ]);
     expect(JSON.stringify(track.mock.calls)).not.toContain("web address");
   });
 
