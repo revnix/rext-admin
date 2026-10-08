@@ -26,6 +26,7 @@ import {
   serpTitleFacts,
 } from "@/lib/generate-content/serp-title-facts";
 import type { RunTitleRow } from "@/lib/generate-content/run-stages";
+import { titlePlace } from "@/lib/generate-content/step-fill";
 import {
   normalizeTitle,
   scoreTitle,
@@ -443,9 +444,10 @@ export function TitleStepFilling({
                 {row.state === "written" ? (
                   <KeyphraseText text={row.title} keyphrase={keyphrase} />
                 ) : (
-                  row.title
+                  // A title just begun has no words yet: its place stands in.
+                  row.title.trim() || titlePlace(index)
                 )}
-                {row.state === "writing" && (
+                {row.state === "writing" && row.title.trim() && (
                   <span className="text-muted-foreground" aria-hidden="true">
                     …
                   </span>
@@ -510,7 +512,8 @@ export function TitleStepFilling({
       sideTitle={PANE_TITLE}
       trigger="inline"
       side={
-        <div className="space-y-6">
+        // The same space above as the heading beside it.
+        <div className="space-y-6 pt-3">
           {progress}
           {facts && (
             <TopTenPanel facts={facts} showFacts keyphrase={keyphrase} pick="">

@@ -191,11 +191,13 @@ jest.mock("@/components/generate-content/keyword", () => ({
   KeywordForm: ({
     userKeyword,
     disabled,
+    readOnly,
     onKeywordChange,
     onSubmit,
   }: {
     userKeyword: string;
     disabled?: boolean;
+    readOnly?: boolean;
     onKeywordChange: (value: string) => void;
     onSubmit: () => void;
   }) => (
@@ -203,6 +205,7 @@ jest.mock("@/components/generate-content/keyword", () => ({
       <input
         aria-label="Keyword"
         value={userKeyword}
+        readOnly={readOnly}
         onChange={(event) => onKeywordChange(event.target.value)}
       />
       <button type="button" disabled={disabled} onClick={onSubmit}>
@@ -398,7 +401,9 @@ describe("the Generate page's progress box", () => {
     expect(
       within(card).getByRole("button", { name: /continue with this keyword/i }),
     ).toBeDisabled();
+    // The search field shows what was searched and can't be changed: the step belongs to it.
     expect(screen.getByRole("button", { name: "Analyse" })).toBeDisabled();
+    expect(screen.getByLabelText("Keyword")).toHaveAttribute("readonly");
 
     const organic = [
       "almanac.com",

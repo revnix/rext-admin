@@ -57,7 +57,11 @@ import type {
 } from "@/types/generate-content";
 import { OutlineApproveBar } from "./approve-bar";
 import { OutlineBrief } from "./outline-brief";
-import { hasSources, OutlineSources } from "./outline-sources";
+import {
+  hasSources,
+  OutlineSources,
+  type OutlineSourcesProps,
+} from "./outline-sources";
 import { ADD_CAP_REASON, OutlineTree, StreamingTree } from "./outline-tree";
 
 export interface OutlineReviewProps {
@@ -83,6 +87,11 @@ export interface OutlineReviewProps {
   filling?: {
     title?: string;
     headings: string[];
+    /** What the run read before it began the outline: the gate, which carries them later, isn't here yet. */
+    sources?: Pick<
+      OutlineSourcesProps,
+      "serpResults" | "questions" | "relatedSearches"
+    >;
     progress: ReactNode;
     strip: ReactNode;
   };
@@ -176,12 +185,15 @@ export function OutlineReview({
     outline?.title ?? filling?.title ?? streamedField(rawTokens, "title");
   const brief = outline?.brief ?? streamedField(rawTokens, "brief");
   const sources = {
-    serpResults: gate.serpResults,
-    questions: gate.questions,
-    relatedSearches: gate.relatedSearches,
+    serpResults: filling?.sources?.serpResults ?? gate.serpResults,
+    questions: filling?.sources?.questions ?? gate.questions,
+    relatedSearches: filling?.sources?.relatedSearches ?? gate.relatedSearches,
     clusters: keywordClusters,
     clusterHeadings: outline?.cluster_heading_map,
   };
+  // While the first outline is written the sources sit under it, in the Outline tab.
+  const sourcesTab = !filling && hasSources(sources);
+  const sourcesId = useId();
   const edited = rowsEdited(rows, gate.sections);
   const faqs = useMemo(() => readOutlineFaqs(outline), [outline]);
 
@@ -338,9 +350,29 @@ export function OutlineReview({
   );
 
   const treePane = isDraft ? (
-    <StreamingTree
-      headings={filling?.headings ?? streamedHeadings(rawTokens)}
-    />
+    filling && hasSources(sources) ? (
+      // The first outline can take half a minute, and its sections often arrive together: what it
+      // is being written from is real, already here, and worth reading meanwhile. Once the outline
+      // is in, the same sources are the Sources tab.
+      <div className="space-y-8">
+        <StreamingTree headings={filling.headings} />
+        <section aria-labelledby={sourcesId} className="space-y-4">
+          <div className="space-y-1">
+            <h3 id={sourcesId} className="text-section text-foreground">
+              What the outline is written from
+            </h3>
+            <p className="text-table text-muted-foreground">
+              The sections take their place above as soon as they are written.
+            </p>
+          </div>
+          <OutlineSources {...sources} />
+        </section>
+      </div>
+    ) : (
+      <StreamingTree
+        headings={filling?.headings ?? streamedHeadings(rawTokens)}
+      />
+    )
   ) : rows.length > 0 ? (
     <div className="space-y-6">
       <OutlineTree
@@ -420,7 +452,7 @@ export function OutlineReview({
             <div className="flex items-center justify-between gap-2">
               <TabsList>
                 <TabsTrigger value="outline">Outline</TabsTrigger>
-                {hasSources(sources) && (
+                {sourcesTab && (
                   <TabsTrigger value="sources">Sources</TabsTrigger>
                 )}
               </TabsList>
@@ -446,7 +478,7 @@ export function OutlineReview({
                 )}
               </div>
             </TabsContent>
-            {hasSources(sources) && (
+            {sourcesTab && (
               <TabsContent value="sources" className="mt-4">
                 <OutlineSources {...sources} />
               </TabsContent>
@@ -455,6 +487,11 @@ export function OutlineReview({
 
           <OutlineApproveBar
             disabled={isLoading || isDraft}
+            reason={
+              filling
+                ? "You can approve once the outline is written."
+                : undefined
+            }
             onRegenerate={onReject}
             onApprove={approve}
             start={<SidePaneTrigger size="default" className="mr-auto" />}

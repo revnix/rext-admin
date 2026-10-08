@@ -202,7 +202,8 @@ export function SuggestionsFilling({
       sideTitle="Top search results"
       trigger="inline"
       side={
-        <div className="space-y-6">
+        // The same space above as the card beside it: the box would else touch the search field.
+        <div className="space-y-6 pt-4">
           {progress}
           {results.length > 0 && <SerpSnapshot results={results} />}
         </div>
@@ -216,17 +217,18 @@ export function SuggestionsFilling({
           pending={pending}
           eyebrow="Searched keyword"
           action={
-            <div className="flex flex-col items-end gap-1">
-              <Button size="lg" disabled aria-describedby={reasonId}>
-                Continue with this keyword
-                <ChevronRight />
-              </Button>
+            // The reason beside the button, not under it: the card keeps the height the step's has.
+            <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
               <span
                 id={reasonId}
                 className="text-caption text-muted-foreground"
               >
                 Ready when the analysis ends
               </span>
+              <Button size="lg" disabled aria-describedby={reasonId}>
+                Continue with this keyword
+                <ChevronRight />
+              </Button>
             </div>
           }
         />
