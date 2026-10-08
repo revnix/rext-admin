@@ -14,10 +14,12 @@ const toast = {
   dismiss: jest.fn(),
 };
 const push = jest.fn();
+// The address's query, as the page arrived with it.
+let query = "";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push, back: jest.fn(), replace: jest.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(query),
   usePathname: () => "/login",
 }));
 jest.mock("next-auth/react", () => ({
@@ -89,6 +91,7 @@ async function pressLogIn(filled = true) {
 
 beforeEach(() => {
   jest.useFakeTimers();
+  query = "";
   signIn.mockReset();
   push.mockReset();
   track.mockClear();
@@ -148,6 +151,25 @@ describe("LoginForm, what it reports", () => {
     expect(signIn).toHaveBeenCalledTimes(2);
     expect(sent("signin_refused")).toEqual([{ kind: "away" }]);
     expect(sent("signin_submitted")).toHaveLength(1);
+  });
+
+  it("says which error the page arrived with, by its code and once", async () => {
+    query = "error=OAuthError";
+
+    await pressLogIn(false);
+
+    expect(sent("signin_error_shown")).toEqual([{ error: "OAuthError" }]);
+  });
+
+  it('calls an error that is not a plain code "other", and reports none when there is none', async () => {
+    query = `error=${encodeURIComponent("Ana, your account ana@example.com is locked")}`;
+    await pressLogIn(false);
+    expect(sent("signin_error_shown")).toEqual([{ error: "other" }]);
+
+    track.mockClear();
+    query = "";
+    await pressLogIn(false);
+    expect(sent("signin_error_shown")).toEqual([]);
   });
 
   it("reports no refusal when the second try signs the person in", async () => {

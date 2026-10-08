@@ -19,6 +19,7 @@ type AnalyticsEvent =
   | "signup_refused"
   | "signin_submitted"
   | "signin_refused"
+  | "signin_error_shown"
   // Onboarding
   | "first_login_questions_shown"
   | "first_login_questions_completed"

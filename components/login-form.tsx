@@ -5,7 +5,7 @@ import { getAuthHeaders, resetAuthRedirectState } from "@/lib/auth-utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { InvitationBanner } from "@/components/auth/invitation-banner";
 import { FieldController } from "@/components/forms/field-controller";
 import { PasswordInput } from "@/components/forms/password-input";
@@ -29,6 +29,7 @@ import { analytics } from "@/lib/analytics";
 import {
   firstRefusedField,
   SIGN_IN_FIELDS,
+  shownErrorCode,
   signInRefusal,
 } from "@/lib/analytics-forms";
 import { classifyError } from "@/lib/error-utils";
@@ -75,11 +76,19 @@ export function LoginForm({
   }, [searchParams, form]);
 
   // Handle URL error parameters (e.g., session expired)
+  const errorReported = useRef(false);
   useEffect(() => {
     const urlError = searchParams.get("error");
     const errorCode = searchParams.get("code");
 
     if (urlError) {
+      // This page is never recorded: it says which error it arrived with, by its code, once.
+      if (!errorReported.current) {
+        errorReported.current = true;
+        analytics.track("signin_error_shown", {
+          error: shownErrorCode(urlError),
+        });
+      }
       const errorMessages: Record<string, string> = {
         SessionExpired: "Your session has expired. Please log in again.",
         // The backend ended this session (a sign-out elsewhere, a password change, an admin):
