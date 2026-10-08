@@ -16,6 +16,11 @@ jest.mock("@/lib/api-client", () => ({
   },
 }));
 
+const track = jest.fn();
+jest.mock("@/lib/analytics", () => ({
+  analytics: { track: (...args: unknown[]) => track(...args) },
+}));
+
 const renderQuestions = () =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -46,6 +51,8 @@ describe("FirstLoginQuestions", () => {
     ]) {
       expect(screen.getByText(label)).toBeVisible();
     }
+    // Once, for the funnel from a new account to its first workspace.
+    expect(track.mock.calls).toEqual([["first_login_questions_shown"]]);
   });
 
   it("asks nothing when the backend says not to (an invited user, an admin, done already)", async () => {
@@ -53,6 +60,7 @@ describe("FirstLoginQuestions", () => {
     renderQuestions();
     await waitFor(() => expect(shouldShow).toHaveBeenCalled());
     expect(screen.queryByRole("dialog")).toBeNull();
+    expect(track).not.toHaveBeenCalled();
   });
 
   it("ends onboarding on Skip, saving no answers, and closes", async () => {
@@ -62,6 +70,11 @@ describe("FirstLoginQuestions", () => {
     await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
     expect(saveAnswers).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    // How many were answered, and nothing about the answers.
+    expect(track).toHaveBeenLastCalledWith("first_login_questions_completed", {
+      answered_count: 0,
+    });
+    expect(track).toHaveBeenCalledTimes(2);
   });
 
   it("ends onboarding on Continue with nothing chosen, saving nothing", async () => {
@@ -72,5 +85,8 @@ describe("FirstLoginQuestions", () => {
     );
     await waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
     expect(saveAnswers).not.toHaveBeenCalled();
+    expect(track).toHaveBeenLastCalledWith("first_login_questions_completed", {
+      answered_count: 0,
+    });
   });
 });

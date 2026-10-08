@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldController } from "@/components/forms/field-controller";
 import { useZodForm } from "@/components/forms/use-zod-form";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { analytics } from "@/lib/analytics";
 import { apiClient } from "@/lib/api-client";
 import { log } from "@/lib/logger";
 import {
@@ -78,8 +79,18 @@ export function FirstLoginQuestions() {
   });
 
   const open = Boolean(data?.should_show) && !dismissed;
+  const asked = Boolean(data?.should_show);
+  // For the funnel from a new account to its first workspace: that the questions came up, and
+  // that the person got past them.
+  useEffect(() => {
+    if (asked) analytics.track("first_login_questions_shown");
+  }, [asked]);
   const close = (answers: Answers | null) => {
     setDismissed(true);
+    // How many of the four were answered, never what the answers were: 0 is a skip.
+    analytics.track("first_login_questions_completed", {
+      answered_count: Object.values(answers ?? {}).filter(Boolean).length,
+    });
     finish.mutate(answers);
   };
 
