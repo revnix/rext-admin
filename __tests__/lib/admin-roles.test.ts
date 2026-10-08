@@ -1,5 +1,9 @@
 import { adminInvitationSchema } from "@/schemas/admin-schemas";
-import { ADMIN_ROLES, adminRoleLabel } from "@/types/admin-invitation";
+import {
+  ADMIN_ROLES,
+  adminLandingRoute,
+  adminRoleLabel,
+} from "@/types/admin-invitation";
 
 const invitation = (admin_role: string) =>
   adminInvitationSchema.safeParse({
@@ -31,5 +35,12 @@ describe("the platform roles an admin can be invited to (task 915)", () => {
     expect(adminRoleLabel("admin")).toBe("Platform admin");
     expect(adminRoleLabel("support")).toBe("Support admin");
     expect(adminRoleLabel("billing_admin")).toBe("billing admin");
+  });
+
+  it("lands a new admin where the route guard lets that role in", () => {
+    expect(adminLandingRoute("super_admin")).toBe("/admin");
+    expect(adminLandingRoute("admin")).toBe("/admin");
+    // The admin home turns a support admin away; the users list is theirs.
+    expect(adminLandingRoute("support")).toBe("/admin/users");
   });
 });

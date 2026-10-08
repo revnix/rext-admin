@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import {
+  AUTH_SESSION_SYNC_PERMISSIONS_ACTION,
+  inTurnWithTokenRefresh,
+} from "@/lib/auth-utils";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,13 +30,17 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
-import { ADMIN_ROLES, adminRoleLabel } from "@/types/admin-invitation";
+import {
+  ADMIN_ROLES,
+  adminLandingRoute,
+  adminRoleLabel,
+} from "@/types/admin-invitation";
 import type { Route } from "next";
 
 export default function AcceptAdminInvitationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { toast } = useToast();
   const token = searchParams.get("token");
   const [isAccepting, setIsAccepting] = useState(false);
@@ -59,16 +67,24 @@ export default function AcceptAdminInvitationPage() {
       if (!token) throw new Error("No token provided");
       return apiClient.adminInvitations.accept(token);
     },
-    onSuccess: () => {
+    onSuccess: async (accepted) => {
       setAcceptanceComplete(true);
+      const role = accepted?.admin_role || validationData?.admin_role || "";
       toast.success(
-        "Welcome to the admin team! You now have platform admin access.",
+        `Welcome to the admin team! You now have ${adminRoleLabel(role)} access.`,
       );
-      // A full load, not a step inside the app: the role is held at once, but the session's own
-      // data has to be read again before the admin area shows (task 915).
-      setTimeout(() => {
-        window.location.assign("/admin");
-      }, 2000);
+      // The backend holds the role at once; the session still carries the roles it was signed in
+      // with, and the route guard reads those. They are read again from the backend, the way a
+      // role change is picked up anywhere else in the app, before the admin area is opened
+      // (task 915). If that reading fails the next page does it again on its own.
+      try {
+        await inTurnWithTokenRefresh(() =>
+          update({ authAction: AUTH_SESSION_SYNC_PERMISSIONS_ACTION }),
+        );
+      } catch {
+        // The landing page's own sync picks the role up.
+      }
+      window.location.assign(adminLandingRoute(role));
     },
     onError: (error: Error) => {
       toast.error(`The invitation wasn't accepted: ${error.message}`);
