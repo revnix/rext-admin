@@ -64,7 +64,6 @@ export function useChecklistAnalytics(
       analytics.track("onboarding_completed", {
         workspace_id: workspaceId,
         user_id: userId,
-        completion_time_ms: Date.now(),
       });
     }
 

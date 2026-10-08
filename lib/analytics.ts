@@ -1,64 +1,45 @@
 // ── Event catalog ─────────────────────────────────────────────────────────────
+// Every event the app sends, by hand (rext-control task 712). The rule for a name: what happened
+// to what, in the past tense and lower case, the thing first (`title_selected`,
+// `checkout_failed`). A name here is sent somewhere: one that isn't is removed.
+//
+// The workspace, the plan and the role ride on every event (AnalyticsContextSync,
+// providers/posthog-provider.tsx), so a caller adds only what is its own.
 
 type AnalyticsEvent =
-  // Auth events
+  // Signing in and up
   | "user_signed_in"
   | "user_signed_up"
   | "oauth_started"
   | "email_verified"
-  // Onboarding events
-  | "onboarding_empty_dashboard_view"
-  | "onboarding_empty_sidebar_view"
-  | "onboarding_empty_switcher_view"
-  | "onboarding_cta_click"
-  | "onboarding_workspace_created"
+  // Onboarding
   | "workspace_created"
-  | "onboarding_first_content_created"
-  | "onboarding_completed"
   | "onboarding_milestone_completed"
-  | "onboarding_milestone_skipped"
-  | "onboarding_dismissed"
-  | "onboarding_reset"
-  // Empty state events
-  | "dashboard_empty_state_view"
-  | "workspace_empty_state_view"
-  | "workspace_empty_state_action_click"
-  // Content generation events
+  | "onboarding_completed"
+  // Generating an article
+  | "content_generation_started"
   | "keyword_search_completed"
   | "keyword_selected"
   | "title_suggestions_generated"
   | "title_selected"
   | "outline_generated"
   | "outline_approved"
-  | "content_generation_started"
   | "content_generation_completed"
   | "content_generation_failed"
-  // Content publish events
+  // Publishing
   | "content_published"
   | "content_scheduled"
-  // CMS events
   | "cms_connection_completed"
   | "cms_connection_failed"
   | "cms_publish_attempted"
   | "cms_publish_succeeded"
   | "cms_publish_failed"
-  // Subscription events
+  // Plans
   | "checkout_started"
-  | "subscription_purchased"
-  | "payment_failed"
-  // General events
-  | "page_view"
-  | "button_click"
-  | "form_submit";
+  | "checkout_failed"
+  | "subscription_purchased";
 
 type EventProperties = Record<string, string | number | boolean | undefined>;
-
-interface AnalyticsUser {
-  id?: string;
-  email?: string;
-  name?: string;
-  role?: string;
-}
 
 // ── PostHog bridge ────────────────────────────────────────────────────────────
 // The PostHogProvider calls registerPostHog() on mount to wire in posthog-js.
@@ -66,10 +47,6 @@ interface AnalyticsUser {
 // server-safe (no browser-only globals at module load time).
 
 interface PostHogBridge {
-  identify: (
-    distinctId: string,
-    properties?: Record<string, string | undefined>,
-  ) => void;
   capture: (event: string, properties?: Record<string, unknown>) => void;
   reset: () => void;
 }
@@ -145,22 +122,6 @@ class Analytics {
   }
 
   /**
-   * Identify the current user.
-   * Call after login / signup so subsequent events are associated with them.
-   */
-  identify(user: AnalyticsUser) {
-    if (!this.enabled) return;
-
-    if (user.id) {
-      _posthog?.identify(user.id, {
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      });
-    }
-  }
-
-  /**
    * Track an analytics event, with the caller's properties only. PostHog adds the time, the person
    * and the page's address itself, and that address goes out with its credentials redacted
    * (lib/analytics-redact.ts); a second, raw copy of it must never ride along.
@@ -172,11 +133,6 @@ class Analytics {
     } else if (!refused && pending.length < PENDING_LIMIT) {
       pending.push({ event, properties: { ...properties } });
     }
-  }
-
-  /** Track a page view. */
-  page(name: string, properties?: EventProperties) {
-    this.track("page_view", { page_name: name, ...properties });
   }
 
   /** Reset analytics state (e.g. on logout). */
@@ -199,7 +155,7 @@ class Analytics {
 }
 
 export const analytics = new Analytics();
-export type { AnalyticsEvent, EventProperties, AnalyticsUser };
+export type { AnalyticsEvent, EventProperties };
 
 // ── Linking a provider ───────────────────────────────────────────────────────
 // Linking Google or GitHub from the settings goes through the same OAuth sign-in as logging in, so

@@ -20,6 +20,9 @@ const mockPosthog = {
   opt_out_capturing: jest.fn(),
   get_property: jest.fn(),
   onSessionId: jest.fn(),
+  register: jest.fn(),
+  unregister: jest.fn(),
+  setPersonProperties: jest.fn(),
 };
 jest.mock("posthog-js", () => ({
   __esModule: true,
@@ -34,7 +37,28 @@ jest.mock("posthog-js", () => ({
       mockPosthog.opt_out_capturing(...args),
     get_property: (...args: unknown[]) => mockPosthog.get_property(...args),
     onSessionId: (...args: unknown[]) => mockPosthog.onSessionId(...args),
+    register: (...args: unknown[]) => mockPosthog.register(...args),
+    unregister: (...args: unknown[]) => mockPosthog.unregister(...args),
+    setPersonProperties: (...args: unknown[]) =>
+      mockPosthog.setPersonProperties(...args),
   },
+}));
+jest.mock("@/stores/subscription-store", () => ({
+  useSubscriptionStore: (selector: (state: unknown) => unknown) =>
+    selector({
+      subscription: {
+        subscription: {
+          plan_name: "growth",
+          status: "active",
+          billing_period: "monthly",
+          trial_end_date: null,
+        },
+      },
+    }),
+}));
+jest.mock("@/stores/workspace", () => ({
+  useWorkspaceStore: (selector: (state: unknown) => unknown) =>
+    selector({ currentWorkspace: { id: "ws-1" }, workspaceList: [{}, {}] }),
 }));
 jest.mock("posthog-js/react", () => ({
   PostHogProvider: ({ children }: { children: React.ReactNode }) => (
@@ -49,7 +73,14 @@ jest.mock("next/navigation", () => ({
 jest.mock("next-auth/react", () => ({
   useSession: () => ({
     status: "authenticated",
-    data: { user: { id: "u1", email: "mary@example.com", name: "Mary" } },
+    data: {
+      user: {
+        id: "u1",
+        email: "mary@example.com",
+        name: "Mary",
+        role: "owner",
+      },
+    },
   }),
 }));
 jest.mock("@/lib/analytics-consent", () => ({
@@ -150,6 +181,32 @@ describe("where analytics is on unless switched off", () => {
     expect(question()).toBeNull();
   });
 
+  it("puts the workspace, the plan and the role on every event, and the plan on the person", async () => {
+    renderProvider();
+    await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());
+
+    const registered = Object.assign(
+      {},
+      ...mockPosthog.register.mock.calls.map(([properties]) => properties),
+    );
+    expect(registered).toEqual({
+      workspace_id: "ws-1",
+      role: "owner",
+      plan: "growth",
+      plan_status: "active",
+      billing_period: "monthly",
+    });
+    expect(mockPosthog.setPersonProperties).toHaveBeenCalledWith({
+      plan: "growth",
+      plan_status: "active",
+      billing_period: "monthly",
+      trial_ends_at: null,
+    });
+    expect(mockPosthog.setPersonProperties).toHaveBeenCalledWith({
+      workspaces: 2,
+    });
+  });
+
   it("puts the choice back after a sign-out's reset, which posthog-js forgets it on", async () => {
     renderProvider();
     await waitFor(() => expect(mockPosthog.identify).toHaveBeenCalled());
@@ -226,6 +283,9 @@ describe("after a no given earlier", () => {
     renderProvider();
 
     await waitFor(() => expect(pageViews()).toHaveLength(1));
+    // Nothing of the person, their plan or their workspace is attached either.
+    expect(mockPosthog.register).not.toHaveBeenCalled();
+    expect(mockPosthog.setPersonProperties).not.toHaveBeenCalled();
     expect(mockPosthog.opt_out_capturing).toHaveBeenCalledTimes(1);
     expect(mockPosthog.identify).not.toHaveBeenCalled();
     expect(question()).toBeNull();

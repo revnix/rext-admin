@@ -25,7 +25,7 @@ describe("analytics.track", () => {
   it("sends the caller's properties only: no address, time or user id of its own", () => {
     const { analytics, registerPostHog } = loadAnalytics();
     const capture = jest.fn();
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
 
     analytics.track("email_verified");
     analytics.track("checkout_started", { plan_name: "Pro" });
@@ -39,11 +39,7 @@ describe("analytics.track", () => {
 
   it("keeps no copy of an event in the browser", () => {
     const { analytics, registerPostHog } = loadAnalytics();
-    registerPostHog({
-      identify: jest.fn(),
-      capture: jest.fn(),
-      reset: jest.fn(),
-    });
+    registerPostHog({ capture: jest.fn(), reset: jest.fn() });
 
     analytics.track("email_verified");
 
@@ -75,7 +71,7 @@ describe("before the person's answer on analytics is known", () => {
     analytics.track("workspace_created");
     expect(capture).not.toHaveBeenCalled();
 
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
 
     expect(capture.mock.calls).toEqual([
       ["user_signed_in", { method: "credentials" }],
@@ -89,7 +85,7 @@ describe("before the person's answer on analytics is known", () => {
 
     analytics.track("user_signed_in");
     unregisterPostHog();
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
 
     expect(capture).not.toHaveBeenCalled();
   });
@@ -100,7 +96,7 @@ describe("before the person's answer on analytics is known", () => {
 
     unregisterPostHog();
     analytics.track("keyword_selected", { keyword: "crm" });
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
     analytics.track("title_selected");
 
     expect(capture.mock.calls).toEqual([["title_selected", {}]]);
@@ -111,7 +107,7 @@ describe("before the person's answer on analytics is known", () => {
     const capture = jest.fn();
 
     for (let i = 0; i < 130; i++) analytics.track("title_selected");
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
 
     expect(capture).toHaveBeenCalledTimes(100);
   });
@@ -126,7 +122,7 @@ describe("while an admin acts as a customer", () => {
     const { analytics, registerPostHog, setImpersonating, isImpersonating } =
       loadAnalytics();
     const capture = jest.fn();
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
 
     setImpersonating(true);
     analytics.track("keyword_selected", { keyword: "crm" });
@@ -142,7 +138,7 @@ describe("while an admin acts as a customer", () => {
     const { analytics, registerPostHog, setImpersonating, isImpersonating } =
       loadAnalytics();
     const capture = jest.fn();
-    registerPostHog({ identify: jest.fn(), capture, reset: jest.fn() });
+    registerPostHog({ capture, reset: jest.fn() });
     const refuse = jest
       .spyOn(Storage.prototype, "setItem")
       .mockImplementation(() => {

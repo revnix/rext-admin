@@ -143,10 +143,11 @@ export function WorkspaceCreateWizard() {
       queryClient.invalidateQueries({
         queryKey: subscriptionQueries.usage().queryKey,
       });
-      analytics.track(
-        isFirstWorkspace ? "onboarding_workspace_created" : "workspace_created",
-        { workspace_id: workspace.id, workspace_slug: workspace.slug },
-      );
+      analytics.track("workspace_created", {
+        workspace_id: workspace.id,
+        workspace_slug: workspace.slug,
+        first_workspace: isFirstWorkspace,
+      });
       setWebsite(data.url);
       const operation = useWorkspaceCrudStore.getState().currentOperation;
       if (operation?.operationId) {
