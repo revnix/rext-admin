@@ -58,12 +58,15 @@ const KEPT_PARAMS: Record<string, RegExp> = {
   resource: WORDS,
   view: WORD,
   month: /^\d{4}-\d{2}$/,
-  // What a page was opened for.
+  // What a page was opened for, or from: one of a few words the code writes
+  // (`?publish=schedule` from the editor, `?from=description` on the create-workspace form).
   error: WORD,
   session: WORD,
   reason: WORD,
   drafted: WORD,
   intent: WORD,
+  publish: WORD,
+  from: WORD,
   // What the backend names a run, a thread or a persona by.
   thread: ID,
   runId: ID,

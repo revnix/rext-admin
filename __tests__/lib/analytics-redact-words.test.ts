@@ -49,13 +49,24 @@ describe("redactUrl, a query", () => {
       ["view", "week"],
       ["error", "OAuthAccountNotLinked"],
       ["session", "expired"],
+      ["publish", "schedule"],
+      ["from", "description"],
     ];
     for (const [name, value] of kept) {
       expect(paramOf(`${APP}/w/acme/content?${name}=${value}`, name)).toBe(
         value,
       );
     }
-    for (const name of ["ref", "thread", "persona", "month", "view", "page"]) {
+    for (const name of [
+      "ref",
+      "thread",
+      "persona",
+      "month",
+      "view",
+      "page",
+      "publish",
+      "from",
+    ]) {
       expect(
         paramOf(
           `${APP}/w/acme/content?${name}=${encodeURIComponent(KEYWORD)}`,
