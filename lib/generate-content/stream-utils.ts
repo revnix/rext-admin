@@ -80,7 +80,25 @@ export async function* streamFromSSE(
     }),
   );
 
-  if (!res.ok || !res.body) throw new Error("Stream failed");
+  if (!res.ok || !res.body) {
+    // A refusal the route worded itself, with its code (a run that isn't there, rext-control task
+    // 824), reaches the page as the same error a stream's own `{ error, code }` event makes.
+    let refused: { error?: unknown; code?: unknown } | null = null;
+    if (!res.ok) {
+      try {
+        refused = await res.json();
+      } catch {
+        // No body, or not JSON: the plain failure below.
+      }
+    }
+    if (
+      typeof refused?.error === "string" &&
+      typeof refused.code === "string"
+    ) {
+      throw new RunStreamError(refused.error, refused.code);
+    }
+    throw new Error("Stream failed");
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
