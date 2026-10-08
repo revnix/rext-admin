@@ -204,8 +204,9 @@ export interface ContentVersion {
   id: string;
   /** When the sitting began. */
   created_at: string;
-  /** When it last took a save: the time to show. */
-  updated_at: string;
+  /** When it last took a save: the time to show. Null until a later save of the same sitting
+   *  has gone into it; the time it was made stands for it then. */
+  updated_at: string | null;
   /** Null when the account is gone; the name can be missing. */
   created_by: { id: string; name: string | null } | null;
   source: ContentVersionSource;
