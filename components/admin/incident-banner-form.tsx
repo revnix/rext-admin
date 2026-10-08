@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 
 import { FieldController } from "@/components/forms/field-controller";
 import { FormSection, FormShell } from "@/components/forms/form-shell";
@@ -113,6 +114,23 @@ export function IncidentBannerForm() {
       toast.error(`The banner wasn't switched off: ${error.message}`),
   });
 
+  // The two switches go to the backend one after the other, in the order they were asked for: a
+  // replacement sent while a switch-off is still on its way waits for it, so the last thing asked
+  // for is what stays. The form's button is busy meanwhile.
+  const switchingOff = useRef<Promise<void> | null>(null);
+  const switchItOff = () => {
+    const sent = switchOff.mutateAsync().then(noop, noop);
+    switchingOff.current = sent;
+    void sent.finally(() => {
+      if (switchingOff.current === sent) switchingOff.current = null;
+    });
+  };
+  const showIt = async (values: IncidentBannerValues) => {
+    await switchingOff.current;
+    // A failure is said by the mutation's own toast.
+    await show.mutateAsync(values).then(noop, noop);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <section aria-label="Showing now">
@@ -124,7 +142,7 @@ export function IncidentBannerForm() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => switchOff.mutate()}
+                onClick={switchItOff}
                 disabled={switchOff.isPending || show.isPending}
               >
                 Switch it off
@@ -155,8 +173,8 @@ export function IncidentBannerForm() {
       <FormShell
         form={form}
         // Held until the request settles: the button stays busy, so a second click or an edit
-        // can't send a competing banner. A failure is said by the mutation's own toast.
-        onSubmit={(values) => show.mutateAsync(values).then(noop, noop)}
+        // can't send a competing banner.
+        onSubmit={showIt}
         submitLabel={showing ? "Replace the banner" : "Show the banner"}
       >
         <FormSection
