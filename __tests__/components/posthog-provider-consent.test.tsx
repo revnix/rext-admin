@@ -4,6 +4,7 @@
  * with no identity and none of our own events.
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { analytics, setImpersonating } from "@/lib/analytics";
@@ -101,6 +102,19 @@ const mockUser = {
 jest.mock("next-auth/react", () => ({
   useSession: () => ({ status: "authenticated", data: { user: mockUser } }),
 }));
+// The account holds no answer of its own here (that side has its own tests, in
+// analytics-consent-prompt.test.tsx): the browser's answer is the whole story.
+jest.mock("@/lib/api-client", () => ({
+  apiClient: {
+    profile: {
+      storeAnalyticsAnswer: jest.fn(async () => ({
+        answer: null,
+        region: "eea",
+        answered_at: null,
+      })),
+    },
+  },
+}));
 jest.mock("@/lib/analytics-consent", () => ({
   ...jest.requireActual("@/lib/analytics-consent"),
   analyticsMode: jest.fn(),
@@ -128,13 +142,18 @@ beforeEach(() => {
     .mockResolvedValue({ ok: true }) as unknown as typeof fetch;
 });
 
+// The question keeps its answer on the account through the app's data layer.
+const queryClient = new QueryClient();
+
 function renderProvider() {
   return render(
-    <PostHogProvider>
-      {/* The shell shows the question; the provider acts on the answer. */}
-      <AnalyticsConsentPrompt />
-      <p>The page</p>
-    </PostHogProvider>,
+    <QueryClientProvider client={queryClient}>
+      <PostHogProvider>
+        {/* The shell shows the question; the provider acts on the answer. */}
+        <AnalyticsConsentPrompt />
+        <p>The page</p>
+      </PostHogProvider>
+    </QueryClientProvider>,
   );
 }
 
@@ -292,10 +311,12 @@ describe("where analytics is on unless switched off", () => {
 
       mockWorkspaceState.currentWorkspace = { id: "ws-1", slug: "acme" };
       view.rerender(
-        <PostHogProvider>
-          <AnalyticsConsentPrompt />
-          <p>The page</p>
-        </PostHogProvider>,
+        <QueryClientProvider client={queryClient}>
+          <PostHogProvider>
+            <AnalyticsConsentPrompt />
+            <p>The page</p>
+          </PostHogProvider>
+        </QueryClientProvider>,
       );
 
       await waitFor(() => expect(pageViews()).toHaveLength(1));
@@ -375,10 +396,12 @@ describe("where analytics is on unless switched off", () => {
       // On to an account page, which has no workspace to wait for.
       mockRoute.path = "/settings/data";
       view.rerender(
-        <PostHogProvider>
-          <AnalyticsConsentPrompt />
-          <p>Settings</p>
-        </PostHogProvider>,
+        <QueryClientProvider client={queryClient}>
+          <PostHogProvider>
+            <AnalyticsConsentPrompt />
+            <p>Settings</p>
+          </PostHogProvider>
+        </QueryClientProvider>,
       );
 
       await waitFor(() => expect(pageViews()).toHaveLength(2));
@@ -408,10 +431,12 @@ describe("where analytics is on unless switched off", () => {
     mockWorkspaceState.currentWorkspace = { id: "ws-9", slug: "another" };
     try {
       view.rerender(
-        <PostHogProvider>
-          <AnalyticsConsentPrompt />
-          <p>Another page</p>
-        </PostHogProvider>,
+        <QueryClientProvider client={queryClient}>
+          <PostHogProvider>
+            <AnalyticsConsentPrompt />
+            <p>Another page</p>
+          </PostHogProvider>
+        </QueryClientProvider>,
       );
       // A render is a new view here (the mocked route hooks answer with new objects each time):
       // it goes out at once, though the app's workspace is not this page's.
