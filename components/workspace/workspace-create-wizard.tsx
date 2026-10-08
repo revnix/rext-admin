@@ -34,6 +34,7 @@ import {
 import { WorkspaceReviewStep } from "@/components/workspace/workspace-review-step";
 import { useSSE } from "@/providers/sse-provider";
 import {
+  normalizeWebsite,
   type WorkspaceFormData,
   workspaceFormSchema,
 } from "@/schemas/workspace-schemas";
@@ -225,6 +226,11 @@ export function WorkspaceCreateWizard() {
     }
   };
 
+  // What the Website field holds, as the address it will be read at (null until it makes one).
+  const typedWebsite = form.watch("url");
+  const reads =
+    typeof typedWebsite === "string" ? normalizeWebsite(typedWebsite) : null;
+
   if (!operationId) {
     return (
       <div className="space-y-6">
@@ -263,15 +269,27 @@ export function WorkspaceCreateWizard() {
             control={form.control}
             name="url"
             label="Website"
-            description="We read it to draft the workspace's brand voice, personas and competitors."
+            // The address that will be read, once what is typed makes one: "mysite.com" is
+            // enough, and the form says where it goes.
+            description={
+              reads
+                ? `We'll read ${reads} to draft the workspace's brand voice, personas and competitors.`
+                : "We read it to draft the workspace's brand voice, personas and competitors."
+            }
             required
           >
             {(field) => (
+              // A text field: `type="url"` makes the browser refuse a bare domain in its own
+              // words before the form can take it (rext-control#854).
               <Input
                 {...field}
-                type="url"
+                type="text"
                 inputMode="url"
-                placeholder="https://your-company.com"
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="url"
+                spellCheck={false}
+                placeholder="yoursite.com"
               />
             )}
           </FieldController>

@@ -4,7 +4,11 @@
  * like Asia/Calcutta, couldn't create a workspace).
  */
 
-import { isTimeZone, workspaceFormSchema } from "@/schemas/workspace-schemas";
+import {
+  isTimeZone,
+  normalizeWebsite,
+  workspaceFormSchema,
+} from "@/schemas/workspace-schemas";
 
 const form = (timezone?: string) => ({
   name: "Acme",
@@ -33,5 +37,47 @@ describe("the workspace form's time zone", () => {
     expect(workspaceFormSchema.safeParse(form("Not/AZone")).success).toBe(
       false,
     );
+  });
+});
+
+describe("the website, as people type it (rext-control#854)", () => {
+  it.each([
+    ["mysite.com", "https://mysite.com"],
+    ["www.mysite.com", "https://www.mysite.com"],
+    ["http://mysite.com", "https://mysite.com"],
+    ["https://mysite.com", "https://mysite.com"],
+    ["https://mysite.com/", "https://mysite.com"],
+    ["  MySite.COM  ", "https://mysite.com"],
+    ["HTTP://WWW.MySite.com/Shop", "https://www.mysite.com/Shop"],
+    ["mysite.com/blog/", "https://mysite.com/blog/"],
+    ["mysite.co.uk", "https://mysite.co.uk"],
+    ["shop.mysite.com?ref=1", "https://shop.mysite.com/?ref=1"],
+  ])("takes %s as %s", (typed, read) => {
+    expect(normalizeWebsite(typed)).toBe(read);
+    expect(
+      workspaceFormSchema.parse({ name: "My company", url: typed }).url,
+    ).toBe(read);
+  });
+
+  it.each([
+    "",
+    "   ",
+    "mysite",
+    "https://mysite",
+    "my site.com",
+    "me@mysite.com",
+    "ftp://mysite.com",
+    "localhost",
+    "just some words",
+  ])("has no address in %j, and says what to type", (typed) => {
+    expect(normalizeWebsite(typed)).toBeNull();
+    const result = workspaceFormSchema.safeParse({
+      name: "My company",
+      url: typed,
+    });
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.find((issue) => issue.path[0] === "url")?.message,
+    ).toBe("Enter your website's address, like yoursite.com");
   });
 });
