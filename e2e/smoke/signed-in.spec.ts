@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { watchForErrors } from "./errors";
+import { field } from "./fields";
 
 // What a customer gets after signing in: Home, and Generate up to its first step. It needs a test account
 // with no billing (SMOKE_EMAIL, SMOKE_PASSWORD) that has been through its first-login questions; without
@@ -25,8 +26,8 @@ test("a signed-in account opens Home and Generate", async ({ page }) => {
   });
 
   await page.goto("/login", { waitUntil: "load" });
-  await page.getByRole("textbox", { name: /^Email\b/ }).fill(email ?? "");
-  await page.getByRole("textbox", { name: /^Password\b/ }).fill(password ?? "");
+  await field(page, "email").fill(email ?? "");
+  await field(page, "password").fill(password ?? "");
   await page.getByRole("button", { name: "Log in" }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), {
     timeout: 30_000,

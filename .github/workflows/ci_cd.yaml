@@ -108,9 +108,20 @@ jobs:
           export DEPLOY_SINCE
           node scripts/wait-for-deploy.mjs
 
-      - name: Smoke test
+      # One step per branch, each with its own account: a branch whose secrets aren't
+      # set gets none (and skips the signed-in part), never the other branch's.
+      - name: Smoke test on production
+        if: github.ref == 'refs/heads/main'
         timeout-minutes: 3
         env:
-          SMOKE_EMAIL: ${{ github.ref == 'refs/heads/main' && secrets.SMOKE_EMAIL || secrets.SMOKE_STAGING_EMAIL }}
-          SMOKE_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.SMOKE_PASSWORD || secrets.SMOKE_STAGING_PASSWORD }}
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+        run: pnpm exec playwright test -c playwright.smoke.config.ts
+
+      - name: Smoke test on staging
+        if: github.ref == 'refs/heads/staging'
+        timeout-minutes: 3
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_STAGING_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_STAGING_PASSWORD }}
         run: pnpm exec playwright test -c playwright.smoke.config.ts
