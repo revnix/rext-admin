@@ -190,22 +190,23 @@ function ArticleEditor({
   // The person is leaving through Done or Publish: the save that goes with it is theirs.
   const leaving = useRef(false);
   const save = useCallback(
-    async (markdown: string) => {
-      const response = await saveArticle({
-        workspaceId,
-        contentId,
-        data: {
-          // Unchanged here; the request's type asks for it with every update.
-          title,
-          body_markdown: markdown,
-          // The backend publishes the stored row, so the HTML and the image list go with the text.
-          body_html: articleHtml(markdown),
-          images_data: deriveImagesData(markdown),
+    (markdown: string) =>
+      saveArticle(
+        {
+          workspaceId,
+          contentId,
+          data: {
+            // Unchanged here; the request's type asks for it with every update.
+            title,
+            body_markdown: markdown,
+            // The backend publishes the stored row, so the HTML and the image list go with the text.
+            body_html: articleHtml(markdown),
+            images_data: deriveImagesData(markdown),
+          },
         },
-      });
-      onSaved(leaving.current ? "done" : "autosave");
-      return response;
-    },
+        // Reported beside the save, not in its way: what waits on the save waits no longer.
+        { onSuccess: () => onSaved(leaving.current ? "done" : "autosave") },
+      ),
     [workspaceId, contentId, title, saveArticle, onSaved],
   );
 
@@ -274,25 +275,29 @@ function ArticleEditor({
   const guard = useLeaveGuard(state !== "saved");
   const isMobile = useIsMobile();
 
-  const saveToLeave = async () => {
+  const done = async () => {
     leaving.current = true;
+    let saved = false;
     try {
-      return await saveNow();
+      saved = await saveNow();
     } finally {
       leaving.current = false;
     }
-  };
-  const done = async () => {
-    if (await saveToLeave()) router.push(articleHref);
+    if (saved) router.push(articleHref);
   };
 
   // Publishing is the article page's: it holds the sites, the confirmations and the schedule.
   // A choice here saves what is unsaved, then goes there with the choice, where it is asked for
   // as that page's own menu would ask. A save that fails keeps the person here, with its notice.
   const publish = async (intent: PublishIntent) => {
-    if (await saveToLeave()) {
-      router.push(`${articleHref}?publish=${intent}` as Route);
+    leaving.current = true;
+    let saved = false;
+    try {
+      saved = await saveNow();
+    } finally {
+      leaving.current = false;
     }
+    if (saved) router.push(`${articleHref}?publish=${intent}` as Route);
   };
 
   const minutes = Math.max(1, Math.round(words / WORDS_A_MINUTE));
